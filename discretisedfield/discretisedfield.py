@@ -662,7 +662,7 @@ class Field(object):
 
         .. code-block:: python
 
-          >>> from oommffield import Field
+          >>> from discretisedfield import Field
           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
 
           >>> field.set((1, 0, 5))
@@ -745,7 +745,7 @@ def read_oommf_file(filename, name='unnamed'):
 
         .. code-block:: python
 
-          from oommffield import read_oommf_file
+          from discretisedfield import read_oommf_file
           oommf_filename = 'vector_field.omf'
           field = read_oommf_file(oommf_filename, name='magnetisation')
 
