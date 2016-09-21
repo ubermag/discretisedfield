@@ -64,7 +64,7 @@ class TestMesh(object):
         assert isinstance(mesh.n[2], int)
 
         assert mesh.name == name
-        
+
     def test_init_valid_args(self):
         for arg in self.valid_args:
             c1 = arg[0]

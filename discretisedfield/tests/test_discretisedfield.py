@@ -222,10 +222,14 @@ class TestDiscretisedField(object):
                         assert cs == (0, 1, 2)
 
                     tol = 1e-16
-                    assert abs(a1[0] - (f.mesh.c1[cs[0]] + f.mesh.d[cs[0]]/2.)) < tol
-                    assert abs(a1[-1] - (f.mesh.c2[cs[0]] - f.mesh.d[cs[0]]/2.)) < tol
-                    assert abs(a2[0] - (f.mesh.c1[cs[1]] + f.mesh.d[cs[1]]/2.)) < tol
-                    assert abs(a2[-1] - (f.mesh.c2[cs[1]] - f.mesh.d[cs[1]]/2.)) < tol
+                    assert abs(a1[0] - (f.mesh.c1[cs[0]] +
+                                        f.mesh.d[cs[0]]/2.)) < tol
+                    assert abs(a1[-1] - (f.mesh.c2[cs[0]] -
+                                         f.mesh.d[cs[0]]/2.)) < tol
+                    assert abs(a2[0] - (f.mesh.c1[cs[1]] +
+                                        f.mesh.d[cs[1]]/2.)) < tol
+                    assert abs(a2[-1] - (f.mesh.c2[cs[1]] -
+                                         f.mesh.d[cs[1]]/2.)) < tol
                     assert len(a1) == f.mesh.n[cs[0]]
                     assert len(a2) == f.mesh.n[cs[1]]
                     assert f_slice.shape == (f.mesh.n[cs[0]],

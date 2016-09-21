@@ -9,11 +9,11 @@ Horizon 2020 European Research Infrastructure project.
 import random
 import matplotlib
 import numpy as np
-from numbers import Real
+from mpl_toolkits.mplot3d import Axes3D
+from discretisedfield.util.typesystem import PositiveRealVector3D, RealVector3D
+from discretisedfield.util.typesystem import String, typesystem
 matplotlib.use('nbagg')
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from discretisedfield.util.typesystem import PositiveRealVector3D, RealVector3D, String, typesystem
 
 
 def plot_cube(ax, c1, c2, color='blue', linewidth=2):
@@ -229,7 +229,7 @@ class Mesh(object):
 
         """
         return self.index2coord(self.coord2index(c))
-    
+
     def plot_mesh(self):
         """Shows a matplotlib figure of sample range and discretisation."""
         fig = plt.figure()

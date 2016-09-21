@@ -255,7 +255,8 @@ class Field(object):
             if np.allclose(pm[:, 2], 0) and np.allclose(pm[:, 3], 0):
                 raise ValueError('Vector plane components are zero.')
             else:
-                ysize = xsize*(self.mesh.l[coord_system[1]]/self.mesh.l[coord_system[0]])
+                ysize = xsize*(self.mesh.l[coord_system[1]] /
+                               self.mesh.l[coord_system[0]])
                 fig = plt.figure(figsize=(xsize, ysize))
                 plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
                 plt.xlim([self.mesh.c1[coord_system[0]],
