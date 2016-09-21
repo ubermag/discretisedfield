@@ -10,7 +10,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from .mesh import Mesh
-from discretisedfield.util.typesystem import UnsignedInt, String, typesystem
+from .util.typesystem import UnsignedInt, String, typesystem
 
 
 @typesystem(dim=UnsignedInt,
