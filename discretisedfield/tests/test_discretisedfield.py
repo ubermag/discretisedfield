@@ -2,12 +2,13 @@ import os
 import pytest
 import random
 import numpy as np
-from discretisedfield import Field, read_oommf_file
+from discretisedfield import Mesh, Field, read_oommf_file
 import matplotlib
 
 
-class TestField(object):
+class TestDiscretisedField(object):
     def setup(self):
+        self.meshes = self.create_meshes()
         self.scalar_fs = self.create_scalar_fs()
         self.vector_fs = self.create_vector_fs()
         self.constant_values = [0, -5., np.pi,
@@ -21,28 +22,36 @@ class TestField(object):
         self.scalar_pyfuncs = self.create_scalar_pyfuncs()
         self.vector_pyfuncs = self.create_vector_pyfuncs()
 
+    def create_meshes(self):
+        c1_list = [(0, 0, 0),
+                   (-5e-9, -8e-9, -10e-9),
+                   (10, -5, -80)]
+        c2_list = [(5e-9, 8e-9, 10e-9),
+                   (11e-9, 4e-9, 4e-9),
+                   (15, 10, 85)]
+        d_list = [(1e-9, 1e-9, 1e-9),
+                  (1e-9, 2e-9, 1e-9),
+                  (5, 5, 2.5)]
+
+        meshes = []
+        for i in range(len(c1_list)):
+            mesh = Mesh(c1_list[i], c2_list[i], d_list[i])
+            meshes.append(mesh)
+        return meshes
+
     def create_scalar_fs(self):
-        cmin_list = [(0, 0, 0), (-5e-9, -8e-9, -10e-9), (10, -5, -80)]
-        cmax_list = [(5e-9, 8e-9, 10e-9), (11e-9, 4e-9, 4e-9), (15, 10, 85)]
-        d_list = [(1e-9, 1e-9, 1e-9), (1e-9, 2e-9, 1e-9), (5, 5, 2.5)]
-
         scalar_fs = []
-        for i in range(len(cmin_list)):
-            f = Field(cmin_list[i], cmax_list[i], d_list[i], dim=1)
+        for mesh in self.meshes:
+            print(mesh.n)
+            f = Field(mesh, dim=1)
             scalar_fs.append(f)
-
         return scalar_fs
 
     def create_vector_fs(self):
-        cmin_list = [(0, 0, 0), (-5, -8, -10), (10, -5, -80)]
-        cmax_list = [(5, 8, 10), (11, 4, 4), (15, 10, 85)]
-        d_list = [(1, 1, 1), (1, 2, 1), (5, 5, 2.5)]
-
         vector_fs = []
-        for i in range(len(cmin_list)):
-            f = Field(cmin_list[i], cmax_list[i], d_list[i], dim=3)
+        for mesh in self.meshes:
+            f = Field(mesh, dim=3)
             vector_fs.append(f)
-
         return vector_fs
 
     def create_scalar_pyfuncs(self):
@@ -66,161 +75,20 @@ class TestField(object):
         return f
 
     def test_init(self):
-        cmin = (0, -4, 11)
-        cmax = (15, 10.1, 16.5)
+        c1 = (0, -4, 11)
+        c2 = (15, 10.1, 16.5)
         d = (1, 0.1, 0.5)
+        mesh = Mesh(c1, c2, d)
+        dim = 2
         name = 'test_field'
         value = [1, 2]
 
-        f = Field(cmin, cmax, d, dim=2, value=value, name=name)
-
-        assert f.l[0] == 15 - 0
-        assert f.l[1] == 10.1 - (-4)
-        assert f.l[2] == 16.5 - 11
-
-        assert f.n[0] == (15 - 0) / 1.0
-        assert f.n[1] == (10.1 - (-4)) / 0.1
-        assert f.n[2] == (16.5 - 11) / 0.5
-
-        assert type(f.n[0]) is int
-        assert type(f.n[1]) is int
-        assert type(f.n[2]) is int
+        f = Field(mesh, dim=2, value=value, name=name)
 
         assert f.name == name
 
         assert np.all(f.f[:, :, :, 0] == value[0])
         assert np.all(f.f[:, :, :, 1] == value[1])
-
-    def test_init_wrong_cmin(self):
-        cmin = 1
-        cmax = (15, 10.1, 16.5)
-        d = (1, 0.1, 0.5)
-        name = 'test_field'
-
-        with pytest.raises(TypeError):
-            f = Field(cmin, cmax, d, dim=3, name=name)
-
-    def test_init_wrong_cmax(self):
-        cmin = (0, -4, 11)
-        cmax = [15, 10.1, 16.5]
-        d = (1, 0.1, 0.5)
-        name = 'test_field'
-
-        with pytest.raises(TypeError):
-            f = Field(cmin, cmax, d, dim=3, name=name)
-
-    def test_init_wrong_d(self):
-        cmin = (0, -4, 11)
-        cmax = (15, 10, 16)
-        d = (0, 1, 1)
-        name = 'test_field'
-
-        with pytest.raises(TypeError):
-            f = Field(cmin, cmax, d, dim=3, name=name)
-
-    def test_init_wrong_dim(self):
-        cmin = (0, -4, 11)
-        cmax = (15, 10, 16)
-        d = (0.1, 1, 1)
-        name = 'test_field'
-
-        with pytest.raises(TypeError):
-            f = Field(cmin, cmax, d, dim=3.5, name=name)
-
-    def test_init_d_not_multiple_of_l(self):
-        cmin = (0, -4, 11)
-        cmax = (15, 10, 16)
-        d = (1, 5, 1)
-        name = 'test_field'
-
-        with pytest.raises(ValueError):
-            f = Field(cmin, cmax, d, dim=3, name=name)
-
-    def test_init_wrong_name(self):
-        cmin = (0, -4, 11)
-        cmax = (15, 10.1, 16.5)
-        d = (1, 0.1, 0.5)
-        name = 552
-
-        with pytest.raises(TypeError):
-            f = Field(cmin, cmax, d, dim=3, name=name)
-
-    def test_index2coord(self):
-        cmin = (-1, -4, 11)
-        cmax = (15, 10.1, 12.5)
-        d = (1, 0.1, 0.5)
-        name = 'test_field'
-
-        f = Field(cmin, cmax, d, dim=2, name=name)
-
-        assert f.index2coord((0, 0, 0)) == (-0.5, -3.95, 11.25)
-        assert f.index2coord((5, 10, 1)) == (4.5, -2.95, 11.75)
-
-    def test_index2coord_exception(self):
-        cmin = (-1, -4, 11)
-        cmax = (15, 10.1, 12.5)
-        d = (1, 0.1, 0.5)
-        name = 'test_field'
-
-        f = Field(cmin, cmax, d, dim=2, name=name)
-
-        with pytest.raises(ValueError):
-            f.index2coord((-1, 0, 0))
-            f.index2coord((500, 10, 1))
-
-    def test_coord2index(self):
-        cmin = (-10, -5, 0)
-        cmax = (10, 5, 10)
-        d = (1, 5, 1)
-        name = 'test_field'
-
-        f = Field(cmin, cmax, d, dim=2, name=name)
-
-        assert f.coord2index((-10, -5, 0)) == (0, 0, 0)
-        assert f.n[0] == 20
-        assert f.coord2index((10, 5, 10)) == (19, 1, 9)
-        assert f.coord2index((0.0001, 0.0001, 5.0001)) == (10, 1, 5)
-        assert f.coord2index((-0.0001, -0.0001, 4.9999)) == (9, 0, 4)
-
-    def test_coord2index_exception(self):
-        cmin = (-10, -5, 0)
-        cmax = (10, 5, 10)
-        d = (1, 5, 1)
-        name = 'test_field'
-
-        f = Field(cmin, cmax, d, dim=2, name=name)
-
-        with pytest.raises(ValueError):
-            f.coord2index((-11, 0, 5))
-            f.coord2index((-5, -5-1e-3, 5))
-            f.coord2index((-5, 0, -0.01))
-            f.coord2index((11, 0, 5))
-            f.coord2index((6, 5+1e-6, 5))
-            f.coord2index((0, 0, 10+1e-10))
-
-    def test_domain_centre(self):
-        cmin = (-18.5, 5, 0)
-        cmax = (10, 10, 10)
-        d = (0.1, 0.25, 2)
-        name = 'test_field'
-
-        f = Field(cmin, cmax, d, dim=2, name=name)
-
-        assert f.domain_centre() == (-4.25, 7.5, 5)
-
-    def test_random_coord(self):
-        cmin = (-18.5, 5, 0)
-        cmax = (10, 10, 10)
-        d = (0.1, 0.25, 2)
-        name = 'test_field'
-
-        f = Field(cmin, cmax, d, dim=2, name=name)
-
-        for j in range(500):
-            c = f.random_coord()
-            assert f.cmin[0] <= c[0] <= f.cmax[0]
-            assert f.cmin[1] <= c[1] <= f.cmax[1]
-            assert f.cmin[2] <= c[2] <= f.cmax[2]
 
     def test_set_with_constant(self):
         for value in self.constant_values:
@@ -231,8 +99,8 @@ class TestField(object):
                 assert np.all(f.f == value)
 
                 # Check with sampling.
-                assert np.all(f(f.random_coord()) == value)
-                assert np.all(f.sample(f.random_coord()) == value)
+                assert np.all(f(f.mesh.random_coord()) == value)
+                assert np.all(f.sample(f.mesh.random_coord()) == value)
 
     def test_set_with_tuple_list_ndarray(self):
         for value in self.tuple_values:
@@ -241,7 +109,7 @@ class TestField(object):
 
                 norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
                 for j in range(3):
-                    c = f.random_coord()
+                    c = f.mesh.random_coord()
                     assert np.all(f.f[:, :, :, j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
                     assert np.all(f.sample(c)[j] == value[j]/norm)
@@ -253,8 +121,8 @@ class TestField(object):
                 f.set(pyfun)
 
                 for j in range(10):
-                    c = f.random_coord()
-                    expected_value = pyfun(f.nearestcellcoord(c))
+                    c = f.mesh.random_coord()
+                    expected_value = pyfun(f.mesh.nearestcellcoord(c))
                     assert f(c) == expected_value
                     assert f.sample(c) == expected_value
 
@@ -264,8 +132,8 @@ class TestField(object):
                 f.set(pyfun)
 
                 for j in range(10):
-                    c = f.random_coord()
-                    expected_value = pyfun(f.nearestcellcoord(c))
+                    c = f.mesh.random_coord()
+                    expected_value = pyfun(f.mesh.nearestcellcoord(c))
                     assert np.all(f(c) == expected_value)
                     assert np.all(f.sample(c) == expected_value)
 
@@ -316,7 +184,9 @@ class TestField(object):
                         norm += f.f[:, :, :, j]**2
                     norm = np.sqrt(norm)
 
-                    assert norm.shape == (f.n[0], f.n[1], f.n[2])
+                    assert norm.shape == (f.mesh.n[0],
+                                          f.mesh.n[1],
+                                          f.mesh.n[2])
                     diff = norm - norm_value
 
                     assert np.all(abs(norm - norm_value) < 1e-12)
@@ -340,7 +210,7 @@ class TestField(object):
 
                 for pyfun in funcs:
                     f.set(pyfun)
-                    point = f.domain_centre()['xyz'.find(s)]
+                    point = f.mesh.domain_centre()['xyz'.find(s)]
                     data = f.slice_field(s, point)
                     a1, a2, f_slice, cs = data
 
@@ -352,19 +222,19 @@ class TestField(object):
                         assert cs == (0, 1, 2)
 
                     tol = 1e-16
-                    assert abs(a1[0] - (f.cmin[cs[0]] + f.d[cs[0]]/2.)) < tol
-                    assert abs(a1[-1] - (f.cmax[cs[0]] - f.d[cs[0]]/2.)) < tol
-                    assert abs(a2[0] - (f.cmin[cs[1]] + f.d[cs[1]]/2.)) < tol
-                    assert abs(a2[-1] - (f.cmax[cs[1]] - f.d[cs[1]]/2.)) < tol
-                    assert len(a1) == f.n[cs[0]]
-                    assert len(a2) == f.n[cs[1]]
-                    assert f_slice.shape == (f.n[cs[0]],
-                                             f.n[cs[1]],
+                    assert abs(a1[0] - (f.mesh.c1[cs[0]] + f.mesh.d[cs[0]]/2.)) < tol
+                    assert abs(a1[-1] - (f.mesh.c2[cs[0]] - f.mesh.d[cs[0]]/2.)) < tol
+                    assert abs(a2[0] - (f.mesh.c1[cs[1]] + f.mesh.d[cs[1]]/2.)) < tol
+                    assert abs(a2[-1] - (f.mesh.c2[cs[1]] - f.mesh.d[cs[1]]/2.)) < tol
+                    assert len(a1) == f.mesh.n[cs[0]]
+                    assert len(a2) == f.mesh.n[cs[1]]
+                    assert f_slice.shape == (f.mesh.n[cs[0]],
+                                             f.mesh.n[cs[1]],
                                              f.dim)
 
-                    for j in range(f.n[cs[0]]):
-                        for k in range(f.n[cs[1]]):
-                            c = list(f.domain_centre())
+                    for j in range(f.mesh.n[cs[0]]):
+                        for k in range(f.mesh.n[cs[1]]):
+                            c = list(f.mesh.domain_centre())
                             c[cs[0]] = a1[j]
                             c[cs[1]] = a2[k]
                             c = tuple(c)
@@ -380,7 +250,7 @@ class TestField(object):
 
             for pyfun in funcs:
                 f.set(pyfun)
-                point = f.domain_centre()[0]
+                point = f.mesh.domain_centre()[0]
                 with pytest.raises(ValueError):
                     data = f.slice_field('xy', point)
                     data = f.slice_field('xyz', point)
@@ -398,11 +268,11 @@ class TestField(object):
 
                 for pyfun in funcs:
                     f.set(pyfun)
-                    point = f.domain_centre()['xyz'.find(s)] + 100
+                    point = f.mesh.domain_centre()['xyz'.find(s)] + 100
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
 
-                    point = f.domain_centre()['xyz'.find(s)] - 100
+                    point = f.mesh.domain_centre()['xyz'.find(s)] - 100
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
 
@@ -411,7 +281,7 @@ class TestField(object):
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
             f.set(value, normalise=True)
-            point = f.domain_centre()['xyz'.find('y')]
+            point = f.mesh.domain_centre()['xyz'.find('y')]
             fig = f.plot_slice('y', point, axes=True)
             fig = f.plot_slice('y', point, axes=False)
 
@@ -419,7 +289,7 @@ class TestField(object):
         value = (0, 0, 1)
         for f in self.vector_fs:
             f.set(value, normalise=True)
-            point = f.domain_centre()['xyz'.find('z')]
+            point = f.mesh.domain_centre()['xyz'.find('z')]
             with pytest.raises(ValueError):
                 fig = f.plot_slice('z', point)
 
@@ -433,10 +303,10 @@ class TestField(object):
 
             f_loaded = read_oommf_file(filename)
 
-            assert f.cmin == f_loaded.cmin
-            assert f.cmax == f_loaded.cmax
-            assert f.d == f_loaded.d
-            assert f.d == f_loaded.d
+            assert f.mesh.c1 == f_loaded.mesh.c1
+            assert f.mesh.c2 == f_loaded.mesh.c2
+            assert f.mesh.d == f_loaded.mesh.d
+            assert f.mesh.d == f_loaded.mesh.d
             assert np.all(abs(f.f - f_loaded.f) < tol)
 
             os.system('rm {}'.format(filename))

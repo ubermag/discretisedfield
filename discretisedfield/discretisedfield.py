@@ -1,22 +1,23 @@
-"""A Python package for analysing and manipulating finite difference fields.
-
-This module is a Python package that provides:
+"""This module is a Python package that provides:
 
 - Analysing vector fields, such as sampling, averaging, plotting, etc.
 
-discretisedfield is a member of JOOMMF project - a part of OpenDreamKit
-Horizon 2020 European Research Infrastructure project
+It is a member of JOOMMF project - a part of OpenDreamKit
+Horizon 2020 European Research Infrastructure project.
 
 """
-
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from .mesh import Mesh
+from .util.typesystem import UnsignedInt, String, typesystem
 
 
+@typesystem(dim=UnsignedInt,
+            name=String)
 class Field(object):
-    def __init__(self, cmin, cmax, d, dim=3, value=None, name='unnamed'):
-        """Class for analysing, manipulating, and writing finite diffrenece fields.
+    def __init__(self, mesh, dim=3, value=None, name='unnamed'):
+        """Class for analysing, manipulating, and writing finite difference fields.
 
         This class provides the functionality for:
           - Creating FD vector and scalar fields.
@@ -24,15 +25,7 @@ class Field(object):
           - Computing common values characterising FD fields.
 
         Args:
-          cmin (tuple): The minimum coordinate range.
-            cmin tuple is of length 3 and defines the minimum x, y, and z
-            coordinates of the finite difference domain: (xmin, ymin, zmax)
-          cmax (tuple): The maximum coordinate range.
-            cmax tuple is of length 3 and defines the maximum x, y, and z
-            coordinates of the finite difference domain: (xmin, ymin, zmax)
-          d (tuple): discretisation
-            d is a discretisation tuple of length 3 and defines the
-            discretisation steps in x, y, and z directions: (dx, dy, dz)
+          mesh (Mesh): Finite difference mesh.
           dim (Optional[int]): The value dimensionality. Defaults to 3.
             If dim=1, a scalar field is initialised. On the other hand, if
             dim=3, a three dimensional vector field is created.
@@ -42,94 +35,27 @@ class Field(object):
           name (Optional[str]): Field name.
 
         Attributes:
-          cmin (tuple): The minimum coordinate range. Defined in Args.
-
-          cmax (tuple): The maximum coordinate range. Defined in Args.
-
-          d (tuple): Discretisation. Defined in Args.
+          mesh (Mesh): Finite difference mesh.
 
           dim (int): The value dimensionality. Defined in Args.
 
           name (str): Field name.
 
-          l (tuple): length of domain x, y, and z edges (lx, ly, lz):
-
-            lx = xmax - xmin
-
-            ly = ymax - ymin
-
-            lz = zmax - zmin
-
-          n (tuple): The number of cells in all three dimensions (nx, ny, nz):
-
-            nx = lx/dx
-
-            ny = ly/dy
-
-            nz = lz/dz
-
           f (np.ndarray): A field value four-dimensional numpy array.
 
-        Example:
-
-          .. code-block:: python
-
-            >>> from discretisedfield import Field
-            >>> cmin = (0, 0, 0)
-            >>> cmax = (10, 5, 3)
-            >>> d = (1, 0.5, 0.1)
-            >>> value = (0.5, -0.3, 6)
-            >>> field = Field(cmin, cmax, d, value=value, name='fdfield')
-
         """
-        # Raise exceptions if invalid arguments are provided.
-        if not isinstance(cmin, tuple) or \
-           not all(isinstance(i, (float, int)) for i in cmin) or \
-           len(cmin) != 3:
-            raise TypeError("""cmin must be a 3-element tuple of
-                            int or float values.""")
-        if not isinstance(cmax, tuple) or \
-           not all(isinstance(i, (float, int)) for i in cmax) or \
-           len(cmax) != 3:
-            raise TypeError("""cmax must be a 3-element tuple of
-                            int or float values.""")
-        if not isinstance(d, tuple) or \
-           any(i <= 0 for i in d) or \
-           len(d) != 3:
-            raise TypeError("""d must be a 3-element tuple of positive
-                            int or float values.""")
-        if not isinstance(dim, int) or \
-           dim <= 0:
-            raise TypeError("""dim must be a positive int value.""")
-        if not isinstance(name, str):
-            raise TypeError("""name must be a string.""")
+        if not isinstance(mesh, Mesh):
+            raise TypeError("""mesh must be of type Mesh.""")
 
-        # Copy arguments to attributes.
-        self.cmin = cmin
-        self.cmax = cmax
-        self.d = d
+        self.mesh = mesh
         self.dim = dim
         self.name = name
 
-        # Compute domain edge lengths.
-        self.l = (self.cmax[0]-self.cmin[0],
-                  self.cmax[1]-self.cmin[1],
-                  self.cmax[2]-self.cmin[2])
-
-        # Check if domain edge lengths are multiples of d.
-        tol = 1e-12
-        if self.d[0] - tol > self.l[0] % self.d[0] > tol or \
-           self.d[1] - tol > self.l[1] % self.d[1] > tol or \
-           self.d[2] - tol > self.l[2] % self.d[2] > tol:
-            raise ValueError('Domain is not a multiple of {}.'.format(self.d))
-
-        # Compute the number of cells in x, y, and z directions.
-        self.n = (int(round(self.l[0]/self.d[0])),
-                  int(round(self.l[1]/self.d[1])),
-                  int(round(self.l[2]/self.d[2])))
-
-        # Create an empty 3d vector field.
-        self.f = np.zeros([self.n[0], self.n[1], self.n[2], dim])
+        # Create an empty field.
+        self.f = np.zeros([self.mesh.n[0],
+                           self.mesh.n[1],
+                           self.mesh.n[2],
+                           dim])
 
         # Set the Field value if not None.
         if value is not None:
@@ -144,180 +70,8 @@ class Field(object):
         Returns:
           Field value in cell containing coordinate c.
 
-        Example:
-
-        .. code-block:: python
-
-          >>> from discretisedfield import Field
-          >>> cmin = (0, 0, 0)
-          >>> cmax = (10, 10, 10)
-          >>> d = (1, 1, 1)
-          >>> value = (1, 0, -5)
-          >>> field = Field(cmin, cmax, d, value=value)
-          >>> c = (5.5, 0.5, 3.5)
-          >>> field(c)
-          array([ 1.,  0., -5.])
-
         """
         return self.sample(c)
-
-    def domain_centre(self):
-        """Compute and return the domain centre coordinate.
-
-        Returns:
-          A domain centre coordinate tuple.
-
-        Example:
-
-        .. code-block:: python
-
-          >>> from discretisedfield import Field
-          >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-          >>> field.domain_centre()
-          (2.5, 2.0, 1.5)
-
-        """
-        c = (self.cmin[0] + 0.5*self.l[0],
-             self.cmin[1] + 0.5*self.l[1],
-             self.cmin[2] + 0.5*self.l[2])
-
-        return c
-
-    def random_coord(self):
-        """Generate a random coordinate in the domain.
-
-        Returns:
-          A random domain coordinate.
-
-        Example:
-
-        .. code-block:: python
-
-           from discretisedfield import Field
-           field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           field.random_coord()
-
-        """
-        c = (self.cmin[0] + random.random()*self.l[0],
-             self.cmin[1] + random.random()*self.l[1],
-             self.cmin[2] + random.random()*self.l[2])
-
-        return c
-
-    def index2coord(self, i):
-        """Convert the cell index to its coordinate.
-
-        The finite difference domain is disretised in x, y, and z directions
-        in steps dx, dy, and dz steps, respectively. Accordingly, there are
-        nx, ny, and nz discretisation steps. This method converts the cell
-        index (ix, iy, iz) to the cell's centre coordinate.
-
-        This method raises ValueError if the index is out of range.
-
-        Args:
-          i (tuple): A length 3 tuple of integers (ix, iy, iz)
-
-        Returns:
-          A length 3 tuple of x, y, and z coodinates.
-
-        Example:
-
-        .. code-block:: python
-
-           >>> from discretisedfield import Field
-           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           >>> i = (2, 2, 1)
-           >>> field.index2coord(i)
-           (2.5, 2.5, 1.5)
-
-        """
-        if i[0] < 0 or i[0] > self.n[0]-1 or \
-           i[1] < 0 or i[1] > self.n[1]-1 or \
-           i[2] < 0 or i[2] > self.n[2]-1:
-            raise ValueError('Index {} out of range.'.format(i))
-
-        else:
-            c = (self.cmin[0] + (i[0] + 0.5)*self.d[0],
-                 self.cmin[1] + (i[1] + 0.5)*self.d[1],
-                 self.cmin[2] + (i[2] + 0.5)*self.d[2])
-
-        return c
-
-    def coord2index(self, c):
-        """Convert the cell's coordinate to its index.
-
-        This method is an inverse function of index2coord method.
-        (For details on index, please refer to the index2coord method.)
-        More precisely, this method return the index of a cell containing
-        the coordinate c.
-
-        This method raises ValueError if the index is out of range.
-
-        Args:
-          c (tuple): A length 3 tuple of integers/floats (cx, cy, cz)
-
-        Returns:
-          A length 3 tuple of cell's indices (ix, iy, iz).
-
-        Example:
-
-        .. code-block:: python
-
-           >>> from discretisedfield import Field
-           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           >>> c = (2.3, 2.1, 0.8)
-           >>> field.coord2index(c)
-           (2, 2, 0)
-
-        """
-        if c[0] < self.cmin[0] or c[0] > self.cmax[0] or \
-           c[1] < self.cmin[1] or c[1] > self.cmax[1] or \
-           c[2] < self.cmin[2] or c[2] > self.cmax[2]:
-            raise ValueError('Coordinate {} out of domain.'. format(c))
-
-        else:
-            i = [int(round(float(c[0]-self.cmin[0])/self.d[0] - 0.5)),
-                 int(round(float(c[1]-self.cmin[1])/self.d[1] - 0.5)),
-                 int(round(float(c[2]-self.cmin[2])/self.d[2] - 0.5))]
-
-            # If rounded to the out-of-range index.
-            for j in range(3):
-                if i[j] < 0:
-                    i[j] = 0
-                elif i[j] > self.n[j] - 1:
-                    i[j] = self.n[j] - 1
-
-        return tuple(i)
-
-    def nearestcellcoord(self, c):
-        """Find the cell coordinate nearest to c.
-
-        This method computes the cell's centre coordinate containing
-        the coodinate c.
-
-        Args:
-          c (tuple): A length 3 tuple of integers/floats.
-
-        Returns:
-          A length 3 tuple of integers/floats.
-
-        Example:
-
-        .. code-block:: python
-
-          >>> from discretisedfield import Field
-          >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-          >>> c = (2.3, 2.1, 0.8)
-          >>> field.nearestcellcoord(c)
-          (2.5, 2.5, 0.5)
-
-        """
-        return self.index2coord(self.coord2index(c))
 
     def sample(self, c):
         """Sample the Field at coordinate c.
@@ -332,19 +86,8 @@ class Field(object):
         Returns:
           The field value at coodinate c.
 
-        Example:
-
-        .. code-block:: python
-
-           >>> from discretisedfield import Field
-           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           >>> c = (2.3, 2.1, 0.8)
-           >>> field.sample(c)
-           array([ 0.,  0.,  0.])
-
         """
-        i = self.coord2index(c)
+        i = self.mesh.coord2index(c)
         return self.f[i[0], i[1], i[2]]
 
     def set(self, value, normalise=False):
@@ -360,28 +103,6 @@ class Field(object):
           normalise (bool): If True, the vector field value is
             normalised to 1.
 
-        Example:
-
-        .. code-block:: python
-
-           >>> from discretisedfield import Field
-           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           >>> # Set the field value with int/float
-           >>> value = 2.1
-           >>> field.set(value)
-
-           >>> # Set the field value with list/tuple/np.ndarray
-           >>> value = [1, -0.2, 3.5]
-           >>> field.set(value, normalise=True)
-
-           >>> # Set the field value using Python function.
-           >>> def m_init(pos):
-           ...     x, y, z = pos
-           ...     return (x+1, x**2+y, -z)
-
-           >>> field.set(m_init)
-
         """
         # value is an int or float.
         # All components of the Field are set to value.
@@ -395,11 +116,11 @@ class Field(object):
 
         # value is a Python function.
         elif hasattr(value, '__call__'):
-            for ix in range(self.n[0]):
-                for iy in range(self.n[1]):
-                    for iz in range(self.n[2]):
+            for ix in range(self.mesh.n[0]):
+                for iy in range(self.mesh.n[1]):
+                    for iz in range(self.mesh.n[2]):
                         i = (ix, iy, iz)
-                        coord = self.index2coord((ix, iy, iz))
+                        coord = self.mesh.index2coord((ix, iy, iz))
                         self.f[ix, iy, iz, :] = value(coord)
 
         else:
@@ -417,18 +138,6 @@ class Field(object):
         Args:
           i (tuple): A length 3 tuple of integers (ix, iy, iz)
 
-        Example:
-
-        .. code-block:: python
-
-           >>> from discretisedfield import Field
-           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           >>> i = (2, 2, 1)
-           >>> value = 5
-           >>> field.set_at_index(i, value)
-           >>> field.f[2, 2, 1]
-           array([ 5.,  5.,  5.])
         """
         self.f[i[0], i[1], i[2], :] = value
 
@@ -437,17 +146,6 @@ class Field(object):
 
         Returns:
           Finite difference field average.
-
-        Example:
-
-        .. code-block:: python
-
-           >>> from discretisedfield import Field
-           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           >>> field.set((1, 0, 5))
-           >>> field.average()
-           [1.0, 0.0, 5.0]
 
         """
         # Scalar field.
@@ -460,7 +158,7 @@ class Field(object):
             for i in range(self.dim):
                 average.append(np.mean(self.f[:, :, :, i]))
 
-        return average
+        return tuple(average)
 
     def slice_field(self, axis, point):
         """Returns the slice of a finite difference field.
@@ -481,16 +179,6 @@ class Field(object):
             - np.ndarray of field values on the plane
             - coordinate system details
 
-        Example:
-
-        .. code-block:: python
-
-           from discretisedfield import Field
-           field = Field((0, 0, 0), (2, 2, 2), (1, 1, 1))
-
-           field.set((1, 0, 5))
-           field.slice_field('z', 0.5)
-
         """
         if axis == 'x':
             slice_num = 0
@@ -504,21 +192,21 @@ class Field(object):
         else:
             raise ValueError('Axis not properly defined.')
 
-        if self.cmin[slice_num] <= point <= self.cmax[slice_num]:
-            axis1_indices = np.arange(0, self.n[axes[0]])
-            axis2_indices = np.arange(0, self.n[axes[1]])
+        if self.mesh.c1[slice_num] <= point <= self.mesh.c2[slice_num]:
+            axis1_indices = np.arange(0, self.mesh.n[axes[0]])
+            axis2_indices = np.arange(0, self.mesh.n[axes[1]])
 
             axis1_coords = np.zeros(len(axis1_indices))
             axis2_coords = np.zeros(len(axis2_indices))
 
-            sample_centre = list(self.domain_centre())
+            sample_centre = list(self.mesh.domain_centre())
             sample_centre[slice_num] = point
             sample_centre = tuple(sample_centre)
 
-            slice_index = self.coord2index(sample_centre)[slice_num]
+            slice_index = self.mesh.coord2index(sample_centre)[slice_num]
 
-            field_slice = np.zeros([self.n[axes[0]],
-                                    self.n[axes[1]],
+            field_slice = np.zeros([self.mesh.n[axes[0]],
+                                    self.mesh.n[axes[1]],
                                     self.dim])
             for j in axis1_indices:
                 for k in axis2_indices:
@@ -528,7 +216,7 @@ class Field(object):
                     i[axes[1]] = k
                     i = tuple(i)
 
-                    coord = self.index2coord(i)
+                    coord = self.mesh.index2coord(i)
 
                     axis1_coords[j] = coord[axes[0]]
                     axis2_coords[k] = coord[axes[1]]
@@ -557,16 +245,6 @@ class Field(object):
         Returns:
           matplotlib figure.
 
-        Example:
-
-        .. code-block:: python
-
-           from discretisedfield import Field
-           field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           field.set((1, 0, 5))
-           print field.plot_slice('z', 0.5)
-
         """
         a1, a2, field_slice, coord_system = self.slice_field(axis, point)
 
@@ -577,13 +255,13 @@ class Field(object):
             if np.allclose(pm[:, 2], 0) and np.allclose(pm[:, 3], 0):
                 raise ValueError('Vector plane components are zero.')
             else:
-                ysize = xsize*(self.l[coord_system[1]]/self.l[coord_system[0]])
+                ysize = xsize*(self.mesh.l[coord_system[1]]/self.mesh.l[coord_system[0]])
                 fig = plt.figure(figsize=(xsize, ysize))
                 plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
-                plt.xlim([self.cmin[coord_system[0]],
-                          self.cmax[coord_system[0]]])
-                plt.ylim([self.cmin[coord_system[1]],
-                          self.cmax[coord_system[1]]])
+                plt.xlim([self.mesh.c1[coord_system[0]],
+                          self.mesh.c2[coord_system[0]]])
+                plt.ylim([self.mesh.c1[coord_system[1]],
+                          self.mesh.c2[coord_system[1]]])
                 if axes:
                     plt.xlabel('xyz'[coord_system[0]] + ' (m)')
                     plt.ylabel('xyz'[coord_system[1]] + ' (m)')
@@ -597,12 +275,12 @@ class Field(object):
 
     def _prepare_for_quiver(self, a1, a2, field_slice, coord_system):
         """Generate arrays for plotting quiver plot."""
-        nel = self.n[coord_system[0]]*self.n[coord_system[1]]
+        nel = self.mesh.n[coord_system[0]]*self.mesh.n[coord_system[1]]
         plot_matrix = np.zeros([nel, 5])
 
         counter = 0
-        for j in range(self.n[coord_system[0]]):
-            for k in range(self.n[coord_system[1]]):
+        for j in range(self.mesh.n[coord_system[0]]):
+            for k in range(self.mesh.n[coord_system[1]]):
                 entry = [a1[j], a2[k],
                          field_slice[j, k, coord_system[0]],
                          field_slice[j, k, coord_system[1]],
@@ -620,16 +298,6 @@ class Field(object):
 
         Args:
           norm (int/float): Norm value at all finite difference cells.
-
-        Example:
-
-        .. code-block:: python
-
-           >>> from discretisedfield import Field
-           >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-           >>> field.set((1, 0, 5))
-           >>> field.normalise(5)
 
         """
         # Scalar field.
@@ -658,16 +326,6 @@ class Field(object):
         Args:
           filename (str): filename including extension
 
-        Example:
-
-        .. code-block:: python
-
-          >>> from discretisedfield import Field
-          >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-
-          >>> field.set((1, 0, 5))
-          >>> field.write_oommf_file('fdfield.omf')
-
         """
         oommf_file = open(filename, 'w')
 
@@ -683,21 +341,21 @@ class Field(object):
                         'Desc: File generated by Field class',
                         'meshunit: m',
                         'meshtype: rectangular',
-                        'xbase: {}'.format(self.d[0]),
-                        'ybase: {}'.format(self.d[1]),
-                        'zbase: {}'.format(self.d[2]),
-                        'xnodes: {}'.format(self.n[0]),
-                        'ynodes: {}'.format(self.n[1]),
-                        'znodes: {}'.format(self.n[2]),
-                        'xstepsize: {}'.format(self.d[0]),
-                        'ystepsize: {}'.format(self.d[1]),
-                        'zstepsize: {}'.format(self.d[2]),
-                        'xmin: {}'.format(self.cmin[0]),
-                        'ymin: {}'.format(self.cmin[1]),
-                        'zmin: {}'.format(self.cmin[2]),
-                        'xmax: {}'.format(self.cmax[0]),
-                        'ymax: {}'.format(self.cmax[1]),
-                        'zmax: {}'.format(self.cmax[2]),
+                        'xbase: {}'.format(self.mesh.d[0]),
+                        'ybase: {}'.format(self.mesh.d[1]),
+                        'zbase: {}'.format(self.mesh.d[2]),
+                        'xnodes: {}'.format(self.mesh.n[0]),
+                        'ynodes: {}'.format(self.mesh.n[1]),
+                        'znodes: {}'.format(self.mesh.n[2]),
+                        'xstepsize: {}'.format(self.mesh.d[0]),
+                        'ystepsize: {}'.format(self.mesh.d[1]),
+                        'zstepsize: {}'.format(self.mesh.d[2]),
+                        'xmin: {}'.format(self.mesh.c1[0]),
+                        'ymin: {}'.format(self.mesh.c1[1]),
+                        'zmin: {}'.format(self.mesh.c1[2]),
+                        'xmax: {}'.format(self.mesh.c2[0]),
+                        'ymax: {}'.format(self.mesh.c2[1]),
+                        'zmax: {}'.format(self.mesh.c2[2]),
                         'valuedim: {}'.format(self.dim),
                         'valuelabels: Mx My Mz',
                         'valueunits: A/m A/m A/m',
@@ -715,9 +373,9 @@ class Field(object):
             oommf_file.write('# ' + line + '\n')
 
         # Write data lines to OOMMF file.
-        for iz in range(self.n[2]):
-            for iy in range(self.n[1]):
-                for ix in range(self.n[0]):
+        for iz in range(self.mesh.n[2]):
+            for iy in range(self.mesh.n[1]):
+                for ix in range(self.mesh.n[0]):
                     v = [str(vi) for vi in self.f[ix, iy, iz, :]]
                     for vi in v:
                         oommf_file.write(' ' + vi)
@@ -741,14 +399,6 @@ def read_oommf_file(filename, name='unnamed'):
     Return:
       Field object.
 
-    Example:
-
-        .. code-block:: python
-
-          from discretisedfield import read_oommf_file
-          oommf_filename = 'vector_field.omf'
-          field = read_oommf_file(oommf_filename, name='magnetisation')
-
     """
     # Open and read the file.
     f = open(filename, 'r')
@@ -768,8 +418,8 @@ def read_oommf_file(filename, name='unnamed'):
             if line.find(key) != -1:
                 dic[key] = float(line.split()[2])
 
-    cmin = (dic['xmin'], dic['ymin'], dic['zmin'])
-    cmax = (dic['xmax'], dic['ymax'], dic['zmax'])
+    c1 = (dic['xmin'], dic['ymin'], dic['zmin'])
+    c2 = (dic['xmax'], dic['ymax'], dic['zmax'])
     d = (dic['xstepsize'], dic['ystepsize'], dic['zstepsize'])
     cbase = (dic['xbase'], dic['ybase'], dic['zbase'])
     n = (int(round(dic['xnodes'])),
@@ -777,7 +427,8 @@ def read_oommf_file(filename, name='unnamed'):
          int(round(dic['znodes'])))
     dim = int(dic['valuedim'])
 
-    field = Field(cmin, cmax, d, dim, name=name)
+    mesh = Mesh(c1, c2, d, name=name)
+    field = Field(mesh, dim, name=name)
 
     for j in range(len(lines)):
         if lines[j].find('Begin: Data') != -1:
