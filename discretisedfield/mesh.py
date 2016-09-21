@@ -13,7 +13,7 @@ from numbers import Real
 matplotlib.use('nbagg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from .util.typesystem import PositiveRealVector3D, RealVector3D, String, typesystem
+from discretisedfield.util.typesystem import PositiveRealVector3D, RealVector3D, String, typesystem
 
 
 def plot_cube(ax, c1, c2, color='blue', linewidth=2):
