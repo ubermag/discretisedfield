@@ -45,105 +45,55 @@ class TestMesh(object):
 
     def test_init_valid_args(self):
         for arg in self.valid_args:
-            cmin = arg[0]
-            cmax = arg[1]
+            c1 = arg[0]
+            c2 = arg[1]
             d = arg[2]
 
-            mesh = Mesh(cmin, cmax, d)
+            mesh = Mesh(c1, c2, d)
 
-            assert mesh.cmin == cmin
-            assert mesh.cmax == cmax
+            assert mesh.c1 == c1
+            assert mesh.c2 == c2
             assert mesh.d == d
 
     def test_init_invalid_args(self):
         for arg in self.invalid_args:
-            with pytest.raises(ValueError):
-                cmin = arg[0]
-                cmax = arg[1]
+            print(arg)
+            with pytest.raises(TypeError):
+                c1 = arg[0]
+                c2 = arg[1]
                 d = arg[2]
 
-                mesh = Mesh(cmin, cmax, d)
-
-    def test_name(self):
-        for arg in self.valid_args:
-            cmin = arg[0]
-            cmax = arg[1]
-            d = arg[2]
-
-            mesh = Mesh(cmin, cmax, d)
-
-            assert mesh._name == 'mesh'
+                mesh = Mesh(c1, c2, d)
 
     def test_plot_mesh(self):
         for arg in self.valid_args:
-            cmin = arg[0]
-            cmax = arg[1]
+            c1 = arg[0]
+            c2 = arg[1]
             d = arg[2]
 
-            mesh = Mesh(cmin, cmax, d)
+            mesh = Mesh(c1, c2, d)
 
             mesh.plot_mesh()
 
     def test_script(self):
         for arg in self.valid_args:
-            cmin = arg[0]
-            cmax = arg[1]
+            c1 = arg[0]
+            c2 = arg[1]
             d = arg[2]
 
-            mesh = Mesh(cmin, cmax, d)
+            mesh = Mesh(c1, c2, d)
             with pytest.raises(NotImplementedError):
                 mesh.script()
 
-    def test_sensible_error_message_if_cell_too_large(self):
-        cmin = (0, 0, 0)
-        cmax = (1., 1., 1.)
+    def test_discretirsation_greater_or_not_multiple_of_domain(self):
+        c1 = (0, 0, 0)
+        c2 = (1., 1., 1.)
 
-        d = (2, 1, 1)
-        with pytest.raises(ValueError) as excinfo:
-            mymesh = Mesh(cmin, cmax, d)
-        print(excinfo)
-        assert 'cell' in str(excinfo.value)
-        assert 'greater' in str(excinfo.value)
-        assert 'domain' in str(excinfo.value)
-        # index should be mentioned
-        assert '0' in str(excinfo.value)
-        
-        # now do the same for y and z components
-        for i in [1, 2]:
-            d = [1., 1., 1.]
-            d[i] = 100.
-            with pytest.raises(ValueError) as excinfo:
-                mymesh = Mesh(cmin, cmax, d)
-            print(excinfo)                
+        for d in [(2, 1, 1), (1, 0.3, 1), (1, 1, 3), (1, 0.4, 0.4)]:
+            with pytest.raises(TypeError) as excinfo:
+                mymesh = Mesh(c1, c2, d)
+            assert 'Discretisation' in str(excinfo.value)
             assert 'cell' in str(excinfo.value)
             assert 'greater' in str(excinfo.value)
-            assert 'domain' in str(excinfo.value)
-            # index should be mentioned
-            assert str(i) in str(excinfo.value)
-
-
-    def test_sensible_error_message_if_domain_not_multiple_cell_size(self):
-        """This tests or the code needs some work"""
-        cmin = (0, 0, 0)
-        cmax = (10., 10., 10.)
-
-        d = (3., 1., 1.)
-        with pytest.raises(ValueError) as excinfo:
-            mymesh = Mesh(cmin, cmax, d)
-        print(excinfo)
-        assert 'Domain' in str(excinfo.value)
-        assert 'not' in str(excinfo.value)
-        assert 'multiple' in str(excinfo.value)
-        assert 'cell' in str(excinfo.value)        
-        
-        # now do the same for y and z components
-        for i in [1, 2]:
-            d = [1., 1., 1.]
-            d[i] = 3.
-            with pytest.raises(ValueError) as excinfo:
-                mymesh = Mesh(cmin, cmax, d)
-
-            assert 'Domain' in str(excinfo.value)
-            assert 'not' in str(excinfo.value)
             assert 'multiple' in str(excinfo.value)
-            assert 'cell' in str(excinfo.value)
+            assert 'domain' in str(excinfo.value)
