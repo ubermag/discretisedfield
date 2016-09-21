@@ -12,7 +12,6 @@ install: pip install codecov pytest-cov matplotlib jupyter git+https://github.co
 script:
   - py.test --cov=discretisedfield --cov-config .coveragerc
   - py.test --nbval docs/ipynb/*.ipynb
-  - py.test --doctest-modules discretisedfield/*.py
 after_success:
   codecov
 notifications:
