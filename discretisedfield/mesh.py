@@ -208,7 +208,7 @@ class Mesh(object):
 
             # If rounded to the out-of-range index.
             for j in range(3):
-                if i[j] < 0:
+                if i[j] < 0:  # pragma: no cover
                     i[j] = 0
                 elif i[j] > self.n[j] - 1:
                     i[j] = self.n[j] - 1

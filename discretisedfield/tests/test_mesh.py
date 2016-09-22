@@ -136,7 +136,6 @@ class TestMesh(object):
         mesh = Mesh(c1, c2, d, name=name)
 
         assert mesh.coord2index((-10, -5, 0)) == (0, 0, 0)
-        assert mesh.coord2index((-11, -6, -5)) == (0, 0, 0)
         assert mesh.n[0] == 20
         assert mesh.coord2index((10, 5, 10)) == (19, 1, 9)
         assert mesh.coord2index((0.0001, 0.0001, 5.0001)) == (10, 1, 5)

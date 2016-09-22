@@ -6,7 +6,7 @@ from discretisedfield import Mesh, Field, read_oommf_file
 import matplotlib
 
 
-class TestDiscretisedField(object):
+class TestField(object):
     def setup(self):
         self.meshes = self.create_meshes()
         self.scalar_fs = self.create_scalar_fs()
@@ -90,6 +90,11 @@ class TestDiscretisedField(object):
         assert np.all(f.f[:, :, :, 0] == value[0])
         assert np.all(f.f[:, :, :, 1] == value[1])
 
+    def test_wrong_init(self):
+        mesh = 'wrong_mesh_string'
+        with pytest.raises(TypeError):
+            f = Field(mesh, dim=1, name='wrong_field')
+            
     def test_set_with_constant(self):
         for value in self.constant_values:
             for f in self.scalar_fs + self.vector_fs:
