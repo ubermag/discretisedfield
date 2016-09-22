@@ -10,9 +10,6 @@
   :target: http://discretisedfield.readthedocs.io/en/latest/?badge=latest
   :alt: Documentation Status
 
-.. image:: https://badge.fury.io/py/discretisedfield.svg
-  :target: https://badge.fury.io/py/discretisedfield
-
 This module is a Python package that provides:
 
 - Analysing finite difference and finite element fields, such as sampling, averaging, plotting, etc.
