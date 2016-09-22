@@ -249,9 +249,8 @@ class Mesh(object):
 
     def _ipython_display_(self):
         """Shows a matplotlib figure of sample range and discretisation."""
-        fig = self.plot_mesh()
-
-        plt.show()
+        fig = self.plot_mesh()  # pragma: no cover
+        plt.show()  # pragma: no cover
 
     def script(self):
         """This method should be implemented by a specific
