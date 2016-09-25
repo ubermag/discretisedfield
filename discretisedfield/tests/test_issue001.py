@@ -15,7 +15,7 @@ def test_matplotlib_warning_setup():
     # test
     # "UserWarning: Matplotlib is building the font cache using fc-list. This may take a moment."
 
-    command = """python -c "import matplotlib" """
+    command = """python -c "import matplotlib.pyplot" """
     status, output = subprocess.getstatusoutput(command)
     print("output = {}".format(output))
     assert status == 0
@@ -31,4 +31,5 @@ def test_matplotlib_warning():
 
     print("output = {}".format(output))
     assert status == 0
-    assert len(output) == 0   # expect no warnings
+    assert len(ouput) == 0
+    
