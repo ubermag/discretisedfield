@@ -7,12 +7,10 @@ Horizon 2020 European Research Infrastructure project.
 
 """
 import random
-import matplotlib
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from .util.typesystem import PositiveRealVector3D, RealVector3D
 from .util.typesystem import String, typesystem
-matplotlib.use('nbagg')
 import matplotlib.pyplot as plt
 
 
