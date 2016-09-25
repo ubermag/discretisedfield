@@ -31,5 +31,5 @@ def test_matplotlib_warning():
 
     print("output = {}".format(output))
     assert status == 0
-    assert len(ouput) == 0
+    assert len(output) == 0
     
