@@ -11,8 +11,10 @@ before_script:
 install: pip install codecov pytest-cov matplotlib jupyter git+https://github.com/computationalmodelling/nbval.git
 
 script:
-  - py.test --cov=discretisedfield --cov-config .coveragerc
-  - py.test --nbval docs/ipynb/*.ipynb
+#  - py.test --cov=discretisedfield --cov-config .coveragerc
+  - make test-code
+#  - py.test --nbval docs/ipynb/*.ipynb
+  - make test-ipynb
 
 after_success:
   codecov
