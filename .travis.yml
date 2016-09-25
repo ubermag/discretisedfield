@@ -21,3 +21,10 @@ after_success:
 
 notifications:
   slack: joommf:eqKxGPXuUP3LxnOfxg7GWgDF
+
+  # follow suggestion on
+  # https://github.com/matplotlib/matplotlib/issues/5836
+  # to get around font cache warning
+cache:
+  directories:
+    - $HOME/.cache/matplotlib
