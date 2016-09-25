@@ -31,5 +31,14 @@ def test_matplotlib_warning():
 
     print("output = {}".format(output))
     assert status == 0
-    assert len(output) == 0
-    
+    if len(output) == 0:
+        pass  # all good
+
+    # On travis, matplotlib builds the font cache the first time
+    # we import it. Thus, we may get this warning here, which is not an error.
+    # "UserWarning: Matplotlib is building the font cache using fc-list. This may take a moment."
+    elif "UserWarning: Matplotlib is building the font cache using fc-list. This may take a moment." in output and 500 < len(output) < 600:
+        pass
+    else:
+        # raise error
+        assert len(output) == 0   # expect no warnings 
