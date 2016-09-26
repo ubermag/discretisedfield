@@ -12,7 +12,7 @@
 
 This module is a Python package that provides:
 
-- Analysing finite difference and finite element fields, such as sampling, averaging, plotting, etc.
+- Analysis of finite difference and finite element fields, such as sampling, averaging, plotting, etc.
 
 discretisedfield is a member of JOOMMF_ project - a part of OpenDreamKit_
 Horizon 2020 European Research Infrastructure project
