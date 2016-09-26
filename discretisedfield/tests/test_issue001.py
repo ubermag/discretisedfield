@@ -8,7 +8,7 @@ import pytest
 
 def test_matplotlib_warning():
     
-    command = """python -c "import discretisedfield" """
+    command = """python3 -c "import discretisedfield" """
     status, output = subprocess.getstatusoutput(command)
 
     print("output = {}".format(output))

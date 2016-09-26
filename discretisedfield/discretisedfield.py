@@ -10,13 +10,14 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from .mesh import Mesh
-from .util.typesystem import UnsignedInt, String, typesystem
+import discretisedfield.util.typesystem as ts
 
 
-@typesystem(dim=UnsignedInt,
-            name=String)
+@ts.typesystem(dim=ts.UnsignedInt,
+               normalisedto=ts.UnsignedReal,
+               name=ts.String)
 class Field(object):
-    def __init__(self, mesh, dim=3, value=None, name='unnamed'):
+    def __init__(self, mesh, dim=3, value=None, normalisedto=1, name='unnamed'):
         """Class for analysing, manipulating, and writing finite difference fields.
 
         This class provides the functionality for:
@@ -50,6 +51,7 @@ class Field(object):
         self.mesh = mesh
         self.dim = dim
         self.name = name
+        self.normalisedto = normalisedto
 
         # Create an empty field.
         self.f = np.zeros([self.mesh.n[0],

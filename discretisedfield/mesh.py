@@ -9,8 +9,7 @@ Horizon 2020 European Research Infrastructure project.
 import random
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
-from .util.typesystem import PositiveRealVector3D, RealVector3D
-from .util.typesystem import String, typesystem
+import discretisedfield.util.typesystem as ts
 import matplotlib.pyplot as plt
 
 
@@ -50,10 +49,10 @@ def plot_cube(ax, c1, c2, color='blue', linewidth=2):
     return ax
 
 
-@typesystem(c1=RealVector3D,
-            c2=RealVector3D,
-            d=PositiveRealVector3D,
-            name=String)
+@ts.typesystem(c1=ts.RealVector3D,
+               c2=ts.RealVector3D,
+               d=ts.PositiveRealVector3D,
+               name=ts.String)
 class Mesh(object):
     def __init__(self, c1, c2, d, name='mesh'):
         """
