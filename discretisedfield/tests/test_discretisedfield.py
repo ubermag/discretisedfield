@@ -42,7 +42,6 @@ class TestField(object):
     def create_scalar_fs(self):
         scalar_fs = []
         for mesh in self.meshes:
-            print(mesh.n)
             f = Field(mesh, dim=1)
             scalar_fs.append(f)
         return scalar_fs
@@ -110,7 +109,8 @@ class TestField(object):
     def test_set_with_tuple_list_ndarray(self):
         for value in self.tuple_values:
             for f in self.vector_fs:
-                f.set(value, normalise=True)
+                f.normalisedto = 1
+                f.set(value)
 
                 norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
                 for j in range(3):
@@ -180,8 +180,8 @@ class TestField(object):
             for value in self.vector_pyfuncs + self.tuple_values:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
                     f.set(value)
-
-                    f.normalise(norm=norm_value)
+                    f.normalisedto = norm_value
+                    f.normalise()
 
                     # Compute norm.
                     norm = 0
@@ -200,10 +200,9 @@ class TestField(object):
         for f in self.scalar_fs:
             for value in self.scalar_pyfuncs:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
-                    f.set(value)
-
                     with pytest.raises(NotImplementedError):
-                        f.normalise(norm=norm_value)
+                        f.normalisedto = norm_value
+                        f.set(value)
 
     def test_slice_field(self):
         for s in 'xyz':
@@ -289,7 +288,8 @@ class TestField(object):
         figname = 'test_slice_plot_figure.pdf'
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
-            f.set(value, normalise=True)
+            f.normalisedto = 1
+            f.set(value)
             point = f.mesh.domain_centre()['xyz'.find('y')]
             fig = f.plot_slice('y', point, axes=True)
             fig = f.plot_slice('y', point, axes=False)
@@ -297,7 +297,8 @@ class TestField(object):
     def test_plot_slice_vector_field_exception(self):
         value = (0, 0, 1)
         for f in self.vector_fs:
-            f.set(value, normalise=True)
+            f.normalisedto = 1
+            f.set(value)
             point = f.mesh.domain_centre()['xyz'.find('z')]
             with pytest.raises(ValueError):
                 fig = f.plot_slice('z', point)

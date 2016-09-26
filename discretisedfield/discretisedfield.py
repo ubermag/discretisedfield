@@ -14,10 +14,9 @@ import discretisedfield.util.typesystem as ts
 
 
 @ts.typesystem(dim=ts.UnsignedInt,
-               normalisedto=ts.UnsignedReal,
                name=ts.String)
 class Field(object):
-    def __init__(self, mesh, dim=3, value=None, normalisedto=1, name='unnamed'):
+    def __init__(self, mesh, dim=3, value=None, normalisedto=None, name='unnamed'):
         """Class for analysing, manipulating, and writing finite difference fields.
 
         This class provides the functionality for:
@@ -92,7 +91,7 @@ class Field(object):
         i = self.mesh.coord2index(c)
         return self.f[i[0], i[1], i[2]]
 
-    def set(self, value, normalise=False):
+    def set(self, value):
         """Set the field value.
 
         This method sets the field values at all finite difference
@@ -101,9 +100,6 @@ class Field(object):
         Args:
           value: This argument can be an integer, float, tuple, list,
             np.ndarray, or Python function.
-
-          normalise (bool): If True, the vector field value is
-            normalised to 1.
 
         """
         # value is an int or float.
@@ -129,7 +125,7 @@ class Field(object):
             raise TypeError("Cannot set field using {}.".format(type(value)))
 
         # Normalise the vector field if required.
-        if normalise:
+        if self.normalisedto is not None:
             self.normalise()
 
     def set_at_index(self, i, value):
@@ -293,20 +289,16 @@ class Field(object):
 
         return plot_matrix
 
-    def normalise(self, norm=1):
+    def normalise(self):
         """Normalise the finite difference vector field.
 
         If the finite difference field is multidimensional (vector),
         its value is normalised so that at all points.
 
-        Args:
-          norm (int/float): Norm value at all finite difference cells.
-
         """
         # Scalar field.
         if self.dim == 1:
-            raise NotImplementedError("""Normalisation of scalar
-                                      fields is not implemented.""")
+            raise NotImplementedError
 
         # Vector field.
         else:
@@ -318,7 +310,7 @@ class Field(object):
 
             # Normalise every component.
             for j in range(self.dim):
-                self.f[:, :, :, j] = norm * self.f[:, :, :, j]/f_norm
+                self.f[:, :, :, j] = self.normalisedto*self.f[:, :, :, j]/f_norm
 
     def write_oommf_file(self, filename):
         """Write the FD field to the OOMMF (omf, ohf) file.
