@@ -57,7 +57,7 @@ def plot_cube(ax, c1, c2, color='blue', linewidth=2):
             d=PositiveRealVector3D,
             name=String)
 class Mesh(object):
-    def __init__(self, c1, c2, d, name='unnamed'):
+    def __init__(self, c1, c2, d, name='mesh'):
         """
         Creates a rectangular finite difference mesh.
 
