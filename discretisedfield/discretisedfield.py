@@ -32,6 +32,7 @@ class Field(object):
           value (Optional): Finite difference field values. Defaults to None.
             For the possible types of value argument, refer to set method.
             If no value argument is provided, a zero field is initialised.
+          normalisedto (Optional[Real]): vector field norm
           name (Optional[str]): Field name.
 
         Attributes:
