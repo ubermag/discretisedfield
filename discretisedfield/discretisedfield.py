@@ -385,7 +385,7 @@ class Field(object):
         oommf_file.close()
 
 
-def read_oommf_file(filename, name='unnamed'):
+def read_oommf_file(filename, normalisedto=None, name='unnamed'):
     """Read the OOMMF file and create an Field object.
 
     Args:
@@ -424,7 +424,7 @@ def read_oommf_file(filename, name='unnamed'):
     dim = int(dic['valuedim'])
 
     mesh = Mesh(c1, c2, d, name=name)
-    field = Field(mesh, dim, name=name)
+    field = Field(mesh, dim, normalisedto=normalisedto, name=name)
 
     for j in range(len(lines)):
         if lines[j].find('Begin: Data') != -1:
