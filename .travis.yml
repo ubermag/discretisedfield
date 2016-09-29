@@ -1,22 +1,17 @@
-language: python
+sudo: required
 
-python:
-  - "3.5"
-
-before_script:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3
+services:
+  - docker
 
 install:
-  pip install codecov pytest-cov matplotlib jupyter git+https://github.com/computationalmodelling/nbval.git
+  - docker build -t dockertestimage .
 
 script:
-  - py.test --cov=discretisedfield --cov-config .coveragerc
-  - py.test --nbval docs/ipynb/*.ipynb
-
-after_success:
-  codecov
+  - ci_env=`bash <(curl -s https://codecov.io/env)`
+  - docker run -e ci_env -ti dockertestimage /bin/bash -c
+      "cd discretisedfield;
+      python3 -m pytest --cov=discretisedfield --cov-config .coveragerc;
+      bash <(curl -s https://codecov.io/bash) -t a96f2545-67ea-442e-a1b6-fdebc595cf52"
 
 notifications:
   slack: joommf:eqKxGPXuUP3LxnOfxg7GWgDF
