@@ -1,3 +1,2 @@
 [run]
 omit = discretisedfield/tests/*
-       discretisedfield/util/*
