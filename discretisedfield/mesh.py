@@ -52,7 +52,7 @@ def plot_cube(ax, c1, c2, color='blue', linewidth=2):
 @ts.typesystem(c1=ts.RealVector(size=3),
                c2=ts.RealVector(size=3),
                d=ts.PositiveRealVector(size=3),
-               name=ts.String)
+               name=ts.ObjectName)
 class Mesh(object):
     def __init__(self, c1, c2, d, name='mesh'):
         """

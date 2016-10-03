@@ -106,6 +106,17 @@ class PositiveRealVector(RealVector):
         super().__set__(instance, value)
 
 
+
+class ObjectName(String):
+    def __set__(self, instance, value):
+        if not (value[0].isalpha() or value[0] == "_"):
+            raise TypeError("Object name must start with "
+                            "a letter or underscore.")
+        if " " in value:
+            raise TypeError("Object name must not contain space.")
+        super().__set__(instance, value)
+
+
 def typesystem(**kwargs):
     def decorate(cls):
         for key, value in kwargs.items():

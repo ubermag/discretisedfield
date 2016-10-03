@@ -1,5 +1,5 @@
 import pytest
-import micromagneticmodel.util.typesystem as ts
+import discretisedfield.util.typesystem as ts
 
 
 def test_typesystem():
@@ -12,9 +12,10 @@ def test_typesystem():
                    g=ts.SizedVector(size=2),
                    h=ts.RealVector(size=3),
                    i=ts.PositiveRealVector(size=3),
-                   j=ts.TypedAttribute(expected_type=dict))
+                   j=ts.TypedAttribute(expected_type=dict),
+                   k=ts.ObjectName)
     class DummyClass:
-        def __init__(self, a, b, c, d, e, f, g, h, i, j):
+        def __init__(self, a, b, c, d, e, f, g, h, i, j, k):
             self.a = a
             self.b = b
             self.c = c
@@ -25,10 +26,11 @@ def test_typesystem():
             self.h = h
             self.i = i
             self.j = j
+            self.k = k
 
     a = 1.7
     b = 2
-    c = 'abc'
+    c = "abc"
     d = 9.5
     e = 11.
     f = (1, 3, -4, 9)
@@ -36,7 +38,9 @@ def test_typesystem():
     h = (-1, 2, 3.1)
     i = (1, 2, 31.1)
     j = {}
-    dc = DummyClass(a=a, b=b, c=c, d=d, e=e, f=f, g=g, h=h, i=i, j=j)
+    k = "exchange_energy_name"
+    
+    dc = DummyClass(a=a, b=b, c=c, d=d, e=e, f=f, g=g, h=h, i=i, j=j, k=k)
 
     # Simple assertions
     assert dc.a == a
@@ -49,14 +53,15 @@ def test_typesystem():
     assert dc.h == h
     assert dc.i == i
     assert dc.j == j
+    assert dc.k == k
 
     # Valid settings
     dc.a = 77.4
     assert dc.a == 77.4
     dc.b = -77
     assert dc.b == -77
-    dc.c = 'dummystring'
-    assert dc.c == 'dummystring'
+    dc.c = "dummystring"
+    assert dc.c == "dummystring"
     dc.d = 61.2
     assert dc.d == 61.2
     dc.e = 0.1
@@ -69,8 +74,9 @@ def test_typesystem():
     assert dc.h == (-5, 6, 8)
     dc.i = (1, 2, 3.2)
     assert dc.i == (1, 2, 3.2)
-    dc.j = {'a': 1}
-    assert dc.j == {'a': 1}
+    dc.j = {"a": 1}
+    assert dc.j == {"a": 1}
+    dc.k = "_new_name2"
 
     # Invalid settings
     with pytest.raises(TypeError):
@@ -84,7 +90,7 @@ def test_typesystem():
     with pytest.raises(TypeError):
         dc.e = -0.1
     with pytest.raises(TypeError):
-        dc.f = 'abc'
+        dc.f = "abc"
     with pytest.raises(ValueError):
         dc.g = (3, 2.1, -6)
     with pytest.raises(ValueError):
@@ -93,6 +99,11 @@ def test_typesystem():
         dc.i = (1, -2, 3.2)
     with pytest.raises(TypeError):
         dc.j = 5
+    # Invalid object names
+    with pytest.raises(TypeError):
+        dc.k = "new name2"
+    with pytest.raises(TypeError):
+        dc.k = "2newname2"
 
     # Attempt deleting attribute
     with pytest.raises(AttributeError):

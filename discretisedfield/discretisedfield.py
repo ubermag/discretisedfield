@@ -15,7 +15,7 @@ import discretisedfield.util.typesystem as ts
 
 @ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
                dim=ts.UnsignedInt,
-               name=ts.String)
+               name=ts.ObjectName)
 class Field(object):
     def __init__(self, mesh, dim=3, value=None, normalisedto=None, name='unnamed'):
         """Class for analysing, manipulating, and writing finite difference fields.
