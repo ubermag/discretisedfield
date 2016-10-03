@@ -9,11 +9,12 @@ Horizon 2020 European Research Infrastructure project.
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from .mesh import Mesh
+import discretisedfield as df
 import discretisedfield.util.typesystem as ts
 
 
-@ts.typesystem(dim=ts.UnsignedInt,
+@ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
+               dim=ts.UnsignedInt,
                name=ts.String)
 class Field(object):
     def __init__(self, mesh, dim=3, value=None, normalisedto=None, name='unnamed'):
@@ -45,7 +46,7 @@ class Field(object):
           f (np.ndarray): A field value four-dimensional numpy array.
 
         """
-        if not isinstance(mesh, Mesh):
+        if not isinstance(mesh, df.Mesh):
             raise TypeError("""mesh must be of type Mesh.""")
 
         self.mesh = mesh
@@ -423,7 +424,7 @@ def read_oommf_file(filename, normalisedto=None, name='unnamed'):
          int(round(dic['znodes'])))
     dim = int(dic['valuedim'])
 
-    mesh = Mesh(c1, c2, d, name=name)
+    mesh = df.Mesh(c1, c2, d, name=name)
     field = Field(mesh, dim, normalisedto=normalisedto, name=name)
 
     for j in range(len(lines)):
