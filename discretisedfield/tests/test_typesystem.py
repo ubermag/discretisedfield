@@ -39,7 +39,7 @@ def test_typesystem():
     i = (1, 2, 31.1)
     j = {}
     k = "exchange_energy_name"
-    
+
     dc = DummyClass(a=a, b=b, c=c, d=d, e=e, f=f, g=g, h=h, i=i, j=j, k=k)
 
     # Simple assertions

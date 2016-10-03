@@ -93,7 +93,7 @@ class TestField(object):
         mesh = 'wrong_mesh_string'
         with pytest.raises(TypeError):
             f = Field(mesh, dim=1, name='wrong_field')
-            
+
     def test_set_with_constant(self):
         for value in self.constant_values:
             for f in self.scalar_fs + self.vector_fs:
