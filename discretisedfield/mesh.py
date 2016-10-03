@@ -13,23 +13,23 @@ import discretisedfield.util.typesystem as ts
 import matplotlib.pyplot as plt
 
 
-def plot_cube(ax, c1, c2, color='blue', linewidth=2):
+def plot_cube(ax, p1, p2, color='blue', linewidth=2):
     """
-    Plot a cube on axis that spans between c1 and c2.
+    Plot a cube on axis that spans between p1 and p2.
 
     Args:
-      c1 (tuple, list, np.ndarray): The minimum coordinate range.
-        c1 is of length 3 and defines the minimum x, y, and z
+      p1 (tuple, list, np.ndarray): The minimum coordinate range.
+        p1 is of length 3 and defines the minimum x, y, and z
         coordinates of the finite difference domain: (xmin, ymin, zmax)
-      c2 (tuple, list, np.ndarray): The maximum coordinate range.
-        c2 is of length 3 and defines the maximum x, y, and z
+      p2 (tuple, list, np.ndarray): The maximum coordinate range.
+        p2 is of length 3 and defines the maximum x, y, and z
         coordinates of the finite difference domain: (xmax, ymax, zmax)
       color (str): matplotlib color string
       linewidth (Real): matplotlib linewidth parameter
 
     """
-    x1, y1, z1 = c1[0], c1[1], c1[2]
-    x2, y2, z2 = c2[0], c2[1], c2[2]
+    x1, y1, z1 = p1[0], p1[1], p1[2]
+    x2, y2, z2 = p2[0], p2[1], p2[2]
 
     ax.plot([x1, x2], [y1, y1], [z1, z1], color=color, linewidth=linewidth)
     ax.plot([x1, x2], [y2, y2], [z1, z1], color=color, linewidth=linewidth)
@@ -49,21 +49,21 @@ def plot_cube(ax, c1, c2, color='blue', linewidth=2):
     return ax
 
 
-@ts.typesystem(c1=ts.RealVector(size=3),
-               c2=ts.RealVector(size=3),
-               d=ts.PositiveRealVector(size=3),
+@ts.typesystem(p1=ts.RealVector(size=3),
+               p2=ts.RealVector(size=3),
+               cell=ts.PositiveRealVector(size=3),
                name=ts.ObjectName)
 class Mesh(object):
-    def __init__(self, c1, c2, d, name='mesh'):
+    def __init__(self, p1, p2, cell, name='mesh'):
         """
         Creates a rectangular finite difference mesh.
 
         Args:
-          c1 (tuple, list, np.ndarray): The minimum coordinate range.
-            c1 is of length 3 and defines the minimum x, y, and z
+          p1 (tuple, list, np.ndarray): The minimum coordinate range.
+            p1 is of length 3 and defines the minimum x, y, and z
             coordinates of the finite difference domain: (xmin, ymin, zmax)
-          c2 (tuple, list, np.ndarray): The maximum coordinate range.
-            c2 is of length 3 and defines the maximum x, y, and z
+          p2 (tuple, list, np.ndarray): The maximum coordinate range.
+            p2 is of length 3 and defines the maximum x, y, and z
             coordinates of the finite difference domain: (xmax, ymax, zmax)
           d (tuple, list, np.ndarray): discretisation
             d is of length 3 and defines the discretisation steps in
@@ -71,9 +71,9 @@ class Mesh(object):
           name (Optional[str]): Mesh name.
 
         Attributes:
-          c1 (tuple, list, np.ndarray): The minimum coordinate range
+          p1 (tuple, list, np.ndarray): The minimum coordinate range
 
-          c2 (tuple, list, np.ndarray): The maximum coordinate range
+          p2 (tuple, list, np.ndarray): The maximum coordinate range
 
           d (tuple, list, np.ndarray): Discretisation cell size
 
@@ -99,27 +99,27 @@ class Mesh(object):
         tol = 1e-12
         # check whether cell size is greater than or not a multiple of domain
         for i in range(3):
-            if d[i] > abs(c2[i] - c1[i]) or \
-               d[i] - tol > (c2[i] - c1[i]) % d[i] > tol:
-                msg = "Discretisation cell index d[{}]={} ".format(i, d[i])
+            if cell[i] > abs(p2[i] - p1[i]) or \
+               cell[i] - tol > (p2[i] - p1[i]) % cell[i] > tol:
+                msg = "Discretisation cell index d[{}]={} ".format(i, cell[i])
                 msg += "is greater or not a multiple of simulation domain = "
-                msg += "c2[{}] - c1[{}] = {}.".format(i, i, abs(c2[i] - c1[i]))
+                msg += "p2[{}] - p1[{}] = {}.".format(i, i, abs(p2[i] - p1[i]))
                 raise TypeError(msg)
 
-        self.c1 = c1
-        self.c2 = c2
-        self.d = d
+        self.p1 = p1
+        self.p2 = p2
+        self.cell = cell
         self.name = name
 
         # Compute domain edge lengths.
-        self.l = (self.c2[0]-self.c1[0],
-                  self.c2[1]-self.c1[1],
-                  self.c2[2]-self.c1[2])
+        self.l = (self.p2[0]-self.p1[0],
+                  self.p2[1]-self.p1[1],
+                  self.p2[2]-self.p1[2])
 
         # Compute the number of cells in x, y, and z directions.
-        self.n = (int(round(self.l[0]/self.d[0])),
-                  int(round(self.l[1]/self.d[1])),
-                  int(round(self.l[2]/self.d[2])))
+        self.n = (int(round(self.l[0]/self.cell[0])),
+                  int(round(self.l[1]/self.cell[1])),
+                  int(round(self.l[2]/self.cell[2])))
 
     def domain_centre(self):
         """Compute and return the domain centre coordinate.
@@ -128,9 +128,9 @@ class Mesh(object):
           A domain centre coordinate tuple.
 
         """
-        c = (self.c1[0] + 0.5*self.l[0],
-             self.c1[1] + 0.5*self.l[1],
-             self.c1[2] + 0.5*self.l[2])
+        c = (self.p1[0] + 0.5*self.l[0],
+             self.p1[1] + 0.5*self.l[1],
+             self.p1[2] + 0.5*self.l[2])
 
         return c
 
@@ -141,9 +141,9 @@ class Mesh(object):
           A random domain coordinate.
 
         """
-        c = (self.c1[0] + random.random()*self.l[0],
-             self.c1[1] + random.random()*self.l[1],
-             self.c1[2] + random.random()*self.l[2])
+        c = (self.p1[0] + random.random()*self.l[0],
+             self.p1[1] + random.random()*self.l[1],
+             self.p1[2] + random.random()*self.l[2])
 
         return c
 
@@ -170,9 +170,9 @@ class Mesh(object):
             raise ValueError('Index {} out of range.'.format(i))
 
         else:
-            c = (self.c1[0] + (i[0] + 0.5)*self.d[0],
-                 self.c1[1] + (i[1] + 0.5)*self.d[1],
-                 self.c1[2] + (i[2] + 0.5)*self.d[2])
+            c = (self.p1[0] + (i[0] + 0.5)*self.cell[0],
+                 self.p1[1] + (i[1] + 0.5)*self.cell[1],
+                 self.p1[2] + (i[2] + 0.5)*self.cell[2])
 
         return c
 
@@ -193,15 +193,15 @@ class Mesh(object):
           A length 3 tuple of cell's indices (ix, iy, iz).
 
         """
-        if c[0] < self.c1[0] or c[0] > self.c2[0] or \
-           c[1] < self.c1[1] or c[1] > self.c2[1] or \
-           c[2] < self.c1[2] or c[2] > self.c2[2]:
+        if c[0] < self.p1[0] or c[0] > self.p2[0] or \
+           c[1] < self.p1[1] or c[1] > self.p2[1] or \
+           c[2] < self.p1[2] or c[2] > self.p2[2]:
             raise ValueError('Coordinate {} out of domain.'. format(c))
 
         else:
-            i = [int(round(float(c[0]-self.c1[0])/self.d[0] - 0.5)),
-                 int(round(float(c[1]-self.c1[1])/self.d[1] - 0.5)),
-                 int(round(float(c[2]-self.c1[2])/self.d[2] - 0.5))]
+            i = [int(round(float(c[0]-self.p1[0])/self.cell[0] - 0.5)),
+                 int(round(float(c[1]-self.p1[1])/self.cell[1] - 0.5)),
+                 int(round(float(c[2]-self.p1[2])/self.cell[2] - 0.5))]
 
             # If rounded to the out-of-range index.
             for j in range(3):
@@ -233,12 +233,12 @@ class Mesh(object):
         ax = fig.add_subplot(111, projection='3d')
         ax.set_aspect('equal')
 
-        cd = (self.d[0] + self.c1[0],
-              self.d[1] + self.c1[1],
-              self.d[2] + self.c1[2])
+        cd = (self.cell[0] + self.p1[0],
+              self.cell[1] + self.p1[1],
+              self.cell[2] + self.p1[2])
 
-        plot_cube(ax, self.c1, self.c2)
-        plot_cube(ax, self.c1, cd, color='red', linewidth=1)
+        plot_cube(ax, self.p1, self.p2)
+        plot_cube(ax, self.p1, cd, color='red', linewidth=1)
 
         ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
 

@@ -23,19 +23,19 @@ class TestField(object):
         self.vector_pyfuncs = self.create_vector_pyfuncs()
 
     def create_meshes(self):
-        c1_list = [(0, 0, 0),
+        p1_list = [(0, 0, 0),
                    (-5e-9, -8e-9, -10e-9),
                    (10, -5, -80)]
-        c2_list = [(5e-9, 8e-9, 10e-9),
+        p2_list = [(5e-9, 8e-9, 10e-9),
                    (11e-9, 4e-9, 4e-9),
                    (15, 10, 85)]
-        d_list = [(1e-9, 1e-9, 1e-9),
-                  (1e-9, 2e-9, 1e-9),
-                  (5, 5, 2.5)]
+        cell_list = [(1e-9, 1e-9, 1e-9),
+                     (1e-9, 2e-9, 1e-9),
+                     (5, 5, 2.5)]
 
         meshes = []
-        for i in range(len(c1_list)):
-            mesh = Mesh(c1_list[i], c2_list[i], d_list[i])
+        for i in range(len(p1_list)):
+            mesh = Mesh(p1_list[i], p2_list[i], cell_list[i])
             meshes.append(mesh)
         return meshes
 
@@ -74,10 +74,10 @@ class TestField(object):
         return f
 
     def test_init(self):
-        c1 = (0, -4, 11)
-        c2 = (15, 10.1, 16.5)
+        p1 = (0, -4, 11)
+        p2 = (15, 10.1, 16.5)
         d = (1, 0.1, 0.5)
-        mesh = Mesh(c1, c2, d)
+        mesh = Mesh(p1, p2, d)
         dim = 2
         name = 'test_field'
         value = [1, 2]
@@ -226,14 +226,14 @@ class TestField(object):
                         assert cs == (0, 1, 2)
 
                     tol = 1e-16
-                    assert abs(a1[0] - (f.mesh.c1[cs[0]] +
-                                        f.mesh.d[cs[0]]/2.)) < tol
-                    assert abs(a1[-1] - (f.mesh.c2[cs[0]] -
-                                         f.mesh.d[cs[0]]/2.)) < tol
-                    assert abs(a2[0] - (f.mesh.c1[cs[1]] +
-                                        f.mesh.d[cs[1]]/2.)) < tol
-                    assert abs(a2[-1] - (f.mesh.c2[cs[1]] -
-                                         f.mesh.d[cs[1]]/2.)) < tol
+                    assert abs(a1[0] - (f.mesh.p1[cs[0]] +
+                                        f.mesh.cell[cs[0]]/2.)) < tol
+                    assert abs(a1[-1] - (f.mesh.p2[cs[0]] -
+                                         f.mesh.cell[cs[0]]/2.)) < tol
+                    assert abs(a2[0] - (f.mesh.p1[cs[1]] +
+                                        f.mesh.cell[cs[1]]/2.)) < tol
+                    assert abs(a2[-1] - (f.mesh.p2[cs[1]] -
+                                         f.mesh.cell[cs[1]]/2.)) < tol
                     assert len(a1) == f.mesh.n[cs[0]]
                     assert len(a2) == f.mesh.n[cs[1]]
                     assert f_slice.shape == (f.mesh.n[cs[0]],
@@ -313,10 +313,10 @@ class TestField(object):
 
             f_loaded = read_oommf_file(filename)
 
-            assert f.mesh.c1 == f_loaded.mesh.c1
-            assert f.mesh.c2 == f_loaded.mesh.c2
-            assert f.mesh.d == f_loaded.mesh.d
-            assert f.mesh.d == f_loaded.mesh.d
+            assert f.mesh.p1 == f_loaded.mesh.p1
+            assert f.mesh.p2 == f_loaded.mesh.p2
+            assert f.mesh.cell == f_loaded.mesh.cell
+            assert f.mesh.cell == f_loaded.mesh.cell
             assert np.all(abs(f.f - f_loaded.f) < tol)
 
             os.system('rm {}'.format(filename))
