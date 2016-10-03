@@ -12,29 +12,51 @@ class Descriptor:
         instance.__dict__[self.name] = value
 
     def __delete__(self, instance):
-        raise AttributeError('Deleting attribute not allowed')
+        raise AttributeError("Deleting attribute not allowed.")
 
 
 class Typed(Descriptor):
-    expected_type = type(None)
+    def __set__(self, instance, value):
+        if not isinstance(value, self.expected_type):
+            raise TypeError("Expected " + str(self.expected_type))
+        super().__set__(instance, value)
+
+
+class TypedAttribute(Descriptor):
+    def __init__(self, name=None, **opts):
+        if "expected_type" not in opts:
+            raise TypeError("Missing expected_type option.")
+        super().__init__(name, **opts)
 
     def __set__(self, instance, value):
         if not isinstance(value, self.expected_type):
-            raise TypeError('Expected ' + str(self.expected_type))
+            raise TypeError("Expected " + str(self.expected_type))
+        super().__set__(instance, value)
+
+
+class MaxSized(Descriptor):
+    def __init__(self, name=None, **opts):
+        if "size" not in opts:
+            raise TypeError("Missing size option")
+        super().__init__(name, **opts)
+
+    def __set__(self, instance, value):
+        if len(value) != self.size:
+            raise ValueError("size must be < " + str(self.size))
         super().__set__(instance, value)
 
 
 class Unsigned(Descriptor):
     def __set__(self, instance, value):
         if value < 0:
-            raise TypeError('Expected >= 0')
+            raise TypeError("Expected >= 0.")
         super().__set__(instance, value)
 
 
 class Positive(Descriptor):
     def __set__(self, instance, value):
         if value <= 0:
-            raise TypeError('Expected > 0')
+            raise TypeError("Expected > 0.")
         super().__set__(instance, value)
 
 
@@ -62,26 +84,25 @@ class PositiveReal(Real, Positive):
     pass
 
 
-class Vector3D(Typed):
+class Vector(Typed):
     expected_type = (list, tuple, np.ndarray)
 
-    def __set__(self, instance, value):
-        if len(value) != 3:
-            raise TypeError('Expected 3D vector.')
-        super().__set__(instance, value)
+
+class SizedVector(Vector, MaxSized):
+    pass
 
 
-class RealVector3D(Vector3D):
+class RealVector(SizedVector):
     def __set__(self, instance, value):
         if not all([isinstance(i, numbers.Real) for i in value]):
-            raise TypeError('Expected Real vector components.')
+            raise TypeError("Expected Real vector components.")
         super().__set__(instance, value)
 
 
-class PositiveRealVector3D(RealVector3D):
+class PositiveRealVector(RealVector):
     def __set__(self, instance, value):
         if not all([i > 0 for i in value]):
-            raise TypeError('Expected Positive vector components.')
+            raise TypeError("Expected Positive vector components.")
         super().__set__(instance, value)
 
 
