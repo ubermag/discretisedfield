@@ -8,9 +8,9 @@ RUN python3 -m pip install --upgrade pip pytest-cov codecov nbval \
       matplotlib tornado ipython ipykernel
 
 # Set the locale for nbval
-RUN locale-gen en_GB.UTF-8  
-ENV LANG en_GB.UTF-8  
-ENV LANGUAGE en_GB:en  
+RUN locale-gen en_GB.UTF-8
+ENV LANG en_GB.UTF-8
+ENV LANGUAGE en_GB:en
 ENV LC_ALL en_GB.UTF-8
 
 WORKDIR /usr/local/
