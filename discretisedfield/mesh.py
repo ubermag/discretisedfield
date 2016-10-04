@@ -8,9 +8,9 @@ Horizon 2020 European Research Infrastructure project.
 """
 import random
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-import discretisedfield.util.typesystem as ts
+import joommfutil.typesystem as ts
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def plot_cube(ax, p1, p2, color='blue', linewidth=2):
@@ -54,7 +54,7 @@ def plot_cube(ax, p1, p2, color='blue', linewidth=2):
                cell=ts.PositiveRealVector(size=3),
                name=ts.ObjectName)
 class Mesh(object):
-    def __init__(self, p1, p2, cell, name='mesh'):
+    def __init__(self, p1, p2, cell, name="mesh"):
         """
         Creates a rectangular finite difference mesh.
 
@@ -167,7 +167,7 @@ class Mesh(object):
         if i[0] < 0 or i[0] > self.n[0]-1 or \
            i[1] < 0 or i[1] > self.n[1]-1 or \
            i[2] < 0 or i[2] > self.n[2]-1:
-            raise ValueError('Index {} out of range.'.format(i))
+            raise ValueError("Index {} out of range.".format(i))
 
         else:
             c = (self.p1[0] + (i[0] + 0.5)*self.cell[0],
@@ -196,7 +196,7 @@ class Mesh(object):
         if c[0] < self.p1[0] or c[0] > self.p2[0] or \
            c[1] < self.p1[1] or c[1] > self.p2[1] or \
            c[2] < self.p1[2] or c[2] > self.p2[2]:
-            raise ValueError('Coordinate {} out of domain.'. format(c))
+            raise ValueError("Coordinate {} out of domain.". format(c))
 
         else:
             i = [int(round(float(c[0]-self.p1[0])/self.cell[0] - 0.5)),
@@ -230,17 +230,17 @@ class Mesh(object):
     def plot_mesh(self):
         """Shows a matplotlib figure of sample range and discretisation."""
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ax.set_aspect('equal')
+        ax = fig.add_subplot(111, projection="3d")
+        ax.set_aspect("equal")
 
         cd = (self.cell[0] + self.p1[0],
               self.cell[1] + self.p1[1],
               self.cell[2] + self.p1[2])
 
         plot_cube(ax, self.p1, self.p2)
-        plot_cube(ax, self.p1, cd, color='red', linewidth=1)
+        plot_cube(ax, self.p1, cd, color="red", linewidth=1)
 
-        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
+        ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
         return fig
 
