@@ -14,7 +14,6 @@ setup(
     url="https://github.com/joommf/discretisedfield",
     download_url="https://github.com/joommf/discretisedfield/tarball/0.5.2",
     packages=["discretisedfield",
-              "discretisedfield.util",
               "discretisedfield.tests"],
     install_requires=["joommfutil",
                       "matplotlib",
