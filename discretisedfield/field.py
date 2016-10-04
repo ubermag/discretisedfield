@@ -17,8 +17,9 @@ import discretisedfield.util.typesystem as ts
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
 class Field(object):
-    def __init__(self, mesh, dim=3, value=None, normalisedto=None, name='unnamed'):
-        """Class for analysing, manipulating, and writing finite difference fields.
+    def __init__(self, mesh, dim=3, value=None,
+                 normalisedto=None, name='unnamed'):
+        """Class for analysing and manipulating finite difference fields.
 
         This class provides the functionality for:
           - Creating FD vector and scalar fields.
@@ -312,7 +313,8 @@ class Field(object):
 
             # Normalise every component.
             for j in range(self.dim):
-                self.f[:, :, :, j] = self.normalisedto*self.f[:, :, :, j]/f_norm
+                normalisedvalue = self.normalisedto*self.f[:, :, :, j]/f_norm
+                self.f[:, :, :, j] = normalisedvalue
 
     def write_oommf_file(self, filename):
         """Write the FD field to the OOMMF (omf, ohf) file.
