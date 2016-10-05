@@ -104,6 +104,19 @@ class TestMesh(object):
         with pytest.raises(TypeError):
             mesh = Mesh(p1, p2, cell, name=name)
 
+    def test_repr(self):
+        p1 = (-1, -4, 11)
+        p2 = (15, 10.1, 12.5)
+        cell = (1, 0.1, 0.5)
+        name = 'test_mesh'
+
+        mesh = Mesh(p1, p2, cell, name=name)
+
+        rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
+                "cell=(1, 0.1, 0.5), name=\"test_mesh\")")
+
+        assert repr(mesh) == rstr
+
     def test_index2coord(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
