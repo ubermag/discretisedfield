@@ -121,7 +121,7 @@ class TestMesh(object):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        name = "test_field"
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -132,7 +132,7 @@ class TestMesh(object):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        name = "test_field"
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -144,7 +144,7 @@ class TestMesh(object):
         p1 = (-10, -5, 0)
         p2 = (10, 5, 10)
         cell = (1, 5, 1)
-        name = "test_field"
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -158,7 +158,7 @@ class TestMesh(object):
         p1 = (-10, -5, 0)
         p2 = (10, 5, 10)
         cell = (1, 5, 1)
-        name = "test_field"
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -174,7 +174,7 @@ class TestMesh(object):
         p1 = (-18.5, 5, 0)
         p2 = (10, 10, 10)
         cell = (0.1, 0.25, 2)
-        name = "test_field"
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -184,7 +184,7 @@ class TestMesh(object):
         p1 = (-18.5, 5, 0)
         p2 = (10, 10, 10)
         cell = (0.1, 0.25, 2)
-        name = "test_field"
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
