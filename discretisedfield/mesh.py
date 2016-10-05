@@ -122,7 +122,12 @@ class Mesh(object):
                   int(round(self.l[2]/self.cell[2])))
 
     def __repr__(self):
-        """Mesh representation method."""
+        """Mesh representation method.
+
+        Returns:
+          A mesh representation string.
+
+        """
         p1str = "p1=({}, {}, {})".format(self.p1[0], self.p1[1], self.p1[2])
         p2str = "p2=({}, {}, {})".format(self.p2[0], self.p2[1], self.p2[2])
         cellstr = "cell=({}, {}, {})".format(self.cell[0],
