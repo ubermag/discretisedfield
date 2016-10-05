@@ -23,10 +23,10 @@ class TestMesh(object):
                              [(0, 0, 0),
                               (5e-9, 5e-9, 5e-9),
                               (2, 2, 2)],
-                             ['1',
+                             ["1",
                               (1, 1, 1),
                               (0, 0, 1e-9)],
-                             [(-1.5e-9, -5e-9, 'a'),
+                             [(-1.5e-9, -5e-9, "a"),
                               (1.5e-9, 15e-9, 16e-9),
                               (5, 1, -1e-9)],
                              [(-1.5e-9, -5e-9, 0),
@@ -38,7 +38,7 @@ class TestMesh(object):
                              [(-1.5e-9, -5e-9, 0),
                               (1.5e-9, 15e-9, 1+2j),
                               (5, 1, 1e-9)],
-                             ['string', (5, 1, 1e-9), 'string'],
+                             ["string", (5, 1, 1e-9), "string"],
                              [(-1.5e-9, -5e-9, 0),
                               (1.5e-9, 15e-9, 16e-9),
                               1]]
@@ -47,7 +47,7 @@ class TestMesh(object):
         p1 = (0, -4, 11)
         p2 = (15, 10.1, 16.5)
         cell = (1, 0.1, 0.5)
-        name = 'test_mesh'
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -90,7 +90,7 @@ class TestMesh(object):
         p1 = (0, -4, 11)
         p2 = (15, 10, 16)
         cell = (1, 5, 1)
-        name = 'test_field'
+        name = "test_mesh"
 
         with pytest.raises(TypeError):
             mesh = Mesh(p1, p2, cell, name=name)
@@ -108,7 +108,7 @@ class TestMesh(object):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        name = 'test_mesh'
+        name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -121,7 +121,7 @@ class TestMesh(object):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        name = 'test_field'
+        name = "test_field"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -132,7 +132,7 @@ class TestMesh(object):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        name = 'test_field'
+        name = "test_field"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -144,7 +144,7 @@ class TestMesh(object):
         p1 = (-10, -5, 0)
         p2 = (10, 5, 10)
         cell = (1, 5, 1)
-        name = 'test_field'
+        name = "test_field"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -158,7 +158,7 @@ class TestMesh(object):
         p1 = (-10, -5, 0)
         p2 = (10, 5, 10)
         cell = (1, 5, 1)
-        name = 'test_field'
+        name = "test_field"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -174,7 +174,7 @@ class TestMesh(object):
         p1 = (-18.5, 5, 0)
         p2 = (10, 10, 10)
         cell = (0.1, 0.25, 2)
-        name = 'test_field'
+        name = "test_field"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -184,7 +184,7 @@ class TestMesh(object):
         p1 = (-18.5, 5, 0)
         p2 = (10, 10, 10)
         cell = (0.1, 0.25, 2)
-        name = 'test_field'
+        name = "test_field"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
@@ -221,8 +221,8 @@ class TestMesh(object):
         for d in [(2, 1, 1), (1, 2, 1), (1, 1, 3), (1, 5, 0.1)]:
             with pytest.raises(TypeError) as excinfo:
                 mymesh = Mesh(p1, p2, d)
-            assert 'Discretisation' in str(excinfo.value)
-            assert 'cell' in str(excinfo.value)
-            assert 'greater' in str(excinfo.value)
-            assert 'multiple' in str(excinfo.value)
-            assert 'domain' in str(excinfo.value)
+            assert "Discretisation" in str(excinfo.value)
+            assert "cell" in str(excinfo.value)
+            assert "greater" in str(excinfo.value)
+            assert "multiple" in str(excinfo.value)
+            assert "domain" in str(excinfo.value)

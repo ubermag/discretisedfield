@@ -131,7 +131,12 @@ class Mesh(object):
         namestr = "name=\"{}\"".format(self.name)
 
         return "Mesh({}, {}, {}, {})".format(p1str, p2str, cellstr, namestr)
-    
+
+    def _ipython_display_(self):
+        """Shows a matplotlib figure of sample range and discretisation."""
+        fig = self.plot_mesh()  # pragma: no cover
+        plt.show()  # pragma: no cover
+
     def domain_centre(self):
         """Compute and return the domain centre coordinate.
 
@@ -254,11 +259,6 @@ class Mesh(object):
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
         return fig
-
-    def _ipython_display_(self):
-        """Shows a matplotlib figure of sample range and discretisation."""
-        fig = self.plot_mesh()  # pragma: no cover
-        plt.show()  # pragma: no cover
 
     def script(self):
         """This method should be implemented by a specific
