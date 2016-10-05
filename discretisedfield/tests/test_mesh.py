@@ -51,7 +51,7 @@ class TestMesh(object):
 
         mesh = Mesh(p1, p2, cell, name=name)
 
-        assert mesh.l[0] == 15 - 0
+        assert mesh.l[0] == 15 - 0.1
         assert mesh.l[1] == 10.1 - (-4)
         assert mesh.l[2] == 16.5 - 11
 
