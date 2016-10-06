@@ -127,7 +127,7 @@ class TestField(object):
 
                 for j in range(10):
                     c = f.mesh.random_point()
-                    expected_value = pyfun(f.mesh.nearestcellcoord(c))
+                    expected_value = pyfun(f.mesh.cell_centre(c))
                     assert f(c) == expected_value
                     assert f.sample(c) == expected_value
 
@@ -138,7 +138,7 @@ class TestField(object):
 
                 for j in range(10):
                     c = f.mesh.random_point()
-                    expected_value = pyfun(f.mesh.nearestcellcoord(c))
+                    expected_value = pyfun(f.mesh.cell_centre(c))
                     assert np.all(f(c) == expected_value)
                     assert np.all(f.sample(c) == expected_value)
 

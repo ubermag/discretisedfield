@@ -1,4 +1,5 @@
 import pytest
+import numpy as np
 from discretisedfield.mesh import Mesh
 
 
@@ -6,17 +7,17 @@ class TestMesh(object):
     def setup(self):
         self.valid_args = [[(0, 0, 0),
                             (5, 5, 5),
-                            (1, 1, 1)],
+                            [1, 1, 1]],
                            [(0, 0, 0),
-                            [5e-9, 5e-9, 5e-9],
+                            (5e-9, 5e-9, 5e-9),
                             (1e-9, 1e-9, 1e-9)],
                            [(-1.5e-9, -5e-9, 0),
-                            (1.5e-9, 15e-9, 16e-9),
-                            (3e-9, 1e-9, 1e-9)],
+                            (1.5e-9, -15e-9, -160e-9),
+                            (0.3e-9, 1e-9, 1e-9)],
                            [(-1.5e-9, -5e-9, -5e-9),
-                            (0, 0, 0),
+                            np.array((0, 0, 0)),
                             (0.5e-9, 1e-9, 5e-9)],
-                           [(0, 0, 0),
+                           [[0, 0, 0],
                             (-1.5e-9, -5e-9, -5e-9),
                             (0.5e-9, 1e-9, 5e-9)]]
 
@@ -40,43 +41,60 @@ class TestMesh(object):
                               (1.5e-9, 15e-9, 16e-9),
                               1]]
 
-    def test_init(self):
-        p1 = (0, -4, 11)
-        p2 = (15, 10.1, 16.5)
+    def test_simple_init(self):
+        p1 = (0, -4, 16.5)
+        p2 = (15, 10.1, 11)
         cell = (1, 0.1, 0.5)
         name = "test_mesh"
 
         mesh = Mesh(p1, p2, cell, name=name)
 
+        assert isinstance(mesh.p1, tuple)
+        assert mesh.p1 == p1
+        assert isinstance(mesh.p2, tuple)
+        assert mesh.p2 == p2
+        assert isinstance(mesh.cell, tuple)
+        assert mesh.cell == cell
+        assert isinstance(mesh.name, str)
+        assert mesh.name == name
+        assert isinstance(mesh.pmin, tuple)
+        assert mesh.pmin == (0, -4, 11)
+        assert isinstance(mesh.pmax, tuple)
+        assert mesh.pmax == (15, 10.1, 16.5)
+
+        assert isinstance(mesh.l, tuple)
         assert mesh.l[0] == 15 - 0
         assert mesh.l[1] == 10.1 - (-4)
         assert mesh.l[2] == 16.5 - 11
 
+        assert isinstance(mesh.n, tuple)
         assert mesh.n[0] == (15 - 0) / 1.0
         assert mesh.n[1] == (10.1 - (-4)) / 0.1
         assert mesh.n[2] == (16.5 - 11) / 0.5
-
-        assert isinstance(mesh.n[0], int)
-        assert isinstance(mesh.n[1], int)
-        assert isinstance(mesh.n[2], int)
-
-        assert mesh.name == name
+        for i in range(3):
+            assert isinstance(mesh.n[i], int)
 
     def test_init_valid_args(self):
         for arg in self.valid_args:
-            p1 = arg[0]
-            p2 = arg[1]
-            cell = arg[2]
+            p1, p2, cell = arg
 
             mesh = Mesh(p1, p2, cell)
 
-            assert mesh.p1 == p1
-            assert mesh.p2 == p2
-            assert mesh.cell == cell
+            assert isinstance(mesh.p1, tuple)
+            assert mesh.p1 == tuple(p1)
+            assert isinstance(mesh.p2, tuple)
+            assert mesh.p2 == tuple(p2)
+            assert isinstance(mesh.cell, tuple)
+            assert mesh.cell == tuple(cell)
+            assert isinstance(mesh.name, str)
+            assert mesh.name == "mesh"  # default name value
+            assert isinstance(mesh.l, tuple)
+            assert isinstance(mesh.n, tuple)
+            for i in range(3):
+                assert isinstance(mesh.n[i], int)
 
     def test_init_invalid_args(self):
         for arg in self.invalid_args:
-            print(arg)
             p1 = arg[0]
             p2 = arg[1]
             cell = arg[2]
@@ -123,7 +141,7 @@ class TestMesh(object):
 
         assert repr(mesh) == rstr
 
-    def test_index2coord(self):
+    def test_index2point(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
@@ -131,10 +149,10 @@ class TestMesh(object):
 
         mesh = Mesh(p1, p2, cell, name=name)
 
-        assert mesh.index2coord((0, 0, 0)) == (-0.5, -3.95, 11.25)
-        assert mesh.index2coord((5, 10, 1)) == (4.5, -2.95, 11.75)
+        assert mesh.index2point((0, 0, 0)) == (-0.5, -3.95, 11.25)
+        assert mesh.index2point((5, 10, 1)) == (4.5, -2.95, 11.75)
 
-    def test_index2coord_exception(self):
+    def test_index2point_exception(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
@@ -143,10 +161,10 @@ class TestMesh(object):
         mesh = Mesh(p1, p2, cell, name=name)
 
         with pytest.raises(ValueError):
-            mesh.index2coord((-1, 0, 0))
-            mesh.index2coord((500, 10, 1))
+            mesh.index2point((-1, 0, 0))
+            mesh.index2point((500, 10, 1))
 
-    def test_coord2index(self):
+    def test_point2index(self):
         p1 = (-10, -5, 0)
         p2 = (10, 5, 10)
         cell = (1, 5, 1)
@@ -154,13 +172,13 @@ class TestMesh(object):
 
         mesh = Mesh(p1, p2, cell, name=name)
 
-        assert mesh.coord2index((-10, -5, 0)) == (0, 0, 0)
+        assert mesh.point2index((-10, -5, 0)) == (0, 0, 0)
         assert mesh.n[0] == 20
-        assert mesh.coord2index((10, 5, 10)) == (19, 1, 9)
-        assert mesh.coord2index((0.0001, 0.0001, 5.0001)) == (10, 1, 5)
-        assert mesh.coord2index((-0.0001, -0.0001, 4.9999)) == (9, 0, 4)
+        assert mesh.point2index((10, 5, 10)) == (19, 1, 9)
+        assert mesh.point2index((0.0001, 0.0001, 5.0001)) == (10, 1, 5)
+        assert mesh.point2index((-0.0001, -0.0001, 4.9999)) == (9, 0, 4)
 
-    def test_coord2index_exception(self):
+    def test_point2index_exception(self):
         p1 = (-10, -5, 0)
         p2 = (10, 5, 10)
         cell = (1, 5, 1)
@@ -169,12 +187,13 @@ class TestMesh(object):
         mesh = Mesh(p1, p2, cell, name=name)
 
         with pytest.raises(ValueError):
-            mesh.coord2index((-11, 0, 5))
-            mesh.coord2index((-5, -5-1e-3, 5))
-            mesh.coord2index((-5, 0, -0.01))
-            mesh.coord2index((11, 0, 5))
-            mesh.coord2index((6, 5+1e-6, 5))
-            mesh.coord2index((0, 0, 10+1e-10))
+            mesh.point2index((-11, 0, 5))
+            mesh.point2index((-5, -5-1e-3, 5))
+            mesh.point2index((-5, 0, -0.01))
+            mesh.point2index((11, 0, 5))
+            mesh.point2index((6, 5+1e-6, 5))
+            mesh.point2index((0, 0, 10+1e-10))
+        # TODO: what if p1 < p2? min(p1, p2) tests
 
     def test_centre(self):
         p1 = (-18.5, 5, 0)
@@ -200,7 +219,7 @@ class TestMesh(object):
             assert mesh.p1[1] <= c[1] <= mesh.p2[1]
             assert mesh.p1[2] <= c[2] <= mesh.p2[2]
 
-    def test_plot_mesh(self):
+    def test_plot(self):
         for arg in self.valid_args:
             p1 = arg[0]
             p2 = arg[1]
@@ -208,7 +227,7 @@ class TestMesh(object):
 
             mesh = Mesh(p1, p2, cell)
 
-            mesh.plot_mesh()
+            mesh.plot()
 
     def test_script(self):
         for arg in self.valid_args:

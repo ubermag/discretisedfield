@@ -90,7 +90,7 @@ class Field(object):
           The field value at coodinate c.
 
         """
-        i = self.mesh.coord2index(c)
+        i = self.mesh.point2index(c)
         return self.f[i[0], i[1], i[2]]
 
     def set(self, value):
@@ -120,7 +120,7 @@ class Field(object):
                 for iy in range(self.mesh.n[1]):
                     for iz in range(self.mesh.n[2]):
                         i = (ix, iy, iz)
-                        coord = self.mesh.index2coord((ix, iy, iz))
+                        coord = self.mesh.index2point((ix, iy, iz))
                         self.f[ix, iy, iz, :] = value(coord)
 
         else:
@@ -203,7 +203,7 @@ class Field(object):
             sample_centre[slice_num] = point
             sample_centre = tuple(sample_centre)
 
-            slice_index = self.mesh.coord2index(sample_centre)[slice_num]
+            slice_index = self.mesh.point2index(sample_centre)[slice_num]
 
             field_slice = np.zeros([self.mesh.n[axes[0]],
                                     self.mesh.n[axes[1]],
@@ -216,7 +216,7 @@ class Field(object):
                     i[axes[1]] = k
                     i = tuple(i)
 
-                    coord = self.mesh.index2coord(i)
+                    coord = self.mesh.index2point(i)
 
                     axis1_coords[j] = coord[axes[0]]
                     axis2_coords[k] = coord[axes[1]]

@@ -46,6 +46,8 @@ def plot_cube(ax, p1, p2, color='blue', linewidth=2):
                cell=ts.PositiveRealVector(size=3),
                name=ts.ObjectName,
                l=ts.PositiveRealVector(size=3),
+               pmin=ts.RealVector(size=3),
+               pmax=ts.RealVector(size=3),
                n=ts.PositiveIntVector(size=3))
 class Mesh(object):
     def __init__(self, p1, p2, cell, name="mesh"):
@@ -63,13 +65,17 @@ class Mesh(object):
           name (Optional[str]): Mesh name
 
         Attributes:
-          p1 (tuple, list, np.ndarray): First mesh domain point
+          p1 (tuple): First mesh domain point
 
-          p2 (tuple, list, np.ndarray): Second mesh domain point
+          p2 (tuple): Second mesh domain point
 
-          cell (tuple, list, np.ndarray): Discretisation cell size
+          cell (tuple): Discretisation cell size
 
           name (str): Mesh name
+
+          pmin (tuple): Minimum mesh domain point
+
+          pmax (tuple): Maximum mesh domain point
 
           l (tuple): length of domain x, y, and z edges (lx, ly, lz):
 
@@ -88,15 +94,23 @@ class Mesh(object):
             nz = lz/dz
 
         """
-        self.p1 = p1
-        self.p2 = p2
-        self.cell = cell
+        self.p1 = tuple(p1)
+        self.p2 = tuple(p2)
+        self.cell = tuple(cell)
         self.name = name
 
         # Compute domain edge lengths.
         self.l = (abs(self.p2[0]-self.p1[0]),
                   abs(self.p2[1]-self.p1[1]),
                   abs(self.p2[2]-self.p1[2]))
+
+        # Compute minimum and maximum mesh domain points.
+        self.pmin = (min(self.p1[0], self.p2[0]),
+                     min(self.p1[1], self.p2[1]),
+                     min(self.p1[2], self.p2[2]))
+        self.pmax = (max(self.p1[0], self.p2[0]),
+                     max(self.p1[1], self.p2[1]),
+                     max(self.p1[2], self.p2[2]))
 
         tol = 1e-12  # picometer tolerance
         # Check if the discretisation cell size is greater than the domain.
@@ -138,7 +152,7 @@ class Mesh(object):
     def _ipython_display_(self):
         """Shows a matplotlib figure of sample range and discretisation."""
         # TODO: plt.show() works only with nbagg
-        fig = self.plot_mesh()  # pragma: no cover
+        fig = self.plot()  # pragma: no cover
         plt.show()  # pragma: no cover
 
     def centre(self):
@@ -159,17 +173,17 @@ class Mesh(object):
           A random mesh point tuple of coordinates.
 
         """
-        return (self.p1[0] + random.random()*self.l[0],
-                self.p1[1] + random.random()*self.l[1],
-                self.p1[2] + random.random()*self.l[2])
+        return (self.pmin[0] + random.random()*self.l[0],
+                self.pmin[1] + random.random()*self.l[1],
+                self.pmin[2] + random.random()*self.l[2])
 
-    def index2coord(self, i):
-        """Convert the cell index to its coordinate.
+    def index2point(self, i):
+        """Convert the discretisation cell index to its centre point coordinate.
 
         The finite difference domain is disretised in x, y, and z directions
-        in steps dx, dy, and dz steps, respectively. Accordingly, there are
+        in dx, dy, and dz steps, respectively. Accordingly, there are
         nx, ny, and nz discretisation steps. This method converts the cell
-        index (ix, iy, iz) to the cell's centre coordinate.
+        index (ix, iy, iz) to the cell's centre point coordinate.
 
         This method raises ValueError if the index is out of range.
 
@@ -177,84 +191,77 @@ class Mesh(object):
           i (tuple): A length 3 tuple of integers (ix, iy, iz)
 
         Returns:
-          A length 3 tuple of x, y, and z coodinates.
+          A length 3 tuple of x, y, and z coodinates
 
         """
-        if i[0] < 0 or i[0] > self.n[0]-1 or \
-           i[1] < 0 or i[1] > self.n[1]-1 or \
-           i[2] < 0 or i[2] > self.n[2]-1:
-            raise ValueError("Index {} out of range.".format(i))
+        for j in range(3):
+            if i[j] < 0 or i[j] > self.n[j] - 1:
+                raise ValueError(("Index i[{}]={} out of "
+                                  "range.").format(j, i[j]))
 
-        else:
-            c = (self.p1[0] + (i[0] + 0.5)*self.cell[0],
-                 self.p1[1] + (i[1] + 0.5)*self.cell[1],
-                 self.p1[2] + (i[2] + 0.5)*self.cell[2])
+        return (self.pmin[0] + (i[0]+0.5)*self.cell[0],
+                self.pmin[1] + (i[1]+0.5)*self.cell[1],
+                self.pmin[2] + (i[2]+0.5)*self.cell[2])
 
-        return c
+    def point2index(self, p):
+        # TODO: test for mutually inverse functions.
+        """Compute the index of a cell containing point p.
 
-    def coord2index(self, c):
-        """Convert the cell's coordinate to its index.
+        This method is an inverse function of index2point method.
+        (For details on index, please refer to the index2point method.)
 
-        This method is an inverse function of index2coord method.
-        (For details on index, please refer to the index2coord method.)
-        More precisely, this method return the index of a cell containing
-        the coordinate c.
-
-        This method raises ValueError if the index is out of range.
+        It raises ValueError if the point is outside the mesh.
 
         Args:
-          c (tuple): A length 3 tuple of integers/floats (cx, cy, cz)
+          p (tuple): A length 3 tuple of Real numbers (px, py, pz)
 
         Returns:
-          A length 3 tuple of cell's indices (ix, iy, iz).
+          A length 3 cell index tuple (ix, iy, iz).
 
         """
-        if c[0] < self.p1[0] or c[0] > self.p2[0] or \
-           c[1] < self.p1[1] or c[1] > self.p2[1] or \
-           c[2] < self.p1[2] or c[2] > self.p2[2]:
-            raise ValueError("Coordinate {} out of domain.". format(c))
+        for j in range(3):
+            if p[j] < self.pmin[j] or p[j] > self.pmax[j]:
+                raise ValueError(("Point coordinate p[{}]={} outside "
+                                 "the mesh domain."). format(j, p[j]))
 
-        else:
-            i = [int(round(float(c[0]-self.p1[0])/self.cell[0] - 0.5)),
-                 int(round(float(c[1]-self.p1[1])/self.cell[1] - 0.5)),
-                 int(round(float(c[2]-self.p1[2])/self.cell[2] - 0.5))]
+        i = []
+        for j in range(3):
+            ij = int(round((p[j]-self.pmin[j])/self.cell[j] - 0.5))
 
-            # If rounded to the out-of-range index.
-            for j in range(3):
-                if i[j] < 0:  # pragma: no cover
-                    i[j] = 0
-                elif i[j] > self.n[j] - 1:
-                    i[j] = self.n[j] - 1
+            # If rounded to the out-of-range mesh index.
+            if ij < 0:
+                ij = 0
+            elif ij > self.n[j] - 1:
+                ij = self.n[j] - 1
+
+            i.append(ij)
 
         return tuple(i)
 
-    def nearestcellcoord(self, c):
-        """Find the cell coordinate nearest to c.
-
-        This method computes the cell's centre coordinate containing
-        the coodinate c.
+    def cell_centre(self, p):
+        """Computes the centre of cell containing (or nearest) to point p.
 
         Args:
-          c (tuple): A length 3 tuple of integers/floats.
+          p (tuple): A length 3 tuple of point coordinates
 
         Returns:
-          A length 3 tuple of integers/floats.
+          A length 3 tuple of cell's centre coordinates
 
         """
-        return self.index2coord(self.coord2index(c))
+        return self.index2point(self.point2index(p))
 
-    def plot_mesh(self):
-        """Shows a matplotlib figure of sample range and discretisation."""
+    def plot(self):
+        """Creates a figure of a mesh range and discretisation cell."""
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         ax.set_aspect("equal")
 
-        cd = (self.cell[0] + self.p1[0],
-              self.cell[1] + self.p1[1],
-              self.cell[2] + self.p1[2])
+        cell_point = (self.pmin[0] + self.cell[0],
+                      self.pmin[1] + self.cell[1],
+                      self.pmin[2] + self.cell[2])
 
-        plot_cube(ax, self.p1, self.p2)
-        plot_cube(ax, self.p1, cd, color="red", linewidth=1)
+        plot_cube(ax, self.pmin, self.pmax)
+        plot_cube(ax, self.pmin, cell_point, color="red", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
