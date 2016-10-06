@@ -121,14 +121,14 @@ class Field(object):
             return tuple(self.f.mean(axis=(0, 1, 2)))
 
     def slice_field(self, axis, point):
-        """Returns the slice of a finite difference field.
+        """Returns the field slice.
 
         This method returns the values of a finite difference field
-        on the plane perpendicular to the axis at point.
+        on the plane perpendicular to the 'axis' at 'point'.
 
         Args:
           axis (str): An axis to which the sampling plane is perpendicular to.
-          point (int/float): The coorindta eon axis at which the field is
+          point (int/float): The coordinate on axis at which the field is
             sampled.
 
         Returns:
@@ -307,13 +307,11 @@ class Field(object):
             oommf_file.write("# " + line + "\n")
 
         # Write data lines to OOMMF file.
-        for iz in range(self.mesh.n[2]):
-            for iy in range(self.mesh.n[1]):
-                for ix in range(self.mesh.n[0]):
-                    v = [str(vi) for vi in self.f[ix, iy, iz, :]]
-                    for vi in v:
-                        oommf_file.write(" " + vi)
-                    oommf_file.write("\n")
+        for i, _ in self.mesh.cells():
+            v = [str(vi) for vi in self.f[i[0], i[1], i[2], :]]
+            for vi in v:
+                oommf_file.write(" " + vi)
+            oommf_file.write("\n")
 
         # Write footer lines to OOMMF file.
         for line in footer_lines:
@@ -369,14 +367,11 @@ def read_oommf_file(filename, normalisedto=None, name="unnamed"):
             data_first_line = j+1
 
     counter = 0
-    for iz in range(n[2]):
-        for iy in range(n[1]):
-            for ix in range(n[0]):
-                i = (ix, iy, iz)
-                line_data = lines[data_first_line+counter]
-                value = [float(vi) for vi in line_data.split()]
-                field.f[ix, iy, iz, :] = value
+    for i, _ in mesh.cells():
+        line_data = lines[data_first_line+counter]
+        value = [float(vi) for vi in line_data.split()]
+        field.f[i[0], i[1], i[2], :] = value
 
-                counter += 1
+        counter += 1
 
     return field

@@ -269,9 +269,9 @@ class Mesh(object):
     def cells(self):
         """Generator method iterating through all mesh cells and
         yielding mesh indices and centre coordinates."""
-        for i in range(self.n[0]):
+        for k in range(self.n[2]):
             for j in range(self.n[1]):
-                for k in range(self.n[2]):
+                for i in range(self.n[0]):
                     yield (i, j, k), self.index2point((i, j, k))
 
     def script(self):
