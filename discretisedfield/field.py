@@ -62,8 +62,10 @@ class Field(object):
 
         """
         if not hasattr(self, "f"):
-            self._f = np.zeros(self.mesh.n,
-                               dtype=[("x", "<f8"), ("y", "<f8"), ("z", "<f8")])
+            self._f = np.zeros((self.mesh.n[0],
+                                self.mesh.n[1],
+                                self.mesh.n[2],
+                                self.dim))
 
         if isinstance(value, (int, float)):
             self._f.fill(value)
