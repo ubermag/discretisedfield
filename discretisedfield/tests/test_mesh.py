@@ -240,7 +240,7 @@ class TestMesh(object):
         for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
             assert isinstance(mesh.point2index(mesh.index2point(i)), tuple)
             assert mesh.point2index(mesh.index2point(i)) == i
-                                    
+
     def test_cell_centre(self):
         p1 = (500e-9, 125e-9, 3e-9)
         p2 = (0, 0, 0)
