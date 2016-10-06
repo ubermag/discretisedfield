@@ -1,11 +1,3 @@
-"""This module is a Python package that provides:
-
-- Analysing vector fields, such as sampling, averaging, plotting, etc.
-
-It is a member of JOOMMF project - a part of OpenDreamKit
-Horizon 2020 European Research Infrastructure project.
-
-"""
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df
@@ -16,25 +8,24 @@ import matplotlib.pyplot as plt
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
 class Field(object):
-    def __init__(self, mesh, dim=3, value=None,
-                 normalisedto=None, name="unnamed"):
-        """Class for analysing and manipulating finite difference fields.
+    def __init__(self, mesh, dim=3, value=0,
+                 normalisedto=None, name="field"):
+        """Class for analysing and manipulating Finite Difference (FD) fields.
 
         This class provides the functionality for:
-          - Creating FD vector and scalar fields.
-          - Plotting FD fields.
-          - Computing common values characterising FD fields.
+          - creating FD scalar and vector fields,
+          - plotting FD fields,
+          - computing common values characteristic to FD fields, and
+          - saving FD fields in common file formats.
 
         Args:
           mesh (Mesh): Finite difference mesh.
           dim (Optional[int]): The value dimensionality. Defaults to 3.
-            If dim=1, a scalar field is initialised. On the other hand, if
-            dim=3, a three dimensional vector field is created.
-          value (Optional): Finite difference field values. Defaults to None.
-            For the possible types of value argument, refer to set method.
+          value (Optional): Finite difference field value. Defaults to 0.
+            For the possible types of value argument, refer to the f.setter method.
             If no value argument is provided, a zero field is initialised.
           normalisedto (Optional[Real]): vector field norm
-          name (Optional[str]): Field name.
+          name (Optional[str]): Field name
 
         Attributes:
           mesh (Mesh): Finite difference mesh.
@@ -46,24 +37,48 @@ class Field(object):
           f (np.ndarray): A field value four-dimensional numpy array.
 
         """
-        if not isinstance(mesh, df.Mesh):
-            raise TypeError("""mesh must be of type Mesh.""")
-
         self.mesh = mesh
         self.dim = dim
-        self.name = name
         self.normalisedto = normalisedto
+        self.name = name
+        self.f = value  # calls setter method
 
-        # Create an empty field.
-        self.f = np.zeros([self.mesh.n[0],
-                           self.mesh.n[1],
-                           self.mesh.n[2],
-                           dim])
+    @property
+    def f(self):
+        return self._f
 
-        # Set the Field value if not None.
-        if value is not None:
-            self.set(value)
+    @f.setter
+    def f(self, value):
+        """Set the field value.
 
+        This method sets the field values at all finite difference
+        domain cells.
+
+        Args:
+          value: This argument can be an integer, float, tuple, list,
+            np.ndarray, or Python function.
+
+        """
+        if not hasattr(self, "f"):
+            self._f = np.zeros([self.mesh.n[0],
+                                self.mesh.n[1],
+                                self.mesh.n[2],
+                                self.dim])
+
+        if isinstance(value, (int, float)):
+            self._f.fill(value)
+        elif isinstance(value, (tuple, list, np.ndarray)):
+            for i in range(self.dim):
+                self._f[:, :, :, i].fill(value[i])
+        elif callable(value):
+            for i, p in self.mesh.cells():
+                self._f[i[0], i[1], i[2], :] = value(p)
+        else:
+            raise TypeError("Cannot set field using {}.".format(type(value)))
+
+        if self.normalisedto is not None:
+            self.normalise()
+        
     def __call__(self, c):
         """Sample the field at coordinate c.
 
@@ -92,43 +107,6 @@ class Field(object):
         """
         i = self.mesh.point2index(c)
         return self.f[i[0], i[1], i[2]]
-
-    def set(self, value):
-        """Set the field value.
-
-        This method sets the field values at all finite difference
-        domain cells.
-
-        Args:
-          value: This argument can be an integer, float, tuple, list,
-            np.ndarray, or Python function.
-
-        """
-        # value is an int or float.
-        # All components of the Field are set to value.
-        if isinstance(value, (int, float)):
-            self.f.fill(value)
-
-        # value is a constant tuple, list or numpy array.
-        elif isinstance(value, (tuple, list, np.ndarray)):
-            for i in range(self.dim):
-                self.f[:, :, :, i].fill(value[i])
-
-        # value is a Python function.
-        elif hasattr(value, "__call__"):
-            for ix in range(self.mesh.n[0]):
-                for iy in range(self.mesh.n[1]):
-                    for iz in range(self.mesh.n[2]):
-                        i = (ix, iy, iz)
-                        coord = self.mesh.index2point((ix, iy, iz))
-                        self.f[ix, iy, iz, :] = value(coord)
-
-        else:
-            raise TypeError("Cannot set field using {}.".format(type(value)))
-
-        # Normalise the vector field if required.
-        if self.normalisedto is not None:
-            self.normalise()
 
     def set_at_index(self, i, value):
         """Set the field value at index i.

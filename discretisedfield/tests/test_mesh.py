@@ -292,6 +292,32 @@ class TestMesh(object):
 
             assert isinstance(mesh.plot(), matplotlib.figure.Figure)
 
+    def test_cells(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = Mesh(p1, p2, cell)
+
+        counter = 0
+        for cell in mesh.cells():
+            assert isinstance(cell, tuple)
+            assert len(cell) == 2
+            assert isinstance(cell[0], tuple)
+            assert len(cell[0]) == 3
+            assert isinstance(cell[1], tuple)
+            assert len(cell[1]) == 3
+
+            i, p = cell
+            for j in range(3):
+                assert i[j] >= 0
+                assert i[j] <= 9
+                assert p[j] >= 0.5
+                assert p[j] <= 9.5
+            
+            counter += 1
+
+        assert counter == 1000
+
     def test_script(self):
         for arg in self.valid_args:
             p1, p2, cell = arg

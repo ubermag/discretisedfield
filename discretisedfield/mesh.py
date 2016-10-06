@@ -266,6 +266,14 @@ class Mesh(object):
 
         return fig
 
+    def cells(self):
+        """Generator method iterating through all mesh cells and
+        yielding mesh indices and centre coordinates."""
+        for i in range(self.n[0]):
+            for j in range(self.n[1]):
+                for k in range(self.n[2]):
+                    yield (i, j, k), self.index2point((i, j, k))
+
     def script(self):
         """This method should be implemented by a specific
         micromagnetic calculator"""
