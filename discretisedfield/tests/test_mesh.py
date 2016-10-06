@@ -226,6 +226,26 @@ class TestMesh(object):
         with pytest.raises(ValueError):
             mesh.point2index((0, 0, 10e-9+tol))
 
+    def test_index2point_point2index_mutually_inverse(self):
+        p1 = (15, -4, 12.5)
+        p2 = (-1, 10.1, 11)
+        cell = (1, 0.1, 0.5)
+        mesh = Mesh(p1, p2, cell)
+
+        for i in [(-0.5, -3.95, 11.25), (14.5, 10.05, 12.25)]:
+            assert mesh.index2point(mesh.point2index(i)) == i
+
+        for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
+            assert mesh.point2index(mesh.index2point(i)) == i
+                                    
+    def test_cell_centre(self):
+        p1 = (500e-9, 125e-9, 3e-9)
+        p2 = (0, 0, 0)
+        cell = (10e-9, 5e-9, 1e-9)
+        mesh = Mesh(p1, p2, cell)
+
+        assert mesh.cell_centre((0, 0, 0)) == (5e-9, 2.5e-9, 0.5e-9)
+
     def test_centre(self):
         p1 = (-18.5, 5, 0)
         p2 = (10, 10, 10)

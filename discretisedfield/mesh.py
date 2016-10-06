@@ -204,7 +204,6 @@ class Mesh(object):
                 self.pmin[2] + (i[2]+0.5)*self.cell[2])
 
     def point2index(self, p):
-        # TODO: test for mutually inverse functions.
         """Compute the index of a cell containing point p.
 
         This method is an inverse function of index2point method.
