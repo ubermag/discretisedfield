@@ -207,21 +207,24 @@ class TestMesh(object):
         assert mesh.point2index((-1e-16, -1e-16, 1e-16)) == (9, 0, 0)
 
     def test_point2index_exception(self):
-        p1 = (-10, -5, 0)
-        p2 = (10, 5, 10)
-        cell = (1, 5, 1)
-        name = "test_mesh"
+        p1 = (-10, 5, 0)
+        p2 = (10, -5, 10e-9)
+        cell = (1, 5, 1e-9)
+        mesh = Mesh(p1, p2, cell)
 
-        mesh = Mesh(p1, p2, cell, name=name)
-
+        tol = 1e-12
         with pytest.raises(ValueError):
-            mesh.point2index((-11, 0, 5))
-            mesh.point2index((-5, -5-1e-3, 5))
-            mesh.point2index((-5, 0, -0.01))
-            mesh.point2index((11, 0, 5))
-            mesh.point2index((6, 5+1e-6, 5))
-            mesh.point2index((0, 0, 10+1e-10))
-        # TODO: what if p1 < p2? min(p1, p2) tests
+            mesh.point2index((-10-tol, 0, 5))
+        with pytest.raises(ValueError):
+            mesh.point2index((-5, -5-tol, 5))
+        with pytest.raises(ValueError):
+            mesh.point2index((-5, 0, -tol))
+        with pytest.raises(ValueError):
+            mesh.point2index((10+tol, 0, 5))
+        with pytest.raises(ValueError):
+            mesh.point2index((6, 5+tol, 5))
+        with pytest.raises(ValueError):
+            mesh.point2index((0, 0, 10e-9+tol))
 
     def test_centre(self):
         p1 = (-18.5, 5, 0)
