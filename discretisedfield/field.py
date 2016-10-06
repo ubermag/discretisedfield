@@ -28,13 +28,15 @@ class Field(object):
           name (Optional[str]): Field name
 
         Attributes:
-          mesh (Mesh): Finite difference mesh.
+          mesh (Mesh): Finite difference mesh
 
-          dim (int): The value dimensionality. Defined in Args.
+          dim (int): The value dimensionality.
 
-          name (str): Field name.
+          normalisedto (Real): Vector field norm
 
-          f (np.ndarray): A field value four-dimensional numpy array.
+          name (str): Field name
+
+          f (np.ndarray): Field value - a four-dimensional numpy array
 
         """
         self.mesh = mesh
@@ -78,35 +80,19 @@ class Field(object):
 
         if self.normalisedto is not None:
             self.normalise()
-        
-    def __call__(self, c):
-        """Sample the field at coordinate c.
+
+    def __call__(self, p):
+        """Sample the field at point p.
 
         Args:
-          c (tuple): coordinate at which the field is sampled.
+          p (tuple): point coordinate at which the field is sampled
 
         Returns:
-          Field value in cell containing coordinate c.
+          Field value in cell containing point p
 
         """
-        return self.sample(c)
-
-    def sample(self, c):
-        """Sample the Field at coordinate c.
-
-        Compute the vector field value at the domain's coordinate c.
-        Due to the finite difference discretisation, the value this method
-        returns is the same for any coorinate in the sell.
-
-        Args:
-          c (tuple): A A length 3 tuple of integers/floats.
-
-        Returns:
-          The field value at coodinate c.
-
-        """
-        i = self.mesh.point2index(c)
-        return self.f[i[0], i[1], i[2]]
+        i, j, k = self.mesh.point2index(p)
+        return self.f[i, j, k]
 
     def set_at_index(self, i, value):
         """Set the field value at index i.

@@ -79,7 +79,7 @@ class TestField(object):
         d = (1, 0.1, 0.5)
         mesh = Mesh(p1, p2, d)
         dim = 2
-        name = 'test_field'
+        name = "test_field"
         value = [1, 2]
 
         f = Field(mesh, dim=2, value=value, name=name)
@@ -90,9 +90,9 @@ class TestField(object):
         assert np.all(f.f[:, :, :, 1] == value[1])
 
     def test_wrong_init(self):
-        mesh = 'wrong_mesh_string'
+        mesh = "wrong_mesh_string"
         with pytest.raises(TypeError):
-            f = Field(mesh, dim=1, name='wrong_field')
+            f = Field(mesh, dim=1, name="wrong_field")
 
     def test_set_with_constant(self):
         for value in self.constant_values:
@@ -104,7 +104,6 @@ class TestField(object):
 
                 # Check with sampling.
                 assert np.all(f(f.mesh.random_point()) == value)
-                assert np.all(f.sample(f.mesh.random_point()) == value)
 
     def test_set_with_tuple_list_ndarray(self):
         for value in self.tuple_values:
@@ -117,7 +116,6 @@ class TestField(object):
                     c = f.mesh.random_point()
                     assert np.all(f.f[:, :, :, j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
-                    assert np.all(f.sample(c)[j] == value[j]/norm)
 
     def test_set_from_callable(self):
         # Test scalar fs.
@@ -129,7 +127,6 @@ class TestField(object):
                     c = f.mesh.random_point()
                     expected_value = pyfun(f.mesh.cell_centre(c))
                     assert f(c) == expected_value
-                    assert f.sample(c) == expected_value
 
         # Test vector fields.
         for f in self.vector_fs:
@@ -140,7 +137,6 @@ class TestField(object):
                     c = f.mesh.random_point()
                     expected_value = pyfun(f.mesh.cell_centre(c))
                     assert np.all(f(c) == expected_value)
-                    assert np.all(f.sample(c) == expected_value)
 
     def test_set_exception(self):
         for f in self.vector_fs + self.scalar_fs:
@@ -205,7 +201,7 @@ class TestField(object):
                         f.f = value
 
     def test_slice_field(self):
-        for s in 'xyz':
+        for s in "xyz":
             for f in self.vector_fs + self.scalar_fs:
                 if f.dim == 1:
                     funcs = self.scalar_pyfuncs
@@ -214,15 +210,15 @@ class TestField(object):
 
                 for pyfun in funcs:
                     f.f = pyfun
-                    point = f.mesh.centre()['xyz'.find(s)]
+                    point = f.mesh.centre()["xyz".find(s)]
                     data = f.slice_field(s, point)
                     a1, a2, f_slice, cs = data
 
-                    if s == 'x':
+                    if s == "x":
                         assert cs == (1, 2, 0)
-                    elif s == 'y':
+                    elif s == "y":
                         assert cs == (0, 2, 1)
-                    elif s == 'z':
+                    elif s == "z":
                         assert cs == (0, 1, 2)
 
                     tol = 1e-16
@@ -260,14 +256,14 @@ class TestField(object):
                 f.f = pyfun
                 point = f.mesh.centre()[0]
                 with pytest.raises(ValueError):
-                    data = f.slice_field('xy', point)
-                    data = f.slice_field('xyz', point)
-                    data = f.slice_field('zy', point)
-                    data = f.slice_field('string', point)
-                    data = f.slice_field('point', point)
+                    data = f.slice_field("xy", point)
+                    data = f.slice_field("xyz", point)
+                    data = f.slice_field("zy", point)
+                    data = f.slice_field("string", point)
+                    data = f.slice_field("point", point)
 
     def test_slice_field_wrong_point(self):
-        for s in 'xyz':
+        for s in "xyz":
             for f in self.vector_fs + self.scalar_fs:
                 if f.dim == 1:
                     funcs = self.scalar_pyfuncs
@@ -276,36 +272,36 @@ class TestField(object):
 
                 for pyfun in funcs:
                     f.f = pyfun
-                    point = f.mesh.centre()['xyz'.find(s)] + 100
+                    point = f.mesh.centre()["xyz".find(s)] + 100
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
 
-                    point = f.mesh.centre()['xyz'.find(s)] - 100
+                    point = f.mesh.centre()["xyz".find(s)] - 100
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
 
     def test_plot_slice_vector_field(self):
-        figname = 'test_slice_plot_figure.pdf'
+        figname = "test_slice_plot_figure.pdf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
             f.normalisedto = 1
             f.f = value
-            point = f.mesh.centre()['xyz'.find('y')]
-            fig = f.plot_slice('y', point, axes=True)
-            fig = f.plot_slice('y', point, axes=False)
+            point = f.mesh.centre()["xyz".find("y")]
+            fig = f.plot_slice("y", point, axes=True)
+            fig = f.plot_slice("y", point, axes=False)
 
     def test_plot_slice_vector_field_exception(self):
         value = (0, 0, 1)
         for f in self.vector_fs:
             f.normalisedto = 1
             f.f = value
-            point = f.mesh.centre()['xyz'.find('z')]
+            point = f.mesh.centre()["xyz".find("z")]
             with pytest.raises(ValueError):
-                fig = f.plot_slice('z', point)
+                fig = f.plot_slice("z", point)
 
     def test_write_read_oommf_file(self):
         tol = 1e-12
-        filename = 'test_write_oommf_file.omf'
+        filename = "test_write_oommf_file.omf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
             f.f = value
@@ -319,4 +315,4 @@ class TestField(object):
             assert f.mesh.cell == f_loaded.mesh.cell
             assert np.all(abs(f.f - f_loaded.f) < tol)
 
-            os.system('rm {}'.format(filename))
+            os.system("rm {}".format(filename))
