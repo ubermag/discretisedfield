@@ -1,6 +1,6 @@
 import os
-import pytest
 import random
+import pytest
 import numpy as np
 from discretisedfield import Mesh, Field, read_oommf_file
 import matplotlib
@@ -103,8 +103,8 @@ class TestField(object):
                 assert np.all(f.f == value)
 
                 # Check with sampling.
-                assert np.all(f(f.mesh.random_coord()) == value)
-                assert np.all(f.sample(f.mesh.random_coord()) == value)
+                assert np.all(f(f.mesh.random_point()) == value)
+                assert np.all(f.sample(f.mesh.random_point()) == value)
 
     def test_set_with_tuple_list_ndarray(self):
         for value in self.tuple_values:
@@ -114,7 +114,7 @@ class TestField(object):
 
                 norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
                 for j in range(3):
-                    c = f.mesh.random_coord()
+                    c = f.mesh.random_point()
                     assert np.all(f.f[:, :, :, j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
                     assert np.all(f.sample(c)[j] == value[j]/norm)
@@ -126,7 +126,7 @@ class TestField(object):
                 f.set(pyfun)
 
                 for j in range(10):
-                    c = f.mesh.random_coord()
+                    c = f.mesh.random_point()
                     expected_value = pyfun(f.mesh.nearestcellcoord(c))
                     assert f(c) == expected_value
                     assert f.sample(c) == expected_value
@@ -137,7 +137,7 @@ class TestField(object):
                 f.set(pyfun)
 
                 for j in range(10):
-                    c = f.mesh.random_coord()
+                    c = f.mesh.random_point()
                     expected_value = pyfun(f.mesh.nearestcellcoord(c))
                     assert np.all(f(c) == expected_value)
                     assert np.all(f.sample(c) == expected_value)

@@ -6,7 +6,6 @@ It is a member of JOOMMF project - a part of OpenDreamKit
 Horizon 2020 European Research Infrastructure project.
 
 """
-import random
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df

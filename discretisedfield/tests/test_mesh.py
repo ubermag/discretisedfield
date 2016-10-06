@@ -186,7 +186,7 @@ class TestMesh(object):
 
         assert mesh.centre() == (-4.25, 7.5, 5)
 
-    def test_random_coord(self):
+    def test_random_point(self):
         p1 = (-18.5, 5, 0)
         p2 = (10, 10, 10)
         cell = (0.1, 0.25, 2)
@@ -195,7 +195,7 @@ class TestMesh(object):
         mesh = Mesh(p1, p2, cell, name=name)
 
         for j in range(500):
-            c = mesh.random_coord()
+            c = mesh.random_point()
             assert mesh.p1[0] <= c[0] <= mesh.p2[0]
             assert mesh.p1[1] <= c[1] <= mesh.p2[1]
             assert mesh.p1[2] <= c[2] <= mesh.p2[2]

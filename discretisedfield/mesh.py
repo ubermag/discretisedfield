@@ -152,18 +152,16 @@ class Mesh(object):
                 self.p1[1] + 0.5*self.l[1],
                 self.p1[2] + 0.5*self.l[2])
 
-    def random_coord(self):
-        """Generate a random coordinate in the domain.
+    def random_point(self):
+        """Generate a random mesh point.
 
         Returns:
-          A random domain coordinate.
+          A random mesh point tuple of coordinates.
 
         """
-        c = (self.p1[0] + random.random()*self.l[0],
-             self.p1[1] + random.random()*self.l[1],
-             self.p1[2] + random.random()*self.l[2])
-
-        return c
+        return (self.p1[0] + random.random()*self.l[0],
+                self.p1[1] + random.random()*self.l[1],
+                self.p1[2] + random.random()*self.l[2])
 
     def index2coord(self, i):
         """Convert the cell index to its coordinate.
