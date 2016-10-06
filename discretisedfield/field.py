@@ -62,10 +62,8 @@ class Field(object):
 
         """
         if not hasattr(self, "f"):
-            self._f = np.zeros([self.mesh.n[0],
-                                self.mesh.n[1],
-                                self.mesh.n[2],
-                                self.dim])
+            self._f = np.zeros(self.mesh.n,
+                               dtype=[("x", "<f8"), ("y", "<f8"), ("z", "<f8")])
 
         if isinstance(value, (int, float)):
             self._f.fill(value)
@@ -82,7 +80,7 @@ class Field(object):
             self.normalise()
 
     def normalise(self):
-        """Normalise the finite difference vector field."""
+        """Normalise the vector field to self.normalisedto value."""
         if self.dim == 1:
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
@@ -115,17 +113,10 @@ class Field(object):
           Finite difference field average.
 
         """
-        # Scalar field.
         if self.dim == 1:
-            return np.mean(self.f)
-
-        # Vector field.
+            return self.f.mean(axis=(0, 1, 2))
         else:
-            average = []
-            for i in range(self.dim):
-                average.append(np.mean(self.f[:, :, :, i]))
-
-        return tuple(average)
+            return tuple(self.f.mean(axis=(0, 1, 2)))
 
     def slice_field(self, axis, point):
         """Returns the slice of a finite difference field.
