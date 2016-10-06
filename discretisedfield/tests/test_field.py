@@ -143,14 +143,6 @@ class TestField(object):
             with pytest.raises(TypeError):
                 f.f = "string"
 
-    def test_set_at_index(self):
-        value = [1.1, -2e-9, 3.5]
-        for f in self.vector_fs:
-            f.set_at_index((0, 0, 0), value)
-            assert f.f[0, 0, 0, 0] == value[0]
-            assert f.f[0, 0, 0, 1] == value[1]
-            assert f.f[0, 0, 0, 2] == value[2]
-
     def test_average_scalar_field(self):
         value = -1e-3 + np.pi
         tol = 1e-12

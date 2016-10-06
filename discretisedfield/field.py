@@ -94,17 +94,6 @@ class Field(object):
         i, j, k = self.mesh.point2index(p)
         return self.f[i, j, k]
 
-    def set_at_index(self, i, value):
-        """Set the field value at index i.
-
-        This method sets the field value at a single index i.
-
-        Args:
-          i (tuple): A length 3 tuple of integers (ix, iy, iz)
-
-        """
-        self.f[i[0], i[1], i[2], :] = value
-
     def average(self):
         """Compute the finite difference field average.
 
@@ -403,7 +392,7 @@ def read_oommf_file(filename, normalisedto=None, name="unnamed"):
                 i = (ix, iy, iz)
                 line_data = lines[data_first_line+counter]
                 value = [float(vi) for vi in line_data.split()]
-                field.set_at_index(i, value)
+                field.f[ix, iy, iz, :] = value
 
                 counter += 1
 
