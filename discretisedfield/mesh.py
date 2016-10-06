@@ -113,7 +113,7 @@ class Mesh(object):
                                   "abs(p2[{}]-p1[{}]) % "
                                   "cell[{}].").format(i, i, i))
 
-        # Compute the number of cells in x, y, and z directions.
+        # Compute the number of cells in all three dimensions.
         self.n = (int(round(self.l[0]/self.cell[0])),
                   int(round(self.l[1]/self.cell[1])),
                   int(round(self.l[2]/self.cell[2])))

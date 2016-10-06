@@ -83,6 +83,15 @@ class TestMesh(object):
             with pytest.raises(TypeError):
                 mesh = Mesh(p1, p2, cell)
 
+    def test_domain_edge_zero(self):
+        p1 = (0, 100e-9, 1e-9)
+        p2 = (150e-9, 100e-9, 6e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        name = "test_mesh"
+
+        with pytest.raises(TypeError):
+            mesh = Mesh(p1, p2, cell, name=name)
+
     def test_init_d_not_multiple_of_l(self):
         p1 = (0, -4, 11)
         p2 = (15, 10, 16)
