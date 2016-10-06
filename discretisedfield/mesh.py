@@ -162,9 +162,9 @@ class Mesh(object):
           A mesh centre point tuple of coordinates.
 
         """
-        return (self.p1[0] + 0.5*self.l[0],
-                self.p1[1] + 0.5*self.l[1],
-                self.p1[2] + 0.5*self.l[2])
+        return (self.pmin[0] + 0.5*self.l[0],
+                self.pmin[1] + 0.5*self.l[1],
+                self.pmin[2] + 0.5*self.l[2])
 
     def random_point(self):
         """Generate a random mesh point.

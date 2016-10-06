@@ -11,6 +11,5 @@ def test_matplotlib_warning():
     command = """python3 -c "import discretisedfield" """
     status, output = subprocess.getstatusoutput(command)
 
-    print("output = {}".format(output))
     assert status == 0
     assert len(output) == 0

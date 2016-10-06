@@ -1,4 +1,5 @@
 import pytest
+import matplotlib
 import numpy as np
 from discretisedfield.mesh import Mesh
 
@@ -233,9 +234,11 @@ class TestMesh(object):
         mesh = Mesh(p1, p2, cell)
 
         for i in [(-0.5, -3.95, 11.25), (14.5, 10.05, 12.25)]:
+            assert isinstance(mesh.index2point(mesh.point2index(i)), tuple)
             assert mesh.index2point(mesh.point2index(i)) == i
 
         for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
+            assert isinstance(mesh.point2index(mesh.index2point(i)), tuple)
             assert mesh.point2index(mesh.index2point(i)) == i
                                     
     def test_cell_centre(self):
@@ -244,56 +247,71 @@ class TestMesh(object):
         cell = (10e-9, 5e-9, 1e-9)
         mesh = Mesh(p1, p2, cell)
 
+        assert isinstance(mesh.cell_centre((500e-9, 0, 0)), tuple)
         assert mesh.cell_centre((0, 0, 0)) == (5e-9, 2.5e-9, 0.5e-9)
 
     def test_centre(self):
-        p1 = (-18.5, 5, 0)
-        p2 = (10, 10, 10)
+        p1 = (-18.5, 10, 0)
+        p2 = (10, 5, 10)
         cell = (0.1, 0.25, 2)
-        name = "test_mesh"
-
-        mesh = Mesh(p1, p2, cell, name=name)
-
+        mesh = Mesh(p1, p2, cell)
+        assert isinstance(mesh.centre(), tuple)
         assert mesh.centre() == (-4.25, 7.5, 5)
+
+        p1 = (500e-9, 125e-9, 3e-9)
+        p2 = (0, 0, 0)
+        cell = (10e-9, 5e-9, 1e-9)
+        mesh = Mesh(p1, p2, cell)
+        assert isinstance(mesh.centre(), tuple)
+        assert mesh.centre() == (250e-9, 62.5e-9, 1.5e-9)
+
+    def test_various_conversions(self):
+        p1 = (0, 0, 0)
+        p2 = (9, 5, -11)
+        cell = (1, 1, 1)
+        mesh = Mesh(p1, p2, cell)
+
+        assert mesh.point2index(mesh.centre()) == (4, 2, 5)
 
     def test_random_point(self):
         p1 = (-18.5, 5, 0)
-        p2 = (10, 10, 10)
-        cell = (0.1, 0.25, 2)
-        name = "test_mesh"
+        p2 = (10, -10, 10e-9)
+        cell = (0.1e-9, 0.25, 2e-9)
+        mesh = Mesh(p1, p2, cell)
 
-        mesh = Mesh(p1, p2, cell, name=name)
-
-        for j in range(500):
-            c = mesh.random_point()
-            assert mesh.p1[0] <= c[0] <= mesh.p2[0]
-            assert mesh.p1[1] <= c[1] <= mesh.p2[1]
-            assert mesh.p1[2] <= c[2] <= mesh.p2[2]
+        for _ in range(20):
+            p = mesh.random_point()
+            assert isinstance(p, tuple)
+            for i in range(3):
+                assert mesh.pmin[i] <= p[i] <= mesh.pmax[i]
 
     def test_plot(self):
         for arg in self.valid_args:
-            p1 = arg[0]
-            p2 = arg[1]
-            cell = arg[2]
-
+            p1, p2, cell = arg
             mesh = Mesh(p1, p2, cell)
 
-            mesh.plot()
+            assert isinstance(mesh.plot(), matplotlib.figure.Figure)
 
     def test_script(self):
         for arg in self.valid_args:
-            p1 = arg[0]
-            p2 = arg[1]
-            cell = arg[2]
-
+            p1, p2, cell = arg
             mesh = Mesh(p1, p2, cell)
+
             with pytest.raises(NotImplementedError):
                 mesh.script()
 
-    def test_discretirsation_greater_or_not_multiple_of_domain(self):
+    def test_cell_greater_than_mesh_domain(self):
         p1 = (0, 0, 0)
         p2 = (1., 1., 1.)
 
-        for d in [(2, 1, 1), (1, 2, 1), (1, 1, 3), (1, 5, 0.1)]:
+        for d in [(2, 1, 1), (1, 2, 1), (1, 1, 2), (1, 5, 0.1)]:
+            with pytest.raises(ValueError) as excinfo:
+                mymesh = Mesh(p1, p2, d)
+
+    def test_mesh_domain_not_aggregate_of_cell(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+
+        for d in [(0.6, 1, 1), (1, 2.2, 1), (1, 1, 4), (2, 5, 0.8)]:
             with pytest.raises(ValueError) as excinfo:
                 mymesh = Mesh(p1, p2, d)
