@@ -81,6 +81,20 @@ class Field(object):
         if self.normalisedto is not None:
             self.normalise()
 
+    def normalise(self):
+        """Normalise the finite difference vector field."""
+        if self.dim == 1:
+            raise NotImplementedError("Normalisation is supported only "
+                                      "for vector fields.")
+
+        norm_squared = 0
+        for i in range(self.dim):
+            norm_squared += self.f[:, :, :, i]**2
+        norm = np.sqrt(norm_squared)
+
+        for i in range(self.dim):
+            self.f[:, :, :, i] = self.normalisedto*self.f[:, :, :, i]/norm
+
     def __call__(self, p):
         """Sample the field at point p.
 
@@ -243,30 +257,6 @@ class Field(object):
                 counter += 1
 
         return plot_matrix
-
-    def normalise(self):
-        """Normalise the finite difference vector field.
-
-        If the finite difference field is multidimensional (vector),
-        its value is normalised so that at all points.
-
-        """
-        # Scalar field.
-        if self.dim == 1:
-            raise NotImplementedError
-
-        # Vector field.
-        else:
-            # Compute norm.
-            f_norm = 0
-            for j in range(self.dim):
-                f_norm += self.f[:, :, :, j]**2
-            f_norm = np.sqrt(f_norm)
-
-            # Normalise every component.
-            for j in range(self.dim):
-                normalisedvalue = self.normalisedto*self.f[:, :, :, j]/f_norm
-                self.f[:, :, :, j] = normalisedvalue
 
     def write_oommf_file(self, filename):
         """Write the FD field to the OOMMF (omf, ohf) file.
