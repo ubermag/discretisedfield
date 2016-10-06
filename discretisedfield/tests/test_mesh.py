@@ -15,23 +15,20 @@ class TestMesh(object):
                             (3e-9, 1e-9, 1e-9)],
                            [(-1.5e-9, -5e-9, -5e-9),
                             (0, 0, 0),
+                            (0.5e-9, 1e-9, 5e-9)],
+                           [(0, 0, 0),
+                            (-1.5e-9, -5e-9, -5e-9),
                             (0.5e-9, 1e-9, 5e-9)]]
 
         self.invalid_args = [[(0, 0, 0),
                               (5, 5, 5),
                               (-1, 1, 1)],
-                             [(0, 0, 0),
-                              (5e-9, 5e-9, 5e-9),
-                              (2, 2, 2)],
                              ["1",
                               (1, 1, 1),
                               (0, 0, 1e-9)],
                              [(-1.5e-9, -5e-9, "a"),
                               (1.5e-9, 15e-9, 16e-9),
                               (5, 1, -1e-9)],
-                             [(-1.5e-9, -5e-9, 0),
-                              (1.5e-9, 15e-9, 16e-9),
-                              (-2e-9, 1, 1e-9)],
                              [(-1.5e-9, -5e-9, 0),
                               (1.5e-9, 16e-9),
                               (5, 1, 1e-9)],
@@ -92,7 +89,7 @@ class TestMesh(object):
         cell = (1, 5, 1)
         name = "test_mesh"
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             mesh = Mesh(p1, p2, cell, name=name)
 
     def test_init_wrong_name(self):
@@ -219,10 +216,5 @@ class TestMesh(object):
         p2 = (1., 1., 1.)
 
         for d in [(2, 1, 1), (1, 2, 1), (1, 1, 3), (1, 5, 0.1)]:
-            with pytest.raises(TypeError) as excinfo:
+            with pytest.raises(ValueError) as excinfo:
                 mymesh = Mesh(p1, p2, d)
-            assert "Discretisation" in str(excinfo.value)
-            assert "cell" in str(excinfo.value)
-            assert "greater" in str(excinfo.value)
-            assert "multiple" in str(excinfo.value)
-            assert "domain" in str(excinfo.value)

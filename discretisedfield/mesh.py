@@ -1,11 +1,3 @@
-"""This module is a Python package that provides:
-
-- Creating and plotting finite difference mesh.
-
-It is a member of JOOMMF project - a part of OpenDreamKit
-Horizon 2020 European Research Infrastructure project.
-
-"""
 import random
 import numpy as np
 import joommfutil.typesystem as ts
@@ -15,15 +7,14 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def plot_cube(ax, p1, p2, color='blue', linewidth=2):
     """
-    Plot a cube on axis that spans between p1 and p2.
+    Plots a cube that spans between p1 and p2 on the given axis.
 
     Args:
-      p1 (tuple, list, np.ndarray): The minimum coordinate range.
-        p1 is of length 3 and defines the minimum x, y, and z
-        coordinates of the finite difference domain: (xmin, ymin, zmax)
-      p2 (tuple, list, np.ndarray): The maximum coordinate range.
-        p2 is of length 3 and defines the maximum x, y, and z
-        coordinates of the finite difference domain: (xmax, ymax, zmax)
+      ax (matplolib axis): matplolib axis object
+      p1 (tuple, list, np.ndarray): First cube point
+        p1 is of length 3 (xmin, ymin, zmax).
+      p2 (tuple, list, np.ndarray): Second cube point
+        p2 is of length 3 (xmin, ymin, zmax).
       color (str): matplotlib color string
       linewidth (Real): matplotlib linewidth parameter
 
@@ -31,6 +22,7 @@ def plot_cube(ax, p1, p2, color='blue', linewidth=2):
     x1, y1, z1 = p1[0], p1[1], p1[2]
     x2, y2, z2 = p2[0], p2[1], p2[2]
 
+    # Plot individual lines (edges) of a cube.
     ax.plot([x1, x2], [y1, y1], [z1, z1], color=color, linewidth=linewidth)
     ax.plot([x1, x2], [y2, y2], [z1, z1], color=color, linewidth=linewidth)
     ax.plot([x1, x2], [y1, y1], [z2, z2], color=color, linewidth=linewidth)
@@ -52,6 +44,7 @@ def plot_cube(ax, p1, p2, color='blue', linewidth=2):
 @ts.typesystem(p1=ts.RealVector(size=3),
                p2=ts.RealVector(size=3),
                cell=ts.PositiveRealVector(size=3),
+               l=ts.PositiveRealVector(size=3),
                name=ts.ObjectName)
 class Mesh(object):
     def __init__(self, p1, p2, cell, name="mesh"):
@@ -59,35 +52,33 @@ class Mesh(object):
         Creates a rectangular finite difference mesh.
 
         Args:
-          p1 (tuple, list, np.ndarray): The minimum coordinate range.
-            p1 is of length 3 and defines the minimum x, y, and z
-            coordinates of the finite difference domain: (xmin, ymin, zmax)
-          p2 (tuple, list, np.ndarray): The maximum coordinate range.
-            p2 is of length 3 and defines the maximum x, y, and z
-            coordinates of the finite difference domain: (xmax, ymax, zmax)
-          d (tuple, list, np.ndarray): discretisation
-            d is of length 3 and defines the discretisation steps in
-            x, y, and z directions: (dx, dy, dz)
-          name (Optional[str]): Mesh name.
+          p1 (tuple, list, np.ndarray): First mesh domain point
+            p1 is of length 3 (xmin, ymin, zmax).
+          p2 (tuple, list, np.ndarray): Second mesh domain point
+            p2 is of length 3 (xmin, ymin, zmax).
+          cell (tuple, list, np.ndarray): Discretisation cell size
+            cell is of length 3 and defines the discretisation steps in
+            x, y, and z directions: (dx, dy, dz).
+          name (Optional[str]): Mesh name
 
         Attributes:
-          p1 (tuple, list, np.ndarray): The minimum coordinate range
+          p1 (tuple, list, np.ndarray): First mesh domain point
 
-          p2 (tuple, list, np.ndarray): The maximum coordinate range
+          p2 (tuple, list, np.ndarray): Second mesh domain point
 
-          d (tuple, list, np.ndarray): Discretisation cell size
+          cell (tuple, list, np.ndarray): Discretisation cell size
 
           name (str): Mesh name
 
           l (tuple): length of domain x, y, and z edges (lx, ly, lz):
 
-            lx = xmax - xmin
+            lx = abs(p2[0] - p1[0])
 
-            ly = ymax - ymin
+            ly = abs(p2[1] - p1[2])
 
-            lz = zmax - zmin
+            lz = abs(p2[2] - p1[2])
 
-          n (tuple): The number of cells in all three dimensions (nx, ny, nz):
+          n (tuple): The number of cells in three dimensions (nx, ny, nz):
 
             nx = lx/dx
 
@@ -96,25 +87,31 @@ class Mesh(object):
             nz = lz/dz
 
         """
-        tol = 1e-12
-        # check whether cell size is greater than or not a multiple of domain
-        for i in range(3):
-            if cell[i] > abs(p2[i] - p1[i]) or \
-               cell[i] - tol > (p2[i] - p1[i]) % cell[i] > tol:
-                msg = "Discretisation cell index d[{}]={} ".format(i, cell[i])
-                msg += "is greater or not a multiple of simulation domain = "
-                msg += "p2[{}] - p1[{}] = {}.".format(i, i, abs(p2[i] - p1[i]))
-                raise TypeError(msg)
-
         self.p1 = p1
         self.p2 = p2
         self.cell = cell
         self.name = name
 
         # Compute domain edge lengths.
-        self.l = (self.p2[0]-self.p1[0],
-                  self.p2[1]-self.p1[1],
-                  self.p2[2]-self.p1[2])
+        self.l = (abs(self.p2[0]-self.p1[0]),
+                  abs(self.p2[1]-self.p1[1]),
+                  abs(self.p2[2]-self.p1[2]))
+
+        tol = 1e-12  # picometer tolerance
+        # Check if the discretisation cell size is greater than the domain.
+        for i in range(3):
+            if self.cell[i] > self.l[i]:
+                raise ValueError(("Discretisation cell is greater than "
+                                  "the domain dimension: cell[{}] > "
+                                  "abs(p2[{}]-p1[{}]).").format(i, i, i))
+
+        # Check if the domain is not an aggregate of discretisation cell.
+        for i in range(3):
+            if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
+                raise ValueError(("Domain is not a multiple (aggregate) of "
+                                  "the discretisation cell: "
+                                  "abs(p2[{}]-p1[{}]) % "
+                                  "cell[{}].").format(i, i, i))
 
         # Compute the number of cells in x, y, and z directions.
         self.n = (int(round(self.l[0]/self.cell[0])),
