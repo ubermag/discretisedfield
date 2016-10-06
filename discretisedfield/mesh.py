@@ -137,21 +137,20 @@ class Mesh(object):
 
     def _ipython_display_(self):
         """Shows a matplotlib figure of sample range and discretisation."""
+        # TODO: plt.show() works only with nbagg
         fig = self.plot_mesh()  # pragma: no cover
         plt.show()  # pragma: no cover
 
-    def domain_centre(self):
-        """Compute and return the domain centre coordinate.
+    def centre(self):
+        """Compute and return the mesh centre point.
 
         Returns:
-          A domain centre coordinate tuple.
+          A mesh centre point tuple of coordinates.
 
         """
-        c = (self.p1[0] + 0.5*self.l[0],
-             self.p1[1] + 0.5*self.l[1],
-             self.p1[2] + 0.5*self.l[2])
-
-        return c
+        return (self.p1[0] + 0.5*self.l[0],
+                self.p1[1] + 0.5*self.l[1],
+                self.p1[2] + 0.5*self.l[2])
 
     def random_coord(self):
         """Generate a random coordinate in the domain.

@@ -200,7 +200,7 @@ class Field(object):
             axis1_coords = np.zeros(len(axis1_indices))
             axis2_coords = np.zeros(len(axis2_indices))
 
-            sample_centre = list(self.mesh.domain_centre())
+            sample_centre = list(self.mesh.centre())
             sample_centre[slice_num] = point
             sample_centre = tuple(sample_centre)
 

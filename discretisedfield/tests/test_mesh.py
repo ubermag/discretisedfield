@@ -176,7 +176,7 @@ class TestMesh(object):
             mesh.coord2index((6, 5+1e-6, 5))
             mesh.coord2index((0, 0, 10+1e-10))
 
-    def test_domain_centre(self):
+    def test_centre(self):
         p1 = (-18.5, 5, 0)
         p2 = (10, 10, 10)
         cell = (0.1, 0.25, 2)
@@ -184,7 +184,7 @@ class TestMesh(object):
 
         mesh = Mesh(p1, p2, cell, name=name)
 
-        assert mesh.domain_centre() == (-4.25, 7.5, 5)
+        assert mesh.centre() == (-4.25, 7.5, 5)
 
     def test_random_coord(self):
         p1 = (-18.5, 5, 0)
