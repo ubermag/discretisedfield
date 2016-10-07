@@ -2,7 +2,7 @@ import os
 import random
 import pytest
 import numpy as np
-from discretisedfield import Mesh, Field, read_oommf_file
+import discretisedfield as df
 import matplotlib
 
 
@@ -35,21 +35,21 @@ class TestField(object):
 
         meshes = []
         for i in range(len(p1_list)):
-            mesh = Mesh(p1_list[i], p2_list[i], cell_list[i])
+            mesh = df.Mesh(p1_list[i], p2_list[i], cell_list[i])
             meshes.append(mesh)
         return meshes
 
     def create_scalar_fs(self):
         scalar_fs = []
         for mesh in self.meshes:
-            f = Field(mesh, dim=1)
+            f = df.Field(mesh, dim=1)
             scalar_fs.append(f)
         return scalar_fs
 
     def create_vector_fs(self):
         vector_fs = []
         for mesh in self.meshes:
-            f = Field(mesh, dim=3)
+            f = df.Field(mesh, dim=3)
             vector_fs.append(f)
         return vector_fs
 
@@ -77,12 +77,12 @@ class TestField(object):
         p1 = (0, -4, 11)
         p2 = (15, 10.1, 16.5)
         d = (1, 0.1, 0.5)
-        mesh = Mesh(p1, p2, d)
+        mesh = df.Mesh(p1, p2, d)
         dim = 2
         name = "test_field"
         value = [1, 2]
 
-        f = Field(mesh, dim=2, value=value, name=name)
+        f = df.Field(mesh, dim=2, value=value, name=name)
 
         assert f.name == name
 
@@ -92,7 +92,7 @@ class TestField(object):
     def test_wrong_init(self):
         mesh = "wrong_mesh_string"
         with pytest.raises(TypeError):
-            f = Field(mesh, dim=1, name="wrong_field")
+            f = df.Field(mesh, dim=1, name="wrong_field")
 
     def test_set_with_constant(self):
         for value in self.constant_values:
@@ -191,6 +191,15 @@ class TestField(object):
                     with pytest.raises(NotImplementedError):
                         f.normalisedto = norm_value
                         f.f = value
+
+    def test_line_intersection(self):
+        mesh = df.Mesh((0, 0, 0), (10, 10, 10), (1, 1, 1))
+        field = df.Field(mesh, value=(1, 2, 3))
+
+        p, v = field.line_intersection((0, 0, 1), (5, 5, 5))
+
+        assert len(p) == 100
+        assert len(v) == 100
 
     def test_slice_field(self):
         for s in "xyz":
@@ -299,7 +308,7 @@ class TestField(object):
             f.f = value
             f.write_oommf_file(filename)
 
-            f_loaded = read_oommf_file(filename)
+            f_loaded = df.read_oommf_file(filename)
 
             assert f.mesh.p1 == f_loaded.mesh.p1
             assert f.mesh.p2 == f_loaded.mesh.p2

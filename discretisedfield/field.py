@@ -121,6 +121,17 @@ class Field(object):
         """
         return tuple(self.f.mean(axis=(0, 1, 2)))
 
+    def line_intersection(self, l, l0, n=100):
+        """
+        Slice field along line defined with l and l0.
+        """
+        points, values = [], []
+        for _, p in self.mesh.line_intersection(l, l0, n=n):
+            points.append(p)
+            values.append(self.__call__(p))
+
+        return points, values
+
     def slice_field(self, axis, point):
         """Returns the field slice.
 
