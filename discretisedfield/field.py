@@ -132,6 +132,16 @@ class Field(object):
 
         return points, values
 
+    def plot_line_intersection(self, l, l0, n=100):
+        p, v = self.line_intersection(l, l0, n=n)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        ax.plot(v)
+
+        plt.show()
+
     def slice_field(self, axis, point):
         """Returns the field slice.
 
