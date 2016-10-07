@@ -150,7 +150,7 @@ class TestField(object):
             f.f = value
             average = f.average()
 
-            assert abs(average - value) < tol
+            assert abs(average[0] - value) < tol
 
     def test_average_vector_field(self):
         value = np.array([1.1, -2e-3, np.pi])

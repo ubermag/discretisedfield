@@ -4,6 +4,10 @@ import discretisedfield as df
 import matplotlib.pyplot as plt
 
 
+# TODO: rename f
+# TODO: average always return tuple
+# TODO: sample along line
+# TODO: sample plane
 @ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
@@ -115,10 +119,7 @@ class Field(object):
           Finite difference field average.
 
         """
-        if self.dim == 1:
-            return self.f.mean(axis=(0, 1, 2))
-        else:
-            return tuple(self.f.mean(axis=(0, 1, 2)))
+        return tuple(self.f.mean(axis=(0, 1, 2)))
 
     def slice_field(self, axis, point):
         """Returns the field slice.
