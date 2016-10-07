@@ -1,44 +1,9 @@
 import random
 import numpy as np
 import joommfutil.typesystem as ts
+import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
-
-def plot_cube(ax, p1, p2, color='blue', linewidth=2):
-    """
-    Plots a cube that spans between p1 and p2 on the given axis.
-
-    Args:
-      ax (matplolib axis): matplolib axis object
-      p1 (tuple, list, np.ndarray): First cube point
-        p1 is of length 3 (xmin, ymin, zmax).
-      p2 (tuple, list, np.ndarray): Second cube point
-        p2 is of length 3 (xmin, ymin, zmax).
-      color (str): matplotlib color string
-      linewidth (Real): matplotlib linewidth parameter
-
-    """
-    x1, y1, z1 = p1[0], p1[1], p1[2]
-    x2, y2, z2 = p2[0], p2[1], p2[2]
-
-    # Plot individual lines (edges) of a cube.
-    ax.plot([x1, x2], [y1, y1], [z1, z1], color=color, linewidth=linewidth)
-    ax.plot([x1, x2], [y2, y2], [z1, z1], color=color, linewidth=linewidth)
-    ax.plot([x1, x2], [y1, y1], [z2, z2], color=color, linewidth=linewidth)
-    ax.plot([x1, x2], [y2, y2], [z2, z2], color=color, linewidth=linewidth)
-
-    ax.plot([x1, x1], [y1, y2], [z1, z1], color=color, linewidth=linewidth)
-    ax.plot([x2, x2], [y1, y2], [z1, z1], color=color, linewidth=linewidth)
-    ax.plot([x1, x1], [y1, y2], [z2, z2], color=color, linewidth=linewidth)
-    ax.plot([x2, x2], [y1, y2], [z2, z2], color=color, linewidth=linewidth)
-
-    ax.plot([x1, x1], [y1, y1], [z1, z2], color=color, linewidth=linewidth)
-    ax.plot([x2, x2], [y1, y1], [z1, z2], color=color, linewidth=linewidth)
-    ax.plot([x1, x1], [y2, y2], [z1, z2], color=color, linewidth=linewidth)
-    ax.plot([x2, x2], [y2, y2], [z1, z2], color=color, linewidth=linewidth)
-
-    return ax
 
 
 @ts.typesystem(p1=ts.RealVector(size=3),
@@ -259,20 +224,32 @@ class Mesh(object):
                       self.pmin[1] + self.cell[1],
                       self.pmin[2] + self.cell[2])
 
-        plot_cube(ax, self.pmin, self.pmax)
-        plot_cube(ax, self.pmin, cell_point, color="red", linewidth=1)
+        dfu.plot_box(ax, self.pmin, self.pmax)
+        dfu.plot_box(ax, self.pmin, cell_point, color="red", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
         return fig
 
     def cells(self):
-        """Generator method iterating through all mesh cells and
+        """Generator iterating through all mesh cells and
         yielding mesh indices and centre coordinates."""
         for k in range(self.n[2]):
             for j in range(self.n[1]):
                 for i in range(self.n[0]):
                     yield (i, j, k), self.index2point((i, j, k))
+
+    def line_intersection(self, l, l0, n=100):
+        """Generator yielding mesh cell indices and their centre coordinates,
+        along the line defined with l and l0 in n points."""
+        p1, p2 = dfu.box_line_intersection(self.pmin, self.pmax, l, l0)
+        p1, p2 = np.array(p1), np.array(p2)
+
+        dl = (p2 - p1) / (n-1)
+
+        for i in range(n):
+            point = p1 + i*dl
+            yield self.point2index(point), tuple(point)
 
     def script(self):
         """This method should be implemented by a specific

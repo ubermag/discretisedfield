@@ -1,7 +1,7 @@
 import pytest
 import matplotlib
 import numpy as np
-from discretisedfield.mesh import Mesh
+import discretisedfield as df
 
 
 class TestMesh(object):
@@ -52,7 +52,7 @@ class TestMesh(object):
         p2 = (15, 10.1, 11)
         cell = (1, 0.1, 0.5)
         name = "test_mesh"
-        mesh = Mesh(p1, p2, cell, name=name)
+        mesh = df.Mesh(p1, p2, cell, name=name)
 
         assert isinstance(mesh.p1, tuple)
         assert mesh.p1 == p1
@@ -82,7 +82,7 @@ class TestMesh(object):
     def test_init_valid_args(self):
         for arg in self.valid_args:
             p1, p2, cell = arg
-            mesh = Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1, p2, cell)
 
             assert isinstance(mesh.p1, tuple)
             assert mesh.p1 == tuple(p1)
@@ -101,7 +101,7 @@ class TestMesh(object):
         for arg in self.invalid_args:
             p1, p2, cell = arg
             with pytest.raises(TypeError):
-                mesh = Mesh(p1, p2, cell)
+                mesh = df.Mesh(p1, p2, cell)
 
     def test_zero_domain_edge(self):
         # Exception is raised by the descriptor
@@ -109,26 +109,26 @@ class TestMesh(object):
         p2 = (150e-9, 100e-9, 6e-9)
         cell = (1e-9, 1e-9, 1e-9)
         with pytest.raises(TypeError):
-            mesh = Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1, p2, cell)
 
         p1 = (0, 100e-9, 0)
         p2 = (150e-9, 101e-9, 0)
         cell = (1e-9, 1e-9, 1e-9)
         with pytest.raises(TypeError):
-            mesh = Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1, p2, cell)
 
     def test_init_d_not_multiple_of_l(self):
         p1 = (0, -4, 11)
         p2 = (15, 20, 16e-9)
         cell = (1, 5, 1e-9)
         with pytest.raises(ValueError):
-            mesh = Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1, p2, cell)
 
         p1 = (0, 0, 0)
         p2 = (500e-9, 125e-9, 3e-9)
         cell = (2.5e-9, 2.5e-9, 2.5e-9)
         with pytest.raises(ValueError):
-            mesh = Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1, p2, cell)
 
     def test_init_invalid_name(self):
         # Exception raised by the descriptor
@@ -137,14 +137,14 @@ class TestMesh(object):
         cell = (2.5e-9, 2.5e-9, 3e-9)
         for name in ["mesh name", "2name", " ", 5]:
             with pytest.raises(TypeError):
-                mesh = Mesh(p1, p2, cell, name=name)
+                mesh = df.Mesh(p1, p2, cell, name=name)
 
     def test_repr(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
         name = "meshname"
-        mesh = Mesh(p1, p2, cell, name=name)
+        mesh = df.Mesh(p1, p2, cell, name=name)
 
         rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
                 "cell=(1, 0.1, 0.5), name=\"meshname\")")
@@ -155,7 +155,7 @@ class TestMesh(object):
         p1 = (15, -4, 12.5)
         p2 = (-1, 10.1, 11)
         cell = (1, 0.1, 0.5)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         assert mesh.index2point((0, 0, 0)) == (-0.5, -3.95, 11.25)
         assert mesh.index2point((5, 10, 1)) == (4.5, -2.95, 11.75)
@@ -165,7 +165,7 @@ class TestMesh(object):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         # Correct minimum index
         assert isinstance(mesh.index2point((0, 0, 0)), tuple)
@@ -191,7 +191,7 @@ class TestMesh(object):
         p1 = (-10e-9, -5e-9, 10e-9)
         p2 = (10e-9, 5e-9, 0)
         cell = (1e-9, 5e-9, 1e-9)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         # (0, 0, 0) cell
         assert mesh.point2index((-10e-9, -5e-9, 0)) == (0, 0, 0)
@@ -211,7 +211,7 @@ class TestMesh(object):
         p1 = (-10, 5, 0)
         p2 = (10, -5, 10e-9)
         cell = (1, 5, 1e-9)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         tol = 1e-12
         with pytest.raises(ValueError):
@@ -231,7 +231,7 @@ class TestMesh(object):
         p1 = (15, -4, 12.5)
         p2 = (-1, 10.1, 11)
         cell = (1, 0.1, 0.5)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         for i in [(-0.5, -3.95, 11.25), (14.5, 10.05, 12.25)]:
             assert isinstance(mesh.index2point(mesh.point2index(i)), tuple)
@@ -245,7 +245,7 @@ class TestMesh(object):
         p1 = (500e-9, 125e-9, 3e-9)
         p2 = (0, 0, 0)
         cell = (10e-9, 5e-9, 1e-9)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         assert isinstance(mesh.cell_centre((500e-9, 0, 0)), tuple)
         assert mesh.cell_centre((0, 0, 0)) == (5e-9, 2.5e-9, 0.5e-9)
@@ -254,14 +254,14 @@ class TestMesh(object):
         p1 = (-18.5, 10, 0)
         p2 = (10, 5, 10)
         cell = (0.1, 0.25, 2)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
         assert isinstance(mesh.centre(), tuple)
         assert mesh.centre() == (-4.25, 7.5, 5)
 
         p1 = (500e-9, 125e-9, 3e-9)
         p2 = (0, 0, 0)
         cell = (10e-9, 5e-9, 1e-9)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
         assert isinstance(mesh.centre(), tuple)
         assert mesh.centre() == (250e-9, 62.5e-9, 1.5e-9)
 
@@ -269,7 +269,7 @@ class TestMesh(object):
         p1 = (0, 0, 0)
         p2 = (9, 5, -11)
         cell = (1, 1, 1)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         assert mesh.point2index(mesh.centre()) == (4, 2, 5)
 
@@ -277,7 +277,7 @@ class TestMesh(object):
         p1 = (-18.5, 5, 0)
         p2 = (10, -10, 10e-9)
         cell = (0.1e-9, 0.25, 2e-9)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         for _ in range(20):
             p = mesh.random_point()
@@ -288,7 +288,7 @@ class TestMesh(object):
     def test_plot(self):
         for arg in self.valid_args:
             p1, p2, cell = arg
-            mesh = Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1, p2, cell)
 
             assert isinstance(mesh.plot(), matplotlib.figure.Figure)
 
@@ -296,32 +296,67 @@ class TestMesh(object):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
-        mesh = Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1, p2, cell)
 
         counter = 0
         for cell in mesh.cells():
             assert isinstance(cell, tuple)
             assert len(cell) == 2
-            assert isinstance(cell[0], tuple)
-            assert len(cell[0]) == 3
-            assert isinstance(cell[1], tuple)
-            assert len(cell[1]) == 3
 
             i, p = cell
+            assert isinstance(i, tuple)
+            assert len(i) == 3
+            assert isinstance(p, tuple)
+            assert len(p) == 3
             for j in range(3):
                 assert i[j] >= 0
                 assert i[j] <= 9
                 assert p[j] >= 0.5
                 assert p[j] <= 9.5
-            
+
             counter += 1
 
         assert counter == 1000
 
+    def test_line_intersection(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1, p2, cell)
+
+        li = mesh.line_intersection((1, 1, 1), (5, 5, 5), n=10)
+        for point in li:
+            assert isinstance(point, tuple)
+            assert len(point) == 2
+
+            i, p = point
+            assert isinstance(i, tuple)
+            assert len(i) == 3
+            assert isinstance(p, tuple)
+            assert len(p) == 3
+            for j in range(3):
+                assert i[j] >= 0
+                assert i[j] <= 10
+                assert p[j] >= 0
+                assert p[j] <= 10
+
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1, p2, cell)
+
+        li = list(mesh.line_intersection((1, 0, 0), (0, 0, 0), n=30))
+
+        assert len(li) == 30
+        assert li[0][0] == (0, 0, 0)
+        assert li[0][1] == (0, 0, 0)
+        assert li[-1][0] == (9, 0, 0)
+        assert li[-1][1] == (10, 0, 0)
+
     def test_script(self):
         for arg in self.valid_args:
             p1, p2, cell = arg
-            mesh = Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1, p2, cell)
 
             with pytest.raises(NotImplementedError):
                 mesh.script()
@@ -332,7 +367,7 @@ class TestMesh(object):
 
         for d in [(2, 1, 1), (1, 2, 1), (1, 1, 2), (1, 5, 0.1)]:
             with pytest.raises(ValueError) as excinfo:
-                mymesh = Mesh(p1, p2, d)
+                mymesh = df.Mesh(p1, p2, d)
 
     def test_mesh_domain_not_aggregate_of_cell(self):
         p1 = (0, 0, 0)
@@ -340,4 +375,4 @@ class TestMesh(object):
 
         for d in [(0.6, 1, 1), (1, 2.2, 1), (1, 1, 4), (2, 5, 0.8)]:
             with pytest.raises(ValueError) as excinfo:
-                mymesh = Mesh(p1, p2, d)
+                mymesh = df.Mesh(p1, p2, d)
