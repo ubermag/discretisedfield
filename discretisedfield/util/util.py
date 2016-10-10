@@ -102,10 +102,22 @@ def box_line_intersection(pmin, pmax, l, l0):
     # Remove False elements from the list.
     points = list(filter(lambda a: a is not False, points))
 
-    # Find unique points.
-    points = tuple(set(points))
+    # Find unique points inside box.
+    points = points_inside_box(tuple(set(points)), pmin, pmax)
 
     if len(points) != 2:
         return False
     else:
         return points
+
+
+def points_inside_box(points, pmin, pmax):
+    resulting_points = []
+    for point in points:
+        if pmin[0] <= point[0] <= pmax[0] and \
+           pmin[1] <= point[1] <= pmax[1] and \
+           pmin[2] <= point[2] <= pmax[2]:
+            resulting_points.append(point)
+
+    return tuple(resulting_points)
+           

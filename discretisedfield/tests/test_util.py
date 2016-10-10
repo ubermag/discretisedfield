@@ -57,3 +57,27 @@ def test_box_line_intersection():
                                        (1, 1, 1), (0, 0, 0))
     assert (0, 0, 0) in points
     assert (1, 1, 1) in points
+
+    points = dfu.box_line_intersection((0, 0, 0), (1, 1, 1),
+                                       (2, 2, 2), (5, 5, 5))
+    assert (0, 0, 0) in points
+    assert (1, 1, 1) in points
+
+    points = dfu.box_line_intersection((0, 0, 0), (1, 1, 1),
+                                       (0, 0, 1), (0.99, 0.5, 0.5))
+    assert (0.99, 0.5, 0) in points
+    assert (0.99, 0.5, 1) in points
+
+    # Special case 1: Line intersection outside the box
+    points = dfu.box_line_intersection((0, 0, 0), (1, 1, 1),
+                                       (1, 0, 0), (5, 5, 5))
+    assert points is False
+
+    points = dfu.box_line_intersection((0, 0, 0), (1, 1, 1),
+                                       (0, 0, 1), (1.01, 0.5, 0.5))
+    assert points is False
+
+    # Special case 2: Only one intersection point
+    points = dfu.box_line_intersection((0, 0, 0), (-1, -1, 1),
+                                       (1, 1, 1), (0, 0, 0))
+    assert points is False
