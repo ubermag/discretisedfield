@@ -225,7 +225,7 @@ class Mesh(object):
                       self.pmin[2] + self.cell[2])
 
         dfu.plot_box(ax, self.pmin, self.pmax)
-        dfu.plot_box(ax, self.pmin, cell_point, color="red", linewidth=1)
+        dfu.plot_box(ax, self.pmin, cell_point, props="r-", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 

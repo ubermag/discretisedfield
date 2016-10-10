@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def plot_line(ax, p1, p2, color="blue", linewidth=2):
+def plot_line(ax, p1, p2, props="b-", linewidth=2):
     """
     Plot a line between points p1 and p2 on axis ax.
 
@@ -9,12 +9,12 @@ def plot_line(ax, p1, p2, color="blue", linewidth=2):
     x1, y1, z1 = p1
     x2, y2, z2 = p2
 
-    ax.plot([x1, x2], [y1, y2], [z1, z2], color=color, linewidth=linewidth)
+    ax.plot([x1, x2], [y1, y2], [z1, z2], props, linewidth=linewidth)
 
     return ax
 
 
-def plot_box(ax, p1, p2, color="blue", linewidth=2):
+def plot_box(ax, p1, p2, props="b-", linewidth=2):
     """
     Plots a cube that spans between p1 and p2 on the given axis.
 
@@ -32,32 +32,20 @@ def plot_box(ax, p1, p2, color="blue", linewidth=2):
     x2, y2, z2 = p2
 
     # Plot individual lines (edges) of a cube.
-    plot_line(ax, (x1, y1, z1), (x2, y1, z1),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x1, y2, z1), (x2, y2, z1),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x1, y1, z2), (x2, y1, z2),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x1, y2, z2), (x2, y2, z2),
-              color=color, linewidth=linewidth)
+    plot_line(ax, (x1, y1, z1), (x2, y1, z1), props, linewidth=linewidth)
+    plot_line(ax, (x1, y2, z1), (x2, y2, z1), props, linewidth=linewidth)
+    plot_line(ax, (x1, y1, z2), (x2, y1, z2), props, linewidth=linewidth)
+    plot_line(ax, (x1, y2, z2), (x2, y2, z2), props, linewidth=linewidth)
 
-    plot_line(ax, (x1, y1, z1), (x1, y2, z1),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x2, y1, z1), (x2, y2, z1),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x1, y1, z2), (x1, y2, z2),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x2, y1, z2), (x2, y2, z2),
-              color=color, linewidth=linewidth)
+    plot_line(ax, (x1, y1, z1), (x1, y2, z1), props, linewidth=linewidth)
+    plot_line(ax, (x2, y1, z1), (x2, y2, z1), props, linewidth=linewidth)
+    plot_line(ax, (x1, y1, z2), (x1, y2, z2), props, linewidth=linewidth)
+    plot_line(ax, (x2, y1, z2), (x2, y2, z2), props, linewidth=linewidth)
 
-    plot_line(ax, (x1, y1, z1), (x1, y1, z2),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x2, y1, z1), (x2, y1, z2),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x1, y2, z1), (x1, y2, z2),
-              color=color, linewidth=linewidth)
-    plot_line(ax, (x2, y2, z1), (x2, y2, z2),
-              color=color, linewidth=linewidth)
+    plot_line(ax, (x1, y1, z1), (x1, y1, z2), props, linewidth=linewidth)
+    plot_line(ax, (x2, y1, z1), (x2, y1, z2), props, linewidth=linewidth)
+    plot_line(ax, (x1, y2, z1), (x1, y2, z2), props, linewidth=linewidth)
+    plot_line(ax, (x2, y2, z1), (x2, y2, z2), props, linewidth=linewidth)
 
     return ax
 

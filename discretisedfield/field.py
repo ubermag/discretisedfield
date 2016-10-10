@@ -1,6 +1,7 @@
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df
+import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
 
@@ -134,14 +135,24 @@ class Field(object):
         return ds, values
 
     def plot_line_intersection(self, l, l0, n=100):
-        p, v = self.line_intersection(l, l0, n=n)
-
+        # Plot schematic representation of intersection.
         fig = plt.figure()
-        ax = fig.add_subplot(111)
+        ax = fig.add_subplot(211, projection="3d")
+        ax.set_aspect("equal")
 
-        ax.plot(v)
+        dfu.plot_box(ax, self.mesh.pmin, self.mesh.pmax)
+        p1, p2 = dfu.box_line_intersection(self.mesh.pmin, self.mesh.pmax, l, l0)
+        dfu.plot_line(ax, p1, p2, props="ro-")
+        ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
-        plt.show()
+        # Plot field along line
+        ax = fig.add_subplot(212)
+        d, v = self.line_intersection(l, l0, n=n)
+        ax.set(xlabel=r"$d$", ylabel=r"$v$")
+        ax.grid()
+        ax.plot(d, v)
+
+        return fig
 
     def slice_field(self, axis, point):
         """Returns the field slice.
