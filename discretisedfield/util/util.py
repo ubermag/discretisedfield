@@ -55,10 +55,8 @@ def plane_line_intersection(n, p0, l, l0):
     Computes an intersection point between line and a plane.
 
     """
-    n = np.array(n)
-    p0 = np.array(p0)
-    l = np.array(l)
-    l0 = np.array(l0)
+    n, p0 = np.array(n), np.array(p0)
+    l, l0 = np.array(l), np.array(l0)
 
     # Compensate for Special Case 1:
     # If both p0 and l0 are zero vectors, l0 is moved along the line vector,
@@ -79,11 +77,23 @@ def plane_line_intersection(n, p0, l, l0):
         return tuple(d*l+l0)
 
 
+def plane_plane_intersection(n1, p01, n2, p02):
+    n1, p01 = np.array(n1), np.array(p01)
+    n2, p02 = np.array(n2), np.array(p02)
+    l = np.cross(n1, n2)
+
+    if np.all(l == 0):
+        # Planes are parallel to each other.
+        return False
+    else:
+        # TODO
+        pass
+
 def box_line_intersection(pmin, pmax, l, l0):
     points = []
     for n in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
-        points.append(plane_line_intersection(n, pmin, l, l0))
-        points.append(plane_line_intersection(n, pmax, l, l0))
+        for p in [pmin, pmax]:
+            points.append(plane_line_intersection(n, p, l, l0))
 
     # Remove False elements from the list.
     points = list(filter(lambda a: a is not False, points))
