@@ -92,11 +92,7 @@ class Field(object):
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
 
-        norm_squared = 0
-        for i in range(self.dim):
-            norm_squared += self.f[:, :, :, i]**2
-        norm = np.sqrt(norm_squared)
-
+        norm = np.linalg.norm(self.f, axis=3)
         for i in range(self.dim):
             self.f[:, :, :, i] = self.normalisedto*self.f[:, :, :, i]/norm
 
