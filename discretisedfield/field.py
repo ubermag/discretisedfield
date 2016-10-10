@@ -6,9 +6,7 @@ import matplotlib.pyplot as plt
 
 
 # TODO: rename f
-# TODO: average always return tuple
-# TODO: sample along line
-# TODO: sample plane
+# TODO: sample arbitrary plane
 @ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
@@ -91,7 +89,6 @@ class Field(object):
         if self.dim == 1:
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
-
         norm = np.linalg.norm(self.f, axis=3)
         for i in range(self.dim):
             self.f[:, :, :, i] = self.normalisedto*self.f[:, :, :, i]/norm
