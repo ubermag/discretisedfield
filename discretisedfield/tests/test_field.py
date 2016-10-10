@@ -193,12 +193,12 @@ class TestField(object):
                         f.f = value
 
     def test_line_intersection(self):
-        mesh = df.Mesh((0, 0, 0), (10, 10, 10), (1, 1, 1))
+        mesh = df.Mesh((0, 0, 0), (10e-9, 10e-9, 10e-9), (1e-9, 1e-9, 1e-9))
         field = df.Field(mesh, value=(1, 2, 3))
 
-        p, v = field.line_intersection((0, 0, 1), (5, 5, 5))
+        d, v = field.line_intersection((0, 0, 1), (5e-9, 5e-9, 5e-9))
 
-        assert len(p) == 100
+        assert len(d) == 100
         assert len(v) == 100
 
     def test_slice_field(self):

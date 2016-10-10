@@ -324,33 +324,26 @@ class TestMesh(object):
         cell = (1, 1, 1)
         mesh = df.Mesh(p1, p2, cell)
 
+        tol = 1e-12
         li = mesh.line_intersection((1, 1, 1), (5, 5, 5), n=10)
         for point in li:
             assert isinstance(point, tuple)
             assert len(point) == 2
 
-            i, p = point
-            assert isinstance(i, tuple)
-            assert len(i) == 3
+            d, p = point
+            assert isinstance(d, float)
+            assert 0 <= d <= 10*np.sqrt(3) + tol
             assert isinstance(p, tuple)
             assert len(p) == 3
             for j in range(3):
-                assert i[j] >= 0
-                assert i[j] <= 10
-                assert p[j] >= 0
-                assert p[j] <= 10
-
-        p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
-        cell = (1, 1, 1)
-        mesh = df.Mesh(p1, p2, cell)
+                assert 0 <= p[j] <= 10
 
         li = list(mesh.line_intersection((1, 0, 0), (0, 0, 0), n=30))
 
         assert len(li) == 30
-        assert li[0][0] == (0, 0, 0)
+        assert li[0][0] == 0
+        assert abs(li[-1][0] - 10) < tol
         assert li[0][1] == (0, 0, 0)
-        assert li[-1][0] == (9, 0, 0)
         assert li[-1][1] == (10, 0, 0)
 
     def test_script(self):

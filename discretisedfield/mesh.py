@@ -251,9 +251,9 @@ class Mesh(object):
         dl = (p2-p1) / (n-1)
         for i in range(n):
             point = p1 + i*dl
-            yield self.point2index(point), tuple(point)
+            yield np.linalg.norm(i*dl), tuple(point)
 
     def script(self):
         """This method should be implemented by a specific
-        micromagnetic calculator"""
+        micromagnetic calculator."""
         raise NotImplementedError

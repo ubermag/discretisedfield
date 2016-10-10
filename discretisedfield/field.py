@@ -123,14 +123,15 @@ class Field(object):
 
     def line_intersection(self, l, l0, n=100):
         """
-        Slice field along line defined with l and l0.
+        Slice field along the line defined with l and l0.
         """
-        points, values = [], []
-        for _, p in self.mesh.line_intersection(l, l0, n=n):
+        ds, points, values = [], [], []
+        for d, p in self.mesh.line_intersection(l, l0, n=n):
+            ds.append(d)
             points.append(p)
             values.append(self.__call__(p))
-
-        return points, values
+            
+        return ds, values
 
     def plot_line_intersection(self, l, l0, n=100):
         p, v = self.line_intersection(l, l0, n=n)
