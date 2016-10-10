@@ -72,7 +72,7 @@ def plane_line_intersection(n, p0, l, l0):
     l = np.array(l)
     l0 = np.array(l0)
 
-    # Compensate for Special Case 1
+    # Compensate for Special Case 1:
     # If both p0 and l0 are zero vectors, l0 is moved along the line vector,
     # so that it is a non-zero vector.
     if np.all(np.abs(p0) + np.abs(l0) == (0, 0, 0)):
@@ -92,18 +92,16 @@ def plane_line_intersection(n, p0, l, l0):
 
 
 def box_line_intersection(pmin, pmax, l, l0):
-    points = [plane_line_intersection((1, 0, 0), pmin, l, l0),
-              plane_line_intersection((1, 0, 0), pmax, l, l0),
-              plane_line_intersection((0, 1, 0), pmin, l, l0),
-              plane_line_intersection((0, 1, 0), pmax, l, l0),
-              plane_line_intersection((0, 0, 1), pmin, l, l0),
-              plane_line_intersection((0, 0, 1), pmax, l, l0)]
+    points = []
+    for n in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
+        points.append(plane_line_intersection(n, pmin, l, l0))
+        points.append(plane_line_intersection(n, pmax, l, l0))
 
     # Remove False elements from the list.
     points = list(filter(lambda a: a is not False, points))
 
     # Find unique points inside box.
-    points = points_inside_box(tuple(set(points)), pmin, pmax)
+    points = points_inside_box(set(points), pmin, pmax)
 
     if len(points) != 2:
         return False

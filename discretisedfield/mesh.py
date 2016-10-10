@@ -242,11 +242,13 @@ class Mesh(object):
     def line_intersection(self, l, l0, n=100):
         """Generator yielding mesh cell indices and their centre coordinates,
         along the line defined with l and l0 in n points."""
-        p1, p2 = dfu.box_line_intersection(self.pmin, self.pmax, l, l0)
+        try:
+            p1, p2 = dfu.box_line_intersection(self.pmin, self.pmax, l, l0)
+        except TypeError:
+            raise ValueError("Line does not intersect mesh in two points.")
+
         p1, p2 = np.array(p1), np.array(p2)
-
-        dl = (p2 - p1) / (n-1)
-
+        dl = (p2-p1) / (n-1)
         for i in range(n):
             point = p1 + i*dl
             yield self.point2index(point), tuple(point)
