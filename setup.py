@@ -5,14 +5,14 @@ with open("README.rst") as f:
 
 setup(
     name="discretisedfield",
-    version="0.5.2",
+    version="0.5.3",
     description=("A Python package for analysing and manipulating "
                  "discretised fields."),
     long_description=readme,
     author="Computational Modelling Group",
     author_email="fangohr@soton.ac.uk",
     url="https://github.com/joommf/discretisedfield",
-    download_url="https://github.com/joommf/discretisedfield/tarball/0.5.2",
+    download_url="https://github.com/joommf/discretisedfield/tarball/0.5.3",
     packages=["discretisedfield",
               "discretisedfield.util",
               "discretisedfield.tests"],
