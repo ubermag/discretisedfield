@@ -387,7 +387,7 @@ def read_oommf_file(filename, normalisedto=None, name="unnamed"):
     dim = int(dic["valuedim"])
 
     mesh = df.Mesh(p1, p2, d, name=name)
-    field = Field(mesh, dim, normalisedto=normalisedto, name=name)
+    field = Field(mesh, dim, value=(1, 1, 1), name=name)
 
     for j in range(len(lines)):
         if lines[j].find("Begin: Data") != -1:
@@ -400,5 +400,9 @@ def read_oommf_file(filename, normalisedto=None, name="unnamed"):
         field.f[i[0], i[1], i[2], :] = value
 
         counter += 1
+
+    field.normalisedto = normalisedto
+    if normalisedto is not None:
+        field.normalise()
 
     return field
