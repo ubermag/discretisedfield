@@ -300,13 +300,31 @@ class TestField(object):
             with pytest.raises(ValueError):
                 fig = f.plot_slice("z", point)
 
-    def test_write_read_oommf_file(self):
+    def test_write_read_oommf_file_text(self):
         tol = 1e-12
-        filename = "test_write_oommf_file.omf"
+        filename = "test_write_oommf_file_text.omf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
             f.f = value
             f.write_oommf_file(filename)
+
+            f_loaded = df.read_oommf_file(filename)
+
+            assert f.mesh.p1 == f_loaded.mesh.p1
+            assert f.mesh.p2 == f_loaded.mesh.p2
+            assert f.mesh.cell == f_loaded.mesh.cell
+            assert f.mesh.cell == f_loaded.mesh.cell
+            assert np.all(abs(f.f - f_loaded.f) < tol)
+
+            os.system("rm {}".format(filename))
+
+    def test_write_read_oommf_file(self):
+        tol = 1e-12
+        filename = "test_write_oommf_file_binary.omf"
+        value = (1e-3 + np.pi, -5, 6)
+        for f in self.vector_fs:
+            f.f = value
+            f.write_oommf_file(filename, 'binary')
 
             f_loaded = df.read_oommf_file(filename)
 
