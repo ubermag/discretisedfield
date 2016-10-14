@@ -228,9 +228,9 @@ class Field(object):
 
         Args:
           axis (str): An axis to which the sampling plane is perpendicular to.
-          point (int/float): The coorindta eon axis at which the field
+          point (int/float): The coordinate axis at which the field
             is sampled.
-          xsize (Optional[int/float]): The horizonatl size of a plot.
+          xsize (Optional[int/float]): The horizontal size of a plot.
           grid (Optional[bool]): If True, grid is shown in the plot.
 
         Returns:
