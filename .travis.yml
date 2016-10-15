@@ -1,5 +1,8 @@
 sudo: required
 
+before_install:
+  - npm install --save-dev travis-after-all
+
 services:
   - docker
 
@@ -14,5 +17,18 @@ script:
       python3 -m pytest --nbval docs/ipynb/*.ipynb &&
       bash <(curl -s https://codecov.io/bash) -t a96f2545-67ea-442e-a1b6-fdebc595cf52"
 
+after_script:
+  - |
+      declare exitCode;
+      $(npm bin)/travis-after-all
+      exitCode=$?
+      if [ "$exitCode" -eq 0 ]; then
+        if [[ ($TRAVIS_BRANCH == master) &&
+              ($TRAVIS_PULL_REQUEST == false) ]] ; then
+          curl -LO https://raw.github.com/mernst/plume-lib/master/bin/trigger-travis.sh
+          sh trigger-travis.sh joommf joommftools $TRAVIS_ACCESS_TOKEN
+        fi
+      fi
+      
 notifications:
   slack: joommf:eqKxGPXuUP3LxnOfxg7GWgDF
