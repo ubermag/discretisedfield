@@ -1,7 +1,7 @@
 import pytest
-import matplotlib
 import numpy as np
 import discretisedfield as df
+import matplotlib
 
 
 class TestMesh(object):
