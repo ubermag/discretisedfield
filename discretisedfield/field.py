@@ -438,7 +438,6 @@ def read_oommf_file_text(filename, name="unnamed"):
          int(round(dic["ynodes"])),
          int(round(dic["znodes"])))
     dim = int(dic["valuedim"])
-    print(d, p1, p2)
     mesh = df.Mesh(p1, p2, d, name=name)
     field = Field(mesh, dim, value=(1, 1, 1), name=name)
 
