@@ -23,11 +23,18 @@ after_script:
       $(npm bin)/travis-after-all
       exitCode=$?
       if [ "$exitCode" -eq 0 ]; then
-        if [[ ($TRAVIS_BRANCH == master) &&
-              ($TRAVIS_PULL_REQUEST == false) ]] ; then
-          curl -LO https://raw.github.com/mernst/plume-lib/master/bin/trigger-travis.sh
-          sh trigger-travis.sh joommf joommftools $TRAVIS_ACCESS_TOKEN
-        fi
+        body='{
+        "request": {
+          "branch":"master"
+        }}'
+
+        curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        -H "Travis-API-Version: 3" \
+        -H "Authorization: token $TRAVIS_ACCESS_TOKEN" \
+        -d "$body" \
+        https://api.travis-ci.org/repo/joommf%2Fjoommftools/requests
       fi
       
 notifications:
