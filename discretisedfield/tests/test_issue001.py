@@ -7,7 +7,6 @@ import subprocess
 import pytest
 
 
-@pytest.mark.xfail
 def test_matplotlib_warning():
     command = """python3 -c "import discretisedfield" """
     status, output = subprocess.getstatusoutput(command)
