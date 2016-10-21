@@ -1,16 +1,34 @@
-test: test-code test-ipynb
+PROJECT=discretisedfield
+IPYNBPATH=docs/ipynb/*.ipynb
+CODECOVTOKEN=a96f2545-67ea-442e-a1b6-fdebc595cf52
 
-test-code:
-	py.test --cov=discretisedfield --cov-config .coveragerc
+test: test-coverage test-ipynb
+
+test-all:
+	python3 -m pytest
 
 test-ipynb:
-	py.test --nbval docs/ipynb/*.ipynb
+	python3 -m pytest --nbval $(IPYNBPATH)
 
+test-coverage:
+	python3 -m pytest --cov=$(PROJECT) --cov-config .coveragerc
 
-testd:
-	# run TESTs in Docker container (TESTD). The commands
-	# below are copied from .travis.yml (excluding coverage tool update)
-	# This is a convenience target to run the Travis tests (inside container) locally.
+upload-coverage: SHELL:=/bin/bash
+upload-coverage:
+	bash <(curl -s https://codecov.io/bash) -t $(CODECOVTOKEN)
+
+travis-build: test-coverage upload-coverage
+
+test-docker:
 	docker build -t dockertestimage .
-	# run tests in docker
-	docker run -e ci_env -ti dockertestimage /bin/bash -c "cd discretisedfield && python3 -m pytest --cov=discretisedfield --cov-config .coveragerc && python3 -m pytest --nbval docs/ipynb/*.ipynb"
+	docker run --privileged -ti -d --name testcontainer dockertestimage
+	docker exec testcontainer python3 -m pytest
+	docker exec testcontainer python3 -m pytest --nbval $(IPYNBPATH)
+	docker stop testcontainer
+	docker rm testcontainer
+
+pypitest-upload:
+	python3 setup.py sdist upload -r pypitest
+
+pypi-upload: pypitest-upload
+	python3 setup.py sdist upload -r pypi
