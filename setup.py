@@ -14,7 +14,7 @@ setuptools.setup(
     author_email='jupyteroommf@gmail.com',
     packages=setuptools.find_packages(),
     install_requires=["joommfutil",
-                      "matplotlib"]
+                      "matplotlib"],
     classifiers=['Development Status :: 3 - Alpha',
                  'License :: OSI Approved :: BSD License',
                  'Topic :: Scientific/Engineering :: Physics',
