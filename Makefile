@@ -28,6 +28,7 @@ test-docker:
 	docker rm testcontainer
 
 pypitest-upload:
+	python3 setup.py register -r pypitest
 	python3 setup.py sdist upload -r pypitest
 
 pypi-upload: pypitest-upload
