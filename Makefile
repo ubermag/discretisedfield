@@ -2,6 +2,7 @@ PROJECT=discretisedfield
 IPYNBPATH=docs/ipynb/*.ipynb
 CODECOVTOKEN=a96f2545-67ea-442e-a1b6-fdebc595cf52
 
+
 test: test-coverage test-ipynb
 
 test-all:
