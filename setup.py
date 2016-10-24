@@ -5,7 +5,7 @@ with open("README.rst") as f:
 
 setuptools.setup(
     name="discretisedfield",
-    version="0.5.4.2",
+    version="0.5.6",
     description=("A Python package for analysing and manipulating "
                  "discretised fields."),
     long_description=readme,
