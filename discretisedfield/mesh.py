@@ -95,11 +95,9 @@ class Mesh(object):
           A mesh representation string.
 
         """
-        p1str = "p1=({}, {}, {})".format(self.p1[0], self.p1[1], self.p1[2])
-        p2str = "p2=({}, {}, {})".format(self.p2[0], self.p2[1], self.p2[2])
-        cellstr = "cell=({}, {}, {})".format(self.cell[0],
-                                             self.cell[1],
-                                             self.cell[2])
+        p1str = "p1=({}, {}, {})".format(*self.p1)
+        p2str = "p2=({}, {}, {})".format(*self.p2)
+        cellstr = "cell=({}, {}, {})".format(*self.cell)
         namestr = "name=\"{}\"".format(self.name)
 
         return "Mesh({}, {}, {}, {})".format(p1str, p2str, cellstr, namestr)
@@ -115,9 +113,7 @@ class Mesh(object):
           A mesh centre point tuple of coordinates.
 
         """
-        return (self.pmin[0] + 0.5*self.l[0],
-                self.pmin[1] + 0.5*self.l[1],
-                self.pmin[2] + 0.5*self.l[2])
+        return tuple(self.pmin[i]+0.5*self.l[i] for i in range(3))
 
     def random_point(self):
         """Generate a random mesh point.
