@@ -292,32 +292,25 @@ class TestMesh(object):
 
             assert isinstance(mesh.plot(), matplotlib.figure.Figure)
 
-    def test_cells(self):
+    def test_indices(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1, p2, cell)
 
         counter = 0
-        for cell in mesh.cells():
-            assert isinstance(cell, tuple)
-            assert len(cell) == 2
+        for index in mesh.indices():
+            assert isinstance(index, tuple)
+            assert len(index) == 3
 
-            i, p = cell
-            assert isinstance(i, tuple)
-            assert len(i) == 3
-            assert isinstance(p, tuple)
-            assert len(p) == 3
-            for j in range(3):
-                assert i[j] >= 0
-                assert i[j] <= 9
-                assert p[j] >= 0.5
-                assert p[j] <= 9.5
+            for i in range(3):
+                assert 0 <= index[i] <= 9
 
             counter += 1
 
         assert counter == 1000
 
+        
     def test_line_intersection(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)

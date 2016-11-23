@@ -79,8 +79,8 @@ class Field(object):
             for i in range(self.dim):
                 self._f[:, :, :, i].fill(value[i])
         elif callable(value):
-            for i, p in self.mesh.cells():
-                self._f[i[0], i[1], i[2], :] = value(p)
+            for i in self.mesh.indices():
+                self._f[i[0], i[1], i[2], :] = value(self.mesh.index2point(i))
         else:
             raise TypeError("Cannot set field using {}.".format(type(value)))
 
@@ -446,7 +446,7 @@ def read_oommf_file_text(filename, name="unnamed"):
             data_first_line = j+1
 
     counter = 0
-    for i, _ in mesh.cells():
+    for i in mesh.indices():
         line_data = lines[data_first_line+counter]
         value = [float(vi) for vi in line_data.split()]
         field.f[i[0], i[1], i[2], :] = value
@@ -527,7 +527,7 @@ def read_oommf_file_binary(filename, name='unnamed'):
                                  ' with reading Binary Data')
 
     counter = 1
-    for i, _ in mesh.cells():
+    for i in mesh.indices():
         value = (listdata[counter][0],
                  listdata[counter+1][0],
                  listdata[counter+2][0])

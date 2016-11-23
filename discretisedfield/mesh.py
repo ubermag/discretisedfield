@@ -207,13 +207,19 @@ class Mesh(object):
 
         return fig
 
-    def cells(self):
+    def indices(self):
         """Generator iterating through all mesh cells and
-        yielding mesh indices and centre coordinates."""
+        yielding their indices."""
         for k in range(self.n[2]):
             for j in range(self.n[1]):
                 for i in range(self.n[0]):
-                    yield (i, j, k), self.index2point((i, j, k))
+                    yield (i, j, k)
+
+    def coordinates(self):
+        """Generator iterating through all mesh cells and
+        yielding their coordinates."""
+        for i in self.indices():
+            yield self.index2coord(i)
 
     def line_intersection(self, l, l0, n=100):
         """Generator yielding mesh cell indices and their centre coordinates,
