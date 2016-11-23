@@ -122,9 +122,7 @@ class Mesh(object):
           A random mesh point tuple of coordinates.
 
         """
-        return (self.pmin[0] + random.random()*self.l[0],
-                self.pmin[1] + random.random()*self.l[1],
-                self.pmin[2] + random.random()*self.l[2])
+        return tuple(self.pmin[i]+random.random()*self.l[i] for i in range(3))
 
     def index2point(self, i):
         """Convert the discretisation cell index to its centre point coordinate.
