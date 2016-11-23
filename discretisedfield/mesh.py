@@ -75,14 +75,14 @@ class Mesh(object):
         for i in range(3):
             if self.cell[i] > self.l[i]:
                 msg = ("Discretisation cell is greater than the domain: "
-                       "cell[{}] > abs(p2[{}]-p1[{}]).").format(i, i, i)
+                       "cell[{0}] > abs(p2[{0}]-p1[{0}]).").format(i)
                 raise ValueError(msg)
 
         # Check if the domain is not an aggregate of discretisation cell.
         for i in range(3):
             if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
                 msg = ("Domain is not an aggregate of the discretisation cell: "
-                       "abs(p2[{}]-p1[{}]) % cell[{}].").format(i, i, i)
+                       "abs(p2[{0}]-p1[{0}]) % cell[{0}].").format(i)
                 raise ValueError(msg)
 
         # Compute the number of cells in all three dimensions.
@@ -95,12 +95,10 @@ class Mesh(object):
           A mesh representation string.
 
         """
-        p1str = "p1=({}, {}, {})".format(*self.p1)
-        p2str = "p2=({}, {}, {})".format(*self.p2)
-        cellstr = "cell=({}, {}, {})".format(*self.cell)
-        namestr = "name=\"{}\"".format(self.name)
-
-        return "Mesh({}, {}, {}, {})".format(p1str, p2str, cellstr, namestr)
+        return "Mesh(p1={}, p2={}, cell={}, name=\"{}\")".format(self.p1,
+                                                                 self.p2,
+                                                                 self.cell,
+                                                                 self.name)
 
     def _ipython_display_(self):
         """Shows a matplotlib figure of sample range and discretisation."""
@@ -124,11 +122,11 @@ class Mesh(object):
         """
         return tuple(self.pmin[i]+random.random()*self.l[i] for i in range(3))
 
-    def index2point(self, i):
-        """Convert the discretisation cell index to its centre point coordinate.
+    def index2point(self, index):
+        """Convert the cell index to its centre point coordinate.
 
         The finite difference domain is disretised in x, y, and z directions
-        in dx, dy, and dz steps, respectively. Accordingly, there are
+        in dx, dy, and dz steps, respectively. Consequently, there are
         nx, ny, and nz discretisation steps. This method converts the cell
         index (ix, iy, iz) to the cell's centre point coordinate.
 
@@ -141,12 +139,12 @@ class Mesh(object):
           A length 3 tuple of x, y, and z coodinates
 
         """
-        for j in range(3):
-            if i[j] < 0 or i[j] > self.n[j] - 1:
-                msg = "Index i[{}]={} out of range.".format(j, i[j])
+        for i in range(3):
+            if index[i] < 0 or index[i] > self.n[i] - 1:
+                msg = "Index index[{}]={} out of range.".format(i, index[i])
                 raise ValueError(msg)
 
-        return tuple(self.pmin[j]+(i[j]+0.5)*self.cell[j] for j in range(3))
+        return tuple(self.pmin[i]+(index[i]+0.5)*self.cell[i] for i in range(3))
 
     def point2index(self, p):
         """Compute the index of a cell containing point p.
