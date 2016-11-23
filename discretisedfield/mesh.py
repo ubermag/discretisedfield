@@ -198,9 +198,7 @@ class Mesh(object):
         ax = fig.add_subplot(111, projection="3d")
         ax.set_aspect("equal")
 
-        cell_point = (self.pmin[0] + self.cell[0],
-                      self.pmin[1] + self.cell[1],
-                      self.pmin[2] + self.cell[2])
+        cell_point = tuple(self.pmin[i]+self.cell[i] for i in range(3))
 
         dfu.plot_box(ax, self.pmin, self.pmax)
         dfu.plot_box(ax, self.pmin, cell_point, props="r-", linewidth=1)
