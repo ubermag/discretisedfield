@@ -241,15 +241,6 @@ class TestMesh(object):
             assert isinstance(mesh.point2index(mesh.index2point(i)), tuple)
             assert mesh.point2index(mesh.index2point(i)) == i
 
-    def test_cell_centre(self):
-        p1 = (500e-9, 125e-9, 3e-9)
-        p2 = (0, 0, 0)
-        cell = (10e-9, 5e-9, 1e-9)
-        mesh = df.Mesh(p1, p2, cell)
-
-        assert isinstance(mesh.cell_centre((500e-9, 0, 0)), tuple)
-        assert mesh.cell_centre((0, 0, 0)) == (5e-9, 2.5e-9, 0.5e-9)
-
     def test_centre(self):
         p1 = (-18.5, 10, 0)
         p2 = (10, 5, 10)

@@ -125,8 +125,8 @@ class TestField(object):
 
                 for j in range(10):
                     c = f.mesh.random_point()
-                    expected_value = pyfun(f.mesh.cell_centre(c))
-                    assert f(c) == expected_value
+                    ev = pyfun(f.mesh.index2point(f.mesh.point2index(c)))
+                    assert f(c) == ev
 
         # Test vector fields.
         for f in self.vector_fs:
@@ -135,8 +135,8 @@ class TestField(object):
 
                 for j in range(10):
                     c = f.mesh.random_point()
-                    expected_value = pyfun(f.mesh.cell_centre(c))
-                    assert np.all(f(c) == expected_value)
+                    ev = pyfun(f.mesh.index2point(f.mesh.point2index(c)))
+                    assert np.all(f(c) == ev)
 
     def test_set_exception(self):
         for f in self.vector_fs + self.scalar_fs:

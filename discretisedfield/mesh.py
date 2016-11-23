@@ -179,18 +179,6 @@ class Mesh(object):
 
         return index
 
-    def cell_centre(self, p):
-        """Computes the centre of cell containing (or nearest) to point p.
-
-        Args:
-          p (tuple): A length 3 tuple of point coordinates
-
-        Returns:
-          A length 3 tuple of cell's centre coordinates
-
-        """
-        return self.index2point(self.point2index(p))
-
     def indices(self):
         """Generator iterating through all mesh cells and
         yielding their indices."""
