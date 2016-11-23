@@ -163,24 +163,24 @@ class Mesh(object):
           A length 3 cell index tuple (ix, iy, iz).
 
         """
-        for j in range(3):
-            if p[j] < self.pmin[j] or p[j] > self.pmax[j]:
-                raise ValueError(("Point coordinate p[{}]={} outside "
-                                 "the mesh domain."). format(j, p[j]))
+        for i in range(3):
+            if p[i] < self.pmin[i] or p[i] > self.pmax[i]:
+                msg = "Point p[{}]={} outside the mesh domain.".format(i, p[i])
+                raise ValueError(msg)
 
-        i = []
-        for j in range(3):
-            ij = int(round((p[j]-self.pmin[j])/self.cell[j] - 0.5))
+        index = ()
+        for i in range(3):
+            index_i = int(round((p[i]-self.pmin[i])/self.cell[i] - 0.5))
 
             # If rounded to the out-of-range mesh index.
-            if ij < 0:
-                ij = 0  # pragma: no cover
-            elif ij > self.n[j] - 1:
-                ij = self.n[j] - 1
+            if index_i < 0:
+                index_i = 0  # pragma: no cover
+            elif index_i > self.n[i] - 1:
+                index_i = self.n[i] - 1
 
-            i.append(ij)
+            index += (index_i,)
 
-        return tuple(i)
+        return index
 
     def cell_centre(self, p):
         """Computes the centre of cell containing (or nearest) to point p.
