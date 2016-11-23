@@ -86,9 +86,7 @@ class Mesh(object):
                 raise ValueError(msg)
 
         # Compute the number of cells in all three dimensions.
-        self.n = (int(round(self.l[0]/self.cell[0])),
-                  int(round(self.l[1]/self.cell[1])),
-                  int(round(self.l[2]/self.cell[2])))
+        self.n = tuple(int(round(self.l[i]/self.cell[i])) for i in range(3))
 
     def __repr__(self):
         """Mesh representation method.
