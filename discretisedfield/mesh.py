@@ -143,12 +143,10 @@ class Mesh(object):
         """
         for j in range(3):
             if i[j] < 0 or i[j] > self.n[j] - 1:
-                raise ValueError(("Index i[{}]={} out of "
-                                  "range.").format(j, i[j]))
+                msg = "Index i[{}]={} out of range.".format(j, i[j])
+                raise ValueError(msg)
 
-        return (self.pmin[0] + (i[0]+0.5)*self.cell[0],
-                self.pmin[1] + (i[1]+0.5)*self.cell[1],
-                self.pmin[2] + (i[2]+0.5)*self.cell[2])
+        return tuple(self.pmin[j]+(i[j]+0.5)*self.cell[j] for j in range(3))
 
     def point2index(self, p):
         """Compute the index of a cell containing point p.
