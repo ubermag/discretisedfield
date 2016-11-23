@@ -20,27 +20,26 @@ class Mesh(object):
         Creates a rectangular finite difference mesh.
 
         Args:
-          p1 (tuple, list, np.ndarray): First mesh domain point
-            p1 is of length 3 (xmin, ymin, zmax).
-          p2 (tuple, list, np.ndarray): Second mesh domain point
-            p2 is of length 3 (xmin, ymin, zmax).
-          cell (tuple, list, np.ndarray): Discretisation cell size
-            cell is of length 3 and defines the discretisation steps in
-            x, y, and z directions: (dx, dy, dz).
+          p1 (tuple, list, numpy.ndarray): First point of the mesh domain
+            p1 = (x1, y1, z1)
+          p2 (tuple, list, numpy.ndarray): Second point of the mesh domain
+            p2 = (x2, y2, z2)
+          cell (tuple, list, numpy.ndarray): Discretisation cell size
+            cell = (dx, dy, dz)
           name (Optional[str]): Mesh name
 
         Attributes:
-          p1 (tuple): First mesh domain point
+          p1 (tuple): First point of the mesh domain
 
-          p2 (tuple): Second mesh domain point
+          p2 (tuple): Second point of the mesh domain
 
           cell (tuple): Discretisation cell size
 
           name (str): Mesh name
 
-          pmin (tuple): Minimum mesh domain point
+          pmin (tuple): Minimum mesh domain coordinates point
 
-          pmax (tuple): Maximum mesh domain point
+          pmax (tuple): Maximum mesh domain coordinates point
 
           l (tuple): length of domain x, y, and z edges (lx, ly, lz):
 
@@ -81,17 +80,16 @@ class Mesh(object):
         # Check if the discretisation cell size is greater than the domain.
         for i in range(3):
             if self.cell[i] > self.l[i]:
-                raise ValueError(("Discretisation cell is greater than "
-                                  "the domain dimension: cell[{}] > "
-                                  "abs(p2[{}]-p1[{}]).").format(i, i, i))
+                msg = ("Discretisation cell is greater than the domain: "
+                       "cell[{}] > abs(p2[{}]-p1[{}]).").format(i, i, i)
+                raise ValueError(msg)
 
         # Check if the domain is not an aggregate of discretisation cell.
         for i in range(3):
             if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
-                raise ValueError(("Domain is not a multiple (aggregate) of "
-                                  "the discretisation cell: "
-                                  "abs(p2[{}]-p1[{}]) % "
-                                  "cell[{}].").format(i, i, i))
+                msg = ("Domain is not an aggregate of the discretisation cell: "
+                       "abs(p2[{}]-p1[{}]) % cell[{}].").format(i, i, i)
+                raise ValueError(msg)
 
         # Compute the number of cells in all three dimensions.
         self.n = (int(round(self.l[0]/self.cell[0])),

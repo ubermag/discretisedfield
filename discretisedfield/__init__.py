@@ -1,4 +1,4 @@
-# use most conservative backend 
+# use most conservative backend
 import matplotlib
 matplotlib.use("agg")
 
