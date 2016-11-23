@@ -81,8 +81,8 @@ class Mesh(object):
         # Check if the domain is not an aggregate of discretisation cell.
         for i in range(3):
             if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
-                msg = ("Domain is not an aggregate of the discretisation cell: "
-                       "abs(p2[{0}]-p1[{0}]) % cell[{0}].").format(i)
+                msg = ("Domain is not an aggregate of the discretisation "
+                       "cell: abs(p2[{0}]-p1[{0}]) % cell[{0}].").format(i)
                 raise ValueError(msg)
 
         # Compute the number of cells in all three dimensions.
@@ -95,10 +95,8 @@ class Mesh(object):
           A mesh representation string.
 
         """
-        return "Mesh(p1={}, p2={}, cell={}, name=\"{}\")".format(self.p1,
-                                                                 self.p2,
-                                                                 self.cell,
-                                                                 self.name)
+        return ("Mesh(p1={}, p2={}, cell={}, "
+                "name=\"{}\")").format(self.p1, self.p2, self.cell, self.name)
 
     def _ipython_display_(self):
         """Shows a matplotlib figure of sample range and discretisation."""
@@ -144,7 +142,8 @@ class Mesh(object):
                 msg = "Index index[{}]={} out of range.".format(i, index[i])
                 raise ValueError(msg)
 
-        return tuple(self.pmin[i]+(index[i]+0.5)*self.cell[i] for i in range(3))
+        return tuple(self.pmin[i]+(index[i]+0.5)*self.cell[i]
+                     for i in range(3))
 
     def point2index(self, p):
         """Compute the index of a cell containing point p.
@@ -192,6 +191,20 @@ class Mesh(object):
         """
         return self.index2point(self.point2index(p))
 
+    def indices(self):
+        """Generator iterating through all mesh cells and
+        yielding their indices."""
+        for k in range(self.n[2]):
+            for j in range(self.n[1]):
+                for i in range(self.n[0]):
+                    yield (i, j, k)
+
+    def coordinates(self):
+        """Generator iterating through all mesh cells and
+        yielding their coordinates."""
+        for i in self.indices():
+            yield self.index2coord(i)
+
     def plot(self):
         """Creates a figure of a mesh range and discretisation cell."""
         fig = plt.figure()
@@ -206,20 +219,6 @@ class Mesh(object):
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
         return fig
-
-    def indices(self):
-        """Generator iterating through all mesh cells and
-        yielding their indices."""
-        for k in range(self.n[2]):
-            for j in range(self.n[1]):
-                for i in range(self.n[0]):
-                    yield (i, j, k)
-
-    def coordinates(self):
-        """Generator iterating through all mesh cells and
-        yielding their coordinates."""
-        for i in self.indices():
-            yield self.index2coord(i)
 
     def line_intersection(self, l, l0, n=100):
         """Generator yielding mesh cell indices and their centre coordinates,
