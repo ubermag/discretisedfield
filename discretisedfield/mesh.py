@@ -64,17 +64,11 @@ class Mesh(object):
         self.name = name
 
         # Compute domain edge lengths.
-        self.l = (abs(self.p2[0]-self.p1[0]),
-                  abs(self.p2[1]-self.p1[1]),
-                  abs(self.p2[2]-self.p1[2]))
+        self.l = tuple(abs(self.p2[i]-self.p1[i]) for i in range(3))
 
         # Compute minimum and maximum mesh domain points.
-        self.pmin = (min(self.p1[0], self.p2[0]),
-                     min(self.p1[1], self.p2[1]),
-                     min(self.p1[2], self.p2[2]))
-        self.pmax = (max(self.p1[0], self.p2[0]),
-                     max(self.p1[1], self.p2[1]),
-                     max(self.p1[2], self.p2[2]))
+        self.pmin = tuple(min(self.p1[i], self.p2[i]) for i in range(3))
+        self.pmax = tuple(max(self.p1[i], self.p2[i]) for i in range(3))
 
         tol = 1e-12  # picometer tolerance
         # Check if the discretisation cell size is greater than the domain.
@@ -114,9 +108,7 @@ class Mesh(object):
 
     def _ipython_display_(self):
         """Shows a matplotlib figure of sample range and discretisation."""
-        # TODO: plt.show() works only with nbagg
-        fig = self.plot()  # pragma: no cover
-        plt.show()  # pragma: no cover
+        return self.plot()  # pragma: no cover
 
     def centre(self):
         """Compute and return the mesh centre point.
