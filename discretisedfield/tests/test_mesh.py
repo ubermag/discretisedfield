@@ -125,7 +125,7 @@ class TestMesh(object):
                 # Exception is raised by the descriptor (mesh.l).
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-    def test_init_d_not_multiple_of_l(self):
+    def test_domain_not_aggregate_of_cell(self):
         args = [[(0, 100e-9, 1e-9),
                  (150e-9, 120e-9, 6e-9),
                  (4e-9, 1e-9, 1e-9)],
@@ -139,6 +139,14 @@ class TestMesh(object):
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
             assert "not an aggregate" in str(excinfo)
+
+    def test_cell_greater_than_domain(self):
+        p1 = (0, 0, 0)
+        p2 = (1., 1., 1.)
+        for d in [(2, 1, 1), (1, 2, 1), (1, 1, 2), (1, 5, 0.1)]:
+            with pytest.raises(ValueError) as excinfo:
+                mymesh = df.Mesh(p1, p2, d)
+            assert "greater than the domain" in str(excinfo)
 
     def test_repr(self):
         p1 = (-1, -4, 11)
@@ -339,18 +347,4 @@ class TestMesh(object):
             with pytest.raises(NotImplementedError):
                 mesh.script()
 
-    def test_cell_greater_than_mesh_domain(self):
-        p1 = (0, 0, 0)
-        p2 = (1., 1., 1.)
-
-        for d in [(2, 1, 1), (1, 2, 1), (1, 1, 2), (1, 5, 0.1)]:
-            with pytest.raises(ValueError) as excinfo:
-                mymesh = df.Mesh(p1, p2, d)
-
-    def test_mesh_domain_not_aggregate_of_cell(self):
-        p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
-
-        for d in [(0.6, 1, 1), (1, 2.2, 1), (1, 1, 4), (2, 5, 0.8)]:
-            with pytest.raises(ValueError) as excinfo:
-                mymesh = df.Mesh(p1, p2, d)
+    
