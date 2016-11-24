@@ -9,11 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 @ts.typesystem(p1=ts.RealVector(size=3),
                p2=ts.RealVector(size=3),
                cell=ts.PositiveRealVector(size=3),
-               name=ts.ObjectName,
-               pmin=ts.RealVector(size=3),
-               pmax=ts.RealVector(size=3),
-               l=ts.PositiveRealVector(size=3),
-               n=ts.PositiveIntVector(size=3))
+               name=ts.ObjectName)
 class Mesh(object):
     def __init__(self, p1, p2, cell, name="mesh"):
         """
@@ -33,16 +29,6 @@ class Mesh(object):
           p2 (tuple): Second point of the mesh domain
           cell (tuple): Discretisation cell size
           name (str): Mesh name
-          pmin (tuple): Minimum mesh domain coordinate point
-          pmax (tuple): Maximum mesh domain coordinate point
-          l (tuple): Length of domain edges (lx, ly, lz)
-            lx = abs(p2[0] - p1[0])
-            ly = abs(p2[1] - p1[2])
-            lz = abs(p2[2] - p1[2])
-          n (tuple): Number of discretisation cells (nx, ny, nz)
-            nx = lx/dx
-            ny = ly/dy
-            nz = lz/dz
 
         """
         self.p1 = tuple(p1)
@@ -50,12 +36,11 @@ class Mesh(object):
         self.cell = tuple(cell)
         self.name = name
 
-        # Compute minimum and maximum mesh domain points.
-        self.pmin = tuple(min(self.p1[i], self.p2[i]) for i in range(3))
-        self.pmax = tuple(max(self.p1[i], self.p2[i]) for i in range(3))
-
-        # Compute domain edge lengths.
-        self.l = tuple(abs(self.p1[i] - self.p2[i]) for i in range(3))
+        # Is domain edge length zero?
+        for i in range(3):
+            if self.l[i] ==0:
+                msg = ("Domain edge length is zero (l[{}]==0).").format(i)
+                raise ValueError(msg)
 
         # Is discretisation cell size greater than the domain?
         for i in range(3):
@@ -72,8 +57,40 @@ class Mesh(object):
                        "cell: abs(p2[{0}]-p1[{0}]) % cell[{0}].").format(i)
                 raise ValueError(msg)
 
-        # Compute the number of cells in all three dimensions.
-        self.n = tuple(int(round(self.l[i]/self.cell[i])) for i in range(3))
+    @property
+    def pmin(self):
+        """Minimum mesh domain coordinate point"""
+        return tuple(min(self.p1[i], self.p2[i]) for i in range(3))
+
+    @property
+    def pmax(self):
+        """Maximum mesh domain coordinate point"""
+        return tuple(max(self.p1[i], self.p2[i]) for i in range(3))
+
+    @property
+    def l(self):
+        """Length of domain edges (lx, ly, lz)
+            lx = abs(p2[0] - p1[0])
+            ly = abs(p2[1] - p1[2])
+            lz = abs(p2[2] - p1[2])
+
+        """
+        return tuple(abs(self.p1[i] - self.p2[i]) for i in range(3))
+
+    @property
+    def n(self):
+        """Number of discretisation cells (nx, ny, nz)
+            nx = lx/dx
+            ny = ly/dy
+            nz = lz/dz
+
+        """
+        return tuple(int(round(self.l[i]/self.cell[i])) for i in range(3))
+
+    @property
+    def centre(self):
+        """Mesh centre point"""
+        return tuple(self.pmin[i]+0.5*self.l[i] for i in range(3))
 
     def __repr__(self):
         """Mesh representation method.
@@ -88,11 +105,6 @@ class Mesh(object):
     def _ipython_display_(self):
         """Shows a matplotlib figure of sample range and discretisation."""
         return self.plot()  # pragma: no cover
-
-    @property
-    def centre(self):
-        """Mesh centre point."""
-        return tuple(self.pmin[i]+0.5*self.l[i] for i in range(3))
 
     def random_point(self):
         """Generate a random mesh point.

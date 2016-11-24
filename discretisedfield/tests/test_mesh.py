@@ -121,9 +121,9 @@ class TestMesh(object):
                  (1e9, 1e3, 1)]]
 
         for p1, p2, cell in args:
-            with pytest.raises(TypeError):
-                # Exception is raised by the descriptor (mesh.l).
+            with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+            assert "edge length is zero" in str(excinfo)
 
     def test_domain_not_aggregate_of_cell(self):
         args = [[(0, 100e-9, 1e-9),
