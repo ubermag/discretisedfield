@@ -152,6 +152,12 @@ class TestMesh(object):
             assert "greater than the domain" in str(excinfo)
 
     def test_centre(self):
+        p1 = (0, 0, 0)
+        p2 = (100, 100, 100)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert mesh.centre == (50, 50, 50)
+
         p1 = (-18.5, 10, 0)
         p2 = (10, 5, 10)
         cell = (0.1, 0.25, 2)

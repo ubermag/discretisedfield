@@ -110,7 +110,7 @@ class Mesh(object):
         """Generate a random mesh point.
 
         Returns:
-          A random mesh point tuple of coordinates.
+          A random mesh point tuple of coordinates (x, y, z).
 
         """
         return tuple(self.pmin[i]+random.random()*self.l[i] for i in range(3))
@@ -132,9 +132,11 @@ class Mesh(object):
           A length 3 tuple of x, y, and z coodinates
 
         """
+        # Does index refer to "a cell" outside the mesh?
         for i in range(3):
             if index[i] < 0 or index[i] > self.n[i] - 1:
-                msg = "Index index[{}]={} out of range.".format(i, index[i])
+                msg = ("index[{}]={} out of range "
+                       "[0, n[{}]].").format(i, index[i], self.n[i])
                 raise ValueError(msg)
 
         return tuple(self.pmin[i]+(index[i]+0.5)*self.cell[i]
@@ -144,8 +146,6 @@ class Mesh(object):
         """Compute the index of a cell containing point p.
 
         This method is an inverse function of index2point method.
-        (For details on index, please refer to the index2point method.)
-
         It raises ValueError if the point is outside the mesh.
 
         Args:
@@ -155,24 +155,17 @@ class Mesh(object):
           A length 3 cell index tuple (ix, iy, iz).
 
         """
+        # Is the point outside the mesh?
         for i in range(3):
             if p[i] < self.pmin[i] or p[i] > self.pmax[i]:
-                msg = "Point p[{}]={} outside the mesh domain.".format(i, p[i])
+                msg = "Point p[{}]={} outside the mesh.".format(i, p[i])
                 raise ValueError(msg)
 
-        index = ()
-        for i in range(3):
-            index_i = int(round((p[i]-self.pmin[i])/self.cell[i] - 0.5))
-
-            # If rounded to the out-of-range mesh index.
-            if index_i < 0:
-                index_i = 0  # pragma: no cover
-            elif index_i > self.n[i] - 1:
-                index_i = self.n[i] - 1
-
-            index += (index_i,)
-
-        return index
+        index = tuple(int(round((p[i]-self.pmin[i])/self.cell[i] - 0.5))
+                      for i in range(3))
+        
+        # If rounded to the out-of-range values
+        return tuple(max(min(self.n[i]-1, index[i]), 0) for i in range(3))
 
     def indices(self):
         """Generator iterating through all mesh cells and
