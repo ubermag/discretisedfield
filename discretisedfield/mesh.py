@@ -89,13 +89,9 @@ class Mesh(object):
         """Shows a matplotlib figure of sample range and discretisation."""
         return self.plot()  # pragma: no cover
 
+    @property
     def centre(self):
-        """Compute and return the mesh centre point.
-
-        Returns:
-          A mesh centre point tuple of coordinates.
-
-        """
+        """Mesh centre point."""
         return tuple(self.pmin[i]+0.5*self.l[i] for i in range(3))
 
     def random_point(self):

@@ -142,22 +142,35 @@ class TestMesh(object):
 
     def test_cell_greater_than_domain(self):
         p1 = (0, 0, 0)
-        p2 = (1., 1., 1.)
-        for d in [(2, 1, 1), (1, 2, 1), (1, 1, 2), (1, 5, 0.1)]:
+        p2 = (1e-9, 1e-9, 1e-9)
+        for cell in [(2e-9, 1e-9, 1e-9), (1e-9, 2e-9, 1e-9),
+                     (1e-9, 1e-9, 2e-9), (1e-9, 5e-9, 0.1e-9)]:
             with pytest.raises(ValueError) as excinfo:
-                mymesh = df.Mesh(p1, p2, d)
+                mymesh = df.Mesh(p1=p1, p2=p2, cell=cell)
             assert "greater than the domain" in str(excinfo)
+
+    def test_centre(self):
+        p1 = (-18.5, 10, 0)
+        p2 = (10, 5, 10)
+        cell = (0.1, 0.25, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert mesh.centre == (-4.25, 7.5, 5)
+
+        p1 = (500e-9, 125e-9, 3e-9)
+        p2 = (0, 0, 0)
+        cell = (10e-9, 5e-9, 1e-9)
+        mesh = df.Mesh(p1, p2, cell)
+        assert mesh.centre == (250e-9, 62.5e-9, 1.5e-9)
 
     def test_repr(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
         name = "meshname"
-        mesh = df.Mesh(p1, p2, cell, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
         rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
                 "cell=(1, 0.1, 0.5), name=\"meshname\")")
-
         assert repr(mesh) == rstr
 
     def test_index2point(self):
@@ -250,28 +263,13 @@ class TestMesh(object):
             assert isinstance(mesh.point2index(mesh.index2point(i)), tuple)
             assert mesh.point2index(mesh.index2point(i)) == i
 
-    def test_centre(self):
-        p1 = (-18.5, 10, 0)
-        p2 = (10, 5, 10)
-        cell = (0.1, 0.25, 2)
-        mesh = df.Mesh(p1, p2, cell)
-        assert isinstance(mesh.centre(), tuple)
-        assert mesh.centre() == (-4.25, 7.5, 5)
-
-        p1 = (500e-9, 125e-9, 3e-9)
-        p2 = (0, 0, 0)
-        cell = (10e-9, 5e-9, 1e-9)
-        mesh = df.Mesh(p1, p2, cell)
-        assert isinstance(mesh.centre(), tuple)
-        assert mesh.centre() == (250e-9, 62.5e-9, 1.5e-9)
-
     def test_various_conversions(self):
         p1 = (0, 0, 0)
         p2 = (9, 5, -11)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1, p2, cell)
 
-        assert mesh.point2index(mesh.centre()) == (4, 2, 5)
+        assert mesh.point2index(mesh.centre) == (4, 2, 5)
 
     def test_random_point(self):
         p1 = (-18.5, 5, 0)

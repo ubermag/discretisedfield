@@ -211,7 +211,7 @@ class TestField(object):
 
                 for pyfun in funcs:
                     f.f = pyfun
-                    point = f.mesh.centre()["xyz".find(s)]
+                    point = f.mesh.centre["xyz".find(s)]
                     data = f.slice_field(s, point)
                     a1, a2, f_slice, cs = data
 
@@ -239,7 +239,7 @@ class TestField(object):
 
                     for j in range(f.mesh.n[cs[0]]):
                         for k in range(f.mesh.n[cs[1]]):
-                            c = list(f.mesh.centre())
+                            c = list(f.mesh.centre)
                             c[cs[0]] = a1[j]
                             c[cs[1]] = a2[k]
                             c = tuple(c)
@@ -255,7 +255,7 @@ class TestField(object):
 
             for pyfun in funcs:
                 f.f = pyfun
-                point = f.mesh.centre()[0]
+                point = f.mesh.centre[0]
                 with pytest.raises(ValueError):
                     data = f.slice_field("xy", point)
                     data = f.slice_field("xyz", point)
@@ -273,11 +273,11 @@ class TestField(object):
 
                 for pyfun in funcs:
                     f.f = pyfun
-                    point = f.mesh.centre()["xyz".find(s)] + 100
+                    point = f.mesh.centre["xyz".find(s)] + 100
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
 
-                    point = f.mesh.centre()["xyz".find(s)] - 100
+                    point = f.mesh.centre["xyz".find(s)] - 100
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
 
@@ -287,7 +287,7 @@ class TestField(object):
         for f in self.vector_fs:
             f.normalisedto = 1
             f.f = value
-            point = f.mesh.centre()["xyz".find("y")]
+            point = f.mesh.centre["xyz".find("y")]
             fig = f.plot_slice("y", point, axes=True)
             fig = f.plot_slice("y", point, axes=False)
 
@@ -296,7 +296,7 @@ class TestField(object):
         for f in self.vector_fs:
             f.normalisedto = 1
             f.f = value
-            point = f.mesh.centre()["xyz".find("z")]
+            point = f.mesh.centre["xyz".find("z")]
             with pytest.raises(ValueError):
                 fig = f.plot_slice("z", point)
 
