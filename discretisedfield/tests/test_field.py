@@ -86,8 +86,8 @@ class TestField(object):
 
         assert f.name == name
 
-        assert np.all(f.f[:, :, :, 0] == value[0])
-        assert np.all(f.f[:, :, :, 1] == value[1])
+        assert np.all(f.value[:, :, :, 0] == value[0])
+        assert np.all(f.value[:, :, :, 1] == value[1])
 
     def test_wrong_init(self):
         mesh = "wrong_mesh_string"
@@ -97,10 +97,10 @@ class TestField(object):
     def test_set_with_constant(self):
         for value in self.constant_values:
             for f in self.scalar_fs + self.vector_fs:
-                f.f = value
+                f.value = value
 
                 # Check all values.
-                assert np.all(f.f == value)
+                assert np.all(f.value == value)
 
                 # Check with sampling.
                 assert np.all(f(f.mesh.random_point()) == value)
@@ -109,19 +109,19 @@ class TestField(object):
         for value in self.tuple_values:
             for f in self.vector_fs:
                 f.normalisedto = 1
-                f.f = value
+                f.value = value
 
                 norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
                 for j in range(3):
                     c = f.mesh.random_point()
-                    assert np.all(f.f[:, :, :, j] == value[j]/norm)
+                    assert np.all(f.value[:, :, :, j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
 
     def test_set_from_callable(self):
         # Test scalar fs.
         for f in self.scalar_fs:
             for pyfun in self.scalar_pyfuncs:
-                f.f = pyfun
+                f.value = pyfun
 
                 for j in range(10):
                     c = f.mesh.random_point()
@@ -131,7 +131,7 @@ class TestField(object):
         # Test vector fields.
         for f in self.vector_fs:
             for pyfun in self.vector_pyfuncs:
-                f.f = pyfun
+                f.value = pyfun
 
                 for j in range(10):
                     c = f.mesh.random_point()
@@ -141,13 +141,13 @@ class TestField(object):
     def test_set_exception(self):
         for f in self.vector_fs + self.scalar_fs:
             with pytest.raises(TypeError):
-                f.f = "string"
+                f.value = "string"
 
     def test_average_scalar_field(self):
         value = -1e-3 + np.pi
         tol = 1e-12
         for f in self.scalar_fs:
-            f.f = value
+            f.value = value
             average = f.average()
 
             assert abs(average[0] - value) < tol
@@ -156,7 +156,7 @@ class TestField(object):
         value = np.array([1.1, -2e-3, np.pi])
         tol = 1e-12
         for f in self.vector_fs:
-            f.f = value
+            f.value = value
             average = f.average()
 
             assert abs(average[0] - value[0]) < tol
@@ -167,14 +167,14 @@ class TestField(object):
         for f in self.vector_fs:
             for value in self.vector_pyfuncs + self.tuple_values:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
-                    f.f = value
+                    f.value = value
                     f.normalisedto = norm_value
                     f.normalise()
 
                     # Compute norm.
                     norm = 0
                     for j in range(f.dim):
-                        norm += f.f[:, :, :, j]**2
+                        norm += f.value[:, :, :, j]**2
                     norm = np.sqrt(norm)
 
                     assert norm.shape == (f.mesh.n[0],
@@ -190,7 +190,7 @@ class TestField(object):
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
                     with pytest.raises(NotImplementedError):
                         f.normalisedto = norm_value
-                        f.f = value
+                        f.value = value
 
     def test_line_intersection(self):
         mesh = df.Mesh((0, 0, 0), (10e-9, 10e-9, 10e-9), (1e-9, 1e-9, 1e-9))
@@ -210,7 +210,7 @@ class TestField(object):
                     funcs = self.vector_pyfuncs
 
                 for pyfun in funcs:
-                    f.f = pyfun
+                    f.value = pyfun
                     point = f.mesh.centre["xyz".find(s)]
                     data = f.slice_field(s, point)
                     a1, a2, f_slice, cs = data
@@ -254,7 +254,7 @@ class TestField(object):
                 funcs = self.vector_pyfuncs
 
             for pyfun in funcs:
-                f.f = pyfun
+                f.value = pyfun
                 point = f.mesh.centre[0]
                 with pytest.raises(ValueError):
                     data = f.slice_field("xy", point)
@@ -272,7 +272,7 @@ class TestField(object):
                     funcs = self.vector_pyfuncs
 
                 for pyfun in funcs:
-                    f.f = pyfun
+                    f.value = pyfun
                     point = f.mesh.centre["xyz".find(s)] + 100
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
@@ -286,7 +286,7 @@ class TestField(object):
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
             f.normalisedto = 1
-            f.f = value
+            f.value = value
             point = f.mesh.centre["xyz".find("y")]
             fig = f.plot_slice("y", point, axes=True)
             fig = f.plot_slice("y", point, axes=False)
@@ -295,7 +295,7 @@ class TestField(object):
         value = (0, 0, 1)
         for f in self.vector_fs:
             f.normalisedto = 1
-            f.f = value
+            f.value = value
             point = f.mesh.centre["xyz".find("z")]
             with pytest.raises(ValueError):
                 fig = f.plot_slice("z", point)
@@ -305,7 +305,7 @@ class TestField(object):
         filename = "test_write_oommf_file_text.omf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
-            f.f = value
+            f.value = value
             f.write_oommf_file(filename)
 
             f_loaded = df.read_oommf_file(filename)
@@ -314,7 +314,7 @@ class TestField(object):
             assert f.mesh.p2 == f_loaded.mesh.p2
             assert f.mesh.cell == f_loaded.mesh.cell
             assert f.mesh.cell == f_loaded.mesh.cell
-            assert np.all(abs(f.f - f_loaded.f) < tol)
+            assert np.all(abs(f.value - f_loaded.value) < tol)
 
             os.system("rm {}".format(filename))
 
@@ -323,7 +323,7 @@ class TestField(object):
         filename = "test_write_oommf_file_binary.omf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
-            f.f = value
+            f.value = value
             f.write_oommf_file(filename, 'binary')
 
             f_loaded = df.read_oommf_file(filename)
@@ -332,6 +332,6 @@ class TestField(object):
             assert f.mesh.p2 == f_loaded.mesh.p2
             assert f.mesh.cell == f_loaded.mesh.cell
             assert f.mesh.cell == f_loaded.mesh.cell
-            assert np.all(abs(f.f - f_loaded.f) < tol)
+            assert np.all(abs(f.value - f_loaded.value) < tol)
 
             os.system("rm {}".format(filename))
