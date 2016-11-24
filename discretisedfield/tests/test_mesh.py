@@ -309,6 +309,24 @@ class TestMesh(object):
 
         assert counter == 1000
 
+    def test_coordinates(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1, p2, cell)
+
+        counter = 0
+        for coord in mesh.coordinates():
+            assert isinstance(coord, tuple)
+            assert len(coord) == 3
+
+            for i in range(3):
+                assert 0.5 <= coord[i] <= 9.5
+
+            counter += 1
+
+        assert counter == 1000
+
     def test_line_intersection(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)

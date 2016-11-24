@@ -178,7 +178,7 @@ class Mesh(object):
         """Generator iterating through all mesh cells and
         yielding their centres' coordinates."""
         for i in self.indices():
-            yield self.index2coord(i)
+            yield self.index2point(i)
 
     def plot(self):
         """Creates a figure of a mesh range and discretisation cell."""
