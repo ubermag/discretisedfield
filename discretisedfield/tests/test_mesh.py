@@ -170,6 +170,18 @@ class TestMesh(object):
         mesh = df.Mesh(p1, p2, cell)
         assert mesh.centre == (250e-9, 62.5e-9, 1.5e-9)
 
+    def test_random_point(self):
+        p1 = (-18.5, 5, 0)
+        p2 = (10, -10, 10e-9)
+        cell = (0.1e-9, 0.25, 2e-9)
+        mesh = df.Mesh(p1, p2, cell)
+
+        for _ in range(20):
+            p = mesh.random_point()
+            assert isinstance(p, tuple)
+            for i in range(3):
+                assert mesh.pmin[i] <= p[i] <= mesh.pmax[i]
+
     def test_repr(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
@@ -190,12 +202,6 @@ class TestMesh(object):
         assert mesh.index2point((0, 0, 0)) == (-0.5, -3.95, 11.25)
         assert mesh.index2point((5, 10, 1)) == (4.5, -2.95, 11.75)
         assert mesh.index2point((15, 140, 2)) == (14.5, 10.05, 12.25)
-
-    def test_index2point_exception(self):
-        p1 = (-1, -4, 11)
-        p2 = (15, 10.1, 12.5)
-        cell = (1, 0.1, 0.5)
-        mesh = df.Mesh(p1, p2, cell)
 
         # Correct minimum index
         assert isinstance(mesh.index2point((0, 0, 0)), tuple)
@@ -234,16 +240,15 @@ class TestMesh(object):
         assert mesh.point2index((9.1e-9, 0.1e-9, 9.1e-9)) == (19, 1, 9)
 
         # vicinity of (0, 0, 0) point
-        assert mesh.point2index((1e-16, 1e-16, 1e-16)) == (10, 1, 0)
-        assert mesh.point2index((-1e-16, -1e-16, 1e-16)) == (9, 0, 0)
+        assert mesh.point2index((1e-16, 1e-16, 0.99e-16)) == (10, 1, 0)
+        assert mesh.point2index((-1e-16, -1e-16, 0.01e-16)) == (9, 0, 0)
 
-    def test_point2index_exception(self):
         p1 = (-10, 5, 0)
         p2 = (10, -5, 10e-9)
         cell = (1, 5, 1e-9)
         mesh = df.Mesh(p1, p2, cell)
 
-        tol = 1e-12
+        tol = 1e-12  # picometer tolerance
         with pytest.raises(ValueError):
             mesh.point2index((-10-tol, 0, 5))
         with pytest.raises(ValueError):
@@ -279,18 +284,6 @@ class TestMesh(object):
 
         assert mesh.point2index(mesh.centre) == (4, 2, 5)
 
-    def test_random_point(self):
-        p1 = (-18.5, 5, 0)
-        p2 = (10, -10, 10e-9)
-        cell = (0.1e-9, 0.25, 2e-9)
-        mesh = df.Mesh(p1, p2, cell)
-
-        for _ in range(20):
-            p = mesh.random_point()
-            assert isinstance(p, tuple)
-            for i in range(3):
-                assert mesh.pmin[i] <= p[i] <= mesh.pmax[i]
-
     def test_plot(self):
         for arg in self.valid_args:
             p1, p2, cell = arg
@@ -316,7 +309,6 @@ class TestMesh(object):
 
         assert counter == 1000
 
-        
     def test_line_intersection(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)

@@ -145,7 +145,6 @@ class Mesh(object):
     def point2index(self, p):
         """Compute the index of a cell containing point p.
 
-        This method is an inverse function of index2point method.
         It raises ValueError if the point is outside the mesh.
 
         Args:
