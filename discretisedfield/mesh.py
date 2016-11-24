@@ -38,7 +38,7 @@ class Mesh(object):
 
         # Is domain edge length zero?
         for i in range(3):
-            if self.l[i] ==0:
+            if self.l[i] == 0:
                 msg = ("Domain edge length is zero (l[{}]==0).").format(i)
                 raise ValueError(msg)
 
