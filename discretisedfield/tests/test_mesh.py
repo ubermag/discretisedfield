@@ -97,13 +97,19 @@ class TestMesh(object):
                 assert isinstance(mesh.n[i], int)
 
     def test_init_invalid_args(self):
-        # Exceptions are raised by descriptors.
         for p1, p2, cell in self.invalid_args:
             with pytest.raises(TypeError):
+                # Exceptions are raised by descriptors.
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
+    def test_init_invalid_name(self):
+        for name in ["mesh name", "2name", " ", 5, "-name", "+mn"]:
+            with pytest.raises(TypeError):
+                # Exception is raised by the descriptor (mesh.name).
+                mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10),
+                               cell=(1, 1, 1), name=name)
+
     def test_zero_domain_edge_length(self):
-        # Exception is raised by the descriptor (mesh.l).
         args = [[(0, 100e-9, 1e-9),
                  (150e-9, 100e-9, 6e-9),
                  (1e-9, 0.01e-9, 1e-9)],
@@ -113,8 +119,10 @@ class TestMesh(object):
                 [(10e9, 10e3, 0),
                  (0.01e12, 11e3, 5),
                  (1e9, 1e3, 1)]]
+
         for p1, p2, cell in args:
             with pytest.raises(TypeError):
+                # Exception is raised by the descriptor (mesh.l).
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     def test_init_d_not_multiple_of_l(self):
@@ -130,16 +138,7 @@ class TestMesh(object):
         for p1, p2, cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-            assert "aggregate" in str(excinfo)
-
-    def test_init_invalid_name(self):
-        # Exception raised by the descriptor
-        p1 = (0, 0, 0)
-        p2 = (500e-9, 125e-9, 3e-9)
-        cell = (2.5e-9, 2.5e-9, 3e-9)
-        for name in ["mesh name", "2name", " ", 5]:
-            with pytest.raises(TypeError):
-                mesh = df.Mesh(p1, p2, cell, name=name)
+            assert "not an aggregate" in str(excinfo)
 
     def test_repr(self):
         p1 = (-1, -4, 11)
