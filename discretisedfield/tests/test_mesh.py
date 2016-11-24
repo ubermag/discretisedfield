@@ -14,21 +14,21 @@ class TestMesh(object):
                             (1e-9, 1e-9, 1e-9)],
                            [(-1.5e-9, -5e-9, 0),
                             (1.5e-9, -15e-9, -160e-9),
-                            (0.3e-9, 1e-9, 1e-9)],
+                            (0.15e-9, 0.1e-9, 10e-9)],
                            [(-1.5e-9, -5e-9, -5e-9),
                             np.array((0, 0, 0)),
                             (0.5e-9, 1e-9, 5e-9)],
                            [[0, 5e-6, 0],
-                            (-1.5e-9, -5e-9, -5e-9),
-                            (0.5e-9, 1e-9, 5e-9)],
-                           [(0, 0, 0),
-                            (500e-9, 125e-9, 3e-9),
+                            (-1.5e-6, -5e-6, -5e-6),
+                            (0.5e-6, 1e-6, 5e-9)],
+                           [(0, 125e-9, 0),
+                            (500e-9, 0, -3e-9),
                             (2.5e-9, 2.5e-9, 3e-9)]]
 
         self.invalid_args = [[(0, 0, 0),
                               (5, 5, 5),
                               (-1, 1, 1)],
-                             ["1",
+                             [("1", 0, 0),
                               (1, 1, 1),
                               (0, 0, 1e-9)],
                              [(-1.5e-9, -5e-9, "a"),
@@ -45,14 +45,14 @@ class TestMesh(object):
                               "string"],
                              [(-1.5e-9, -5e-9, 0),
                               (1.5e-9, 15e-9, 16e-9),
-                              1]]
+                              2+2j]]
 
-    def test_simple_init(self):
+    def test_init(self):
         p1 = (0, -4, 16.5)
         p2 = (15, 10.1, 11)
         cell = (1, 0.1, 0.5)
         name = "test_mesh"
-        mesh = df.Mesh(p1, p2, cell, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
         assert isinstance(mesh.p1, tuple)
         assert mesh.p1 == p1
@@ -82,7 +82,7 @@ class TestMesh(object):
     def test_init_valid_args(self):
         for arg in self.valid_args:
             p1, p2, cell = arg
-            mesh = df.Mesh(p1, p2, cell)
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
             assert isinstance(mesh.p1, tuple)
             assert mesh.p1 == tuple(p1)
@@ -103,7 +103,7 @@ class TestMesh(object):
             with pytest.raises(TypeError):
                 mesh = df.Mesh(p1, p2, cell)
 
-    def test_zero_domain_edge(self):
+    def test_zero_domain_edge_length(self):
         # Exception is raised by the descriptor
         p1 = (0, 100e-9, 1e-9)
         p2 = (150e-9, 100e-9, 6e-9)
