@@ -84,6 +84,10 @@ class Field(object):
         if self.normalisedto is not None:
             self.normalise()
 
+    def __repr__(self):
+        """Representation method."""
+        return "Field(dim={}, name=\"{}\")".format(self.dim, self.name)
+
     def normalise(self):
         """Normalise the vector field to self.normalisedto value."""
         if self.dim == 1:
