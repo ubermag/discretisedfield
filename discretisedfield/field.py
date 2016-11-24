@@ -5,9 +5,6 @@ import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 import struct
 
-# TODO: rename f
-# TODO: sample arbitrary plane
-
 
 @ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
                dim=ts.UnsignedInt,

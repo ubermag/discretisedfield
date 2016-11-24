@@ -132,7 +132,7 @@ class Mesh(object):
           A length 3 tuple of x, y, and z coodinates
 
         """
-        # Does index refer to "a cell" outside the mesh?
+        # Does index refer to a cell outside the mesh?
         for i in range(3):
             if index[i] < 0 or index[i] > self.n[i] - 1:
                 msg = ("index[{}]={} out of range "
