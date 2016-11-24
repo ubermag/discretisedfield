@@ -177,7 +177,7 @@ class Mesh(object):
 
     def coordinates(self):
         """Generator iterating through all mesh cells and
-        yielding their coordinates."""
+        yielding their centres' coordinates."""
         for i in self.indices():
             yield self.index2coord(i)
 
