@@ -80,8 +80,7 @@ class TestMesh(object):
             assert isinstance(mesh.n[i], int)
 
     def test_init_valid_args(self):
-        for arg in self.valid_args:
-            p1, p2, cell = arg
+        for p1, p2, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
             assert isinstance(mesh.p1, tuple)
@@ -98,37 +97,40 @@ class TestMesh(object):
                 assert isinstance(mesh.n[i], int)
 
     def test_init_invalid_args(self):
-        for arg in self.invalid_args:
-            p1, p2, cell = arg
+        # Exceptions are raised by descriptors.
+        for p1, p2, cell in self.invalid_args:
             with pytest.raises(TypeError):
-                mesh = df.Mesh(p1, p2, cell)
+                mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     def test_zero_domain_edge_length(self):
-        # Exception is raised by the descriptor
-        p1 = (0, 100e-9, 1e-9)
-        p2 = (150e-9, 100e-9, 6e-9)
-        cell = (1e-9, 1e-9, 1e-9)
-        with pytest.raises(TypeError):
-            mesh = df.Mesh(p1, p2, cell)
-
-        p1 = (0, 100e-9, 0)
-        p2 = (150e-9, 101e-9, 0)
-        cell = (1e-9, 1e-9, 1e-9)
-        with pytest.raises(TypeError):
-            mesh = df.Mesh(p1, p2, cell)
+        # Exception is raised by the descriptor (mesh.l).
+        args = [[(0, 100e-9, 1e-9),
+                 (150e-9, 100e-9, 6e-9),
+                 (1e-9, 0.01e-9, 1e-9)],
+                [(0, 100e-9, 0),
+                 (150e-9, 101e-9, 0),
+                 (2e-9, 1e-9, 0.1e-9)],
+                [(10e9, 10e3, 0),
+                 (0.01e12, 11e3, 5),
+                 (1e9, 1e3, 1)]]
+        for p1, p2, cell in args:
+            with pytest.raises(TypeError):
+                mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     def test_init_d_not_multiple_of_l(self):
-        p1 = (0, -4, 11)
-        p2 = (15, 20, 16e-9)
-        cell = (1, 5, 1e-9)
-        with pytest.raises(ValueError):
-            mesh = df.Mesh(p1, p2, cell)
-
-        p1 = (0, 0, 0)
-        p2 = (500e-9, 125e-9, 3e-9)
-        cell = (2.5e-9, 2.5e-9, 2.5e-9)
-        with pytest.raises(ValueError):
-            mesh = df.Mesh(p1, p2, cell)
+        args = [[(0, 100e-9, 1e-9),
+                 (150e-9, 120e-9, 6e-9),
+                 (4e-9, 1e-9, 1e-9)],
+                [(0, 100e-9, 0),
+                 (150e-9, 104e-9, 1e-9),
+                 (2e-9, 1.5e-9, 0.1e-9)],
+                [(10e9, 10e3, 0),
+                 (11e9, 11e3, 5),
+                 (1e9, 1e3, 1.5)]]
+        for p1, p2, cell in args:
+            with pytest.raises(ValueError) as excinfo:
+                mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+            assert "aggregate" in str(excinfo)
 
     def test_init_invalid_name(self):
         # Exception raised by the descriptor
