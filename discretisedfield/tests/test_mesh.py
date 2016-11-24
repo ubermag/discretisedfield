@@ -68,11 +68,13 @@ class TestMesh(object):
         assert mesh.pmax == (15, 10.1, 16.5)
 
         assert isinstance(mesh.l, tuple)
+        assert len(mesh.l) == 3
         assert mesh.l[0] == 15 - 0
         assert mesh.l[1] == 10.1 - (-4)
         assert mesh.l[2] == 16.5 - 11
 
         assert isinstance(mesh.n, tuple)
+        assert len(mesh.n) == 3
         assert mesh.n[0] == (15 - 0) / 1.0
         assert mesh.n[1] == (10.1 - (-4)) / 0.1
         assert mesh.n[2] == (16.5 - 11) / 0.5
