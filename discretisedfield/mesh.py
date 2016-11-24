@@ -10,51 +10,38 @@ from mpl_toolkits.mplot3d import Axes3D
                p2=ts.RealVector(size=3),
                cell=ts.PositiveRealVector(size=3),
                name=ts.ObjectName,
-               l=ts.PositiveRealVector(size=3),
                pmin=ts.RealVector(size=3),
                pmax=ts.RealVector(size=3),
+               l=ts.PositiveRealVector(size=3),
                n=ts.PositiveIntVector(size=3))
 class Mesh(object):
     def __init__(self, p1, p2, cell, name="mesh"):
         """
-        Creates a rectangular finite difference mesh.
+        Rectangular finite difference mesh
 
         Args:
-          p1 (tuple, list, numpy.ndarray): First point of the mesh domain
+          p1 (tuple): First point of the mesh domain
             p1 = (x1, y1, z1)
-          p2 (tuple, list, numpy.ndarray): Second point of the mesh domain
+          p2 (tuple): Second point of the mesh domain
             p2 = (x2, y2, z2)
-          cell (tuple, list, numpy.ndarray): Discretisation cell size
+          cell (tuple): Discretisation cell size
             cell = (dx, dy, dz)
-          name (Optional[str]): Mesh name
+          name (Optional[str]): Mesh name. Defaults to "mesh".
 
         Attributes:
           p1 (tuple): First point of the mesh domain
-
           p2 (tuple): Second point of the mesh domain
-
           cell (tuple): Discretisation cell size
-
           name (str): Mesh name
-
-          pmin (tuple): Minimum mesh domain coordinates point
-
-          pmax (tuple): Maximum mesh domain coordinates point
-
-          l (tuple): length of domain x, y, and z edges (lx, ly, lz):
-
+          pmin (tuple): Minimum mesh domain coordinate point
+          pmax (tuple): Maximum mesh domain coordinate point
+          l (tuple): Length of domain edges (lx, ly, lz)
             lx = abs(p2[0] - p1[0])
-
             ly = abs(p2[1] - p1[2])
-
             lz = abs(p2[2] - p1[2])
-
-          n (tuple): The number of cells in three dimensions (nx, ny, nz):
-
+          n (tuple): Number of discretisation cells (nx, ny, nz)
             nx = lx/dx
-
             ny = ly/dy
-
             nz = lz/dz
 
         """
@@ -63,22 +50,22 @@ class Mesh(object):
         self.cell = tuple(cell)
         self.name = name
 
-        # Compute domain edge lengths.
-        self.l = tuple(abs(self.p2[i]-self.p1[i]) for i in range(3))
-
         # Compute minimum and maximum mesh domain points.
         self.pmin = tuple(min(self.p1[i], self.p2[i]) for i in range(3))
         self.pmax = tuple(max(self.p1[i], self.p2[i]) for i in range(3))
 
-        tol = 1e-12  # picometer tolerance
-        # Check if the discretisation cell size is greater than the domain.
+        # Compute domain edge lengths.
+        self.l = tuple(abs(self.p1[i] - self.p2[i]) for i in range(3))
+
+        # Is discretisation cell size greater than the domain?
         for i in range(3):
             if self.cell[i] > self.l[i]:
                 msg = ("Discretisation cell is greater than the domain: "
                        "cell[{0}] > abs(p2[{0}]-p1[{0}]).").format(i)
                 raise ValueError(msg)
 
-        # Check if the domain is not an aggregate of discretisation cell.
+        # Is domain not an aggregate of discretisation cells?
+        tol = 1e-12  # picometer tolerance
         for i in range(3):
             if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
                 msg = ("Domain is not an aggregate of the discretisation "
