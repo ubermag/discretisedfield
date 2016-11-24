@@ -188,8 +188,10 @@ class Mesh(object):
 
         cell_point = tuple(self.pmin[i]+self.cell[i] for i in range(3))
 
-        dfu.plot_box(ax, self.pmin, self.pmax)
-        dfu.plot_box(ax, self.pmin, cell_point, props="r-", linewidth=1)
+        # domain box
+        dfu.plot_box(ax, self.pmin, self.pmax, "b-", linewidth=1.5)
+        # discretisation cell box
+        dfu.plot_box(ax, self.pmin, cell_point, "r-", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
