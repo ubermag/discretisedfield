@@ -49,9 +49,12 @@ class Field(object):
     @property
     def value(self):
         """Field value representation."""
-        return self.array
+        if self._value_consistent():
+            return self._value
+        else:
+            return self.array
 
-    def value_consistent(self):
+    def _value_consistent(self):
         value_array = self._as_array(self._value)
         return np.all(self.array==value_array)
 
@@ -124,9 +127,9 @@ class Field(object):
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
 
-        norm = np.linalg.norm(self.value, axis=self.dim)
+        norm = np.linalg.norm(self.array, axis=self.dim)
         for i in range(self.dim):
-            self.value[..., i] = self.normalisedto*self.value[..., i]/norm
+            self.array[..., i] = self.normalisedto*self.array[..., i]/norm
 
     def __call__(self, p):
         """Sample the field at point p.
@@ -139,7 +142,7 @@ class Field(object):
 
         """
         i, j, k = self.mesh.point2index(p)
-        return self.value[i, j, k]
+        return self.array[i, j, k]
 
     def average(self):
         """Compute the finite difference field average.
@@ -148,7 +151,7 @@ class Field(object):
           Finite difference field average.
 
         """
-        return tuple(self.value.mean(axis=(0, 1, 2)))
+        return tuple(self.array.mean(axis=(0, 1, 2)))
 
     def line_intersection(self, l, l0, n=100):
         """
@@ -244,7 +247,7 @@ class Field(object):
                     axis1_coords[j] = coord[axes[0]]
                     axis2_coords[k] = coord[axes[1]]
 
-                    field_slice[j, k, :] = self.value[i]
+                    field_slice[j, k, :] = self.array[i]
             coord_system = (axes[0], axes[1], slice_num)
 
         else:
@@ -390,7 +393,7 @@ class Field(object):
             for iz in range(self.mesh.n[2]):
                 for iy in range(self.mesh.n[1]):
                     for ix in range(self.mesh.n[0]):
-                        [packarray.append(vi) for vi in self.value[ix, iy, iz, :]]
+                        [packarray.append(vi) for vi in self.array[ix, iy, iz, :]]
 
             v_binary = struct.pack("d"*len(packarray), *packarray)
             oommf_file.write(v_binary)
@@ -401,7 +404,7 @@ class Field(object):
             for iz in range(self.mesh.n[2]):
                 for iy in range(self.mesh.n[1]):
                     for ix in range(self.mesh.n[0]):
-                        v = [str(vi) for vi in self.value[ix, iy, iz, :]]
+                        v = [str(vi) for vi in self.array[ix, iy, iz, :]]
                         for vi in v:
                             oommf_file.write(" " + vi)
                         oommf_file.write("\n")
@@ -481,7 +484,7 @@ def read_oommf_file_text(filename, name="unnamed"):
     for i in mesh.indices():
         line_data = lines[data_first_line+counter]
         value = [float(vi) for vi in line_data.split()]
-        field.value[i] = value
+        field.array[i] = value
 
         counter += 1
 
@@ -563,7 +566,7 @@ def read_oommf_file_binary(filename, name="unnamed"):
         value = (listdata[counter][0],
                  listdata[counter+1][0],
                  listdata[counter+2][0])
-        field.value[i] = value
+        field.array[i] = value
 
         counter += 3
 

@@ -86,8 +86,8 @@ class TestField(object):
 
         assert f.name == name
 
-        assert np.all(f.value[:, :, :, 0] == value[0])
-        assert np.all(f.value[:, :, :, 1] == value[1])
+        assert np.all(f.array[:, :, :, 0] == value[0])
+        assert np.all(f.array[:, :, :, 1] == value[1])
 
     def test_wrong_init(self):
         mesh = "wrong_mesh_string"
@@ -114,7 +114,7 @@ class TestField(object):
                 norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
                 for j in range(3):
                     c = f.mesh.random_point()
-                    assert np.all(f.value[:, :, :, j] == value[j]/norm)
+                    assert np.all(f.array[:, :, :, j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
 
     def test_set_with_ndarray(self):
@@ -179,7 +179,7 @@ class TestField(object):
                     # Compute norm.
                     norm = 0
                     for j in range(f.dim):
-                        norm += f.value[:, :, :, j]**2
+                        norm += f.array[:, :, :, j]**2
                     norm = np.sqrt(norm)
 
                     assert norm.shape == (f.mesh.n[0],
