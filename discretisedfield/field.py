@@ -65,13 +65,12 @@ class Field(object):
         if isinstance(value, (int, float)):
             self.array.fill(value)
         elif isinstance(value, (tuple, list, np.ndarray)):
-            for i in range(self.dim):
-                self.array[..., i].fill(value[i])
+            self.array[..., :] = value
         elif callable(value):
             for i in self.mesh.indices():
                 self.array[i] = value(self.mesh.index2point(i))
         else:
-            raise TypeError("Cannot set field using {}.".format(type(value)))
+            raise TypeError("Cannot set field with {}.".format(type(value)))
 
         if self.normalisedto is not None:
             self.normalise()
