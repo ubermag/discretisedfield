@@ -383,10 +383,8 @@ class Field(object):
             # Add the 8 bit binary check value that OOMMF uses
             packarray = [123456789012345.0]
             # Write data lines to OOMMF file.
-            for iz in range(self.mesh.n[2]):
-                for iy in range(self.mesh.n[1]):
-                    for ix in range(self.mesh.n[0]):
-                        [packarray.append(vi) for vi in self.array[ix, iy, iz, :]]
+            for i in self.mesh.indices():
+                [packarray.append(vi) for vi in self.array[i[0], i[1], i[2], :]]
 
             v_binary = struct.pack("d"*len(packarray), *packarray)
             oommf_file.write(v_binary)
@@ -394,13 +392,11 @@ class Field(object):
             oommf_file = open(filename, "a")
 
         else:
-            for iz in range(self.mesh.n[2]):
-                for iy in range(self.mesh.n[1]):
-                    for ix in range(self.mesh.n[0]):
-                        v = [str(vi) for vi in self.array[ix, iy, iz, :]]
-                        for vi in v:
-                            oommf_file.write(" " + vi)
-                        oommf_file.write("\n")
+            for i in self.mesh.indices():
+                v = [str(vi) for vi in self.array[i[0], i[1], i[2], :]]
+                for vi in v:
+                    oommf_file.write(" " + vi)
+                oommf_file.write("\n")
         # Write footer lines to OOMMF file.
         for line in footer_lines:
             oommf_file.write("# " + line + "\n")
