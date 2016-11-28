@@ -117,6 +117,11 @@ class TestField(object):
                     assert np.all(f.value[:, :, :, j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
 
+    def test_set_with_ndarray(self):
+        for f in self.vector_fs:
+            value = np.zeros(f.mesh.n + (f.dim,))
+            f.value = value
+
     def test_set_from_callable(self):
         # Test scalar fs.
         for f in self.scalar_fs:

@@ -23,7 +23,7 @@ class Field(object):
           mesh (Mesh): Finite difference mesh.
           dim (Optional[int]): The value dimensionality. Defaults to 3.
           value (Optional): Finite difference field value. Defaults to 0.
-            For the possible types of value argument, refer to the f.setter method.
+            For the possible types of value argument, refer to f.setter method.
             If no value argument is provided, a zero field is initialised.
           normalisedto (Optional[Real]): vector field norm
           name (Optional[str]): Field name
@@ -48,6 +48,7 @@ class Field(object):
 
     @property
     def value(self):
+        """Field value representation."""
         return self.array
 
     @value.setter
@@ -58,25 +59,32 @@ class Field(object):
         domain cells.
 
         Args:
-          value: This argument can be an integer, float, tuple, list,
-            np.ndarray, or Python function.
+          value: This argument can be int, float, tuple, list,
+            numpy.ndarray, or Python function.
 
         """
         if isinstance(value, (int, float)):
             self.array.fill(value)
-        elif isinstance(value, (tuple, list, np.ndarray)):
+        elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == self.dim:
             self.array[..., :] = value
+        elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
+            self.array = value
         elif callable(value):
             for i in self.mesh.indices():
                 self.array[i] = value(self.mesh.index2point(i))
         else:
             raise TypeError("Cannot set field with {}.".format(type(value)))
 
+        # Save the value representation.
+        self._value = value
+        self._value_consistent = True
+        
         if self.normalisedto is not None:
             self.normalise()
 
     @property
     def array(self):
+        """Field value numpy array representation."""
         if not hasattr(self, "_f"):
             self._f = np.zeros(self.mesh.n + (self.dim,))
         return self._f
@@ -103,7 +111,7 @@ class Field(object):
     def __repr__(self):
         """Representation method."""
         return "Field(dim={}, name=\"{}\")".format(self.dim, self.name)
-    
+
     def normalise(self):
         """Normalise the vector field to self.normalisedto value."""
         if self.dim == 1:
