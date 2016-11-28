@@ -276,14 +276,6 @@ class TestMesh(object):
             assert isinstance(mesh.point2index(mesh.index2point(i)), tuple)
             assert mesh.point2index(mesh.index2point(i)) == i
 
-    def test_various_conversions(self):
-        p1 = (0, 0, 0)
-        p2 = (9, 5, -11)
-        cell = (1, 1, 1)
-        mesh = df.Mesh(p1, p2, cell)
-
-        assert mesh.point2index(mesh.centre) == (4, 2, 5)
-
     def test_plot(self):
         for arg in self.valid_args:
             p1, p2, cell = arg
