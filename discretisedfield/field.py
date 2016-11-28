@@ -82,7 +82,7 @@ class Field(object):
     @property
     def norm(self):
         norm_ndarray = np.linalg.norm(self.array, axis=self.dim)
-        if np.all(norm_ndarray == self._as_ndarray(self._norm)):
+        if np.all(norm_ndarray == self._as_ndarray(self._norm)[..., 0]):
             return self._norm
         else:
             return norm_ndarray
@@ -98,8 +98,9 @@ class Field(object):
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
         norm_ndarray = np.linalg.norm(self.array, axis=self.dim)
+        value_ndarray = self._as_ndarray(value)[..., 0]
         for i in range(self.dim):
-            self.array[..., i] = value*self.array[..., i]/norm_ndarray
+            self.array[..., i] = value_ndarray*self.array[..., i]/norm_ndarray
         
     def _as_ndarray(self, value):
         value_array = np.zeros(self.mesh.n + (self.dim,))
