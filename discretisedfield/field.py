@@ -166,7 +166,7 @@ class Field(object):
         dfu.plot_box(ax, self.mesh.pmin, self.mesh.pmax)
         p1, p2 = dfu.box_line_intersection(
             self.mesh.pmin, self.mesh.pmax, l, l0)
-        dfu.plot_line(ax, p1, p2, props="ro-")
+        dfu.plot_line(ax, p1, p2, "ro-")
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
         # Plot field along line
