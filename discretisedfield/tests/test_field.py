@@ -108,8 +108,8 @@ class TestField(object):
     def test_set_with_tuple_list_ndarray(self):
         for value in self.tuple_values:
             for f in self.vector_fs:
-                f.normalisedto = 1
                 f.value = value
+                f.norm = 1
 
                 norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
                 for j in range(3):
@@ -173,8 +173,7 @@ class TestField(object):
             for value in self.vector_pyfuncs + self.tuple_values:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
                     f.value = value
-                    f.normalisedto = norm_value
-                    f.normalise()
+                    f.norm = norm_value
 
                     # Compute norm.
                     norm = 0
@@ -194,7 +193,7 @@ class TestField(object):
             for value in self.scalar_pyfuncs:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
                     with pytest.raises(NotImplementedError):
-                        f.normalisedto = norm_value
+                        f.norm = norm_value
                         f.value = value
 
     def test_line_intersection(self):

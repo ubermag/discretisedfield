@@ -10,7 +10,7 @@ import struct
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
 class Field(object):
-    def __init__(self, mesh, dim=3, value=0, normalisedto=None, name="field"):
+    def __init__(self, mesh, dim=3, value=0, norm=None, name="field"):
         """Class for analysing and manipulating Finite Difference (FD) fields.
 
         This class provides the functionality for:
@@ -42,14 +42,14 @@ class Field(object):
         """
         self.mesh = mesh
         self.dim = dim
-        self.normalisedto = normalisedto
-        self.name = name
         self.value = value  # calls setter method
+        self.norm = norm
+        self.name = name
 
     @property
     def value(self):
         """Field value representation."""
-        if np.all(self.array == self._as_array(self._value)):
+        if np.all(self.array == self._as_ndarray(self._value)):
             return self._value
         else:
             return self.array
@@ -58,18 +58,15 @@ class Field(object):
     def value(self, value):
         """Set the field value.
 
-        This method sets the field values at all finite difference
-        domain cells.
-
         Args:
           value: This argument can be int, float, tuple, list,
             numpy.ndarray, or Python function.
 
         """
-        self.array = self._as_array(value)
+        self.array = self._as_ndarray(value)
         self._value = value
-        if self.normalisedto is not None:
-            self.normalise()
+        #if self._norm is not None:
+        #    self._normalise()
 
     @property
     def array(self):
@@ -82,22 +79,29 @@ class Field(object):
     def array(self, value):
         self._f = value
 
-    """
     @property
     def norm(self):
-        return np.linalg.norm(self.value, axis=self.dim)
+        norm_ndarray = np.linalg.norm(self.array, axis=self.dim)
+        if np.all(norm_ndarray == self._as_ndarray(self._norm)):
+            return self._norm
+        else:
+            return norm_ndarray
 
     @norm.setter
     def norm(self, value):
+        self._norm = value
+        if self._norm is not None:
+            self._normalise(value)
+
+    def _normalise(self, value):
         if self.dim == 1:
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
-        self._norm = value
+        norm_ndarray = np.linalg.norm(self.array, axis=self.dim)
         for i in range(self.dim):
-            self.value[..., i] = value*self.value[..., i]/self.norm
-    """
-
-    def _as_array(self, value):
+            self.array[..., i] = value*self.array[..., i]/norm_ndarray
+        
+    def _as_ndarray(self, value):
         value_array = np.zeros(self.mesh.n + (self.dim,))
         if isinstance(value, (int, float)):
             value_array.fill(value)
@@ -117,16 +121,6 @@ class Field(object):
     def __repr__(self):
         """Representation method."""
         return "Field(dim={}, name=\"{}\")".format(self.dim, self.name)
-
-    def normalise(self):
-        """Normalise the vector field to self.normalisedto value."""
-        if self.dim == 1:
-            raise NotImplementedError("Normalisation is supported only "
-                                      "for vector fields.")
-
-        norm = np.linalg.norm(self.array, axis=self.dim)
-        for i in range(self.dim):
-            self.array[..., i] = self.normalisedto*self.array[..., i]/norm
 
     def __call__(self, p):
         """Sample the field at point p.
