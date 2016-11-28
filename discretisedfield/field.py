@@ -63,25 +63,48 @@ class Field(object):
 
         """
         if not hasattr(self, "f"):
-            self._f = np.zeros((self.mesh.n[0],
-                                self.mesh.n[1],
-                                self.mesh.n[2],
-                                self.dim))
+            self.array = np.zeros((self.mesh.n[0],
+                                   self.mesh.n[1],
+                                   self.mesh.n[2],
+                                   self.dim))
 
         if isinstance(value, (int, float)):
-            self._f.fill(value)
+            self.array.fill(value)
         elif isinstance(value, (tuple, list, np.ndarray)):
             for i in range(self.dim):
-                self._f[..., i].fill(value[i])
+                self.array[..., i].fill(value[i])
         elif callable(value):
             for i in self.mesh.indices():
-                self._f[i] = value(self.mesh.index2point(i))
+                self.array[i] = value(self.mesh.index2point(i))
         else:
             raise TypeError("Cannot set field using {}.".format(type(value)))
 
         if self.normalisedto is not None:
             self.normalise()
 
+    @property
+    def array(self):
+        return self._f
+
+    @array.setter
+    def array(self, value):
+        self._f = value
+
+    """
+
+    @property
+    def norm(self):
+        return np.linalg.norm(self.value, axis=self.dim)
+
+    @norm.setter
+    def norm(self, value):
+        if self.dim == 1:
+            raise NotImplementedError("Normalisation is supported only "
+                                      "for vector fields.")
+        self._norm = value
+        for i in range(self.dim):
+            self.value[..., i] = value*self.value[..., i]/self.norm
+    """ 
     def __repr__(self):
         """Representation method."""
         return "Field(dim={}, name=\"{}\")".format(self.dim, self.name)
@@ -91,6 +114,7 @@ class Field(object):
         if self.dim == 1:
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
+
         norm = np.linalg.norm(self.value, axis=self.dim)
         for i in range(self.dim):
             self.value[..., i] = self.normalisedto*self.value[..., i]/norm
