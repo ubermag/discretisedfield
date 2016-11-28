@@ -62,11 +62,6 @@ class Field(object):
             np.ndarray, or Python function.
 
         """
-        if not hasattr(self, "f"):
-            self.array = np.zeros((self.mesh.n[0],
-                                   self.mesh.n[1],
-                                   self.mesh.n[2],
-                                   self.dim))
         if isinstance(value, (int, float)):
             self.array.fill(value)
         elif isinstance(value, (tuple, list, np.ndarray)):
@@ -83,6 +78,8 @@ class Field(object):
 
     @property
     def array(self):
+        if not hasattr(self, "_f"):
+            self._f = np.zeros(self.mesh.n + (self.dim,))
         return self._f
 
     @array.setter
