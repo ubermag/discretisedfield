@@ -10,9 +10,7 @@ import struct
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
 class Field(object):
-
-    def __init__(self, mesh, dim=3, value=0,
-                 normalisedto=None, name="field"):
+    def __init__(self, mesh, dim=3, value=0, normalisedto=None, name="field"):
         """Class for analysing and manipulating Finite Difference (FD) fields.
 
         This class provides the functionality for:
@@ -87,13 +85,13 @@ class Field(object):
     def __repr__(self):
         """Representation method."""
         return "Field(dim={}, name=\"{}\")".format(self.dim, self.name)
-
+    
     def normalise(self):
         """Normalise the vector field to self.normalisedto value."""
         if self.dim == 1:
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
-        norm = np.linalg.norm(self.value, axis=3)
+        norm = np.linalg.norm(self.value, axis=self.dim)
         for i in range(self.dim):
             self.value[..., i] = self.normalisedto*self.value[..., i]/norm
 
