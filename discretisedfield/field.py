@@ -48,7 +48,7 @@ class Field(object):
 
     @property
     def value(self):
-        return self._f
+        return self.array
 
     @value.setter
     def value(self, value):
@@ -67,7 +67,6 @@ class Field(object):
                                    self.mesh.n[1],
                                    self.mesh.n[2],
                                    self.dim))
-
         if isinstance(value, (int, float)):
             self.array.fill(value)
         elif isinstance(value, (tuple, list, np.ndarray)):
@@ -91,7 +90,6 @@ class Field(object):
         self._f = value
 
     """
-
     @property
     def norm(self):
         return np.linalg.norm(self.value, axis=self.dim)
@@ -104,7 +102,8 @@ class Field(object):
         self._norm = value
         for i in range(self.dim):
             self.value[..., i] = value*self.value[..., i]/self.norm
-    """ 
+    """
+
     def __repr__(self):
         """Representation method."""
         return "Field(dim={}, name=\"{}\")".format(self.dim, self.name)
