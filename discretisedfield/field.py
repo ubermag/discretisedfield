@@ -42,8 +42,8 @@ class Field(object):
         """
         self.mesh = mesh
         self.dim = dim
+        self._norm = norm
         self.value = value  # calls setter method
-        self.norm = norm
         self.name = name
 
     @property
@@ -65,8 +65,8 @@ class Field(object):
         """
         self.array = self._as_ndarray(value)
         self._value = value
-        #if self._norm is not None:
-        #    self._normalise()
+        if self._norm is not None:
+            self._normalise(self._norm)
 
     @property
     def array(self):
