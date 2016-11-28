@@ -153,7 +153,7 @@ class TestField(object):
         tol = 1e-12
         for f in self.scalar_fs:
             f.value = value
-            average = f.average()
+            average = f.average
 
             assert abs(average[0] - value) < tol
 
@@ -162,7 +162,7 @@ class TestField(object):
         tol = 1e-12
         for f in self.vector_fs:
             f.value = value
-            average = f.average()
+            average = f.average
 
             assert abs(average[0] - value[0]) < tol
             assert abs(average[1] - value[1]) < tol

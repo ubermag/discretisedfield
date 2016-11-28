@@ -135,6 +135,7 @@ class Field(object):
         i, j, k = self.mesh.point2index(p)
         return self.array[i, j, k]
 
+    @property
     def average(self):
         """Compute the finite difference field average.
 
