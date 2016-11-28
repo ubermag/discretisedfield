@@ -181,16 +181,16 @@ class Mesh(object):
             yield self.index2point(i)
 
     def plot(self):
-        """Creates a figure of a mesh range and discretisation cell."""
+        """Creates a figure of a mesh domain and discretisation cell."""
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         ax.set_aspect("equal")
 
-        cell_point = tuple(self.pmin[i]+self.cell[i] for i in range(3))
-
         # domain box
         dfu.plot_box(ax, self.pmin, self.pmax, "b-", linewidth=1.5)
-        # discretisation cell box
+
+        # cell box
+        cell_point = tuple(self.pmin[i]+self.cell[i] for i in range(3))
         dfu.plot_box(ax, self.pmin, cell_point, "r-", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
