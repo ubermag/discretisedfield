@@ -49,14 +49,10 @@ class Field(object):
     @property
     def value(self):
         """Field value representation."""
-        if self._value_consistent():
+        if np.all(self.array==self._as_array(self._value)):
             return self._value
         else:
             return self.array
-
-    def _value_consistent(self):
-        value_array = self._as_array(self._value)
-        return np.all(self.array==value_array)
 
     def _as_array(self, value):
         value_array = np.zeros(self.mesh.n + (self.dim,))
