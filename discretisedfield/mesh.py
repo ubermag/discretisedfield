@@ -212,6 +212,5 @@ class Mesh(object):
             yield np.linalg.norm(i*dl), tuple(point)
 
     def script(self):
-        """This method should be implemented by a specific
-        micromagnetic calculator."""
+        """This method should be implemented by a specific calculator."""
         raise NotImplementedError
