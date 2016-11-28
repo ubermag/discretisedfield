@@ -49,27 +49,11 @@ class Field(object):
     @property
     def value(self):
         """Field value representation."""
-        if np.all(self.array==self._as_array(self._value)):
+        if np.all(self.array == self._as_array(self._value)):
             return self._value
         else:
             return self.array
 
-    def _as_array(self, value):
-        value_array = np.zeros(self.mesh.n + (self.dim,))
-        if isinstance(value, (int, float)):
-            value_array.fill(value)
-        elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == self.dim:
-            value_array[..., :] = value
-        elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
-            value_array = value
-        elif callable(value):
-            for i in self.mesh.indices():
-                value_array[i] = value(self.mesh.index2point(i))
-        else:
-            raise TypeError("Cannot set field with {}.".format(type(value)))
-
-        return value_array
-        
     @value.setter
     def value(self, value):
         """Set the field value.
@@ -112,6 +96,23 @@ class Field(object):
         for i in range(self.dim):
             self.value[..., i] = value*self.value[..., i]/self.norm
     """
+
+    def _as_array(self, value):
+        value_array = np.zeros(self.mesh.n + (self.dim,))
+        if isinstance(value, (int, float)):
+            value_array.fill(value)
+        elif (isinstance(value, (tuple, list, np.ndarray)) and
+        len(value) == self.dim):
+            value_array[..., :] = value
+        elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
+            value_array = value
+        elif callable(value):
+            for i in self.mesh.indices():
+                value_array[i] = value(self.mesh.index2point(i))
+        else:
+            raise TypeError("Cannot set field with {}.".format(type(value)))
+
+        return value_array
 
     def __repr__(self):
         """Representation method."""
