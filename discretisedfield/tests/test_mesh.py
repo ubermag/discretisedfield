@@ -293,10 +293,8 @@ class TestMesh(object):
         for index in mesh.indices():
             assert isinstance(index, tuple)
             assert len(index) == 3
-
             for i in range(3):
                 assert 0 <= index[i] <= 9
-
             counter += 1
 
         assert counter == 1000
@@ -311,10 +309,8 @@ class TestMesh(object):
         for coord in mesh.coordinates():
             assert isinstance(coord, tuple)
             assert len(coord) == 3
-
             for i in range(3):
                 assert 0.5 <= coord[i] <= 9.5
-
             counter += 1
 
         assert counter == 1000
@@ -354,5 +350,3 @@ class TestMesh(object):
 
             with pytest.raises(NotImplementedError):
                 mesh.script()
-
-    

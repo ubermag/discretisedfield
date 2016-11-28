@@ -162,7 +162,7 @@ class Mesh(object):
 
         index = tuple(int(round((p[i]-self.pmin[i])/self.cell[i] - 0.5))
                       for i in range(3))
-        
+
         # If rounded to the out-of-range values
         return tuple(max(min(self.n[i]-1, index[i]), 0) for i in range(3))
 
