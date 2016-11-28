@@ -51,6 +51,26 @@ class Field(object):
         """Field value representation."""
         return self.array
 
+    def value_consistent(self):
+        value_array = self._as_array(self._value)
+        return np.all(self.array==value_array)
+
+    def _as_array(self, value):
+        value_array = np.zeros(self.mesh.n + (self.dim,))
+        if isinstance(value, (int, float)):
+            value_array.fill(value)
+        elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == self.dim:
+            value_array[..., :] = value
+        elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
+            value_array = value
+        elif callable(value):
+            for i in self.mesh.indices():
+                value_array[i] = value(self.mesh.index2point(i))
+        else:
+            raise TypeError("Cannot set field with {}.".format(type(value)))
+
+        return value_array
+        
     @value.setter
     def value(self, value):
         """Set the field value.
@@ -63,22 +83,8 @@ class Field(object):
             numpy.ndarray, or Python function.
 
         """
-        if isinstance(value, (int, float)):
-            self.array.fill(value)
-        elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == self.dim:
-            self.array[..., :] = value
-        elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
-            self.array = value
-        elif callable(value):
-            for i in self.mesh.indices():
-                self.array[i] = value(self.mesh.index2point(i))
-        else:
-            raise TypeError("Cannot set field with {}.".format(type(value)))
-
-        # Save the value representation.
+        self.array = self._as_array(value)
         self._value = value
-        self._value_consistent = True
-        
         if self.normalisedto is not None:
             self.normalise()
 
