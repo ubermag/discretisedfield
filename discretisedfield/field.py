@@ -49,7 +49,7 @@ class Field(object):
     @property
     def value(self):
         """Field value representation."""
-        if np.all(self.array == self._as_ndarray(self._value)):
+        if np.all(self.array == self._as_array(self._value)):
             return self._value
         else:
             return self.array
@@ -63,7 +63,7 @@ class Field(object):
             numpy.ndarray, or Python function.
 
         """
-        self.array = self._as_ndarray(value)
+        self.array = self._as_array(value)
         self._value = value
         if self._norm is not None:
             self._normalise(self._norm)
@@ -81,11 +81,11 @@ class Field(object):
 
     @property
     def norm(self):
-        norm_ndarray = np.linalg.norm(self.array, axis=self.dim)
-        if np.all(norm_ndarray == self._as_ndarray(self._norm)[..., 0]):
+        norm_array = np.linalg.norm(self.array, axis=self.dim)
+        if np.all(norm_array == self._as_array(self._norm)[..., 0]):
             return self._norm
         else:
-            return norm_ndarray
+            return norm_array
 
     @norm.setter
     def norm(self, value):
@@ -97,12 +97,12 @@ class Field(object):
         if self.dim == 1:
             raise NotImplementedError("Normalisation is supported only "
                                       "for vector fields.")
-        norm_ndarray = np.linalg.norm(self.array, axis=self.dim)
-        value_ndarray = self._as_ndarray(value)[..., 0]
+        norm_array = np.linalg.norm(self.array, axis=self.dim)
+        value_array = self._as_array(value)[..., 0]
         for i in range(self.dim):
-            self.array[..., i] = value_ndarray*self.array[..., i]/norm_ndarray
+            self.array[..., i] = value_array*self.array[..., i]/norm_array
         
-    def _as_ndarray(self, value):
+    def _as_array(self, value):
         value_array = np.zeros(self.mesh.n + (self.dim,))
         if isinstance(value, (int, float)):
             value_array.fill(value)
