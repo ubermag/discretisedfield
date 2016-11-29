@@ -48,7 +48,8 @@ class Field(object):
 
     @property
     def value(self):
-        """Field value representation."""
+        """Returns field value representation if exists or
+        numpy.ndarray if not."""
         if np.all(self.array == self._as_array(self._value)):
             return self._value
         else:
@@ -106,8 +107,8 @@ class Field(object):
         value_array = np.zeros(self.mesh.n + (self.dim,))
         if isinstance(value, (int, float)):
             value_array.fill(value)
-        elif (isinstance(value, (tuple, list, np.ndarray)) and
-        len(value) == self.dim):
+        elif isinstance(value, (tuple, list, np.ndarray)) and \
+        len(value) == self.dim:
             value_array[..., :] = value
         elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
             value_array = value
@@ -384,7 +385,7 @@ class Field(object):
             packarray = [123456789012345.0]
             # Write data lines to OOMMF file.
             for i in self.mesh.indices():
-                [packarray.append(vi) for vi in self.array[i[0], i[1], i[2], :]]
+                [packarray.append(vi) for vi in self.array[i]]
 
             v_binary = struct.pack("d"*len(packarray), *packarray)
             oommf_file.write(v_binary)
@@ -393,7 +394,7 @@ class Field(object):
 
         else:
             for i in self.mesh.indices():
-                v = [str(vi) for vi in self.array[i[0], i[1], i[2], :]]
+                v = [str(vi) for vi in self.array[i]]
                 for vi in v:
                     oommf_file.write(" " + vi)
                 oommf_file.write("\n")
