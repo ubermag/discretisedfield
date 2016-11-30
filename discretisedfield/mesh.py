@@ -16,19 +16,19 @@ class Mesh(object):
         Rectangular finite difference mesh
 
         Args:
-          p1 (tuple): First point of the mesh domain
+          p1 (tuple): first point of the mesh domain
             p1 = (x1, y1, z1)
-          p2 (tuple): Second point of the mesh domain
+          p2 (tuple): second point of the mesh domain
             p2 = (x2, y2, z2)
-          cell (tuple): Discretisation cell size
+          cell (tuple): discretisation cell size
             cell = (dx, dy, dz)
-          name (Optional[str]): Mesh name (defaults to "mesh")
+          name (Optional[str]): mesh name (defaults to "mesh")
 
         Attributes:
-          p1 (tuple): First point of the mesh domain
-          p2 (tuple): Second point of the mesh domain
-          cell (tuple): Discretisation cell size
-          name (str): Mesh name
+          p1 (tuple): first point of the mesh domain
+          p2 (tuple): second point of the mesh domain
+          cell (tuple): discretisation cell size
+          name (str): mesh name
 
         """
         self.p1 = tuple(p1)
