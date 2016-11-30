@@ -103,13 +103,12 @@ class Field(object):
         value_array = self._as_array(value)[..., 0]
         for i in range(self.dim):
             self.array[..., i] = value_array*self.array[..., i]/norm_array
-        
+
     def _as_array(self, value):
         value_array = np.zeros(self.mesh.n + (self.dim,))
         if isinstance(value, (int, float)):
             value_array.fill(value)
-        elif isinstance(value, (tuple, list, np.ndarray)) and \
-        len(value) == self.dim:
+        elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == self.dim:
             value_array[..., :] = value
         elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
             value_array = value
@@ -356,7 +355,8 @@ class Field(object):
                         "ymax: {}".format(self.mesh.p2[1]),
                         "zmax: {}".format(self.mesh.p2[2]),
                         "valuedim: {}".format(self.dim),
-                        "valuelabels: Magnetization_x Magnetization_y Magnetization_z",
+                        ("valuelabels: Magnetization_x "
+                         "Magnetization_y Magnetization_z"),
                         "valueunits: A/m A/m A/m",
                         "",
                         "End: Header",
