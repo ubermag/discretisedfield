@@ -22,7 +22,7 @@ class Mesh(object):
             p2 = (x2, y2, z2)
           cell (tuple): Discretisation cell size
             cell = (dx, dy, dz)
-          name (Optional[str]): Mesh name. Defaults to "mesh".
+          name (Optional[str]): Mesh name (defaults to "mesh")
 
         Attributes:
           p1 (tuple): First point of the mesh domain
