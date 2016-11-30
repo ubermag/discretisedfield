@@ -13,7 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
 class Mesh(object):
     def __init__(self, p1, p2, cell, name="mesh"):
         """
-        Rectangular finite difference mesh
+        Finite Difference Mesh
 
         Args:
           p1 (tuple): first point of the mesh domain

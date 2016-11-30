@@ -11,27 +11,21 @@ import struct
                name=ts.ObjectName)
 class Field(object):
     def __init__(self, mesh, dim=3, value=0, norm=None, name="field"):
-        """Finite Difference (FD) field.
+        """Finite Difference Field
 
         Args:
-          mesh (Mesh): finite difference mesh
-          dim (Optional[int]): the value dimension (defaults to 3)
+          mesh (Mesh[discretisedfield.Mesh]): finite difference mesh
+          dim (Optional[int]): value dimension (defaults to 3)
           value (Optional): finite difference field value (defaults to 0)
             For the possible types of value argument, please refer to the
             value.setter method.
-          norm (Optional[Real]): vector field norm (defaults to None)
+          norm (Optional): vector field norm (defaults to None)
           name (Optional[str]): field name (defaults to "field")
 
         Attributes:
-          mesh (Mesh): Finite difference mesh
-
-          dim (int): The value dimensionality.
-
-          normalisedto (Real): Vector field norm
-
-          name (str): Field name
-
-          f (np.ndarray): Field value - a four-dimensional numpy array
+          mesh (Mesh): finite difference mesh
+          dim (int): value dimensionality
+          name (str): field name
 
         """
         self.mesh = mesh
