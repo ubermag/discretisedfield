@@ -11,22 +11,16 @@ import struct
                name=ts.ObjectName)
 class Field(object):
     def __init__(self, mesh, dim=3, value=0, norm=None, name="field"):
-        """Class for analysing and manipulating Finite Difference (FD) fields.
-
-        This class provides the functionality for:
-          - creating FD scalar and vector fields,
-          - plotting FD fields,
-          - computing common values characteristic to FD fields, and
-          - saving FD fields in common file formats.
+        """Finite Difference (FD) field.
 
         Args:
-          mesh (Mesh): Finite difference mesh.
-          dim (Optional[int]): The value dimensionality. Defaults to 3.
-          value (Optional): Finite difference field value. Defaults to 0.
-            For the possible types of value argument, refer to f.setter method.
-            If no value argument is provided, a zero field is initialised.
-          normalisedto (Optional[Real]): vector field norm
-          name (Optional[str]): Field name
+          mesh (Mesh): finite difference mesh
+          dim (Optional[int]): the value dimension (defaults to 3)
+          value (Optional): finite difference field value (defaults to 0)
+            For the possible types of value argument, please refer to the
+            value.setter method.
+          norm (Optional[Real]): vector field norm (defaults to None)
+          name (Optional[str]): field name (defaults to "field")
 
         Attributes:
           mesh (Mesh): Finite difference mesh
@@ -48,7 +42,7 @@ class Field(object):
 
     @property
     def value(self):
-        """Returns field value representation if exists or
+        """Returns field value representation if it exists or
         numpy.ndarray if not."""
         if np.all(self.array == self._as_array(self._value)):
             return self._value
@@ -64,8 +58,8 @@ class Field(object):
             numpy.ndarray, or Python function.
 
         """
-        self.array = self._as_array(value)
         self._value = value
+        self.array = self._as_array(value)
         if hasattr(self, "_norm"):
             if self._norm is not None:
                 self._normalise(self._norm)
@@ -105,7 +99,7 @@ class Field(object):
             self.array[..., i] = value_array*self.array[..., i]/norm_array
 
     def _as_array(self, value):
-        value_array = np.zeros(self.mesh.n + (self.dim,))
+        value_array = np.empty(self.mesh.n + (self.dim,))
         if isinstance(value, (int, float)):
             value_array.fill(value)
         elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == self.dim:
