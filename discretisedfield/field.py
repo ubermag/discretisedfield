@@ -61,13 +61,13 @@ class Field(object):
     @property
     def array(self):
         """Field value numpy array representation."""
-        if not hasattr(self, "_f"):
-            self._f = np.zeros(self.mesh.n + (self.dim,))
-        return self._f
+        if not hasattr(self, "_array"):
+            self._array = np.zeros(self.mesh.n + (self.dim,))
+        return self._array
 
     @array.setter
     def array(self, value):
-        self._f = value
+        self._array = value
 
     @property
     def norm(self):
