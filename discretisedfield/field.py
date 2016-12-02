@@ -37,7 +37,7 @@ class Field(object):
     @property
     def value(self):
         """Value representation if it exists or numpy.ndarray if not."""
-        if np.all(self.array == self._as_array(self._value)):
+        if np.all(self.array == self._as_array(self._value, self.dim)):
             return self._value
         else:
             return self.array
@@ -52,7 +52,7 @@ class Field(object):
 
         """
         self._value = value
-        self.array = self._as_array(value)
+        self.array = self._as_array(value, self.dim)
         if hasattr(self, "_norm"):
             self._normalise()
 
@@ -70,7 +70,7 @@ class Field(object):
     @property
     def norm(self):
         norm_array = np.linalg.norm(self.array, axis=self.dim)
-        if np.all(norm_array == self._as_array(self._norm)[..., 0]):
+        if np.all(norm_array[..., None] == self._as_array(self._norm, dim=1)):
             return self._norm
         else:
             return norm_array
@@ -97,14 +97,14 @@ class Field(object):
                 msg = "Cannot normalise field with dim={}.".format(self.dim)
                 raise NotImplementedError(msg)
             current_norm = np.linalg.norm(self.array, axis=self.dim)
-            required_norm = self._as_array(self._norm)
+            required_norm = self._as_array(self._norm, dim=1)
             self.array = required_norm*self.array/current_norm[..., None]
 
-    def _as_array(self, value):
-        value_array = np.empty(self.mesh.n + (self.dim,))
+    def _as_array(self, value, dim):
+        value_array = np.empty(self.mesh.n + (dim,))
         if isinstance(value, (int, float)):
             value_array.fill(value)
-        elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == self.dim:
+        elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == dim:
             value_array[..., :] = value
         elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
             value_array = value
