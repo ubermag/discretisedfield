@@ -36,7 +36,7 @@ class Field(object):
 
     @property
     def value(self):
-        """Returns field value representation if it exists or
+        """Field value representation if it exists or
         numpy.ndarray if not."""
         if np.all(self.array == self._as_array(self._value)):
             return self._value
@@ -55,8 +55,7 @@ class Field(object):
         self._value = value
         self.array = self._as_array(value)
         if hasattr(self, "_norm"):
-            if self._norm is not None:
-                self._normalise(self._norm)
+            self._normalise()
 
     @property
     def array(self):
@@ -66,8 +65,8 @@ class Field(object):
         return self._array
 
     @array.setter
-    def array(self, value):
-        self._array = value
+    def array(self, array):
+        self._array = array
 
     @property
     def norm(self):
@@ -78,19 +77,19 @@ class Field(object):
             return norm_array
 
     @norm.setter
-    def norm(self, value):
-        self._norm = value
-        if self._norm is not None:
-            self._normalise(value)
+    def norm(self, norm):
+        self._norm = norm
+        self._normalise()
 
-    def _normalise(self, value):
-        if self.dim == 1:
-            raise NotImplementedError("Normalisation is supported only "
-                                      "for vector fields.")
-        norm_array = np.linalg.norm(self.array, axis=self.dim)
-        value_array = self._as_array(value)[..., 0]
-        for i in range(self.dim):
-            self.array[..., i] = value_array*self.array[..., i]/norm_array
+    def _normalise(self):
+        if self._norm is not None:
+            if self.dim == 1:
+                raise NotImplementedError("Normalisation is supported only "
+                                          "for vector fields.")
+            norm_array = np.linalg.norm(self.array, axis=self.dim)
+            value_array = self._as_array(self._norm)[..., 0]
+            for i in range(self.dim):
+                self.array[..., i] = value_array*self.array[..., i]/norm_array
 
     def _as_array(self, value):
         value_array = np.empty(self.mesh.n + (self.dim,))
