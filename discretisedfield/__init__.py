@@ -1,7 +1,5 @@
-# use most conservative backend
-import matplotlib
-matplotlib.use("agg")
-
+import matplotlib as mpl
+mpl.use("agg")  # use most conservative backend
 from .mesh import Mesh
 from .field import Field, read_oommf_file
 
