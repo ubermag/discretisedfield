@@ -128,8 +128,7 @@ class Field(object):
           Field value in cell containing point p
 
         """
-        i, j, k = self.mesh.point2index(p)
-        return self.array[i, j, k]
+        return self.array[self.mesh.point2index(p)]
 
     def line_intersection(self, l, l0, n=100):
         """
