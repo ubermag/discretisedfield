@@ -36,8 +36,7 @@ class Field(object):
 
     @property
     def value(self):
-        """Field value representation if it exists or
-        numpy.ndarray if not."""
+        """Value representation if it exists or numpy.ndarray if not."""
         if np.all(self.array == self._as_array(self._value)):
             return self._value
         else:
@@ -81,11 +80,22 @@ class Field(object):
         self._norm = norm
         self._normalise()
 
+    @property
+    def average(self):
+        """Compute the finite difference field average.
+
+        Returns:
+          Finite difference field average.
+
+        """
+        return tuple(self.array.mean(axis=(0, 1, 2)))
+
     def _normalise(self):
+        """Normalise field to self.dim value."""
         if self._norm is not None:
             if self.dim == 1:
-                raise NotImplementedError("Normalisation is supported only "
-                                          "for vector fields.")
+                msg = "Cannot normalise field with dim={}.".format(self.dim)
+                raise NotImplementedError(msg)
             norm_array = np.linalg.norm(self.array, axis=self.dim)
             value_array = self._as_array(self._norm)[..., 0]
             for i in range(self.dim):
@@ -123,16 +133,6 @@ class Field(object):
         """
         i, j, k = self.mesh.point2index(p)
         return self.array[i, j, k]
-
-    @property
-    def average(self):
-        """Compute the finite difference field average.
-
-        Returns:
-          Finite difference field average.
-
-        """
-        return tuple(self.array.mean(axis=(0, 1, 2)))
 
     def line_intersection(self, l, l0, n=100):
         """
