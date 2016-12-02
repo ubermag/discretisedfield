@@ -112,7 +112,6 @@ class Field(object):
                 value_array[i] = value(self.mesh.index2point(i))
         else:
             raise TypeError("Cannot set field with {}.".format(type(value)))
-
         return value_array
 
     def __repr__(self):
