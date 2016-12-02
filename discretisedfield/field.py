@@ -96,9 +96,8 @@ class Field(object):
             if self.dim == 1:
                 msg = "Cannot normalise field with dim={}.".format(self.dim)
                 raise NotImplementedError(msg)
-            current_norm = np.linalg.norm(self.array, axis=self.dim)
-            required_norm = self._as_array(self._norm, dim=1)
-            self.array = required_norm*self.array/current_norm[..., None]
+            self.array /= np.linalg.norm(self.array, axis=self.dim)[..., None]
+            self.array *= self._as_array(self._norm, dim=1)
 
     def _as_array(self, value, dim):
         value_array = np.empty(self.mesh.n + (dim,))
