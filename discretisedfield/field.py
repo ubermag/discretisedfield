@@ -111,7 +111,7 @@ class Field(object):
             for i in self.mesh.indices():
                 value_array[i] = value(self.mesh.index2point(i))
         else:
-            raise TypeError("Cannot set field with {}.".format(type(value)))
+            raise TypeError("Unsupported type(value)={}.".format(type(value)))
         return value_array
 
     def __repr__(self):
@@ -131,9 +131,7 @@ class Field(object):
         return self.array[self.mesh.point2index(p)]
 
     def line_intersection(self, l, l0, n=100):
-        """
-        Slice field along the line defined with l and l0.
-        """
+        """Slice field along the line defined with l and l0."""
         ds, points, values = [], [], []
         for d, p in self.mesh.line_intersection(l, l0, n=n):
             ds.append(d)
