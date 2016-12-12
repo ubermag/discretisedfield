@@ -347,6 +347,5 @@ class TestMesh(object):
         for arg in self.valid_args:
             p1, p2, cell = arg
             mesh = df.Mesh(p1, p2, cell)
-
             with pytest.raises(NotImplementedError):
-                mesh.script()
+                script = mesh.script
