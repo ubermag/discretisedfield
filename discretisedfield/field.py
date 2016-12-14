@@ -449,7 +449,7 @@ def read_oommf_file_text(filename, name="unnamed"):
          int(round(dic["znodes"])))
     dim = int(dic["valuedim"])
     mesh = df.Mesh(p1, p2, d, name=name)
-    field = Field(mesh, dim, value=(1, 1, 1), name=name)
+    field = Field(mesh, dim, name=name)
 
     for j in range(len(lines)):
         if lines[j].find("Begin: Data Text") != -1:
