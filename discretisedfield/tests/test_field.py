@@ -322,6 +322,26 @@ class TestField(object):
 
             os.system("rm {}".format(filename))
 
+    def test_write_vector_norm_file(self):
+        tol = 1e-12
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
+        f = df.Field(mesh, dim=1, value=-3.1)
+
+        filename = "test_write_oommf_file_text1.omf"
+        f.write_oommf_file(filename)
+
+        f_loaded = df.read_oommf_file(filename)
+
+        assert f.mesh.p1 == f_loaded.mesh.p1
+        assert f.mesh.p2 == f_loaded.mesh.p2
+        assert f.mesh.cell == f_loaded.mesh.cell
+        assert f.mesh.cell == f_loaded.mesh.cell
+        assert np.all(abs(f.value - f_loaded.array[..., 0]) < tol)
+        assert np.all(abs(0 - f_loaded.array[..., 1]) < tol)
+        assert np.all(abs(0 - f_loaded.array[..., 2]) < tol)
+
+        os.system("rm {}".format(filename))
+
     def test_write_read_oommf_file(self):
         tol = 1e-12
         filename = "test_write_oommf_file_binary.omf"

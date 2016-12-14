@@ -299,12 +299,7 @@ class Field(object):
         Args:
           filename (str): filename including extension
           type(str): Either "text" or "binary"
-        Example:
-        .. code-block:: python
-          >>> from oommffield import Field
-          >>> field = Field((0, 0, 0), (5, 4, 3), (1, 1, 1))
-          >>> field.set((1, 0, 5))
-          >>> field.write_oommf_file("fdfield.omf")
+
         """
         oommf_file = open(filename, "w")
 
@@ -335,7 +330,7 @@ class Field(object):
                         "xmax: {}".format(self.mesh.p2[0]),
                         "ymax: {}".format(self.mesh.p2[1]),
                         "zmax: {}".format(self.mesh.p2[2]),
-                        "valuedim: {}".format(self.dim),
+                        "valuedim: {}".format(3),
                         ("valuelabels: Magnetization_x "
                          "Magnetization_y Magnetization_z"),
                         "valueunits: A/m A/m A/m",
@@ -376,10 +371,18 @@ class Field(object):
 
         else:
             for i in self.mesh.indices():
-                v = [str(vi) for vi in self.array[i]]
+                if self.dim == 3:
+                    v = [vi for vi in self.array[i]]
+                elif self.dim == 1:
+                    v = [self.array[i][0], 0, 0]
+                else:
+                    msg = ("Cannot write dim={} field to "
+                           "omf file.".format(self.dim))
+                    raise TypeError(msg)
                 for vi in v:
-                    oommf_file.write(" " + vi)
+                    oommf_file.write(" " + str(vi))
                 oommf_file.write("\n")
+                    
         # Write footer lines to OOMMF file.
         for line in footer_lines:
             oommf_file.write("# " + line + "\n")
@@ -388,7 +391,7 @@ class Field(object):
         oommf_file.close()
 
 
-def read_oommf_file(filename, normalisedto=None, name="unnamed"):
+def read_oommf_file(filename, norm=None, name="unnamed"):
     try:
         f = open(filename)
 
@@ -399,9 +402,9 @@ def read_oommf_file(filename, normalisedto=None, name="unnamed"):
     except UnicodeDecodeError:
         field = read_oommf_file_binary(filename, name)
 
-    field.normalisedto = normalisedto
-    if normalisedto is not None:
-        field.normalise()
+    field.norm = norm
+    if norm is not None:
+        field.norm = norm
 
     return field
 
