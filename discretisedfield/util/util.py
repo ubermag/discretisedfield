@@ -77,19 +77,6 @@ def plane_line_intersection(n, p0, l, l0):
         return tuple(d*l+l0)
 
 
-def plane_plane_intersection(n1, p01, n2, p02):
-    n1, p01 = np.array(n1), np.array(p01)
-    n2, p02 = np.array(n2), np.array(p02)
-    l = np.cross(n1, n2)
-
-    if np.all(l == 0):
-        # Planes are parallel to each other.
-        return False
-    else:
-        # TODO
-        pass
-
-
 def box_line_intersection(pmin, pmax, l, l0):
     points = []
     for n in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
