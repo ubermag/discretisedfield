@@ -117,4 +117,3 @@ def points_inside_box(points, pmin, pmax):
             resulting_points.append(point)
 
     return tuple(resulting_points)
-           

@@ -193,7 +193,7 @@ class Field(object):
         else:
             raise ValueError("Axis not properly defined.")
 
-        if self.mesh.p1[slice_num] <= point <= self.mesh.p2[slice_num]:
+        if self.mesh.pmin[slice_num] <= point <= self.mesh.pmax[slice_num]:
             axis1_indices = np.arange(0, self.mesh.n[axes[0]])
             axis2_indices = np.arange(0, self.mesh.n[axes[1]])
 
@@ -255,23 +255,35 @@ class Field(object):
 
             if np.allclose(pm[:, 2], 0) and np.allclose(pm[:, 3], 0):
                 raise ValueError("Vector plane components are zero.")
-            else:
-                ysize = xsize*(self.mesh.l[coord_system[1]] /
-                               self.mesh.l[coord_system[0]])
-                fig = plt.figure(figsize=(xsize, ysize))
-                plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
-                plt.xlim([self.mesh.p1[coord_system[0]],
-                          self.mesh.p2[coord_system[0]]])
-                plt.ylim([self.mesh.p1[coord_system[1]],
-                          self.mesh.p2[coord_system[1]]])
-                if axes:
-                    plt.xlabel("xyz"[coord_system[0]] + " (m)")
-                    plt.ylabel("xyz"[coord_system[1]] + " (m)")
-                    plt.title("xyz"[coord_system[2]] + " slice")
-                if not axes:
-                    plt.axis("off")
-                if grid:
-                    plt.grid()
+            ysize = xsize*(self.mesh.l[coord_system[1]] /
+                           self.mesh.l[coord_system[0]])
+            fig = plt.figure(figsize=(xsize, ysize))
+            plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
+        elif self.dim == 1:
+            ysize = xsize*(self.mesh.l[coord_system[1]] /
+                           self.mesh.l[coord_system[0]])
+            fig = plt.figure(figsize=(xsize, ysize))
+            extent = [self.mesh.pmin[coord_system[0]],
+                      self.mesh.pmax[coord_system[0]],
+                      self.mesh.pmin[coord_system[1]],
+                      self.mesh.pmax[coord_system[1]]]
+            plt.imshow(field_slice[:, :, 0], extent=extent)
+        else:
+            raise TypeError(("Cannot plot slice of field with "
+                             "dim={}".format(self.dim)))
+
+        plt.xlim([self.mesh.pmin[coord_system[0]],
+                  self.mesh.pmax[coord_system[0]]])
+        plt.ylim([self.mesh.pmin[coord_system[1]],
+                  self.mesh.pmax[coord_system[1]]])
+        if axes:
+            plt.xlabel("xyz"[coord_system[0]] + " (m)")
+            plt.ylabel("xyz"[coord_system[1]] + " (m)")
+            plt.title("xyz"[coord_system[2]] + " slice")
+        if not axes:
+            plt.axis("off")
+        if grid:
+            plt.grid()
 
         return fig
 
@@ -382,7 +394,7 @@ class Field(object):
                 for vi in v:
                     oommf_file.write(" " + str(vi))
                 oommf_file.write("\n")
-                    
+
         # Write footer lines to OOMMF file.
         for line in footer_lines:
             oommf_file.write("# " + line + "\n")
