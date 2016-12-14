@@ -459,7 +459,10 @@ def read_oommf_file_text(filename, name="unnamed"):
     for i in mesh.indices():
         line_data = lines[data_first_line+counter]
         value = [float(vi) for vi in line_data.split()]
-        field.array[i] = value
+        if dim > 1:
+            field.array[i] = value
+        else:
+            field.array[i] = value[0]
 
         counter += 1
 
