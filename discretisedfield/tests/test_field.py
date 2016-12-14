@@ -94,6 +94,17 @@ class TestField(object):
         with pytest.raises(TypeError):
             f = df.Field(mesh, dim=1, name="wrong_field")
 
+    def test_repr(self):
+        for f in self.scalar_fs:
+            rstr = repr(f)
+            assert isinstance(rstr, str)
+            assert "dim=1" in rstr
+
+        for f in self.vector_fs:
+            rstr = repr(f)
+            assert isinstance(rstr, str)
+            assert "dim=3" in rstr
+            
     def test_set_with_constant(self):
         for value in self.constant_values:
             for f in self.scalar_fs + self.vector_fs:
@@ -148,6 +159,12 @@ class TestField(object):
             with pytest.raises(TypeError):
                 f.value = "string"
 
+    def test_array(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=2)
+
+        assert isinstance(f.array, np.ndarray)
+
     def test_average_scalar_field(self):
         value = -1e-3 + np.pi
         tol = 1e-12
@@ -167,6 +184,26 @@ class TestField(object):
             assert abs(average[0] - value[0]) < tol
             assert abs(average[1] - value[1]) < tol
             assert abs(average[2] - value[2]) < tol
+
+    def test_norm(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=3, value=2)
+
+        f.norm = 1
+        assert f.norm == 1
+
+        f.array[0, 0, 0, 0] = 3
+        assert isinstance(f.norm, np.ndarray)
+
+    def test_value(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=3)
+
+        f.value = 1
+        assert f.value == 1
+
+        f.array[0, 0, 0, 0] = 3
+        assert isinstance(f.value, np.ndarray)
 
     def test_normalise(self):
         for f in self.vector_fs:
@@ -285,20 +322,42 @@ class TestField(object):
                     with pytest.raises(ValueError):
                         data = f.slice_field(s, point)
 
+    def test_line_intersection(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=3, value=2)
+
+        fig = f.plot_line_intersection(l=(1, 0, 0), l0=(0, 0, 0), n=10)
+
+    def test_plot_slice_scalar_field(self):
+        figname = "test_slice_plot_figure.pdf"
+        for f in self.scalar_fs:
+            f.value = 1e-3 + np.pi
+            point = f.mesh.centre["xyz".find("y")]
+            fig = f.plot_slice("y", point, axes=True)
+            fig = f.plot_slice("y", point, axes=False)
+
     def test_plot_slice_vector_field(self):
         figname = "test_slice_plot_figure.pdf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
-            f.normalisedto = 1
+            f.norm = 1
             f.value = value
             point = f.mesh.centre["xyz".find("y")]
             fig = f.plot_slice("y", point, axes=True)
             fig = f.plot_slice("y", point, axes=False)
 
+    def test_plot_slice_exception(self):
+        figname = "test_slice_plot_figure.pdf"
+        for f in self.scalar_fs:
+            f.dim = 2
+            with pytest.raises(TypeError):
+                point = f.mesh.centre["xyz".find("y")]
+                fig = f.plot_slice("y", point, axes=True)
+
     def test_plot_slice_vector_field_exception(self):
         value = (0, 0, 1)
         for f in self.vector_fs:
-            f.normalisedto = 1
+            f.norm = 1
             f.value = value
             point = f.mesh.centre["xyz".find("z")]
             with pytest.raises(ValueError):
