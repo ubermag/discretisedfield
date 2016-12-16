@@ -166,6 +166,7 @@ class Mesh(object):
         # If rounded to the out-of-range values
         return tuple(max(min(self.n[i]-1, index[i]), 0) for i in range(3))
 
+    @property
     def indices(self):
         """Generator iterating through all mesh cells and
         yielding their indices."""
@@ -174,10 +175,11 @@ class Mesh(object):
                 for i in range(self.n[0]):
                     yield (i, j, k)
 
+    @property
     def coordinates(self):
         """Generator iterating through all mesh cells and
         yielding their centres' coordinates."""
-        for i in self.indices():
+        for i in self.indices:
             yield self.index2point(i)
 
     def plot(self):

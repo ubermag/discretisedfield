@@ -108,7 +108,7 @@ class Field(object):
         elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
             value_array = value
         elif callable(value):
-            for i in self.mesh.indices():
+            for i in self.mesh.indices:
                 value_array[i] = value(self.mesh.index2point(i))
         else:
             raise TypeError("Unsupported type(value)={}.".format(type(value)))
@@ -375,7 +375,7 @@ class Field(object):
             # Add the 8 bit binary check value that OOMMF uses
             packarray = [123456789012345.0]
             # Write data lines to OOMMF file.
-            for i in self.mesh.indices():
+            for i in self.mesh.indices:
                 [packarray.append(vi) for vi in self.array[i]]
 
             v_binary = struct.pack("d"*len(packarray), *packarray)
@@ -384,7 +384,7 @@ class Field(object):
             oommf_file = open(filename, "a")
 
         else:
-            for i in self.mesh.indices():
+            for i in self.mesh.indices:
                 if self.dim == 3:
                     v = [vi for vi in self.array[i]]
                 elif self.dim == 1:
@@ -470,7 +470,7 @@ def read_oommf_file_text(filename, name="unnamed"):
             data_first_line = j+1
 
     counter = 0
-    for i in mesh.indices():
+    for i in mesh.indices:
         line_data = lines[data_first_line+counter]
         value = [float(vi) for vi in line_data.split()]
         if dim > 1:
@@ -554,7 +554,7 @@ def read_oommf_file_binary(filename, name="unnamed"):
                                  " with reading Binary Data")
 
     counter = 1
-    for i in mesh.indices():
+    for i in mesh.indices:
         value = (listdata[counter][0],
                  listdata[counter+1][0],
                  listdata[counter+2][0])

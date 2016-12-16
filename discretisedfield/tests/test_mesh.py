@@ -290,7 +290,7 @@ class TestMesh(object):
         mesh = df.Mesh(p1, p2, cell)
 
         counter = 0
-        for index in mesh.indices():
+        for index in mesh.indices:
             assert isinstance(index, tuple)
             assert len(index) == 3
             for i in range(3):
@@ -306,7 +306,7 @@ class TestMesh(object):
         mesh = df.Mesh(p1, p2, cell)
 
         counter = 0
-        for coord in mesh.coordinates():
+        for coord in mesh.coordinates:
             assert isinstance(coord, tuple)
             assert len(coord) == 3
             for i in range(3):
