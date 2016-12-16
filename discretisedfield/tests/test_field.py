@@ -97,13 +97,17 @@ class TestField(object):
     def test_repr(self):
         for f in self.scalar_fs:
             rstr = repr(f)
+            print(rstr)
             assert isinstance(rstr, str)
             assert "dim=1" in rstr
+            assert "mesh=" in rstr
+            assert "name=" in rstr
 
         for f in self.vector_fs:
             rstr = repr(f)
             assert isinstance(rstr, str)
             assert "dim=3" in rstr
+            assert "name=" in rstr
             
     def test_set_with_constant(self):
         for value in self.constant_values:

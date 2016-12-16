@@ -116,7 +116,9 @@ class Field(object):
 
     def __repr__(self):
         """Representation method."""
-        return "Field(dim={}, name=\"{}\")".format(self.dim, self.name)
+        return "Field(mesh={}, dim={}, name=\"{}\")".format(repr(self.mesh),
+                                                            self.dim,
+                                                            self.name)
 
     def __call__(self, p):
         """Sample the field at point p.
