@@ -214,6 +214,6 @@ class Mesh(object):
             yield np.linalg.norm(i*dl), tuple(point)
 
     @property
-    def script(self):
+    def _script(self):
         """This method should be implemented by a specific calculator."""
         raise NotImplementedError

@@ -348,4 +348,4 @@ class TestMesh(object):
             p1, p2, cell = arg
             mesh = df.Mesh(p1, p2, cell)
             with pytest.raises(NotImplementedError):
-                script = mesh.script
+                script = mesh._script
