@@ -111,7 +111,7 @@ class TestField(object):
             
     def test_set_with_constant(self):
         for value in self.constant_values:
-            for f in self.scalar_fs + self.vector_fs:
+            for f in self.scalar_fs:
                 f.value = value
 
                 # Check all values.
@@ -191,7 +191,7 @@ class TestField(object):
 
     def test_norm(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
-        f = df.Field(mesh, dim=3, value=2)
+        f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         f.norm = 1
         assert f.norm == 1
@@ -203,8 +203,8 @@ class TestField(object):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=3)
 
-        f.value = 1
-        assert f.value == 1
+        f.value = (1, 1, 1)
+        assert f.value == (1, 1, 1)
 
         f.array[0, 0, 0, 0] = 3
         assert isinstance(f.value, np.ndarray)
@@ -328,7 +328,7 @@ class TestField(object):
 
     def test_line_intersection(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
-        f = df.Field(mesh, dim=3, value=2)
+        f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         fig = f.plot_line_intersection(l=(1, 0, 0), l0=(0, 0, 0), n=10)
 

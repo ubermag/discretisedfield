@@ -102,7 +102,8 @@ class Field(object):
     def _as_array(self, value, dim):
         value_array = np.empty(self.mesh.n + (dim,))
         if isinstance(value, (int, float)):
-            value_array.fill(value)
+            if dim == 1 or value == 0:
+                value_array.fill(value)
         elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == dim:
             value_array[..., :] = value
         elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
