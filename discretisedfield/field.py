@@ -53,8 +53,6 @@ class Field(object):
         """
         self._value = value
         self.array = self._as_array(value, self.dim)
-        if hasattr(self, "_norm"):
-            self._normalise()
 
     @property
     def array(self):

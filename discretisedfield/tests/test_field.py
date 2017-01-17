@@ -123,8 +123,8 @@ class TestField(object):
     def test_set_with_tuple_list_ndarray(self):
         for value in self.tuple_values:
             for f in self.vector_fs:
-                f.norm = 1
                 f.value = value
+                f.norm = 1
 
                 norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
                 for j in range(3):
