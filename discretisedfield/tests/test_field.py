@@ -132,6 +132,17 @@ class TestField(object):
                     assert np.all(f.array[:, :, :, j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
 
+    def test_norm_is_not_preserved(self):
+        for f in self.vector_fs:
+            f.norm = 1
+            f.value = (0, 2, 0)
+
+            norm = 2
+            for j in range(3):
+                c = f.mesh.random_point()
+                assert np.all(f.array[:, :, :, j] == value[j]/norm)
+                assert np.all(f(c)[j] == value[j]/norm)
+
     def test_set_with_ndarray(self):
         for f in self.vector_fs:
             value = np.zeros(f.mesh.n + (f.dim,))
