@@ -204,10 +204,22 @@ class TestField(object):
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         f.norm = 1
-        assert f.norm == 1
+        assert isinstance(f.norm, np.ndarray)
+        assert np.all(f.norm == 1)
 
         f.array[0, 0, 0, 0] = 3
         assert isinstance(f.norm, np.ndarray)
+
+    def test_norm_value(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=3, value=(2, 2, 2))
+
+        f.norm = 1
+        assert isinstance(f.norm_value, int)
+        assert f.norm_value == 1
+
+        f.array[0, 0, 0, 0] = 3
+        assert isinstance(f.norm_value, np.ndarray)
 
     def test_value(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))

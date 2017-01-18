@@ -67,11 +67,14 @@ class Field(object):
 
     @property
     def norm(self):
-        norm_array = np.linalg.norm(self.array, axis=self.dim)
-        if np.all(norm_array[..., None] == self._as_array(self._norm, dim=1)):
+        return np.linalg.norm(self.array, axis=self.dim)
+
+    @property
+    def norm_value(self):
+        if np.all(self.norm[..., None] == self._as_array(self._norm, dim=1)):
             return self._norm
         else:
-            return norm_array
+            return self.norm
 
     @norm.setter
     def norm(self, norm):
