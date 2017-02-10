@@ -137,6 +137,7 @@ class TestMesh:
                 [(10e9, 10e3, 0),
                  (11e9, 11e3, 5),
                  (1e9, 1e3, 1.5)]]
+
         for p1, p2, cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -354,20 +355,25 @@ class TestMesh:
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        name = "object_name"
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
         assert mesh.p1 == p1
         assert mesh.p2 == p2
         assert mesh.cell == cell
+        assert mesh.name == name
         assert mesh.l == (10, 10, 10)
         assert mesh.n == (10, 10, 10)
 
         # Attempt to change attribute
         with pytest.raises(AttributeError):
             mesh.p2 = (15, 15, 15)
+        with pytest.raises(AttributeError):
+            mesh.name = "new_object_name"
 
         assert mesh.p1 == p1
         assert mesh.p2 == p2
         assert mesh.cell == cell
+        assert mesh.name == name
         assert mesh.l == (10, 10, 10)
         assert mesh.n == (10, 10, 10)

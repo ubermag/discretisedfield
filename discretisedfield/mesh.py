@@ -9,7 +9,7 @@ from mpl_toolkits.mplot3d import Axes3D
 @ts.typesystem(p1=ts.ConstantRealVector(size=3),
                p2=ts.ConstantRealVector(size=3),
                cell=ts.ConstantPositiveRealVector(size=3),
-               name=ts.ObjectName)
+               name=ts.ConstantObjectName)
 class Mesh:
     def __init__(self, p1, p2, cell, name="mesh"):
         """
