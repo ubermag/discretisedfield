@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 @ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
-class Field(object):
+class Field:
     def __init__(self, mesh, dim=3, value=0, norm=None, name="field"):
         """Finite Difference Field
 

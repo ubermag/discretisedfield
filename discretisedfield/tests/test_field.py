@@ -6,7 +6,7 @@ import discretisedfield as df
 import matplotlib
 
 
-class TestField(object):
+class TestField:
     def setup(self):
         self.meshes = self.create_meshes()
         self.scalar_fs = self.create_scalar_fs()
