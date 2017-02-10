@@ -4,7 +4,7 @@ import numpy as np
 import discretisedfield as df
 
 
-class TestMesh(object):
+class TestMesh:
     def setup(self):
         self.valid_args = [[(0, 0, 0),
                             (5, 5, 5),
