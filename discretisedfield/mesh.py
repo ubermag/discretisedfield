@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
                p2=ts.ConstantRealVector(size=3),
                cell=ts.ConstantPositiveRealVector(size=3),
                name=ts.ObjectName)
-class Mesh(object):
+class Mesh:
     def __init__(self, p1, p2, cell, name="mesh"):
         """
         Finite Difference Mesh
