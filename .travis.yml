@@ -1,8 +1,5 @@
 sudo: required
 
-before_install:
-  - npm install --save-dev travis-after-all
-
 services:
   - docker
 
@@ -15,26 +12,6 @@ script:
   - docker exec testcontainer make travis-build
   - docker stop testcontainer
   - docker rm testcontainer
-
-after_script:
-  - |
-      declare exitCode;
-      $(npm bin)/travis-after-all
-      exitCode=$?
-      if [ "$exitCode" -eq 0 ]; then
-        body='{
-        "request": {
-          "branch":"master"
-        }}'
-
-        curl -s -X POST \
-        -H "Content-Type: application/json" \
-        -H "Accept: application/json" \
-        -H "Travis-API-Version: 3" \
-        -H "Authorization: token $TRAVIS_ACCESS_TOKEN" \
-        -d "$body" \
-        https://api.travis-ci.org/repo/joommf%2Fjoommftools/requests
-      fi
       
 notifications:
   slack: joommf:eqKxGPXuUP3LxnOfxg7GWgDF
