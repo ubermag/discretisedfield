@@ -349,3 +349,25 @@ class TestMesh(object):
             mesh = df.Mesh(p1, p2, cell)
             with pytest.raises(NotImplementedError):
                 script = mesh._script
+
+    def test_issue21(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        assert mesh.p1 == p1
+        assert mesh.p2 == p2
+        assert mesh.cell == cell
+        assert mesh.l == (10, 10, 10)
+        assert mesh.n == (10, 10, 10)
+
+        # Attempt to change attribute
+        with pytest.raises(AttributeError):
+            mesh.p2 = (15, 15, 15)
+
+        assert mesh.p1 == p1
+        assert mesh.p2 == p2
+        assert mesh.cell == cell
+        assert mesh.l == (10, 10, 10)
+        assert mesh.n == (10, 10, 10)

@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-@ts.typesystem(p1=ts.RealVector(size=3),
-               p2=ts.RealVector(size=3),
-               cell=ts.PositiveRealVector(size=3),
+@ts.typesystem(p1=ts.ConstantRealVector(size=3),
+               p2=ts.ConstantRealVector(size=3),
+               cell=ts.ConstantPositiveRealVector(size=3),
                name=ts.ObjectName)
 class Mesh(object):
     def __init__(self, p1, p2, cell, name="mesh"):
