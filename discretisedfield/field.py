@@ -253,7 +253,7 @@ class Field:
         """
         a1, a2, field_slice, coord_system = self.slice_field(axis, point)
 
-        # Vector field.
+        # Vector field
         if self.dim == 3:
             pm = self._prepare_for_quiver(a1, a2, field_slice, coord_system)
 

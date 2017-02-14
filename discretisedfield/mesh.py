@@ -36,83 +36,89 @@ class Mesh:
         self.cell = tuple(cell)
         self.name = name
 
-        # Is domain edge length zero?
+        # Is the length of any mesh domain edge zero?
         for i in range(3):
             if self.l[i] == 0:
-                msg = ("Domain edge length is zero (l[{}]==0).").format(i)
+                msg = "Mesh domain edge length is zero (l[{}]==0).".format(i)
                 raise ValueError(msg)
 
-        # Is discretisation cell size greater than the domain?
+        # Is the discretisation cell greater than the mesh domain?
         for i in range(3):
             if self.cell[i] > self.l[i]:
-                msg = ("Discretisation cell is greater than the domain: "
+                msg = ("Discretisation cell is greater than the mesh domain: "
                        "cell[{0}] > abs(p2[{0}]-p1[{0}]).").format(i)
                 raise ValueError(msg)
 
-        # Is domain not an aggregate of discretisation cells?
+        # Is mesh domain not an aggregate of discretisation cells?
         tol = 1e-12  # picometer tolerance
         for i in range(3):
             if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
-                msg = ("Domain is not an aggregate of the discretisation "
+                msg = ("Mesh domain is not an aggregate of the discretisation "
                        "cell: abs(p2[{0}]-p1[{0}]) % cell[{0}].").format(i)
                 raise ValueError(msg)
 
     @property
     def pmin(self):
-        """Minimum mesh domain coordinate point"""
+        """Mesh domain point with minimum coordinate."""
         return tuple(min(self.p1[i], self.p2[i]) for i in range(3))
 
     @property
     def pmax(self):
-        """Maximum mesh domain coordinate point"""
+        """Mesh domain point with maximum coordinate."""
         return tuple(max(self.p1[i], self.p2[i]) for i in range(3))
 
     @property
     def l(self):
-        """Length of domain edges (lx, ly, lz)
-            lx = abs(p2[0] - p1[0])
-            ly = abs(p2[1] - p1[2])
-            lz = abs(p2[2] - p1[2])
+        """Lengths of domain edges
+            l = (abs(p2[0] - p1[0]),
+                 abs(p2[1] - p1[1]),
+                 abs(p2[2] - p1[2])).
 
         """
         return tuple(abs(self.p1[i] - self.p2[i]) for i in range(3))
 
     @property
     def n(self):
-        """Number of discretisation cells (nx, ny, nz)
-            nx = lx/dx
-            ny = ly/dy
-            nz = lz/dz
+        """Number of discretisation cells
+            n = (l[0]/cell[0],
+                 l[1]/cell[1],
+                 l[2]/cell[2])
 
         """
         return tuple(int(round(self.l[i]/self.cell[i])) for i in range(3))
 
     @property
     def centre(self):
-        """Mesh centre point"""
+        """Mesh domain centre"""
         return tuple(self.pmin[i]+0.5*self.l[i] for i in range(3))
 
+    @property
+    def indices(self):
+        """Generator iterating through all mesh cells and
+        yielding their indices."""
+        for k in range(self.n[2]):
+            for j in range(self.n[1]):
+                for i in range(self.n[0]):
+                    yield (i, j, k)
+
+    @property
+    def coordinates(self):
+        """Generator iterating through all mesh cells and
+        yielding their centres' coordinates."""
+        for i in self.indices:
+            yield self.index2point(i)
+
     def __repr__(self):
-        """Mesh representation method.
-
-        Returns:
-          A mesh representation string.
-
-        """
+        """Mesh representation string."""
         return ("Mesh(p1={}, p2={}, cell={}, "
                 "name=\"{}\")").format(self.p1, self.p2, self.cell, self.name)
 
     def _ipython_display_(self):
-        """Shows a matplotlib figure of sample range and discretisation."""
+        """Figure of mesh domain and discretisation cell."""
         return self.plot()  # pragma: no cover
 
     def random_point(self):
-        """Generate a random mesh point.
-
-        Returns:
-          A random mesh point tuple of coordinates (x, y, z).
-
-        """
+        """Random point inside the mesh."""
         return tuple(self.pmin[i]+random.random()*self.l[i] for i in range(3))
 
     def index2point(self, index):
@@ -165,22 +171,6 @@ class Mesh:
 
         # If rounded to the out-of-range values
         return tuple(max(min(self.n[i]-1, index[i]), 0) for i in range(3))
-
-    @property
-    def indices(self):
-        """Generator iterating through all mesh cells and
-        yielding their indices."""
-        for k in range(self.n[2]):
-            for j in range(self.n[1]):
-                for i in range(self.n[0]):
-                    yield (i, j, k)
-
-    @property
-    def coordinates(self):
-        """Generator iterating through all mesh cells and
-        yielding their centres' coordinates."""
-        for i in self.indices:
-            yield self.index2point(i)
 
     def plot(self):
         """Creates a figure of a mesh domain and discretisation cell."""

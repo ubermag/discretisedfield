@@ -150,7 +150,7 @@ class TestMesh:
                      (1e-9, 1e-9, 2e-9), (1e-9, 5e-9, 0.1e-9)]:
             with pytest.raises(ValueError) as excinfo:
                 mymesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-            assert "greater than the domain" in str(excinfo)
+            assert "greater than the mesh domain" in str(excinfo)
 
     def test_centre(self):
         p1 = (0, 0, 0)
