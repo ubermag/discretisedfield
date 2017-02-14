@@ -15,14 +15,14 @@ class Mesh:
         """
         Finite Difference Mesh
 
-        Args:
-          p1 (tuple): first point of the mesh domain
-            p1 = (x1, y1, z1)
-          p2 (tuple): second point of the mesh domain
-            p2 = (x2, y2, z2)
-          cell (tuple): discretisation cell size
-            cell = (dx, dy, dz)
-          name (Optional[str]): mesh name (defaults to "mesh")
+        Parameters
+        ----------
+        p1, p2 : array_like
+            Points between which the mesh domain spans `p` = (`x`, `y`, `z`).
+        cell : array_like
+            Discretisation cell size `cell` = (`dx`, `dy`, `dz`).
+        name : str, optional
+            Mesh name (the default is "mesh").
 
         Attributes:
           p1 (tuple): first point of the mesh domain
