@@ -12,23 +12,48 @@ from mpl_toolkits.mplot3d import Axes3D
                name=ts.ConstantObjectName)
 class Mesh:
     def __init__(self, p1, p2, cell, name="mesh"):
-        """
-        Finite Difference Mesh
+        """Finite difference rectangular mesh.
+
+        The rectangular mesh domain spans between two points `p1` and `p2`
+        defined as array_like objects of length 3, e.g. `p` = (`x`, `y`, `z`).
+        The domain is then discretised into cells whose dimensions are defined
+        as `cell` = (`dx`, `dy`, `dz`). The default name is "mesh", but can be
+        specified using `mesh` parameter. 
 
         Parameters
         ----------
-        p1, p2 : array_like
+        p1, p2 : (3,) array_like
             Points between which the mesh domain spans `p` = (`x`, `y`, `z`).
-        cell : array_like
+        cell : (3,) array_like
             Discretisation cell size `cell` = (`dx`, `dy`, `dz`).
         name : str, optional
-            Mesh name (the default is "mesh").
+            Mesh name (the default is "mesh"). The mesh name must be a valid
+            Python string. More specifically, it must not contain spaces, or
+            start with underscore or numeric character.
 
-        Attributes:
-          p1 (tuple): first point of the mesh domain
-          p2 (tuple): second point of the mesh domain
-          cell (tuple): discretisation cell size
-          name (str): mesh name
+        Attributes
+        ----------
+        pmin
+        pmax
+        l
+        n
+        centre
+        indices
+        coordinates
+        p1, p2 : (3,) array_like
+            Points between which the mesh domain spans `p` = (`x`, `y`, `z`).
+        cell : (3,) array_like
+            Discretisation cell size `cell` = (`dx`, `dy`, `dz`).
+        name : str, optional
+            Mesh name (the default is "mesh"). The mesh name must be a valid
+            Python string. More specifically, it must not contain spaces, or
+            start with underscore or numeric character.
+
+        Raises
+        ------
+        ValueError
+            If the length of one or more mesh domain edges is zero, or
+            mesh domain is not an aggregate of discretisation cells.
 
         """
         self.p1 = tuple(p1)
