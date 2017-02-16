@@ -18,7 +18,7 @@ class Mesh:
         defined as array_like objects of length 3, e.g. `p` = (`x`, `y`, `z`).
         The domain is then discretised into cells whose dimensions are defined
         as `cell` = (`dx`, `dy`, `dz`). The default name is "mesh", but can be
-        specified using `mesh` parameter. 
+        specified using `name` parameter. 
 
         Parameters
         ----------
@@ -56,9 +56,11 @@ class Mesh:
             mesh domain is not an aggregate of discretisation cells.
 
         """
+        # Convert to tuple before assignment because parameters are array_like.
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.cell = tuple(cell)
+
         self.name = name
 
         # Is the length of any mesh domain edge zero?

@@ -150,7 +150,7 @@ class Field:
         ax = fig.add_subplot(211, projection="3d")
         ax.set_aspect("equal")
 
-        dfu.plot_box(ax, self.mesh.pmin, self.mesh.pmax)
+        dfu.plot_box(ax, self.mesh.pmin, self.mesh.pmax, "b-")
         p1, p2 = dfu.box_line_intersection(
             self.mesh.pmin, self.mesh.pmax, l, l0)
         dfu.plot_line(ax, p1, p2, "ro-")
