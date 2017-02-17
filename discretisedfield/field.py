@@ -162,6 +162,7 @@ class Field:
         ax.set(xlabel=r"$d$", ylabel=r"$v$")
         ax.grid()
         ax.plot(d, v)
+        plt.close()
 
         return fig
 
@@ -288,6 +289,7 @@ class Field:
             plt.axis("off")
         if grid:
             plt.grid()
+        plt.close()
 
         return fig
 
