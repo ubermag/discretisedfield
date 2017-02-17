@@ -213,6 +213,7 @@ class Mesh:
         dfu.plot_box(ax, self.pmin, cell_point, "r-", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
+        plt.close()
 
         return fig
 
