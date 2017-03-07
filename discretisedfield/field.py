@@ -289,7 +289,7 @@ class Field:
             plt.axis("off")
         if grid:
             plt.grid()
-        plt.close()
+        #plt.close()
 
         return fig
 

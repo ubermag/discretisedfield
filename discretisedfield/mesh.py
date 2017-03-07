@@ -1,8 +1,8 @@
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
 import discretisedfield.util as dfu
-import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -12,42 +12,24 @@ from mpl_toolkits.mplot3d import Axes3D
                name=ts.ConstantObjectName)
 class Mesh:
     def __init__(self, p1, p2, cell, name="mesh"):
-        """Finite difference rectangular mesh.
+        """Finite difference rectangular mesh
 
-        The rectangular mesh domain spans between two points `p1` and `p2`
-        defined as array_like objects of length 3, e.g. `p` = (`x`, `y`, `z`).
-        The domain is then discretised into cells whose dimensions are defined
-        as `cell` = (`dx`, `dy`, `dz`). The default name is "mesh", but can be
-        specified using `name` parameter. 
+        The rectangular mesh domain spans between two points `p1` and
+        `p2` defined as array_like objects of length 3, `p` = (`px`,
+        `py`, `pz`).  The domain is then discretised into cells with
+        dimensions defined as `cell` = (`dx`, `dy`, `dz`). The
+        parameter `name` is optional and defaults to "mesh".
 
         Parameters
         ----------
         p1, p2 : (3,) array_like
-            Points between which the mesh domain spans `p` = (`x`, `y`, `z`).
+            Points between which the mesh domain spans `p` = (`px`, `py`, `pz`).
         cell : (3,) array_like
             Discretisation cell size `cell` = (`dx`, `dy`, `dz`).
         name : str, optional
             Mesh name (the default is "mesh"). The mesh name must be a valid
-            Python string. More specifically, it must not contain spaces, or
-            start with underscore or numeric character.
-
-        Attributes
-        ----------
-        pmin
-        pmax
-        l
-        n
-        centre
-        indices
-        coordinates
-        p1, p2 : (3,) array_like
-            Points between which the mesh domain spans `p` = (`x`, `y`, `z`).
-        cell : (3,) array_like
-            Discretisation cell size `cell` = (`dx`, `dy`, `dz`).
-        name : str, optional
-            Mesh name (the default is "mesh"). The mesh name must be a valid
-            Python string. More specifically, it must not contain spaces, or
-            start with underscore or numeric character.
+            Python variable name string. More specifically, it must not
+            contain spaces, or start with underscore or numeric character.
 
         Raises
         ------
@@ -87,29 +69,25 @@ class Mesh:
     @property
     def pmin(self):
         """Mesh domain point with minimum coordinate."""
-        return tuple(min(self.p1[i], self.p2[i]) for i in range(3))
+        return tuple(min(coords) for coords in zip(self.p1, self.p2))
 
     @property
     def pmax(self):
         """Mesh domain point with maximum coordinate."""
-        return tuple(max(self.p1[i], self.p2[i]) for i in range(3))
+        return tuple(max(coords) for coords in zip(self.p1, self.p2))
 
     @property
     def l(self):
         """Lengths of domain edges
-            l = (abs(p2[0] - p1[0]),
-                 abs(p2[1] - p1[1]),
-                 abs(p2[2] - p1[2])).
+            l = (abs(p2[0] - p1[0]), abs(p2[1] - p1[1]), abs(p2[2] - p1[2])).
 
         """
-        return tuple(abs(self.p1[i] - self.p2[i]) for i in range(3))
+        return tuple(abs(a-b) for a, b in zip(self.p1, self.p2))
 
     @property
     def n(self):
         """Number of discretisation cells
-            n = (l[0]/cell[0],
-                 l[1]/cell[1],
-                 l[2]/cell[2])
+            n = (l[0]/cell[0], l[1]/cell[1], l[2]/cell[2])
 
         """
         return tuple(int(round(self.l[i]/self.cell[i])) for i in range(3))
