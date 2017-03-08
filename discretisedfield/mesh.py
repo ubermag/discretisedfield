@@ -176,30 +176,82 @@ class Mesh:
 
                 & l^{z}/d^{z})
 
+        Returns
+        -------
+        tuple (3,)
+            The number of discretisation cells (`nx`, `ny`, `nz`).
+
         Example
         -------
-        Getting mesh domain edge lengths.
+        Getting the number of discretisation cells in all three direction.
 
         >>> import discretisedfield as df
-        >>> p1 = (0, 5, -5)
-        >>> p2 = (5, 15, 15)
-        >>> cell = (0.5, 1, 2)
+        >>> p1 = (0, 5, 0)
+        >>> p2 = (5, 15, 1)
+        >>> cell = (0.5, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.n
-        (10, 10, 10)
+        (10, 10, 1)
 
         """
         return tuple(int(round(l/d)) for l, d in zip(self.l, self.cell))
 
     @property
     def centre(self):
-        """Mesh domain centre"""
+        """Mesh domain centre point.
+
+        This point does not necessarily coincides with the
+        discretisation cell centre. It is computed as the
+        middle point between minimum and maximum coordinate:
+
+        .. math::
+
+           p_{c}^{i} = p_{min}^{i} + 0.5l^{i}
+
+        Returns
+        -------
+        tuple (3,)
+            Mesh domain centre point c = (`cx`, `cy`, `cz`).
+
+        Example
+        -------
+        Getting the mesh centre point.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 15, 18)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.centre
+        (2.5, 7.5, 9.0)
+
+        """
         return tuple(self.pmin[i]+0.5*self.l[i] for i in range(3))
 
     @property
     def indices(self):
-        """Generator iterating through all mesh cells and
-        yielding their indices."""
+        """Generator iterating through all mesh cells and yielding their
+        indices.
+
+        Yields
+        ------
+        tuple (3,)
+            Mesh cell indices (`ix`, `iy`, `iz`).
+
+
+        Example
+        -------
+        Getting all mesh cell indices.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (3, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> tuple(mesh.indices)
+        ((0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0))
+
+        """
         for k in range(self.n[2]):
             for j in range(self.n[1]):
                 for i in range(self.n[0]):
@@ -207,13 +259,57 @@ class Mesh:
 
     @property
     def coordinates(self):
-        """Generator iterating through all mesh cells and
-        yielding their centres' coordinates."""
+        """Generator iterating through all mesh cells and yielding their
+        coordinates.
+
+        Yields
+        ------
+        tuple (3,)
+            Mesh cell coordinates (`px`, `py`, `pz`).
+
+
+        Example
+        -------
+        Getting all mesh cell coordinates.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> tuple(mesh.coordinates)
+        ((0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 1.5, 0.5), (1.5, 1.5, 0.5))
+
+        """
         for i in self.indices:
             yield self.index2point(i)
 
     def __repr__(self):
-        """Mesh representation string."""
+        """Mesh representation.
+
+        This method returns the string that can be copied in another
+        Python script so that exactly the same mesh object would be
+        reproduced.
+        
+        Returns
+        -------
+        str
+           Mesh representation string
+
+
+        Example
+        -------
+        Getting mesh representation string.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> repr(mesh)
+        'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), name="mesh")'
+
+        """
         return ("Mesh(p1={}, p2={}, cell={}, "
                 "name=\"{}\")").format(self.p1, self.p2, self.cell, self.name)
 
