@@ -318,7 +318,31 @@ class Mesh:
         return self.plot()  # pragma: no cover
 
     def random_point(self):
-        """Random point inside the mesh."""
+        """Generate the random point coordinates inside the mesh.
+
+        Returns
+        -------
+        tuple (3,)
+            Coordinates of a random point inside the mesh `p` = (`x`, `y`, `z`).
+
+        Example
+        -------
+        Getting mesh representation string.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.random_point()  # doctest: +ELLIPSIS
+        (..., ..., ...)
+
+        .. note::
+
+           In the example, ellipsis is used because the result
+           differs each time the random_point command command is run.
+
+        """
         return tuple(self.pmin[i]+random.random()*self.l[i] for i in range(3))
 
     def index2point(self, index):
@@ -406,5 +430,13 @@ class Mesh:
 
     @property
     def _script(self):
-        """This method should be implemented by a specific calculator."""
+        """This abstract method should be implemented by a specific
+        calculator.
+
+        Raises
+        ------
+        NotImplementedError
+            If not implemented by a specific calculator.
+
+        """
         raise NotImplementedError
