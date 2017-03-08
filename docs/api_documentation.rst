@@ -1,12 +1,10 @@
 API Documentation
 =================
 
-.. autoclass:: discretisedfield.Mesh
-   :members:
-   :special-members:
+.. toctree::
+   :maxdepth: 1
+   :caption: Contents:
 
-
-.. autoclass:: discretisedfield.Field
-   :members:
-   :special-members:
+   mesh
+   field
 
