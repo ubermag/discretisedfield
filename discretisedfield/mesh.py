@@ -129,7 +129,10 @@ class Mesh:
     def l(self):
         """Property: mesh domain edge lengths.
 
-        .. math:: 
+        Edge lengths are computed from the points between which the
+        mesh domain spans.
+        
+        .. math::
 
            l = (& |p_{2}^{x} - p_{1}^{x}|
 
@@ -159,11 +162,34 @@ class Mesh:
 
     @property
     def n(self):
-        """Number of discretisation cells
-            n = (l[0]/cell[0], l[1]/cell[1], l[2]/cell[2])
+        """Number of discretisation cells in all directions.
+
+        By dividing the lengths of mesh domain edges `l` = (`lx`, `ly`,
+        `lz`) with discretisations `cell` = (`dx`, `dy`, `dz`), the number of
+        discretisation cells are computed.
+
+        .. math::
+
+           n = (& l^{x}/d^{x},
+
+                & l^{y}/d^{y},
+
+                & l^{z}/d^{z})
+
+        Example
+        -------
+        Getting mesh domain edge lengths.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 5, -5)
+        >>> p2 = (5, 15, 15)
+        >>> cell = (0.5, 1, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.n
+        (10, 10, 10)
 
         """
-        return tuple(int(round(self.l[i]/self.cell[i])) for i in range(3))
+        return tuple(int(round(l/d)) for l, d in zip(self.l, self.cell))
 
     @property
     def centre(self):
