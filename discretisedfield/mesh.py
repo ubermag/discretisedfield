@@ -11,33 +11,44 @@ from mpl_toolkits.mplot3d import Axes3D
                cell=ts.ConstantPositiveRealVector(size=3),
                name=ts.ConstantObjectName)
 class Mesh:
+    """Finite difference rectangular mesh.
+
+    The rectangular mesh domain spans between two points `p1` and
+    `p2` defined as array_like objects of length 3, `p` = (`px`,
+    `py`, `pz`).  The domain is then discretised into cells with
+    dimensions defined as `cell` = (`dx`, `dy`, `dz`). The
+    parameter `name` is optional and defaults to "mesh".
+
+    Parameters
+    ----------
+    p1, p2 : (3,) array_like
+        Points between which the mesh domain spans `p` = (`px`, `py`, `pz`).
+    cell : (3,) array_like
+        Discretisation cell size `cell` = (`dx`, `dy`, `dz`).
+    name : str, optional
+        Mesh name (the default is "mesh"). The mesh name must be a valid
+        Python variable name string. More specifically, it must not
+        contain spaces, or start with underscore or numeric character.
+
+    Raises
+    ------
+    ValueError
+        If the length of one or more mesh domain edges is zero, or
+        mesh domain is not an aggregate of discretisation cells.
+
+    Examples
+    --------
+    Creating a simple mesh
+
+    >>> import discretisedfield as df
+    >>> p1 = (-5, -5, -5)
+    >>> p2 = (5, -2, 10)
+    >>> cell = (1, 1, 0.1)
+    >>> name = "mesh_name"
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+
+    """
     def __init__(self, p1, p2, cell, name="mesh"):
-        """Finite difference rectangular mesh
-
-        The rectangular mesh domain spans between two points `p1` and
-        `p2` defined as array_like objects of length 3, `p` = (`px`,
-        `py`, `pz`).  The domain is then discretised into cells with
-        dimensions defined as `cell` = (`dx`, `dy`, `dz`). The
-        parameter `name` is optional and defaults to "mesh".
-
-        Parameters
-        ----------
-        p1, p2 : (3,) array_like
-            Points between which the mesh domain spans `p` = (`px`, `py`, `pz`).
-        cell : (3,) array_like
-            Discretisation cell size `cell` = (`dx`, `dy`, `dz`).
-        name : str, optional
-            Mesh name (the default is "mesh"). The mesh name must be a valid
-            Python variable name string. More specifically, it must not
-            contain spaces, or start with underscore or numeric character.
-
-        Raises
-        ------
-        ValueError
-            If the length of one or more mesh domain edges is zero, or
-            mesh domain is not an aggregate of discretisation cells.
-
-        """
         # Convert to tuple before assignment because parameters are array_like.
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
@@ -58,7 +69,7 @@ class Mesh:
                        "cell[{0}] > abs(p2[{0}]-p1[{0}]).").format(i)
                 raise ValueError(msg)
 
-        # Is mesh domain not an aggregate of discretisation cells?
+        # Is the mesh domain not an aggregate of discretisation cells?
         tol = 1e-12  # picometer tolerance
         for i in range(3):
             if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
@@ -68,21 +79,83 @@ class Mesh:
 
     @property
     def pmin(self):
-        """Mesh domain point with minimum coordinate."""
+        """Property: mesh domain point with minimum coordinates.
+
+        Returns
+        -------
+        tuple (3,)
+            Point with minimum mesh coordinates (`px`, `py`, `pz`).
+
+        Example
+        -------
+        Getting the minimum domain coordinate as the mesh object property.
+
+        >>> import discretisedfield as df
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, 0.01)
+        >>> cell = (0.1, 0.1, 0.005)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.pmin
+        (-1.1, 0, 0)
+
+        """
         return tuple(min(coords) for coords in zip(self.p1, self.p2))
 
     @property
     def pmax(self):
-        """Mesh domain point with maximum coordinate."""
+        """Property: mesh domain point with maximum coordinates.
+
+        Returns
+        -------
+        tuple (3,)
+            Point with maximum mesh coordinates (`px`, `py`, `pz`).
+
+        Example
+        -------
+        Getting the minimum domain coordinate as the mesh object property.
+
+        >>> import discretisedfield as df
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, 0.01)
+        >>> cell = (0.1, 0.1, 0.005)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.pmax
+        (5, 2.9, 0.01)
+
+        """
         return tuple(max(coords) for coords in zip(self.p1, self.p2))
 
     @property
     def l(self):
-        """Lengths of domain edges
-            l = (abs(p2[0] - p1[0]), abs(p2[1] - p1[1]), abs(p2[2] - p1[2])).
+        """Property: mesh domain edge lengths.
+
+        .. math:: 
+
+           l = (& |p_{2}^{x} - p_{1}^{x}|
+
+                & |p_{2}^{y} - p_{1}^{y}|
+
+                & |p_{2}^{z} - p_{1}^{z}|)
+
+        Returns
+        -------
+        tuple (3,)
+            Lengths of mesh domain edges (`lx`, `ly`, `lz`).
+
+        Example
+        -------
+        Getting mesh domain edge lengths.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, -5)
+        >>> p2 = (5, 15, 15)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.l
+        (5, 15, 20)
 
         """
-        return tuple(abs(a-b) for a, b in zip(self.p1, self.p2))
+        return tuple(abs(c2-c1) for c1, c2 in zip(self.p1, self.p2))
 
     @property
     def n(self):
