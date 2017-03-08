@@ -335,12 +335,13 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.random_point()  # doctest: +ELLIPSIS
-        (..., ..., ...)
+        (...)
 
         .. note::
 
-           In the example, ellipsis is used because the result
-           differs each time the random_point command command is run.
+           In the example, ellipsis is used instead of a tuple because
+           the result differs each time the random_point command
+           command is run.
 
         """
         return tuple(self.pmin[i]+random.random()*self.l[i] for i in range(3))
