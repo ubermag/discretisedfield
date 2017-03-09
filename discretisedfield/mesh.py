@@ -101,6 +101,11 @@ class Mesh:
     @property
     def pmin(self):
         """Point contained in the mesh domain with minimum coordinates.
+        
+        The :math:`i`-th component of :math:`p_\\text{min}` is computed
+        from the points :math:`p_{1}` and :math:`p_{2}` between which
+        the mesh domain spans: :math:`p_\\text{min}^{i} =
+        \\text{min}(p_{1}^{i}, p_{2}^{i})`.
 
         Returns
         -------
@@ -133,6 +138,11 @@ class Mesh:
     @property
     def pmax(self):
         """Point contained in the mesh domain with maximum coordinates.
+
+        The :math:`i`-th component of :math:`p_\\text{max}` is computed
+        from the points :math:`p_{1}` and :math:`p_{2}` between which
+        the mesh domain spans: :math:`p_\\text{min}^{i} =
+        \\text{max}(p_{1}^{i}, p_{2}^{i})`.
 
         Returns
         -------
@@ -234,17 +244,17 @@ class Mesh:
         """Mesh domain centre point.
 
         This point does not necessarily coincides with the
-        discretisation cell centre. It is computed as the
-        middle point between minimum and maximum coordinate:
-
-        .. math::
-
-           p_{c}^{i} = p_{min}^{i} + 0.5l^{i}
+        discretisation cell centre. It is computed as the middle point
+        between minimum and maximum coordinate :math:`p_{c}^{i} =
+        p_\\text{min}^{i} + 0.5l^{i}`, where :math:`p_\\text{min}^{i}`
+        is the :math:`i`-th coordinate of the minimum mesh domain
+        point and :math:`l^{i}` is the mesh domain edge length in the
+        :math:`i`-th direction.
 
         Returns
         -------
         tuple (3,)
-            Mesh domain centre point c = (`cx`, `cy`, `cz`).
+            Mesh domain centre point :math:`(c_{x}, c_{y}, c_{z})`.
 
         Example
         -------
@@ -259,7 +269,7 @@ class Mesh:
         (2.5, 7.5, 9.0)
 
         """
-        return tuple(self.pmin[i]+0.5*self.l[i] for i in range(3))
+        return tuple(pmini+0.5*li for pmini, li in zip(self.pmin, self.l))
 
     @property
     def indices(self):
