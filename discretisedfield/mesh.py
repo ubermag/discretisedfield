@@ -199,22 +199,15 @@ class Mesh:
     def n(self):
         """Number of discretisation cells in all directions.
 
-        By dividing the lengths of mesh domain edges `l` = (`lx`, `ly`,
-        `lz`) with discretisations `cell` = (`dx`, `dy`, `dz`), the number of
-        discretisation cells are computed.
-
-        .. math::
-
-           n = (& l^{x}/d^{x},
-
-                & l^{y}/d^{y},
-
-                & l^{z}/d^{z})
+        By dividing the lengths of mesh domain edges with
+        discretisation in all directions, the number of cells is
+        computed :math:`n^{i} = l^{i}/d^{i}`.
 
         Returns
         -------
         tuple (3,)
-            The number of discretisation cells (`nx`, `ny`, `nz`).
+            The number of discretisation cells :math:`(n_{x},
+            n_{y}, n_{z})`.
 
         Example
         -------
@@ -223,11 +216,16 @@ class Mesh:
         >>> import discretisedfield as df
         >>> p1 = (0, 5, 0)
         >>> p2 = (5, 15, 1)
-        >>> cell = (0.5, 1, 1)
+        >>> cell = (0.5, 0.1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.n
-        (10, 10, 1)
+        (10, 100, 1)
 
+        .. note::
+
+           Please note this method is a property and should be called
+           as ``mesh.n``, not ``mesh.n()``.
+    
         """
         return tuple(int(round(l/d)) for l, d in zip(self.l, self.cell))
 
