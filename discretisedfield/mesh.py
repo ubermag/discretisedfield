@@ -517,7 +517,7 @@ class Mesh:
         Raises
         ------
             ValueError
-                If `point` is outside the mesh domain.
+                If `p` is outside the mesh domain.
 
         Example
         -------
@@ -542,12 +542,50 @@ class Mesh:
                 msg = "Point p[{}]={} outside the mesh.".format(i, p[i])
                 raise ValueError(msg)
         
-    def line_intersection(self, p1, p2, n=100):
+    def line(self, p1, p2, n=100):
         """Line intersection generator.
 
-        Given two points :math:`p_{1}`
+        Given two points :math:`p_{1}` and :math:`p_{2}`, `n` position
+        vectors are generated
+
+        .. math::
+
+           \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} - \\mathbf{p}_{1}}{n-1}
+
+        and this method yields :math:`|\\mathbf{r}_{i}|` and
+        :math:`\\mathbf{r}_{i}` in :math:`n` iterations.
+
+        Parameters
+        ----------
+            p1, p2 : (3,) array_like
+                Two points between which the line is generated.
+            n : int
+                Number of points on the line.
+
+        Yields
+        ------
+            tuple of (float, tuple)
+                (:math:`|\\mathbf{r}_{i}|` and :math:`\\mathbf{r}_{i}`)
+
+        Raises
+        ------
+            ValueError
+                If `p` is outside the mesh domain.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> tuple(mesh.line(p1=(0, 0, 0), p2=(2, 0, 0), n=3))
+        ((0.0, (0.0, 0.0, 0.0)), (1.0, (1.0, 0.0, 0.0)), (2.0, (2.0, 0.0, 0.0)))
 
         """
+        self._isoutside(p1)
+        self._isoutside(p2)
+
         p1, p2 = np.array(p1), np.array(p2)
         dl = (p2-p1) / (n-1)
         for i in range(n):

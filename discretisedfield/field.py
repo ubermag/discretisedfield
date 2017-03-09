@@ -134,10 +134,10 @@ class Field:
         """
         return self.array[self.mesh.point2index(p)]
 
-    def line_intersection(self, l, l0, n=100):
+    def line_intersection(self, p1, p2, n=100):
         """Slice field along the line defined with l and l0."""
         ds, points, values = [], [], []
-        for d, p in self.mesh.line_intersection(l, l0, n=n):
+        for d, p in self.mesh.line(p1, p2, n=n):
             ds.append(d)
             points.append(p)
             values.append(self.__call__(p))
