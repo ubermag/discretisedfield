@@ -323,7 +323,7 @@ class TestMesh:
         mesh = df.Mesh(p1, p2, cell)
 
         tol = 1e-12
-        li = mesh.line_intersection((1, 1, 1), (5, 5, 5), n=10)
+        li = mesh.line_intersection((0, 0, 0), (10, 10, 10), n=10)
         for point in li:
             assert isinstance(point, tuple)
             assert len(point) == 2
@@ -336,7 +336,7 @@ class TestMesh:
             for j in range(3):
                 assert 0 <= p[j] <= 10
 
-        li = list(mesh.line_intersection((1, 0, 0), (0, 0, 0), n=30))
+        li = list(mesh.line_intersection((0, 0, 0), (10, 0, 0), n=30))
 
         assert len(li) == 30
         assert li[0][0] == 0

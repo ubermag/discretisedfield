@@ -405,7 +405,7 @@ class Mesh:
         >>> p2 = (200e-9, 200e-9, 1e-9)
         >>> cell = (1e-9, 1e-9, 0.5e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.random_point()  # doctest: +ELLIPSIS
+        >>> mesh.random_point()
         (...)
 
         .. note::
@@ -492,11 +492,7 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
         """
-        # Is the point outside the mesh?
-        for i in range(3):
-            if p[i] < self.pmin[i] or p[i] > self.pmax[i]:
-                msg = "Point p[{}]={} outside the mesh.".format(i, p[i])
-                raise ValueError(msg)
+        self._isoutside(p)
 
         index = tuple(int(round((pi-pmini)/celli - 0.5))
                       for pi, pmini, celli in zip(p, self.pmin, self.cell))
@@ -504,6 +500,58 @@ class Mesh:
         # If rounded to the out-of-range values
         return tuple(max(min(ni-1, indexi), 0)
                      for ni, indexi in zip(self.n, index))
+
+    def _isoutside(self, p):
+        """Raises ValueError if point is outside the mesh.
+
+        Parameters
+        ----------
+        p : (3,) array_like
+            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+
+        Returns
+        -------
+            None
+                If `point` is inside the mesh.
+
+        Raises
+        ------
+            ValueError
+                If `point` is outside the mesh domain.
+
+        Example
+        -------
+        Checking if point is outside the mesh.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> point1 = (1, 1, 1)
+        >>> mesh._isoutside(point1)  # Nothing is returned.
+        >>> point2 = (1, 3, 1)
+        >>> mesh._isoutside(point2)
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        """
+        for i in range(3):
+            if p[i] < self.pmin[i] or p[i] > self.pmax[i]:
+                msg = "Point p[{}]={} outside the mesh.".format(i, p[i])
+                raise ValueError(msg)
+        
+    def line_intersection(self, p1, p2, n=100):
+        """Line intersection generator.
+
+        Given two points :math:`p_{1}`
+
+        """
+        p1, p2 = np.array(p1), np.array(p2)
+        dl = (p2-p1) / (n-1)
+        for i in range(n):
+            yield np.linalg.norm(i*dl), tuple(p1+i*dl)
 
     def plot(self):
         """Creates a figure of a mesh domain and discretisation cell."""
@@ -522,20 +570,6 @@ class Mesh:
         plt.close()
 
         return fig
-
-    def line_intersection(self, l, l0, n=100):
-        """Generator yielding mesh cell indices and their centre coordinates,
-        along the line defined with l and l0 in n points."""
-        try:
-            p1, p2 = dfu.box_line_intersection(self.pmin, self.pmax, l, l0)
-        except TypeError:
-            raise ValueError("Line does not intersect mesh in two points.")
-
-        p1, p2 = np.array(p1), np.array(p2)
-        dl = (p2-p1) / (n-1)
-        for i in range(n):
-            point = p1 + i*dl
-            yield np.linalg.norm(i*dl), tuple(point)
 
     @property
     def _script(self):
