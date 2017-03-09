@@ -101,7 +101,7 @@ class Mesh:
     @property
     def pmin(self):
         """Point contained in the mesh domain with minimum coordinates.
-        
+
         The :math:`i`-th component of :math:`p_\\text{min}` is computed
         from the points :math:`p_{1}` and :math:`p_{2}` between which
         the mesh domain spans: :math:`p_\\text{min}^{i} =
@@ -203,7 +203,7 @@ class Mesh:
            as ``mesh.l``, not ``mesh.l()``.
 
         """
-        return tuple(abs(c2-c1) for c1, c2 in zip(self.p1, self.p2))
+        return tuple(abs(p1i-p2i) for p1i, p2i in zip(self.p1, self.p2))
 
     @property
     def n(self):
@@ -235,9 +235,9 @@ class Mesh:
 
            Please note this method is a property and should be called
            as ``mesh.n``, not ``mesh.n()``.
-    
+
         """
-        return tuple(int(round(l/d)) for l, d in zip(self.l, self.cell))
+        return tuple(int(round(li/di)) for li, di in zip(self.l, self.cell))
 
     @property
     def centre(self):
@@ -268,6 +268,11 @@ class Mesh:
         >>> mesh.centre
         (2.5, 7.5, 9.0)
 
+        .. note::
+
+           Please note this method is a property and should be called
+           as ``mesh.centre``, not ``mesh.centre()``.
+
         """
         return tuple(pmini+0.5*li for pmini, li in zip(self.pmin, self.l))
 
@@ -279,8 +284,7 @@ class Mesh:
         Yields
         ------
         tuple (3,)
-            Mesh cell indices (`ix`, `iy`, `iz`).
-
+            Mesh cell indices :math:`(i_{x}, i_{y}, i_{z})`.
 
         Example
         -------
@@ -294,6 +298,13 @@ class Mesh:
         >>> tuple(mesh.indices)
         ((0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0))
 
+        .. note::
+
+           Please note this method is a property and should be called
+           as ``mesh.indices``, not ``mesh.indices()``.
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.coordintes`
+
         """
         for k in range(self.n[2]):
             for j in range(self.n[1]):
@@ -304,6 +315,9 @@ class Mesh:
     def coordinates(self):
         """Generator iterating through all mesh cells and yielding their
         coordinates.
+
+        The discretisation cell coordinate corresponds to the cell
+        centre point.
 
         Yields
         ------
@@ -323,6 +337,13 @@ class Mesh:
         >>> tuple(mesh.coordinates)
         ((0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 1.5, 0.5), (1.5, 1.5, 0.5))
 
+        .. note::
+
+           Please note this method is a property and should be called
+           as ``mesh.coordinates``, not ``mesh.coordinates()``.
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
+
         """
         for i in self.indices:
             yield self.index2point(i)
@@ -331,13 +352,13 @@ class Mesh:
         """Mesh representation.
 
         This method returns the string that can be copied in another
-        Python script so that exactly the same mesh object would be
-        reproduced.
-        
+        Python script so that exactly the same mesh object could be
+        created.
+
         Returns
         -------
         str
-           Mesh representation string
+           Mesh representation string.
 
 
         Example
@@ -348,25 +369,32 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> name = "mesh_name"
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
         >>> repr(mesh)
-        'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), name="mesh")'
+        'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), name="mesh_name")'
 
         """
         return ("Mesh(p1={}, p2={}, cell={}, "
                 "name=\"{}\")").format(self.p1, self.p2, self.cell, self.name)
 
     def _ipython_display_(self):
-        """Figure of mesh domain and discretisation cell."""
+        """Jupyter notebook mesh representation.
+
+        Mesh domain and discretisation cell are plotted by the
+        :py:func:`~discretisedfield.Mesh.plot`.
+
+        """
         return self.plot()  # pragma: no cover
 
     def random_point(self):
-        """Generate the random point coordinates inside the mesh.
+        """Generate the random point inside the mesh.
 
         Returns
         -------
         tuple (3,)
-            Coordinates of a random point inside the mesh `p` = (`x`, `y`, `z`).
+            Coordinates of a random point inside the mesh
+            :math:`(x_\\text{rand}, y_\\text{rand}, z_\\text{rand})`.
 
         Example
         -------
@@ -374,36 +402,52 @@ class Mesh:
 
         >>> import discretisedfield as df
         >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 1)
-        >>> cell = (1, 1, 1)
+        >>> p2 = (200e-9, 200e-9, 1e-9)
+        >>> cell = (1e-9, 1e-9, 0.5e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.random_point()  # doctest: +ELLIPSIS
         (...)
 
         .. note::
 
-           In the example, ellipsis is used instead of a tuple because
-           the result differs each time the random_point command
-           command is run.
+           In the example, ellipsis is used instead of an exact tuple
+           because the result differs each time the random_point
+           command command is run.
 
         """
-        return tuple(self.pmin[i]+random.random()*self.l[i] for i in range(3))
+        return tuple(pmini+random.random()*li
+                     for pmini, li in zip(self.pmin, self.l))
 
     def index2point(self, index):
-        """Convert the cell index to its centre point coordinate.
+        """Convert the cell index to its coordinate.
 
-        The finite difference domain is disretised in x, y, and z directions
-        in dx, dy, and dz steps, respectively. Consequently, there are
-        nx, ny, and nz discretisation steps. This method converts the cell
-        index (ix, iy, iz) to the cell's centre point coordinate.
+        Parameters
+        ----------
+        index : (3,) array_like
+            The discretisation cell index :math:`(i_{x}, i_{y}, i_{z})`.
 
-        This method raises ValueError if the index is out of range.
+        Returns
+        -------
+            The discretisation cell centre point :math:`(p_{x}, p_{y}, p_{z})`.
 
-        Args:
-          i (tuple): A length 3 tuple of integers (ix, iy, iz)
+        Raises
+        ------
+            ValueError
+                If the discretisation cell index is out of range.
 
-        Returns:
-          A length 3 tuple of x, y, and z coodinates
+        Example
+        -------
+        Converting cell index to its coordinate.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.index2point((0, 1, 0))
+        (0.5, 1.5, 0.5)
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
         """
         # Does index refer to a cell outside the mesh?
@@ -413,38 +457,39 @@ class Mesh:
                        "[0, n[{}]].").format(i, index[i], self.n[i])
                 raise ValueError(msg)
 
-        return tuple(self.pmin[i]+(index[i]+0.5)*self.cell[i]
-                     for i in range(3))
+        return tuple(pmini+(indexi+0.5)*celli for pmini, indexi, celli
+                     in zip(self.pmin, index, self.cell))
 
     def point2index(self, p):
-        """Compute the index of a cell containing point `p`.
+        """Convert the mesh coordinate to the index of a cell which contains it.
 
         Parameters
         ----------
         p : (3,) array_like
-            Point `p` = (`px`, `py`, `pz`) in the mesh domain.
+            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------
-        tuple (3,)
-            Mesh cell indices (`ix`, `iy`, `iz`).
-        
+            The discretisation cell index :math:`(i_{x}, i_{y}, i_{z})`.
+
         Raises
         ------
-        ValueError
-            If the point `p` is outside the mesh.
+            ValueError
+                If `point` is outside the mesh domain.
 
         Example
         -------
-        Getting mesh representation string.
+        Converting point coordinate to the cell index.
 
         >>> import discretisedfield as df
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.point2index((0.5, 0.1, 0))  # doctest: +ELLIPSIS
-        (...)
+        >>> mesh.point2index((0.2, 1.7, 0.3))
+        (0, 1, 0)
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
         """
         # Is the point outside the mesh?
@@ -453,11 +498,12 @@ class Mesh:
                 msg = "Point p[{}]={} outside the mesh.".format(i, p[i])
                 raise ValueError(msg)
 
-        index = tuple(int(round((p[i]-self.pmin[i])/self.cell[i] - 0.5))
-                      for i in range(3))
+        index = tuple(int(round((pi-pmini)/celli - 0.5))
+                      for pi, pmini, celli in zip(p, self.pmin, self.cell))
 
         # If rounded to the out-of-range values
-        return tuple(max(min(self.n[i]-1, index[i]), 0) for i in range(3))
+        return tuple(max(min(ni-1, indexi), 0)
+                     for ni, indexi in zip(self.n, index))
 
     def plot(self):
         """Creates a figure of a mesh domain and discretisation cell."""
