@@ -352,7 +352,7 @@ class TestField:
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
-        fig = f.plot_line_intersection(l=(1, 0, 0), l0=(0, 0, 0), n=10)
+        fig = f.plot_line_intersection((1, 0, 0), (0, 0, 0), n=10)
 
     def test_plot_slice_scalar_field(self):
         figname = "test_slice_plot_figure.pdf"

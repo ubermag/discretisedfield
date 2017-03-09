@@ -541,16 +541,17 @@ class Mesh:
             if p[i] < self.pmin[i] or p[i] > self.pmax[i]:
                 msg = "Point p[{}]={} outside the mesh.".format(i, p[i])
                 raise ValueError(msg)
-        
+
     def line(self, p1, p2, n=100):
         """Line intersection generator.
 
-        Given two points :math:`p_{1}` and :math:`p_{2}`, `n` position
-        vectors are generated
+        Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n`
+        position vectors are generated.
 
         .. math::
 
-           \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} - \\mathbf{p}_{1}}{n-1}
+           \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} -
+           \\mathbf{p}_{1}}{n-1}
 
         and this method yields :math:`|\\mathbf{r}_{i}|` and
         :math:`\\mathbf{r}_{i}` in :math:`n` iterations.
@@ -579,8 +580,8 @@ class Mesh:
         >>> p2 = (2, 2, 2)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> tuple(mesh.line(p1=(0, 0, 0), p2=(2, 0, 0), n=3))
-        ((0.0, (0.0, 0.0, 0.0)), (1.0, (1.0, 0.0, 0.0)), (2.0, (2.0, 0.0, 0.0)))
+        >>> tuple(mesh.line(p1=(0, 0, 0), p2=(2, 0, 0), n=2))
+        ((0.0, (0.0, 0.0, 0.0)), (2.0, (2.0, 0.0, 0.0)))
 
         """
         self._isoutside(p1)

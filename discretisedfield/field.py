@@ -144,21 +144,19 @@ class Field:
 
         return ds, values
 
-    def plot_line_intersection(self, l, l0, n=100):
+    def plot_line_intersection(self, p1, p2, n=100):
         # Plot schematic representation of intersection.
         fig = plt.figure()
         ax = fig.add_subplot(211, projection="3d")
         ax.set_aspect("equal")
 
         dfu.plot_box(ax, self.mesh.pmin, self.mesh.pmax, "b-")
-        p1, p2 = dfu.box_line_intersection(
-            self.mesh.pmin, self.mesh.pmax, l, l0)
         dfu.plot_line(ax, p1, p2, "ro-")
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
         # Plot field along line
         ax = fig.add_subplot(212)
-        d, v = self.line_intersection(l, l0, n=n)
+        d, v = self.line_intersection(p1, p2, n=n)
         ax.set(xlabel=r"$d$", ylabel=r"$v$")
         ax.grid()
         ax.plot(d, v)
