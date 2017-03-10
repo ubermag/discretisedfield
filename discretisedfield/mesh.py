@@ -378,15 +378,6 @@ class Mesh:
         return ("Mesh(p1={}, p2={}, cell={}, "
                 "name=\"{}\")").format(self.p1, self.p2, self.cell, self.name)
 
-    def _ipython_display_(self):
-        """Jupyter notebook mesh representation.
-
-        Mesh domain and discretisation cell are plotted by the
-        :py:func:`~discretisedfield.Mesh.plot`.
-
-        """
-        return self.plot()  # pragma: no cover
-
     def random_point(self):
         """Generate the random point inside the mesh.
 
@@ -593,22 +584,33 @@ class Mesh:
             yield np.linalg.norm(i*dl), tuple(p1+i*dl)
 
     def plot(self):
-        """Creates a figure of a mesh domain and discretisation cell."""
+        """Plots the mesh domain and the discretisation cell.
+
+        This function is called as a display function in Jupyter
+        notebook.
+
+        """
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
         ax.set_aspect("equal")
 
-        # domain box
         dfu.plot_box(ax, self.pmin, self.pmax, "b-", linewidth=1.5)
-
-        # cell box
-        cell_point = tuple(self.pmin[i]+self.cell[i] for i in range(3))
+        cell_point = tuple(pmini+celli for pmini, celli
+                           in zip(self.pmin, self.cell))
         dfu.plot_box(ax, self.pmin, cell_point, "r-", linewidth=1)
-
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
         plt.close()
 
         return fig
+
+    def _ipython_display_(self):
+        """Jupyter notebook mesh representation.
+
+        Mesh domain and discretisation cell are plotted by the
+        :py:func:`~discretisedfield.Mesh.plot`.
+
+        """
+        return self.plot()  # pragma: no cover
 
     @property
     def _script(self):
