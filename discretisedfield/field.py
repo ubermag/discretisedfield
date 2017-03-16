@@ -1,3 +1,4 @@
+import pyvtk
 import struct
 import numpy as np
 import joommfutil.typesystem as ts
@@ -308,6 +309,19 @@ class Field:
 
         return plot_matrix
 
+    def tovtk(self, filename):
+        grid = [self.mesh.pmin[i] + np.linspace(0, self.mesh.l[i], self.mesh.n[i]+1) for i in range(3)]
+
+        structure = pyvtk.RectilinearGrid(*grid)
+        vtkdata = pyvtk.VtkData(structure)
+
+        vtkdata.cell_data.append(pyvtk.Vectors([self.__call__(i) for i in self.mesh.coordinates], "m"))
+        vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[0] for i in self.mesh.coordinates], "mx"))
+        vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[1] for i in self.mesh.coordinates], "my"))
+        vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[2] for i in self.mesh.coordinates], "mz"))
+        
+        vtkdata.tofile(filename)
+        
     def write_oommf_file(self, filename, datatype="text"):
         """Write the FD field to the OOMMF (omf, ohf) file.
         This method writes all necessary data to the omf or ohf file,
