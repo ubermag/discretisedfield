@@ -262,7 +262,8 @@ class Field:
             ysize = xsize*(self.mesh.l[coord_system[1]] /
                            self.mesh.l[coord_system[0]])
             fig = plt.figure(figsize=(xsize, ysize))
-            plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4], scale=1.5e8)
+            # plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4], scale=1.5e8)
+            plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
         elif self.dim == 1:
             ysize = xsize*(self.mesh.l[coord_system[1]] /
                            self.mesh.l[coord_system[0]])
@@ -319,9 +320,9 @@ class Field:
         vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[0] for i in self.mesh.coordinates], "mx"))
         vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[1] for i in self.mesh.coordinates], "my"))
         vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[2] for i in self.mesh.coordinates], "mz"))
-        
+
         vtkdata.tofile(filename)
-        
+
     def write_oommf_file(self, filename, datatype="text"):
         """Write the FD field to the OOMMF (omf, ohf) file.
         This method writes all necessary data to the omf or ohf file,
