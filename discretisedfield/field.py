@@ -98,7 +98,17 @@ class Field:
             if self.dim == 1:
                 msg = "Cannot normalise field with dim={}.".format(self.dim)
                 raise NotImplementedError(msg)
-            self.array /= np.linalg.norm(self.array, axis=self.dim)[..., None]
+
+            norm_tmp = np.linalg.norm(self.array, axis=self.dim)[..., None]
+
+            if np.any(norm_tmp.flat == 0.):
+                print("RuntimeWarning: At least one value of |m| is zero - "
+                      "is that intended?")
+
+            if np.all(norm_tmp.flat == 0.):
+                print("RuntimeError: All values of |m| are - this seems wrong.")
+
+            self.array /= norm_tmp
             self.array *= self._as_array(self._norm, dim=1)
 
     def _as_array(self, value, dim):
