@@ -1,3 +1,4 @@
+import pyvtk
 import struct
 import numpy as np
 import joommfutil.typesystem as ts
@@ -97,7 +98,17 @@ class Field:
             if self.dim == 1:
                 msg = "Cannot normalise field with dim={}.".format(self.dim)
                 raise NotImplementedError(msg)
-            self.array /= np.linalg.norm(self.array, axis=self.dim)[..., None]
+
+            norm_tmp = np.linalg.norm(self.array, axis=self.dim)[..., None]
+
+            if np.any(norm_tmp.flat == 0.):
+                print("RuntimeWarning: At least one value of |m| is zero - "
+                      "is that intended?")
+
+            if np.all(norm_tmp.flat == 0.):
+                print("RuntimeError: All values of |m| are - this seems wrong.")
+
+            self.array /= norm_tmp
             self.array *= self._as_array(self._norm, dim=1)
 
     def _as_array(self, value, dim):
@@ -261,7 +272,8 @@ class Field:
             ysize = xsize*(self.mesh.l[coord_system[1]] /
                            self.mesh.l[coord_system[0]])
             fig = plt.figure(figsize=(xsize, ysize))
-            plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4], scale=1.5e8)
+            # plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4], scale=1.5e8)
+            plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
         elif self.dim == 1:
             ysize = xsize*(self.mesh.l[coord_system[1]] /
                            self.mesh.l[coord_system[0]])
@@ -307,6 +319,19 @@ class Field:
                 counter += 1
 
         return plot_matrix
+
+    def tovtk(self, filename):
+        grid = [self.mesh.pmin[i] + np.linspace(0, self.mesh.l[i], self.mesh.n[i]+1) for i in range(3)]
+
+        structure = pyvtk.RectilinearGrid(*grid)
+        vtkdata = pyvtk.VtkData(structure)
+
+        vtkdata.cell_data.append(pyvtk.Vectors([self.__call__(i) for i in self.mesh.coordinates], "m"))
+        vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[0] for i in self.mesh.coordinates], "mx"))
+        vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[1] for i in self.mesh.coordinates], "my"))
+        vtkdata.cell_data.append(pyvtk.Scalars([self.__call__(i)[2] for i in self.mesh.coordinates], "mz"))
+
+        vtkdata.tofile(filename)
 
     def write_oommf_file(self, filename, datatype="text"):
         """Write the FD field to the OOMMF (omf, ohf) file.
