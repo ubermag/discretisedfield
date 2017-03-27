@@ -11,40 +11,40 @@ import matplotlib.pyplot as plt
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
 class Field:
+    """Finite Difference field
+
+    Parameters
+    ----------
+    mesh : discretisedfield.Mesh
+        Finite difference rectangular mesh on which the field is defined.
+    dim : int, optional
+        Dimension of the field value. For instance, if ``dim=3``
+        the field is three-dimensional vector field; and for
+        ``dim=1`` it is a scalar field.
+    value : 0, array_like, callable, optional
+        For more details, please refer to the `value` property.
+    norm : numbers.Real, callable, optional
+        For more details, please refer to the `norm` property.
+    name : str, optional, optional
+        Field name (the default is "field"). The field name must be a valid
+        Python variable name string. More specifically, it must not
+        contain spaces, or start with underscore or numeric character.
+
+    Examples
+    --------
+    1. Creating a uniform vector field on a nano-sized thin film
+
+    >>> import discretisedfield as df
+    >>> p1 = (-50e-9, -25e-9, 0)
+    >>> p2 = (50e-9, 25e-9, 5e-9)
+    >>> cell = (1e-9, 1e-9, 0.1e-9)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    >>> value = (0, 0, 1)
+    >>> name = "uniform_field"
+    >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
+
+    """
     def __init__(self, mesh, dim=3, value=0, norm=None, name="field"):
-        """Finite Difference field
-
-        Parameters
-        ----------
-        mesh : discretisedfield.Mesh
-            Finite difference rectangular mesh on which the field is defined.
-        dim : int, optional
-            Dimension of the field value. For instance, if ``dim=3``
-            the field is three-dimensional vector field; and for
-            ``dim=1`` it is a scalar field.
-        value : 0, array_like, callable, optional
-            For more details, please refer to the `value` property.
-        norm : numbers.Real, callable, optional
-            For more details, please refer to the `norm` property.
-        name : str, optional, optional
-            Field name (the default is "field"). The field name must be a valid
-            Python variable name string. More specifically, it must not
-            contain spaces, or start with underscore or numeric character.
-
-        Examples
-        --------
-        1. Creating a uniform vector field on a nano-sized thin film
-
-        >>> import discretisedfield as df
-        >>> p1 = (-50e-9, -25e-9, 0)
-        >>> p2 = (50e-9, 25e-9, 5e-9)
-        >>> cell = (1e-9, 1e-9, 0.1e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> value = (0, 0, 1)
-        >>> name = "uniform_field"
-        >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
-
-        """
         self.mesh = mesh
         self.dim = dim
         self.value = value
