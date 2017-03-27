@@ -27,9 +27,10 @@ test-docker:
 	docker stop testcontainer
 	docker rm testcontainer
 
-pypitest-upload:
-	python3 setup.py register -r pypitest
-	python3 setup.py sdist upload -r pypitest
+build-dists:
+	rm -rf dist/
+	python3 setup.py sdist
+	python3 setup.py bdist_wheel
 
-pypi-upload: pypitest-upload
-	python3 setup.py sdist upload -r pypi
+release: build-dists
+	twine upload dist/*
