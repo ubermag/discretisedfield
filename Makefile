@@ -1,17 +1,18 @@
 PROJECT=discretisedfield
 IPYNBPATH=docs/ipynb/*.ipynb
 CODECOVTOKEN=a96f2545-67ea-442e-a1b6-fdebc595cf52
+PYTHON?=python3
 
 test: test-coverage test-ipynb
 
 test-all:
-	python3 -m pytest
+	$(PYTHON) -m pytest
 
 test-ipynb:
-	python3 -m pytest --nbval $(IPYNBPATH)
+	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
 
 test-coverage:
-	python3 -m pytest --cov=$(PROJECT) --cov-config .coveragerc
+	$(PYTHON) -m pytest --cov=$(PROJECT) --cov-config .coveragerc
 
 upload-coverage: SHELL:=/bin/bash
 upload-coverage:
@@ -22,15 +23,15 @@ travis-build: test-coverage upload-coverage
 test-docker:
 	docker build -t dockertestimage .
 	docker run --privileged -ti -d --name testcontainer dockertestimage
-	docker exec testcontainer python3 -m pytest
-	docker exec testcontainer python3 -m pytest --nbval $(IPYNBPATH)
+	docker exec testcontainer $(PYTHON) -m pytest
+	docker exec testcontainer $(PYTHON) -m pytest --nbval $(IPYNBPATH)
 	docker stop testcontainer
 	docker rm testcontainer
 
 build-dists:
 	rm -rf dist/
-	python3 setup.py sdist
-	python3 setup.py bdist_wheel
+	$(PYTHON) setup.py sdist
+	$(PYTHON) setup.py bdist_wheel
 
 release: build-dists
 	twine upload dist/*

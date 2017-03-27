@@ -13,6 +13,10 @@ import matplotlib.pyplot as plt
 class Field:
     """Finite Difference field
 
+    This class defines a finite difference field and provides some
+    basic opertaions. The field is defined on a finite difference mesh
+    (`discretisedfield.Mesh`).
+
     Parameters
     ----------
     mesh : discretisedfield.Mesh
@@ -32,7 +36,7 @@ class Field:
 
     Examples
     --------
-    1. Creating a uniform vector field on a nano-sized thin film
+    Creating a uniform vector field on a nano-sized thin film
 
     >>> import discretisedfield as df
     >>> p1 = (-50e-9, -25e-9, 0)
@@ -42,6 +46,8 @@ class Field:
     >>> value = (0, 0, 1)
     >>> name = "uniform_field"
     >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
+
+    .. seealso:: :py:func:`~discretisedfield.Mesh`
 
     """
     def __init__(self, mesh, dim=3, value=0, norm=None, name="field"):
@@ -53,7 +59,7 @@ class Field:
 
     @property
     def value(self):
-        """Value representation if it exists or numpy.ndarray if not."""
+        """Finite difference field value. Value representation if it exists or numpy.ndarray if not."""
         if np.all(self.array == self._as_array(self._value, self.dim)):
             return self._value
         else:
@@ -181,7 +187,7 @@ class Field:
         dfu.plot_line(ax, p1, p2, "ro-")
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
-        # Plot field along line
+        # Plot field along line.
         ax = fig.add_subplot(212)
         d, v = self.line_intersection(p1, p2, n=n)
         ax.set(xlabel=r"$d$", ylabel=r"$v$")
@@ -288,7 +294,6 @@ class Field:
             ysize = xsize*(self.mesh.l[coord_system[1]] /
                            self.mesh.l[coord_system[0]])
             fig = plt.figure(figsize=(xsize, ysize))
-            # plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4], scale=1.5e8)
             plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
         elif self.dim == 1:
             ysize = xsize*(self.mesh.l[coord_system[1]] /
