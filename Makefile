@@ -3,22 +3,25 @@ IPYNBPATH=docs/ipynb/*.ipynb
 CODECOVTOKEN=a96f2545-67ea-442e-a1b6-fdebc595cf52
 PYTHON?=python3
 
-test: test-coverage test-ipynb
-
-test-all:
+test:
 	$(PYTHON) -m pytest
+
+test-coverage:
+	$(PYTHON) -m pytest --cov=$(PROJECT) --cov-config .coveragerc
 
 test-ipynb:
 	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
 
-test-coverage:
-	$(PYTHON) -m pytest --cov=$(PROJECT) --cov-config .coveragerc
+test-docs:
+	$(PYTHON) -m pytest --doctest-modules --ignore=$(PROJECT)/tests $(PROJECT)
+
+test-all: test-coverage test-ipynb test-docs
 
 upload-coverage: SHELL:=/bin/bash
 upload-coverage:
 	bash <(curl -s https://codecov.io/bash) -t $(CODECOVTOKEN)
 
-travis-build: test-coverage upload-coverage
+travis-build: test-all upload-coverage
 
 test-docker:
 	docker build -t dockertestimage .
