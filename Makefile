@@ -26,8 +26,7 @@ travis-build: test-all upload-coverage
 test-docker:
 	docker build -t dockertestimage .
 	docker run --privileged -ti -d --name testcontainer dockertestimage
-	docker exec testcontainer $(PYTHON) -m pytest
-	docker exec testcontainer $(PYTHON) -m pytest --nbval $(IPYNBPATH)
+	docker exec testcontainer make test-all
 	docker stop testcontainer
 	docker rm testcontainer
 
