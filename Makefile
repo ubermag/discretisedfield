@@ -21,7 +21,14 @@ upload-coverage: SHELL:=/bin/bash
 upload-coverage:
 	bash <(curl -s https://codecov.io/bash) -t $(CODECOVTOKEN)
 
-travis-build: test-all upload-coverage
+travis-build:
+	ci_env=`bash <(curl -s https://codecov.io/env)`
+	docker build -t dockertestimage .
+	docker run -e ci_env -ti -d --name testcontainer dockertestimage
+	docker exec testcontainer make test-all
+	docker exec testcontainer make upload-coverage
+	docker stop testcontainer
+	docker rm testcontainer
 
 test-docker:
 	docker build -t dockertestimage .
