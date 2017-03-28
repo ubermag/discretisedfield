@@ -59,7 +59,73 @@ class Field:
 
     @property
     def value(self):
-        """Finite difference field value. Value representation if it exists or numpy.ndarray if not."""
+        """Finite difference field value representation property.
+
+        The getter of this propertry returns a field value
+        representation if exists. Otherwise, it returns the
+        numpy.ndarray.
+
+        Parameters
+        ----------
+        value : numbers.Real, array_like, callable
+            If the parameter for the setter of this property is 0, all
+            values in the field will be set to zero (for vector fields
+            ``dim > 1``, all componenets of the vector will be
+            0). Input parameter can also be ``numbers.Real`` for
+            scalar fields (``dim=1``). In the case of vector fields,
+            ``numbers.Real`` is not allowed unless ``value=0``, but an
+            array_like data with length equal to the ``dim`` should be
+            used. Finally, the value can also be a callable
+            (e.g. Python function), which for every coordinate in the
+            mesh returns an appropriate value.
+
+        Returns
+        -------
+        array_like, callable, numbers.Real
+            The returned value in the case of vector field can be
+            array_like (tuple, list, numpy.ndarray). In the case of
+            scalar field, the returned value can be numbers.Real. If
+            all components of a vector field are zero, 0 will be
+            returned.
+
+        Examples
+        --------
+        Different ways of setting and getting property `value`.
+
+        >>> import discretisedfield as df
+        >>> p1 = (-50e-9, -25e-9, 0)
+        >>> p2 = (50e-9, 25e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> value = (0, 0, 1)
+        >>> name = "uniform_field"
+        >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
+        >>> # Value getter
+        >>> field.value
+        (0, 0, 1)
+        >>> field.value = 0
+        >>> field.value
+        0
+        >>> def value_function(pos):
+        ...     x, y, z = pos
+        ...     if x <= 0:
+        ...         return (0, 0, 1)
+        ...     else:
+        ...         return (0, 0, -1)
+        >>> field.value = value_function
+        >>> field((10e-9, 0, 0))
+        (0.0, 0.0, -1.0)
+        >>> field((-10e-9, 0, 0))
+        (0.0, 0.0, 1.0)
+
+        .. note::
+
+           Please note this method is a property and should be called
+           as ``field.value``, not ``field.value()``.
+
+        .. seealso:: :py:func:`~discretisedfield.Field.array`
+
+        """
         if np.all(self.array == self._as_array(self._value, self.dim)):
             return self._value
         else:
@@ -67,13 +133,6 @@ class Field:
 
     @value.setter
     def value(self, value):
-        """Set the field value.
-
-        Args:
-          value: This argument can be int, float, tuple, list,
-            numpy.ndarray, or Python function.
-
-        """
         self._value = value
         self.array = self._as_array(value, self.dim)
 
@@ -165,7 +224,11 @@ class Field:
           Field value in cell containing point p
 
         """
-        return self.array[self.mesh.point2index(p)]
+        sampled_value = self.array[self.mesh.point2index(p)]
+        if len(sampled_value) == 1:
+            return sampled_value
+        else:
+            return tuple(sampled_value)
 
     def line_intersection(self, p1, p2, n=100):
         """Slice field along the line defined with l and l0."""

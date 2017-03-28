@@ -303,7 +303,7 @@ class Mesh:
            Please note this method is a property and should be called
            as ``mesh.indices``, not ``mesh.indices()``.
 
-        .. seealso:: :py:func:`~discretisedfield.Mesh.coordintes`
+        .. seealso:: :py:func:`~discretisedfield.Mesh.coordinates`
 
         """
         for k in range(self.n[2]):
@@ -480,7 +480,7 @@ class Mesh:
         >>> mesh.point2index((0.2, 1.7, 0.3))
         (0, 1, 0)
 
-        .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
+        .. seealso:: :py:func:`~discretisedfield.Mesh.index2point`
 
         """
         self._isoutside(p)
