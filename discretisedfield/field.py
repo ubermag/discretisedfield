@@ -138,7 +138,27 @@ class Field:
 
     @property
     def array(self):
-        """Field value numpy array representation."""
+        """Field value as a numpy array.
+
+        Returns
+        -------
+        numpy.ndarray
+            Field values array.
+
+        Parameters
+        ----------
+        numpy.ndarray
+            The dimensions must be ``(field.mesh.n[0],
+            field.mesh.n[1], field.mesh.n[2], dim)``
+
+        .. note::
+
+           Please note this method is a property and should be called
+           as ``field.array``, not ``field.array()``.
+
+        .. seealso:: :py:func:`~discretisedfield.Field.value`
+
+        """
         if not hasattr(self, "_array"):
             self._array = np.zeros(self.mesh.n + (self.dim,))
         return self._array
