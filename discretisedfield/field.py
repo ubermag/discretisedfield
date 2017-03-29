@@ -151,6 +151,22 @@ class Field:
             The dimensions must be ``(field.mesh.n[0],
             field.mesh.n[1], field.mesh.n[2], dim)``
 
+        Examples
+        --------
+        Different ways of setting and getting property `value`.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (1, 1, 1)
+        >>> cell = (0.5, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> value = (0, 0, 1)
+        >>> name = "uniform_field"
+        >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
+        >>> # array getter
+        >>> field.array.shape
+        (2, 1, 1, 3)
+
         .. note::
 
            Please note this method is a property and should be called
@@ -201,10 +217,6 @@ class Field:
                 raise NotImplementedError(msg)
 
             norm_tmp = np.linalg.norm(self.array, axis=self.dim)[..., None]
-
-            if np.any(norm_tmp.flat == 0.):
-                print("RuntimeWarning: At least one value of |m| is zero - "
-                      "is that intended?")
 
             if np.all(norm_tmp.flat == 0.):
                 print("RuntimeError: All values of |m| are - this seems wrong.")
