@@ -17,14 +17,14 @@ class Mesh:
     `p2`. They are defined as ``array_like`` objects of length 3
     (e.g. ``tuple``, ``list``, ``numpy.ndarray``), :math:`p = (p_{x},
     p_{y}, p_{z})`. The domain is then discretised into finite
-    difference cells, where dimensions of a single cell is defined
+    difference cells, where dimensions of a single cell are defined
     with a `cell` parameter. Similar to `p1` and `p2`, `cell`
     parameter is an ``array_like`` object :math:`(d_{x}, d_{y},
     d_{z})` of length 3. The parameter `name` is optional and defaults
     to "mesh".
 
     In order to properly define a mesh, the length of all mesh domain
-    edges must not be zero, and the mesh domain must be an aggregate
+    edges must be positive, and the mesh domain must be an aggregate
     of discretisation cells.
 
     Parameters
@@ -47,7 +47,7 @@ class Mesh:
 
     Examples
     --------
-    1. Creating a nano-sized thin film mesh object
+    1. Creating a nano-sized thin film mesh
 
     >>> import discretisedfield as df
     >>> p1 = (-50e-9, -25e-9, 0)
@@ -64,7 +64,7 @@ class Mesh:
     >>> import discretisedfield as df
     >>> p1 = (-25, 3, 0)
     >>> p2 = (25, 6, 1)
-    >>> cell = (5, 1, 0.3)
+    >>> cell = (5, 3, 0.3)
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
     Traceback (most recent call last):
         ...
@@ -78,33 +78,33 @@ class Mesh:
         self.name = name
 
         # Is the length of any mesh domain edge zero?
-        for i in range(3):
-            if self.l[i] == 0:
+        for i, li in enumerate(self.l):
+            if li == 0:
                 msg = "Mesh domain edge length is zero (l[{}]==0).".format(i)
                 raise ValueError(msg)
 
         # Is the discretisation cell greater than the mesh domain?
-        for i in range(3):
-            if self.cell[i] > self.l[i]:
+        for i, (li, celli) in enumerate(zip(self.l, self.cell)):
+            if celli > li:
                 msg = ("Discretisation cell is greater than the mesh domain: "
                        "cell[{0}] > abs(p2[{0}]-p1[{0}]).").format(i)
                 raise ValueError(msg)
 
         # Is the mesh domain not an aggregate of discretisation cells?
-        tol = 1e-12  # picometer tolerance
-        for i in range(3):
-            if tol < self.l[i] % self.cell[i] < self.cell[i] - tol:
+        tol = 1e-12  # picometre tolerance
+        for i, (li, celli) in enumerate(zip(self.l, self.cell)):
+            if tol < li % celli < celli - tol:
                 msg = ("Mesh domain is not an aggregate of the discretisation "
                        "cell: abs(p2[{0}]-p1[{0}]) % cell[{0}].").format(i)
                 raise ValueError(msg)
 
     @property
     def pmin(self):
-        """Point contained in the mesh domain with minimum coordinates.
+        """Mesh point with minimum coordinates.
 
-        The :math:`i`-th component of :math:`p_\\text{min}` is computed
-        from the points :math:`p_{1}` and :math:`p_{2}` between which
-        the mesh domain spans: :math:`p_\\text{min}^{i} =
+        The :math:`i`-th component of :math:`p_\\text{min}` is
+        computed from points :math:`p_{1}` and :math:`p_{2}` between
+        which the mesh domain spans: :math:`p_\\text{min}^{i} =
         \\text{min}(p_{1}^{i}, p_{2}^{i})`.
 
         Returns
@@ -115,15 +115,15 @@ class Mesh:
 
         Example
         -------
-        Getting the minimum domain coordinate as the mesh object property.
+        Getting the minimum mesh point.
 
         >>> import discretisedfield as df
         >>> p1 = (-1.1, 2.9, 0)
-        >>> p2 = (5, 0, 0.01)
+        >>> p2 = (5, 0, -0.1)
         >>> cell = (0.1, 0.1, 0.005)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.pmin
-        (-1.1, 0, 0)
+        (-1.1, 0, -0.1)
 
         .. note::
 
@@ -137,11 +137,11 @@ class Mesh:
 
     @property
     def pmax(self):
-        """Point contained in the mesh domain with maximum coordinates.
+        """Mesh point with maximum coordinates.
 
-        The :math:`i`-th component of :math:`p_\\text{max}` is computed
-        from the points :math:`p_{1}` and :math:`p_{2}` between which
-        the mesh domain spans: :math:`p_\\text{min}^{i} =
+        The :math:`i`-th component of :math:`p_\\text{max}` is
+        computed from points :math:`p_{1}` and :math:`p_{2}` between
+        which the mesh domain spans: :math:`p_\\text{min}^{i} =
         \\text{max}(p_{1}^{i}, p_{2}^{i})`.
 
         Returns
@@ -152,20 +152,20 @@ class Mesh:
 
         Example
         -------
-        Getting the maximum domain coordinate as the mesh object property.
+        Getting the maximum mesh point.
 
         >>> import discretisedfield as df
         >>> p1 = (-1.1, 2.9, 0)
-        >>> p2 = (5, 0, 0.01)
+        >>> p2 = (5, 0, -0.1)
         >>> cell = (0.1, 0.1, 0.005)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.pmax
-        (5, 2.9, 0.01)
+        (5, 2.9, 0)
 
         .. note::
 
            Please note this method is a property and should be called
-           as ``mesh.pmin``, not ``mesh.pmax()``.
+           as ``mesh.pmin``, not ``mesh.pmin()``.
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmax`
 
