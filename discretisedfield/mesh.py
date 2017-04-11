@@ -165,9 +165,9 @@ class Mesh:
         .. note::
 
            Please note this method is a property and should be called
-           as ``mesh.pmin``, not ``mesh.pmin()``.
+           as ``mesh.pmax``, not ``mesh.pmax()``.
 
-        .. seealso:: :py:func:`~discretisedfield.Mesh.pmax`
+        .. seealso:: :py:func:`~discretisedfield.Mesh.pmin`
 
         """
         return tuple(max(coords) for coords in zip(self.p1, self.p2))
@@ -221,7 +221,8 @@ class Mesh:
 
         Example
         -------
-        Getting the number of discretisation cells in all three direction.
+        Getting the number of discretisation cells in all three
+        directions.
 
         >>> import discretisedfield as df
         >>> p1 = (0, 5, 0)
@@ -254,7 +255,8 @@ class Mesh:
         Returns
         -------
         tuple (3,)
-            Mesh domain centre point :math:`(c_{x}, c_{y}, c_{z})`.
+            Mesh domain centre point :math:`(p_{c}^{x}, p_{c}^{y},
+            p_{c}^{z})`.
 
         Example
         -------
@@ -262,11 +264,11 @@ class Mesh:
 
         >>> import discretisedfield as df
         >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 15, 18)
+        >>> p2 = (5, 15, 20)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.centre
-        (2.5, 7.5, 9.0)
+        (2.5, 7.5, 10.0)
 
         .. note::
 
