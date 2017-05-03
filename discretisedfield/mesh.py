@@ -326,7 +326,6 @@ class Mesh:
         tuple (3,)
             Mesh cell coordinates (`px`, `py`, `pz`).
 
-
         Example
         -------
         Getting all mesh cell coordinates.
@@ -361,7 +360,6 @@ class Mesh:
         -------
         str
            Mesh representation string.
-
 
         Example
         -------
@@ -444,17 +442,16 @@ class Mesh:
 
         """
         # Does index refer to a cell outside the mesh?
-        for i in range(3):
-            if index[i] < 0 or index[i] > self.n[i] - 1:
+        for i, (indexi, ni) in enumerate(zip(index, self.n)):
+            if indexi > ni - 1 or indexi < 0:
                 msg = ("index[{}]={} out of range "
-                       "[0, n[{}]].").format(i, index[i], self.n[i])
+                       "[0, n[{}]].").format(i, indexi, ni)
                 raise ValueError(msg)
-
         return tuple(pmini+(indexi+0.5)*celli for pmini, indexi, celli
                      in zip(self.pmin, index, self.cell))
 
     def point2index(self, p):
-        """Convert the mesh coordinate to the index of a cell which contains it.
+        """Convert the mesh coordinate to the cell index which contains it.
 
         Parameters
         ----------
@@ -530,9 +527,9 @@ class Mesh:
         ValueError: ...
 
         """
-        for i in range(3):
-            if p[i] < self.pmin[i] or p[i] > self.pmax[i]:
-                msg = "Point p[{}]={} outside the mesh.".format(i, p[i])
+        for i, (pi, pmini, pmaxi) in enumerate(zip(p, self.pmin, self.pmax)):
+            if pi < pmini or pi > pmaxi:
+                msg = "Point p[{}]={} outside the mesh.".format(i, pi)
                 raise ValueError(msg)
 
     def line(self, p1, p2, n=100):
