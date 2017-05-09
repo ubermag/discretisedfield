@@ -86,8 +86,8 @@ class TestField:
 
         assert f.name == name
 
-        assert np.all(f.array[:, :, :, 0] == value[0])
-        assert np.all(f.array[:, :, :, 1] == value[1])
+        assert np.all(f.array[..., 0] == value[0])
+        assert np.all(f.array[..., 1] == value[1])
 
     def test_wrong_init(self):
         mesh = "wrong_mesh_string"
