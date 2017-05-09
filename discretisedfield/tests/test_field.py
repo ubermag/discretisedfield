@@ -126,10 +126,10 @@ class TestField:
                 f.value = value
                 f.norm = 1
 
-                norm = (value[0]**2 + value[1]**2 + value[2]**2)**0.5
+                norm = np.linalg.norm(value)
                 for j in range(3):
                     c = f.mesh.random_point()
-                    assert np.all(f.array[:, :, :, j] == value[j]/norm)
+                    assert np.all(f.array[..., j] == value[j]/norm)
                     assert np.all(f(c)[j] == value[j]/norm)
 
     def test_norm_is_not_preserved(self):
