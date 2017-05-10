@@ -1,3 +1,2 @@
 from .abstractfield import Field
-from .util import plot_box
-from .util import plot_line
+from .util import as_array, plot_box, plot_line
