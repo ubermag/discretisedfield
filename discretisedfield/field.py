@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 @ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
-class Field:
+class Field(dfu.Field):
     """Finite Difference field
 
     This class defines a finite difference field and provides some
@@ -398,7 +398,7 @@ class Field:
                       self.mesh.pmax[coord_system[0]],
                       self.mesh.pmin[coord_system[1]],
                       self.mesh.pmax[coord_system[1]]]
-            plt.imshow(field_slice[:, :, 0], extent=extent)
+            plt.imshow(field_slice[..., 0], extent=extent)
         else:
             raise TypeError(("Cannot plot slice of field with "
                              "dim={}".format(self.dim)))
