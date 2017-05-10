@@ -135,11 +135,11 @@ class TestField:
         for f in self.vector_fs:
             f.value = (0, 3, 0)
             f.norm = 1
-            assert np.all(f.norm_array == 1)
+            assert np.all(f.norm.array == 1)
 
             f.value = (0, 2, 0)
-            assert np.all(f.norm_array != 1)
-            assert np.all(f.norm_array == 2)
+            assert np.all(f.norm.array != 1)
+            assert np.all(f.norm.array == 2)
         
     def test_set_with_ndarray(self):
         for f in self.vector_fs:
@@ -198,16 +198,16 @@ class TestField:
             assert abs(average[1] - value[1]) < tol
             assert abs(average[2] - value[2]) < tol
 
-    def test_norm_array(self):
+    def test_norm_value(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         f.norm = 1
-        assert isinstance(f.norm_array, np.ndarray)
-        assert np.all(f.norm_array == 1)
+        assert isinstance(f.norm.value, int)
+        assert np.all(f.norm.value == 1)
 
         f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.norm_array, np.ndarray)
+        assert isinstance(f.norm.value, np.ndarray)
 
     def test_norm(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))

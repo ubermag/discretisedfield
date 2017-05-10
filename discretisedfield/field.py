@@ -183,10 +183,11 @@ class Field(dfu.Field):
 
     @property
     def norm(self):
-        if np.array_equiv(self.norm_array, self._norm.array):
+        current_norm = np.linalg.norm(self.array, axis=self.dim)[..., None]
+        if np.array_equiv(current_norm, self._norm.array):
             return self._norm
         else:
-            return Field(self.mesh, dim=1, value=self.norm_array[..., None], name="norm")
+            return Field(self.mesh, dim=1, value=current_norm, name="norm")
 
     @norm.setter
     def norm(self, val):
@@ -205,13 +206,8 @@ class Field(dfu.Field):
             self._norm = val
 
     def _normalise(self):
-        self.array /= self.norm_array[..., None]
+        self.array /= np.linalg.norm(self.array, axis=self.dim)[..., None]
         self.array *= self._norm.array
-
-    @property
-    def norm_array(self):
-        """Always returns a numpy array."""
-        return np.linalg.norm(self.array, axis=self.dim)
 
     @property
     def average(self):
