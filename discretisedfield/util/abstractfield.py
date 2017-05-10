@@ -20,3 +20,7 @@ class Field(metaclass=abc.ABCMeta):
     @norm.setter
     @abc.abstractmethod
     def norm(self, val): pass  # pragma: no cover
+
+    @property
+    @abc.abstractmethod
+    def average(self): pass  # pragma: no cover
