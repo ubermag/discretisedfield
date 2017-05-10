@@ -12,3 +12,11 @@ class Field(metaclass=abc.ABCMeta):
     @value.setter
     @abc.abstractmethod
     def value(self, val): pass  # pragma: no cover
+
+    @property
+    @abc.abstractmethod
+    def norm(self): pass  # pragma: no cover
+
+    @norm.setter
+    @abc.abstractmethod
+    def norm(self, val): pass  # pragma: no cover
