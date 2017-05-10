@@ -24,3 +24,6 @@ class Field(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def average(self): pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def __repr__(self): pass  # pragma: no cover
