@@ -1,6 +1,6 @@
 import abc
 import matplotlib.pyplot as plt
-import util as dfu
+from .util import plot_line, plot_box
 
 
 class Field(metaclass=abc.ABCMeta):
@@ -49,8 +49,8 @@ class Field(metaclass=abc.ABCMeta):
         ax = fig.add_subplot(211, projection="3d")
         ax.set_aspect("equal")
 
-        dfu.plot_box(ax, self.mesh.pmin, self.mesh.pmax, "b-")
-        dfu.plot_line(ax, p1, p2, "ro-")
+        plot_box(ax, self.mesh.pmin, self.mesh.pmax, "b-")
+        plot_line(ax, p1, p2, "ro-")
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
         # Plot field along line.
