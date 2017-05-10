@@ -242,36 +242,6 @@ class Field(dfu.Field):
         else:
             return tuple(field_value)
 
-    def line_intersection(self, p1, p2, n=100):
-        """Slice field along the line defined with l and l0."""
-        ds, points, values = [], [], []
-        for d, p in self.mesh.line(p1, p2, n=n):
-            ds.append(d)
-            points.append(p)
-            values.append(self.__call__(p))
-
-        return ds, values
-
-    def plot_line_intersection(self, p1, p2, n=100):
-        # Plot schematic representation of intersection.
-        fig = plt.figure()
-        ax = fig.add_subplot(211, projection="3d")
-        ax.set_aspect("equal")
-
-        dfu.plot_box(ax, self.mesh.pmin, self.mesh.pmax, "b-")
-        dfu.plot_line(ax, p1, p2, "ro-")
-        ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
-
-        # Plot field along line.
-        ax = fig.add_subplot(212)
-        d, v = self.line_intersection(p1, p2, n=n)
-        ax.set(xlabel=r"$d$", ylabel=r"$v$")
-        ax.grid()
-        ax.plot(d, v)
-        plt.close()
-
-        return fig
-
     def slice_field(self, axis, point):
         """Returns the field slice.
 
