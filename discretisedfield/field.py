@@ -178,8 +178,8 @@ class Field(dfu.Field):
         return self._array
 
     @array.setter
-    def array(self, array):
-        self._array = array
+    def array(self, val):
+        self._array = val
 
     @property
     def norm(self):
