@@ -126,7 +126,7 @@ class Field(dfu.Field):
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        if np.all(self.array == self._as_array(self._value, self.dim)):
+        if np.array_equal(self.array, self._as_array(self._value, self.dim)):
             return self._value
         else:
             return self.array
