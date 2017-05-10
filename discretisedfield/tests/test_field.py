@@ -136,11 +136,11 @@ class TestField:
         for f in self.vector_fs:
             f.value = (0, 3, 0)
             f.norm = 1
-            assert np.all(f.norm == 1)
+            assert np.all(f.norm_array == 1)
 
             f.value = (0, 2, 0)
-            assert np.all(f.norm != 1)
-            assert np.all(f.norm == 2)
+            assert np.all(f.norm_array != 1)
+            assert np.all(f.norm_array == 2)
         
     def test_set_with_ndarray(self):
         for f in self.vector_fs:
@@ -199,27 +199,27 @@ class TestField:
             assert abs(average[1] - value[1]) < tol
             assert abs(average[2] - value[2]) < tol
 
+    def test_norm_array(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=3, value=(2, 2, 2))
+
+        f.norm = 1
+        assert isinstance(f.norm_array, np.ndarray)
+        assert np.all(f.norm_array == 1)
+
+        f.array[0, 0, 0, 0] = 3
+        assert isinstance(f.norm_array, np.ndarray)
+
     def test_norm(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         f.norm = 1
-        assert isinstance(f.norm, np.ndarray)
-        assert np.all(f.norm == 1)
+        assert isinstance(f.norm, int)
+        assert f.norm == 1
 
         f.array[0, 0, 0, 0] = 3
         assert isinstance(f.norm, np.ndarray)
-
-    def test_norm_value(self):
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
-        f = df.Field(mesh, dim=3, value=(2, 2, 2))
-
-        f.norm = 1
-        assert isinstance(f.norm_value, int)
-        assert f.norm_value == 1
-
-        f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.norm_value, np.ndarray)
 
     def test_value(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
@@ -244,9 +244,7 @@ class TestField:
                         norm += f.array[:, :, :, j]**2
                     norm = np.sqrt(norm)
 
-                    assert norm.shape == (f.mesh.n[0],
-                                          f.mesh.n[1],
-                                          f.mesh.n[2])
+                    assert norm.shape == f.mesh.n
                     diff = norm - norm_value
 
                     assert np.all(abs(norm - norm_value) < 1e-12)

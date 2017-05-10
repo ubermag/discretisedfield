@@ -183,29 +183,20 @@ class Field(dfu.Field):
 
     @property
     def norm(self):
-        return np.linalg.norm(self.array, axis=self.dim)
-
-    @property
-    def norm_value(self):
-        if np.all(self.norm[..., None] == self._as_array(self._norm, dim=1)):
+        if np.array_equal(self.norm_array[..., None], self._as_array(self._norm, dim=1)):
             return self._norm
         else:
-            return self.norm
+            return self.norm_array
 
     @norm.setter
-    def norm(self, norm):
-        self._norm = norm
+    def norm(self, val):
+        self._norm = val
         self._normalise()
 
     @property
-    def average(self):
-        """Compute the finite difference field average.
-
-        Returns:
-          Finite difference field average.
-
-        """
-        return tuple(self.array.mean(axis=(0, 1, 2)))
+    def norm_array(self):
+        """Always returns a numpy array."""
+        return np.linalg.norm(self.array, axis=self.dim)
 
     def _normalise(self):
         """Normalise field to self.dim value."""
@@ -221,6 +212,16 @@ class Field(dfu.Field):
 
             self.array /= norm_tmp
             self.array *= self._as_array(self._norm, dim=1)
+
+    @property
+    def average(self):
+        """Compute the finite difference field average.
+
+        Returns:
+          Finite difference field average.
+
+        """
+        return tuple(self.array.mean(axis=(0, 1, 2)))
 
     def _as_array(self, value, dim):
         value_array = np.empty(self.mesh.n + (dim,))
