@@ -14,7 +14,7 @@ class Field(dfu.Field):
     """Finite Difference field
 
     This class defines a finite difference field and provides some
-    basic opertaions. The field is defined on a finite difference mesh
+    basic operations. The field is defined on a finite difference mesh
     (`discretisedfield.Mesh`).
 
     Parameters
@@ -132,9 +132,9 @@ class Field(dfu.Field):
             return self.array
 
     @value.setter
-    def value(self, value):
-        self._value = value
-        self.array = self._as_array(value, self.dim)
+    def value(self, val):
+        self._value = val
+        self.array = self._as_array(val, self.dim)
 
     @property
     def array(self):
