@@ -175,8 +175,6 @@ class Field(dfu.Field):
         .. seealso:: :py:func:`~discretisedfield.Field.value`
 
         """
-        if not hasattr(self, "_array"):
-            self._array = np.zeros(self.mesh.n + (self.dim,))
         return self._array
 
     @array.setter
