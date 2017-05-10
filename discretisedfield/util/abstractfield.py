@@ -27,3 +27,6 @@ class Field(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def __repr__(self): pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def __call__(self, point): pass  # pragma: no cover

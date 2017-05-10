@@ -226,8 +226,8 @@ class Field(dfu.Field):
                 "name=\"{}\")").format(repr(self.mesh), self.dim, self.name)
         return rstr
 
-    def __call__(self, p):
-        """Sample the field at point p.
+    def __call__(self, point):
+        """Sample the field at `point`.
 
         Args:
           p (tuple): point coordinate at which the field is sampled
@@ -236,11 +236,11 @@ class Field(dfu.Field):
           Field value in cell containing point p
 
         """
-        sampled_value = self.array[self.mesh.point2index(p)]
-        if len(sampled_value) == 1:
-            return sampled_value
+        field_value = self.array[self.mesh.point2index(point)]
+        if len(field_value) == 1:
+            return field_value
         else:
-            return tuple(sampled_value)
+            return tuple(field_value)
 
     def line_intersection(self, p1, p2, n=100):
         """Slice field along the line defined with l and l0."""
