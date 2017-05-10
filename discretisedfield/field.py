@@ -183,35 +183,35 @@ class Field(dfu.Field):
 
     @property
     def norm(self):
-        if np.array_equiv(self.norm_array, self._as_array(self._norm, dim=1)):
+        if np.array_equiv(self.norm_array, self._norm.array):
             return self._norm
         else:
-            return self.norm_array
+            return Field(self.mesh, dim=1, value=self.norm_array[..., None], name="norm")
 
     @norm.setter
     def norm(self, val):
-        self._norm = val
-        self._normalise()
+        if val is not None:
+            if self.dim == 1:
+                msg = "Cannot normalise field with dim={}.".format(self.dim)
+                raise ValueError(msg)
+
+            if not np.any(self.array):
+                msg = "All field values are zero. Cannot normalise zero field."
+                raise ValueError(msg)
+
+            self._norm = Field(mesh=self.mesh, dim=1, value=val, name="norm")
+            self._normalise()
+        else:
+            self._norm = val
+
+    def _normalise(self):
+        self.array /= self.norm_array[..., None]
+        self.array *= self._norm.array
 
     @property
     def norm_array(self):
         """Always returns a numpy array."""
         return np.linalg.norm(self.array, axis=self.dim)
-
-    def _normalise(self):
-        """Normalise field to self.dim value."""
-        if self._norm is not None:
-            if self.dim == 1:
-                msg = "Cannot normalise field with dim={}.".format(self.dim)
-                raise NotImplementedError(msg)
-
-            norm_tmp = np.linalg.norm(self.array, axis=self.dim)[..., None]
-
-            if np.all(norm_tmp.flat == 0.):
-                print("RuntimeError: All values of |m| are - this seems wrong.")
-
-            self.array /= norm_tmp
-            self.array *= self._as_array(self._norm, dim=1)
 
     @property
     def average(self):
@@ -230,7 +230,7 @@ class Field(dfu.Field):
                 value_array.fill(value)
         elif isinstance(value, (tuple, list, np.ndarray)) and len(value) == dim:
             value_array[..., :] = value
-        elif isinstance(value, np.ndarray) and value.shape == self.array.shape:
+        elif isinstance(value, np.ndarray) and value.shape == value_array.shape:
             value_array = value
         elif callable(value):
             for i in self.mesh.indices:

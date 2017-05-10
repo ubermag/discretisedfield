@@ -97,7 +97,6 @@ class TestField:
     def test_repr(self):
         for f in self.scalar_fs:
             rstr = repr(f)
-            print(rstr)
             assert isinstance(rstr, str)
             assert "dim=1" in rstr
             assert "mesh=" in rstr
@@ -215,11 +214,11 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         f.norm = 1
-        assert isinstance(f.norm, int)
-        assert f.norm == 1
+        assert isinstance(f.norm.value, int)
+        assert f.norm.value == 1
 
         f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.norm, np.ndarray)
+        assert isinstance(f.norm.value, np.ndarray)
 
     def test_value(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
@@ -253,7 +252,7 @@ class TestField:
         for f in self.scalar_fs:
             for value in self.scalar_pyfuncs:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
-                    with pytest.raises(NotImplementedError):
+                    with pytest.raises(ValueError):
                         f.norm = norm_value
                         f.value = value
 
@@ -364,8 +363,8 @@ class TestField:
         figname = "test_slice_plot_figure.pdf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
-            f.norm = 1
             f.value = value
+            f.norm = 1
             point = f.mesh.centre["xyz".find("y")]
             fig = f.plot_slice("y", point, axes=True)
             fig = f.plot_slice("y", point, axes=False)
@@ -381,8 +380,8 @@ class TestField:
     def test_plot_slice_vector_field_exception(self):
         value = (0, 0, 1)
         for f in self.vector_fs:
-            f.norm = 1
             f.value = value
+            f.norm = 1
             point = f.mesh.centre["xyz".find("z")]
             with pytest.raises(ValueError):
                 fig = f.plot_slice("z", point)
