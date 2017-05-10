@@ -1,5 +1,6 @@
 import pyvtk
 import struct
+import itertools
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df
@@ -517,43 +518,41 @@ def read_oommf_file(filename, norm=None, name="unnamed"):
 
 
 def read_oommf_file_text(filename, name="unnamed"):
-    """Read the OOMMF file and create an Field object.
+    """Read the OOMMF file and create a Field object.
+
     Args:
       filename (str): OOMMF file name
       name (str): name of the Field object
+
     Return:
       Field object.
+
     Example:
         .. code-block:: python
           from oommffield import read_oommf_file
           oommf_filename = "vector_field.omf"
           field = read_oommf_file(oommf_filename, name="magnetisation")
+
     """
-    # Open and read the file.
     f = open(filename, "r")
     lines = f.readlines()
     f.close()
 
-    # Load metadata.
-    dic = {"xmin": None, "ymin": None, "zmin": None,
-           "xmax": None, "ymax": None, "zmax": None,
-           "xstepsize": None, "ystepsize": None, "zstepsize": None,
-           "xbase": None, "ybase": None, "zbase": None,
-           "xnodes": None, "ynodes": None, "znodes": None,
-           "valuedim": None}
+    metadata = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
+                "xstepsize", "ystepsize", "zstepsize",
+                "xnodes", "ynodes", "znodes", "valuedim"]
 
-    for line in lines[0:50]:
-        for key in dic.keys():
-            if line.find(key) != -1:
-                dic[key] = float(line.split()[2])
+    dic = {}
+    for metadatum in metadata:
+        for line in lines:
+            if metadatum in line:
+                value = line.split()[-1]
+                dic[metadatum] = float(value)
 
-    pmin = (dic["xmin"], dic["ymin"], dic["zmin"])
-    pmax = (dic["xmax"], dic["ymax"], dic["zmax"])
-    d = (dic["xstepsize"], dic["ystepsize"], dic["zstepsize"])
-    cbase = (dic["xbase"], dic["ybase"], dic["zbase"])
-    n = (int(round(dic["xnodes"])),
-         int(round(dic["ynodes"])),
-         int(round(dic["znodes"])))
+    pmin = (dic[key] for key in ["xmin", "ymin", "zmin"])
+    pmax = (dic[key] for key in ["xmax", "ymax", "zmax"])
+    d = (dic[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
+    n = (int(round(dic[key])) for key in ["xnodes", "ynodes", "znodes"])
     dim = int(dic["valuedim"])
     mesh = df.Mesh(pmin, pmax, d, name=name)
     field = Field(mesh, dim, name=name)
