@@ -539,8 +539,7 @@ def read_oommf_file_text(filename, name="unnamed"):
     f.close()
 
     metadata = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
-                "xstepsize", "ystepsize", "zstepsize",
-                "xnodes", "ynodes", "znodes", "valuedim"]
+                "xstepsize", "ystepsize", "zstepsize", "valuedim"]
 
     dic = {}
     for metadatum in metadata:
@@ -549,28 +548,25 @@ def read_oommf_file_text(filename, name="unnamed"):
                 value = line.split()[-1]
                 dic[metadatum] = float(value)
 
-    pmin = (dic[key] for key in ["xmin", "ymin", "zmin"])
-    pmax = (dic[key] for key in ["xmax", "ymax", "zmax"])
-    d = (dic[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
-    n = (int(round(dic[key])) for key in ["xnodes", "ynodes", "znodes"])
+    p1 = (dic[key] for key in ["xmin", "ymin", "zmin"])
+    p2 = (dic[key] for key in ["xmax", "ymax", "zmax"])
+    cell = (dic[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
     dim = int(dic["valuedim"])
-    mesh = df.Mesh(pmin, pmax, d, name=name)
-    field = Field(mesh, dim, name=name)
 
-    for j in range(len(lines)):
-        if lines[j].find("Begin: Data Text") != -1:
-            data_first_line = j+1
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+    field = Field(mesh, dim=dim, name=name)
 
-    counter = 0
-    for i in mesh.indices:
-        line_data = lines[data_first_line+counter]
-        value = [float(vi) for vi in line_data.split()]
+    for i, line in enumerate(lines):
+        if "Begin: Data Text" in line:
+            data_first_line = i+1
+            break
+
+    for i, index in enumerate(mesh.indices):
+        value = [float(vi) for vi in lines[data_first_line+i].split()]
         if dim > 1:
-            field.array[i] = value
+            field.array[index] = value
         else:
-            field.array[i] = value[0]
-
-        counter += 1
+            field.array[index] = value[0]
 
     return field
 
