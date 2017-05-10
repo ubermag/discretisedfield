@@ -183,7 +183,8 @@ class Field(dfu.Field):
 
     @property
     def norm(self):
-        if np.array_equal(self.norm_array[..., None], self._as_array(self._norm, dim=1)):
+        if np.array_equal(self.norm_array[..., None],
+                          self._as_array(self._norm, dim=1)):
             return self._norm
         else:
             return self.norm_array
