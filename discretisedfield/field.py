@@ -197,7 +197,7 @@ class Field(dfu.Field):
                 raise ValueError(msg)
 
             if not np.any(self.array):
-                msg = "All field values are zero. Cannot normalise zero field."
+                msg = "Cannot normalise field with all zero values."
                 raise ValueError(msg)
 
             self._norm = Field(mesh=self.mesh, dim=1, value=val, name="norm")
