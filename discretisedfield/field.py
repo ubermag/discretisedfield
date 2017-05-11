@@ -534,9 +534,9 @@ def read_oommf_file_text(filename, name="unnamed"):
           field = read_oommf_file(oommf_filename, name="magnetisation")
 
     """
-    f = open(filename, "r")
-    lines = f.readlines()
-    f.close()
+    with open(filename, "r") as ovffile:
+        f = ovffile.read()
+        lines = f.split("\n")
 
     mdatalines = filter(lambda s: s.startswith("#"), lines)
     datalines = filter(lambda s: not s.startswith("#"), lines)
@@ -607,11 +607,9 @@ def read_oommf_file_binary(filename, name="unnamed"):
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
     field = Field(mesh, dim=dim, name=name)
 
-    binary_header = b"# Begin: Data Binary "
-    # Here we find the start and end points of the
-    # binary data, in terms of byte position.
-    data_start = file.find(binary_header)
-    header = file[data_start:data_start + len(binary_header) + 1]
+    header = b"# Begin: Data Binary "
+    data_start = file.find(header)
+    header = file[data_start:data_start + len(header) + 1]
     if b"8" in header:
         bytesize = 8
     elif b"4" in header:
@@ -635,11 +633,11 @@ def read_oommf_file_binary(filename, name="unnamed"):
                                  " with reading Binary Data")
 
     counter = 1
-    for i in mesh.indices:
+    for index in mesh.indices:
         value = (listdata[counter][0],
                  listdata[counter+1][0],
                  listdata[counter+2][0])
-        field.array[i] = value
+        field.array[index] = value
 
         counter += 3
 
