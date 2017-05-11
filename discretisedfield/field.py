@@ -538,20 +538,23 @@ def read_oommf_file_text(filename, name="unnamed"):
     lines = f.readlines()
     f.close()
 
-    metadata = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
-                "xstepsize", "ystepsize", "zstepsize", "valuedim"]
+    mdatalines = filter(lambda s: s.startswith("#"), lines)
+    datalines = filter(lambda s: not s.startswith("#"), lines)
+    
+    mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
+                 "xstepsize", "ystepsize", "zstepsize", "valuedim"]
 
-    dic = {}
-    for metadatum in metadata:
-        for line in lines:
-            if metadatum in line:
-                value = line.split()[-1]
-                dic[metadatum] = float(value)
+    mdatadict = dict()
+    for line in mdatalines:
+        for mdatum in mdatalist:
+            if mdatum in line:
+                mdatadict[mdatum] = float(line.split()[-1])
+                break
 
-    p1 = (dic[key] for key in ["xmin", "ymin", "zmin"])
-    p2 = (dic[key] for key in ["xmax", "ymax", "zmax"])
-    cell = (dic[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
-    dim = int(dic["valuedim"])
+    p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
+    p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
+    cell = (mdatadict[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
+    dim = int(mdatadict["valuedim"])
 
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
     field = Field(mesh, dim=dim, name=name)
