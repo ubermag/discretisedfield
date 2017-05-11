@@ -27,7 +27,8 @@ def read_oommf_file(filename, norm=None, name="unnamed"):
 
             p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
             p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
-            cell = (mdatadict[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
+            cell = (mdatadict[key] for key in ["xstepsize", "ystepsize",
+                                               "zstepsize"])
             dim = int(mdatadict["valuedim"])
 
             mesh = Mesh(p1=p1, p2=p2, cell=cell, name=name)
@@ -99,11 +100,6 @@ def read_oommf_file(filename, norm=None, name="unnamed"):
             counter += 3
 
         return field
-
-
-
-
-
 
     field.norm = norm
     if norm is not None:
