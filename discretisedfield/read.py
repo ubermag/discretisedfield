@@ -5,43 +5,40 @@ from .field import Field
 
 def read_oommf_file(filename, norm=None, name="unnamed"):
     try:
-        f = open(filename)
+        with open(filename, "r") as ovffile:
+            f = ovffile.read()
+            lines = f.split("\n")
 
-        if "Begin: Data Text" in f.read():
-            with open(filename, "r") as ovffile:
-                f = ovffile.read()
-                lines = f.split("\n")
+        mdatalines = filter(lambda s: s.startswith("#"), lines)
+        datalines = filter(lambda s: not s.startswith("#"), lines)
 
-            mdatalines = filter(lambda s: s.startswith("#"), lines)
-            datalines = filter(lambda s: not s.startswith("#"), lines)
+        mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
+                     "xstepsize", "ystepsize", "zstepsize", "valuedim"]
 
-            mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
-                         "xstepsize", "ystepsize", "zstepsize", "valuedim"]
+        mdatadict = dict()
+        for line in mdatalines:
+            for mdatum in mdatalist:
+                if mdatum in line:
+                    mdatadict[mdatum] = float(line.split()[-1])
+                    break
 
-            mdatadict = dict()
-            for line in mdatalines:
-                for mdatum in mdatalist:
-                    if mdatum in line:
-                        mdatadict[mdatum] = float(line.split()[-1])
-                        break
+        p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
+        p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
+        cell = (mdatadict[key] for key in ["xstepsize", "ystepsize",
+                                           "zstepsize"])
+        dim = int(mdatadict["valuedim"])
 
-            p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
-            p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
-            cell = (mdatadict[key] for key in ["xstepsize", "ystepsize",
-                                               "zstepsize"])
-            dim = int(mdatadict["valuedim"])
+        mesh = Mesh(p1=p1, p2=p2, cell=cell, name=name)
+        field = Field(mesh, dim=dim, name=name)
 
-            mesh = Mesh(p1=p1, p2=p2, cell=cell, name=name)
-            field = Field(mesh, dim=dim, name=name)
+        for i, (index, line) in enumerate(zip(mesh.indices, datalines)):
+            value = [float(vi) for vi in line.split()]
+            if dim == 1:
+                field.array[index] = value[0]
+            else:
+                field.array[index] = value
 
-            for i, (index, line) in enumerate(zip(mesh.indices, datalines)):
-                value = [float(vi) for vi in line.split()]
-                if dim == 1:
-                    field.array[index] = value[0]
-                else:
-                    field.array[index] = value
-
-            return field
+        return field
         
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
