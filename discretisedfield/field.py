@@ -582,35 +582,30 @@ def read_oommf_file_binary(filename, name="unnamed"):
           oommf_filename = "vector_field.omf"
           field = read_oommf_file(oommf_filename, name="magnetisation")
     """
-    # Open and read the file.
     with open(filename, "rb") as f:
         file = f.read()
         lines = file.split(b"\n")
 
-    # Load metadata.
-    dic = {"xmin": None, "ymin": None, "zmin": None,
-           "xmax": None, "ymax": None, "zmax": None,
-           "xstepsize": None, "ystepsize": None, "zstepsize": None,
-           "xbase": None, "ybase": None, "zbase": None,
-           "xnodes": None, "ynodes": None, "znodes": None,
-           "valuedim": None}
+    mdatalines = filter(lambda s: s.startswith(bytes("#", "utf-8")), lines)
+    datalines = filter(lambda s: not s.startswith("#"), lines)
 
-    for line in lines[0:50]:
-        for key in dic.keys():
-            if line.find(bytes(key, "utf-8")) != -1:
-                dic[key] = float(line.split()[2])
+    mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
+                 "xstepsize", "ystepsize", "zstepsize", "valuedim"]
 
-    pmin = (dic["xmin"], dic["ymin"], dic["zmin"])
-    pmax = (dic["xmax"], dic["ymax"], dic["zmax"])
-    d = (dic["xstepsize"], dic["ystepsize"], dic["zstepsize"])
-    cbase = (dic["xbase"], dic["ybase"], dic["zbase"])
-    n = (int(round(dic["xnodes"])),
-         int(round(dic["ynodes"])),
-         int(round(dic["znodes"])))
-    dim = int(dic["valuedim"])
+    mdatadict = dict()
+    for line in mdatalines:
+        for mdatum in mdatalist:
+            if bytes(mdatum, "utf-8") in line:
+                mdatadict[mdatum] = float(line.split()[-1])
+                break
 
-    mesh = df.Mesh(pmin, pmax, d, name=name)
-    field = Field(mesh, dim, value=(1, 1, 1), name=name)
+    p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
+    p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
+    cell = (mdatadict[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
+    dim = int(mdatadict["valuedim"])
+
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+    field = Field(mesh, dim=dim, name=name)
 
     binary_header = b"# Begin: Data Binary "
     # Here we find the start and end points of the
