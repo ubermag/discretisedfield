@@ -8,7 +8,40 @@ def read_oommf_file(filename, norm=None, name="unnamed"):
         f = open(filename)
 
         if "Begin: Data Text" in f.read():
-            field = read_oommf_file_text(filename, name)
+            with open(filename, "r") as ovffile:
+                f = ovffile.read()
+                lines = f.split("\n")
+
+            mdatalines = filter(lambda s: s.startswith("#"), lines)
+            datalines = filter(lambda s: not s.startswith("#"), lines)
+
+            mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
+                         "xstepsize", "ystepsize", "zstepsize", "valuedim"]
+
+            mdatadict = dict()
+            for line in mdatalines:
+                for mdatum in mdatalist:
+                    if mdatum in line:
+                        mdatadict[mdatum] = float(line.split()[-1])
+                        break
+
+            p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
+            p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
+            cell = (mdatadict[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
+            dim = int(mdatadict["valuedim"])
+
+            mesh = Mesh(p1=p1, p2=p2, cell=cell, name=name)
+            field = Field(mesh, dim=dim, name=name)
+
+            for i, (index, line) in enumerate(zip(mesh.indices, datalines)):
+                value = [float(vi) for vi in line.split()]
+                if dim == 1:
+                    field.array[index] = value[0]
+                else:
+                    field.array[index] = value
+
+            return field
+
         else:
             field = read_oommf_file_binary(filename, name)
     except UnicodeDecodeError:
@@ -21,56 +54,13 @@ def read_oommf_file(filename, norm=None, name="unnamed"):
     return field
 
 
-def read_oommf_file_text(filename, name="unnamed"):
-    """Read the OOMMF file and create a Field object.
 
-    Args:
-      filename (str): OOMMF file name
-      name (str): name of the Field object
 
-    Return:
-      Field object.
 
-    Example:
-        .. code-block:: python
-          from oommffield import read_oommf_file
-          oommf_filename = "vector_field.omf"
-          field = read_oommf_file(oommf_filename, name="magnetisation")
 
-    """
-    with open(filename, "r") as ovffile:
-        f = ovffile.read()
-        lines = f.split("\n")
 
-    mdatalines = filter(lambda s: s.startswith("#"), lines)
-    datalines = filter(lambda s: not s.startswith("#"), lines)
+
     
-    mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
-                 "xstepsize", "ystepsize", "zstepsize", "valuedim"]
-
-    mdatadict = dict()
-    for line in mdatalines:
-        for mdatum in mdatalist:
-            if mdatum in line:
-                mdatadict[mdatum] = float(line.split()[-1])
-                break
-
-    p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
-    p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
-    cell = (mdatadict[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
-    dim = int(mdatadict["valuedim"])
-
-    mesh = Mesh(p1=p1, p2=p2, cell=cell, name=name)
-    field = Field(mesh, dim=dim, name=name)
-
-    for i, (index, line) in enumerate(zip(mesh.indices, datalines)):
-        value = [float(vi) for vi in line.split()]
-        if dim == 1:
-            field.array[index] = value[0]
-        else:
-            field.array[index] = value
-
-    return field
 
 
 def read_oommf_file_binary(filename, name="unnamed"):
@@ -86,8 +76,8 @@ def read_oommf_file_binary(filename, name="unnamed"):
           oommf_filename = "vector_field.omf"
           field = read_oommf_file(oommf_filename, name="magnetisation")
     """
-    with open(filename, "rb") as f:
-        f = f.read()
+    with open(filename, "rb") as ovffile:
+        f = ovffile.read()
         lines = f.split(b"\n")
 
     mdatalines = filter(lambda s: s.startswith(bytes("#", "utf-8")), lines)
