@@ -587,7 +587,10 @@ def read_oommf_file_binary(filename, name="unnamed"):
         lines = file.split(b"\n")
 
     mdatalines = filter(lambda s: s.startswith(bytes("#", "utf-8")), lines)
-    datalines = filter(lambda s: not s.startswith("#"), lines)
+    datalines = filter(lambda s: not s.startswith(bytes("#", "utf-8")), lines)
+
+    for i in datalines:
+        print(i)
 
     mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
                  "xstepsize", "ystepsize", "zstepsize", "valuedim"]
@@ -610,21 +613,17 @@ def read_oommf_file_binary(filename, name="unnamed"):
     header = b"# Begin: Data Binary "
     data_start = file.find(header)
     header = file[data_start:data_start + len(header) + 1]
-    if b"8" in header:
-        bytesize = 8
-    elif b"4" in header:
-        bytesize = 4
 
     data_start += len(b"# Begin: Data Binary 8\n")
     data_end = file.find(b"# End: Data Binary ")
-    if bytesize == 4:
+    if b"4" in header:
         listdata = list(struct.iter_unpack("@f", file[data_start:data_end]))
         try:
             assert listdata[0] == 1234567.0
         except:
             raise AssertionError("Something has gone wrong"
                                  " with reading Binary Data")
-    elif bytesize == 8:
+    elif b"8" in header:
         listdata = list(struct.iter_unpack("@d", file[data_start:data_end]))
         try:
             assert listdata[0][0] == 123456789012345.0
