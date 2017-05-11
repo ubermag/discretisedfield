@@ -559,17 +559,12 @@ def read_oommf_file_text(filename, name="unnamed"):
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
     field = Field(mesh, dim=dim, name=name)
 
-    for i, line in enumerate(lines):
-        if "Begin: Data Text" in line:
-            data_first_line = i+1
-            break
-
-    for i, index in enumerate(mesh.indices):
-        value = [float(vi) for vi in lines[data_first_line+i].split()]
-        if dim > 1:
-            field.array[index] = value
-        else:
+    for i, (index, line) in enumerate(zip(mesh.indices, datalines)):
+        value = [float(vi) for vi in line.split()]
+        if dim == 1:
             field.array[index] = value[0]
+        else:
+            field.array[index] = value
 
     return field
 
