@@ -7,5 +7,6 @@ RUN python3 -m pip install --upgrade pip pytest-cov nbval matplotlib pyvtk \
 
 WORKDIR /usr/local
 RUN git clone https://github.com/joommf/discretisedfield.git
-
 WORKDIR /usr/local/discretisedfield
+RUN python3 -m pip install .
+
