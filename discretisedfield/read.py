@@ -60,15 +60,15 @@ def read_oommf_file(filename, norm=None, name="field"):
             try:
                 assert listdata[0] == 1234567.0
             except:
-                raise AssertionError("Something has gone wrong"
-                                     " with reading Binary Data")
+                raise AssertionError("Something has gone wrong "
+                                     "with reading Binary Data")
         elif b"8" in header:
             listdata = list(struct.iter_unpack("@d", f[data_start:data_end]))
             try:
                 assert listdata[0][0] == 123456789012345.0
             except:
-                raise AssertionError("Something has gone wrong"
-                                     " with reading Binary Data")
+                raise AssertionError("Something has gone wrong "
+                                     "with reading Binary Data")
 
         counter = 1
         for index in mesh.indices:
