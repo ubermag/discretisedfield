@@ -344,6 +344,17 @@ class TestMesh:
         assert li[0][1] == (0, 0, 0)
         assert li[-1][1] == (10, 0, 0)
 
+    def test_plane(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1, p2, cell)
+
+        pi = mesh.plane(z=3, n=(2, 2))
+        for point in pi:
+            assert isinstance(point, tuple)
+            assert len(point) == 3
+
     def test_script(self):
         for arg in self.valid_args:
             p1, p2, cell = arg
