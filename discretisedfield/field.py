@@ -242,149 +242,34 @@ class Field(dfu.Field):
             return field_value
         else:
             return tuple(field_value)
+            
+    def plane_slice(self, x=None, y=None, z=None, n=None):
+        for point in self.mesh.plane(x=x, y=y, z=z, n=n):
+            yield point, self.__call__(point)
 
-    def slice_field(self, axis, point):
-        """Returns the field slice.
+    def plot_slice(self, x=None, y=None, z=None, n=None):
+        if x is not None:
+            axis = "x"
+        elif y is not None:
+            axis = "y"
+        elif z is not None:
+            axis = "z"
+            
+        axesdict = {"x": 0, "y": 1, "z": 2}
+        slice_num = axesdict[axis]
+        axes = tuple(filter(lambda val: val!=slice_num, (0, 1, 2)))
 
-        This method returns the values of a finite difference field
-        on the plane perpendicular to the "axis" at "point".
-
-        Args:
-          axis (str): An axis to which the sampling plane is perpendicular to.
-          point (int/float): The coordinate on axis at which the field is
-            sampled.
-
-        Returns:
-          A 4 element tuple containing:
-
-            - Axis 1 coodinates
-            - Axis 2 coodinates
-            - np.ndarray of field values on the plane
-            - coordinate system details
-
-        """
-        if axis == "x":
-            slice_num = 0
-            axes = (1, 2)
-        elif axis == "y":
-            slice_num = 1
-            axes = (0, 2)
-        elif axis == "z":
-            slice_num = 2
-            axes = (0, 1)
-        else:
-            raise ValueError("Axis not properly defined.")
-
-        if self.mesh.pmin[slice_num] <= point <= self.mesh.pmax[slice_num]:
-            axis1_indices = np.arange(0, self.mesh.n[axes[0]])
-            axis2_indices = np.arange(0, self.mesh.n[axes[1]])
-
-            axis1_coords = np.zeros(len(axis1_indices))
-            axis2_coords = np.zeros(len(axis2_indices))
-
-            sample_centre = list(self.mesh.centre)
-            sample_centre[slice_num] = point
-            sample_centre = tuple(sample_centre)
-
-            slice_index = self.mesh.point2index(sample_centre)[slice_num]
-
-            field_slice = np.zeros([self.mesh.n[axes[0]],
-                                    self.mesh.n[axes[1]],
-                                    self.dim])
-            for j in axis1_indices:
-                for k in axis2_indices:
-                    i = [0, 0, 0]
-                    i[slice_num] = slice_index
-                    i[axes[0]] = j
-                    i[axes[1]] = k
-                    i = tuple(i)
-
-                    coord = self.mesh.index2point(i)
-
-                    axis1_coords[j] = coord[axes[0]]
-                    axis2_coords[k] = coord[axes[1]]
-
-                    field_slice[j, k, :] = self.array[i]
-            coord_system = (axes[0], axes[1], slice_num)
-
-        else:
-            raise ValueError("Point {} outside the domain.".format(point))
-
-        return axis1_coords, axis2_coords, field_slice, coord_system
-
-    def plot_slice(self, axis, point, xsize=10, axes=True, grid=True):
-        """Plot the field slice.
-
-        This method plots the field slice that is obtained
-        using slice_field method.
-
-        Args:
-          axis (str): An axis to which the sampling plane is perpendicular to.
-          point (int/float): The coordinate axis at which the field
-            is sampled.
-          xsize (Optional[int/float]): The horizontal size of a plot.
-          grid (Optional[bool]): If True, grid is shown in the plot.
-
-        Returns:
-          matplotlib figure.
-
-        """
-        a1, a2, field_slice, coord_system = self.slice_field(axis, point)
-
-        # Vector field
-        if self.dim == 3:
-            pm = self._prepare_for_quiver(a1, a2, field_slice, coord_system)
-
-            if np.allclose(pm[:, 2], 0) and np.allclose(pm[:, 3], 0):
-                raise ValueError("Vector plane components are zero.")
-            ysize = xsize*(self.mesh.l[coord_system[1]] /
-                           self.mesh.l[coord_system[0]])
-            fig = plt.figure(figsize=(xsize, ysize))
-            plt.quiver(pm[:, 0], pm[:, 1], pm[:, 2], pm[:, 3], pm[:, 4])
-        elif self.dim == 1:
-            ysize = xsize*(self.mesh.l[coord_system[1]] /
-                           self.mesh.l[coord_system[0]])
-            fig = plt.figure(figsize=(xsize, ysize))
-            extent = [self.mesh.pmin[coord_system[0]],
-                      self.mesh.pmax[coord_system[0]],
-                      self.mesh.pmin[coord_system[1]],
-                      self.mesh.pmax[coord_system[1]]]
-            plt.imshow(field_slice[..., 0], extent=extent)
-        else:
-            raise TypeError(("Cannot plot slice of field with "
-                             "dim={}".format(self.dim)))
-
-        plt.xlim([self.mesh.pmin[coord_system[0]],
-                  self.mesh.pmax[coord_system[0]]])
-        plt.ylim([self.mesh.pmin[coord_system[1]],
-                  self.mesh.pmax[coord_system[1]]])
-        if axes:
-            plt.xlabel("xyz"[coord_system[0]] + " (m)")
-            plt.ylabel("xyz"[coord_system[1]] + " (m)")
-            plt.title("xyz"[coord_system[2]] + " slice")
-        if not axes:
-            plt.axis("off")
-        if grid:
-            plt.grid()
-
-        return fig
-
-    def _prepare_for_quiver(self, a1, a2, field_slice, coord_system):
-        """Generate arrays for plotting quiver plot."""
-        nel = self.mesh.n[coord_system[0]]*self.mesh.n[coord_system[1]]
-        plot_matrix = np.zeros([nel, 5])
-
-        counter = 0
-        for j in range(self.mesh.n[coord_system[0]]):
-            for k in range(self.mesh.n[coord_system[1]]):
-                entry = [a1[j], a2[k],
-                         field_slice[j, k, coord_system[0]],
-                         field_slice[j, k, coord_system[1]],
-                         field_slice[j, k, coord_system[2]]]
-                plot_matrix[counter, :] = np.array(entry)
-                counter += 1
-
-        return plot_matrix
+        data = list(self.plane_slice(x=x, y=y, z=z, n=n))
+        points, values = list(zip(*data))
+        ipoints = list(zip(*points))
+        ivalues = list(zip(*values))
+        
+        plt.quiver(ipoints[axes[0]],
+                   ipoints[axes[1]],
+                   ivalues[axes[0]],
+                   ivalues[axes[1]],
+                   ivalues[slice_num])
+        plt.show()
 
     def tovtk(self, filename):
         grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
