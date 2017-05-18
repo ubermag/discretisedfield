@@ -248,27 +248,17 @@ class Field(dfu.Field):
             yield point, self.__call__(point)
 
     def plot_slice(self, x=None, y=None, z=None, n=None):
-        if x is not None:
-            axis = "x"
-        elif y is not None:
-            axis = "y"
-        elif z is not None:
-            axis = "z"
-            
-        axesdict = {"x": 0, "y": 1, "z": 2}
-        slice_num = axesdict[axis]
-        axes = tuple(filter(lambda val: val!=slice_num, (0, 1, 2)))
-
+        info = dfu.plane_info(x=x, y=y, z=z)
         data = list(self.plane_slice(x=x, y=y, z=z, n=n))
         points, values = list(zip(*data))
         ipoints = list(zip(*points))
         ivalues = list(zip(*values))
         
-        plt.quiver(ipoints[axes[0]],
-                   ipoints[axes[1]],
-                   ivalues[axes[0]],
-                   ivalues[axes[1]],
-                   ivalues[slice_num])
+        plt.quiver(ipoints[info["haxis"]],
+                   ipoints[info["vaxis"]],
+                   ivalues[info["haxis"]],
+                   ivalues[info["vaxis"]],
+                   ivalues[info["slice"]])
         plt.show()
 
     def tovtk(self, filename):
