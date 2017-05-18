@@ -3,7 +3,7 @@ from .mesh import Mesh
 from .field import Field
 
 
-def read_oommf_file(filename, norm=None, name="field"):
+def read(filename, norm=None, name="field"):
     mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
                  "xstepsize", "ystepsize", "zstepsize", "valuedim"]
     mdatadict = dict()

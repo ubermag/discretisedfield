@@ -2,7 +2,7 @@ import matplotlib as mpl
 mpl.use("agg")  # use most conservative backend
 from .mesh import Mesh
 from .field import Field
-from .read import read_oommf_file
+from .read import read
 
 
 def test():

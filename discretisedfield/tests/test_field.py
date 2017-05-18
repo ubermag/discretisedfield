@@ -279,7 +279,7 @@ class TestField:
             f.value = value
             f.write(filename)
 
-            f_loaded = df.read_oommf_file(filename)
+            f_loaded = df.read(filename)
 
             assert f.mesh.p1 == f_loaded.mesh.p1
             assert f.mesh.p2 == f_loaded.mesh.p2
@@ -297,7 +297,7 @@ class TestField:
         filename = "test_write_oommf_file_text1.omf"
         f.write(filename)
 
-        f_loaded = df.read_oommf_file(filename)
+        f_loaded = df.read(filename)
 
         assert f.mesh.p1 == f_loaded.mesh.p1
         assert f.mesh.p2 == f_loaded.mesh.p2
@@ -317,7 +317,7 @@ class TestField:
             f.value = value
             f.write(filename, representation="binary")
 
-            f_loaded = df.read_oommf_file(filename)
+            f_loaded = df.read(filename)
 
             assert f.mesh.p1 == f_loaded.mesh.p1
             assert f.mesh.p2 == f_loaded.mesh.p2
