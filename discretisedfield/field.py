@@ -275,23 +275,15 @@ class Field(dfu.Field):
         vtkdata = pyvtk.VtkData(structure)
 
         vectors = [self.__call__(i) for i in self.mesh.coordinates]
-        vtkdata.cell_data.append(pyvtk.Vectors(vectors, "m"))
-        vtkdata.cell_data.append(pyvtk.Scalars(zip(*vectors)[0], "mx"))
-        vtkdata.cell_data.append(pyvtk.Scalars(zip(*vectors)[1], "my"))
-        vtkdata.cell_data.append(pyvtk.Scalars(zip(*vectors)[2], "mz"))
+        vtkdata.cell_data.append(pyvtk.Vectors(vectors, self.name))
+        for i, component in enumerate(["x", "y", "z"]):
+            name = "{}_{}".format(self.name, component) 
+            vtkdata.cell_data.append(pyvtk.Scalars(zip(*vectors)[i], name))
 
         vtkdata.tofile(filename)
 
     def _writeovf(self, filename, representation="text"):
-        """Write the FD field to the OOMMF (omf, ohf) file.
-        This method writes all necessary data to the omf or ohf file,
-        so that it can be read by OOMMF.
-        Args:
-          filename (str): filename including extension
-          type(str): Either "text" or "binary"
-
-        """
-        oommf_file = open(filename, "w")
+        f = open(filename, "w")
 
         # Define header lines.
         header_lines = ["OOMMF OVF 2.0",
@@ -343,14 +335,14 @@ class Field(dfu.Field):
         # Write header lines to OOMMF file.
         for line in header_lines:
             if line == "":
-                oommf_file.write("#\n")
+                f.write("#\n")
             else:
-                oommf_file.write("# " + line + "\n")
+                f.write("# " + line + "\n")
         if representation == "binary":
             # Close the file and reopen with binary write
             # appending to end of file.
-            oommf_file.close()
-            oommf_file = open(filename, "ab")
+            f.close()
+            f = open(filename, "ab")
             # Add the 8 bit binary check value that OOMMF uses
             packarray = [123456789012345.0]
             # Write data lines to OOMMF file.
@@ -358,9 +350,9 @@ class Field(dfu.Field):
                 [packarray.append(vi) for vi in self.array[i]]
 
             v_binary = struct.pack("d"*len(packarray), *packarray)
-            oommf_file.write(v_binary)
-            oommf_file.close()
-            oommf_file = open(filename, "a")
+            f.write(v_binary)
+            f.close()
+            f = open(filename, "a")
 
         else:
             for i in self.mesh.indices:
@@ -373,12 +365,12 @@ class Field(dfu.Field):
                            "omf file.".format(self.dim))
                     raise TypeError(msg)
                 for vi in v:
-                    oommf_file.write(" " + str(vi))
-                oommf_file.write("\n")
+                    f.write(" " + str(vi))
+                f.write("\n")
 
         # Write footer lines to OOMMF file.
         for line in footer_lines:
-            oommf_file.write("# " + line + "\n")
+            f.write("# " + line + "\n")
 
         # Close the file.
-        oommf_file.close()
+        f.close()
