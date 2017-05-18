@@ -221,6 +221,9 @@ class Field(dfu.Field):
         """
         return tuple(self.array.mean(axis=(0, 1, 2)))
 
+    def component(self, comp):
+        pass
+
     def __repr__(self):
         """Representation method."""
         rstr = ("Field(mesh={}, dim={}, "
