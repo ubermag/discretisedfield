@@ -256,7 +256,8 @@ class Field(dfu.Field):
         for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):
             yield point, self.__call__(point)
 
-    def plot_slice(self, *args, x=None, y=None, z=None, n=None):
+    def plot_slice(self, *args, x=None, y=None, z=None, n=None,
+                   ax=None, figsize=(8, 8)):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
         data = list(self.plane_slice(*args, x=x, y=y, z=z, n=n))
         ps, vs = list(zip(*data))
@@ -268,11 +269,16 @@ class Field(dfu.Field):
         else:
             kwargs = {}
 
+        if not ax:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+
         plt.quiver(points[info["haxis"]],
                    points[info["vaxis"]],
                    values[info["haxis"]],
                    values[info["vaxis"]],
                    values[info["slice"]],
+                   pivot='mid',
                    **kwargs)
         plt.show()
 
