@@ -186,14 +186,15 @@ class Field(dfu.Field):
     @property
     def norm(self):
         current_norm = np.linalg.norm(self.array, axis=self.dim)[..., None]
-        if np.array_equiv(current_norm, self._norm.array):
-            return self._norm
-        else:
-            return Field(self.mesh, dim=1, value=current_norm, name="norm")
+        if self._norm: 
+            if np.array_equiv(current_norm, self._norm.array):
+                return self._norm
+
+        return Field(self.mesh, dim=1, value=current_norm, name="norm")
 
     @norm.setter
     def norm(self, val):
-        if val is not None:
+        if val:
             if self.dim == 1:
                 msg = "Cannot normalise field with dim={}.".format(self.dim)
                 raise ValueError(msg)
@@ -221,8 +222,14 @@ class Field(dfu.Field):
         """
         return tuple(self.array.mean(axis=(0, 1, 2)))
 
-    def component(self, comp):
-        pass
+    def component(self, comp, name="component"):
+        if isinstance(comp, int):
+            val = self.array[..., comp]
+        elif isinstance(comp, str):
+            compdict = {"x": 0, "y": 1, "z": 2}
+            val = self.array[..., compdict[comp]]
+            
+        return Field(mesh=self.mesh, dim=1, value=val[..., None], name=name)
 
     def __repr__(self):
         """Representation method."""

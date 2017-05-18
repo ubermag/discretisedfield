@@ -26,7 +26,7 @@ def plane_info(*args, x=None, y=None, z=None):
         info["point"] = None
     else:
         sliceaxis = [key for key in kwargs.keys()
-                     if kwargs[key] is not None and key != "args"][0]
+                     if kwargs[key] and key != "args"][0]
         info["point"] = kwargs[sliceaxis]
 
     axesdict = {"x": 0, "y": 1, "z": 2}
