@@ -45,17 +45,13 @@ def plane_info(*args, x=None, y=None, z=None):
 
 
 def plot_line(ax, p1, p2, *args, **kwargs):
-    """
-    Plot a line between points p1 and p2 on axis ax.
-
-    """
+    """Plot a line between points p1 and p2 on axis ax."""
     ax.plot(*zip(p1, p2), *args, **kwargs)
     return ax
 
 
 def plot_box(ax, p1, p2, *args, **kwargs):
-    """
-    Plots a cube that spans between p1 and p2 on the given axis.
+    """Plots a cube that spans between p1 and p2 on the given axis.
 
     Args:
       ax (matplolib axis): matplolib axis object
@@ -67,13 +63,9 @@ def plot_box(ax, p1, p2, *args, **kwargs):
       linewidth (Real): matplotlib linewidth parameter
 
     """
-    # for a, b in it.combinations(it.product(*zip(p1, p2)), 2):
-    #    plot_line(ax, a, b, *args, **kwargs)
-
     x1, y1, z1 = p1
     x2, y2, z2 = p2
 
-    # Plot individual lines (edges) of a cube.
     plot_line(ax, (x1, y1, z1), (x2, y1, z1), *args, **kwargs)
     plot_line(ax, (x1, y2, z1), (x2, y2, z1), *args, **kwargs)
     plot_line(ax, (x1, y1, z2), (x2, y1, z2), *args, **kwargs)
