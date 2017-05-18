@@ -7,7 +7,7 @@ def read(filename, norm=None, name="field"):
     mdatalist = ["xmin", "ymin", "zmin", "xmax", "ymax", "zmax",
                  "xstepsize", "ystepsize", "zstepsize", "valuedim"]
     mdatadict = dict()
-    
+
     try:
         with open(filename, "r") as ovffile:
             f = ovffile.read()
@@ -32,14 +32,15 @@ def read(filename, norm=None, name="field"):
                 field.array[index] = value
 
         return field
-        
+
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
                 f = ovffile.read()
                 lines = f.split(b"\n")
 
         mdatalines = filter(lambda s: s.startswith(bytes("#", "utf-8")), lines)
-        datalines = filter(lambda s: not s.startswith(bytes("#", "utf-8")), lines)
+        datalines = filter(lambda s: not s.startswith(bytes("#", "utf-8")),
+                           lines)
 
         for line in mdatalines:
             for mdatum in mdatalist:
@@ -95,6 +96,6 @@ def _create_mesh_and_field(mdatadict, name):
     dim = int(mdatadict["valuedim"])
 
     mesh = Mesh(p1=p1, p2=p2, cell=cell)
-    field= Field(mesh, dim=dim, name=name)
+    field = Field(mesh, dim=dim, name=name)
 
     return mesh, field
