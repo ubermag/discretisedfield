@@ -583,37 +583,28 @@ class Mesh:
             yield np.linalg.norm(i*dl), tuple(p1+i*dl)
 
     def plane(self, x=None, y=None, z=None, n=None):
-        if x is not None:
-            axis = "x"
-        elif y is not None:
-            axis = "y"
-        elif z is not None:
-            axis = "z"
-            
-        axesdict = {"x": 0, "y": 1, "z": 2}
-        slice_num = axesdict[axis]
-        axes = tuple(filter(lambda val: val!=slice_num, (0, 1, 2)))
+        info = dfu.plane_info(x=x, y=y, z=z)
 
-        fixed_point = locals()[axis]
-        tmp_point = list(self.centre)
-        tmp_point[slice_num] = fixed_point
-        
-        self._isoutside(tmp_point)
+        test_point = list(self.centre)
+        test_point[info["slice"]] = info["point"]
+        self._isoutside(test_point)
 
         if n is None:
-            n = (self.n[axes[0]], self.n[axes[0]])
+            n = (self.n[info["haxis"]], self.n[info["vaxis"]])
 
-        x = np.linspace(self.pmin[axes[0]]+self.cell[axes[0]]/2,
-                        self.pmax[axes[0]]-self.cell[axes[0]]/2, n[0])
-        y = np.linspace(self.pmin[axes[1]]+self.cell[axes[1]]/2,
-                        self.pmax[axes[1]]-self.cell[axes[1]]/2, n[1])
+        xx = np.linspace(self.pmin[info["haxis"]]+self.cell[info["haxis"]]/2,
+                         self.pmax[info["haxis"]]-self.cell[info["haxis"]]/2,
+                         n[0])
+        yy = np.linspace(self.pmin[info["vaxis"]]+self.cell[info["vaxis"]]/2,
+                         self.pmax[info["vaxis"]]-self.cell[info["vaxis"]]/2,
+                         n[1])
 
-        for i in x:
-            for j in y:
+        for x in xx:
+            for y in yy:
                 point = [None, None, None]
-                point[slice_num] = fixed_point
-                point[axes[0]] = i
-                point[axes[1]] = j
+                point[info["slice"]] = info["point"]
+                point[info["haxis"]] = x
+                point[info["vaxis"]] = y
                 yield tuple(point)
 
     def plot(self):

@@ -19,17 +19,19 @@ def as_array(mesh, dim, val):
 
 
 def plane_info(x=None, y=None, z=None):
-    axesdict = {"x": 0, "y": 1, "z": 2}
     info = dict()
     if x is not None:
-        info["slice"] = axesdict["x"]
+        info["slice"] = 0
+        info["point"] = x
     elif y is not None:
-        info["slice"] = axesdict["y"]
+        info["slice"] = 1
+        info["point"] = y
     elif z is not None:
-        info["slice"] = axesdict["z"]
-            
-    info["axes"] = tuple(filter(lambda val: val!=axes["slice"], (0, 1, 2)))
-    info["point"] = locals()[axis]
+        info["slice"] = 2
+        info["point"] = z
+
+    info["haxis"], info["vaxis"] = tuple(filter(lambda val: val!=info["slice"],
+                                                (0, 1, 2)))
     
     return info
 
