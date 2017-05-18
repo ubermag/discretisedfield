@@ -30,9 +30,9 @@ def plane_info(x=None, y=None, z=None):
         info["slice"] = 2
         info["point"] = z
 
-    info["haxis"], info["vaxis"] = tuple(filter(lambda val: val!=info["slice"],
-                                                (0, 1, 2)))
-    
+    axes = tuple(filter(lambda val: val != info["slice"], (0, 1, 2)))
+    info["haxis"], info["vaxis"] = axes
+
     return info
 
 
