@@ -250,15 +250,15 @@ class Field(dfu.Field):
     def plot_slice(self, x=None, y=None, z=None, n=None):
         info = dfu.plane_info(x=x, y=y, z=z)
         data = list(self.plane_slice(x=x, y=y, z=z, n=n))
-        points, values = list(zip(*data))
-        ipoints = list(zip(*points))
-        ivalues = list(zip(*values))
+        ps, vs = list(zip(*data))
+        points = list(zip(*ps))
+        values = list(zip(*vs))
 
-        plt.quiver(ipoints[info["haxis"]],
-                   ipoints[info["vaxis"]],
-                   ivalues[info["haxis"]],
-                   ivalues[info["vaxis"]],
-                   ivalues[info["slice"]])
+        plt.quiver(points[info["haxis"]],
+                   points[info["vaxis"]],
+                   values[info["haxis"]],
+                   values[info["vaxis"]],
+                   values[info["slice"]])
         plt.show()
 
     def tovtk(self, filename):
