@@ -586,7 +586,7 @@ class Mesh:
         info = dfu.plane_info(*args, x=x, y=y, z=z)
 
         if info["point"] is None:
-           info["point"] = self.centre[info["slice"]]
+            info["point"] = self.centre[info["slice"]]
 
         test_point = list(self.centre)
         test_point[info["slice"]] = info["point"]
