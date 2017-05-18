@@ -263,11 +263,17 @@ class Field(dfu.Field):
         points = list(zip(*ps))
         values = list(zip(*vs))
 
+        if not any(values[info["haxis"]] + values[info["vaxis"]]):
+            kwargs = {"scale": 1}
+        else:
+            kwargs = {}
+
         plt.quiver(points[info["haxis"]],
                    points[info["vaxis"]],
                    values[info["haxis"]],
                    values[info["vaxis"]],
-                   values[info["slice"]])
+                   values[info["slice"]],
+                   **kwargs)
         plt.show()
 
     def write(self, filename, **kwargs):
