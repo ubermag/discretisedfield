@@ -242,7 +242,7 @@ class Field(dfu.Field):
             return field_value
         else:
             return tuple(field_value)
-            
+
     def plane_slice(self, x=None, y=None, z=None, n=None):
         for point in self.mesh.plane(x=x, y=y, z=z, n=n):
             yield point, self.__call__(point)
@@ -253,7 +253,7 @@ class Field(dfu.Field):
         points, values = list(zip(*data))
         ipoints = list(zip(*points))
         ivalues = list(zip(*values))
-        
+
         plt.quiver(ipoints[info["haxis"]],
                    ipoints[info["vaxis"]],
                    ivalues[info["haxis"]],
