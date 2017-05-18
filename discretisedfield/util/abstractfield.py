@@ -28,10 +28,22 @@ class Field(metaclass=abc.ABCMeta):
     def average(self): pass  # pragma: no cover
 
     @abc.abstractmethod
+    def component(self): pass  # pragma: no cover
+
+    @abc.abstractmethod
     def __repr__(self): pass  # pragma: no cover
 
     @abc.abstractmethod
     def __call__(self, point): pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def plane_slice(self): pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def plot_slice(self): pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def write(self): pass  # pragma: no cover
 
     def line_intersection(self, p1, p2, n=100):
         """Slice the field along the line between `p1` and `p2`"""
