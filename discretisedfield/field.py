@@ -186,7 +186,7 @@ class Field(dfu.Field):
     @property
     def norm(self):
         current_norm = np.linalg.norm(self.array, axis=self.dim)[..., None]
-        if self._norm: 
+        if self._norm:
             if np.array_equiv(current_norm, self._norm.array):
                 return self._norm
 
@@ -228,7 +228,6 @@ class Field(dfu.Field):
         elif isinstance(comp, str):
             compdict = {"x": 0, "y": 1, "z": 2}
             val = self.array[..., compdict[comp]]
-            
         return Field(mesh=self.mesh, dim=1, value=val[..., None], name=name)
 
     def __repr__(self):
@@ -276,7 +275,7 @@ class Field(dfu.Field):
             self._writeovf(filename, **kwargs)
         elif filename.endswith(".vtk"):
             self._writevtk(filename)
-            
+
     def _writevtk(self, filename):
         grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
                 zip(self.mesh.pmin, self.mesh.l, self.mesh.n)]
@@ -287,7 +286,7 @@ class Field(dfu.Field):
         vectors = [self.__call__(i) for i in self.mesh.coordinates]
         vtkdata.cell_data.append(pyvtk.Vectors(vectors, self.name))
         for i, component in enumerate(["x", "y", "z"]):
-            name = "{}_{}".format(self.name, component) 
+            name = "{}_{}".format(self.name, component)
             vtkdata.cell_data.append(pyvtk.Scalars(zip(*vectors)[i], name))
 
         vtkdata.tofile(filename)
