@@ -107,7 +107,7 @@ class TestField:
             assert isinstance(rstr, str)
             assert "dim=3" in rstr
             assert "name=" in rstr
-            
+
     def test_set_with_constant(self):
         for value in self.constant_values:
             for f in self.scalar_fs:
@@ -140,7 +140,7 @@ class TestField:
             f.value = (0, 2, 0)
             assert np.all(f.norm.array != 1)
             assert np.all(f.norm.array == 2)
-        
+
     def test_set_with_ndarray(self):
         for f in self.vector_fs:
             value = np.zeros(f.mesh.n + (f.dim,))
