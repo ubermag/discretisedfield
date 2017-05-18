@@ -243,13 +243,13 @@ class Field(dfu.Field):
         else:
             return tuple(field_value)
 
-    def plane_slice(self, x=None, y=None, z=None, n=None):
-        for point in self.mesh.plane(x=x, y=y, z=z, n=n):
+    def plane_slice(self, *args, x=None, y=None, z=None, n=None):
+        for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):
             yield point, self.__call__(point)
 
-    def plot_slice(self, x=None, y=None, z=None, n=None):
-        info = dfu.plane_info(x=x, y=y, z=z)
-        data = list(self.plane_slice(x=x, y=y, z=z, n=n))
+    def plot_slice(self, *args, x=None, y=None, z=None, n=None):
+        info = dfu.plane_info(*args, x=x, y=y, z=z)
+        data = list(self.plane_slice(*args, x=x, y=y, z=z, n=n))
         ps, vs = list(zip(*data))
         points = list(zip(*ps))
         values = list(zip(*vs))
@@ -316,8 +316,7 @@ class Field(dfu.Field):
                         "ymax: {}".format(self.mesh.pmax[1]),
                         "zmax: {}".format(self.mesh.pmax[2]),
                         "valuedim: {}".format(3),
-                        ("valuelabels: Magnetization_x "
-                         "Magnetization_y Magnetization_z"),
+                        "valuelabels: {0}_x {0}_y {0}_z".format(self.name),
                         "valueunits: A/m A/m A/m",
                         "",
                         "End: Header",

@@ -18,20 +18,26 @@ def as_array(mesh, dim, val):
     return val_array
 
 
-def plane_info(x=None, y=None, z=None):
-    args = locals()
-    sliceaxis = [key for key in args.keys() if args[key] is not None][0]
+def plane_info(*args, x=None, y=None, z=None):
+    kwargs = locals()
+    info = dict()
+    if args:
+        sliceaxis = args[0]
+        info["point"] = None
+    else:
+        sliceaxis = [key for key in kwargs.keys()
+                     if kwargs[key] is not None and key != "args"][0]
+        info["point"] = kwargs[sliceaxis]
+
     axesdict = {"x": 0, "y": 1, "z": 2}
     if len(sliceaxis) != 1:
         msg = "Exactly one argument must be given."
         raise ValueError(msg)
     if sliceaxis not in axesdict.keys():
-        msg = "Argument name must be one of {}".format(axesdict.keys())
+        msg = "Argument name must be one of {}.".format(axesdict.keys())
         raise ValueError(msg)
 
-    info = dict()
     info["slice"] = axesdict[sliceaxis]
-    info["point"] = locals()[sliceaxis]
     axes = tuple(filter(lambda val: val != info["slice"], (0, 1, 2)))
     info["haxis"], info["vaxis"] = axes
 

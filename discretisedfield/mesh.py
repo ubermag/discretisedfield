@@ -582,8 +582,11 @@ class Mesh:
         for i in range(n):
             yield np.linalg.norm(i*dl), tuple(p1+i*dl)
 
-    def plane(self, x=None, y=None, z=None, n=None):
-        info = dfu.plane_info(x=x, y=y, z=z)
+    def plane(self, *args, x=None, y=None, z=None, n=None):
+        info = dfu.plane_info(*args, x=x, y=y, z=z)
+
+        if info["point"] is None:
+           info["point"] = self.centre[info["slice"]]
 
         test_point = list(self.centre)
         test_point[info["slice"]] = info["point"]
