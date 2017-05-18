@@ -22,8 +22,11 @@ def plane_info(x=None, y=None, z=None):
     args = locals()
     sliceaxis = [key for key in args.keys() if args[key] is not None][0]
     axesdict = {"x": 0, "y": 1, "z": 2}
-    if len(sliceaxis) != 1 or sliceaxis not in axesdict.keys():
-        msg = "Slice axis not properly defined."
+    if len(sliceaxis) != 1
+        msg = "Exactly one argument must be given."
+        raise ValueError(msg)
+    if sliceaxis not in axesdict.keys():
+        msg = "Argument name must be one of {}".format(axesdict.keys())
         raise ValueError(msg)
 
     info = dict()
