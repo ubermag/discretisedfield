@@ -593,8 +593,8 @@ class Mesh:
         axesdict = {"x": 0, "y": 1, "z": 2}
         slice_num = axesdict[axis]
         axes = tuple(filter(lambda val: val!=slice_num, (0, 1, 2)))
-        fixed_point = locals()[axis]
 
+        fixed_point = locals()[axis]
         tmp_point = list(self.centre)
         tmp_point[slice_num] = fixed_point
         

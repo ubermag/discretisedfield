@@ -18,6 +18,22 @@ def as_array(mesh, dim, val):
     return val_array
 
 
+def plane_info(x=None, y=None, z=None):
+    axesdict = {"x": 0, "y": 1, "z": 2}
+    info = dict()
+    if x is not None:
+        info["slice"] = axesdict["x"]
+    elif y is not None:
+        info["slice"] = axesdict["y"]
+    elif z is not None:
+        info["slice"] = axesdict["z"]
+            
+    info["axes"] = tuple(filter(lambda val: val!=axes["slice"], (0, 1, 2)))
+    info["point"] = locals()[axis]
+    
+    return info
+
+    
 def plot_line(ax, p1, p2, *args, **kwargs):
     """
     Plot a line between points p1 and p2 on axis ax.
