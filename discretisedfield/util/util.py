@@ -33,7 +33,7 @@ def plane_info(x=None, y=None, z=None):
     
     return info
 
-    
+
 def plot_line(ax, p1, p2, *args, **kwargs):
     """
     Plot a line between points p1 and p2 on axis ax.
