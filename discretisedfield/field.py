@@ -261,7 +261,13 @@ class Field(dfu.Field):
                    values[info["slice"]])
         plt.show()
 
-    def tovtk(self, filename):
+    def write(self, filename, **kwargs):
+        if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):
+            self._writeovf(filename, **kwargs)
+        elif filename.endswith(".vtk"):
+            self._writevtk(filename)
+            
+    def _writevtk(self, filename):
         grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
                 zip(self.mesh.pmin, self.mesh.l, self.mesh.n)]
 
@@ -276,7 +282,7 @@ class Field(dfu.Field):
 
         vtkdata.tofile(filename)
 
-    def write_oommf_file(self, filename, datatype="text"):
+    def _writeovf(self, filename, representation="text"):
         """Write the FD field to the OOMMF (omf, ohf) file.
         This method writes all necessary data to the omf or ohf file,
         so that it can be read by OOMMF.
@@ -325,11 +331,11 @@ class Field(dfu.Field):
                         "End: Header",
                         ""]
 
-        if datatype == "binary":
+        if representation == "binary":
             header_lines.append("Begin: Data Binary 8")
             footer_lines = ["End: Data Binary 8",
                             "End: Segment"]
-        if datatype == "text":
+        if representation == "text":
             header_lines.append("Begin: Data Text")
             footer_lines = ["End: Data Text",
                             "End: Segment"]
@@ -340,7 +346,7 @@ class Field(dfu.Field):
                 oommf_file.write("#\n")
             else:
                 oommf_file.write("# " + line + "\n")
-        if datatype == "binary":
+        if representation == "binary":
             # Close the file and reopen with binary write
             # appending to end of file.
             oommf_file.close()

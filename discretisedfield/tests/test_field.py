@@ -271,13 +271,13 @@ class TestField:
 
         fig = f.plot_line_intersection((1, 0, 0), (0, 0, 0), n=10)
 
-    def test_write_read_oommf_file_text(self):
+    def test_write_read_ovf_file_text(self):
         tol = 1e-12
-        filename = "test_write_oommf_file_text.omf"
+        filename = "test_write_ovf_file_text.omf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
             f.value = value
-            f.write_oommf_file(filename)
+            f.write(filename)
 
             f_loaded = df.read_oommf_file(filename)
 
@@ -295,7 +295,7 @@ class TestField:
         f = df.Field(mesh, dim=1, value=-3.1)
 
         filename = "test_write_oommf_file_text1.omf"
-        f.write_oommf_file(filename)
+        f.write(filename)
 
         f_loaded = df.read_oommf_file(filename)
 
@@ -309,13 +309,13 @@ class TestField:
 
         os.system("rm {}".format(filename))
 
-    def test_write_read_oommf_file(self):
+    def test_write_read_ovf_file_binary(self):
         tol = 1e-12
-        filename = "test_write_oommf_file_binary.omf"
+        filename = "test_write_ovf_file_binary.omf"
         value = (1e-3 + np.pi, -5, 6)
         for f in self.vector_fs:
             f.value = value
-            f.write_oommf_file(filename, 'binary')
+            f.write(filename, representation="binary")
 
             f_loaded = df.read_oommf_file(filename)
 
