@@ -1,6 +1,5 @@
 import pyvtk
 import struct
-import itertools
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df
@@ -223,7 +222,7 @@ class Field(dfu.Field):
         return tuple(self.array.mean(axis=(0, 1, 2)))
 
     def __getattr__(self, name):
-        if name in itertools.islice(dfu.axesdict.keys(), self.dim):
+        if name in list(dfu.axesdict.keys())[:self.dim] and 1 < self.dim <= 3:
             val = self.array[..., dfu.axesdict[name]][..., None]
             fieldname = "{}_{}".format(self.name, name)
             return Field(mesh=self.mesh, dim=1, value=val, name=fieldname)
@@ -232,7 +231,10 @@ class Field(dfu.Field):
             raise AttributeError(msg.format(type(self).__name__, name))
 
     def __dir__(self):
-        extension = list(dfu.axesdict.keys())[:self.dim]
+        if 1 < self.dim <= 3:
+            extension = list(dfu.axesdict.keys())[:self.dim]
+        else:
+            extension = []
         return list(self.__dict__.keys()) + extension
 
     def component(self, comp, name="component"):
