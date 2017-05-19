@@ -1,5 +1,9 @@
+import collections
 import numpy as np
 import itertools as it
+
+
+axesdict = collections.OrderedDict([("x", 0), ("y", 1), ("z", 2)])
 
 
 def as_array(mesh, dim, val):
@@ -29,7 +33,6 @@ def plane_info(*args, x=None, y=None, z=None):
                      if kwargs[key] and key != "args"][0]
         info["point"] = kwargs[sliceaxis]
 
-    axesdict = {"x": 0, "y": 1, "z": 2}
     if len(sliceaxis) != 1:
         msg = "Exactly one argument must be given."
         raise ValueError(msg)
