@@ -232,8 +232,7 @@ class Field(dfu.Field):
         if isinstance(comp, int):
             val = self.array[..., comp]
         elif isinstance(comp, str):
-            compdict = {"x": 0, "y": 1, "z": 2}
-            val = self.array[..., compdict[comp]]
+            val = self.array[..., dfu.axesdict[comp]]
         return Field(mesh=self.mesh, dim=1, value=val[..., None], name=name)
 
     def __repr__(self):
@@ -303,7 +302,7 @@ class Field(dfu.Field):
 
         vectors = [self.__call__(i) for i in self.mesh.coordinates]
         vtkdata.cell_data.append(pyvtk.Vectors(vectors, self.name))
-        for i, component in enumerate(["x", "y", "z"]):
+        for i, component in enumerate(dfu.axesdict.keys()):
             name = "{}_{}".format(self.name, component)
             vtkdata.cell_data.append(pyvtk.Scalars(zip(*vectors)[i], name))
 
