@@ -237,13 +237,6 @@ class Field(dfu.Field):
             extension = []
         return list(self.__dict__.keys()) + extension
 
-    def component(self, comp, name="component"):
-        if isinstance(comp, int):
-            val = self.array[..., comp]
-        elif isinstance(comp, str):
-            val = self.array[..., dfu.axesdict[comp]]
-        return Field(mesh=self.mesh, dim=1, value=val[..., None], name=name)
-
     def __repr__(self):
         """Representation method."""
         rstr = ("Field(mesh={}, dim={}, "

@@ -28,9 +28,6 @@ class Field(metaclass=abc.ABCMeta):
     def average(self): pass  # pragma: no cover
 
     @abc.abstractmethod
-    def component(self, comp, name="component"): pass  # pragma: no cover
-
-    @abc.abstractmethod
     def __repr__(self): pass  # pragma: no cover
 
     @abc.abstractmethod
