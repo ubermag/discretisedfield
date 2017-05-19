@@ -223,7 +223,13 @@ class Field(dfu.Field):
         return tuple(self.array.mean(axis=(0, 1, 2)))
 
     def __getattr__(self, name):
-        pass
+        if name in itertools.islice(dfu.axesdict.keys(), self.dim):
+            val = self.array[..., dfu.axesdict[name]][..., None]
+            fieldname = "{}_{}".format(self.name, name)
+            return Field(mesh=self.mesh, dim=1, value=val, name=fieldname)
+        else:
+            msg = "{} object has no attribute {}."
+            raise AttributeError(msg.format(type(self).__name__, name))
 
     def __dir__(self):
         pass
