@@ -1,6 +1,8 @@
 import collections
 import numpy as np
 import itertools as it
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 axesdict = collections.OrderedDict([("x", 0), ("y", 1), ("z", 2)])
@@ -30,7 +32,7 @@ def plane_info(*args, x=None, y=None, z=None):
         info["point"] = None
     else:
         sliceaxis = [key for key in kwargs.keys()
-                     if kwargs[key] and key != "args"][0]
+                     if kwargs[key] is not None and key != "args"][0]
         info["point"] = kwargs[sliceaxis]
 
     if len(sliceaxis) != 1:
@@ -85,3 +87,26 @@ def plot_box(ax, p1, p2, *args, **kwargs):
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
 
     return ax
+
+
+def addimshow(ax, data, extent):
+    imax = ax.imshow(data, origin="lower", extent=extent)
+    return ax, imax
+
+
+def addquiver(ax, points, values, info, colour=False, **kwargs):
+    ax.quiver(points[info["haxis"]],
+              points[info["vaxis"]],
+              values[info["haxis"]],
+              values[info["vaxis"]],
+              # values[info["slice"]],
+              pivot='mid',
+              **kwargs)
+    return ax
+
+
+def addcolorbar(ax, imax):
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="3%", pad=0.05)
+    cbar = plt.colorbar(imax, cax=cax)
+    return ax, cbar
