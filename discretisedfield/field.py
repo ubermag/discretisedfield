@@ -221,22 +221,6 @@ class Field(dfu.Field):
         """
         return tuple(self.array.mean(axis=(0, 1, 2)))
 
-    def __getattr__(self, name):
-        if name in list(dfu.axesdict.keys())[:self.dim] and 1 < self.dim <= 3:
-            val = self.array[..., dfu.axesdict[name]][..., None]
-            fieldname = "{}_{}".format(self.name, name)
-            return Field(mesh=self.mesh, dim=1, value=val, name=fieldname)
-        else:
-            msg = "{} object has no attribute {}."
-            raise AttributeError(msg.format(type(self).__name__, name))
-
-    def __dir__(self):
-        if 1 < self.dim <= 3:
-            extension = list(dfu.axesdict.keys())[:self.dim]
-        else:
-            extension = []
-        return list(self.__dict__.keys()) + extension
-
     def __repr__(self):
         """Representation method."""
         rstr = ("Field(mesh={}, dim={}, "
@@ -258,6 +242,22 @@ class Field(dfu.Field):
             return field_value
         else:
             return tuple(field_value)
+
+    def __getattr__(self, name):
+        if name in list(dfu.axesdict.keys())[:self.dim] and 1 < self.dim <= 3:
+            val = self.array[..., dfu.axesdict[name]][..., None]
+            fieldname = "{}_{}".format(self.name, name)
+            return Field(mesh=self.mesh, dim=1, value=val, name=fieldname)
+        else:
+            msg = "{} object has no attribute {}."
+            raise AttributeError(msg.format(type(self).__name__, name))
+
+    def __dir__(self):
+        if 1 < self.dim <= 3:
+            extension = list(dfu.axesdict.keys())[:self.dim]
+        else:
+            extension = []
+        return list(self.__dict__.keys()) + extension
 
     def plane_slice(self, *args, x=None, y=None, z=None, n=None):
         for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):

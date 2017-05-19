@@ -34,6 +34,12 @@ class Field(metaclass=abc.ABCMeta):
     def __call__(self, point): pass  # pragma: no cover
 
     @abc.abstractmethod
+    def __getattr__(self, name): pass  # pragma: no cover
+
+    @abc.abstractmethod
+    def __dir__(self): pass  # pragma: no cover
+
+    @abc.abstractmethod
     def plane_slice(self, *args, x=None, y=None, z=None, n=None):
         pass  # pragma: no cover
 
