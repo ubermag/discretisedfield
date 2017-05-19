@@ -232,7 +232,8 @@ class Field(dfu.Field):
             raise AttributeError(msg.format(type(self).__name__, name))
 
     def __dir__(self):
-        pass
+        extension = list(dfu.axesdict.keys())[:self.dim]
+        return list(self.__dict__.keys()) + extension
 
     def component(self, comp, name="component"):
         if isinstance(comp, int):
