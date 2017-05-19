@@ -264,7 +264,7 @@ class Field(dfu.Field):
             yield point, self.__call__(point)
 
     def plot_slice(self, *args, x=None, y=None, z=None, n=None,
-                   ax=None, figsize=(8, 8)):
+                   ax=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
         data = list(self.plane_slice(*args, x=x, y=y, z=z, n=n))
         ps, vs = list(zip(*data))
@@ -276,18 +276,26 @@ class Field(dfu.Field):
         else:
             kwargs = {}
 
+        if n is None:
+            n = (self.mesh.n[info["haxis"]], self.mesh.n[info["vaxis"]])
+
         if not ax:
-            fig = plt.figure(figsize=figsize)
+            fig = plt.figure()
             ax = fig.add_subplot(111)
 
-        plt.quiver(points[info["haxis"]],
-                   points[info["vaxis"]],
-                   values[info["haxis"]],
-                   values[info["vaxis"]],
-                   values[info["slice"]],
-                   pivot='mid',
-                   **kwargs)
-        plt.show()
+        imshowdata = np.array(values[info["slice"]]).reshape(n).T
+        extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
+                  self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
+
+        ax, imax = dfu.addimshow(ax, imshowdata, extent=extent)
+        ax = dfu.addquiver(ax, points, values, info, colour=False, **kwargs)
+        ax, cbar = dfu.addcolorbar(ax, imax)
+
+        ax.set_xlabel(list(dfu.axesdict.keys())[info["haxis"]])
+        ax.set_ylabel(list(dfu.axesdict.keys())[info["vaxis"]])
+        cbar.set_label(list(dfu.axesdict.keys())[info["slice"]])
+
+        return ax
 
     def write(self, filename, **kwargs):
         if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):
