@@ -222,6 +222,12 @@ class Field(dfu.Field):
         """
         return tuple(self.array.mean(axis=(0, 1, 2)))
 
+    def __getattr__(self, name):
+        pass
+
+    def __dir__(self):
+        pass
+
     def component(self, comp, name="component"):
         if isinstance(comp, int):
             val = self.array[..., comp]
