@@ -1,4 +1,5 @@
 import random
+import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
@@ -308,10 +309,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.coordinates`
 
         """
-        for k in range(self.n[2]):
-            for j in range(self.n[1]):
-                for i in range(self.n[0]):
-                    yield (i, j, k)
+        for index in itertools.product(*map(range, self.n)):
+            yield index
 
     @property
     def coordinates(self):
@@ -587,28 +586,26 @@ class Mesh:
 
         if info["point"] is None:
             info["point"] = self.centre[info["slice"]]
-
-        test_point = list(self.centre)
-        test_point[info["slice"]] = info["point"]
-        self._isoutside(test_point)
+        else:
+            test_point = list(self.centre)
+            test_point[info["slice"]] = info["point"]
+            self._isoutside(test_point)
 
         if n is None:
             n = (self.n[info["haxis"]], self.n[info["vaxis"]])
 
-        dx, dy = self.l[info["haxis"]]/n[0], self.l[info["vaxis"]]/n[1]
+        dhaxis, dvaxis = self.l[info["haxis"]]/n[0], self.l[info["vaxis"]]/n[1]
+        haxis = np.linspace(self.pmin[info["haxis"]]+dhaxis/2,
+                            self.pmax[info["haxis"]]-dhaxis/2, n[0])
+        vaxis = np.linspace(self.pmin[info["vaxis"]]+dvaxis/2,
+                            self.pmax[info["vaxis"]]-dvaxis/2, n[1])
 
-        xx = np.linspace(self.pmin[info["haxis"]]+dx/2,
-                         self.pmax[info["haxis"]]-dx/2, n[0])
-        yy = np.linspace(self.pmin[info["vaxis"]]+dy/2,
-                         self.pmax[info["vaxis"]]-dy/2, n[1])
-
-        for x in xx:
-            for y in yy:
-                point = [None, None, None]
-                point[info["slice"]] = info["point"]
-                point[info["haxis"]] = x
-                point[info["vaxis"]] = y
-                yield tuple(point)
+        for x, y in itertools.product(haxis, vaxis):
+            point = [None, None, None]
+            point[info["slice"]] = info["point"]
+            point[info["haxis"]] = x
+            point[info["vaxis"]] = y
+            yield tuple(point)
 
     def plot(self):
         """Plots the mesh domain and the discretisation cell.
