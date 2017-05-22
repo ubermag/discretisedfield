@@ -595,12 +595,12 @@ class Mesh:
         if n is None:
             n = (self.n[info["haxis"]], self.n[info["vaxis"]])
 
-        xx = np.linspace(self.pmin[info["haxis"]]+self.cell[info["haxis"]]/2,
-                         self.pmax[info["haxis"]]-self.cell[info["haxis"]]/2,
-                         n[0])
-        yy = np.linspace(self.pmin[info["vaxis"]]+self.cell[info["vaxis"]]/2,
-                         self.pmax[info["vaxis"]]-self.cell[info["vaxis"]]/2,
-                         n[1])
+        dx, dy = self.l[info["haxis"]]/n[0], self.l[info["vaxis"]]/n[1]
+
+        xx = np.linspace(self.pmin[info["haxis"]]+dx/2,
+                         self.pmax[info["haxis"]]-dx/2, n[0])
+        yy = np.linspace(self.pmin[info["vaxis"]]+dy/2,
+                         self.pmax[info["vaxis"]]-dy/2, n[1])
 
         for x in xx:
             for y in yy:
