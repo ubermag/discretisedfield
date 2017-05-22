@@ -259,13 +259,13 @@ class Field(dfu.Field):
             extension = []
         return list(self.__dict__.keys()) + extension
 
-    def plane_slice(self, *args, x=None, y=None, z=None, n=None):
+    def plane(self, *args, x=None, y=None, z=None, n=None):
         for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):
             yield point, self.__call__(point)
 
-    def plot_slice(self, *args, x=None, y=None, z=None, n=None, ax=None):
+    def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
-        data = list(self.plane_slice(*args, x=x, y=y, z=z, n=n))
+        data = list(self.plane(*args, x=x, y=y, z=z, n=n))
         ps, vs = list(zip(*data))
         points = list(zip(*ps))
         values = list(zip(*vs))
@@ -317,7 +317,7 @@ class Field(dfu.Field):
         vtkdata.cell_data.append(pyvtk.Vectors(vectors, self.name))
         for i, component in enumerate(dfu.axesdict.keys()):
             name = "{}_{}".format(self.name, component)
-            vtkdata.cell_data.append(pyvtk.Scalars(zip(*vectors)[i], name))
+            vtkdata.cell_data.append(pyvtk.Scalars(list(zip(*vectors))[i], name))
 
         vtkdata.tofile(filename)
 
