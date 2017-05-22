@@ -40,17 +40,17 @@ class Field(metaclass=abc.ABCMeta):
     def __dir__(self): pass  # pragma: no cover
 
     @abc.abstractmethod
-    def plane_slice(self, *args, x=None, y=None, z=None, n=None):
+    def plane(self, *args, x=None, y=None, z=None, n=None):
         pass  # pragma: no cover
 
     @abc.abstractmethod
-    def plot_slice(self, *args, x=None, y=None, z=None, n=None):
+    def plot_plane(self, *args, x=None, y=None, z=None, n=None):
         pass  # pragma: no cover
 
     @abc.abstractmethod
     def write(self, filename, **kwargs): pass  # pragma: no cover
 
-    def line_intersection(self, p1, p2, n=100):
+    def line(self, p1, p2, n=100):
         """Slice the field along the line between `p1` and `p2`"""
         ds, points, values = [], [], []
         for parameter, point in self.mesh.line(p1, p2, n=n):
@@ -60,7 +60,7 @@ class Field(metaclass=abc.ABCMeta):
 
         return ds, values
 
-    def plot_line_intersection(self, p1, p2, n=100):
+    def plot_line(self, p1, p2, n=100):
         # Plot schematic representation of intersection.
         fig = plt.figure()
         ax = fig.add_subplot(211, projection="3d")
@@ -72,7 +72,7 @@ class Field(metaclass=abc.ABCMeta):
 
         # Plot field along line.
         ax = fig.add_subplot(212)
-        d, v = self.line_intersection(p1, p2, n=n)
+        d, v = self.line(p1, p2, n=n)
         ax.set(xlabel=r"$d$", ylabel=r"$v$")
         ax.grid()
         ax.plot(d, v)
