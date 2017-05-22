@@ -1,6 +1,7 @@
 import os
 import random
 import pytest
+import itertools
 import numpy as np
 import discretisedfield as df
 import matplotlib
@@ -109,27 +110,25 @@ class TestField:
             assert "name=" in rstr
 
     def test_set_with_constant(self):
-        for value in self.constant_values:
-            for f in self.scalar_fs:
-                f.value = value
+        for value, f in itertools.product(self.constant_values, self.scalar_fs):
+            f.value = value
 
-                # Check all values.
-                assert np.all(f.value == value)
+            # Check all values.
+            assert np.all(f.value == value)
 
-                # Check with sampling.
-                assert np.all(f(f.mesh.random_point()) == value)
+            # Check with sampling.
+            assert np.all(f(f.mesh.random_point()) == value)
 
     def test_set_with_tuple_list_ndarray(self):
-        for value in self.tuple_values:
-            for f in self.vector_fs:
-                f.value = value
-                f.norm = 1
+        for value, f in itertools.product(self.tuple_values, self.vector_fs):
+            f.value = value
+            f.norm = 1
 
-                norm = np.linalg.norm(value)
-                for j in range(3):
-                    c = f.mesh.random_point()
-                    assert np.all(f.array[..., j] == value[j]/norm)
-                    assert np.all(f(c)[j] == value[j]/norm)
+            norm = np.linalg.norm(value)
+            for j in range(3):
+                c = f.mesh.random_point()
+                assert np.all(f.array[..., j] == value[j]/norm)
+                assert np.all(f(c)[j] == value[j]/norm)
 
     def test_norm_is_not_preserved(self):
         for f in self.vector_fs:
@@ -148,24 +147,22 @@ class TestField:
 
     def test_set_from_callable(self):
         # Test scalar fs.
-        for f in self.scalar_fs:
-            for pyfun in self.scalar_pyfuncs:
-                f.value = pyfun
+        for f, pyfun in itertools.product(self.scalar_fs, self.scalar_pyfuncs):
+            f.value = pyfun
 
-                for j in range(10):
-                    c = f.mesh.random_point()
-                    ev = pyfun(f.mesh.index2point(f.mesh.point2index(c)))
-                    assert f(c) == ev
+            for j in range(10):
+                c = f.mesh.random_point()
+                ev = pyfun(f.mesh.index2point(f.mesh.point2index(c)))
+                assert f(c) == ev
 
         # Test vector fields.
-        for f in self.vector_fs:
-            for pyfun in self.vector_pyfuncs:
-                f.value = pyfun
+        for f, pyfun in itertools.product(self.vector_fs, self.vector_pyfuncs):
+            f.value = pyfun
 
-                for j in range(10):
-                    c = f.mesh.random_point()
-                    ev = pyfun(f.mesh.index2point(f.mesh.point2index(c)))
-                    assert np.all(f(c) == ev)
+            for j in range(10):
+                c = f.mesh.random_point()
+                ev = pyfun(f.mesh.index2point(f.mesh.point2index(c)))
+                assert np.all(f(c) == ev)
 
     def test_set_exception(self):
         for f in self.vector_fs + self.scalar_fs:
@@ -249,12 +246,11 @@ class TestField:
                     assert np.all(abs(norm - norm_value) < 1e-12)
 
     def test_normalise_scalar_field_exception(self):
-        for f in self.scalar_fs:
-            for value in self.scalar_pyfuncs:
-                for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
-                    with pytest.raises(ValueError):
-                        f.norm = norm_value
-                        f.value = value
+        for f, value in itertools.product(self.scalar_fs, self.scalar_pyfuncs):
+            for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
+                with pytest.raises(ValueError):
+                    f.norm = norm_value
+                    f.value = value
 
     def test_line_intersection(self):
         mesh = df.Mesh((0, 0, 0), (10e-9, 10e-9, 10e-9), (1e-9, 1e-9, 1e-9))
