@@ -260,16 +260,16 @@ class TestField:
         mesh = df.Mesh((0, 0, 0), (10e-9, 10e-9, 10e-9), (1e-9, 1e-9, 1e-9))
         field = df.Field(mesh, value=(1, 2, 3))
 
-        d, v = field.line_intersection((0, 0, 1), (5e-9, 5e-9, 5e-9))
+        d, v = field.line(p1=(0, 0, 1e-9), p2=(5e-9, 5e-9, 5e-9))
 
         assert len(d) == 100
         assert len(v) == 100
 
-    def test_line_intersection(self):
+    def test_plot_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
-        fig = f.plot_line_intersection((1, 0, 0), (0, 0, 0), n=10)
+        fig = f.plot_line(p1=(1, 0, 0), p2=(0, 0, 0), n=10)
 
     def test_write_read_ovf_file_text(self):
         tol = 1e-12
