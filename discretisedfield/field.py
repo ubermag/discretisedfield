@@ -263,18 +263,12 @@ class Field(dfu.Field):
         for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):
             yield point, self.__call__(point)
 
-    def plot_slice(self, *args, x=None, y=None, z=None, n=None,
-                   ax=None):
+    def plot_slice(self, *args, x=None, y=None, z=None, n=None, ax=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
         data = list(self.plane_slice(*args, x=x, y=y, z=z, n=n))
         ps, vs = list(zip(*data))
         points = list(zip(*ps))
         values = list(zip(*vs))
-
-        if not any(values[info["haxis"]] + values[info["vaxis"]]):
-            kwargs = {"scale": 1}
-        else:
-            kwargs = {}
 
         if n is None:
             n = (self.mesh.n[info["haxis"]], self.mesh.n[info["vaxis"]])
@@ -283,12 +277,21 @@ class Field(dfu.Field):
             fig = plt.figure()
             ax = fig.add_subplot(111)
 
-        imshowdata = np.array(values[info["slice"]]).reshape(n).T
+        if self.dim > 1:
+            imshowdata = np.array(values[info["slice"]]).reshape(n).T
+        else:
+            imshowdata = np.array(values).reshape(n).T
         extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
                   self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
-
         ax, imax = dfu.addimshow(ax, imshowdata, extent=extent)
-        ax = dfu.addquiver(ax, points, values, info, colour=False, **kwargs)
+        
+        if self.dim > 1:
+            if not any(values[info["haxis"]] + values[info["vaxis"]]):
+                kwargs = {"scale": 1}
+            else:
+                kwargs = {}
+            ax = dfu.addquiver(ax, points, values, info, colour=False, **kwargs)
+
         ax, cbar = dfu.addcolorbar(ax, imax)
 
         ax.set_xlabel(list(dfu.axesdict.keys())[info["haxis"]])
