@@ -601,7 +601,7 @@ class Mesh:
                             self.pmax[info["vaxis"]]-dvaxis/2, n[1])
 
         for x, y in itertools.product(haxis, vaxis):
-            point = [None, None, None]
+            point = 3*[None]
             point[info["slice"]] = info["point"]
             point[info["haxis"]] = x
             point[info["vaxis"]] = y
