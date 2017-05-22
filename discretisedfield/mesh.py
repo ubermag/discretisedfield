@@ -309,8 +309,10 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.coordinates`
 
         """
-        for index in itertools.product(*map(range, self.n)):
-            yield index
+        for k in range(self.n[2]):
+            for j in range(self.n[1]):
+                for i in range(self.n[0]):
+                    yield (i, j, k)
 
     @property
     def coordinates(self):
@@ -345,8 +347,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
 
         """
-        for i in self.indices:
-            yield self.index2point(i)
+        for index in self.indices:
+            yield self.index2point(index)
 
     def __repr__(self):
         """Mesh representation.
