@@ -281,8 +281,7 @@ class TestMesh:
         for arg in self.valid_args:
             p1, p2, cell = arg
             mesh = df.Mesh(p1, p2, cell)
-
-            assert isinstance(mesh.plot(), matplotlib.figure.Figure)
+            mesh.plot()
 
     def test_indices(self):
         p1 = (0, 0, 0)

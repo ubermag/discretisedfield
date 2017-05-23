@@ -298,8 +298,6 @@ class Field(dfu.Field):
         ax.set_ylabel(list(dfu.axesdict.keys())[info["vaxis"]])
         cbar.set_label(list(dfu.axesdict.keys())[info["slice"]])
 
-        return ax
-
     def write(self, filename, **kwargs):
         if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):
             self._writeovf(filename, **kwargs)

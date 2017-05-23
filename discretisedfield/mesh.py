@@ -624,8 +624,6 @@ class Mesh:
         dfu.plot_box(ax, self.pmin, cell_point, "r-", linewidth=1)
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
-        return fig
-
     def _ipython_display_(self):
         """Jupyter notebook mesh representation.
 
@@ -633,7 +631,7 @@ class Mesh:
         :py:func:`~discretisedfield.Mesh.plot`.
 
         """
-        return self.plot()  # pragma: no cover
+        self.plot()  # pragma: no cover
 
     @property
     def _script(self):
