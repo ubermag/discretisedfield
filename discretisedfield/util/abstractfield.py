@@ -59,23 +59,3 @@ class Field(metaclass=abc.ABCMeta):
             values.append(self.__call__(point))
 
         return ds, values
-
-    def plot_line(self, p1, p2, n=100):
-        # Plot schematic representation of intersection.
-        fig = plt.figure()
-        ax = fig.add_subplot(211, projection="3d")
-        ax.set_aspect("equal")
-
-        plot_box(ax, self.mesh.pmin, self.mesh.pmax, "b-")
-        plot_line(ax, p1, p2, "ro-")
-        ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
-
-        # Plot field along line.
-        ax = fig.add_subplot(212)
-        d, v = self.line(p1, p2, n=n)
-        ax.set(xlabel=r"$d$", ylabel=r"$v$")
-        ax.grid()
-        ax.plot(d, v)
-        plt.close()
-
-        return fig
