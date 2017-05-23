@@ -52,10 +52,5 @@ class Field(metaclass=abc.ABCMeta):
 
     def line(self, p1, p2, n=100):
         """Slice the field along the line between `p1` and `p2`"""
-        ds, points, values = [], [], []
-        for parameter, point in self.mesh.line(p1, p2, n=n):
-            ds.append(parameter)
-            points.append(point)
-            values.append(self.__call__(point))
-
-        return ds, values
+        for point in self.mesh.line(p1, p2, n=n):
+            yield point, self.__call__(point)
