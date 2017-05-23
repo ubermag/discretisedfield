@@ -203,13 +203,10 @@ class Field(dfu.Field):
                 raise ValueError(msg)
 
             self._norm = Field(mesh=self.mesh, dim=1, value=val, name="norm")
-            self._normalise()
+            self.array /= np.linalg.norm(self.array, axis=self.dim)[..., None]
+            self.array *= self._norm.array
         else:
             self._norm = val
-
-    def _normalise(self):
-        self.array /= np.linalg.norm(self.array, axis=self.dim)[..., None]
-        self.array *= self._norm.array
 
     @property
     def average(self):
