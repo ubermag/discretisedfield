@@ -544,8 +544,8 @@ class Mesh:
            \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} -
            \\mathbf{p}_{1}}{n-1}
 
-        and this method yields :math:`|\\mathbf{r}_{i}|` and
-        :math:`\\mathbf{r}_{i}` in :math:`n` iterations.
+        and this method yields :math:`\\mathbf{r}_{i}` in :math:`n`
+        iterations.
 
         Parameters
         ----------
@@ -556,8 +556,8 @@ class Mesh:
 
         Yields
         ------
-            tuple of (float, tuple)
-                (:math:`|\\mathbf{r}_{i}|` and :math:`\\mathbf{r}_{i}`)
+            tuple
+                :math:`\\mathbf{r}_{i}`
 
         Raises
         ------
@@ -572,7 +572,7 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> tuple(mesh.line(p1=(0, 0, 0), p2=(2, 0, 0), n=2))
-        ((0.0, (0.0, 0.0, 0.0)), (2.0, (2.0, 0.0, 0.0)))
+        ((0.0, 0.0, 0.0), (2.0, 0.0, 0.0))
 
         """
         self._isoutside(p1)
@@ -581,7 +581,7 @@ class Mesh:
         p1, p2 = np.array(p1), np.array(p2)
         dl = (p2-p1) / (n-1)
         for i in range(n):
-            yield np.linalg.norm(i*dl), tuple(p1+i*dl)
+            yield tuple(p1+i*dl)
 
     def plane(self, *args, x=None, y=None, z=None, n=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
