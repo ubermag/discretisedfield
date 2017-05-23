@@ -101,12 +101,16 @@ class TestField:
             assert "dim=1" in rstr
             assert "mesh=" in rstr
             assert "name=" in rstr
+            assert rstr.startswith("<")
+            assert rstr.endswith(">")
 
         for f in self.vector_fs:
             rstr = repr(f)
             assert isinstance(rstr, str)
             assert "dim=3" in rstr
             assert "name=" in rstr
+            assert rstr.startswith("<")
+            assert rstr.endswith(">")
 
     def test_set_with_constant(self):
         for value, f in itertools.product(self.constant_values,
