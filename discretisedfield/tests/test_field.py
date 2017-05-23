@@ -110,7 +110,8 @@ class TestField:
             assert "name=" in rstr
 
     def test_set_with_constant(self):
-        for value, f in itertools.product(self.constant_values, self.scalar_fs):
+        for value, f in itertools.product(self.constant_values,
+                                          self.scalar_fs):
             f.value = value
 
             # Check all values.

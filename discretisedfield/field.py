@@ -284,13 +284,14 @@ class Field(dfu.Field):
         extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
                   self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
         ax, imax = dfu.addimshow(ax, imshowdata, extent=extent)
-        
+
         if self.dim > 1:
             if not any(values[info["haxis"]] + values[info["vaxis"]]):
                 kwargs = {"scale": 1}
             else:
                 kwargs = {}
-            ax = dfu.addquiver(ax, points, values, info, colour=False, **kwargs)
+            ax = dfu.addquiver(ax, points, values, info,
+                               colour=False, **kwargs)
 
         ax, cbar = dfu.addcolorbar(ax, imax)
 
@@ -315,7 +316,8 @@ class Field(dfu.Field):
         vtkdata.cell_data.append(pyvtk.Vectors(vectors, self.name))
         for i, component in enumerate(dfu.axesdict.keys()):
             name = "{}_{}".format(self.name, component)
-            vtkdata.cell_data.append(pyvtk.Scalars(list(zip(*vectors))[i], name))
+            vtkdata.cell_data.append(pyvtk.Scalars(list(zip(*vectors))[i],
+                                                   name))
 
         vtkdata.tofile(filename)
 
