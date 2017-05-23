@@ -309,10 +309,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.coordinates`
 
         """
-        for k in range(self.n[2]):
-            for j in range(self.n[1]):
-                for i in range(self.n[0]):
-                    yield (i, j, k)
+        for k, j, i in itertools.product(*map(range, reversed(self.n))):
+            yield i, j, k
 
     @property
     def coordinates(self):
@@ -534,7 +532,7 @@ class Mesh:
                 raise ValueError(msg)
 
     def line(self, p1, p2, n=100):
-        """Line intersection generator.
+        """Line generator.
 
         Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n`
         position vectors are generated.
