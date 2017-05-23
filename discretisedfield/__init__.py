@@ -1,3 +1,5 @@
+import matplotlib as mpl
+mpl.use("agg")
 from .mesh import Mesh
 from .field import Field
 from .read import read
