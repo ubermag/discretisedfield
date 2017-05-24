@@ -309,8 +309,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.coordinates`
 
         """
-        for k, j, i in itertools.product(*map(range, reversed(self.n))):
-            yield i, j, k
+        for index in itertools.product(*map(range, reversed(self.n))):
+            yield tuple(reversed(index))
 
     @property
     def coordinates(self):

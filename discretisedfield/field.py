@@ -220,9 +220,8 @@ class Field(dfu.Field):
 
     def __repr__(self):
         """Representation method."""
-        rstr = ("<Field(mesh={}, dim={}, "
-                "name=\"{}\")>").format(repr(self.mesh), self.dim, self.name)
-        return rstr
+        rstr = "<Field(mesh={}, dim={}, name=\"{}\")>"
+        return rstr.format(repr(self.mesh), self.dim, self.name)
 
     def __call__(self, point):
         """Sample the field at `point`.
