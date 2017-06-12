@@ -401,8 +401,8 @@ class Mesh:
         .. note::
 
            In the example, ellipsis is used instead of an exact tuple
-           because the result differs each time the random_point
-           command command is run.
+           because the result differs each time the ``random_point``
+           is called.
 
         """
         return tuple(pmini+random.random()*li
