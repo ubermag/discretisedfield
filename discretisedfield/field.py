@@ -259,6 +259,53 @@ class Field(dfu.Field):
         for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):
             yield point, self.__call__(point)
 
+
+    def imshow(self, *args, x=None, y=None, z=None, n=None, ax=None, **kwargs):
+        info = dfu.plane_info(*args, x=x, y=y, z=z)
+        data = list(self.plane(*args, x=x, y=y, z=z, n=n))
+        ps, vs = list(zip(*data))
+        points = list(zip(*ps))
+        values = list(zip(*vs))
+
+        if n is None:
+            n = (self.mesh.n[info["haxis"]], self.mesh.n[info["vaxis"]])
+        
+        if not ax:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+
+        if self.dim > 1:
+            imshowdata = np.array(values[info["slice"]]).reshape(n).T
+        else:
+            imshowdata = np.array(values).reshape(n).T
+        extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
+                  self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
+        ax, imax = dfu.addimshow(ax, imshowdata, extent=extent, **kwargs)
+
+        ax, cbar = dfu.addcolorbar(ax, imax)
+
+        cbar.set_label(list(dfu.axesdict.keys())[info["slice"]])
+
+    def quiver(self, *args, x=None, y=None, z=None, n=None, ax=None,
+               colour=False, **kwargs):
+        info = dfu.plane_info(*args, x=x, y=y, z=z)
+        data = list(self.plane(*args, x=x, y=y, z=z, n=n))
+        ps, vs = list(zip(*data))
+        points = list(zip(*ps))
+        values = list(zip(*vs))
+
+        if n is None:
+            n = (self.mesh.n[info["haxis"]], self.mesh.n[info["vaxis"]])
+        
+        if not ax:
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+
+        if self.dim > 1:
+            if not any(values[info["haxis"]] + values[info["vaxis"]]):
+                kwargs["scale"] = 1
+            ax = dfu.addquiver(ax, points, values, info, colour=colour, **kwargs)
+
     def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
         data = list(self.plane(*args, x=x, y=y, z=z, n=n))

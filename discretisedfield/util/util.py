@@ -89,19 +89,27 @@ def plot_box(ax, p1, p2, *args, **kwargs):
     return ax
 
 
-def addimshow(ax, data, extent):
-    imax = ax.imshow(data, origin="lower", extent=extent)
+def addimshow(ax, data, extent, **kwargs):
+    imax = ax.imshow(data, origin="lower", extent=extent, **kwargs)
     return ax, imax
 
 
 def addquiver(ax, points, values, info, colour=False, **kwargs):
-    ax.quiver(points[info["haxis"]],
-              points[info["vaxis"]],
-              values[info["haxis"]],
-              values[info["vaxis"]],
-              # values[info["slice"]],
-              pivot='mid',
-              **kwargs)
+    if not colour:
+        ax.quiver(points[info["haxis"]],
+                  points[info["vaxis"]],
+                  values[info["haxis"]],
+                  values[info["vaxis"]],
+                  pivot='mid',
+                  **kwargs)
+    else:
+        ax.quiver(points[info["haxis"]],
+                  points[info["vaxis"]],
+                  values[info["haxis"]],
+                  values[info["vaxis"]],
+                  values[info["slice"]],
+                  pivot='mid',
+                  **kwargs)
     return ax
 
 
