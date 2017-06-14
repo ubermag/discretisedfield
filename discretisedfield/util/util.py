@@ -86,25 +86,6 @@ def plot_box(ax, p1, p2, *args, **kwargs):
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
 
 
-def addquiver(ax, points, values, info, colour=False, **kwargs):
-    if not colour:
-        ax.quiver(points[info["haxis"]],
-                  points[info["vaxis"]],
-                  values[info["haxis"]],
-                  values[info["vaxis"]],
-                  pivot='mid',
-                  **kwargs)
-    else:
-        ax.quiver(points[info["haxis"]],
-                  points[info["vaxis"]],
-                  values[info["haxis"]],
-                  values[info["vaxis"]],
-                  values[info["slice"]],
-                  pivot='mid',
-                  **kwargs)
-    return ax
-
-
 def addcolorbar(ax, imax):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="3%", pad=0.05)

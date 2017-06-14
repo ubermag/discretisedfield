@@ -269,7 +269,7 @@ class Field(dfu.Field):
         if n is None:
             n = (self.mesh.n[info["haxis"]], self.mesh.n[info["vaxis"]])
 
-        if not ax:
+        if ax is None:
             fig = plt.figure()
             ax = fig.add_subplot(111)
 
@@ -279,27 +279,38 @@ class Field(dfu.Field):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
                                                       n=n, ax=ax)
 
-        if self.dim > 1:
-            imshowdata = np.array(values[info["slice"]]).reshape(n).T
-        else:
-            imshowdata = np.array(values).reshape(n).T
         extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
                   self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
-        imax = ax.imshow(imshowdata, origin="lower", extent=extent, **kwargs)
+        imax = ax.imshow(np.array(values).reshape(n).T, origin="lower",
+                         extent=extent, **kwargs)
 
         ax, cbar = dfu.addcolorbar(ax, imax)
 
         cbar.set_label(list(dfu.axesdict.keys())[info["slice"]])
 
     def quiver(self, *args, x=None, y=None, z=None, n=None, ax=None,
-               colour=False, **kwargs):
+               colour=None, **kwargs):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
                                                       n=n, ax=ax)
 
-        if self.dim > 1:
-            if not any(values[info["haxis"]] + values[info["vaxis"]]):
-                kwargs["scale"] = 1
-            dfu.addquiver(ax, points, values, info, colour=colour, **kwargs)
+        if not any(values[info["haxis"]] + values[info["vaxis"]]):
+            kwargs["scale"] = 1
+
+        if colour is None:
+            ax.quiver(points[info["haxis"]],
+                      points[info["vaxis"]],
+                      values[info["haxis"]],
+                      values[info["vaxis"]],
+                      pivot='mid',
+                      **kwargs)
+        elif colour in dfu.axesdict.keys():
+            ax.quiver(points[info["haxis"]],
+                      points[info["vaxis"]],
+                      values[info["haxis"]],
+                      values[info["vaxis"]],
+                      values[dfu.axesdict[colour]],
+                      pivot='mid',
+                      **kwargs)
 
     def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
@@ -318,8 +329,13 @@ class Field(dfu.Field):
                 kwargs = {"scale": 1}
             else:
                 kwargs = {}
-            ax = dfu.addquiver(ax, points, values, info,
-                               colour=False, **kwargs)
+
+            ax.quiver(points[info["haxis"]],
+                  points[info["vaxis"]],
+                  values[info["haxis"]],
+                  values[info["vaxis"]],
+                  pivot='mid',
+                  **kwargs)
 
         ax, cbar = dfu.addcolorbar(ax, imax)
 
