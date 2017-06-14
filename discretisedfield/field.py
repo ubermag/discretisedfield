@@ -297,51 +297,29 @@ class Field(dfu.Field):
             kwargs["scale"] = 1
 
         if colour is None:
-            ax.quiver(points[info["haxis"]],
-                      points[info["vaxis"]],
-                      values[info["haxis"]],
-                      values[info["vaxis"]],
-                      pivot='mid',
-                      **kwargs)
+            ax.quiver(points[info["haxis"]], points[info["vaxis"]],
+                      values[info["haxis"]], values[info["vaxis"]],
+                      pivot='mid', **kwargs)
         elif colour in dfu.axesdict.keys():
-            ax.quiver(points[info["haxis"]],
-                      points[info["vaxis"]],
-                      values[info["haxis"]],
-                      values[info["vaxis"]],
+            ax.quiver(points[info["haxis"]], points[info["vaxis"]],
+                      values[info["haxis"]], values[info["vaxis"]],
                       values[dfu.axesdict[colour]],
-                      pivot='mid',
-                      **kwargs)
+                      pivot='mid', **kwargs)
 
     def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
                                                       n=n, ax=ax)
 
         if self.dim > 1:
-            imshowdata = np.array(values[info["slice"]]).reshape(n).T
+            self.quiver(*args, x=x, y=y, z=z, n=n, ax=ax)
+            scalar_field = getattr(self, list(dfu.axesdict.keys())[info["slice"]])
         else:
-            imshowdata = np.array(values).reshape(n).T
-        extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
-                  self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
-        imax = ax.imshow(imshowdata, origin="lower", extent=extent)
+            scalar_field = self
 
-        if self.dim > 1:
-            if not any(values[info["haxis"]] + values[info["vaxis"]]):
-                kwargs = {"scale": 1}
-            else:
-                kwargs = {}
-
-            ax.quiver(points[info["haxis"]],
-                  points[info["vaxis"]],
-                  values[info["haxis"]],
-                  values[info["vaxis"]],
-                  pivot='mid',
-                  **kwargs)
-
-        ax, cbar = dfu.addcolorbar(ax, imax)
+        scalar_field.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
 
         ax.set_xlabel(list(dfu.axesdict.keys())[info["haxis"]])
         ax.set_ylabel(list(dfu.axesdict.keys())[info["vaxis"]])
-        cbar.set_label(list(dfu.axesdict.keys())[info["slice"]])
 
     def write(self, filename, **kwargs):
         if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):
