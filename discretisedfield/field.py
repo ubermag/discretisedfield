@@ -5,6 +5,7 @@ import joommfutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 @ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
@@ -274,7 +275,7 @@ class Field(dfu.Field):
             ax = fig.add_subplot(111)
 
         return info, points, values, n, ax
-        
+
     def imshow(self, *args, x=None, y=None, z=None, n=None, ax=None, **kwargs):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
                                                       n=n, ax=ax)
@@ -284,9 +285,7 @@ class Field(dfu.Field):
         imax = ax.imshow(np.array(values).reshape(n).T, origin="lower",
                          extent=extent, **kwargs)
 
-        ax, cbar = dfu.addcolorbar(ax, imax)
-
-        cbar.set_label(list(dfu.axesdict.keys())[info["slice"]])
+        return imax
 
     def quiver(self, *args, x=None, y=None, z=None, n=None, ax=None,
                colour=None, **kwargs):
@@ -297,14 +296,23 @@ class Field(dfu.Field):
             kwargs["scale"] = 1
 
         if colour is None:
-            ax.quiver(points[info["haxis"]], points[info["vaxis"]],
-                      values[info["haxis"]], values[info["vaxis"]],
-                      pivot='mid', **kwargs)
+            qvax = ax.quiver(points[info["haxis"]], points[info["vaxis"]],
+                             values[info["haxis"]], values[info["vaxis"]],
+                             pivot='mid', **kwargs)
         elif colour in dfu.axesdict.keys():
-            ax.quiver(points[info["haxis"]], points[info["vaxis"]],
-                      values[info["haxis"]], values[info["vaxis"]],
-                      values[dfu.axesdict[colour]],
-                      pivot='mid', **kwargs)
+            qvax = ax.quiver(points[info["haxis"]], points[info["vaxis"]],
+                             values[info["haxis"]], values[info["vaxis"]],
+                             values[dfu.axesdict[colour]],
+                             pivot='mid', **kwargs)
+
+        return qvax
+
+    def colorbar(self, ax, colouredplot, cax=None, **kwargs):
+        if cax is None:
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.1)
+
+        plt.colorbar(colouredplot, cax=cax, **kwargs)
 
     def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
@@ -312,11 +320,12 @@ class Field(dfu.Field):
 
         if self.dim > 1:
             self.quiver(*args, x=x, y=y, z=z, n=n, ax=ax)
-            scalar_field = getattr(self, list(dfu.axesdict.keys())[info["slice"]])
+            scfield = getattr(self, list(dfu.axesdict.keys())[info["slice"]])
         else:
-            scalar_field = self
+            scfield = self
 
-        scalar_field.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
+        colouredplot = scfield.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
+        self.colorbar(ax, colouredplot)
 
         ax.set_xlabel(list(dfu.axesdict.keys())[info["haxis"]])
         ax.set_ylabel(list(dfu.axesdict.keys())[info["vaxis"]])
