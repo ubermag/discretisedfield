@@ -65,7 +65,7 @@ class Mesh:
     >>> import discretisedfield as df
     >>> p1 = (-25, 3, 0)
     >>> p2 = (25, 6, 1)
-    >>> cell = (5, 3, 0.3)
+    >>> cell = (5, 3, 0.4)
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
     Traceback (most recent call last):
         ...
@@ -78,17 +78,10 @@ class Mesh:
         self.cell = tuple(cell)
         self.name = name
 
-        # Is the length of any mesh domain edge zero?
+        # Is the length of any mesh domain edges zero?
         for i, li in enumerate(self.l):
             if li == 0:
                 msg = "Mesh domain edge length is zero (l[{}]==0).".format(i)
-                raise ValueError(msg)
-
-        # Is the discretisation cell greater than the mesh domain?
-        for i, (li, celli) in enumerate(zip(self.l, self.cell)):
-            if celli > li:
-                msg = ("Discretisation cell is greater than the mesh domain: "
-                       "cell[{0}] > abs(p2[{0}]-p1[{0}]).").format(i)
                 raise ValueError(msg)
 
         # Is the mesh domain not an aggregate of discretisation cells?
