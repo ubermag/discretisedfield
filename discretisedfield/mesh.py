@@ -127,7 +127,7 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmax`
 
         """
-        return tuple(min(coords) for coords in zip(self.p1, self.p2))
+        return tuple(map(min, zip(self.p1, self.p2)))
 
     @property
     def pmax(self):
@@ -164,7 +164,7 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmin`
 
         """
-        return tuple(max(coords) for coords in zip(self.p1, self.p2))
+        return tuple(map(max, zip(self.p1, self.p2)))
 
     @property
     def l(self):
