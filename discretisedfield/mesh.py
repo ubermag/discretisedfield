@@ -238,7 +238,7 @@ class Mesh:
     def centre(self):
         """Mesh domain centre point.
 
-        This point does not necessarily coincides with the
+        This point does not necessarily coincide with the
         discretisation cell centre. It is computed as the middle point
         between minimum and maximum coordinate :math:`p_{c}^{i} =
         p_\\text{min}^{i} + 0.5l^{i}`, where :math:`p_\\text{min}^{i}`
@@ -371,12 +371,12 @@ class Mesh:
                 "name=\"{}\")").format(self.p1, self.p2, self.cell, self.name)
 
     def random_point(self):
-        """Generate the random point inside the mesh.
+        """Generate the random point belonging to the mesh.
 
         Returns
         -------
         tuple (3,)
-            Coordinates of a random point inside the mesh
+            Coordinates of a random point inside that belongs to the mesh
             :math:`(x_\\text{rand}, y_\\text{rand}, z_\\text{rand})`.
 
         Example
