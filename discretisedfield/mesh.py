@@ -402,7 +402,7 @@ class Mesh:
                      for pmini, li in zip(self.pmin, self.l))
 
     def index2point(self, index):
-        """Convert the cell index to its coordinate.
+        """Convert the cell index to its centre's coordinate.
 
         Parameters
         ----------

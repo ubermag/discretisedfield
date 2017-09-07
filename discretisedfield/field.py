@@ -12,7 +12,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
 class Field(dfu.Field):
-    """Finite Difference field
+    """Finite difference field
 
     This class defines a finite difference field and provides some
     basic operations. The field is defined on a finite difference mesh
@@ -30,7 +30,7 @@ class Field(dfu.Field):
         For more details, please refer to the `value` property.
     norm : numbers.Real, callable, optional
         For more details, please refer to the `norm` property.
-    name : str, optional, optional
+    name : str, optional
         Field name (the default is "field"). The field name must be a valid
         Python variable name string. More specifically, it must not
         contain spaces, or start with underscore or numeric character.
