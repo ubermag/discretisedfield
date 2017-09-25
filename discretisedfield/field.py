@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-@ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
+@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.UnsignedInt,
                name=ts.ObjectName)
 class Field(dfu.Field):
