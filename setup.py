@@ -14,6 +14,7 @@ setuptools.setup(
     author_email='jupyteroommf@gmail.com',
     packages=setuptools.find_packages(),
     install_requires=["hypothesis",
+                      "sphinx",
                       "joommfutil",
                       "matplotlib",
                       "pytest",
