@@ -15,6 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=["hypothesis",
                       "sphinx",
+                      "nbsphinx",
                       "joommfutil",
                       "matplotlib",
                       "pytest",
