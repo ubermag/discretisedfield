@@ -16,7 +16,7 @@ setuptools.setup(
     install_requires=["hypothesis",
                       "joommfutil",
                       "matplotlib",
-                      "pytest"
+                      "pytest",
                       "pyvtk"],
     classifiers=['Development Status :: 3 - Alpha',
                  'License :: OSI Approved :: BSD License',
