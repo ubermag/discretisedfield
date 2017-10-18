@@ -9,7 +9,7 @@ WORKDIR /usr/local
 #RUN git clone https://github.com/joommf/discretisedfield.git
 #RUN mkdir -p /usr/local/discretisedfield
 # guessing here cloned repository might be ...
-COPY ../discretisedfield/ /usr/local/discretisedfield/
-#COPY * /usr/local/discretisedfield/.
+COPY discretisedfield/ /usr/local/discretisedfield/
+COPY * /usr/local/discretisedfield/
 WORKDIR /usr/local/discretisedfield
 RUN python3 -m pip install .
