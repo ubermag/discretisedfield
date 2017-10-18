@@ -10,5 +10,7 @@ WORKDIR /usr/local
 #RUN mkdir -p /usr/local/discretisedfield
 # guessing here cloned repository might be ...
 COPY discretisedfield/ /usr/local/discretisedfield/
+COPY setup.py /usr/local/discretisedfield/.
+COPY Makefile /usr/local/discretisedfield/.
 WORKDIR /usr/local/discretisedfield
 RUN python3 -m pip install .
