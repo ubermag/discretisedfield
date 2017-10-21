@@ -7,5 +7,6 @@ RUN python3 -m pip install --upgrade pip pytest-cov hypothesis nbval \
 
 WORKDIR /usr/local
 COPY . /usr/local/discretisedfield/
+
+RUN python3 -m pip install /usr/local/discretisedfield
 WORKDIR /usr/local/discretisedfield
-RUN python3 -m pip install .
