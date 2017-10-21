@@ -6,7 +6,6 @@ RUN python3 -m pip install --upgrade pip pytest-cov hypothesis nbval \
       matplotlib pyvtk git+git://github.com/joommf/joommfutil.git
 
 WORKDIR /usr/local
-RUN git clone https://github.com/joommf/discretisedfield.git
+COPY . /usr/local/discretisedfield/
 WORKDIR /usr/local/discretisedfield
 RUN python3 -m pip install .
-
