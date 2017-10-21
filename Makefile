@@ -3,22 +3,30 @@ IPYNBPATH=docs/ipynb/*.ipynb
 CODECOVTOKEN=a96f2545-67ea-442e-a1b6-fdebc595cf52
 PYTHON?=python3
 
+# run all tests that can be found in source directories
 test:
 	$(PYTHON) -m pytest
 
+# run tests that users can activate via 'discretisedfield.test()'
 test-test:
 	$(PYTHON) -c "import discretisedfield as d; d.test()"
 
+# like 'test' but gather coverage
 test-coverage:
 	$(PYTHON) -m pytest --cov=$(PROJECT) --cov-config .coveragerc
 
+# NBVAL to check notebooks for regression
 test-ipynb:
 	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
 
+# run doctests (?)
 test-docs:
 	$(PYTHON) -m pytest --doctest-modules --ignore=$(PROJECT)/tests $(PROJECT)
 
+# do all ('test' is the same set of tests as 'test-coverage')
 test-all: test-test test-coverage test-ipynb test-docs
+
+
 
 upload-coverage: SHELL:=/bin/bash
 upload-coverage:
