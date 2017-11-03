@@ -9,7 +9,7 @@ test:
 
 # run tests that users can activate via 'discretisedfield.test()'
 test-test:
-	$(PYTHON) -c "import discretisedfield as d; d.test()"
+	$(PYTHON) -c "import sys; import discretisedfield as d; sys.exit(d.test())"
 
 # like 'test' but gather coverage
 test-coverage:
