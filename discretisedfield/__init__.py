@@ -7,4 +7,4 @@ from .read import read
 
 def test():
     import pytest  # pragma: no cover
-    pytest.main(["-v", "--pyargs", "discretisedfield"])  # pragma: no cover
+    return pytest.main(["-v", "--pyargs", "discretisedfield"])  # pragma: no cover
