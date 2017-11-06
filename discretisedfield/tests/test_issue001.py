@@ -3,14 +3,17 @@
 # This test may catch any warnings/print statements that are
 # unintentionally issued during import.
 
+import sys
+
 import subprocess
 import pytest
 
 
 def test_matplotlib_warning():
-    command = """python3 -c "import discretisedfield" """
+    executable = sys.executable
+    command = executable + """ -c "import discretisedfield" """
     status, output = subprocess.getstatusoutput(command)
-    
+
     # show output in case of failure, so we know what it is
     print(output)
 
