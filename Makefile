@@ -26,35 +26,19 @@ test-docs:
 # do all ('test' is the same set of tests as 'test-coverage')
 test-all: test-test test-coverage test-ipynb test-docs
 
-
-
 upload-coverage: SHELL:=/bin/bash
 upload-coverage:
 	bash <(curl -s https://codecov.io/bash) -t $(CODECOVTOKEN)
 
-# container image for 'discretisedfield.test()'
-docker-build1:
-	docker build -t dockertestimage1 -f docker/Dockerfile1 .
-
-# container image for all other tests
-docker-build2:
-	docker build -t dockertestimage2 -f docker/Dockerfile2 .
-
 travis-build: SHELL:=/bin/bash
 travis-build:
-	make docker-build1
-	docker run -e ci_env -ti -d --name testcontainer1 dockertestimage1
-	docker exec testcontainer1 make test-test
-	docker stop testcontainer1
-	docker rm testcontainer1
-
 	ci_env=`bash <(curl -s https://codecov.io/env)`
-	make docker-build2
-	docker run -e ci_env -ti -d --name testcontainer2 dockertestimage2
-	docker exec testcontainer2 make test-all
-	docker exec testcontainer2 make upload-coverage
-	docker stop testcontainer2
-	docker rm testcontainer2
+	docker build -t dockertestimage .
+	docker run -e ci_env -ti -d --name testcontainer dockertestimage
+	docker exec testcontainer make test-test
+	docker exec testcontainer make upload-coverage
+	docker stop testcontainer
+	docker rm testcontainer
 
 test-docker:
 	make travis-build
