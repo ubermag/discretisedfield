@@ -198,16 +198,27 @@ class TestMesh:
             for i in range(3):
                 assert mesh.pmin[i] <= p[i] <= mesh.pmax[i]
 
-    def test_repr(self):
+    def test_repr_no_pbc(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        pbc = "z"
+        name = "meshname"
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+
+        rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
+                "cell=(1, 0.1, 0.5), pbc=None, name=\"meshname\")")
+        assert repr(mesh) == rstr
+
+    def test_repr_pbc(self):
+        p1 = (-1, -4, 11)
+        p2 = (15, 10.1, 12.5)
+        cell = (1, 0.1, 0.5)
+        pbc = "zyx"
         name = "meshname"
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
 
         rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
-                "cell=(1, 0.1, 0.5), pbc={\'z\'}, name=\"meshname\")")
+                "cell=(1, 0.1, 0.5), pbc=\"xyz\", name=\"meshname\")")
         assert repr(mesh) == rstr
 
     def test_index2point(self):

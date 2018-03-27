@@ -374,9 +374,13 @@ class Mesh:
         'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc="xy", name="m")'
 
         """
+        if self.pbc is not None:
+            pbc = "\"{}\"".format("".join(sorted(self.pbc)))
+        else:
+            pbc = self.pbc
         return ("Mesh(p1={}, p2={}, cell={}, pbc={}, "
                 "name=\"{}\")").format(self.p1, self.p2, self.cell,
-                                       self.pbc, self.name)
+                                       pbc, self.name)
 
     def random_point(self):
         """Generate the random point belonging to the mesh.

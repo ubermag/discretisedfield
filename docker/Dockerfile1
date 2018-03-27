@@ -13,6 +13,8 @@ RUN python3 -m pip install --upgrade pip
 
 COPY . /usr/local/discretisedfield/
 
+RUN python3 -m pip install --upgrade \
+      git+git://github.com/joommf/joommfutil.git
 RUN python3 -m pip install /usr/local/discretisedfield
 
 # CD into directory to have Makefile available
