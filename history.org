@@ -1,7 +1,0 @@
-* Version on PyPI
-
-** 0.7
-
-*** 0.7.6
-- fix https://github.com/joommf/discretisedfield/issues/43 Name of python interpreter across OS
-- add this history.org file
