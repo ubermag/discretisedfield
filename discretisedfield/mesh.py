@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 @ts.typesystem(p1=ts.ConstantRealVector(size=3),
                p2=ts.ConstantRealVector(size=3),
                cell=ts.ConstantPositiveRealVector(size=3),
+               pbc=ts.FromCombinations(sample_set="xyz"),
                name=ts.ConstantObjectName)
 class Mesh:
     """Finite difference rectangular mesh.
@@ -35,6 +36,10 @@ class Mesh:
         p_{y}, p_{z})`.
     cell : (3,) array_like
         Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`.
+    pbc : str, optional
+        Periodic boundary conditions in x, y, or z direction. Its value
+        is a string consisting of one or more of the letters `x`, `y`,
+        or ``z, denoting the periodic direction(s).
     name : str, optional
         Mesh name (the default is "mesh"). The mesh name must be a valid
         Python variable name string. More specifically, it must not
@@ -55,7 +60,7 @@ class Mesh:
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> cell = (1e-9, 1e-9, 0.1e-9)
     >>> name = "mesh_name"
-    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc="xy", name=name)
 
     2. An attempt to create a mesh with invalid parameters, so that
     the ``ValueError`` is raised. In this example, the mesh domain is
@@ -72,10 +77,11 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, cell, name="mesh"):
+    def __init__(self, p1, p2, cell, pbc=None, name="mesh"):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.cell = tuple(cell)
+        self.pbc = pbc
         self.name = name
 
         # Is the length of any mesh domain edges zero?
@@ -361,14 +367,16 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
-        >>> name = "mesh_name"
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+        >>> pbc = "xy"
+        >>> name = "m"
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
         >>> repr(mesh)
-        'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), name="mesh_name")'
+        'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc="xy", name="m")'
 
         """
-        return ("Mesh(p1={}, p2={}, cell={}, "
-                "name=\"{}\")").format(self.p1, self.p2, self.cell, self.name)
+        return ("Mesh(p1={}, p2={}, cell={}, pbc={}, "
+                "name=\"{}\")").format(self.p1, self.p2, self.cell,
+                                       self.pbc, self.name)
 
     def random_point(self):
         """Generate the random point belonging to the mesh.

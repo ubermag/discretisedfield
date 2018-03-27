@@ -50,8 +50,9 @@ class TestMesh:
         p1 = (0, -4, 16.5)
         p2 = (15, 10.1, 11)
         cell = (1, 0.1, 0.5)
+        pbc = 'y'
         name = "test_mesh"
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
 
         assert isinstance(mesh.p1, tuple)
         assert mesh.p1 == p1
@@ -59,6 +60,8 @@ class TestMesh:
         assert mesh.p2 == p2
         assert isinstance(mesh.cell, tuple)
         assert mesh.cell == cell
+        assert isinstance(mesh.pbc, set)
+        assert mesh.pbc == set(pbc)
         assert isinstance(mesh.name, str)
         assert mesh.name == name
         assert isinstance(mesh.pmin, tuple)
@@ -109,6 +112,19 @@ class TestMesh:
                 # Exception is raised by the descriptor (mesh.name).
                 mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10),
                                cell=(1, 1, 1), name=name)
+
+    def test_init_valid_pbc(self):
+        for pbc in ["x", "z", "zx", "yxzz", "yz"]:
+            mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10),
+                           cell=(1, 1, 1), pbc=pbc)
+            assert mesh.pbc == set(pbc)
+
+    def test_init_invalid_pbc(self):
+        for pbc in ["abc", "a", "123", 5]:
+            with pytest.raises(TypeError):
+                # Exception is raised by the descriptor (mesh.pbc).
+                mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10),
+                               cell=(1, 1, 1), pbc=pbc)
 
     def test_zero_domain_edge_length(self):
         args = [[(0, 100e-9, 1e-9),
@@ -186,11 +202,12 @@ class TestMesh:
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
+        pbc = "z"
         name = "meshname"
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
 
         rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
-                "cell=(1, 0.1, 0.5), name=\"meshname\")")
+                "cell=(1, 0.1, 0.5), pbc={\'z\'}, name=\"meshname\")")
         assert repr(mesh) == rstr
 
     def test_index2point(self):
