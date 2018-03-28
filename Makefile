@@ -3,22 +3,22 @@ IPYNBPATH=docs/ipynb/*.ipynb
 CODECOVTOKEN=a96f2545-67ea-442e-a1b6-fdebc595cf52
 PYTHON?=python3
 
+test-all: test test-test test-coverage test-docs test-ipynb
+
 test:
 	$(PYTHON) -m pytest
 
 test-test:
-	$(PYTHON) -c "import sys; import discretisedfield as d; sys.exit(d.test())"
+	$(PYTHON) -c "import sys; import $(PROJECT); sys.exit($(PROJECT).test())"
 
 test-coverage:
 	$(PYTHON) -m pytest --cov=$(PROJECT) --cov-config .coveragerc
 
-test-ipynb:
-	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
-
 test-docs:
 	$(PYTHON) -m pytest --doctest-modules --ignore=$(PROJECT)/tests $(PROJECT)
 
-test-all: test-test test-coverage test-ipynb test-docs
+test-ipynb:
+	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
 
 upload-coverage: SHELL:=/bin/bash
 upload-coverage:
