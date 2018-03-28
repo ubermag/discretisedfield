@@ -1,4 +1,5 @@
 import os
+import types
 import random
 import pytest
 import itertools
@@ -256,6 +257,35 @@ class TestField:
                     f.norm = norm_value
                     f.value = value
 
+    def test_norm_zero_field_exception(self):
+        for f in self.vector_fs:
+            f.value = (0, 0, 0)
+            with pytest.raises(ValueError):
+                f.norm = 1
+
+    def test_get_vector_field_component(self):
+        for f in self.vector_fs:
+            f.value = (1, 2, 3)
+            assert f.x.dim == 1
+            assert np.all(f.x.array == 1)
+            assert f.y.dim == 1
+            assert np.all(f.y.array == 2)
+            assert f.z.dim == 1
+            assert np.all(f.z.array == 3)
+
+    def test_get_attr(self):
+        for f in self.vector_fs:
+            f.value = (1, 2, 3)
+            with pytest.raises(AttributeError):
+                f.__getattr__("nonexisting_attribute")
+            
+    def test_dir(self):
+        for f in self.vector_fs:
+            f.value = (1, 2, 3)
+            assert "x" in f.__dir__()
+            assert "y" in f.__dir__()
+            assert "z" in f.__dir__()
+            
     def test_line(self):
         mesh = df.Mesh((0, 0, 0), (10e-9, 10e-9, 10e-9), (1e-9, 1e-9, 1e-9))
         field = df.Field(mesh, value=(1, 2, 3))
@@ -265,6 +295,17 @@ class TestField:
 
         assert len(p) == 100
         assert len(v) == 100
+
+    def test_plane(self):
+        for f in self.vector_fs:
+            assert isinstance(f.plane("x"), types.GeneratorType)
+
+
+    def test_plot_plane(self):
+        for f in self.vector_fs:
+            f.plot_plane("x")
+            f.plot_plane("y")
+            f.plot_plane("z")
 
     def test_write_read_ovf_file_text(self):
         tol = 1e-12
@@ -319,5 +360,15 @@ class TestField:
             assert f.mesh.cell == f_loaded.mesh.cell
             assert f.mesh.cell == f_loaded.mesh.cell
             assert np.all(abs(f.value - f_loaded.value) < tol)
+
+            os.system("rm {}".format(filename))
+
+    def test_write_vtk_file(self):
+        tol = 1e-12
+        filename = "test_write_vtk_file.vtk"
+        value = (1e-3 + np.pi, -5, 6)
+        for f in self.vector_fs:
+            f.value = value
+            f.write(filename)
 
             os.system("rm {}".format(filename))
