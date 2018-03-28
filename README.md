@@ -1,15 +1,17 @@
-[![Build Status](https://travis-ci.org/joommf/discretisedfield.svg?branch=master)](https://travis-ci.org/joommf/discretisedfield)
-[![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest)
-[![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield)
-[![codecov](https://codecov.io/gh/joommf/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/joommf/discretisedfield)
-[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-
 # discretisedfield
-
 Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, and Hans Fangohr<sup>1,2</sup>
 
 <sup>1</sup> European XFEL GmbH, Holzkoppel 4, 22869 Schenefeld, Germany  
 <sup>2</sup> Faculty of Engineering and the Environment, University of Southampton, Southampton SO17 1BJ, United Kingdom  
+
+| Description | Badge |
+| --- | --- |
+| Latest release | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
+|                | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
+| License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
+| Build | [![Build Status](https://travis-ci.org/joommf/discretisedfield.svg?branch=master)](https://travis-ci.org/joommf/discretisedfield) |
+| Coverage | [![codecov](https://codecov.io/gh/joommf/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/joommf/discretisedfield) |
+| Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
 
 ## About
 
