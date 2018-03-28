@@ -1,6 +1,7 @@
+import codecs
 import setuptools
 
-with open("README.md") as f:
+with codecs.open("README.md") as f:
     readme = f.read()
 
 setuptools.setup(
