@@ -1,3 +1,9 @@
 .cache
 .hypothesis
-
+.coverage
+.pytest_cache/
+.ipynb_checkpoints/
+build/
+dist/
+discretisedfield.egg-info/
+__pycache__/
