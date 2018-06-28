@@ -1,4 +1,5 @@
 import struct
+import numpy as np
 from .mesh import Mesh
 from .field import Field
 
@@ -14,22 +15,19 @@ def read(filename, norm=None, name="field"):
             lines = f.split("\n")
 
         mdatalines = filter(lambda s: s.startswith("#"), lines)
-        datalines = filter(lambda s: not s.startswith("#"), lines)
+        datalines = np.loadtxt(filter(lambda s: not s.startswith("#"), lines))
 
         for line in mdatalines:
-            for mdatum in mdatalist:
-                if mdatum in line:
-                    mdatadict[mdatum] = float(line.split()[-1])
+            for metadatum in mdatalist:
+                if metadatum in line:
+                    mdatadict[metadatum] = float(line.split()[-1])
                     break
 
         mesh, field = _create_mesh_and_field(mdatadict, name)
 
-        for index, line in zip(mesh.indices, datalines):
-            value = [float(vi) for vi in line.split()]
-            if mdatadict["valuedim"] == 1:
-                field.array[index] = value[0]
-            else:
-                field.array[index] = value
+        r_tuple = tuple(reversed(mesh.n)) + (int(mdatadict["valuedim"]),)
+        t_tuple = tuple(reversed(range(3))) + (int(mdatadict["valuedim"]),)
+        field.array = datalines.reshape(r_tuple).transpose(t_tuple)
 
         return field
 
