@@ -10,7 +10,7 @@ def read(filename, norm=None, name="field"):
     mdatadict = dict()
 
     try:
-        with open(filename, "r") as ovffile:
+        with open(filename, "r", encoding="utf-8") as ovffile:
             f = ovffile.read()
             lines = f.split("\n")
 
