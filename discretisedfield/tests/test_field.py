@@ -349,6 +349,16 @@ class TestField:
         tol = 1e-12
         filename = "test_write_ovf_file_binary.omf"
         value = (1e-3 + np.pi, -5, 6)
+
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), cell=(1, 1, 1))
+        field = df.Field(mesh, value=(1, 2, 3))
+
+        field.write(filename, representation="binary")
+
+        f_loaded = df.read(filename)
+
+        assert np.all(abs(field.value - f_loaded.value) < tol) 
+        """
         for f in self.vector_fs:
             f.value = value
             f.write(filename, representation="binary")
@@ -360,8 +370,8 @@ class TestField:
             assert f.mesh.cell == f_loaded.mesh.cell
             assert f.mesh.cell == f_loaded.mesh.cell
             assert np.all(abs(f.value - f_loaded.value) < tol)
-
-            os.system("rm {}".format(filename))
+        """
+        os.system("rm {}".format(filename))
 
     def test_write_vtk_file(self):
         tol = 1e-12
