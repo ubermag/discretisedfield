@@ -23,8 +23,6 @@ def read(filename, norm=None, name="field"):
                     mdatadict[metadatum] = float(line.split()[-1])
                     break
 
-        mesh, field = _create_mesh_and_field(mdatadict, name)
-
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
             f = ovffile.read()
@@ -40,14 +38,13 @@ def read(filename, norm=None, name="field"):
                     mdatadict[mdatum] = float(line.split()[-1])
                     break
 
-        mesh, field = _create_mesh_and_field(mdatadict, name)
-
         header = b"# Begin: Data Binary "
         data_start = f.find(header)
         header = f[data_start:data_start + len(header) + 1]
 
         data_start += len(b"# Begin: Data Binary 8\n")
         data_end = f.find(b"# End: Data Binary ")
+
         if b"4" in header:
             listdata = list(struct.iter_unpack("@f", f[data_start:data_end]))
             try:
@@ -64,19 +61,17 @@ def read(filename, norm=None, name="field"):
                                      "with reading Binary Data")
 
         datalines = np.array(listdata[1:])
-    
-    r_tuple = tuple(reversed(mesh.n)) + (int(mdatadict["valuedim"]),)
+
+    field = _make_field(mdatadict, name)
+    r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict["valuedim"]),)
     t_tuple = tuple(reversed(range(3))) + (3,)
     field.array = datalines.reshape(r_tuple).transpose(t_tuple)
-
     field.norm = norm
-    if norm is not None:
-        field.norm = norm
 
     return field
 
 
-def _create_mesh_and_field(mdatadict, name):
+def _make_field(mdatadict, name):
     p1 = (mdatadict[key] for key in ["xmin", "ymin", "zmin"])
     p2 = (mdatadict[key] for key in ["xmax", "ymax", "zmax"])
     cell = (mdatadict[key] for key in ["xstepsize", "ystepsize", "zstepsize"])
@@ -85,4 +80,4 @@ def _create_mesh_and_field(mdatadict, name):
     mesh = Mesh(p1=p1, p2=p2, cell=cell)
     field = Field(mesh, dim=dim, name=name)
 
-    return mesh, field
+    return field
