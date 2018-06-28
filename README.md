@@ -10,6 +10,7 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, and Hans Fangohr<sup>1,2<
 |                | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
 | Build | [![Build Status](https://travis-ci.org/joommf/discretisedfield.svg?branch=master)](https://travis-ci.org/joommf/discretisedfield) |
+|       |  [![Build status](https://ci.appveyor.com/api/projects/status/83tcspfx3qlx6rlp/branch/master?svg=true)](https://ci.appveyor.com/project/marijanbeg/discretisedfield/branch/master) |
 | Coverage | [![codecov](https://codecov.io/gh/joommf/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/joommf/discretisedfield) |
 | Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
 
