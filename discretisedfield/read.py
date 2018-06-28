@@ -25,12 +25,6 @@ def read(filename, norm=None, name="field"):
 
         mesh, field = _create_mesh_and_field(mdatadict, name)
 
-        r_tuple = tuple(reversed(mesh.n)) + (int(mdatadict["valuedim"]),)
-        t_tuple = tuple(reversed(range(3))) + (int(mdatadict["valuedim"]),)
-        field.array = datalines.reshape(r_tuple).transpose(t_tuple)
-
-        return field
-
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
             f = ovffile.read()
@@ -69,16 +63,11 @@ def read(filename, norm=None, name="field"):
                 raise AssertionError("Something has gone wrong "
                                      "with reading Binary Data")
 
-        counter = 1
-        for index in mesh.indices:
-            value = (listdata[counter][0],
-                     listdata[counter+1][0],
-                     listdata[counter+2][0])
-            field.array[index] = value
-
-            counter += 3
-
-        return field
+        datalines = np.array(listdata[1:])
+    
+    r_tuple = tuple(reversed(mesh.n)) + (int(mdatadict["valuedim"]),)
+    t_tuple = tuple(reversed(range(3))) + (3,)
+    field.array = datalines.reshape(r_tuple).transpose(t_tuple)
 
     field.norm = norm
     if norm is not None:
