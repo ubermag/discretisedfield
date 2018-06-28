@@ -26,7 +26,7 @@ def read(filename, norm=None, name="field"):
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
             f = ovffile.read()
-            lines = f.split(b"\n")
+            lines = f.split(b"\r\n")
 
         mdatalines = filter(lambda s: s.startswith(bytes("#", "utf-8")), lines)
         datalines = filter(lambda s: not s.startswith(bytes("#", "utf-8")),
@@ -42,7 +42,7 @@ def read(filename, norm=None, name="field"):
         data_start = f.find(header)
         header = f[data_start:data_start + len(header) + 1]
 
-        data_start += len(b"# Begin: Data Binary 8\n")
+        data_start += len(b"# Begin: Data Binary 8\r\n")
         data_end = f.find(b"# End: Data Binary ")
 
         if b"4" in header:
