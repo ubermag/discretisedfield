@@ -1,5 +1,6 @@
 import struct
 import numpy as np
+import os
 from .mesh import Mesh
 from .field import Field
 
@@ -55,9 +56,11 @@ def read(filename, norm=None, name="field"):
         elif b"8" in header:
             print((data_end - data_start) / 8 )
             print(f[data_start:data_end])
-            assert 2 == 1
 
-            listdata = list(struct.iter_unpack("@d", f[data_start:data_end]))
+            if os.name == 'nt':
+                listdata = list(struct.iter_unpack("@d", f[data_start+1:data_end]))
+            else:
+                listdata = list(struct.iter_unpack("@d", f[data_start:data_end]))
             try:
                 assert listdata[0][0] == 123456789012345.0
             except AssertionError:
