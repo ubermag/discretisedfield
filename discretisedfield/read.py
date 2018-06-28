@@ -24,7 +24,7 @@ def read(filename, norm=None, name="field"):
 
         mesh, field = _create_mesh_and_field(mdatadict, name)
 
-        for i, (index, line) in enumerate(zip(mesh.indices, datalines)):
+        for index, line in zip(mesh.indices, datalines):
             value = [float(vi) for vi in line.split()]
             if mdatadict["valuedim"] == 1:
                 field.array[index] = value[0]
