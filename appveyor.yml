@@ -1,23 +1,25 @@
 environment:
   matrix:
-    - PYTHON: "C:\\Python36-x64"
+    - PYTHON_VERSION: 3.5
+      MINICONDA: C:\Miniconda3
+    - PYTHON_VERSION: 3.6
+      MINICONDA: C:\Miniconda3
 
-install:
-  - "%PYTHON%\\python.exe -m pip install ."
+platform:
+  - x64
 
 build: off
 
+install:
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - "conda create -q -n test-environment python=%PYTHON_VERSION%"
+  - activate test-environment
+  - pip install pytest .
+
 test_script:
-  - "%PYTHON%\\python.exe -m pytest"
-
-after_test:
-  # This step builds your wheels.
-  # Again, you only need build.cmd if you're building C extensions for
-  # 64-bit Python 3.3/3.4. And you need to use %PYTHON% to get the correct
-  # interpreter
-
-artifacts:
-  # bdist_wheel puts your built wheel in the dist directory
+  - python -m pytest -v
 
 #on_success:
 #  You can use this step to upload your artifacts to a public website.
