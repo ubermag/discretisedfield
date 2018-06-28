@@ -24,9 +24,7 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 
 - Reading and writing of different file types, such as `.ovf` and `.vtk`
 
-- Available on all major operating systems (Windows, MacOS, Linux)
-
-- Requires Python 3.5+
+It is available on all major operating systems (Windows, MacOS, Linux) and requires Python 3.5 or higher.
 
 ## Installation
 
