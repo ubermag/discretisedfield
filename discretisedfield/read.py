@@ -53,6 +53,10 @@ def read(filename, norm=None, name="field"):
                 raise AssertionError("Something has gone wrong "
                                      "with reading Binary Data")
         elif b"8" in header:
+            print((data_end - data_start) / 8 )
+            print(f[data_start:data_end])
+            assert 2 == 1
+
             listdata = list(struct.iter_unpack("@d", f[data_start:data_end]))
             try:
                 assert listdata[0][0] == 123456789012345.0
