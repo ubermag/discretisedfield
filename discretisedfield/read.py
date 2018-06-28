@@ -47,7 +47,10 @@ def read(filename, norm=None, name="field"):
         data_end = f.find(b"# End: Data Binary ")
 
         if b"4" in header:
-            listdata = list(struct.iter_unpack("@f", f[data_start:data_end]))
+            if os.name == 'nt':                
+                listdata = list(struct.iter_unpack("@f", f[data_start+1:data_end]))
+            else:
+                listdata = list(struct.iter_unpack("@f", f[data_start:data_end])
             try:
                 assert listdata[0] == 1234567.0
             except AssertionError:
