@@ -35,8 +35,8 @@ def read(filename, norm=None, name="field"):
 
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
-                f = ovffile.read()
-                lines = f.split(b"\n")
+            f = ovffile.read()
+            lines = f.split(b"\n")
 
         mdatalines = filter(lambda s: s.startswith(bytes("#", "utf-8")), lines)
         datalines = filter(lambda s: not s.startswith(bytes("#", "utf-8")),
