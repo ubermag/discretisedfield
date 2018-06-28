@@ -57,9 +57,6 @@ def read(filename, norm=None, name="field"):
                 raise AssertionError("Something has gone wrong "
                                      "with reading Binary Data")
         elif b"8" in header:
-            print((data_end - data_start) / 8 )
-            print(f[data_start:data_end])
-
             if os.name == 'nt':
                 listdata = list(struct.iter_unpack("@d", f[data_start+1:data_end]))
             else:
