@@ -1,8 +1,8 @@
 # discretisedfield
 Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup>, and Hans Fangohr<sup>1,2</sup>
 
-<sup>1</sup> European XFEL GmbH, Holzkoppel 4, 22869 Schenefeld, Germany  
-<sup>2</sup> Faculty of Engineering and the Environment, University of Southampton, Southampton SO17 1BJ, United Kingdom  
+<sup>1</sup> *European XFEL GmbH, Holzkoppel 4, 22869 Schenefeld, Germany*  
+<sup>2</sup> *Faculty of Engineering and the Environment, University of Southampton, Southampton SO17 1BJ, United Kingdom*  
 
 | Description | Badge |
 | --- | --- |
@@ -33,34 +33,21 @@ It is available on all major operating systems (Windows, MacOS, Linux) and requi
 
 ### Python requirements
 
-Before installing `discretisedfield` via `pip`, please make sure you have Python 3.5+ on your system. You can check that by running
+Before installing `discretisedfield` via `pip`, please make sure you have Python 3.5 or higher on your system. You can check that by running
 
     python3 --version
 
-If you are using Linux, most probably you already have Python. However, on MacOS and Windows, this is usually not the case. If you do not have Python 3.5+ on your machine, we strongly recommend installing [Anaconda](https://www.anaconda.com/) Python distribution. [Download Anaconda](https://www.anaconda.com/download) for your operating system and follow instructions on the download page. Further information about installing Anaconda can be found [here](https://conda.io/docs/user-guide/install/download.html).
+If you are on Linux, most probably you already have Python. However, on MacOS and Windows, this is usually not the case. If you do not have Python 3.5 or higher on your machine, we strongly recommend installing [Anaconda](https://www.anaconda.com/) Python distribution. [Download Anaconda](https://www.anaconda.com/download) for your operating system and follow instructions on the download page. Further information about installing Anaconda can be found [here](https://conda.io/docs/user-guide/install/download.html).
 
 ### `pip`
 
-After installing Anaconda on MacOS or Windows, `pip` will also be installed. However, on Linux, if you do not have `pip`, you can install it with
+After installing Anaconda on MacOS or Windows, `pip` will also be installed. However, on Linux, if you do not already have `pip`, you can install it with
 
     sudo apt install python3-pip
 
-To install the `discretisedfield` version currently in the Python Package Index repository [PyPI](https://pypi.org/) run
+On all operating systems install the `discretisedfield` version currently in the Python Package Index repository [PyPI](https://pypi.org/) run
 
     python3 -m pip install discretisedfield
-
-#### Updating
-
-`discretisedfield` can be updated to the latest released version by running
-
-    python3 -m pip install --upgrade discretisedfield
-
-However, if you want to use the most recent version of `discretisedfield` (still under development), you can do it by running
-
-    git clone https://github.com/joommf/discretisedfield
-    python3 -m pip install discretisedfield
-
-**Note**: If you do not have `git` on your system, it can be installed by following these [instructions](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 ### `conda`
 
@@ -70,15 +57,28 @@ However, if you want to use the most recent version of `discretisedfield` (still
 
 For further information on the `conda` package, dependency, and environment management, please have a look at its [documentation](https://conda.io/docs/). 
 
-#### Updating
+## Updating
 
-To update `discretisedfield` run
+If you used pip to install `discretisedfield`, you can update to the latest released version in [PyPI](https://pypi.org/) by running
+
+    python3 -m pip install --upgrade discretisedfield
+
+On the other hand, if you used `conda` for installation, update `discretisedfield` with
 
     conda upgrade discretisedfield
 
+### Development version
+
+The most recent development version of `discretisedfield` that is not yet released can be installed/updated with
+
+    git clone https://github.com/joommf/discretisedfield
+    python3 -m pip install --upgrade discretisedfield
+
+**Note**: If you do not have `git` on your system, it can be installed by following, please have a look at [instructions](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+
 ## Documentation
 
-Documentation for `discretisedfield` is available [here](http://discretisedfield.readthedocs.io/en/latest/?badge=latest). APIs and tutorials (in the form of Jupyter notebooks) are available.
+Documentation for `discretisedfield` is available [here](http://discretisedfield.readthedocs.io/en/latest/?badge=latest), where APIs and tutorials (in the form of Jupyter notebooks) are available.
 
 ## Support
 
