@@ -352,7 +352,7 @@ class TestField:
 
         for f in self.vector_fs:
             f.value = value
-            f.write(filename, representation="binary")
+            f.write(filename, representation="bin8")
 
             f_loaded = df.read(filename)
 
