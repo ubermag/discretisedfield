@@ -353,9 +353,7 @@ class Field(dfu.Field):
         vtkdata.tofile(filename)
 
     def _writeovf(self, filename, representation="txt"):
-        f = open(filename, "w")
 
-        # Define header lines.
         header = ["OOMMF OVF 2.0",
                   "",
                   "Segment count: 1",
@@ -405,24 +403,23 @@ class Field(dfu.Field):
             footer = ["End: Data Text",
                       "End: Segment"]
 
-        # Write header lines to OOMMF file.
-        for line in header:
-            if not line:
-                f.write("#\n")
-            else:
-                f.write("# {}\n".format(line))
+        f = open(filename, "w")
 
-        if representation == "binary":
+        # Write header lines to OOMMF file.
+        headerstr = "".join(map(lambda line: "# {}\n".format(line), header))
+        f.write(headerstr)
+
+        if representation == "bin8":
             # Close the file and reopen with binary write
             # appending to the end of file.
             f.close()
             f = open(filename, "ab")
-            # Write data lines to OOMMF file.
-            packarray = self.array.reshape(np.prod(self.array.shape))
+
             # Add the 8 bit binary check value that OOMMF uses
-            np.insert(packarray, 0, 123456789012345.0)
-            #for i in self.mesh.indices:
-            #    [packarray.append(vi) for vi in self.array[i]]
+            packarray = [123456789012345.0]
+            # Write data lines to OOMMF file.
+            for i in self.mesh.indices:
+                [packarray.append(vi) for vi in self.array[i]]
 
             v_binary = struct.pack("d"*len(packarray), *packarray)
             f.write(v_binary)
