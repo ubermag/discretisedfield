@@ -1,6 +1,6 @@
+import sys
 import struct
 import numpy as np
-import os
 from .mesh import Mesh
 from .field import Field
 
@@ -18,11 +18,11 @@ def read(filename, norm=None, name="field"):
         mdatalines = filter(lambda s: s.startswith("#"), lines)
         datalines = np.loadtxt(filter(lambda s: not s.startswith("#"), lines))
 
-        #for line in mdatalines:
-        #    for mdatum in mdatalist:
-        #        if mdatum in line:
-        #            mdatadict[mdatum] = float(line.split()[-1])
-        #            break
+        for line in mdatalines:
+            for mdatum in mdatalist:
+                if mdatum in line:
+                    mdatadict[mdatum] = float(line.split()[-1])
+                    break
 
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
@@ -33,6 +33,12 @@ def read(filename, norm=None, name="field"):
         datalines = filter(lambda s: not s.startswith(bytes("#", "utf-8")),
                            lines)
 
+        for line in mdatalines:
+            for mdatum in mdatalist:
+                if bytes(mdatum, "utf-8") in line:
+                    mdatadict[mdatum] = float(line.split()[-1])
+                    break
+
         header = b"# Begin: Data Binary "
         data_start = f.find(header)
         header = f[data_start:data_start + len(header) + 1]
@@ -41,7 +47,7 @@ def read(filename, norm=None, name="field"):
         data_end = f.find(b"# End: Data Binary ")
 
         if b"4" in header:
-            if os.name == 'nt':                
+            if sys.platform == 'win32':
                 listdata = list(struct.iter_unpack("@f", f[data_start+1:data_end]))
             else:
                 listdata = list(struct.iter_unpack("@f", f[data_start:data_end]))
@@ -51,7 +57,7 @@ def read(filename, norm=None, name="field"):
                 raise AssertionError("Something has gone wrong "
                                      "with reading Binary Data")
         elif b"8" in header:
-            if os.name == 'nt':
+            if sys.platform == 'win32':
                 listdata = list(struct.iter_unpack("@d", f[data_start+1:data_end]))
             else:
                 listdata = list(struct.iter_unpack("@d", f[data_start:data_end]))
@@ -62,12 +68,6 @@ def read(filename, norm=None, name="field"):
                                      "with reading Binary Data")
 
         datalines = np.array(listdata[1:])
-
-    for line in mdatalines:
-        for mdatum in mdatalist:
-            if bytes(mdatum, "utf-8") in line:
-                mdatadict[mdatum] = float(line.split()[-1])
-                break
 
     field = _make_field(mdatadict, name)
     r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict["valuedim"]),)
