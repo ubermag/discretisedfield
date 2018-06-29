@@ -71,7 +71,7 @@ On the other hand, if you used `conda` for installation, update `discretisedfiel
 
 The most recent development version of `discretisedfield` that is not yet released can be installed/updated with
 
-    git clone https://github.com/joommf/discretisedfield
+    git clone https://github.com/joommf/discretisedfield.git
     python3 -m pip install --upgrade discretisedfield
 
 **Note**: If you do not have `git` on your system, it can be installed by following the instructions [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
