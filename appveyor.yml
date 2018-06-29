@@ -1,9 +1,9 @@
 environment:
   matrix:
     - PYTHON_VERSION: 3.5
-      MINICONDA: C:\Miniconda3
+      MINICONDA: C:\Miniconda3-x64
     - PYTHON_VERSION: 3.6
-      MINICONDA: C:\Miniconda3
+      MINICONDA: C:\Miniconda3-x64
 
 platform:
   - x64
@@ -16,12 +16,13 @@ install:
   - conda update -q conda
   - "conda create -q -n test-environment python=%PYTHON_VERSION%"
   - activate test-environment
-  - pip install pytest .
+  - python -m pip install --upgrade pip pytest nbval .
 
 test_script:
-  - python -m pytest -v
+  - python -c "import discretisedfield as d; import sys; sys.exit(d.test())"
+  - python -m pytest --nbval docs\ipynb\
+  - python -m pytest --doctest-modules --ignore=discretisedfield\tests discretisedfield
 
-#on_success:
-#  You can use this step to upload your artifacts to a public website.
-#  See Appveyor's documentation for more details. Or you can simply
-#  access your wheels from the Appveyor "artifacts" tab for your build.
+notifications:
+  - provider: Slack
+    incoming_webhook: https://hooks.slack.com/services/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
