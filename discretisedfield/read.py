@@ -64,7 +64,7 @@ def read(filename, norm=None, name="field"):
                                  "with reading Binary Data")
 
         datalines = datalines[1:]  # check value removal
-        
+
     field = _make_field(mdatadict, name)
     r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict["valuedim"]),)
     t_tuple = tuple(reversed(range(3))) + (3,)
@@ -81,6 +81,5 @@ def _make_field(mdatadict, name):
     dim = int(mdatadict["valuedim"])
 
     mesh = Mesh(p1=p1, p2=p2, cell=cell)
-    field = Field(mesh, dim=dim, name=name)
 
-    return field
+    return Field(mesh, dim=dim, name=name)
