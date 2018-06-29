@@ -45,7 +45,7 @@ After installing Anaconda on MacOS or Windows, `pip` will also be installed. How
 
     sudo apt install python3-pip
 
-To install the `discretisedfield` version currently in the Python Package Index repository [PyPI](https://pypi.org/) on all operating systems run:
+To install the `discretisedfield` version currently in the Python Package Index repository [PyPI](https://pypi.org/project/discretisedfield/) on all operating systems run:
 
     python3 -m pip install discretisedfield
 
@@ -59,7 +59,7 @@ For further information on the `conda` package, dependency, and environment mana
 
 ## Updating
 
-If you used pip to install `discretisedfield`, you can update to the latest released version in [PyPI](https://pypi.org/) by running
+If you used pip to install `discretisedfield`, you can update to the latest released version in [PyPI](https://pypi.org/project/discretisedfield/) by running
 
     python3 -m pip install --upgrade discretisedfield
 
