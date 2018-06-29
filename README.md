@@ -31,7 +31,7 @@ It is available on all major operating systems (Windows, MacOS, Linux) and requi
 
 We recommend installing `discretisedfield` by using either `pip` or `conda` package managers.
 
-### Python requirements
+#### Python requirements
 
 Before installing `discretisedfield` via `pip`, please make sure you have Python 3.5 or higher on your system. You can check that by running
 
@@ -39,7 +39,7 @@ Before installing `discretisedfield` via `pip`, please make sure you have Python
 
 If you are on Linux, most probably you already have Python. However, on MacOS and Windows, this is usually not the case. If you do not have Python 3.5 or higher on your machine, we strongly recommend installing [Anaconda](https://www.anaconda.com/) Python distribution. [Download Anaconda](https://www.anaconda.com/download) for your operating system and follow instructions on the download page. Further information about installing Anaconda can be found [here](https://conda.io/docs/user-guide/install/download.html).
 
-### `pip`
+#### `pip`
 
 After installing Anaconda on MacOS or Windows, `pip` will also be installed. However, on Linux, if you do not already have `pip`, you can install it with
 
@@ -49,7 +49,7 @@ On all operating systems install the `discretisedfield` version currently in the
 
     python3 -m pip install discretisedfield
 
-### `conda`
+#### `conda`
 
 `discretisedfield` is installed using `conda` by running
 
@@ -67,7 +67,7 @@ On the other hand, if you used `conda` for installation, update `discretisedfiel
 
     conda upgrade discretisedfield
 
-### Development version
+#### Development version
 
 The most recent development version of `discretisedfield` that is not yet released can be installed/updated with
 
