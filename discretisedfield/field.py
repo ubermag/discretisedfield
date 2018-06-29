@@ -353,7 +353,6 @@ class Field(dfu.Field):
         vtkdata.tofile(filename)
 
     def _writeovf(self, filename, representation="txt"):
-
         header = ["OOMMF OVF 2.0",
                   "",
                   "Segment count: 1",
@@ -444,5 +443,4 @@ class Field(dfu.Field):
         footerstr = "".join(map(lambda line: "# {}\n".format(line), footer))
         f.write(footerstr)
 
-        # Close the file.
         f.close()

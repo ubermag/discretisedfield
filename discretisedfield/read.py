@@ -19,9 +19,9 @@ def read(filename, norm=None, name="field"):
         datalines = np.loadtxt(filter(lambda s: not s.startswith("#"), lines))
 
         for line in mdatalines:
-            for metadatum in mdatalist:
-                if metadatum in line:
-                    mdatadict[metadatum] = float(line.split()[-1])
+            for mdatum in mdatalist:
+                if mdatum in line:
+                    mdatadict[mdatum] = float(line.split()[-1])
                     break
 
     except UnicodeDecodeError:
