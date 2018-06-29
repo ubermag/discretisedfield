@@ -6,8 +6,8 @@ with open("README.md", 'r+', encoding="utf-8") as f:
 setuptools.setup(
     name="discretisedfield",
     version="0.8",
-    description=("A Python package for analysing and manipulating "
-                 "discretised fields."),
+    description=("Python package for creation, reading, analysis, "
+                 "and plotting of finite difference fields."),
     long_description=readme,
     long_description_content_type='text/markdown',
     url='https://joommf.github.io',
