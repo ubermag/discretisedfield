@@ -11,7 +11,7 @@ setuptools.setup(
     long_description=readme,
     long_description_content_type='text/markdown',
     url='https://joommf.github.io',
-    author='Marijan Beg, Ryan A. Pepper, and Hans Fangohr',
+    author='Marijan Beg, Ryan A. Pepper, Thomas Kluyver, and Hans Fangohr',
     author_email='jupyteroommf@gmail.com',
     packages=setuptools.find_packages(),
     install_requires=["joommfutil",
