@@ -18,11 +18,11 @@ def read(filename, norm=None, name="field"):
         mdatalines = filter(lambda s: s.startswith("#"), lines)
         datalines = np.loadtxt(filter(lambda s: not s.startswith("#"), lines))
 
-        for line in mdatalines:
-            for mdatum in mdatalist:
-                if mdatum in line:
-                    mdatadict[mdatum] = float(line.split()[-1])
-                    break
+        #for line in mdatalines:
+        #    for mdatum in mdatalist:
+        #        if mdatum in line:
+        #            mdatadict[mdatum] = float(line.split()[-1])
+        #            break
 
     except UnicodeDecodeError:
         with open(filename, "rb") as ovffile:
@@ -32,12 +32,6 @@ def read(filename, norm=None, name="field"):
         mdatalines = filter(lambda s: s.startswith(bytes("#", "utf-8")), lines)
         datalines = filter(lambda s: not s.startswith(bytes("#", "utf-8")),
                            lines)
-
-        for line in mdatalines:
-            for mdatum in mdatalist:
-                if bytes(mdatum, "utf-8") in line:
-                    mdatadict[mdatum] = float(line.split()[-1])
-                    break
 
         header = b"# Begin: Data Binary "
         data_start = f.find(header)
@@ -68,6 +62,12 @@ def read(filename, norm=None, name="field"):
                                      "with reading Binary Data")
 
         datalines = np.array(listdata[1:])
+
+    for line in mdatalines:
+        for mdatum in mdatalist:
+            if bytes(mdatum, "utf-8") in line:
+                mdatadict[mdatum] = float(line.split()[-1])
+                break
 
     field = _make_field(mdatadict, name)
     r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict["valuedim"]),)
