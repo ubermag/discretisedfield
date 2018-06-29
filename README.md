@@ -19,9 +19,9 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 
 `discretisedfield` is a Python package that provides:
 
-- Creating finite difference meshes
+- Creation of finite difference meshes
 
-- Creating, analysis, and plotting of finite difference fields
+- Creation, analysis, and plotting of finite difference fields
 
 - Reading and writing of different file types, such as `.ovf` and `.vtk`
 
@@ -29,7 +29,7 @@ It is available on all major operating systems (Windows, MacOS, Linux) and requi
 
 ## Installation
 
-We recommend installing `discretisedfield` by using either `pip` or `conda` package managers.
+We recommend installing `discretisedfield` by using either of the `pip` or `conda` package managers.
 
 #### Python requirements
 
@@ -37,7 +37,7 @@ Before installing `discretisedfield` via `pip`, please make sure you have Python
 
     python3 --version
 
-If you are on Linux, most probably you already have Python. However, on MacOS and Windows, this is usually not the case. If you do not have Python 3.5 or higher on your machine, we strongly recommend installing [Anaconda](https://www.anaconda.com/) Python distribution. [Download Anaconda](https://www.anaconda.com/download) for your operating system and follow instructions on the download page. Further information about installing Anaconda can be found [here](https://conda.io/docs/user-guide/install/download.html).
+If you are on Linux, it is likely that you already have Python installed. However, on MacOS and Windows, this is usually not the case. If you do not have Python 3.5 or higher on your machine, we strongly recommend installing the [Anaconda](https://www.anaconda.com/) Python distribution. [Download Anaconda](https://www.anaconda.com/download) for your operating system and follow instructions on the download page. Further information about installing Anaconda can be found [here](https://conda.io/docs/user-guide/install/download.html).
 
 #### `pip`
 
@@ -45,7 +45,7 @@ After installing Anaconda on MacOS or Windows, `pip` will also be installed. How
 
     sudo apt install python3-pip
 
-On all operating systems install the `discretisedfield` version currently in the Python Package Index repository [PyPI](https://pypi.org/) run
+To install the `discretisedfield' version currently in the Python Package Index repository [PyPI](https://pypi.org/) on all operating systems run:
 
     python3 -m pip install discretisedfield
 
@@ -74,7 +74,7 @@ The most recent development version of `discretisedfield` that is not yet releas
     git clone https://github.com/joommf/discretisedfield
     python3 -m pip install --upgrade discretisedfield
 
-**Note**: If you do not have `git` on your system, it can be installed by following, please have a look at [instructions](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+**Note**: If you do not have `git` on your system, it can be installed by following the instructions [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 ## Documentation
 
