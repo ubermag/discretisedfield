@@ -29,7 +29,7 @@ It is available on all major operating systems (Windows, MacOS, Linux) and requi
 
 ## Installation
 
-`discretisedfield` can be installed using either `pip` or `conda` package managers.
+We recommend installing `discretisedfield` by using either `pip` or `conda` package managers.
 
 ### Python requirements
 
