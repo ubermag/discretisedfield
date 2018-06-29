@@ -47,28 +47,24 @@ def read(filename, norm=None, name="field"):
         data_end = f.find(b"# End: Data Binary ")
 
         if b"4" in header:
-            if sys.platform == 'win32':
-                listdata = list(struct.iter_unpack("@f", f[data_start+1:data_end]))
-            else:
-                listdata = list(struct.iter_unpack("@f", f[data_start:data_end]))
-            try:
-                assert listdata[0] == 1234567.0
-            except AssertionError:
-                raise AssertionError("Something has gone wrong "
-                                     "with reading Binary Data")
+            formatstr = "@f"
+            checkvalue = 1234567.0
         elif b"8" in header:
-            if sys.platform == 'win32':
-                listdata = list(struct.iter_unpack("@d", f[data_start+1:data_end]))
-            else:
-                listdata = list(struct.iter_unpack("@d", f[data_start:data_end]))
-            try:
-                assert listdata[0][0] == 123456789012345.0
-            except AssertionError:
-                raise AssertionError("Something has gone wrong "
-                                     "with reading Binary Data")
+            formatstr = "@d"
+            checkvalue = 123456789012345.0
+            
+        if sys.platform == 'win32':
+            data_start += 1  # On Windows new line is \n\r.
 
-        datalines = np.array(listdata[1:])
+        listdata = list(struct.iter_unpack(formatstr, f[data_start:data_end]))
+        datalines = np.array(listdata)
+        
+        if datalines[0] != checkvalue:
+            raise AssertionError("Something has gone wrong "
+                                 "with reading Binary Data")
 
+        datalines = datalines[1:]  # check value removal
+        
     field = _make_field(mdatadict, name)
     r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict["valuedim"]),)
     t_tuple = tuple(reversed(range(3))) + (3,)
