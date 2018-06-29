@@ -441,8 +441,8 @@ class Field(dfu.Field):
                 f.write("\n")
 
         # Write footer lines to OOMMF file.
-        for line in footer:
-            f.write("# " + line + "\n")
+        footerstr = "".join(map(lambda line: "# {}\n".format(line), footer))
+        f.write(footerstr)
 
         # Close the file.
         f.close()
