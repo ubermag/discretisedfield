@@ -362,6 +362,8 @@ class TestField:
             assert f.mesh.cell == f_loaded.mesh.cell
             assert np.all(abs(f.value - f_loaded.value) < tol)
 
+        os.system("rm {}".format(filename))
+
     def test_write_vtk_file(self):
         tol = 1e-12
         filename = "test_write_vtk_file.vtk"
