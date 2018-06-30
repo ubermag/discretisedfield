@@ -1,5 +1,4 @@
 .cache
-.hypothesis
 .coverage
 .pytest_cache/
 .ipynb_checkpoints/
