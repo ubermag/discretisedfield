@@ -1,13 +1,13 @@
+import pytest
 import pkg_resources
-import matplotlib as mpl
-mpl.use("agg")
+import matplotlib
+matplotlib.use("agg")
 from .mesh import Mesh
 from .field import Field
 from .read import read
 
 
 def test():
-    import pytest  # pragma: no cover
     return pytest.main(["-v", "--pyargs", "discretisedfield"])  # pragma: no cover
 
 __version__ = pkg_resources.get_distribution(__name__).version
