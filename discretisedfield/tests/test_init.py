@@ -1,10 +1,10 @@
-import joommf as jo
+import discretisedfield as df
 
 def test_version():
-    assert isinstance(jo.__version__, str)
-    assert '.' in jo.__version__
+    assert isinstance(df.__version__, str)
+    assert '.' in df.__version__
 
 def test_dependencies():
-    assert isinstance(jo.__dependencies__, list)
-    assert len(jo.__dependencies__) > 0
+    assert isinstance(df.__dependencies__, list)
+    assert len(df.__dependencies__) > 0
     
