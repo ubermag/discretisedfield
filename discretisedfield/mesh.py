@@ -7,11 +7,11 @@ import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
 
-@ts.typesystem(p1=ts.ConstantRealVector(size=3),
-               p2=ts.ConstantRealVector(size=3),
-               cell=ts.ConstantPositiveRealVector(size=3),
-               pbc=ts.FromCombinations(sample_set="xyz"),
-               name=ts.ConstantObjectName)
+@ts.typesystem(p1=ts.Vector(size=3, const=True),
+               p2=ts.Vector(size=3, const=True),
+               cell=ts.Vector(size=3, positive=True, const=True),
+               pbc=ts.Subset(sample_set="xyz", const=True),
+               name=ts.Name(const=True))
 class Mesh:
     """Finite difference rectangular mesh.
 
@@ -77,7 +77,7 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, cell, pbc=None, name="mesh"):
+    def __init__(self, p1, p2, cell, pbc={}, name="mesh"):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.cell = tuple(cell)
@@ -374,7 +374,7 @@ class Mesh:
         'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc="xy", name="m")'
 
         """
-        if self.pbc is not None:
+        if self.pbc:
             pbc = "\"{}\"".format("".join(sorted(self.pbc)))
         else:
             pbc = self.pbc

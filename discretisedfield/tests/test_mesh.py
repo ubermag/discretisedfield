@@ -44,7 +44,7 @@ class TestMesh:
                               "string"],
                              [(-1.5e-9, -5e-9, 0),
                               (1.5e-9, 15e-9, 16e-9),
-                              2+2j]]
+                              (2+2j,)]]
 
     def test_init(self):
         p1 = (0, -4, 16.5)
@@ -102,13 +102,13 @@ class TestMesh:
 
     def test_init_invalid_args(self):
         for p1, p2, cell in self.invalid_args:
-            with pytest.raises(TypeError):
+            with pytest.raises(ValueError):
                 # Exceptions are raised by descriptors.
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     def test_init_invalid_name(self):
         for name in ["mesh name", "2name", " ", 5, "-name", "+mn"]:
-            with pytest.raises(TypeError):
+            with pytest.raises((ValueError, TypeError)):
                 # Exception is raised by the descriptor (mesh.name).
                 mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10),
                                cell=(1, 1, 1), name=name)
@@ -121,7 +121,7 @@ class TestMesh:
 
     def test_init_invalid_pbc(self):
         for pbc in ["abc", "a", "123", 5]:
-            with pytest.raises(TypeError):
+            with pytest.raises((ValueError, TypeError)):
                 # Exception is raised by the descriptor (mesh.pbc).
                 mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10),
                                cell=(1, 1, 1), pbc=pbc)
@@ -206,7 +206,7 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
         rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
-                "cell=(1, 0.1, 0.5), pbc=None, name=\"meshname\")")
+                "cell=(1, 0.1, 0.5), pbc=set(), name=\"meshname\")")
         assert repr(mesh) == rstr
 
     def test_repr_pbc(self):
