@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True),
                cell=ts.Vector(size=3, positive=True, const=True),
-               pbc=ts.Subset(sample_set="xyz", const=True),
+               pbc=ts.Subset(sample_set="xyz"),
                name=ts.Name(const=True))
 class Mesh:
     """Finite difference rectangular mesh.
