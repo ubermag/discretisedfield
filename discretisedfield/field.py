@@ -1,3 +1,4 @@
+import k3d
 import pyvtk
 import struct
 import numpy as np
@@ -444,3 +445,21 @@ class Field(dfu.Field):
         f.write(footerstr)
 
         f.close()
+
+
+    def plot3d(self, vector_scale=1.0):
+
+        plot = k3d.plot()
+
+        # value of vectors
+        vectors = self.array.reshape(-1,3)
+        vectors_nonzero = vectors[np.sum(vectors**2,axis=-1) !=0]
+
+        # coordinat of vectors start
+        origins = np.array(list(self.mesh.coordinates))
+        origins_nonzero = origins[np.sum(vectors**2,axis=-1)!=0]
+        origins_nonzero -= 0.5 * vectors_nonzero
+
+        plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero)
+        plot += plt
+        plot.display()
