@@ -1,6 +1,8 @@
 import k3d
+import pylab
 import pyvtk
 import struct
+import matplotlib
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df
@@ -447,7 +449,17 @@ class Field(dfu.Field):
         f.close()
 
 
-    def plot3d(self, vector_scale=1.0):
+    def _get_colormap(self, name, bins):
+        data = []
+        cmap = pylab.cm.get_cmap(name, bins)
+        for i in range(cmap.N):
+            rgb = cmap(i)[:3]
+            data.append(rgb)
+
+        return np.array(data)
+
+
+    def plot3d(self, vector_scale=1.0, direction=0, color=0xff, colormap_name=''):
 
         plot = k3d.plot()
 
@@ -460,6 +472,20 @@ class Field(dfu.Field):
         origins_nonzero = origins[np.sum(vectors**2,axis=-1)!=0]
         origins_nonzero -= 0.5 * vectors_nonzero
 
-        plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero)
+        if not colormap_name:
+            plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero, color=color)
+        else:
+            projection = vectors_nonzero[:, direction]
+            projection = list((projection + 1) / 2.0 * 256)
+            projection = [int(i) for i in projection]
+
+            bins = np.array([i*8 for i in range(33)])
+            colormap = self._get_colormap(colormap_name, 32)
+
+            projection = colormap[np.digitize(projection, bins, right=True)]
+            colors = ['0x{}{}{}'.format(int(256*i[0]), int(256*i[1]), int(256*i[2])) for i in projection]
+            colors = [(int(i, 16), int(i, 16)) for i in colors]
+
+            plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero, colors=colors)
         plot += plt
         plot.display()
