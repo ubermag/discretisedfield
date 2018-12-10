@@ -1,7 +1,6 @@
 import pytest
 import pkg_resources
 import matplotlib
-matplotlib.use("agg")
 from .mesh import Mesh
 from .field import Field
 from .read import read
