@@ -21,3 +21,6 @@ class TestField:
                     pattern = line.strip()
 
         assert pattern == 'CELL_DATA 8'
+
+        os.system("rm {}".format(filename_omf))
+        os.system("rm {}".format(filename_vtk))
