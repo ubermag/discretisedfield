@@ -14,6 +14,11 @@ setuptools.setup(
     author='Marijan Beg, Ryan A. Pepper, Thomas Kluyver, and Hans Fangohr',
     author_email='jupyteroommf@gmail.com',
     packages=setuptools.find_packages(),
+    entry_points={
+        "console_scripts": [
+            "ovf2vtk = discretisedfield.ovf2vtk:main",
+        ],
+    },
     install_requires=['joommfutil',
                       'matplotlib',
                       'pyvtk',
