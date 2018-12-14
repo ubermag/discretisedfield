@@ -20,6 +20,20 @@ def check_k3d_install():
         raise ImportError(msg)
 
 
+def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
+               color=0x99bbff, **kwargs):
+
+    if check_k3d_install():
+        import k3d
+
+    plot_array = plot_array.astype(np.float32)  # to avoid the warning
+
+    if k3d_plot is None:
+        k3d_plot = k3d.plot()
+        k3d_plot.display()
+    k3d_plot += k3d.points(plot_array, point_size=point_size, color=color, **kwargs)
+
+
 def k3d_vox(plot_array, mesh, k3d_plot=None,
             colormap=[0x99bbff, 0xff4d4d], **kwargs):
 

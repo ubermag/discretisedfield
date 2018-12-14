@@ -1,7 +1,7 @@
 import random
 import itertools
 import numpy as np
-from . plot3d import k3d_vox
+from . plot3d import k3d_vox, k3d_points
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
 import discretisedfield.util as dfu
@@ -652,7 +652,7 @@ class Mesh:
         """
         raise NotImplementedError
 
-    def plot_3d(self, k3d_plot=None, **kwargs):
+    def plot3d(self, k3d_plot=None, **kwargs):
         """Plots the mesh domain and the discretisation cell on 3D.
 
         This function is called as a display function in Jupyter
@@ -668,3 +668,19 @@ class Mesh:
         plot_array = np.ones(tuple(reversed((self.n))))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
         k3d_vox(plot_array, self, k3d_plot=k3d_plot, **kwargs)
+
+    def plot3d_coordinates(self, k3d_plot=None, **kwargs):
+        """Plots the mesh coordinates.
+
+        This function is called as a display function in Jupyter
+        notebook.
+
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+            We transfer a k3d.plot.Plot object to add the current 3d figure
+            to the canvas(?).
+
+        """
+        plot_array = np.array(list(self.coordinates))
+        k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
