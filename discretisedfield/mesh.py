@@ -1,7 +1,8 @@
 import random
 import itertools
 import numpy as np
-from .plot3d import Plot3d
+#import .plot3d as plot3d
+from . plot3d import k3d_vox
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
 import discretisedfield.util as dfu
@@ -667,4 +668,4 @@ class Mesh:
         """
         plot_array = np.ones(tuple(reversed((self.n))))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
-        Plot3d().k3d_vox(plot_array, self, k3d_plot=k3d_plot, **kwargs)
+        k3d_vox(plot_array, self, k3d_plot=k3d_plot, **kwargs)
