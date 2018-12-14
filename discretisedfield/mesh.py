@@ -1,7 +1,6 @@
 import random
 import itertools
 import numpy as np
-#import .plot3d as plot3d
 from . plot3d import k3d_vox
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts

@@ -1,6 +1,7 @@
 import pyvtk
 import struct
 import numpy as np
+from . plot3d import k3d_vox
 import joommfutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
@@ -444,3 +445,20 @@ class Field(dfu.Field):
         f.write(footerstr)
 
         f.close()
+
+    def plot_domain(self, k3d_plot=None, **kwargs):
+        """Plots the mesh domain and the discretisation cell on 3D.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+               We transfer a k3d.plot.Plot object to add the current 3d figure
+               to the canvas(?).
+
+        """
+        plot_array = np.squeeze(self.x.array)
+        plot_array = np.swapaxes(plot_array, 0, 2) # in k3d, numpy arrays are (z, y, x)
+        plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
+        k3d_vox(plot_array, self.mesh, k3d_plot=k3d_plot, **kwargs)
