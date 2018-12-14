@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib
 
 def check_k3d_install():
     try:
@@ -31,7 +31,36 @@ def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
     if k3d_plot is None:
         k3d_plot = k3d.plot()
         k3d_plot.display()
-    k3d_plot += k3d.points(plot_array, point_size=point_size, color=color, **kwargs)
+    k3d_plot += k3d.points(plot_array, point_size=point_size, color=color,
+                           **kwargs)
+
+
+def k3d_vectors(coordinates, vectors, k3d_plot=None, points=False,
+                colormap='viridis'):
+
+    if check_k3d_install():
+        import k3d
+
+    # To avoid the warning
+    coordinates = coordinates.astype(np.float32)
+    vectors = vectors.astype(np.float32)
+
+    cmap = matplotlib.cm.get_cmap(colormap, 256)
+
+    vc = vectors[..., 0]
+    vc = np.interp(vc, (vc.min(), vc.max()), (0, 1))
+    colors = cmap(vc)
+    colors = [int('0x{}'.format(matplotlib.colors.to_hex(rgb)[1:]), 16)
+              for rgb in colors]
+    colors = list(zip(colors, colors))
+
+    if k3d_plot is None:
+        k3d_plot = k3d.plot()
+        k3d_plot.display()
+    k3d_plot += k3d.vectors(coordinates, vectors, colors=colors)
+
+    if points:
+            k3d_points(coordinates + 0.5 * vectors, k3d_plot=k3d_plot)
 
 
 def k3d_vox(plot_array, mesh, k3d_plot=None,

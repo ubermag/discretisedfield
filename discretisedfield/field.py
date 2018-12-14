@@ -1,7 +1,7 @@
 import pyvtk
 import struct
 import numpy as np
-from . plot3d import k3d_vox, k3d_points
+from . plot3d import k3d_vox, k3d_points, k3d_vectors
 import joommfutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
@@ -446,7 +446,7 @@ class Field(dfu.Field):
 
         f.close()
 
-    def plot_domain(self, k3d_plot=None, **kwargs):
+    def plot3d_domain(self, k3d_plot=None, **kwargs):
         """Plots only an aria where norm is not zero
         (where the material is present).
 
@@ -464,7 +464,7 @@ class Field(dfu.Field):
         plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
         k3d_vox(plot_array, self.mesh, k3d_plot=k3d_plot, **kwargs)
 
-    def plot_domain_coordinates(self, k3d_plot=None, **kwargs):
+    def plot3d_domain_coordinates(self, k3d_plot=None, **kwargs):
         """Plots the mesh coordinates where norm is not zero
         (where the material is present).
 
@@ -481,3 +481,30 @@ class Field(dfu.Field):
         plot_array = np.array([i for i in self.mesh.coordinates
                                if self.norm(i) > 0])
         k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
+
+    def plot3d_vectors(self, k3d_plot=None, points=False, **kwargs):
+        """Plots the vector fields where norm is not zero
+        (where the material is present). Shift the vector so that
+        its center passes through the center of the cell.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+               We transfer a k3d.plot.Plot object to add the current 3d figure
+               to the canvas(?).
+
+        """
+        # Plot arrows only with norm > 0.
+        data = [(i, self(i)) for i in self.mesh.coordinates
+                if self.norm(i) > 0]
+        coordinates, vectors = zip(*data)
+        coordinates, vectors = np.array(coordinates), np.array(vectors)
+
+        # Middle of the arrow at the cell centre.
+        coordinates -= 0.5 * vectors
+
+        k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
+                    **kwargs)
+
