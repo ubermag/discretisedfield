@@ -508,6 +508,35 @@ class Field(dfu.Field):
         k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
                     **kwargs)
 
+    def plot3d_vectors_slice(self, x=None, y=None, z=None,
+                             k3d_plot=None, points=False, **kwargs):
+        """Plots the slice of vector field by X,Y or Z plane, where norm
+         is not zero (where the material is present). Shift the vector
+         so that its center passes through the center of the cell.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+            x, y, z : float
+                The coordinate of the axis along which the volume is cut.
+            k3d_plot : k3d.plot.Plot, optional
+                We transfer a k3d.plot.Plot object to add the current 3d figure
+                to the canvas(?).
+
+        """
+        # Plot arrows only with norm > 0.
+        data = [(i, self(i)) for i in self.mesh.plane(x=x, y=y, z=z)
+                if self.norm(i) > 0]
+        coordinates, vectors = zip(*data)
+        coordinates, vectors = np.array(coordinates), np.array(vectors)
+
+        # Middle of the arrow at the cell centre.
+        coordinates -= 0.5 * vectors
+
+        k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
+                    **kwargs)
+
     def plot3d_scalar(self, k3d_plot=None, **kwargs):
         """Plots the scalar fields.
 
@@ -539,3 +568,4 @@ class Field(dfu.Field):
 
         k3d_scalar(field_component, self.mesh, k3d_plot=k3d_plot,
                    **kwargs)
+
