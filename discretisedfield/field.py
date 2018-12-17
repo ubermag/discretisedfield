@@ -1,12 +1,13 @@
 import pyvtk
 import struct
 import numpy as np
-from . plot3d import k3d_vox, k3d_points, k3d_vectors, k3d_scalar
 import joommfutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from . plot3d import k3d_vox, k3d_points, k3d_vectors, \
+                     k3d_scalar, k3d_isosurface
 
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
@@ -569,3 +570,20 @@ class Field(dfu.Field):
         k3d_scalar(field_component, self.mesh, k3d_plot=k3d_plot,
                    **kwargs)
 
+
+    def plot3d_isosurface(self, level, k3d_plot=None, **kwargs):
+        """Plots isosurface where norm of field.array equal the `level`.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+            level : float
+                The field surface value.
+            k3d_plot : k3d.plot.Plot, optional
+                We transfer a k3d.plot.Plot object to add the current 3d figure
+                to the canvas(?).
+
+        """
+        k3d_isosurface(self.array, level, self.mesh, k3d_plot=k3d_plot,
+                       **kwargs)

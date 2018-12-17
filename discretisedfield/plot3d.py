@@ -142,3 +142,26 @@ def k3d_vox(plot_array, mesh, k3d_plot=None,
                            zmin=zmin, zmax=zmax,
                            outlines=False,
                            **kwargs)
+
+
+def k3d_isosurface(field, level, mesh, k3d_plot=None, **kwargs):
+
+    if check_k3d_install():
+        import k3d
+
+    xmin, ymin, zmin = mesh.pmin
+    xmax, ymax, zmax = mesh.pmax
+
+    plot_array = np.sum(field**2, axis=-1)
+    print(plot_array)
+    plot_array = plot_array.astype(np.float32)  # to avoid the warning
+
+    if k3d_plot is None:
+        k3d_plot = k3d.plot()
+        k3d_plot.display()
+    k3d_plot += k3d.marching_cubes(plot_array,
+                                   level=level,
+                                   xmin=xmin, xmax=xmax,
+                                   ymin=ymin, ymax=ymax,
+                                   zmin=zmin, zmax=zmax,
+                                   **kwargs)
