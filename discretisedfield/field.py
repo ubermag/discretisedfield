@@ -1,7 +1,7 @@
 import pyvtk
 import struct
 import numpy as np
-from . plot3d import k3d_vox, k3d_points, k3d_vectors
+from . plot3d import k3d_vox, k3d_points, k3d_vectors, k3d_scalar
 import joommfutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
@@ -508,3 +508,34 @@ class Field(dfu.Field):
         k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
                     **kwargs)
 
+    def plot3d_scalar(self, k3d_plot=None, **kwargs):
+        """Plots the scalar fields.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+               We transfer a k3d.plot.Plot object to add the current 3d figure
+               to the canvas(?).
+
+        """
+        field_array = self.array.copy()
+        array_shape = self.array.shape  # TODO rewrite
+
+        nx, ny, nz, _ = array_shape
+
+        norm = np.linalg.norm(field_array, axis=3)[..., None]
+
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    if norm[i, j, k] == 0:
+                        field_array[i, j, k] = np.nan
+
+        component = 0
+
+        field_component = field_array[..., component]
+
+        k3d_scalar(field_component, self.mesh, k3d_plot=k3d_plot,
+                   **kwargs)
