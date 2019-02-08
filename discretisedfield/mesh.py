@@ -494,12 +494,10 @@ class Mesh:
         """
         self._isoutside(p)
 
-        index = tuple(int(round((pi-pmini)/celli - 0.5))
-                      for pi, pmini, celli in zip(p, self.pmin, self.cell))
+        index = np.subtract(np.divide(np.subtract(p, self.pmin), self.cell), 0.5).round().astype(int)
 
         # If rounded to the out-of-range values
-        return tuple(max(min(ni-1, indexi), 0)
-                     for ni, indexi in zip(self.n, index))
+        return tuple(np.clip(index, 0, np.subtract(self.n, 1)).tolist())
 
     def _isoutside(self, p):
         """Raises ValueError if point is outside the mesh.
@@ -538,7 +536,7 @@ class Mesh:
 
         """
         if np.logical_or(np.less(p, self.pmin), np.greater(p, self.pmax)).any():
-            msg = 'Point is outside the mesh.'
+            msg = 'Point outside the mesh.'
             raise ValueError(msg)
 
     def line(self, p1, p2, n=100):
