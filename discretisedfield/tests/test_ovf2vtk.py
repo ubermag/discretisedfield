@@ -10,7 +10,7 @@ def test_write_vtk_file():
     filename_vtk = "test_write_vtk_file.vtk"
     f.write(filename_omf)
 
-    os.system("python3 -m discretisedfield.ovf2vtk --infile {}".format(filename_omf))
+    os.system("python -m discretisedfield.ovf2vtk --infile {}".format(filename_omf))
 
     pattern = ''
     with open(filename_vtk, 'r') as f:
