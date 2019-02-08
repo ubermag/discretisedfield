@@ -40,8 +40,8 @@ def _check_mesh_args(mesh):
     assert isinstance(mesh.n, tuple)
     assert len(mesh.n) == 3
     assert all(isinstance(i, int) for i in mesh.n)
-    #assert isinstance(mesh.pbc, set)
-    #assert all(isinstance(i, str) for i in mesh.pbc)
+    assert isinstance(mesh.pbc, set)
+    assert all(isinstance(i, str) for i in mesh.pbc)
     assert isinstance(mesh.name, str)
 
 
