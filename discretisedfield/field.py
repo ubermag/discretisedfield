@@ -1,5 +1,6 @@
 import pyvtk
 import struct
+import matplotlib
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df
