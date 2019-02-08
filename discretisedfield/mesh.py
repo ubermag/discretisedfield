@@ -1,7 +1,7 @@
 import random
 import itertools
 import numpy as np
-from . plot3d import k3d_vox, k3d_points
+from .plot3d import k3d_vox, k3d_points
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
 import discretisedfield.util as dfu
