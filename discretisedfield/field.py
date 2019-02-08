@@ -7,6 +7,8 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from . plot3d import k3d_vox, k3d_points, k3d_vectors, \
+                     k3d_scalar, k3d_isosurface
 
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
@@ -446,45 +448,143 @@ class Field(dfu.Field):
 
         f.close()
 
-    def _get_colormap(self, name, n):
-        data = []
-        cmap = pylab.cm.get_cmap(name, n)
-        for i in range(cmap.N):
-            rgb = cmap(i)[:3]
-            data.append(rgb)
+    def plot3d_domain(self, k3d_plot=None, **kwargs):
+        """Plots only an aria where norm is not zero
+        (where the material is present).
 
-        return np.array(data)
+        This function is called as a display function in Jupyter notebook.
 
-    def plot3d(self, vector_scale=1.0, direction=0, color=0xff, colormap_name='', **kwargs):
-        import k3d
-        plot = k3d.plot()
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+               We transfer a k3d.plot.Plot object to add the current 3d figure
+               to the canvas(?).
 
-        # value of vectors
-        vectors = self.array.reshape(-1,3)
-        vectors_nonzero = vectors[np.sum(vectors**2,axis=-1) !=0]
+        """
+        plot_array = np.squeeze(self.x.array)
+        plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
+        plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
+        k3d_vox(plot_array, self.mesh, k3d_plot=k3d_plot, **kwargs)
 
-        # coordinat of vectors start
-        origins = np.array(list(self.mesh.coordinates))
-        origins_nonzero = origins[np.sum(vectors**2,axis=-1) !=0]
-        origins_nonzero -= 0.5 * vectors_nonzero
+    def plot3d_domain_coordinates(self, k3d_plot=None, **kwargs):
+        """Plots the mesh coordinates where norm is not zero
+        (where the material is present).
 
-        if not colormap_name:
-            plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero, color=color, **kwargs)
-        else:
-            projection = vectors_nonzero[:, direction]
-            if projection.max() - projection.min() > 0.0:
-                projection = list((projection + abs(projection.min())) / (projection.max() - projection.min()) * 255)
-            else:
-                projection = [0.1] # needs to change
-            projection = [int(i) for i in projection]
+        This function is called as a display function in Jupyter notebook.
 
-            bins = np.array([i for i in range(256)])
-            colormap = self._get_colormap(colormap_name, 256)
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+               We transfer a k3d.plot.Plot object to add the current 3d figure
+               to the canvas(?).
 
-            projection = colormap[np.digitize(projection, bins, right=True)]
-            colors = ['0x{}'.format(matplotlib.colors.rgb2hex(rgb)[1:]) for rgb in projection]
-            colors = [(int(i, 16), int(i, 16)) for i in colors]
+        """
+        # TODO can use np.fromiter
+        plot_array = np.array([i for i in self.mesh.coordinates
+                               if self.norm(i) > 0])
+        k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
 
-            plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero, colors=colors, **kwargs)
-        plot += plt
-        plot.display()
+    def plot3d_vectors(self, k3d_plot=None, points=False, **kwargs):
+        """Plots the vector fields where norm is not zero
+        (where the material is present). Shift the vector so that
+        its center passes through the center of the cell.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+               We transfer a k3d.plot.Plot object to add the current 3d figure
+               to the canvas(?).
+
+        """
+        # Plot arrows only with norm > 0.
+        data = [(i, self(i)) for i in self.mesh.coordinates
+                if self.norm(i) > 0]
+        coordinates, vectors = zip(*data)
+        coordinates, vectors = np.array(coordinates), np.array(vectors)
+
+        # Middle of the arrow at the cell centre.
+        coordinates -= 0.5 * vectors
+
+        k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
+                    **kwargs)
+
+    def plot3d_vectors_slice(self, x=None, y=None, z=None,
+                             k3d_plot=None, points=False, **kwargs):
+        """Plots the slice of vector field by X,Y or Z plane, where norm
+         is not zero (where the material is present). Shift the vector
+         so that its center passes through the center of the cell.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+            x, y, z : float
+                The coordinate of the axis along which the volume is cut.
+            k3d_plot : k3d.plot.Plot, optional
+                We transfer a k3d.plot.Plot object to add the current 3d figure
+                to the canvas(?).
+
+        """
+        # Plot arrows only with norm > 0.
+        data = [(i, self(i)) for i in self.mesh.plane(x=x, y=y, z=z)
+                if self.norm(i) > 0]
+        coordinates, vectors = zip(*data)
+        coordinates, vectors = np.array(coordinates), np.array(vectors)
+
+        # Middle of the arrow at the cell centre.
+        coordinates -= 0.5 * vectors
+
+        k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
+                    **kwargs)
+
+    def plot3d_scalar(self, k3d_plot=None, **kwargs):
+        """Plots the scalar fields.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+        k3d_plot : k3d.plot.Plot, optional
+               We transfer a k3d.plot.Plot object to add the current 3d figure
+               to the canvas(?).
+
+        """
+        field_array = self.array.copy()
+        array_shape = self.array.shape  # TODO rewrite
+
+        nx, ny, nz, _ = array_shape
+
+        norm = np.linalg.norm(field_array, axis=3)[..., None]
+
+        for i in range(nx):
+            for j in range(ny):
+                for k in range(nz):
+                    if norm[i, j, k] == 0:
+                        field_array[i, j, k] = np.nan
+
+        component = 0
+
+        field_component = field_array[..., component]
+
+        k3d_scalar(field_component, self.mesh, k3d_plot=k3d_plot,
+                   **kwargs)
+
+
+    def plot3d_isosurface(self, level, k3d_plot=None, **kwargs):
+        """Plots isosurface where norm of field.array equal the `level`.
+
+        This function is called as a display function in Jupyter notebook.
+
+        Parameters
+        ----------
+            level : float
+                The field surface value.
+            k3d_plot : k3d.plot.Plot, optional
+                We transfer a k3d.plot.Plot object to add the current 3d figure
+                to the canvas(?).
+
+        """
+        k3d_isosurface(self.array, level, self.mesh, k3d_plot=k3d_plot,
+                       **kwargs)
