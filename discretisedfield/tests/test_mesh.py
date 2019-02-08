@@ -24,7 +24,7 @@ def invalid_args():
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 16e-9), 2+2j]]
 
 
-def _check_mesh_args(mesh):
+def check_mesh(mesh):
     assert isinstance(mesh.p1, tuple)
     assert len(mesh.p1) == 3
     assert isinstance(mesh.p2, tuple)
@@ -53,7 +53,7 @@ def test_init():
     name = 'test_mesh'
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
 
-    _check_mesh_args(mesh)
+    check_mesh(mesh)
     assert mesh.p1 == p1
     assert mesh.p2 == p2
     assert mesh.cell == cell
@@ -67,13 +67,13 @@ def test_init():
     assert mesh.n[0] == (15 - 0) / 1.0
     assert mesh.n[1] == (10.1 - (-4)) / 0.1
     assert mesh.n[2] == (16.5 - 11) / 0.5
-
+    assert mesh.ntotal == 23265
 
 def test_init_valid_args(valid_args):
     for p1, p2, cell in valid_args:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        _check_mesh_args(mesh)
+        check_mesh(mesh)
         assert mesh.name == 'mesh'  # default name value
         assert mesh.pbc == set()
 
@@ -98,7 +98,7 @@ def test_init_valid_pbc(valid_args):
         for pbc in ['x', 'z', 'zx', 'yxzz', 'yz']:
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
 
-            _check_mesh_args(mesh)
+            check_mesh(mesh)
             assert mesh.pbc == set(pbc)
 
 
