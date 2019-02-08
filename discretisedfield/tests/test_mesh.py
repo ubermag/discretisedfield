@@ -40,6 +40,7 @@ def check_mesh(mesh):
     assert isinstance(mesh.n, tuple)
     assert len(mesh.n) == 3
     assert all(isinstance(i, int) for i in mesh.n)
+    assert isinstance(mesh.ntotal, int)
     assert isinstance(mesh.pbc, set)
     assert all(isinstance(i, str) for i in mesh.pbc)
     assert isinstance(mesh.name, str)
@@ -69,6 +70,7 @@ def test_init():
     assert mesh.n[2] == (16.5 - 11) / 0.5
     assert mesh.ntotal == 23265
 
+
 def test_init_valid_args(valid_args):
     for p1, p2, cell in valid_args:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -84,6 +86,7 @@ def test_init_invalid_args(invalid_args):
             # Exceptions are raised by descriptors.
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
+
 def test_init_invalid_name():
     p1=(0, 0, 0)
     p2=(10, 10, 10)
@@ -92,6 +95,7 @@ def test_init_invalid_name():
         with pytest.raises((TypeError, ValueError)):
             # Exception is raised by the descriptor (mesh.name).
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+
 
 def test_init_valid_pbc(valid_args):
     for p1, p2, cell in valid_args:
@@ -108,6 +112,7 @@ def test_init_invalid_pbc(valid_args):
             with pytest.raises((ValueError, TypeError)):
                 # Exception is raised by the descriptor (mesh.pbc).
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
+
 
 def test_zero_domain_edge_length():
     args = [[(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9), (1e-9, 0.01e-9, 1e-9)],
@@ -173,6 +178,7 @@ def test_random_point():
         assert isinstance(random_point, tuple)
         for minval, val, maxval in zip(mesh.pmin, random_point, mesh.pmax):
             assert minval <= val <= maxval
+
 
 def test_repr_no_pbc():
     p1 = (-1, -4, 11)

@@ -3,10 +3,10 @@ import operator
 import itertools
 import functools
 import numpy as np
-from .plot3d import k3d_vox, k3d_points
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
 import discretisedfield.util as dfu
+from .plot3d import k3d_vox, k3d_points
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -90,7 +90,7 @@ class Mesh:
         self.name = name
 
         # Is any edge length of the domain equal to zero?
-        if any(edge_length==0 for edge_length in self.l):
+        if any(edge_length == 0 for edge_length in self.l):
             msg = 'The length of one of the domain edges is zero.'
             raise ValueError(msg)
 
@@ -196,7 +196,7 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.n`
 
         """
-        return tuple(abs(p1i-p2i) for p1i, p2i in zip(self.p1, self.p2))
+        return tuple(np.abs(np.subtract(self.p1, self.p2)))
 
     @property
     def n(self):
@@ -229,8 +229,7 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.ntotal`
 
         """
-        return tuple(int(round(li/celli))
-                     for li, celli in zip(self.l, self.cell))
+        return tuple(np.divide(self.l, self.cell).round().astype(int).tolist())
 
     @property
     def ntotal(self):
@@ -260,7 +259,7 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.n`
 
         """
-        return functools.reduce(operator.mul, self.n)
+        return int(np.prod(self.n))
 
     @property
     def centre(self):
@@ -294,7 +293,7 @@ class Mesh:
         (2.5, 7.5, 10.0)
 
         """
-        return tuple(pmini+0.5*li for pmini, li in zip(self.pmin, self.l))
+        return tuple(np.add(self.pmin, np.multiply(self.l, 0.5)).tolist())
 
     @property
     def indices(self):
@@ -418,8 +417,7 @@ class Mesh:
            is called.
 
         """
-        return tuple(pmini+random.random()*li
-                     for pmini, li in zip(self.pmin, self.l))
+        return tuple(np.add(self.pmin, np.multiply(np.random.random(3), self.l)).tolist())
 
     def index2point(self, index):
         """Convert cell's index to the cell's centre coordinate.
@@ -455,12 +453,11 @@ class Mesh:
 
         """
         # Does index refer to a cell outside the mesh?
-        if any(indexi < 0 or indexi > ni-1 for indexi, ni in zip(index, self.n)):
+        if np.logical_or(np.less(index, 0), np.greater(index, np.subtract(self.n, 1))).any():
             msg = 'Index out of range.'
             raise ValueError(msg)
         
-        return tuple(pmini+(indexi+0.5)*celli for pmini, indexi, celli
-                     in zip(self.pmin, index, self.cell))
+        return tuple(np.add(self.pmin, np.multiply(np.add(index, 0.5), self.cell)).tolist())
 
     def point2index(self, p):
         """Compute the index of a cell to which the point belongs to.
@@ -540,10 +537,9 @@ class Mesh:
         ValueError: ...
 
         """
-        for i, (pi, pmini, pmaxi) in enumerate(zip(p, self.pmin, self.pmax)):
-            if pi < pmini or pi > pmaxi:
-                msg = "Point p[{}]={} outside the mesh.".format(i, pi)
-                raise ValueError(msg)
+        if np.logical_or(np.less(p, self.pmin), np.greater(p, self.pmax)).any():
+            msg = 'Point is outside the mesh.'
+            raise ValueError(msg)
 
     def line(self, p1, p2, n=100):
         """Line generator.
