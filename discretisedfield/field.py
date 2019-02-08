@@ -1,5 +1,7 @@
+import pylab
 import pyvtk
 import struct
+import matplotlib
 import numpy as np
 import joommfutil.typesystem as ts
 import discretisedfield as df
@@ -444,3 +446,48 @@ class Field(dfu.Field):
         f.write(footerstr)
 
         f.close()
+
+
+    def _get_colormap(self, name, n):
+        data = []
+        cmap = pylab.cm.get_cmap(name, n)
+        for i in range(cmap.N):
+            rgb = cmap(i)[:3]
+            data.append(rgb)
+
+        return np.array(data)
+
+
+    def plot3d(self, vector_scale=1.0, direction=0, color=0xff, colormap_name='', **kwargs):
+        import k3d
+        plot = k3d.plot()
+
+        # value of vectors
+        vectors = self.array.reshape(-1,3)
+        vectors_nonzero = vectors[np.sum(vectors**2,axis=-1) !=0]
+
+        # coordinat of vectors start
+        origins = np.array(list(self.mesh.coordinates))
+        origins_nonzero = origins[np.sum(vectors**2,axis=-1) !=0]
+        origins_nonzero -= 0.5 * vectors_nonzero
+
+        if not colormap_name:
+            plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero, color=color, **kwargs)
+        else:
+            projection = vectors_nonzero[:, direction]
+            if projection.max() - projection.min() > 0.0:
+                projection = list((projection + abs(projection.min())) / (projection.max() - projection.min()) * 255)
+            else:
+                projection = [0.1] # needs to change
+            projection = [int(i) for i in projection]
+
+            bins = np.array([i for i in range(256)])
+            colormap = self._get_colormap(colormap_name, 256)
+
+            projection = colormap[np.digitize(projection, bins, right=True)]
+            colors = ['0x{}'.format(matplotlib.colors.rgb2hex(rgb)[1:]) for rgb in projection]
+            colors = [(int(i, 16), int(i, 16)) for i in colors]
+
+            plt = k3d.vectors(origins_nonzero, vector_scale*vectors_nonzero, colors=colors, **kwargs)
+        plot += plt
+        plot.display()
