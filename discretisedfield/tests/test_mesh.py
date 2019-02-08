@@ -117,7 +117,7 @@ def test_zero_domain_edge_length():
     for p1, p2, cell in args:
         with pytest.raises(ValueError) as excinfo:
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert "edge length is zero" in str(excinfo)
+        assert "is zero" in str(excinfo)
 
 
 def test_domain_not_aggregate_of_cell():
@@ -350,6 +350,7 @@ def test_plane():
     for point in pi:
         assert isinstance(point, tuple)
         assert len(point) == 3
+
 
 def test_script(valid_args):
     for arg in valid_args:

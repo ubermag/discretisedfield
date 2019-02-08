@@ -16,7 +16,7 @@ from mpl_toolkits.mplot3d import Axes3D
 class Mesh:
     """Finite difference rectangular mesh.
 
-    The rectangular mesh domain spans between two points `p1` and
+    A rectangular mesh domain spans between two points `p1` and
     `p2`. They are defined as ``array_like`` objects of length 3
     (e.g. ``tuple``, ``list``, ``numpy.ndarray``), :math:`p = (p_{x},
     p_{y}, p_{z})`. The domain is then discretised into finite
@@ -27,7 +27,7 @@ class Mesh:
     to "mesh".
 
     In order to properly define a mesh, the length of all mesh domain
-    edges must be positive, and the mesh domain must be an aggregate
+    edges must not be zero and the mesh domain must be an aggregate
     of discretisation cells.
 
     Parameters
@@ -40,7 +40,7 @@ class Mesh:
     pbc : str, optional
         Periodic boundary conditions in x, y, or z direction. Its value
         is a string consisting of one or more of the letters `x`, `y`,
-        or ``z, denoting the periodic direction(s).
+        or `z`, denoting the direction(s) in which the mesh is periodic.
     name : str, optional
         Mesh name (the default is "mesh"). The mesh name must be a valid
         Python variable name string. More specifically, it must not
@@ -57,11 +57,12 @@ class Mesh:
     1. Creating a nano-sized thin film mesh
 
     >>> import discretisedfield as df
+    ...
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> cell = (1e-9, 1e-9, 0.1e-9)
     >>> name = "mesh_name"
-    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc="xy", name=name)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
     2. An attempt to create a mesh with invalid parameters, so that
     the ``ValueError`` is raised. In this example, the mesh domain is
@@ -69,6 +70,7 @@ class Mesh:
     direction.
 
     >>> import discretisedfield as df
+    ...
     >>> p1 = (-25, 3, 0)
     >>> p2 = (25, 6, 1)
     >>> cell = (5, 3, 0.4)
@@ -85,19 +87,17 @@ class Mesh:
         self.pbc = pbc
         self.name = name
 
-        # Is the length of any mesh domain edges zero?
-        for i, li in enumerate(self.l):
-            if li == 0:
-                msg = "Mesh domain edge length is zero (l[{}]==0).".format(i)
-                raise ValueError(msg)
+        # Is any edge length of the domain equal to zero?
+        if any(edge_length==0 for edge_length in self.l):
+            msg = 'The length of one of the domain edges is zero.'
+            raise ValueError(msg)
 
         # Is the mesh domain not an aggregate of discretisation cells?
         tol = 1e-12  # picometre tolerance
-        for i, (li, celli) in enumerate(zip(self.l, self.cell)):
-            if tol < li % celli < celli - tol:
-                msg = ("Mesh domain is not an aggregate of the discretisation "
-                       "cell: abs(p2[{0}]-p1[{0}]) % cell[{0}].").format(i)
-                raise ValueError(msg)
+        if any(tol < edge_length % cell_length < cell_length - tol
+               for edge_length, cell_length in zip(self.l, self.cell)):
+            msg = 'Mesh domain is not an aggregate of the discretisation cell'
+            raise ValueError(msg)
 
     @property
     def pmin(self):
@@ -119,17 +119,13 @@ class Mesh:
         Getting the minimum mesh point.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (-1.1, 2.9, 0)
         >>> p2 = (5, 0, -0.1)
         >>> cell = (0.1, 0.1, 0.005)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name='mesh')
         >>> mesh.pmin
         (-1.1, 0, -0.1)
-
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``mesh.pmin``, not ``mesh.pmin()``.
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmax`
 
