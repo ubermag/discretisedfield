@@ -39,7 +39,7 @@ class Mesh:
         p_{y}, p_{z})`.
     cell : (3,) array_like
         Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`.
-    pbc : str, optional
+    pbc : iterable, optional
         Periodic boundary conditions in x, y, or z direction. Its value
         is a string consisting of one or more of the letters `x`, `y`,
         or `z`, denoting the direction(s) in which the mesh is periodic.
@@ -82,11 +82,11 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, cell, pbc={}, name="mesh"):
+    def __init__(self, p1, p2, cell, pbc=set(), name='mesh'):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.cell = tuple(cell)
-        self.pbc = pbc
+        self.pbc = sorted(pbc)
         self.name = name
 
         # Is any edge length of the domain equal to zero?
@@ -369,9 +369,10 @@ class Mesh:
 
         Example
         -------
-        Getting mesh representation string.
+        1. Getting mesh representation string.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
@@ -379,19 +380,17 @@ class Mesh:
         >>> name = "m"
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
         >>> repr(mesh)
-        'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc="xy", name="m")'
+        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x', 'y'}, name='m')"
 
         """
-        if self.pbc:
-            pbc = "\"{}\"".format("".join(sorted(self.pbc)))
-        else:
-            pbc = self.pbc
-        return ("Mesh(p1={}, p2={}, cell={}, pbc={}, "
-                "name=\"{}\")").format(self.p1, self.p2, self.cell,
-                                       pbc, self.name)
+        return (f'Mesh(p1={self.p1}, p2={self.p2}, cell={self.cell}, '
+                f'pbc={self.pbc}, name=\'{self.name}\')')
 
     def random_point(self):
         """Generate the random point belonging to the mesh.
+
+        The use of this function is mostly limited for writing tests
+        for packages based on `discretisedfield`.
 
         Returns
         -------
@@ -401,9 +400,10 @@ class Mesh:
 
         Example
         -------
-        Getting mesh representation string.
+        1. Generating a random mesh point.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (200e-9, 200e-9, 1e-9)
         >>> cell = (1e-9, 1e-9, 0.5e-9)
@@ -422,27 +422,28 @@ class Mesh:
                      for pmini, li in zip(self.pmin, self.l))
 
     def index2point(self, index):
-        """Convert the cell index to its centre's coordinate.
+        """Convert cell's index to the cell's centre coordinate.
 
         Parameters
         ----------
         index : (3,) array_like
-            The discretisation cell index :math:`(i_{x}, i_{y}, i_{z})`.
+            The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Returns
         -------
-            The discretisation cell centre point :math:`(p_{x}, p_{y}, p_{z})`.
+            The cell's centre point :math:`(p_{x}, p_{y}, p_{z})`.
 
         Raises
         ------
-            ValueError
-                If the discretisation cell index is out of range.
+        ValueError
+            If the cell's index is out of range.
 
         Example
         -------
-        Converting cell index to its coordinate.
+        1. Converting cell's index to its coordinate.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
@@ -454,36 +455,36 @@ class Mesh:
 
         """
         # Does index refer to a cell outside the mesh?
-        for i, (indexi, ni) in enumerate(zip(index, self.n)):
-            if indexi > ni - 1 or indexi < 0:
-                msg = ("index[{}]={} out of range "
-                       "[0, n[{}]].").format(i, indexi, ni)
-                raise ValueError(msg)
+        if any(indexi < 0 or indexi > ni-1 for indexi, ni in zip(index, self.n)):
+            msg = 'Index out of range.'
+            raise ValueError(msg)
+        
         return tuple(pmini+(indexi+0.5)*celli for pmini, indexi, celli
                      in zip(self.pmin, index, self.cell))
 
     def point2index(self, p):
-        """Convert the mesh coordinate to the cell index which contains it.
+        """Compute the index of a cell to which the point belongs to.
 
         Parameters
         ----------
         p : (3,) array_like
-            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+            The point's coordinate :math:`(p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------
-            The discretisation cell index :math:`(i_{x}, i_{y}, i_{z})`.
+            The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Raises
         ------
-            ValueError
-                If `point` is outside the mesh domain.
+        ValueError
+            If `point` is outside the mesh domain.
 
         Example
         -------
-        Converting point coordinate to the cell index.
+        1. Converting point's coordinate to the cell index.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)

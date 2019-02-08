@@ -16,11 +16,11 @@ def valid_args():
 @pytest.fixture
 def invalid_args():
     return [[(0, 0, 0), (5, 5, 5), (-1, 1, 1)],
-            [("1", 0, 0), (1, 1, 1), (0, 0, 1e-9)],
-            [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9), (5, 1, -1e-9)],
+            [('1', 0, 0), (1, 1, 1), (0, 0, 1e-9)],
+            [(-1.5e-9, -5e-9, 'a'), (1.5e-9, 15e-9, 16e-9), (5, 1, -1e-9)],
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9), (0.1e-9, 0.1e-9, 1e-9)],
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1+2j), (5, 1, 1e-9)],
-            ["string", (5, 1, 1e-9), "string"],
+            ['string', (5, 1, 1e-9), 'string'],
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 16e-9), 2+2j]]
 
 
@@ -50,7 +50,7 @@ def test_init():
     p2 = (15, 10.1, 11)
     cell = (1, 0.1, 0.5)
     pbc = 'yx'
-    name = "test_mesh"
+    name = 'test_mesh'
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
 
     _check_mesh_args(mesh)
@@ -74,7 +74,7 @@ def test_init_valid_args(valid_args):
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         _check_mesh_args(mesh)
-        assert mesh.name == "mesh"  # default name value
+        assert mesh.name == 'mesh'  # default name value
         assert mesh.pbc == set()
 
         
@@ -88,14 +88,14 @@ def test_init_invalid_name():
     p1=(0, 0, 0)
     p2=(10, 10, 10)
     cell=(1, 1, 1)
-    for name in ["mesh name", "2name", " ", 5, "-name", "+mn"]:
+    for name in ['mesh name', '2name', ' ', 5, '-name', '+mn']:
         with pytest.raises((TypeError, ValueError)):
             # Exception is raised by the descriptor (mesh.name).
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
 def test_init_valid_pbc(valid_args):
     for p1, p2, cell in valid_args:
-        for pbc in ["x", "z", "zx", "yxzz", "yz"]:
+        for pbc in ['x', 'z', 'zx', 'yxzz', 'yz']:
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
 
             _check_mesh_args(mesh)
@@ -104,7 +104,7 @@ def test_init_valid_pbc(valid_args):
 
 def test_init_invalid_pbc(valid_args):
     for p1, p2, cell in valid_args:
-        for pbc in ["abc", "a", "123", 5]:
+        for pbc in ['abc', 'a', '123', 5]:
             with pytest.raises((ValueError, TypeError)):
                 # Exception is raised by the descriptor (mesh.pbc).
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
@@ -117,7 +117,7 @@ def test_zero_domain_edge_length():
     for p1, p2, cell in args:
         with pytest.raises(ValueError) as excinfo:
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert "is zero" in str(excinfo)
+        assert 'is zero' in str(excinfo)
 
 
 def test_domain_not_aggregate_of_cell():
@@ -128,7 +128,7 @@ def test_domain_not_aggregate_of_cell():
     for p1, p2, cell in args:
         with pytest.raises(ValueError) as excinfo:
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert "not an aggregate" in str(excinfo)
+        assert 'not an aggregate' in str(excinfo)
 
 
 def test_cell_greater_than_domain():
@@ -139,7 +139,7 @@ def test_cell_greater_than_domain():
     for cell in args:
         with pytest.raises(ValueError) as excinfo:
             mymesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert "not an aggregate" in str(excinfo)
+        assert 'not an aggregate' in str(excinfo)
 
 
 def test_centre():
@@ -178,11 +178,11 @@ def test_repr_no_pbc():
     p1 = (-1, -4, 11)
     p2 = (15, 10.1, 12.5)
     cell = (1, 0.1, 0.5)
-    name = "meshname"
+    name = 'meshname'
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
-    rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
-            "cell=(1, 0.1, 0.5), pbc=set(), name=\"meshname\")")
+    rstr = ('Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), '
+            'cell=(1, 0.1, 0.5), pbc=set(), name=\'meshname\')')
     assert repr(mesh) == rstr
 
 
@@ -190,12 +190,12 @@ def test_repr_pbc():
     p1 = (-1, -4, 11)
     p2 = (15, 10.1, 12.5)
     cell = (1, 0.1, 0.5)
-    pbc = "zyx"
-    name = "meshname"
+    pbc = 'x'
+    name = 'meshname'
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
 
-    rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
-            "cell=(1, 0.1, 0.5), pbc=\"xyz\", name=\"meshname\")")
+    rstr = ('Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), '
+            'cell=(1, 0.1, 0.5), pbc={\'x\'}, name=\'meshname\')')
     assert repr(mesh) == rstr
 
 
@@ -364,7 +364,7 @@ def test_issue21():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (1, 1, 1)
-    name = "object_name"
+    name = 'object_name'
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
     assert mesh.p1 == p1
@@ -378,7 +378,7 @@ def test_issue21():
     with pytest.raises(AttributeError):
         mesh.p2 = (15, 15, 15)
     with pytest.raises(AttributeError):
-        mesh.name = "new_object_name"
+        mesh.name = 'new_object_name'
     
     assert mesh.p1 == p1
     assert mesh.p2 == p2
