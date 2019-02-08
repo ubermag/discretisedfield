@@ -1,4 +1,5 @@
 import os
+import subprocess
 import discretisedfield as df
 
 
@@ -10,7 +11,9 @@ def test_write_vtk_file():
     filename_vtk = "test_write_vtk_file.vtk"
     f.write(filename_omf)
 
-    os.system("python -m discretisedfield.ovf2vtk --infile {}".format(filename_omf))
+    cmd = ['python', '-m', 'discretisedfield.ovf2vtk',
+           '--infile', f'{filename_omf}']
+    subprocess.run(cmd)
 
     pattern = ''
     with open(filename_vtk, 'r') as f:
@@ -20,5 +23,6 @@ def test_write_vtk_file():
 
     assert pattern == 'CELL_DATA 8'
 
-    os.system("rm {}".format(filename_omf))
-    os.system("rm {}".format(filename_vtk))
+    os.remove(f'{filename_omf}')
+    os.remove(f'{filename_vtk}')
+
