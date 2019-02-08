@@ -1,4 +1,3 @@
-import pylab
 import pyvtk
 import struct
 import matplotlib
@@ -447,7 +446,6 @@ class Field(dfu.Field):
 
         f.close()
 
-
     def _get_colormap(self, name, n):
         data = []
         cmap = pylab.cm.get_cmap(name, n)
@@ -456,7 +454,6 @@ class Field(dfu.Field):
             data.append(rgb)
 
         return np.array(data)
-
 
     def plot3d(self, vector_scale=1.0, direction=0, color=0xff, colormap_name='', **kwargs):
         import k3d
