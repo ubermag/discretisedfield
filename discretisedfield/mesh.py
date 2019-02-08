@@ -1,5 +1,7 @@
 import random
+import operator
 import itertools
+import functools
 import numpy as np
 from .plot3d import k3d_vox, k3d_points
 import matplotlib.pyplot as plt
@@ -116,7 +118,7 @@ class Mesh:
 
         Example
         -------
-        Getting the minimum mesh point.
+        1. Getting the minimum mesh point.
 
         >>> import discretisedfield as df
         ...
@@ -149,20 +151,16 @@ class Mesh:
 
         Example
         -------
-        Getting the maximum mesh point.
+        1. Getting the maximum mesh point.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (-1.1, 2.9, 0)
         >>> p2 = (5, 0, -0.1)
         >>> cell = (0.1, 0.1, 0.005)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.pmax
         (5, 2.9, 0)
-
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``mesh.pmax``, not ``mesh.pmax()``.
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmin`
 
@@ -184,9 +182,10 @@ class Mesh:
 
         Example
         -------
-        Getting mesh domain edge lengths.
+        1. Getting mesh domain edge lengths.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, -5)
         >>> p2 = (5, 15, 15)
         >>> cell = (1, 1, 1)
@@ -194,10 +193,7 @@ class Mesh:
         >>> mesh.l
         (5, 15, 20)
 
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``mesh.l``, not ``mesh.l()``.
+        .. seealso:: :py:func:`~discretisedfield.Mesh.n`
 
         """
         return tuple(abs(p1i-p2i) for p1i, p2i in zip(self.p1, self.p2))
@@ -218,10 +214,11 @@ class Mesh:
 
         Example
         -------
-        Getting the number of discretisation cells in all three
+        1. Getting the number of discretisation cells in all three
         directions.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 5, 0)
         >>> p2 = (5, 15, 1)
         >>> cell = (0.5, 0.1, 1)
@@ -229,13 +226,41 @@ class Mesh:
         >>> mesh.n
         (10, 100, 1)
 
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``mesh.n``, not ``mesh.n()``.
+        .. seealso:: :py:func:`~discretisedfield.Mesh.ntotal`
 
         """
-        return tuple(int(round(li/di)) for li, di in zip(self.l, self.cell))
+        return tuple(int(round(li/celli))
+                     for li, celli in zip(self.l, self.cell))
+
+    @property
+    def ntotal(self):
+        """Total number of discretisation cells in the mesh.
+
+        `ntotal` is obtained by multiplying all elements of `self.n`
+        tuple.
+
+        Returns
+        -------
+        int
+            The total number of discretisation cells in the mesh
+
+        Example
+        -------
+        1. Getting the number of discretisation cells in a mesh.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 5, 0)
+        >>> p2 = (5, 15, 2)
+        >>> cell = (1, 0.1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.ntotal
+        1000
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.n`
+
+        """
+        return functools.reduce(operator.mul, self.n)
 
     @property
     def centre(self):
@@ -257,9 +282,10 @@ class Mesh:
 
         Example
         -------
-        Getting the mesh centre point.
+        1. Getting the mesh centre point.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (5, 15, 20)
         >>> cell = (1, 1, 1)
@@ -267,18 +293,12 @@ class Mesh:
         >>> mesh.centre
         (2.5, 7.5, 10.0)
 
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``mesh.centre``, not ``mesh.centre()``.
-
         """
         return tuple(pmini+0.5*li for pmini, li in zip(self.pmin, self.l))
 
     @property
     def indices(self):
-        """Generator iterating through all mesh cells and yielding their
-        indices.
+        """Generator yielding indices of all mesh cells.
 
         Yields
         ------
@@ -287,20 +307,16 @@ class Mesh:
 
         Example
         -------
-        Getting all mesh cell indices.
+        1. Getting all mesh cell indices.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (3, 2, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> tuple(mesh.indices)
-        ((0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0))
-
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``mesh.indices``, not ``mesh.indices()``.
+        >>> list(mesh.indices)
+        [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0)]
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.coordinates`
 
@@ -310,8 +326,7 @@ class Mesh:
 
     @property
     def coordinates(self):
-        """Generator iterating through all mesh cells and yielding their
-        coordinates.
+        """Generator yielding coordinates of all mesh cells.
 
         The discretisation cell coordinate corresponds to the cell
         centre point.
@@ -323,20 +338,16 @@ class Mesh:
 
         Example
         -------
-        Getting all mesh cell coordinates.
+        1. Getting all mesh cell coordinates.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> tuple(mesh.coordinates)
-        ((0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 1.5, 0.5), (1.5, 1.5, 0.5))
-
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``mesh.coordinates``, not ``mesh.coordinates()``.
+        >>> list(mesh.coordinates)
+        [(0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 1.5, 0.5), (1.5, 1.5, 0.5)]
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
 
