@@ -1,0 +1,28 @@
+environment:
+  matrix:
+    - PYTHON_VERSION: 3.6
+      MINICONDA: C:\Miniconda3-x64
+    - PYTHON_VERSION: 3.7
+      MINICONDA: C:\Miniconda3-x64
+
+platform:
+  - x64
+
+build: off
+
+install:
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - "conda create -q -n test-environment python=%PYTHON_VERSION%"
+  - activate test-environment
+  - python -m pip install --upgrade pip pytest nbval .
+
+test_script:
+  - python -c "import discretisedfield as d; import sys; sys.exit(d.test())"
+  - python -m pytest --nbval docs\ipynb\
+  - python -m pytest --doctest-modules --ignore=discretisedfield\tests discretisedfield
+
+notifications:
+  - provider: Slack
+    incoming_webhook: https://hooks.slack.com/services/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

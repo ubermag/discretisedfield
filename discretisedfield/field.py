@@ -5,13 +5,14 @@ import joommfutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-@ts.typesystem(mesh=ts.TypedAttribute(expected_type=df.Mesh),
-               dim=ts.UnsignedInt,
-               name=ts.ObjectName)
+@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
+               dim=ts.Scalar(expected_type=int, unsigned=True, const=True),
+               name=ts.Name(const=True))
 class Field(dfu.Field):
-    """Finite Difference field
+    """Finite difference field
 
     This class defines a finite difference field and provides some
     basic operations. The field is defined on a finite difference mesh
@@ -29,7 +30,7 @@ class Field(dfu.Field):
         For more details, please refer to the `value` property.
     norm : numbers.Real, callable, optional
         For more details, please refer to the `norm` property.
-    name : str, optional, optional
+    name : str, optional
         Field name (the default is "field"). The field name must be a valid
         Python variable name string. More specifically, it must not
         contain spaces, or start with underscore or numeric character.
@@ -259,7 +260,7 @@ class Field(dfu.Field):
         for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):
             yield point, self.__call__(point)
 
-    def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None):
+    def _plot_data(self, *args, x=None, y=None, z=None, n=None, ax=None, figsize=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
         data = list(self.plane(*args, x=x, y=y, z=z, n=n))
         ps, vs = list(zip(*data))
@@ -269,31 +270,65 @@ class Field(dfu.Field):
         if n is None:
             n = (self.mesh.n[info["haxis"]], self.mesh.n[info["vaxis"]])
 
-        if not ax:
-            fig = plt.figure()
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
 
-        if self.dim > 1:
-            imshowdata = np.array(values[info["slice"]]).reshape(n).T
-        else:
-            imshowdata = np.array(values).reshape(n).T
+        return info, points, values, n, ax
+
+    def imshow(self, *args, x=None, y=None, z=None, n=None, ax=None, **kwargs):
+        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
+                                                      n=n, ax=ax)
+
         extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
                   self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
-        ax, imax = dfu.addimshow(ax, imshowdata, extent=extent)
+        imax = ax.imshow(np.array(values).reshape(n).T, origin="lower",
+                         extent=extent, **kwargs)
+
+        return imax
+
+    def quiver(self, *args, x=None, y=None, z=None, n=None, ax=None,
+               colour=None, **kwargs):
+        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
+                                                      n=n, ax=ax)
+
+        if not any(values[info["haxis"]] + values[info["vaxis"]]):
+            kwargs["scale"] = 1
+
+        if colour is None:
+            qvax = ax.quiver(points[info["haxis"]], points[info["vaxis"]],
+                             values[info["haxis"]], values[info["vaxis"]],
+                             pivot='mid', **kwargs)
+        elif colour in dfu.axesdict.keys():
+            qvax = ax.quiver(points[info["haxis"]], points[info["vaxis"]],
+                             values[info["haxis"]], values[info["vaxis"]],
+                             values[dfu.axesdict[colour]],
+                             pivot='mid', **kwargs)
+
+        return qvax
+
+    def colorbar(self, ax, colouredplot, cax=None, **kwargs):
+        if cax is None:
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.1)
+
+        plt.colorbar(colouredplot, cax=cax, **kwargs)
+
+    def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None, figsize=None):
+        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
+                                                      n=n, ax=ax, figsize=figsize)
 
         if self.dim > 1:
-            if not any(values[info["haxis"]] + values[info["vaxis"]]):
-                kwargs = {"scale": 1}
-            else:
-                kwargs = {}
-            ax = dfu.addquiver(ax, points, values, info,
-                               colour=False, **kwargs)
+            self.quiver(*args, x=x, y=y, z=z, n=n, ax=ax)
+            scfield = getattr(self, list(dfu.axesdict.keys())[info["slice"]])
+        else:
+            scfield = self
 
-        ax, cbar = dfu.addcolorbar(ax, imax)
+        colouredplot = scfield.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
+        self.colorbar(ax, colouredplot)
 
         ax.set_xlabel(list(dfu.axesdict.keys())[info["haxis"]])
         ax.set_ylabel(list(dfu.axesdict.keys())[info["vaxis"]])
-        cbar.set_label(list(dfu.axesdict.keys())[info["slice"]])
 
     def write(self, filename, **kwargs):
         if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):
@@ -317,10 +352,7 @@ class Field(dfu.Field):
 
         vtkdata.tofile(filename)
 
-    def _writeovf(self, filename, representation="text"):
-        f = open(filename, "w")
-
-        # Define header lines.
+    def _writeovf(self, filename, representation="txt"):
         header = ["OOMMF OVF 2.0",
                   "",
                   "Segment count: 1",
@@ -357,26 +389,31 @@ class Field(dfu.Field):
                   "End: Header",
                   ""]
 
-        if representation == "binary":
+        if representation == "bin4":
+            header.append("Begin: Data Binary 4")
+            footer = ["End: Data Binary 4",
+                      "End: Segment"]
+        elif representation == "bin8":
             header.append("Begin: Data Binary 8")
             footer = ["End: Data Binary 8",
                       "End: Segment"]
-        if representation == "text":
+        elif representation == "txt":
             header.append("Begin: Data Text")
             footer = ["End: Data Text",
                       "End: Segment"]
 
+        f = open(filename, "w")
+
         # Write header lines to OOMMF file.
-        for line in header:
-            if not line:
-                f.write("#\n")
-            else:
-                f.write("# " + line + "\n")
-        if representation == "binary":
+        headerstr = "".join(map(lambda line: "# {}\n".format(line), header))
+        f.write(headerstr)
+
+        if representation == "bin8":
             # Close the file and reopen with binary write
-            # appending to end of file.
+            # appending to the end of file.
             f.close()
             f = open(filename, "ab")
+
             # Add the 8 bit binary check value that OOMMF uses
             packarray = [123456789012345.0]
             # Write data lines to OOMMF file.
@@ -403,8 +440,7 @@ class Field(dfu.Field):
                 f.write("\n")
 
         # Write footer lines to OOMMF file.
-        for line in footer:
-            f.write("# " + line + "\n")
+        footerstr = "".join(map(lambda line: "# {}\n".format(line), footer))
+        f.write(footerstr)
 
-        # Close the file.
         f.close()

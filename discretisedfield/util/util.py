@@ -52,7 +52,6 @@ def plane_info(*args, x=None, y=None, z=None):
 def plot_line(ax, p1, p2, *args, **kwargs):
     """Plot a line between points p1 and p2 on axis ax."""
     ax.plot(*zip(p1, p2), *args, **kwargs)
-    return ax
 
 
 def plot_box(ax, p1, p2, *args, **kwargs):
@@ -85,24 +84,6 @@ def plot_box(ax, p1, p2, *args, **kwargs):
     plot_line(ax, (x2, y1, z1), (x2, y1, z2), *args, **kwargs)
     plot_line(ax, (x1, y2, z1), (x1, y2, z2), *args, **kwargs)
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
-
-    return ax
-
-
-def addimshow(ax, data, extent):
-    imax = ax.imshow(data, origin="lower", extent=extent)
-    return ax, imax
-
-
-def addquiver(ax, points, values, info, colour=False, **kwargs):
-    ax.quiver(points[info["haxis"]],
-              points[info["vaxis"]],
-              values[info["haxis"]],
-              values[info["vaxis"]],
-              # values[info["slice"]],
-              pivot='mid',
-              **kwargs)
-    return ax
 
 
 def addcolorbar(ax, imax):

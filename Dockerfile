@@ -1,12 +1,28 @@
-FROM ubuntu:16.04
+# This Dockerfile is used for Binder only. Dockerfile for tests and
+# builds is in docker directory.
 
-RUN apt update -y
-RUN apt install -y git python3-pip curl
-RUN python3 -m pip install --upgrade pip pytest-cov nbval matplotlib pyvtk \
-      git+git://github.com/joommf/joommfutil.git
+FROM ubuntu:18.04
 
-WORKDIR /usr/local
-RUN git clone https://github.com/joommf/discretisedfield.git
+RUN apt-get update -y
+RUN apt-get install -y python3-pip
+
+COPY . /usr/local/discretisedfield/
 WORKDIR /usr/local/discretisedfield
 RUN python3 -m pip install .
 
+# Commands to make Binder work.
+RUN python3 -m pip install --no-cache-dir notebook==5.*
+ENV NB_USER binderuser
+ENV NB_UID 1000
+ENV HOME /home/${NB_USER}
+
+RUN adduser --disabled-password \
+    --gecos "Default user" \
+    --uid ${NB_UID} \
+    ${NB_USER}
+
+COPY . ${HOME}
+USER root
+RUN chown -R ${NB_UID} ${HOME}
+RUN chown -R ${NB_UID} /usr/local/discretisedfield
+USER ${NB_USER}
