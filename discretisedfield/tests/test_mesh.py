@@ -77,13 +77,12 @@ def test_init_valid_args(valid_args):
         assert mesh.name == "mesh"  # default name value
         assert mesh.pbc == None
 
-
+        
 def test_init_invalid_args(invalid_args):
     for p1, p2, cell in invalid_args:
         with pytest.raises(TypeError):
             # Exceptions are raised by descriptors.
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
 
 def test_init_invalid_name():
     p1=(0, 0, 0)
@@ -106,10 +105,9 @@ def test_init_valid_pbc(valid_args):
 def test_init_invalid_pbc(valid_args):
     for p1, p2, cell in valid_args:
         for pbc in ["abc", "a", "123", 5]:
-            with pytest.raises(TypeError):
+            with pytest.raises((ValueError, TypeError)):
                 # Exception is raised by the descriptor (mesh.pbc).
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
-
 
 def test_zero_domain_edge_length():
     args = [[(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9), (1e-9, 0.01e-9, 1e-9)],
