@@ -1,4 +1,3 @@
-import k3d
 import pylab
 import pyvtk
 import struct
@@ -460,7 +459,7 @@ class Field(dfu.Field):
 
 
     def plot3d(self, vector_scale=1.0, direction=0, color=0xff, colormap_name='', **kwargs):
-
+        import k3d
         plot = k3d.plot()
 
         # value of vectors
