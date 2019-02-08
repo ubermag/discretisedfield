@@ -75,12 +75,12 @@ def test_init_valid_args(valid_args):
 
         _check_mesh_args(mesh)
         assert mesh.name == "mesh"  # default name value
-        assert mesh.pbc == None
+        assert mesh.pbc == set()
 
         
 def test_init_invalid_args(invalid_args):
     for p1, p2, cell in invalid_args:
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, ValueError)):
             # Exceptions are raised by descriptors.
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
@@ -89,7 +89,7 @@ def test_init_invalid_name():
     p2=(10, 10, 10)
     cell=(1, 1, 1)
     for name in ["mesh name", "2name", " ", 5, "-name", "+mn"]:
-        with pytest.raises(TypeError):
+        with pytest.raises((TypeError, ValueError)):
             # Exception is raised by the descriptor (mesh.name).
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
@@ -182,7 +182,7 @@ def test_repr_no_pbc():
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
     rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), "
-            "cell=(1, 0.1, 0.5), pbc=None, name=\"meshname\")")
+            "cell=(1, 0.1, 0.5), pbc=set(), name=\"meshname\")")
     assert repr(mesh) == rstr
 
 
