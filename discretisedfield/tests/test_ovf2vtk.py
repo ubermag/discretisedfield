@@ -2,7 +2,7 @@ import os
 import discretisedfield as df
 
 
-def test_write_vtk_file(self):
+def test_write_vtk_file():
     mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
     f = df.Field(mesh, dim=1, value=-3.1)
 
