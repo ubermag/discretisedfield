@@ -1,7 +1,5 @@
 import random
-import operator
 import itertools
-import functools
 import numpy as np
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
@@ -86,18 +84,19 @@ class Mesh:
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.cell = tuple(cell)
-        self.pbc = sorted(pbc)
+        self.pbc = pbc
         self.name = name
 
         # Is any edge length of the domain equal to zero?
-        if any(edge_length == 0 for edge_length in self.l):
+        if np.equal(self.l, 0).any():
             msg = 'The length of one of the domain edges is zero.'
             raise ValueError(msg)
 
         # Is the mesh domain not an aggregate of discretisation cells?
         tol = 1e-12  # picometre tolerance
-        if any(tol < edge_length % cell_length < cell_length - tol
-               for edge_length, cell_length in zip(self.l, self.cell)):
+        rem = np.remainder(self.l, self.cell)
+        if np.logical_and(np.greater(rem, tol),
+                          np.less(rem, np.subtract(self.cell, tol))).any():
             msg = 'Mesh domain is not an aggregate of the discretisation cell'
             raise ValueError(msg)
 
@@ -132,7 +131,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmax`
 
         """
-        return tuple(map(min, zip(self.p1, self.p2)))
+        res = np.minimum(self.p1, self.p2)
+        return dfu.array2tuple(res)
 
     @property
     def pmax(self):
@@ -165,7 +165,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmin`
 
         """
-        return tuple(map(max, zip(self.p1, self.p2)))
+        res = np.maximum(self.p1, self.p2)
+        return dfu.array2tuple(res)
 
     @property
     def l(self):
@@ -196,7 +197,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.n`
 
         """
-        return tuple(np.abs(np.subtract(self.p1, self.p2)))
+        res = np.abs(np.subtract(self.p1, self.p2))
+        return dfu.array2tuple(res)
 
     @property
     def n(self):
@@ -229,7 +231,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.ntotal`
 
         """
-        return tuple(np.divide(self.l, self.cell).round().astype(int).tolist())
+        res = np.divide(self.l, self.cell).round().astype(int)
+        return dfu.array2tuple(res)
 
     @property
     def ntotal(self):
@@ -293,7 +296,8 @@ class Mesh:
         (2.5, 7.5, 10.0)
 
         """
-        return tuple(np.add(self.pmin, np.multiply(self.l, 0.5)).tolist())
+        res = np.add(self.pmin, np.multiply(self.l, 0.5))
+        return dfu.array2tuple(res)
 
     @property
     def indices(self):
@@ -354,6 +358,17 @@ class Mesh:
         for index in self.indices:
             yield self.index2point(index)
 
+    def __iter__(self):
+        """This method makes `df.Mesh` object iterable.
+
+        It iterates through the coodinates of the mesh cells
+        (`df.Mesh.coordinates`).
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
+
+        """
+        return self.coordinates
+
     def __repr__(self):
         """Mesh representation.
 
@@ -375,8 +390,8 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
-        >>> pbc = "x"
-        >>> name = "m"
+        >>> pbc = 'x'
+        >>> name = 'm'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
         >>> repr(mesh)
         "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'}, name='m')"
@@ -413,11 +428,12 @@ class Mesh:
         .. note::
 
            In the example, ellipsis is used instead of an exact tuple
-           because the result differs each time the ``random_point``
-           is called.
+           because the result differs each time ``random_point``
+           method is called.
 
         """
-        return tuple(np.add(self.pmin, np.multiply(np.random.random(3), self.l)).tolist())
+        res = np.add(self.pmin, np.multiply(np.random.random(3), self.l))
+        return dfu.array2tuple(res)
 
     def index2point(self, index):
         """Convert cell's index to the cell's centre coordinate.
@@ -453,13 +469,14 @@ class Mesh:
 
         """
         # Does index refer to a cell outside the mesh?
-        if np.logical_or(np.less(index, 0), np.greater(index, np.subtract(self.n, 1))).any():
+        if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
             msg = 'Index out of range.'
             raise ValueError(msg)
-        
-        return tuple(np.add(self.pmin, np.multiply(np.add(index, 0.5), self.cell)).tolist())
 
-    def point2index(self, p):
+        res = np.add(self.pmin, np.multiply(np.add(index, 0.5), self.cell))
+        return dfu.array2tuple(res)
+
+    def point2index(self, point):
         """Compute the index of a cell to which the point belongs to.
 
         Parameters
@@ -492,19 +509,22 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.index2point`
 
         """
-        self._isoutside(p)
+        self._isoutside(point)
 
-        index = np.subtract(np.divide(np.subtract(p, self.pmin), self.cell), 0.5).round().astype(int)
+        index = np.subtract(np.divide(np.subtract(point, self.pmin),
+                                      self.cell), 0.5).round().astype(int)
 
         # If rounded to the out-of-range values
-        return tuple(np.clip(index, 0, np.subtract(self.n, 1)).tolist())
+        index = np.clip(index, 0, np.subtract(self.n, 1))
 
-    def _isoutside(self, p):
+        return dfu.array2tuple(index)
+
+    def _isoutside(self, p):  # Restructure to inside fuction (returns True or False)
         """Raises ValueError if point is outside the mesh.
 
         Parameters
         ----------
-        p : (3,) array_like
+        point : (3,) array_like
             The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
 
         Returns
@@ -515,13 +535,14 @@ class Mesh:
         Raises
         ------
             ValueError
-                If `p` is outside the mesh domain.
+                If `point` is outside the mesh domain.
 
         Example
         -------
         Checking if point is outside the mesh.
 
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
@@ -587,7 +608,7 @@ class Mesh:
         p1, p2 = np.array(p1), np.array(p2)
         dl = (p2-p1) / (n-1)
         for i in range(n):
-            yield tuple(p1+i*dl)
+            yield dfu.array2tuple(p1+i*dl)
 
     def plane(self, *args, x=None, y=None, z=None, n=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
@@ -641,19 +662,6 @@ class Mesh:
         """
         self.plot()  # pragma: no cover
 
-    @property
-    def _script(self):
-        """This abstract method should be implemented by a specific
-        calculator.
-
-        Raises
-        ------
-        NotImplementedError
-            If not implemented by a specific calculator.
-
-        """
-        raise NotImplementedError
-
     def plot3d(self, k3d_plot=None, **kwargs):
         """Plots the mesh domain and the discretisation cell on 3D.
 
@@ -686,3 +694,16 @@ class Mesh:
         """
         plot_array = np.array(list(self.coordinates))
         k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
+
+    @property
+    def _script(self):
+        """This abstract method should be implemented by a specific
+        calculator.
+
+        Raises
+        ------
+        NotImplementedError
+            If not implemented by a specific calculator.
+
+        """
+        raise NotImplementedError

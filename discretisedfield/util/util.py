@@ -8,6 +8,10 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 axesdict = collections.OrderedDict([("x", 0), ("y", 1), ("z", 2)])
 
 
+def array2tuple(array):
+    return tuple(array.tolist())
+
+
 def as_array(mesh, dim, val):
     val_array = np.empty(mesh.n + (dim,))
     if isinstance(val, (int, float)) and (dim == 1 or val == 0):
