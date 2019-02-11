@@ -375,11 +375,11 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
-        >>> pbc = "xy"
+        >>> pbc = "x"
         >>> name = "m"
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
         >>> repr(mesh)
-        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x', 'y'}, name='m')"
+        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'}, name='m')"
 
         """
         return (f'Mesh(p1={self.p1}, p2={self.p2}, cell={self.cell}, '
