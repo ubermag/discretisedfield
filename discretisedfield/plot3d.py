@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib
 
+
 def check_k3d_install():
     try:
         import k3d
@@ -20,13 +21,25 @@ def check_k3d_install():
         raise ImportError(msg)
 
 
+def get_colors(vectors, colormap='viridis'):
+    """Return list of color for each verctor in 0xaabbcc format."""
+    cmap = matplotlib.cm.get_cmap(colormap, 256)
+
+    vc = vectors[..., 0]
+    vc = np.interp(vc, (vc.min(), vc.max()), (0, 1))
+    colors = cmap(vc)
+    colors = [int('0x{}'.format(matplotlib.colors.to_hex(rgb)[1:]), 16)
+              for rgb in colors]
+    colors = list(zip(colors, colors))
+
+    return colors
+
+
 def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
                color=0x99bbff, **kwargs):
 
     if check_k3d_install():
         import k3d
-
-    plot_array = plot_array.astype(np.float32)  # to avoid the warning
 
     if k3d_plot is None:
         k3d_plot = k3d.plot()
@@ -36,23 +49,12 @@ def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
 
 
 def k3d_vectors(coordinates, vectors, k3d_plot=None, points=False,
-                colormap='viridis'):
+                **kwargs):
 
     if check_k3d_install():
         import k3d
 
-    # To avoid the warning
-    coordinates = coordinates.astype(np.float32)
-    vectors = vectors.astype(np.float32)
-
-    cmap = matplotlib.cm.get_cmap(colormap, 256)
-
-    vc = vectors[..., 0]
-    vc = np.interp(vc, (vc.min(), vc.max()), (0, 1))
-    colors = cmap(vc)
-    colors = [int('0x{}'.format(matplotlib.colors.to_hex(rgb)[1:]), 16)
-              for rgb in colors]
-    colors = list(zip(colors, colors))
+    colors = get_colors(vectors, **kwargs)
 
     if k3d_plot is None:
         k3d_plot = k3d.plot()
