@@ -485,6 +485,19 @@ class Field(dfu.Field):
                               dtype=np.float32)
         k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
 
+    def get_coord_and_vect  (self, raw):
+        # Get arrows only with norm > 0.
+        data = [(i, self(i)) for i in raw
+                if self.norm(i) > 0]
+        coordinates, vectors = zip(*data)
+        coordinates, vectors = np.array(coordinates, dtype=np.float32), \
+                               np.array(vectors, dtype=np.float32)
+
+        # Middle of the arrow at the cell centre.
+        coordinates -= 0.5 * vectors
+
+        return coordinates, vectors
+
     def plot3d_vectors(self, k3d_plot=None, points=False, **kwargs):
         """Plots the vector fields where norm is not zero
         (where the material is present). Shift the vector so that
@@ -499,15 +512,7 @@ class Field(dfu.Field):
                to the canvas(?).
 
         """
-        # Plot arrows only with norm > 0.
-        data = [(i, self(i)) for i in self.mesh.coordinates
-                if self.norm(i) > 0]
-        coordinates, vectors = zip(*data)
-        coordinates, vectors = np.array(coordinates, dtype=np.float32), \
-                               np.array(vectors, dtype=np.float32)
-
-        # Middle of the arrow at the cell centre.
-        coordinates -= 0.5 * vectors
+        coordinates, vectors = self.get_coord_and_vect(self.mesh.coordinates)
 
         k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
                     **kwargs)
@@ -529,18 +534,12 @@ class Field(dfu.Field):
                 to the canvas(?).
 
         """
-        # Plot arrows only with norm > 0.
-        data = [(i, self(i)) for i in self.mesh.plane(x=x, y=y, z=z)
-                if self.norm(i) > 0]
-        coordinates, vectors = zip(*data)
-        coordinates, vectors = np.array(coordinates, dtype=np.float32), \
-                               np.array(vectors, dtype=np.float32)
-
-        # Middle of the arrow at the cell centre.
-        coordinates -= 0.5 * vectors
+        coordinates, vectors = self.get_coord_and_vect(self.mesh.plane(x=x, y=y, z=z))
 
         k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
                     **kwargs)
+
+
 
     def plot3d_scalar(self, k3d_plot=None, **kwargs):
         """Plots the scalar fields.
