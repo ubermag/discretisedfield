@@ -481,7 +481,8 @@ class Field(dfu.Field):
         """
         # TODO can use np.fromiter
         plot_array = np.array([i for i in self.mesh.coordinates
-                               if self.norm(i) > 0])
+                               if self.norm(i) > 0],
+                              dtype=np.float32)
         k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
 
     def plot3d_vectors(self, k3d_plot=None, points=False, **kwargs):
@@ -502,7 +503,8 @@ class Field(dfu.Field):
         data = [(i, self(i)) for i in self.mesh.coordinates
                 if self.norm(i) > 0]
         coordinates, vectors = zip(*data)
-        coordinates, vectors = np.array(coordinates), np.array(vectors)
+        coordinates, vectors = np.array(coordinates, dtype=np.float32), \
+                               np.array(vectors, dtype=np.float32)
 
         # Middle of the arrow at the cell centre.
         coordinates -= 0.5 * vectors
@@ -531,7 +533,8 @@ class Field(dfu.Field):
         data = [(i, self(i)) for i in self.mesh.plane(x=x, y=y, z=z)
                 if self.norm(i) > 0]
         coordinates, vectors = zip(*data)
-        coordinates, vectors = np.array(coordinates), np.array(vectors)
+        coordinates, vectors = np.array(coordinates, dtype=np.float32), \
+                               np.array(vectors, dtype=np.float32)
 
         # Middle of the arrow at the cell centre.
         coordinates -= 0.5 * vectors
