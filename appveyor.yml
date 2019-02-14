@@ -17,6 +17,7 @@ install:
   - "conda create -q -n test-environment python=%PYTHON_VERSION%"
   - activate test-environment
   - python -m pip install --upgrade pip pytest nbval .
+  - conda update numpy
 
 test_script:
   - python -c "import numpy, sys; sys.exit(print(numpy.__version__))"
