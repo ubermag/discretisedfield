@@ -23,6 +23,7 @@ install:
 test_script:
   - activate test-environment
   - conda list
+  - pip freeze
   - which python
   - python -h
   - python -V
