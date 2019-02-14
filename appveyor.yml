@@ -18,7 +18,7 @@ install:
   - conda install numpy=1.15.1
   - activate test-environment
   - python -m pip install --upgrade pip pytest nbval .
-  - python -m pip uninstall numpy
+  - python -m pip uninstall -y numpy
 
 test_script:
   - python -c "import numpy, sys; sys.exit(print(numpy.__version__))"
