@@ -11,7 +11,7 @@ def test_write_vtk_file():
     filename_vtk = "test_write_vtk_file.vtk"
     f.write(filename_omf)
 
-    cmd = ['python', '-m', 'discretisedfield.ovf2vtk',
+    cmd = ['python3', '-m', 'discretisedfield.ovf2vtk',
            '--infile', f'{filename_omf}']
     subprocess.run(cmd)
 
