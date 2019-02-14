@@ -547,9 +547,12 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> point1 = (1, 1, 1)
-        >>> mesh._isoutside(point1)  # Nothing is returned.
+        >>> mesh.isinside(point1)
+        True
         >>> point2 = (1, 3, 1)
-        >>> mesh._isoutside(point2)
+        >>> mesh.isinside(point2)
+        False
+        >>> mesh.isinside(point2, raise_exception=True)
         Traceback (most recent call last):
         ...
         ValueError: ...
