@@ -32,22 +32,21 @@ def plane_info(*args, x=None, y=None, z=None):
     kwargs = locals()
     info = dict()
     if args:
+        # Only an axis is provided.
         sliceaxis = args[0]
         info["point"] = None
     else:
+        # Both an axis and the value are provided.
         sliceaxis = [key for key in kwargs.keys()
                      if kwargs[key] is not None and key != "args"][0]
         info["point"] = kwargs[sliceaxis]
 
-    if len(sliceaxis) != 1:
-        msg = "Exactly one argument must be given."
-        raise ValueError(msg)
     if sliceaxis not in axesdict.keys():
-        msg = "Argument name must be one of {}.".format(axesdict.keys())
+        msg = f"Argument name must be one of {axesdict.keys()}."
         raise ValueError(msg)
 
     info["slice"] = axesdict[sliceaxis]
-    axes = tuple(filter(lambda val: val != info["slice"], (0, 1, 2)))
+    axes = tuple(filter(lambda val: val != info["slice"], axesdict.values()))
     info["haxis"], info["vaxis"] = axes
 
     return info

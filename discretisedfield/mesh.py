@@ -509,17 +509,16 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.index2point`
 
         """
-        self._isoutside(point)
+        self.isinside(point, raise_exception=True)
 
         index = np.subtract(np.divide(np.subtract(point, self.pmin),
                                       self.cell), 0.5).round().astype(int)
-
-        # If rounded to the out-of-range values
+        # If index is rounded to the out-of-range values.
         index = np.clip(index, 0, np.subtract(self.n, 1))
 
         return dfu.array2tuple(index)
 
-    def _isoutside(self, p):  # Restructure to inside fuction (returns True or False)
+    def isinside(self, point, raise_exception=False):
         """Raises ValueError if point is outside the mesh.
 
         Parameters
@@ -556,9 +555,15 @@ class Mesh:
         ValueError: ...
 
         """
-        if np.logical_or(np.less(p, self.pmin), np.greater(p, self.pmax)).any():
-            msg = 'Point outside the mesh.'
-            raise ValueError(msg)
+        if np.logical_or(np.less(point, self.pmin),
+                         np.greater(point, self.pmax)).any():
+            if raise_exception:
+                msg = 'Point is outside the mesh.'
+                raise ValueError(msg)
+            else:
+                return False
+        else:
+            return True
 
     def line(self, p1, p2, n=100):
         """Line generator.
@@ -602,8 +607,8 @@ class Mesh:
         ((0.0, 0.0, 0.0), (2.0, 0.0, 0.0))
 
         """
-        self._isoutside(p1)
-        self._isoutside(p2)
+        self.isinside(p1, raise_exception=True)
+        self.isinside(p2, raise_exception=True)
 
         p1, p2 = np.array(p1), np.array(p2)
         dl = (p2-p1) / (n-1)
@@ -618,7 +623,7 @@ class Mesh:
         else:
             test_point = list(self.centre)
             test_point[info["slice"]] = info["point"]
-            self._isoutside(test_point)
+            self.isinside(test_point, raise_exception=True)
 
         if n is None:
             n = (self.n[info["haxis"]], self.n[info["vaxis"]])
