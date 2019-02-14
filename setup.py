@@ -22,8 +22,7 @@ setuptools.setup(
     install_requires=['joommfutil',
                       'matplotlib',
                       'pyvtk',
-                      'k3d',
-                      'numpy==1.15.1'],
+                      'k3d']
     classifiers=['Development Status :: 3 - Alpha',
                  'License :: OSI Approved :: BSD License',
                  'Programming Language :: Python :: 3 :: Only',
