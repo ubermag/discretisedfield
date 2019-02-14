@@ -21,6 +21,7 @@ install:
   - python -m pip uninstall -y numpy
 
 test_script:
+  - activate test-environment
   - python -c "import numpy, sys; sys.exit(print(numpy.__version__))"
   - python -c "import discretisedfield as d; import sys; sys.exit(d.test())"
   - python -m pytest --nbval docs\ipynb\
