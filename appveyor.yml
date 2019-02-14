@@ -17,6 +17,8 @@ install:
   - "conda create -q -n test-environment python=%PYTHON_VERSION%"
   - activate test-environment
   - python -m pip install --upgrade pip pytest nbval .
+  - python -m pip uninstall -y numpy
+  - conda install numpy  # numpy conflict temporary solution
 
 test_script:
   - python -c "import discretisedfield as d; import sys; sys.exit(d.test())"

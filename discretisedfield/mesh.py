@@ -126,7 +126,7 @@ class Mesh:
         >>> cell = (0.1, 0.1, 0.005)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name='mesh')
         >>> mesh.pmin
-        (-1.1, 0, -0.1)
+        (-1.1, 0.0, -0.1)
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmax`
 
@@ -160,7 +160,7 @@ class Mesh:
         >>> cell = (0.1, 0.1, 0.005)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.pmax
-        (5, 2.9, 0)
+        (5.0, 2.9, 0.0)
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.pmin`
 
