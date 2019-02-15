@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import joommfutil.typesystem as ts
 import discretisedfield.util as dfu
-from .plot3d import k3d_vox, k3d_points
+from .plot3d import voxels
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -14,17 +14,18 @@ from mpl_toolkits.mplot3d import Axes3D
                pbc=ts.Subset(sample_set="xyz"),
                name=ts.Name(const=True))
 class Mesh:
-    """Finite difference rectangular mesh.
+    """Finite difference mesh.
 
     A rectangular mesh domain spans between two points `p1` and
     `p2`. They are defined as ``array_like`` objects of length 3
     (e.g. ``tuple``, ``list``, ``numpy.ndarray``), :math:`p = (p_{x},
-    p_{y}, p_{z})`. The domain is then discretised into finite
-    difference cells, where dimensions of a single cell are defined
-    with a `cell` parameter. Similar to `p1` and `p2`, `cell`
-    parameter is an ``array_like`` object :math:`(d_{x}, d_{y},
-    d_{z})` of length 3. The parameter `name` is optional and defaults
-    to "mesh".
+    p_{y}, p_{z})`. The domain is discretised usign a finite
+    difference cell, whose dimensions are defined with `cell`. Similar
+    to `p1` and `p2`, `cell` parameter is an ``array_like`` object
+    :math:`(d_{x}, d_{y}, d_{z})` of length 3. Periodic boundary
+    conditions can be specified by passing `pbc` argument, which is an
+    iterable containing one or more elements from `['x', 'y',
+    'z']`. The parameter `name` is optional and defaults to "mesh".
 
     In order to properly define a mesh, the length of all mesh domain
     edges must not be zero and the mesh domain must be an aggregate
@@ -39,7 +40,7 @@ class Mesh:
         Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`.
     pbc : iterable, optional
         Periodic boundary conditions in x, y, or z direction. Its value
-        is a string consisting of one or more of the letters `x`, `y`,
+        is an iterable consisting of one or more characters `x`, `y`,
         or `z`, denoting the direction(s) in which the mesh is periodic.
     name : str, optional
         Mesh name (the default is "mesh"). The mesh name must be a valid
@@ -54,7 +55,7 @@ class Mesh:
 
     Examples
     --------
-    1. Creating a nano-sized thin film mesh
+    1. Defining a nano-sized thin film mesh
 
     >>> import discretisedfield as df
     ...
@@ -64,7 +65,18 @@ class Mesh:
     >>> name = "mesh_name"
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
-    2. An attempt to create a mesh with invalid parameters, so that
+    2. Defining a mesh with periodic boundary conditions in x and y
+    directions.
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (100, 100, 1)
+    >>> cell = (1, 1, 1)
+    >>> pbc = 'xy'
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
+
+    3. An attempt to define a mesh with invalid parameters, so that
     the ``ValueError`` is raised. In this example, the mesh domain is
     not an aggregate of discretisation cells in the :math:`z`
     direction.
@@ -374,7 +386,7 @@ class Mesh:
 
         This method returns the string that can be copied in another
         Python script so that exactly the same mesh object could be
-        created.
+        defined.
 
         Returns
         -------
@@ -661,15 +673,17 @@ class Mesh:
         """
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
-        ax.set_aspect("equal")
 
         dfu.plot_box(ax, self.pmin, self.pmax, "b-", linewidth=1.5)
-        dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell), "r-", linewidth=1)
+        dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell),
+                     "r-", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
     def _ipython_display_(self):
         """Jupyter notebook mesh representation.
+        
+        %matplolib inline
 
         Mesh domain and discretisation cell are plotted by the
         :py:func:`~discretisedfield.Mesh.plot`.
@@ -677,38 +691,23 @@ class Mesh:
         """
         self.plot()  # pragma: no cover
 
-    def plot3d(self, k3d_plot=None, **kwargs):
-        """Plots the mesh domain and the discretisation cell on 3D.
+    def k3d(self, colormap=[0x99bbff, 0xff4d4d], outlines=False,
+            plot=None, **kwargs):
+        """Plots the mesh domain and emphasises the discretisation cell.
 
-        This function is called as a display function in Jupyter
-        notebook.
+        All arguments allowed in `k3d.voxels()` can be passed.
 
         Parameters
         ----------
         k3d_plot : k3d.plot.Plot, optional
-            We transfer a k3d.plot.Plot object to add the current 3d figure
-            to the canvas(?).
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
 
         """
-        plot_array = np.ones(tuple(reversed((self.n))))
+        plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
-        k3d_vox(plot_array, self, k3d_plot=k3d_plot, **kwargs)
-
-    def plot3d_coordinates(self, k3d_plot=None, **kwargs):
-        """Plots the mesh coordinates.
-
-        This function is called as a display function in Jupyter
-        notebook.
-
-        Parameters
-        ----------
-        k3d_plot : k3d.plot.Plot, optional
-            We transfer a k3d.plot.Plot object to add the current 3d figure
-            to the canvas(?).
-
-        """
-        plot_array = np.array(list(self.coordinates))
-        k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
+        voxels(plot_array, self.pmin, self.pmax, colormap,
+               outlines=outlines, plot=plot, **kwargs)
 
     @property
     def _script(self):

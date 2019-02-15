@@ -2,25 +2,45 @@ import numpy as np
 import matplotlib
 
 
-def check_k3d_install():
+def import_k3d():
     try:
         import k3d
-        return True
+        return k3d
     except ImportError:
         msg = '''
-        Missing module k3d.
-        Please install and activate k3d via pip using:
+        k3d is not installed. It can be installed using pip:
 
         $ pip install k3d
-        $ jupyter nbextension install --py --sys-prefix k3d
-        $ jupyter nbextension enable --py --sys-prefix k3d
 
-        More information on the project Github`s page:
+        After the installation, k3d is activated in JupyterLab with:
+
+        $ jupyter labextension install k3d
+
+        More information can be found on the k3d page:
         https://github.com/K3D-tools/K3D-jupyter
         '''
         raise ImportError(msg)
 
 
+def voxels(plot_array, pmin, pmax, colormap=[0x99bbff, 0xff4d4d],
+           outlines=False, plot=None, **kwargs):
+    k3d = import_k3d()
+    plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
+    xmin, ymin, zmin = pmin
+    xmax, ymax, zmax = pmax
+
+    if plot is None:
+        plot = k3d.plot()
+        plot.display()
+    plot += k3d.voxels(plot_array,
+                       color_map=colormap,
+                       xmin=xmin, xmax=xmax,
+                       ymin=ymin, ymax=ymax,
+                       zmin=zmin, zmax=zmax,
+                       outlines=outlines,
+                       **kwargs)
+
+    
 def get_colors(vectors, colormap='viridis'):
     """Return list of color for each verctor in 0xaabbcc format."""
     cmap = matplotlib.cm.get_cmap(colormap, 256)
@@ -123,29 +143,6 @@ def k3d_scalar(field_component, mesh, k3d_plot=None, colormap='viridis',
                            **kwargs)
 
 
-def k3d_vox(plot_array, mesh, k3d_plot=None,
-            colormap=[0x99bbff, 0xff4d4d], **kwargs):
-
-    if check_k3d_install():
-        import k3d
-
-    plot_array = plot_array.astype(np.uint8)  # to avoid the warning
-
-    xmin, ymin, zmin = mesh.pmin
-    xmax, ymax, zmax = mesh.pmax
-
-    if k3d_plot is None:
-        k3d_plot = k3d.plot()
-        k3d_plot.display()
-    k3d_plot += k3d.voxels(plot_array,
-                           color_map=colormap,
-                           xmin=xmin, xmax=xmax,
-                           ymin=ymin, ymax=ymax,
-                           zmin=zmin, zmax=zmax,
-                           outlines=False,
-                           **kwargs)
-
-
 def k3d_isosurface(field, level, mesh, k3d_plot=None, **kwargs):
 
     if check_k3d_install():
@@ -155,7 +152,6 @@ def k3d_isosurface(field, level, mesh, k3d_plot=None, **kwargs):
     xmax, ymax, zmax = mesh.pmax
 
     plot_array = np.sum(field**2, axis=-1)
-    print(plot_array)
     plot_array = plot_array.astype(np.float32)  # to avoid the warning
 
     if k3d_plot is None:

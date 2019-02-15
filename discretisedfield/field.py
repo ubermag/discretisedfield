@@ -7,7 +7,7 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from . plot3d import k3d_vox, k3d_points, k3d_vectors, \
+from . plot3d import voxels, k3d_points, k3d_vectors, \
                      k3d_scalar, k3d_isosurface
 
 
