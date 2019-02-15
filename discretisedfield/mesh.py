@@ -623,17 +623,22 @@ class Mesh:
         info = dfu.plane_info(*args, **kwargs)
 
         if info['point'] is None:
+            # Plane info was extracted from args.
             info['point'] = self.centre[info['planeaxis']]
         else:
+            # Plane info was extracted from kwargs and should be
+            # tested whether it is inside the mesh.
             test_point = list(self.centre)
             test_point[info['planeaxis']] = info['point']
             self.isinside(test_point, raise_exception=True)
 
-        if 'n' not in kwargs.keys() or kwargs['n'] == None:
+        # None condition can probably be removed later.
+        if 'n' not in kwargs.keys() or kwargs['n'] is None:
             n = (self.n[info["axis1"]], self.n[info["axis2"]])
         else:
             n = kwargs['n']
 
+        # Get values for in-plane axes.
         daxis1, daxis2 = self.l[info["axis1"]]/n[0], self.l[info["axis2"]]/n[1]
         axis1 = np.linspace(self.pmin[info["axis1"]]+daxis1/2,
                             self.pmax[info["axis1"]]-daxis1/2, n[0])
@@ -659,9 +664,8 @@ class Mesh:
         ax.set_aspect("equal")
 
         dfu.plot_box(ax, self.pmin, self.pmax, "b-", linewidth=1.5)
-        cell_point = tuple(pmini+celli for pmini, celli
-                           in zip(self.pmin, self.cell))
-        dfu.plot_box(ax, self.pmin, cell_point, "r-", linewidth=1)
+        dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell), "r-", linewidth=1)
+
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
     def _ipython_display_(self):
