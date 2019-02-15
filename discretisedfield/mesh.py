@@ -16,26 +16,23 @@ from mpl_toolkits.mplot3d import Axes3D
 class Mesh:
     """Finite difference mesh.
 
-    A rectangular mesh domain spans between two points `p1` and
-    `p2`. They are defined as ``array_like`` objects of length 3
-    (e.g. ``tuple``, ``list``, ``numpy.ndarray``), :math:`p = (p_{x},
-    p_{y}, p_{z})`. The domain is discretised usign a finite
-    difference cell, whose dimensions are defined with `cell`. Similar
-    to `p1` and `p2`, `cell` parameter is an ``array_like`` object
-    :math:`(d_{x}, d_{y}, d_{z})` of length 3. Periodic boundary
-    conditions can be specified by passing `pbc` argument, which is an
-    iterable containing one or more elements from `['x', 'y',
-    'z']`. The parameter `name` is optional and defaults to "mesh".
+    A rectangular mesh domain spans between two points
+    :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`. The domain is
+    discretised using a finite difference cell, whose dimensions are
+    defined with `cell`. Periodic boundary conditions can be specified
+    by passing `pbc` argument, which is an iterable containing one or
+    more elements from ``['x', 'y', 'z']``. The parameter `name` is
+    optional and defaults to 'mesh'.
 
     In order to properly define a mesh, the length of all mesh domain
-    edges must not be zero and the mesh domain must be an aggregate
-    of discretisation cells.
+    edges must not be zero and the mesh domain must be an aggregate of
+    discretisation cells.
 
     Parameters
     ----------
     p1, p2 : (3,) array_like
-        Points between which the mesh domain spans :math:`p = (p_{x},
-        p_{y}, p_{z})`.
+        Points between which the mesh domain spans :math:`\\mathbf{p}
+        = (p_{x}, p_{y}, p_{z})`.
     cell : (3,) array_like
         Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`.
     pbc : iterable, optional
@@ -43,7 +40,7 @@ class Mesh:
         is an iterable consisting of one or more characters `x`, `y`,
         or `z`, denoting the direction(s) in which the mesh is periodic.
     name : str, optional
-        Mesh name (the default is "mesh"). The mesh name must be a valid
+        Mesh name (the default is 'mesh'). The mesh name must be a valid
         Python variable name string. More specifically, it must not
         contain spaces, or start with underscore or numeric character.
 
@@ -109,17 +106,17 @@ class Mesh:
         rem = np.remainder(self.l, self.cell)
         if np.logical_and(np.greater(rem, tol),
                           np.less(rem, np.subtract(self.cell, tol))).any():
-            msg = 'Mesh domain is not an aggregate of the discretisation cell'
+            msg = 'Mesh domain is not an aggregate of the discretisation cell.'
             raise ValueError(msg)
 
     @property
     def pmin(self):
         """Mesh point with minimum coordinates.
 
-        The :math:`i`-th component of :math:`p_\\text{min}` is
-        computed from points :math:`p_{1}` and :math:`p_{2}` between
-        which the mesh domain spans: :math:`p_\\text{min}^{i} =
-        \\text{min}(p_{1}^{i}, p_{2}^{i})`.
+        The :math:`i`-th component of :math:`\mathbf{p}_\\text{min}`
+        is computed from points :math:`p_{1}` and :math:`p_{2}`
+        between which the mesh domain spans: :math:`p_\\text{min}^{i}
+        = \\text{min}(p_{1}^{i}, p_{2}^{i})`.
 
         Returns
         -------
@@ -150,10 +147,10 @@ class Mesh:
     def pmax(self):
         """Mesh point with maximum coordinates.
 
-        The :math:`i`-th component of :math:`p_\\text{max}` is
-        computed from points :math:`p_{1}` and :math:`p_{2}` between
-        which the mesh domain spans: :math:`p_\\text{min}^{i} =
-        \\text{max}(p_{1}^{i}, p_{2}^{i})`.
+        The :math:`i`-th component of :math:`\mathbf{p}_\\text{max}`
+        is computed from points :math:`p_{1}` and :math:`p_{2}`
+        between which the mesh domain spans: :math:`p_\\text{min}^{i}
+        = \\text{max}(p_{1}^{i}, p_{2}^{i})`.
 
         Returns
         -------
@@ -195,7 +192,7 @@ class Mesh:
 
         Example
         -------
-        1. Getting mesh domain edge lengths.
+        1. Getting the mesh domain edge lengths.
 
         >>> import discretisedfield as df
         ...
@@ -248,15 +245,14 @@ class Mesh:
 
     @property
     def ntotal(self):
-        """Total number of discretisation cells in the mesh.
+        """Total number of discretisation cells.
 
-        `ntotal` is obtained by multiplying all elements of `self.n`
-        tuple.
+        It is computed by multiplying all elements of `self.n`.
 
         Returns
         -------
         int
-            The total number of discretisation cells in the mesh
+            The total number of discretisation cells
 
         Example
         -------
@@ -280,13 +276,11 @@ class Mesh:
     def centre(self):
         """Mesh domain centre point.
 
-        This point does not necessarily coincide with the
-        discretisation cell centre. It is computed as the middle point
-        between minimum and maximum coordinate :math:`p_{c}^{i} =
-        p_\\text{min}^{i} + 0.5l^{i}`, where :math:`p_\\text{min}^{i}`
-        is the :math:`i`-th coordinate of the minimum mesh domain
-        point and :math:`l^{i}` is the mesh domain edge length in the
-        :math:`i`-th direction.
+        It is computed as the middle point between minimum and maximum
+        coordinates :math:`\\mathbf{p}_\\text{c} = \\frac{1}{2}
+        (\\mathbf{p}_\\text{min} + \\mathbf{p}_\\text{max})` This
+        point does not necessarily coincide with the discretisation
+        cell centre.
 
         Returns
         -------
@@ -308,7 +302,7 @@ class Mesh:
         (2.5, 7.5, 10.0)
 
         """
-        res = np.add(self.pmin, np.multiply(self.l, 0.5))
+        res = np.multiply(np.add(self.pmin, self.pmax), 0.5)
         return dfu.array2tuple(res)
 
     @property
