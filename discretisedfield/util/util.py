@@ -12,6 +12,31 @@ def array2tuple(array):
     return tuple(array.tolist())
 
 
+def plane_info(*args, **kwargs):
+    info = dict()
+    # The plane is defined with: planeaxis and point. They should be
+    # extracted from *args and *kwargs.
+    if args:
+        # Only an axis is provided.
+        planeaxis = args[0]
+        info["point"] = None
+    else:
+        # Both an axis and the value are provided.
+        planeaxis = [key for key in kwargs.keys()
+                     if kwargs[key] is not None and key != "args"][0]
+        info["point"] = kwargs[planeaxis]
+
+    if planeaxis not in axesdict.keys():
+        msg = f"Argument name must be one of {axesdict.keys()}."
+        raise ValueError(msg)
+
+    info["slice"] = axesdict[planeaxis]
+    axes = tuple(filter(lambda val: val != info["slice"], axesdict.values()))
+    info["haxis"], info["vaxis"] = axes
+
+    return info
+
+
 def as_array(mesh, dim, val):
     val_array = np.empty(mesh.n + (dim,))
     if isinstance(val, (int, float)) and (dim == 1 or val == 0):
@@ -26,30 +51,6 @@ def as_array(mesh, dim, val):
     else:
         raise TypeError("Unsupported type(val)={}.".format(type(val)))
     return val_array
-
-
-def plane_info(*args, x=None, y=None, z=None):
-    kwargs = locals()
-    info = dict()
-    if args:
-        # Only an axis is provided.
-        sliceaxis = args[0]
-        info["point"] = None
-    else:
-        # Both an axis and the value are provided.
-        sliceaxis = [key for key in kwargs.keys()
-                     if kwargs[key] is not None and key != "args"][0]
-        info["point"] = kwargs[sliceaxis]
-
-    if sliceaxis not in axesdict.keys():
-        msg = f"Argument name must be one of {axesdict.keys()}."
-        raise ValueError(msg)
-
-    info["slice"] = axesdict[sliceaxis]
-    axes = tuple(filter(lambda val: val != info["slice"], axesdict.values()))
-    info["haxis"], info["vaxis"] = axes
-
-    return info
 
 
 def plot_line(ax, p1, p2, *args, **kwargs):

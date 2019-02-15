@@ -602,6 +602,7 @@ class Mesh:
         Example
         -------
         >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 2)
         >>> cell = (1, 1, 1)
