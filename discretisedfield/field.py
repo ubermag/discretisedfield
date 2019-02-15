@@ -271,7 +271,7 @@ class Field(dfu.Field):
         values = list(zip(*vs))
 
         if n is None:
-            n = (self.mesh.n[info["haxis"]], self.mesh.n[info["vaxis"]])
+            n = (self.mesh.n[info["axis1"]], self.mesh.n[info["axis2"]])
 
         if ax is None:
             fig = plt.figure(figsize=figsize)
@@ -283,8 +283,8 @@ class Field(dfu.Field):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
                                                       n=n, ax=ax)
 
-        extent = [self.mesh.pmin[info["haxis"]], self.mesh.pmax[info["haxis"]],
-                  self.mesh.pmin[info["vaxis"]], self.mesh.pmax[info["vaxis"]]]
+        extent = [self.mesh.pmin[info["axis1"]], self.mesh.pmax[info["axis1"]],
+                  self.mesh.pmin[info["axis2"]], self.mesh.pmax[info["axis2"]]]
         imax = ax.imshow(np.array(values).reshape(n).T, origin="lower",
                          extent=extent, **kwargs)
 
@@ -295,16 +295,16 @@ class Field(dfu.Field):
         info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
                                                       n=n, ax=ax)
 
-        if not any(values[info["haxis"]] + values[info["vaxis"]]):
+        if not any(values[info["axis1"]] + values[info["axis2"]]):
             kwargs["scale"] = 1
 
         if colour is None:
-            qvax = ax.quiver(points[info["haxis"]], points[info["vaxis"]],
-                             values[info["haxis"]], values[info["vaxis"]],
+            qvax = ax.quiver(points[info["axis1"]], points[info["axis2"]],
+                             values[info["axis1"]], values[info["axis2"]],
                              pivot='mid', **kwargs)
         elif colour in dfu.axesdict.keys():
-            qvax = ax.quiver(points[info["haxis"]], points[info["vaxis"]],
-                             values[info["haxis"]], values[info["vaxis"]],
+            qvax = ax.quiver(points[info["axis1"]], points[info["axis2"]],
+                             values[info["axis1"]], values[info["axis2"]],
                              values[dfu.axesdict[colour]],
                              pivot='mid', **kwargs)
 
@@ -323,15 +323,15 @@ class Field(dfu.Field):
 
         if self.dim > 1:
             self.quiver(*args, x=x, y=y, z=z, n=n, ax=ax)
-            scfield = getattr(self, list(dfu.axesdict.keys())[info["slice"]])
+            scfield = getattr(self, list(dfu.axesdict.keys())[info["planeaxis"]])
         else:
             scfield = self
 
         colouredplot = scfield.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
         self.colorbar(ax, colouredplot)
 
-        ax.set_xlabel(list(dfu.axesdict.keys())[info["haxis"]])
-        ax.set_ylabel(list(dfu.axesdict.keys())[info["vaxis"]])
+        ax.set_xlabel(list(dfu.axesdict.keys())[info["axis1"]])
+        ax.set_ylabel(list(dfu.axesdict.keys())[info["axis2"]])
 
     def write(self, filename, **kwargs):
         if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):

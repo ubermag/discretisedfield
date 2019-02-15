@@ -623,26 +623,26 @@ class Mesh:
         info = dfu.plane_info(*args, x=x, y=y, z=z)
 
         if info["point"] is None:
-            info["point"] = self.centre[info["slice"]]
+            info["point"] = self.centre[info["planeaxis"]]
         else:
             test_point = list(self.centre)
-            test_point[info["slice"]] = info["point"]
+            test_point[info["planeaxis"]] = info["point"]
             self.isinside(test_point, raise_exception=True)
 
         if n is None:
-            n = (self.n[info["haxis"]], self.n[info["vaxis"]])
+            n = (self.n[info["axis1"]], self.n[info["axis2"]])
 
-        dhaxis, dvaxis = self.l[info["haxis"]]/n[0], self.l[info["vaxis"]]/n[1]
-        haxis = np.linspace(self.pmin[info["haxis"]]+dhaxis/2,
-                            self.pmax[info["haxis"]]-dhaxis/2, n[0])
-        vaxis = np.linspace(self.pmin[info["vaxis"]]+dvaxis/2,
-                            self.pmax[info["vaxis"]]-dvaxis/2, n[1])
+        daxis1, daxis2 = self.l[info["axis1"]]/n[0], self.l[info["axis2"]]/n[1]
+        axis1 = np.linspace(self.pmin[info["axis1"]]+daxis1/2,
+                            self.pmax[info["axis1"]]-daxis1/2, n[0])
+        axis2 = np.linspace(self.pmin[info["axis2"]]+daxis2/2,
+                            self.pmax[info["axis2"]]-daxis2/2, n[1])
 
-        for x, y in itertools.product(haxis, vaxis):
+        for x, y in itertools.product(axis1, axis2):
             point = 3*[None]
-            point[info["slice"]] = info["point"]
-            point[info["haxis"]] = x
-            point[info["vaxis"]] = y
+            point[info["planeaxis"]] = info["point"]
+            point[info["axis1"]] = x
+            point[info["axis2"]] = y
             yield tuple(point)
 
     def plot(self):

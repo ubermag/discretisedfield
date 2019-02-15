@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-axesdict = collections.OrderedDict([("x", 0), ("y", 1), ("z", 2)])
+axesdict = collections.OrderedDict([('x', 0), ('y', 1), ('z', 2)])
 
 
 def array2tuple(array):
@@ -14,25 +14,29 @@ def array2tuple(array):
 
 def plane_info(*args, **kwargs):
     info = dict()
-    # The plane is defined with: planeaxis and point. They should be
+    # The plane is defined with: planeaxis and point. They are
     # extracted from *args and *kwargs.
     if args:
-        # Only an axis is provided.
+        # Only planeaxis is provided via args and the point will be
+        # defined later as a centre of the sample.
         planeaxis = args[0]
-        info["point"] = None
+        point = None
     else:
-        # Both an axis and the value are provided.
-        planeaxis = [key for key in kwargs.keys()
-                     if kwargs[key] is not None and key != "args"][0]
-        info["point"] = kwargs[planeaxis]
+        # Both planeaxis and point are provided via kwargs.
+        planeaxis = [key for key in axesdict.keys()
+                     if key in kwargs.keys()][0]
+        point = kwargs[planeaxis]
 
     if planeaxis not in axesdict.keys():
-        msg = f"Argument name must be one of {axesdict.keys()}."
+        msg = f'Plane axis name must be one of {axesdict.keys()}.'
         raise ValueError(msg)
 
-    info["slice"] = axesdict[planeaxis]
-    axes = tuple(filter(lambda val: val != info["slice"], axesdict.values()))
-    info["haxis"], info["vaxis"] = axes
+    info['planeaxis'] = axesdict[planeaxis]
+    info['point'] = point
+
+    # Get indices of in-plane axes.
+    axes = tuple(filter(lambda val: val != info['planeaxis'], axesdict.values()))
+    info['axis1'], info['axis2'] = axes
 
     return info
 
@@ -49,7 +53,7 @@ def as_array(mesh, dim, val):
         for index, point in zip(mesh.indices, mesh.coordinates):
             val_array[index] = val(point)
     else:
-        raise TypeError("Unsupported type(val)={}.".format(type(val)))
+        raise TypeError('Unsupported type(val)={}.'.format(type(val)))
     return val_array
 
 
@@ -92,6 +96,6 @@ def plot_box(ax, p1, p2, *args, **kwargs):
 
 def addcolorbar(ax, imax):
     divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="3%", pad=0.05)
+    cax = divider.append_axes('right', size='3%', pad=0.05)
     cbar = plt.colorbar(imax, cax=cax)
     return ax, cbar
