@@ -629,7 +629,7 @@ class Mesh:
             test_point[info['planeaxis']] = info['point']
             self.isinside(test_point, raise_exception=True)
 
-        if 'n' not in kwargs.keys:
+        if 'n' not in kwargs.keys() or kwargs['n'] == None:
             n = (self.n[info["axis1"]], self.n[info["axis2"]])
         else:
             n = kwargs['n']
