@@ -619,18 +619,20 @@ class Mesh:
         for i in range(n):
             yield dfu.array2tuple(p1+i*dl)
 
-    def plane(self, *args, x=None, y=None, z=None, n=None):
-        info = dfu.plane_info(*args, x=x, y=y, z=z)
+    def plane(self, *args, **kwargs):
+        info = dfu.plane_info(*args, **kwargs)
 
-        if info["point"] is None:
-            info["point"] = self.centre[info["planeaxis"]]
+        if info['point'] is None:
+            info['point'] = self.centre[info['planeaxis']]
         else:
             test_point = list(self.centre)
-            test_point[info["planeaxis"]] = info["point"]
+            test_point[info['planeaxis']] = info['point']
             self.isinside(test_point, raise_exception=True)
 
-        if n is None:
+        if 'n' not in kwargs.keys:
             n = (self.n[info["axis1"]], self.n[info["axis2"]])
+        else:
+            n = kwargs['n']
 
         daxis1, daxis2 = self.l[info["axis1"]]/n[0], self.l[info["axis2"]]/n[1]
         axis1 = np.linspace(self.pmin[info["axis1"]]+daxis1/2,

@@ -23,12 +23,12 @@ def plane_info(*args, **kwargs):
         point = None
     else:
         # Both planeaxis and point are provided via kwargs.
-        planeaxis = [key for key in axesdict.keys()
-                     if key in kwargs.keys()][0]
+        planeaxis = [key for key in axesdict.keys() if key in
+                     kwargs.keys()][0]
         point = kwargs[planeaxis]
 
     if planeaxis not in axesdict.keys():
-        msg = f'Plane axis name must be one of {axesdict.keys()}.'
+        msg = f'Plane axis must be one of {axesdict.keys()}.'
         raise ValueError(msg)
 
     info['planeaxis'] = axesdict[planeaxis]
