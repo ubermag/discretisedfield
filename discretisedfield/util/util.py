@@ -1,3 +1,4 @@
+import numbers
 import collections
 import numpy as np
 import itertools as it
@@ -79,19 +80,22 @@ def plot_box(ax, p1, p2, *args, **kwargs):
 
 
 def as_array(mesh, dim, val):
-    val_array = np.empty(mesh.n + (dim,))
-    if isinstance(val, (int, float)) and (dim == 1 or val == 0):
-        val_array.fill(val)
+    array = np.empty(mesh.n + (dim,))
+    if isinstance(val, numbers.Real) and (dim == 1 or val == 0):
+        # The array for a scalar field with numbers.Real value or any
+        # field with zero value.
+        array.fill(val)
     elif isinstance(val, (tuple, list, np.ndarray)) and len(val) == dim:
-        val_array[..., :] = val
-    elif isinstance(val, np.ndarray) and val.shape == val_array.shape:
-        val_array = val
+        array[..., :] = val
+    elif isinstance(val, np.ndarray) and val.shape == array.shape:
+        array = val
     elif callable(val):
         for index, point in zip(mesh.indices, mesh.coordinates):
-            val_array[index] = val(point)
+            array[index] = val(point)
     else:
-        raise TypeError('Unsupported type(val)={}.'.format(type(val)))
-    return val_array
+        msg = f'Unsupported type(val)={type(val)} or invalid value dimensions.'
+        raise ValueError(msg)
+    return array
 
 
 def addcolorbar(ax, imax):

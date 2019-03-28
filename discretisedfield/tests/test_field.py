@@ -171,7 +171,7 @@ class TestField:
 
     def test_set_exception(self):
         for f in self.vector_fs + self.scalar_fs:
-            with pytest.raises(TypeError):
+            with pytest.raises(ValueError):
                 f.value = "string"
 
     def test_array(self):

@@ -78,67 +78,63 @@ class Field(dfu.Field):
 
         Parameters
         ----------
-        value : numbers.Real, array_like, callable
-            If the parameter for the setter of this property is 0, all
-            values in the field will be set to zero (for vector fields
-            ``dim > 1``, all componenets of the vector will be
-            0). Input parameter can also be ``numbers.Real`` for
-            scalar fields (``dim=1``). In the case of vector fields,
-            ``numbers.Real`` is not allowed unless ``value=0``, but an
-            array_like data with length equal to the ``dim`` should be
-            used. Finally, the value can also be a callable
-            (e.g. Python function), which for every coordinate in the
-            mesh returns an appropriate value.
+        value : 0, array_like, callable
+            For scalar fields (`dim=1`) `numbers.Real` values are
+            allowed. In the case of vector fields, array_like value
+            with length equal to `dim` should be used. Finally, the
+            value can also be a callable (e.g. Python function), which
+            for every coordinate in the mesh returns a valid value. If
+            `value=0`, all values in the field will be set to zero
+            independent of the field dimension.
 
         Returns
         -------
         array_like, callable, numbers.Real
-            The returned value in the case of vector field can be
-            array_like (tuple, list, numpy.ndarray). In the case of
-            scalar field, the returned value can be numbers.Real. If
-            all components of a vector field are zero, 0 will be
-            returned.
+            The value used (representation) for setting the field is
+            returned. However, if the actual value of the field does
+            not correspond to the initially used value anymore, a
+            `numpy.ndarray` is returned containing all field values.
 
         Examples
         --------
-        Different ways of setting and getting property `value`.
+        1. Different ways of setting and getting the field value.
 
         >>> import discretisedfield as df
-        >>> p1 = (-50e-9, -25e-9, 0)
-        >>> p2 = (50e-9, 25e-9, 5e-9)
-        >>> cell = (5e-9, 5e-9, 5e-9)
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> value = (0, 0, 1)
-        >>> name = "uniform_field"
-        >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
-        >>> # Value getter
-        >>> field.value
-        (0, 0, 1)
-        >>> field.value = 0
+        >>> # if value is not specified, zero-field is defined
+        >>> field = df.Field(mesh=mesh, dim=3)
         >>> field.value
         0
+        >>> field.value = (0, 0, 1)
+        >>> field.value
+        (0, 0, 1)
+        >>> # Setting the field value using a Python function (callable).
         >>> def value_function(pos):
         ...     x, y, z = pos
-        ...     if x <= 0:
+        ...     if x <= 1:
         ...         return (0, 0, 1)
         ...     else:
         ...         return (0, 0, -1)
         >>> field.value = value_function
-        >>> field((10e-9, 0, 0))
-        (0.0, 0.0, -1.0)
-        >>> field((-10e-9, 0, 0))
-        (0.0, 0.0, 1.0)
-
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``field.value``, not ``field.value()``.
+        >>> field.value
+        <function value_function at ...>
+        >>> # We now change the value of a single cell so that the
+        >>> # representation used for initialising field is not valid
+        >>> # anymore.
+        >>> field.array[0, 0, 0, :] = (0, 0, 0)
+        >>> field.value
+        array(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        if np.array_equal(self.array,
-                          dfu.as_array(self.mesh, self.dim, self._value)):
+        value_array = dfu.as_array(self.mesh, self.dim, self._value)
+        if np.array_equal(self.array, value_array):
             return self._value
         else:
             return self.array
@@ -150,39 +146,39 @@ class Field(dfu.Field):
 
     @property
     def array(self):
-        """Field value as a numpy array.
+        """Numpy array of a field value.
+
+        Parameters
+        ----------
+        numpy.ndarray
+            Numpy array with dimensions `(field.mesh.n[0],
+            field.mesh.n[1], field.mesh.n[2], dim)`
 
         Returns
         -------
         numpy.ndarray
             Field values array.
 
-        Parameters
-        ----------
-        numpy.ndarray
-            The dimensions must be ``(field.mesh.n[0],
-            field.mesh.n[1], field.mesh.n[2], dim)``
-
         Examples
         --------
-        Different ways of setting and getting property `value`.
+        1. Accessing and setting the field array.
 
         >>> import discretisedfield as df
+        >>> import numpy as np
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (1, 1, 1)
         >>> cell = (0.5, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> value = (0, 0, 1)
-        >>> name = "uniform_field"
-        >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
-        >>> # array getter
+        >>> field = df.Field(mesh=mesh, dim=3, value=value)
+        >>> field.array
+        array(...)
         >>> field.array.shape
         (2, 1, 1, 3)
-
-        .. note::
-
-           Please note this method is a property and should be called
-           as ``field.array``, not ``field.array()``.
+        >>> field.array = np.ones(field.array.shape)
+        >>> field.array
+        array(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field.value`
 
@@ -191,26 +187,30 @@ class Field(dfu.Field):
 
     @array.setter
     def array(self, val):
-        self._array = val
+        if isinstance(val, np.ndarray) and val.shape == self.mesh.n + (self.dim,):
+            self._array = val
+        else:
+            raise ValueError(f'Unsupported type(val)={type(val)} or '
+                             'invalid value dimensions.')
 
     @property
     def norm(self):
-        current_norm = np.linalg.norm(self.array, axis=self.dim)[..., None]
-        if self._norm:
-            if np.array_equiv(current_norm, self._norm.array):
+        current_norm = np.linalg.norm(self.array, axis=-1)[..., None]
+        if self._norm is not None:
+            if np.array_equal(current_norm, self._norm.array):
                 return self._norm
 
         return Field(self.mesh, dim=1, value=current_norm, name="norm")
 
     @norm.setter
     def norm(self, val):
-        if val:
+        if val is not None:
             if self.dim == 1:
-                msg = "Cannot normalise field with dim={}.".format(self.dim)
+                msg = f'Cannot set norm for field with dim={self.dim}.'
                 raise ValueError(msg)
 
             if not np.any(self.array):
-                msg = "Cannot normalise field with all zero values."
+                msg = 'Cannot normalise zero field.'
                 raise ValueError(msg)
 
             self._norm = Field(mesh=self.mesh, dim=1, value=val, name="norm")
