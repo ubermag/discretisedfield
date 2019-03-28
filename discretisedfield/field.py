@@ -15,41 +15,48 @@ from . plot3d import voxels, k3d_points, k3d_vectors, \
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True),
                name=ts.Name(const=True))
 class Field(dfu.Field):
-    """Finite difference field
+    """Finite difference field.
 
-    This class defines a finite difference field and provides some
-    basic operations. The field is defined on a finite difference mesh
-    (`discretisedfield.Mesh`).
+    This class defines a finite difference field and enables certain
+    operations for the analysis and visualisation. The field is
+    defined on a finite difference mesh (`discretisedfield.Mesh`).
 
     Parameters
     ----------
     mesh : discretisedfield.Mesh
-        Finite difference rectangular mesh on which the field is defined.
+        Finite difference rectangular mesh.
     dim : int, optional
-        Dimension of the field value. For instance, if ``dim=3``
-        the field is three-dimensional vector field; and for
-        ``dim=1`` it is a scalar field.
-    value : 0, array_like, callable, optional
-        For more details, please refer to the `value` property.
+        Dimension of the field value. For instance, if `dim=3` the
+        field is a three-dimensional vector field; and for ``dim=1``
+        the field is a scalar field. Defaults to `dim=3`.
+    value : array_like, callable, optional
+        Please refer to the `value` property:
+        :py:func:`~discretisedfield.Field.value`. Defaults to 0,
+        meaning that if the value is not provided in the
+        initialisation pricess, "zero-field" will be defined.
     norm : numbers.Real, callable, optional
-        For more details, please refer to the `norm` property.
+        Please refer to the `norm` property:
+        :py:func:`~discretisedfield.Field.norm`. Defaults to `None`
+        (`norm=None` defines no norm).
     name : str, optional
-        Field name (the default is "field"). The field name must be a valid
+        Field name (defaults to "field"). The field name must be a valid
         Python variable name string. More specifically, it must not
         contain spaces, or start with underscore or numeric character.
 
     Examples
     --------
-    Creating a uniform vector field on a nano-sized thin film
+    1. Creating a uniform three-dimensional vector field on a
+    nano-sized thin film.
 
     >>> import discretisedfield as df
+    ...
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> cell = (1e-9, 1e-9, 0.1e-9)
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    >>> dim = 3
     >>> value = (0, 0, 1)
-    >>> name = "uniform_field"
-    >>> field = df.Field(mesh=mesh, dim=3, value=value, name=name)
+    >>> field = df.Field(mesh=mesh, dim=dim, value=value)
 
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
@@ -63,11 +70,11 @@ class Field(dfu.Field):
 
     @property
     def value(self):
-        """Finite difference field value representation property.
+        """Field value representation.
 
-        The getter of this propertry returns a field value
-        representation if exists. Otherwise, it returns the
-        numpy.ndarray.
+        This propertry returns a representation of the field value if
+        it exists. Otherwise, the `numpy.ndarray` containing all
+        values from the field is returned.
 
         Parameters
         ----------
