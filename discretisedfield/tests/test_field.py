@@ -205,7 +205,6 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         f.norm = 1
-        assert isinstance(f.norm.value, int)
         assert np.all(f.norm.value == 1)
 
         f.array[0, 0, 0, 0] = 3
@@ -216,8 +215,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         f.norm = 1
-        assert isinstance(f.norm.value, int)
-        assert f.norm.value == 1
+        assert np.all(f.norm.value == 1)
 
         f.array[0, 0, 0, 0] = 3
         assert isinstance(f.norm.value, np.ndarray)

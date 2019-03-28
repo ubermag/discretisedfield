@@ -11,7 +11,7 @@ from . plot3d import voxels, k3d_points, k3d_vectors, \
                      k3d_scalar, k3d_isosurface
 
 
-@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
+@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True),
                name=ts.Name(const=True))
 class Field(dfu.Field):
@@ -159,6 +159,11 @@ class Field(dfu.Field):
         numpy.ndarray
             Field values array.
 
+        Raises
+        ------
+        ValueError
+            If setting the array with wrong type, shape, or value.
+
         Examples
         --------
         1. Accessing and setting the field array.
@@ -190,16 +195,51 @@ class Field(dfu.Field):
         if isinstance(val, np.ndarray) and val.shape == self.mesh.n + (self.dim,):
             self._array = val
         else:
-            raise ValueError(f'Unsupported type(val)={type(val)} or '
-                             'invalid value dimensions.')
+            msg = f'Unsupported type(val)={type(val)} or invalid value dimensions.'
+            raise ValueError(msg)
 
     @property
     def norm(self):
-        current_norm = np.linalg.norm(self.array, axis=-1)[..., None]
-        if self._norm is not None:
-            if np.array_equal(current_norm, self._norm.array):
-                return self._norm
+        """Norm of a field.
 
+        Parameters
+        ----------
+        numbers.Real, numpy.ndarray
+            Norm value
+
+        Returns
+        -------
+        discretisedfield.Field
+            Scalar field with norm values.
+
+        Raises
+        ------
+        ValueError
+            If setting the norm with wrong type, shape, or value.
+
+        Examples
+        --------
+        1. Manipulating the field norm
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (1, 1, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
+        >>> field.norm
+        <Field(...)>
+        >>> field.norm = 2
+        >>> field.norm.array
+        array([[[[2.]]]])
+        >>> field.value = (1, 0, 0)
+        >>> field.norm.array
+        array([[[[1.]]]])
+
+        """
+        
+        current_norm = np.linalg.norm(self.array, axis=-1)[..., None]
         return Field(self.mesh, dim=1, value=current_norm, name="norm")
 
     @norm.setter
@@ -208,23 +248,41 @@ class Field(dfu.Field):
             if self.dim == 1:
                 msg = f'Cannot set norm for field with dim={self.dim}.'
                 raise ValueError(msg)
-
-            if not np.any(self.array):
-                msg = 'Cannot normalise zero field.'
+            
+            current_norm = self.norm.array
+            if not np.all(current_norm):
+                msg = 'Cannot normalise field with zero values.'
                 raise ValueError(msg)
 
-            self._norm = Field(mesh=self.mesh, dim=1, value=val, name="norm")
-            self.array /= np.linalg.norm(self.array, axis=self.dim)[..., None]
-            self.array *= self._norm.array
-        else:
-            self._norm = val
+            self.array /= current_norm  # normalise to 1
+            self.array *= dfu.as_array(self.mesh, dim=1, val=val)
 
     @property
     def average(self):
-        """Compute the finite difference field average.
+        """Field average.
 
-        Returns:
-          Finite difference field average.
+        Returns
+        -------
+        tuple
+            Field average tuple whose length equals to the field's
+            dimension.
+
+        Examples
+        --------
+        1. Getting the field average.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field1 = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
+        >>> field1.average
+        (0.0, 0.0, 1.0)
+        >>> field2 = df.Field(mesh=mesh, dim=1, value=55)
+        >>> field2.average
+        (55.0,)
 
         """
         return tuple(self.array.mean(axis=(0, 1, 2)))

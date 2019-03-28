@@ -389,7 +389,7 @@ class Mesh:
 
         Example
         -------
-        1. Getting mesh representation string.
+        1. Getting mesh representation string.x
 
         >>> import discretisedfield as df
         ...
