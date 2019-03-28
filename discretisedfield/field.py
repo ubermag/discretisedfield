@@ -11,7 +11,7 @@ from . plot3d import voxels, k3d_points, k3d_vectors, \
                      k3d_scalar, k3d_isosurface
 
 
-@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
+@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True),
                name=ts.Name(const=True))
 class Field(dfu.Field):
