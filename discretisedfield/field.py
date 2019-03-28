@@ -248,13 +248,12 @@ class Field(dfu.Field):
             if self.dim == 1:
                 msg = f'Cannot set norm for field with dim={self.dim}.'
                 raise ValueError(msg)
-            
-            current_norm = self.norm.array
-            if not np.all(current_norm):
+
+            if not np.all(self.norm.array):
                 msg = 'Cannot normalise field with zero values.'
                 raise ValueError(msg)
 
-            self.array /= current_norm  # normalise to 1
+            self.array /= self.norm.array  # normalise to 1
             self.array *= dfu.as_array(self.mesh, dim=1, val=val)
 
     @property
@@ -289,14 +288,14 @@ class Field(dfu.Field):
 
     def __repr__(self):
         """Representation method."""
-        rstr = "<Field(mesh={}, dim={}, name=\"{}\")>"
-        return rstr.format(repr(self.mesh), self.dim, self.name)
+        return f'<Field(mesh={repr(self.mesh)}, dim={self.dim}, name=\'{self.name}\')>'
 
     def __call__(self, point):
         """Sample the field at `point`.
 
-        Args:
-          p (tuple): point coordinate at which the field is sampled
+        Parameters
+        ----------
+        p (tuple): point coordinate at which the field is sampled
 
         Returns:
           Field value in cell containing point p
