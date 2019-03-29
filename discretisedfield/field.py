@@ -238,9 +238,8 @@ class Field(dfu.Field):
         array([[[[1.]]]])
 
         """
-        
         current_norm = np.linalg.norm(self.array, axis=-1)[..., None]
-        return Field(self.mesh, dim=1, value=current_norm, name="norm")
+        return Field(self.mesh, dim=1, value=current_norm, name='norm')
 
     @norm.setter
     def norm(self, val):
@@ -301,19 +300,20 @@ class Field(dfu.Field):
           Field value in cell containing point p
 
         """
-        field_value = self.array[self.mesh.point2index(point)]
-        if len(field_value) == 1:
-            return field_value
-        else:
-            return tuple(field_value)
+        value = self.array[self.mesh.point2index(point)]
+        if self.dim > 1:
+            value = tuple(value)
+        return value
 
     def __getattr__(self, name):
         if name in list(dfu.axesdict.keys())[:self.dim] and 1 < self.dim <= 3:
-            val = self.array[..., dfu.axesdict[name]][..., None]
-            fieldname = "{}_{}".format(self.name, name)
-            return Field(mesh=self.mesh, dim=1, value=val, name=fieldname)
+            # Components x, y, and z make sense only for vector fields
+            # with typical dimensions 2 and 3.
+            component_array = self.array[..., dfu.axesdict[name]][..., None]
+            fieldname = f'{self.name}-{name}'.format(self.name, name)
+            return Field(mesh=self.mesh, dim=1, value=component_array, name=fieldname)
         else:
-            msg = "{} object has no attribute {}."
+            msg = f'{type(self).__name__} object has no attribute {name}.'
             raise AttributeError(msg.format(type(self).__name__, name))
 
     def __dir__(self):
@@ -323,9 +323,33 @@ class Field(dfu.Field):
             extension = []
         return list(self.__dict__.keys()) + extension
 
-    def plane(self, *args, x=None, y=None, z=None, n=None):
-        for point in self.mesh.plane(*args, x=x, y=y, z=z, n=n):
+    def __iter__(self):
+        for point in self.mesh.coordinates:
             yield point, self.__call__(point)
+
+    def line(self, p1, p2, n=50):
+        for point in self.mesh.line(p1=p1, p2=p2, n=n):
+            yield point, self.__call__(point)
+        
+    def plane(self, *args, **kwargs):
+        for point in self.mesh.plane(*args, **kwargs):
+            yield point, self.__call__(point)
+
+    def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None, figsize=None):
+        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
+                                                      n=n, ax=ax, figsize=figsize)
+
+        if self.dim > 1:
+            self.quiver(*args, x=x, y=y, z=z, n=n, ax=ax)
+            scfield = getattr(self, list(dfu.axesdict.keys())[info["planeaxis"]])
+        else:
+            scfield = self
+
+        colouredplot = scfield.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
+        self.colorbar(ax, colouredplot)
+
+        ax.set_xlabel(list(dfu.axesdict.keys())[info["axis1"]])
+        ax.set_ylabel(list(dfu.axesdict.keys())[info["axis2"]])
 
     def _plot_data(self, *args, x=None, y=None, z=None, n=None, ax=None, figsize=None):
         info = dfu.plane_info(*args, x=x, y=y, z=z)
@@ -380,22 +404,6 @@ class Field(dfu.Field):
             cax = divider.append_axes("right", size="5%", pad=0.1)
 
         plt.colorbar(colouredplot, cax=cax, **kwargs)
-
-    def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None, figsize=None):
-        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
-                                                      n=n, ax=ax, figsize=figsize)
-
-        if self.dim > 1:
-            self.quiver(*args, x=x, y=y, z=z, n=n, ax=ax)
-            scfield = getattr(self, list(dfu.axesdict.keys())[info["planeaxis"]])
-        else:
-            scfield = self
-
-        colouredplot = scfield.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
-        self.colorbar(ax, colouredplot)
-
-        ax.set_xlabel(list(dfu.axesdict.keys())[info["axis1"]])
-        ax.set_ylabel(list(dfu.axesdict.keys())[info["axis2"]])
 
     def write(self, filename, **kwargs):
         if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):
