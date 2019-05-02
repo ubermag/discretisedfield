@@ -327,7 +327,7 @@ class Field(dfu.Field):
         for point in self.mesh.coordinates:
             yield point, self.__call__(point)
 
-    def line(self, p1, p2, n=50):
+    def line(self, p1, p2, n=100):
         for point in self.mesh.line(p1=p1, p2=p2, n=n):
             yield point, self.__call__(point)
         
@@ -441,9 +441,9 @@ class Field(dfu.Field):
                   "meshtype: rectangular",
                   "xbase: {}".format(self.mesh.pmin[0] +
                                      self.mesh.cell[0]/2),
-                  "ybase: {}".format(self.mesh.pmin[0] +
+                  "ybase: {}".format(self.mesh.pmin[1] +
                                      self.mesh.cell[1]/2),
-                  "zbase: {}".format(self.mesh.pmin[0] +
+                  "zbase: {}".format(self.mesh.pmin[2] +
                                      self.mesh.cell[2]/2),
                   "xnodes: {}".format(self.mesh.n[0]),
                   "ynodes: {}".format(self.mesh.n[1]),
