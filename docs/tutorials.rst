@@ -12,3 +12,4 @@ Tutorials
    ipynb/plotting_field
    ipynb/saving_reading_oommf_files
    ipynb/new_interface
+   ipynb/ovf2vtk_script.ipynb
