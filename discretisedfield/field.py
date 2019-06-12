@@ -500,6 +500,23 @@ class Field(dfu.Field):
             f.close()
             f = open(filename, "a")
 
+        elif representation == "bin4":
+            # Close the file and reopen with binary write
+            # appending to the end of file.
+            f.close()
+            f = open(filename, "ab")
+
+            # Add the 4 bit binary check value that OOMMF uses
+            packarray = [1234567.0]
+            # Write data lines to OOMMF file.
+            for i in self.mesh.indices:
+                [packarray.append(vi) for vi in self.array[i]]
+
+            v_binary = struct.pack("f"*len(packarray), *packarray)
+            f.write(v_binary)
+            f.close()
+            f = open(filename, "a")
+
         else:
             for i in self.mesh.indices:
                 if self.dim == 3:
