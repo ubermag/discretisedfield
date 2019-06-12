@@ -306,22 +306,24 @@ class TestField:
             f.plot_plane("z")
 
     def test_write_read_ovf_file_text(self):
-        tol = 1e-12
-        filename = "test_write_ovf_file_text.omf"
-        value = (1e-3 + np.pi, -5, 6)
-        for f in self.vector_fs:
-            f.value = value
-            f.write(filename)
+        for format in ['txt', 'bin4', 'bin8']:
+            if format == 'bin4':
+                tol = 1e-6
+            else:
+                tol = 1e-12
+            filename = "test_write_ovf_file_text.omf"
+            value = (1e-3 + np.pi, -5, 6)
+            for f in self.vector_fs:
+                f.value = value
+                f.write(filename, representation=format)
+                f_loaded = df.read(filename)
 
-            f_loaded = df.read(filename)
-
-            assert f.mesh.p1 == f_loaded.mesh.p1
-            assert f.mesh.p2 == f_loaded.mesh.p2
-            assert f.mesh.cell == f_loaded.mesh.cell
-            assert f.mesh.cell == f_loaded.mesh.cell
-            assert np.all(abs(f.value - f_loaded.value) < tol)
-
-            os.system("rm {}".format(filename))
+                assert f.mesh.p1 == f_loaded.mesh.p1
+                assert f.mesh.p2 == f_loaded.mesh.p2
+                assert f.mesh.cell == f_loaded.mesh.cell
+                assert f.mesh.cell == f_loaded.mesh.cell
+                assert np.all(abs(f.value - f_loaded.value) < tol)
+                os.system("rm {}".format(filename))
 
     def test_write_vector_norm_file(self):
         tol = 1e-12
