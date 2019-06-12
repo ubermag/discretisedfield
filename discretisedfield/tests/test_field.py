@@ -1,4 +1,5 @@
 import os
+import sys
 import types
 import random
 import pytest
@@ -396,7 +397,10 @@ class TestField:
         #    run from discretisedfield.test()
 
         # here is our test-data from mumax3:
-        filename = "mumax-output.ovf"
+        if sys.platform == 'win32':
+            filename = "mumax-output-win.ovf"
+        else:
+            filename = "mumax-output-linux.ovf"
         path = os.path.join("discretisedfield", "tests", filename)
 
         f = df.read(path)
