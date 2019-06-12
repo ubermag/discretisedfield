@@ -375,7 +375,6 @@ class TestField:
 
     def test_read_mumax3_ovffile(self):
         """Test reading a file created by mumax, with 4-byte binary data."""
-        filename = "mumax-output.ovf"
         # Output file has been produced with Mumax ~3.1.0
         # (fd3a50233f0a6625086d390) using this script:
         #
@@ -388,7 +387,19 @@ class TestField:
         #
         # m = uniform(1, .1, 0)
         # save(m)
-        f = df.read(filename)
+
+        # debug: which folder are we in? (use "py.test -l" to display
+        # local variables on fail)
+        cwd = os.getcwd()
+        print(cwd)
+        # -> tests are run in module base directory, when tests are
+        #    run from discretisedfield.test()
+
+        # here is our test-data from mumax3:
+        filename = "mumax-output.ovf"
+        path = os.path.join("discretisedfield", "tests", filename)
+
+        f = df.read(path)
 
         # comparison with human readable part of file
         assert f.dim == 3
