@@ -276,14 +276,14 @@ class TestField:
             f.value = (1, 2, 3)
             with pytest.raises(AttributeError):
                 f.__getattr__("nonexisting_attribute")
-            
+
     def test_dir(self):
         for f in self.vector_fs:
             f.value = (1, 2, 3)
             assert "x" in f.__dir__()
             assert "y" in f.__dir__()
             assert "z" in f.__dir__()
-            
+
     def test_line(self):
         mesh = df.Mesh((0, 0, 0), (10e-9, 10e-9, 10e-9), (1e-9, 1e-9, 1e-9))
         field = df.Field(mesh, value=(1, 2, 3))
@@ -371,3 +371,47 @@ class TestField:
             f.write(filename)
 
             os.system("rm {}".format(filename))
+
+
+    def test_read_mumax3_ovffile(self):
+        """Test reading a file created by mumax, with 4-byte binary data."""
+        filename = "mumax-output.ovf"
+        # Output file has been produced with Mumax ~3.1.0
+        # (fd3a50233f0a6625086d390) using this script:
+        #
+        # SetGridsize(128, 32, 1)
+        # SetCellsize(500e-9/128, 125e-9/32, 3e-9)
+        #
+        # Msat  = 800e3
+        # Aex   = 13e-12
+        # alpha = 0.02
+        #
+        # m = uniform(1, .1, 0)
+        # save(m)
+        f = df.read(filename)
+
+        # comparison with human readable part of file
+        assert f.dim == 3
+        assert f.mesh.ntotal == 4096
+        assert f.mesh.pmin == (0., 0., 0.)
+        assert f.mesh.pmax == (5e-07, 1.25e-07, 3e-09)
+        assert f.array.shape == (128, 32, 1, 3)
+
+        # comparison with vector field (we know from the script shown above)
+        #
+        # m vector in mumax (uses 4 bytes)
+        m = np.array([1, 0.1, 0], dtype=np.float32)
+
+        # needs to be normalised
+        norm = sum(m**2)**0.5
+        v = m / norm
+
+        # expect the x-component to be v[0]
+        np.alltrue(f.array[:, :, :, 0] == v[0])
+
+        # same for y and z
+        np.alltrue(f.array[:, :, :, 1] == v[1])
+        np.alltrue(f.array[:, :, :, 2] == v[2])
+
+        # expect each vector to be v
+        assert np.max(np.abs(f.array[:, :, :] - m / norm)) == 0.
