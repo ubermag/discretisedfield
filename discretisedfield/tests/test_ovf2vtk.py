@@ -20,7 +20,7 @@ def test_write_vtk_file():
            '--infile', f'{filename_omf}']
     proc_return = subprocess.run(cmd)
 
-    assert proc_return.returncode == 0, proc_return.stdout + proc_return.stderr
+    assert proc_return.returncode == 0
 
     pattern = ''
     with open(filename_vtk, 'r') as f:
