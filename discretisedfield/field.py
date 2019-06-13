@@ -11,6 +11,9 @@ from . plot3d import voxels, k3d_points, k3d_vectors, \
                      k3d_scalar, k3d_isosurface
 
 
+representations = ['txt', 'bin4', 'bin8']
+
+
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True),
                name=ts.Name(const=True))
@@ -330,7 +333,7 @@ class Field(dfu.Field):
     def line(self, p1, p2, n=100):
         for point in self.mesh.line(p1=p1, p2=p2, n=n):
             yield point, self.__call__(point)
-        
+
     def plane(self, *args, **kwargs):
         for point in self.mesh.plane(*args, **kwargs):
             yield point, self.__call__(point)
@@ -427,7 +430,9 @@ class Field(dfu.Field):
 
         vtkdata.tofile(filename)
 
-    def _writeovf(self, filename, representation="txt"):
+    def _writeovf(self, filename, **kwargs):
+        representation = kwargs['representation'] if 'representation' in kwargs else 'txt'
+        dim = kwargs['dim'] if 'dim' in kwargs else self.dim
         header = ["OOMMF OVF 2.0",
                   "",
                   "Segment count: 1",
@@ -457,7 +462,7 @@ class Field(dfu.Field):
                   "xmax: {}".format(self.mesh.pmax[0]),
                   "ymax: {}".format(self.mesh.pmax[1]),
                   "zmax: {}".format(self.mesh.pmax[2]),
-                  "valuedim: {}".format(3),
+                  "valuedim: {}".format(self.dim),
                   "valuelabels: {0}_x {0}_y {0}_z".format(self.name),
                   "valueunits: A/m A/m A/m",
                   "",
@@ -483,19 +488,22 @@ class Field(dfu.Field):
         headerstr = "".join(map(lambda line: "# {}\n".format(line), header))
         f.write(headerstr)
 
-        if representation == "bin8":
+        binary_reps = {'bin4': (1234567.0, 'f'),
+            'bin8': (123456789012345.0, 'd')}
+
+        if representation in binary_reps:
             # Close the file and reopen with binary write
             # appending to the end of file.
             f.close()
             f = open(filename, "ab")
 
             # Add the 8 bit binary check value that OOMMF uses
-            packarray = [123456789012345.0]
+            packarray = [binary_reps[representation][0]]
             # Write data lines to OOMMF file.
             for i in self.mesh.indices:
                 [packarray.append(vi) for vi in self.array[i]]
 
-            v_binary = struct.pack("d"*len(packarray), *packarray)
+            v_binary = struct.pack(binary_reps[representation][1]*len(packarray), *packarray)
             f.write(v_binary)
             f.close()
             f = open(filename, "a")
@@ -505,7 +513,7 @@ class Field(dfu.Field):
                 if self.dim == 3:
                     v = [vi for vi in self.array[i]]
                 elif self.dim == 1:
-                    v = [self.array[i][0], 0, 0]
+                    v = [self.array[i][0]]
                 else:
                     msg = ("Cannot write dim={} field to "
                            "omf file.".format(self.dim))
@@ -536,7 +544,7 @@ class Field(dfu.Field):
         plot_array = np.squeeze(self.x.array)
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
         plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
-        k3d_vox(plot_array, self.mesh, k3d_plot=k3d_plot, **kwargs)
+        voxels(plot_array, self.mesh.pmin, self.mesh.pmax, k3d_plot=k3d_plot, **kwargs)
 
     def plot3d_domain_coordinates(self, k3d_plot=None, **kwargs):
         """Plots the mesh coordinates where norm is not zero
@@ -557,7 +565,7 @@ class Field(dfu.Field):
                               dtype=np.float32)
         k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
 
-    def get_coord_and_vect  (self, raw):
+    def get_coord_and_vect(self, raw):
         # Get arrows only with norm > 0.
         data = [(i, self(i)) for i in raw
                 if self.norm(i) > 0]

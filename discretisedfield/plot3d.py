@@ -57,9 +57,7 @@ def get_colors(vectors, colormap='viridis'):
 
 def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
                color=0x99bbff, **kwargs):
-
-    if check_k3d_install():
-        import k3d
+    k3d = import_k3d()
 
     if k3d_plot is None:
         k3d_plot = k3d.plot()
@@ -70,9 +68,7 @@ def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
 
 def k3d_vectors(coordinates, vectors, k3d_plot=None, points=False,
                 **kwargs):
-
-    if check_k3d_install():
-        import k3d
+    k3d = import_k3d()
 
     colors = get_colors(vectors, **kwargs)
 

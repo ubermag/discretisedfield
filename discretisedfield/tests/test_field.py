@@ -1,10 +1,10 @@
 import os
-import sys
 import types
 import random
 import pytest
 import itertools
 import numpy as np
+from numpy.testing import assert_allclose
 import discretisedfield as df
 
 
@@ -299,80 +299,31 @@ class TestField:
         for f in self.vector_fs:
             assert isinstance(f.plane("x"), types.GeneratorType)
 
-
     def test_plot_plane(self):
         for f in self.vector_fs:
             f.plot_plane("x")
             f.plot_plane("y")
             f.plot_plane("z")
 
-    def test_write_read_ovf_file_text(self):
-        tol = 1e-12
-        filename = "test_write_ovf_file_text.omf"
-        value = (1e-3 + np.pi, -5, 6)
-        for f in self.vector_fs:
-            f.value = value
-            f.write(filename)
-
-            f_loaded = df.read(filename)
-
-            assert f.mesh.p1 == f_loaded.mesh.p1
-            assert f.mesh.p2 == f_loaded.mesh.p2
-            assert f.mesh.cell == f_loaded.mesh.cell
-            assert f.mesh.cell == f_loaded.mesh.cell
-            assert np.all(abs(f.value - f_loaded.value) < tol)
-
-            os.system("rm {}".format(filename))
-
-    def test_write_vector_norm_file(self):
-        tol = 1e-12
+    def test_write_read_ovf_file(self):
+        # num dims, default value, relative tolerence
+        dims = [(1, -1.23), (3, (1e-3 + np.pi, -5, 6))]
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
-        f = df.Field(mesh, dim=1, value=-3.1)
+        tolerence = {'txt':0, 'bin4':1e-6, 'bin8':1e-12}
+        filename = "test_write_file.ovf"
 
-        filename = "test_write_oommf_file_text1.omf"
-        f.write(filename)
+        for d, v in dims:
+            f_out = df.Field(mesh, dim=d, value=v)
+            for rep in df.field.representations:
+                f_out.write(filename, representation=rep)
+                f_in = df.read(filename)
+                assert f_out.mesh.p1 == f_in.mesh.p1
+                assert f_out.mesh.p2 == f_in.mesh.p2
+                assert f_out.mesh.cell == f_in.mesh.cell
+                assert f_out.mesh.cell == f_in.mesh.cell
+                assert_allclose(f_out.array, f_in.array, rtol=tolerence[rep])
 
-        f_loaded = df.read(filename)
-
-        assert f.mesh.p1 == f_loaded.mesh.p1
-        assert f.mesh.p2 == f_loaded.mesh.p2
-        assert f.mesh.cell == f_loaded.mesh.cell
-        assert f.mesh.cell == f_loaded.mesh.cell
-        assert np.all(abs(f.value - f_loaded.array[..., 0]) < tol)
-        assert np.all(abs(0 - f_loaded.array[..., 1]) < tol)
-        assert np.all(abs(0 - f_loaded.array[..., 2]) < tol)
-
-        os.system("rm {}".format(filename))
-
-    def test_write_read_ovf_file_binary(self):
-        tol = 1e-12
-        filename = "test_write_ovf_file_binary.omf"
-        value = (1e-3 + np.pi, -5, 6)
-
-        for f in self.vector_fs:
-            f.value = value
-            f.write(filename, representation="bin8")
-
-            f_loaded = df.read(filename)
-
-            assert f.mesh.p1 == f_loaded.mesh.p1
-            assert f.mesh.p2 == f_loaded.mesh.p2
-            assert f.mesh.cell == f_loaded.mesh.cell
-            assert f.mesh.cell == f_loaded.mesh.cell
-            assert np.all(abs(f.value - f_loaded.value) < tol)
-
-        os.system("rm {}".format(filename))
-
-    def test_write_vtk_file(self):
-        tol = 1e-12
-        filename = "test_write_vtk_file.vtk"
-        value = (1e-3 + np.pi, -5, 6)
-        for f in self.vector_fs:
-            f.value = value
-            f.write(filename)
-
-            os.system("rm {}".format(filename))
-
+        os.remove(filename)
 
     def test_read_mumax3_ovffile(self):
         """Test reading a file created by mumax, with 4-byte binary data."""
