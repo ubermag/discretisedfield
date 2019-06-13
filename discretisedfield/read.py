@@ -43,8 +43,15 @@ def read(filename, norm=None, name="field"):
         data_start = f.find(header)
         header = f[data_start:data_start + len(header) + 1]
 
-        data_start += len(b"# Begin: Data Binary 8\n")
+        data_start += len(b"# Begin: Data Binary 8")
         data_end = f.find(b"# End: Data Binary ")
+
+        # ordered by length
+        newlines = [b'\n\r', b'\r\n', b'\n']
+        for nl in newlines:
+            if f.startswith(nl, data_start):
+                data_start += len(nl)
+                break
 
         if b"4" in header:
             formatstr = "@f"
@@ -52,13 +59,10 @@ def read(filename, norm=None, name="field"):
         elif b"8" in header:
             formatstr = "@d"
             checkvalue = 123456789012345.0
-            
-        if sys.platform == 'win32':
-            data_start += 1  # On Windows new line is \n\r.
 
         listdata = list(struct.iter_unpack(formatstr, f[data_start:data_end]))
         datalines = np.array(listdata)
-        
+
         if datalines[0] != checkvalue:
             raise AssertionError("Something has gone wrong "
                                  "with reading Binary Data")

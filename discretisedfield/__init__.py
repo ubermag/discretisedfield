@@ -11,4 +11,4 @@ __dependencies__ = pkg_resources.require(__name__)
 
 
 def test():
-    return pytest.main(["-v", "--pyargs", "discretisedfield"])  # pragma: no cover
+    return pytest.main(["-v", "--pyargs", "discretisedfield", "-l"])  # pragma: no cover
