@@ -544,7 +544,7 @@ class Field(dfu.Field):
         plot_array = np.squeeze(self.x.array)
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
         plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
-        k3d_vox(plot_array, self.mesh, k3d_plot=k3d_plot, **kwargs)
+        voxels(plot_array, self.mesh.pmin, self.mesh.pmax, k3d_plot=k3d_plot, **kwargs)
 
     def plot3d_domain_coordinates(self, k3d_plot=None, **kwargs):
         """Plots the mesh coordinates where norm is not zero
@@ -565,7 +565,7 @@ class Field(dfu.Field):
                               dtype=np.float32)
         k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
 
-    def get_coord_and_vect  (self, raw):
+    def get_coord_and_vect(self, raw):
         # Get arrows only with norm > 0.
         data = [(i, self(i)) for i in raw
                 if self.norm(i) > 0]
