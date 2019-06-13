@@ -397,36 +397,34 @@ class TestField:
         #    run from discretisedfield.test()
 
         # here is our test-data from mumax3:
-        if sys.platform == 'win32':
-            filename = "mumax-output-win.ovf"
-        else:
-            filename = "mumax-output-linux.ovf"
-        path = os.path.join("discretisedfield", "tests", filename)
+        filenames = ["mumax-output-linux.ovf", "mumax-output-win.ovf"]
+        for f in filenames:
+            path = os.path.join("discretisedfield", "tests", f)
 
-        f = df.read(path)
+            f = df.read(path)
 
-        # comparison with human readable part of file
-        assert f.dim == 3
-        assert f.mesh.ntotal == 4096
-        assert f.mesh.pmin == (0., 0., 0.)
-        assert f.mesh.pmax == (5e-07, 1.25e-07, 3e-09)
-        assert f.array.shape == (128, 32, 1, 3)
+            # comparison with human readable part of file
+            assert f.dim == 3
+            assert f.mesh.ntotal == 4096
+            assert f.mesh.pmin == (0., 0., 0.)
+            assert f.mesh.pmax == (5e-07, 1.25e-07, 3e-09)
+            assert f.array.shape == (128, 32, 1, 3)
 
-        # comparison with vector field (we know from the script shown above)
-        #
-        # m vector in mumax (uses 4 bytes)
-        m = np.array([1, 0.1, 0], dtype=np.float32)
+            # comparison with vector field (we know from the script shown above)
+            #
+            # m vector in mumax (uses 4 bytes)
+            m = np.array([1, 0.1, 0], dtype=np.float32)
 
-        # needs to be normalised
-        norm = sum(m**2)**0.5
-        v = m / norm
+            # needs to be normalised
+            norm = sum(m**2)**0.5
+            v = m / norm
 
-        # expect the x-component to be v[0]
-        np.alltrue(f.array[:, :, :, 0] == v[0])
+            # expect the x-component to be v[0]
+            np.alltrue(f.array[:, :, :, 0] == v[0])
 
-        # same for y and z
-        np.alltrue(f.array[:, :, :, 1] == v[1])
-        np.alltrue(f.array[:, :, :, 2] == v[2])
+            # same for y and z
+            np.alltrue(f.array[:, :, :, 1] == v[1])
+            np.alltrue(f.array[:, :, :, 2] == v[2])
 
-        # expect each vector to be v
-        assert np.max(np.abs(f.array[:, :, :] - m / norm)) == 0.
+            # expect each vector to be v
+            assert np.max(np.abs(f.array[:, :, :] - m / norm)) == 0.
