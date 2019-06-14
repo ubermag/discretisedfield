@@ -8,12 +8,12 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 | --- | --- |
 | Latest release | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |                | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
-| Build | [![Build Status](https://travis-ci.org/joommf/discretisedfield.svg?branch=master)](https://travis-ci.org/joommf/discretisedfield) |
-|       |  [![Build status](https://ci.appveyor.com/api/projects/status/83tcspfx3qlx6rlp/branch/master?svg=true)](https://ci.appveyor.com/project/marijanbeg/discretisedfield/branch/master) |
-| Coverage | [![codecov](https://codecov.io/gh/joommf/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/joommf/discretisedfield) |
+| Build | [![Build Status](https://travis-ci.org/ubermag/discretisedfield.svg?branch=master)](https://travis-ci.org/ubermag/discretisedfield) |
+|       |  [![Build status](https://ci.appveyor.com/api/projects/status/83tcspfx3qlx6rlp/branch/master?svg=true)](https://ci.appveyor.com/project/ubermag/discretisedfield/branch/master) |
+| Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/ubermag/discretisedfield) |
 | Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
-| Binder | [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/joommf/discretisedfield/master?filepath=index.ipynb) |
-| Dependecies | [![Requirements Status](https://requires.io/github/joommf/discretisedfield/requirements.svg?branch=master)](https://requires.io/github/joommf/discretisedfield/requirements/?branch=master) |
+| Binder | [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=index.ipynb) |
+| Dependecies | [![Requirements Status](https://requires.io/github/ubermag/discretisedfield/requirements.svg?branch=master)](https://requires.io/github/ubermag/discretisedfield/requirements/?branch=master) |
 | License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
 
 ## About
@@ -72,14 +72,14 @@ On the other hand, if you used `conda` for installation, update `discretisedfiel
 
 The most recent development version of `discretisedfield` that is not yet released can be installed/updated with
 
-    git clone https://github.com/joommf/discretisedfield.git
+    git clone https://github.com/ubermag/discretisedfield.git
     python3 -m pip install --upgrade discretisedfield
 
 **Note**: If you do not have `git` on your system, it can be installed by following the instructions [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
 
 ## Binder
 
-`discretisedfield` can be used in the cloud via Binder. This does not require you to have anything installed and no files will be created on your machine. To use `discretisedfield` in the cloud, follow this [link](https://mybinder.org/v2/gh/joommf/discretisedfield/master?filepath=index.ipynb).
+`discretisedfield` can be used in the cloud via Binder. This does not require you to have anything installed and no files will be created on your machine. To use `discretisedfield` in the cloud, follow this [link](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=index.ipynb).
 
 ## Documentation
 
@@ -87,7 +87,7 @@ Documentation for `discretisedfield` is available [here](http://discretisedfield
 
 ## Support
 
-If you require support on installation or usage of `discretisedfield` or if you want to report a problem, you are welcome to raise an issue in our [joommf/help](https://github.com/joommf/help) repository.
+If you require support on installation or usage of `discretisedfield` or if you want to report a problem, you are welcome to raise an issue in our [ubermag/help](https://github.com/ubermag/help) repository.
 
 ## License
 
