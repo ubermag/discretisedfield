@@ -13,7 +13,6 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/ubermag/discretisedfield) |
 | Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
 | Binder | [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=index.ipynb) |
-| Dependecies | [![Requirements Status](https://requires.io/github/ubermag/discretisedfield/requirements.svg?branch=master)](https://requires.io/github/ubermag/discretisedfield/requirements/?branch=master) |
 | License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
 
 ## About
