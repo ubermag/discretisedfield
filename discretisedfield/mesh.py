@@ -141,7 +141,7 @@ class Mesh:
     def pmin(self):
         """Mesh point with minimum coordinates.
 
-        The :math:`i`-th component of :math:`\mathbf{p}_\\text{min}`
+        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{min}`
         is computed from points :math:`p_{1}` and :math:`p_{2}`
         between which the mesh domain spans: :math:`p_\\text{min}^{i}
         = \\text{min}(p_{1}^{i}, p_{2}^{i})`.
@@ -175,7 +175,7 @@ class Mesh:
     def pmax(self):
         """Mesh point with maximum coordinates.
 
-        The :math:`i`-th component of :math:`\mathbf{p}_\\text{max}`
+        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{max}`
         is computed from points :math:`p_{1}` and :math:`p_{2}`
         between which the mesh domain spans: :math:`p_\\text{min}^{i}
         = \\text{max}(p_{1}^{i}, p_{2}^{i})`.
