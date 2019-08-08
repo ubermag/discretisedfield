@@ -11,6 +11,7 @@ from mpl_toolkits.mplot3d import Axes3D
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True),
                cell=ts.Vector(size=3, positive=True, const=True),
+               n=ts.Vector(size=3, component_type=int, unsigned=True, const=True),
                pbc=ts.Subset(sample_set="xyz"),
                name=ts.Name(const=True))
 class Mesh:
@@ -89,16 +90,26 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, cell, pbc=set(), name='mesh'):
+    def __init__(self, p1, p2, cell=None, n=None, pbc=set(), name='mesh'):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
-        self.cell = tuple(cell)
         self.pbc = pbc
         self.name = name
 
         # Is any edge length of the domain equal to zero?
         if np.equal(self.l, 0).any():
             msg = 'The length of one of the domain edges is zero.'
+            raise ValueError(msg)
+
+        # Determine whether cell or n was passed and define them both.
+        if cell is not None and n is None:
+            self.cell = tuple(cell)
+            self.n = dfu.array2tuple(np.divide(self.l, self.cell).round().astype(int))
+        elif n is not None and cell is None:
+            self.n = tuple(n)
+            self.cell = dfu.array2tuple(np.divide(self.l, self.n).round().astype(int))
+        else:
+            msg = 'One and only one of the mesh parameters n or cell should be defined.'
             raise ValueError(msg)
 
         # Is the mesh domain not an aggregate of discretisation cells?
@@ -207,40 +218,6 @@ class Mesh:
 
         """
         res = np.abs(np.subtract(self.p1, self.p2))
-        return dfu.array2tuple(res)
-
-    @property
-    def n(self):
-        """Number of discretisation cells in all directions.
-
-        By dividing the lengths of mesh domain edges with
-        discretisation in all directions, the number of cells is
-        computed :math:`n^{i} = l^{i}/d^{i}`.
-
-        Returns
-        -------
-        tuple (3,)
-            The number of discretisation cells :math:`(n_{x},
-            n_{y}, n_{z})`.
-
-        Example
-        -------
-        1. Getting the number of discretisation cells in all three
-        directions.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 5, 0)
-        >>> p2 = (5, 15, 1)
-        >>> cell = (0.5, 0.1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.n
-        (10, 100, 1)
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.ntotal`
-
-        """
-        res = np.divide(self.l, self.cell).round().astype(int)
         return dfu.array2tuple(res)
 
     @property

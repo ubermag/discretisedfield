@@ -343,14 +343,15 @@ class TestField:
         # debug: which folder are we in? (use "py.test -l" to display
         # local variables on fail)
         cwd = os.getcwd()
-        print(cwd)
         # -> tests are run in module base directory, when tests are
         #    run from discretisedfield.test()
 
         # here is our test-data from mumax3:
         filenames = ["mumax-output-linux.ovf", "mumax-output-win.ovf"]
+        test_sample_dirname = os.path.join(os.path.dirname(__file__),
+                                           'test_sample/')
         for f in filenames:
-            path = os.path.join("discretisedfield", "tests", f)
+            path = os.path.join(test_sample_dirname, f)
 
             f = df.read(path)
 
