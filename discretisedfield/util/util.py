@@ -17,16 +17,26 @@ def plane_info(*args, **kwargs):
     info = dict()
     # The plane is defined with: planeaxis and point. They are
     # extracted from *args and *kwargs.
-    if args:
+    if args and not kwargs:
+        if len(args) != 1:
+            msg = 'Only one arg can be passed.'
+            raise ValueError(msg)
+
         # Only planeaxis is provided via args and the point will be
         # defined later as a centre of the sample.
         planeaxis = args[0]
         point = None
-    else:
+    elif kwargs and not args:
+        if len(kwargs.keys()) != 1:
+            msg = 'Only one kwarg can be passed.'
+            raise ValueError(msg)
+
         # Both planeaxis and point are provided via kwargs.
-        planeaxis = [key for key in axesdict.keys() if key in
-                     kwargs.keys()][0]
-        point = kwargs[planeaxis]
+        planeaxis = list(kwargs.keys())[0]
+        point = list(kwargs.values())[0]
+    else:
+        msg = 'Either one arg or one kwarg can be passed.'
+        raise ValueError(msg)
 
     if planeaxis not in axesdict.keys():
         msg = f'Plane axis must be one of {axesdict.keys()}.'

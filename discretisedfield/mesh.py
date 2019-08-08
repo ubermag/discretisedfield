@@ -519,22 +519,30 @@ class Mesh:
         return dfu.array2tuple(index)
 
     def isinside(self, point, raise_exception=False):
-        """Raises ValueError if point is outside the mesh.
+        """Determine whether `point` is inside the mesh. If it is, it returns
+        `True`, otherwise `False`. ValueError is raised if `point` is
+        outside the mesh and `raise_exception=True`.
 
         Parameters
         ----------
         point : (3,) array_like
             The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+        raise_exception : bool
+            If `True` and the `point` is outside the mesh,
+            `ValueError` is raised.
 
         Returns
         -------
-            None
-                If `point` is inside the mesh.
+        True
+            If `point` is inside the mesh.
+        False
+            If `point` is outside the mesh and `raise_exception=False`
 
         Raises
         ------
-            ValueError
-                If `point` is outside the mesh domain.
+        ValueError
+            If `point` is outside the mesh domain and
+            `raise_exception=True`.
 
         Example
         -------
@@ -561,10 +569,9 @@ class Mesh:
         if np.logical_or(np.less(point, self.pmin),
                          np.greater(point, self.pmax)).any():
             if raise_exception:
-                msg = 'Point is outside the mesh.'
+                msg = f'Point {point} is outside the mesh.'
                 raise ValueError(msg)
-            else:
-                return False
+            return False
         else:
             return True
 
@@ -572,7 +579,7 @@ class Mesh:
         """Line generator.
 
         Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n`
-        position vectors are generated.
+        position coordinates are generated.
 
         .. math::
 
@@ -584,20 +591,20 @@ class Mesh:
 
         Parameters
         ----------
-            p1, p2 : (3,) array_like
-                Two points between which the line is generated.
-            n : int
-                Number of points on the line.
+        p1, p2 : (3,) array_like
+            Two points between which the line is generated.
+        n : int
+            Number of points on the line.
 
         Yields
         ------
-            tuple
-                :math:`\\mathbf{r}_{i}`
+        tuple
+            :math:`\\mathbf{r}_{i}`
 
         Raises
         ------
-            ValueError
-                If `p` is outside the mesh domain.
+        ValueError
+            If `p1` or `p2` is outside the mesh domain.
 
         Example
         -------
@@ -614,10 +621,9 @@ class Mesh:
         self.isinside(p1, raise_exception=True)
         self.isinside(p2, raise_exception=True)
 
-        p1, p2 = np.array(p1), np.array(p2)
-        dl = (p2-p1) / (n-1)
+        dl = np.subtract(p2, p1)/(n-1)
         for i in range(n):
-            yield dfu.array2tuple(p1+i*dl)
+            yield dfu.array2tuple(np.add(p1, i*dl))
 
     def plane(self, *args, **kwargs):
         info = dfu.plane_info(*args, **kwargs)
