@@ -118,7 +118,8 @@ class TestMesh:
         for p1, p2, cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-            assert 'is zero' in str(excinfo)
+            print(str(excinfo))
+            assert 'is zero' in str(excinfo.value)
 
 
     def test_domain_not_aggregate_of_cell(self):
@@ -129,7 +130,7 @@ class TestMesh:
         for p1, p2, cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-            assert 'not an aggregate' in str(excinfo)
+            assert 'not an aggregate' in str(excinfo.value)
 
 
     def test_cell_greater_than_domain(self):
@@ -140,7 +141,7 @@ class TestMesh:
         for cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mymesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-            assert 'not an aggregate' in str(excinfo)
+            assert 'not an aggregate' in str(excinfo.value)
 
 
     def test_centre(self):

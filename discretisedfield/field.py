@@ -2,7 +2,7 @@ import pyvtk
 import struct
 import matplotlib
 import numpy as np
-import joommfutil.typesystem as ts
+import ubermagutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt

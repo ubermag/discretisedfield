@@ -2,7 +2,7 @@ import random
 import itertools
 import numpy as np
 import matplotlib.pyplot as plt
-import joommfutil.typesystem as ts
+import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from .plot3d import voxels
 from mpl_toolkits.mplot3d import Axes3D
