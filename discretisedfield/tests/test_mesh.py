@@ -168,7 +168,7 @@ class TestMesh:
         p1 = (-18.5, 5, 0)
         p2 = (10, -10, 10e-9)
         cell = (0.1e-9, 0.25, 2e-9)
-        mesh = df.Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         for _ in range(50):
             random_point = mesh.random_point()

@@ -20,10 +20,13 @@ class Mesh:
     A rectangular mesh domain spans between two points
     :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`. The domain is
     discretised using a finite difference cell, whose dimensions are
-    defined with `cell`. Periodic boundary conditions can be specified
-    by passing `pbc` argument, which is an iterable containing one or
-    more elements from ``['x', 'y', 'z']``. The parameter `name` is
-    optional and defaults to 'mesh'.
+    defined with `cell`. Alternatively, the domain can be discretised
+    by passing the number of discretisation cells `n` in all three
+    dimensions. Either `cell` or `n` should be defined to discretise
+    the domain, not both. Periodic boundary conditions can be
+    specified by passing `pbc` argument, which is an iterable
+    containing one or more elements from ``['x', 'y', 'z']``. The
+    parameter `name` is optional and defaults to 'mesh'.
 
     In order to properly define a mesh, the length of all mesh domain
     edges must not be zero and the mesh domain must be an aggregate of
@@ -34,8 +37,12 @@ class Mesh:
     p1, p2 : (3,) array_like
         Points between which the mesh domain spans :math:`\\mathbf{p}
         = (p_{x}, p_{y}, p_{z})`.
-    cell : (3,) array_like
-        Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`.
+    cell : (3,) array_like, optional
+        Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`. Either
+        `cell` or `n` should be defined, not both.
+    n : (3,) array_like, optional
+        The number of discretisation cells :math:`(n_{x}, n_{y},
+        n_{z})`. Either `cell` or `n` should be defined, not both.
     pbc : iterable, optional
         Periodic boundary conditions in x, y, or z direction. Its value
         is an iterable consisting of one or more characters `x`, `y`,
@@ -53,7 +60,7 @@ class Mesh:
 
     Examples
     --------
-    1. Defining a nano-sized thin film mesh
+    1. Defining a nano-sized thin film mesh by passing `cell` parameter
 
     >>> import discretisedfield as df
     ...
@@ -63,7 +70,17 @@ class Mesh:
     >>> name = "mesh_name"
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
-    2. Defining a mesh with periodic boundary conditions in x and y
+    2. Defining a nano-sized thin film mesh by passing `n` parameter
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (-50e-9, -25e-9, 0)
+    >>> p2 = (50e-9, 25e-9, 5e-9)
+    >>> n = (100, 50, 5)
+    >>> name = "mesh_name"
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, name=name)
+
+    3. Defining a mesh with periodic boundary conditions in x and y
     directions.
 
     >>> import discretisedfield as df
@@ -74,7 +91,7 @@ class Mesh:
     >>> pbc = 'xy'
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
 
-    3. An attempt to define a mesh with invalid parameters, so that
+    4. An attempt to define a mesh with invalid parameters, so that
     the ``ValueError`` is raised. In this example, the mesh domain is
     not an aggregate of discretisation cells in the :math:`z`
     direction.
