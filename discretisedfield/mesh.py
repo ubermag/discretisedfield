@@ -87,9 +87,9 @@ class Mesh:
     ...
     >>> p1 = (0, 0, 0)
     >>> p2 = (100, 100, 1)
-    >>> cell = (1, 1, 1)
+    >>> n = (100, 100, 1)
     >>> pbc = 'xy'
-    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc, name=name)
 
     4. An attempt to define a mesh with invalid parameters, so that
     the ``ValueError`` is raised. In this example, the mesh domain is
@@ -124,7 +124,7 @@ class Mesh:
             self.n = dfu.array2tuple(np.divide(self.l, self.cell).round().astype(int))
         elif n is not None and cell is None:
             self.n = tuple(n)
-            self.cell = dfu.array2tuple(np.divide(self.l, self.n).round().astype(float))
+            self.cell = dfu.array2tuple(np.divide(self.l, self.n).astype(float))
         else:
             msg = 'One and only one of the mesh parameters n or cell should be defined.'
             raise ValueError(msg)
@@ -226,8 +226,8 @@ class Mesh:
         ...
         >>> p1 = (0, 0, -5)
         >>> p2 = (5, 15, 15)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> n = (5, 15, 20)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> mesh.l
         (5, 15, 20)
 
@@ -290,8 +290,8 @@ class Mesh:
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (5, 15, 20)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> n = (5, 15, 20)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> mesh.centre
         (2.5, 7.5, 10.0)
 
@@ -394,10 +394,10 @@ class Mesh:
         >>> name = 'm'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
         >>> repr(mesh)
-        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'}, name='m')"
+        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), n=(2, 2, 1), pbc={'x'}, name='m')"
 
         """
-        return (f'Mesh(p1={self.p1}, p2={self.p2}, cell={self.cell}, '
+        return (f'Mesh(p1={self.p1}, p2={self.p2}, n={self.n}, '
                 f'pbc={self.pbc}, name=\'{self.name}\')')
 
     def random_point(self):
