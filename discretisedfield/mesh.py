@@ -107,7 +107,7 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, cell=None, n=None, pbc=set(), name='mesh'):
+    def __init__(self, p1, p2, n=None, cell=None, pbc=set(), name='mesh'):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.pbc = pbc
@@ -394,10 +394,10 @@ class Mesh:
         >>> name = 'm'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
         >>> repr(mesh)
-        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), n=(2, 2, 1), pbc={'x'}, name='m')"
+        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'}, name='m')"
 
         """
-        return (f'Mesh(p1={self.p1}, p2={self.p2}, n={self.n}, '
+        return (f'Mesh(p1={self.p1}, p2={self.p2}, cell={self.cell}, '
                 f'pbc={self.pbc}, name=\'{self.name}\')')
 
     def random_point(self):
