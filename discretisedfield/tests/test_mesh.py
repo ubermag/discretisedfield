@@ -10,15 +10,15 @@ def check_mesh(mesh):
         assert len(mesh.p2) == 3
         assert isinstance(mesh.cell, tuple)
         assert len(mesh.cell) == 3
+        assert isinstance(mesh.n, tuple)
+        assert len(mesh.n) == 3
+        assert all(isinstance(i, int) for i in mesh.n)
         assert isinstance(mesh.pmin, tuple)
         assert len(mesh.pmin) == 3
         assert isinstance(mesh.pmax, tuple)
         assert len(mesh.pmax) == 3
         assert isinstance(mesh.l, tuple)
         assert len(mesh.l) == 3
-        assert isinstance(mesh.n, tuple)
-        assert len(mesh.n) == 3
-        assert all(isinstance(i, int) for i in mesh.n)
         assert isinstance(mesh.ntotal, int)
         assert isinstance(mesh.pbc, set)
         assert all(isinstance(i, str) for i in mesh.pbc)

@@ -124,7 +124,7 @@ class Mesh:
             self.n = dfu.array2tuple(np.divide(self.l, self.cell).round().astype(int))
         elif n is not None and cell is None:
             self.n = tuple(n)
-            self.cell = dfu.array2tuple(np.divide(self.l, self.n).round().astype(int))
+            self.cell = dfu.array2tuple(np.divide(self.l, self.n).round().astype(float))
         else:
             msg = 'One and only one of the mesh parameters n or cell should be defined.'
             raise ValueError(msg)
