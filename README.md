@@ -9,7 +9,7 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 | Latest release | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |                | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Build | [![Build Status](https://travis-ci.org/ubermag/discretisedfield.svg?branch=master)](https://travis-ci.org/ubermag/discretisedfield) |
-|       |  [![Build status](https://ci.appveyor.com/api/projects/status/83tcspfx3qlx6rlp/branch/master?svg=true)](https://ci.appveyor.com/project/ubermag/discretisedfield/branch/master) |
+|       |  [![Build status](https://ci.appveyor.com/api/projects/status/0shhdl5sj6fx07oe?svg=true)](https://ci.appveyor.com/project/marijanbeg/discretisedfield) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/ubermag/discretisedfield) |
 | Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
 | Binder | [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=index.ipynb) |
