@@ -1,2 +1,4 @@
 jupyter
+jupyter_sphinx
 nbsphinx
+nbsphinx_link
