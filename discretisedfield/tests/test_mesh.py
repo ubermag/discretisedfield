@@ -446,7 +446,7 @@ class TestMesh:
         assert mesh.l == (10, 10, 10)
         assert mesh.n == (10, 10, 10)
 
-    def test_plot(self):
+    def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             mesh.plot()

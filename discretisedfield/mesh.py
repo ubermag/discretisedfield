@@ -625,7 +625,39 @@ class Mesh:
         for i in range(n):
             yield dfu.array2tuple(np.add(p1, i*dl))
 
-    def plane(self, *args, **kwargs):
+    def plane(self, *args, n=None, **kwargs):
+        """Plane generator.
+
+        If one of the axes (`'x'`, `'y'`, or `'z'`) is passed as a
+        string, a plane perpendicular to that axis is generated which
+        intersects the mesh at its centre. Alternatively, if a keyword
+        argument is passed (e.g. `x=1`), a plane perpendicular to the
+        x-axis and intersecting it at x=1 is generated. The number of
+        points in two dimensions on the plane can be defined using `n`
+        (e.g. `n=(10, 15)`).
+
+        Parameters
+        ----------
+        n : tuple of length 2
+            The number of points on the plane in two dimensions
+
+        Yields
+        ------
+        tuple
+            :math:`\\mathbf{r}_{i}`
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> list(mesh.plane(x=0, n=(2, 2)))
+        [(0, 0.5, 0.5), (0, 0.5, 1.5), (0, 1.5, 0.5), (0, 1.5, 1.5)]
+
+        """
         info = dfu.plane_info(*args, **kwargs)
 
         if info['point'] is None:
@@ -638,52 +670,37 @@ class Mesh:
             test_point[info['planeaxis']] = info['point']
             self.isinside(test_point, raise_exception=True)
 
-        # None condition can probably be removed later.
-        if 'n' not in kwargs.keys() or kwargs['n'] is None:
-            n = (self.n[info["axis1"]], self.n[info["axis2"]])
-        else:
-            n = kwargs['n']
+        # Determine the n tuple.
+        if n is None:
+            n = (self.n[info['axis1']], self.n[info['axis2']])
 
         # Get values for in-plane axes.
-        daxis1, daxis2 = self.l[info["axis1"]]/n[0], self.l[info["axis2"]]/n[1]
-        axis1 = np.linspace(self.pmin[info["axis1"]]+daxis1/2,
-                            self.pmax[info["axis1"]]-daxis1/2, n[0])
-        axis2 = np.linspace(self.pmin[info["axis2"]]+daxis2/2,
-                            self.pmax[info["axis2"]]-daxis2/2, n[1])
+        daxis1, daxis2 = self.l[info['axis1']]/n[0], self.l[info['axis2']]/n[1]
+        axis1 = np.linspace(self.pmin[info['axis1']]+daxis1/2,
+                            self.pmax[info['axis1']]-daxis1/2, n[0])
+        axis2 = np.linspace(self.pmin[info['axis2']]+daxis2/2,
+                            self.pmax[info['axis2']]-daxis2/2, n[1])
 
         for x, y in itertools.product(axis1, axis2):
             point = 3*[None]
-            point[info["planeaxis"]] = info["point"]
-            point[info["axis1"]] = x
-            point[info["axis2"]] = y
+            point[info['planeaxis']] = info['point']
+            point[info['axis1']] = x
+            point[info['axis2']] = y
             yield tuple(point)
 
-    def plot(self):
-        """Plots the mesh domain and the discretisation cell.
-
-        This function is called as a display function in Jupyter
-        notebook.
+    def mpl(self, figsize=None):
+        """Plots the mesh domain and the discretisation cell using a
+        `matplotlib` 3D plot.
 
         """
-        fig = plt.figure()
+        fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111, projection="3d")
 
         dfu.plot_box(ax, self.pmin, self.pmax, "b-", linewidth=1.5)
         dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell),
-                     "r-", linewidth=1)
+                     "r--", linewidth=1)
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
-
-    def _ipython_display_(self):
-        """Jupyter notebook mesh representation.
-        
-        %matplolib inline
-
-        Mesh domain and discretisation cell are plotted by the
-        :py:func:`~discretisedfield.Mesh.plot`.
-
-        """
-        self.plot()  # pragma: no cover
 
     def k3d(self, colormap=[0x99bbff, 0xff4d4d], outlines=False,
             plot=None, **kwargs):
