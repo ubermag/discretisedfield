@@ -230,7 +230,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.norm
-        <Field(...)>
+        Field(...)
         >>> field.norm = 2
         >>> field.norm.array
         array([[[[2.]]]])
