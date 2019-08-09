@@ -9,9 +9,6 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-representations = ['txt', 'bin4', 'bin8']
-
-
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True),
                name=ts.Name(const=True))
@@ -332,12 +329,21 @@ class Field:
         for point in self.mesh.line(p1=p1, p2=p2, n=n):
             yield point, self.__call__(point)
 
+    def slice(self, *args, n=None, **kwargs):
+        pl = list(self.mesh.plane(*args, n=n, **kwargs))
+        pl = list(zip(*pl))
+        d = np.divide(self.mesh.cell, 2)
+        p1 = np.array(list(map(min, pl))) - d
+        p2 = np.array(list(map(max, pl))) + d
+        mesh = df.Mesh(p1=p1, p2=p2, cell=self.mesh.cell)
+        field = df.Field(mesh, value=self)
+        return field
+    
     def plane(self, *args, n=None, **kwargs):
         for point in self.mesh.plane(*args, n=n, **kwargs):
             yield point, self.__call__(point)
 
     def plot_plane(self, *args, n=None, ax=None, figsize=None, **kwargs):
-        print(kwargs)
         info, points, values, n, ax = self._plot_data(*args,
                                                       n=n, ax=ax, figsize=figsize, **kwargs)
 
