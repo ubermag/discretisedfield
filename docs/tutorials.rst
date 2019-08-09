@@ -6,6 +6,9 @@ Tutorials
    :numbered:
    :caption: Contents:
 
+   ipynb/01-tutorial-defining-mesh
+   ipynb/02-tutorial-mesh-properties-and-generators
+   ipynb/03-tutorial-mesh-plotting
    ipynb/creating_fd_field
    ipynb/setting_fd_field
    ipynb/analysing_field
