@@ -332,29 +332,30 @@ class Field:
         for point in self.mesh.line(p1=p1, p2=p2, n=n):
             yield point, self.__call__(point)
 
-    def plane(self, *args, **kwargs):
-        for point in self.mesh.plane(*args, **kwargs):
+    def plane(self, *args, n=None, **kwargs):
+        for point in self.mesh.plane(*args, n=n, **kwargs):
             yield point, self.__call__(point)
 
-    def plot_plane(self, *args, x=None, y=None, z=None, n=None, ax=None, figsize=None):
-        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
-                                                      n=n, ax=ax, figsize=figsize)
+    def plot_plane(self, *args, n=None, ax=None, figsize=None, **kwargs):
+        print(kwargs)
+        info, points, values, n, ax = self._plot_data(*args,
+                                                      n=n, ax=ax, figsize=figsize, **kwargs)
 
         if self.dim > 1:
-            self.quiver(*args, x=x, y=y, z=z, n=n, ax=ax)
+            self.quiver(*args, n=n, ax=ax, **kwargs)
             scfield = getattr(self, list(dfu.axesdict.keys())[info["planeaxis"]])
         else:
             scfield = self
 
-        colouredplot = scfield.imshow(*args, x=x, y=y, z=z, n=n, ax=ax)
+        colouredplot = scfield.imshow(*args, n=n, ax=ax, **kwargs)
         self.colorbar(ax, colouredplot)
 
         ax.set_xlabel(list(dfu.axesdict.keys())[info["axis1"]])
         ax.set_ylabel(list(dfu.axesdict.keys())[info["axis2"]])
 
-    def _plot_data(self, *args, x=None, y=None, z=None, n=None, ax=None, figsize=None):
-        info = dfu.plane_info(*args, x=x, y=y, z=z)
-        data = list(self.plane(*args, x=x, y=y, z=z, n=n))
+    def _plot_data(self, *args, n=None, ax=None, figsize=None, **kwargs):
+        info = dfu.plane_info(*args, **kwargs)
+        data = list(self.plane(*args, n=n, **kwargs))
         ps, vs = list(zip(*data))
         points = list(zip(*ps))
         values = list(zip(*vs))
@@ -368,9 +369,12 @@ class Field:
 
         return info, points, values, n, ax
 
-    def imshow(self, *args, x=None, y=None, z=None, n=None, ax=None, **kwargs):
-        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
-                                                      n=n, ax=ax)
+    def imshow(self, *args, n=None, ax=None, **kwargs):
+        info, points, values, n, ax = self._plot_data(*args, n=n, ax=ax, **kwargs)
+
+        for i in 'xyz':
+            if i in kwargs.keys():
+                del kwargs[i]
 
         extent = [self.mesh.pmin[info["axis1"]], self.mesh.pmax[info["axis1"]],
                   self.mesh.pmin[info["axis2"]], self.mesh.pmax[info["axis2"]]]
@@ -379,13 +383,15 @@ class Field:
 
         return imax
 
-    def quiver(self, *args, x=None, y=None, z=None, n=None, ax=None,
-               colour=None, **kwargs):
-        info, points, values, n, ax = self._plot_data(*args, x=x, y=y, z=z,
-                                                      n=n, ax=ax)
+    def quiver(self, *args, n=None, ax=None, colour=None, **kwargs):
+        info, points, values, n, ax = self._plot_data(*args, n=n, ax=ax, **kwargs)
 
         if not any(values[info["axis1"]] + values[info["axis2"]]):
             kwargs["scale"] = 1
+
+        for i in 'xyz':
+            if i in kwargs.keys():
+                del kwargs[i]
 
         if colour is None:
             qvax = ax.quiver(points[info["axis1"]], points[info["axis2"]],
@@ -597,8 +603,6 @@ class Field:
 
         k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
                     **kwargs)
-
-
 
     def plot3d_scalar(self, k3d_plot=None, **kwargs):
         """Plots the scalar fields.
