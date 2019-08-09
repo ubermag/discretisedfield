@@ -468,6 +468,15 @@ class TestMesh:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             mesh.k3d()
 
+    def test_k3d_regions(self):
+        p1 = (0, 0, 0)
+        p2 = (100, 50, 10)
+        n = (10, 10, 10)
+        regions = {'r1': df.Region(p1=(0, 0, 0), p2=(100, 10, 10)),
+                   'r2': df.Region(p1=(0, 10, 0), p2=(100, 50, 10))}
+        mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
+        mesh.k3d_regions()
+
     def test_script(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
