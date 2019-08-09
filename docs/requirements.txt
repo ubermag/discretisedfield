@@ -3,6 +3,6 @@ ipydatawidgets
 traittypes
 traitlets
 numpy
-jupyter_sphinx
+jupyter_sphinx>=0.1.4
 nbsphinx
 nbsphinx_link
