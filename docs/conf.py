@@ -36,7 +36,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.mathjax',
               'nbsphinx',
               'nbsphinx_link',
-              'jupyter_sphinx.embed_widgets']]
+              'jupyter_sphinx.embed_widgets']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
