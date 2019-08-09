@@ -382,6 +382,18 @@ class TestMesh:
             assert len(coord) == 3
             assert all([1.5 <= i <= 4.5 for i in coord])
 
+    def test_contains(self):
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 20e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        assert (0, 0, 0) in mesh
+        assert (10e-9, 10e-9, 10e-9) in mesh
+        assert (5e-9, 5e-9, 5e-9) in mesh
+        assert (11e-9, 11e-9, 11e-9) not in mesh
+        assert (-1e-9, -1e-9, -1e-9) not in mesh
+        
     def test_line(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
@@ -389,29 +401,70 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         tol = 1e-12
-        line1 = mesh.line((0, 0, 0), (10, 10, 10), n=10)
-        assert len(list(line1))
-        for point in line1:
+        line = mesh.line((0, 0, 0), (10, 10, 10), n=10)
+        assert len(list(line))
+        for point in line:
             assert isinstance(point, tuple)
             assert len(point) == 3
             assert all([0 <= i <= 10 for i in point])
 
-        line2 = list(mesh.line((0, 0, 0), (10, 0, 0), n=30))
-        assert len(line2) == 30
-        assert line2[0] == (0, 0, 0)
-        assert line2[-1] == (10, 0, 0)
+        line = list(mesh.line((0, 0, 0), (10, 0, 0), n=30))
+        assert len(line) == 30
+        assert line[0] == (0, 0, 0)
+        assert line[-1] == (10, 0, 0)
+
+        with pytest.raises(ValueError):
+            line = list(mesh.line((-1e-9, 0, 0), (10, 0, 0), n=30))
+
+        with pytest.raises(ValueError):
+            line = list(mesh.line((0, 0, 0), (11, 0, 0), n=30))
+
 
     def test_plane(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
-        mesh = df.Mesh(p1, p2, cell)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         plane = mesh.plane(z=3, n=(2, 2))
         assert len(list(plane)) == 4
         for point in plane:
             assert isinstance(point, tuple)
             assert len(point) == 3
+            assert point[2] == 3
+
+        plane = mesh.plane(y=9.2, n=(3, 2))
+        assert len(list(plane)) == 6
+        for point in plane:
+            assert isinstance(point, tuple)
+            assert len(point) == 3
+            assert point[1] == 9.2
+
+        plane = mesh.plane('x')
+        assert len(list(plane)) == 100
+        for point in plane:
+            assert isinstance(point, tuple)
+            assert len(point) == 3
+            assert point[0] == 5
+
+        with pytest.raises(ValueError):
+            plane = list(mesh.plane(x=-1))
+
+        with pytest.raises(ValueError):
+            plane = list(mesh.plane(y=11))
+
+        with pytest.raises(ValueError):
+            plane = list(mesh.plane(z=-1e-9))
+
+    def test_mpl(self):
+        for p1, p2, n, cell in self.valid_args:
+            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+            mesh.mpl()
+
+    def test_k3d(self):
+        for p1, p2, n, cell in self.valid_args:
+            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+            #mesh.k3d()
 
     def test_script(self):
         for p1, p2, n, cell in self.valid_args:
@@ -445,8 +498,3 @@ class TestMesh:
         assert mesh.name == name
         assert mesh.l == (10, 10, 10)
         assert mesh.n == (10, 10, 10)
-
-    def test_mpl(self):
-        for p1, p2, n, cell in self.valid_args:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-            mesh.plot()

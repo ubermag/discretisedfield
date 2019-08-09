@@ -369,6 +369,46 @@ class Mesh:
         """
         return self.coordinates
 
+    def __contains__(self, item):
+        """Determine whether `point` is inside the mesh. If it is, it returns
+        `True`, otherwise `False`.
+
+        Parameters
+        ----------
+        item : (3,) array_like
+            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+
+        Returns
+        -------
+        True
+            If `point` is inside the mesh.
+        False
+            If `point` is outside the mesh and `raise_exception=False`
+
+        Example
+        -------
+        1. Check whether point is inside the mesh.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> point1 = (1, 1, 1)
+        >>> point1 in mesh
+        True
+        >>> point2 = (1, 3, 1)
+        >>> point2 in mesh
+        False
+
+        """
+        if np.logical_or(np.less(item, self.pmin),
+                         np.greater(item, self.pmax)).any():
+            return False
+        else:
+            return True
+
     def __repr__(self):
         """Mesh representation.
 
@@ -509,7 +549,9 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.index2point`
 
         """
-        self.isinside(point, raise_exception=True)
+        if point not in self:
+            msg = f'Point {point} is outside the mesh.'
+            raise ValueError(msg)
 
         index = np.subtract(np.divide(np.subtract(point, self.pmin),
                                       self.cell), 0.5).round().astype(int)
@@ -517,63 +559,6 @@ class Mesh:
         index = np.clip(index, 0, np.subtract(self.n, 1))
 
         return dfu.array2tuple(index)
-
-    def isinside(self, point, raise_exception=False):
-        """Determine whether `point` is inside the mesh. If it is, it returns
-        `True`, otherwise `False`. ValueError is raised if `point` is
-        outside the mesh and `raise_exception=True`.
-
-        Parameters
-        ----------
-        point : (3,) array_like
-            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
-        raise_exception : bool
-            If `True` and the `point` is outside the mesh,
-            `ValueError` is raised.
-
-        Returns
-        -------
-        True
-            If `point` is inside the mesh.
-        False
-            If `point` is outside the mesh and `raise_exception=False`
-
-        Raises
-        ------
-        ValueError
-            If `point` is outside the mesh domain and
-            `raise_exception=True`.
-
-        Example
-        -------
-        Checking if point is outside the mesh.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 1)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> point1 = (1, 1, 1)
-        >>> mesh.isinside(point1)
-        True
-        >>> point2 = (1, 3, 1)
-        >>> mesh.isinside(point2)
-        False
-        >>> mesh.isinside(point2, raise_exception=True)
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
-
-        """
-        if np.logical_or(np.less(point, self.pmin),
-                         np.greater(point, self.pmax)).any():
-            if raise_exception:
-                msg = f'Point {point} is outside the mesh.'
-                raise ValueError(msg)
-            return False
-        else:
-            return True
 
     def line(self, p1, p2, n=100):
         """Line generator.
@@ -618,8 +603,9 @@ class Mesh:
         ((0.0, 0.0, 0.0), (2.0, 0.0, 0.0))
 
         """
-        self.isinside(p1, raise_exception=True)
-        self.isinside(p2, raise_exception=True)
+        if p1 not in self or p2 not in self:
+            msg = f'Point {p1} or point {p2} is outside the mesh.'
+            raise ValueError(msg)
 
         dl = np.subtract(p2, p1)/(n-1)
         for i in range(n):
@@ -668,7 +654,9 @@ class Mesh:
             # tested whether it is inside the mesh.
             test_point = list(self.centre)
             test_point[info['planeaxis']] = info['point']
-            self.isinside(test_point, raise_exception=True)
+            if test_point not in self:
+                msg = f'Point {test_point} is outside the mesh.'
+                raise ValueError(msg)
 
         # Determine the n tuple.
         if n is None:
