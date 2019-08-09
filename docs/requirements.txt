@@ -1,4 +1,8 @@
-jupyter
+ipywidgets
+ipydatawidgets
+traittypes
+traitlets
+numpy
 jupyter_sphinx
 nbsphinx
 nbsphinx_link
