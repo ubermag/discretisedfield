@@ -215,18 +215,21 @@ class TestMesh:
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         assert mesh.centre == (50, 50, 50)
+        assert mesh.centre in mesh
 
         p1 = (-18.5, 10, 0)
         p2 = (10, 5, 10)
         cell = (0.1, 0.25, 2)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         assert mesh.centre == (-4.25, 7.5, 5)
+        assert mesh.centre in mesh
 
         p1 = (500e-9, 125e-9, 3e-9)
         p2 = (0, 0, 0)
         n = (250, 125, 3)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
         assert mesh.centre == (250e-9, 62.5e-9, 1.5e-9)
+        assert mesh.centre in mesh
 
     def test_random_point(self):
         p1 = (-18.5, 5, 0)
@@ -237,8 +240,7 @@ class TestMesh:
         for _ in range(50):
             random_point = mesh.random_point()
             assert isinstance(random_point, tuple)
-            assert np.less(mesh.pmin, random_point).all()
-            assert np.greater(mesh.pmax, random_point).all()
+            assert random_point in mesh
 
     def test_repr_no_pbc(self):
         p1 = (-1, -4, 11)
@@ -464,7 +466,7 @@ class TestMesh:
     def test_k3d(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-            #mesh.k3d()
+            mesh.k3d()
 
     def test_script(self):
         for p1, p2, n, cell in self.valid_args:
