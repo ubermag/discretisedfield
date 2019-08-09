@@ -1,30 +1,10 @@
+import k3d
 import numpy as np
 import matplotlib
 
 
-def import_k3d():
-    try:
-        import k3d
-        return k3d
-    except ImportError:
-        msg = '''
-        k3d is not installed. It can be installed using pip:
-
-        $ pip install k3d
-
-        After the installation, k3d is activated in JupyterLab with:
-
-        $ jupyter labextension install k3d
-
-        More information can be found on the k3d page:
-        https://github.com/K3D-tools/K3D-jupyter
-        '''
-        raise ImportError(msg)
-
-
-def voxels(plot_array, pmin, pmax, colormap=[0x99bbff, 0xff4d4d],
-           outlines=False, plot=None, **kwargs):
-    k3d = import_k3d()
+def voxels(plot_array, pmin, pmax, colormap, outlines=False,
+           plot=None, **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
     xmin, ymin, zmin = pmin
     xmax, ymax, zmax = pmax
@@ -34,9 +14,7 @@ def voxels(plot_array, pmin, pmax, colormap=[0x99bbff, 0xff4d4d],
         plot.display()
     plot += k3d.voxels(plot_array,
                        color_map=colormap,
-                       xmin=xmin, xmax=xmax,
-                       ymin=ymin, ymax=ymax,
-                       zmin=zmin, zmax=zmax,
+                       bounds=[xmin, xmax, ymin, ymax, zmin, zmax],
                        outlines=outlines,
                        **kwargs)
 
@@ -57,8 +35,6 @@ def get_colors(vectors, colormap='viridis'):
 
 def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
                color=0x99bbff, **kwargs):
-    k3d = import_k3d()
-
     if k3d_plot is None:
         k3d_plot = k3d.plot()
         k3d_plot.display()
@@ -68,8 +44,6 @@ def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
 
 def k3d_vectors(coordinates, vectors, k3d_plot=None, points=False,
                 **kwargs):
-    k3d = import_k3d()
-
     colors = get_colors(vectors, **kwargs)
 
     if k3d_plot is None:
@@ -108,10 +82,6 @@ def get_int_component2(field_component):
 
 def k3d_scalar(field_component, mesh, k3d_plot=None, colormap='viridis',
                **kwargs):
-
-    if check_k3d_install():
-        import k3d
-
     int_component = get_int_component2(field_component)
     int_component = int_component.astype(np.uint8)  # to avoid the warning
 
@@ -140,10 +110,6 @@ def k3d_scalar(field_component, mesh, k3d_plot=None, colormap='viridis',
 
 
 def k3d_isosurface(field, level, mesh, k3d_plot=None, **kwargs):
-
-    if check_k3d_install():
-        import k3d
-
     xmin, ymin, zmin = mesh.pmin
     xmax, ymax, zmax = mesh.pmax
 

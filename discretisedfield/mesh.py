@@ -702,7 +702,7 @@ class Mesh:
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
-    def k3d(self, colormap=[0x99bbff, 0xff4d4d], outlines=False,
+    def k3d(self, colormap=[0x3498db, 0xe74c3c], outlines=False,
             plot=None, **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
 
@@ -717,7 +717,7 @@ class Mesh:
         """
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
-        voxels(plot_array, self.pmin, self.pmax, colormap,
+        voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
                outlines=outlines, plot=plot, **kwargs)
 
     @property
