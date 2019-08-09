@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
+import discretisedfield as df
 import discretisedfield.util as dfu
 from .plot3d import voxels
 from mpl_toolkits.mplot3d import Axes3D
@@ -381,9 +382,9 @@ class Mesh:
         Returns
         -------
         True
-            If `point` is inside the mesh.
+            If `item` is inside the mesh.
         False
-            If `point` is outside the mesh and `raise_exception=False`
+            If `item` is outside the mesh.
 
         Example
         -------
@@ -403,11 +404,8 @@ class Mesh:
         False
 
         """
-        if np.logical_or(np.less(item, self.pmin),
-                         np.greater(item, self.pmax)).any():
-            return False
-        else:
-            return True
+        region = df.Region(self.p1, self.p2)
+        return item in region
 
     def __repr__(self):
         """Mesh representation.
