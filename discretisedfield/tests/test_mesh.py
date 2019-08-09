@@ -1,3 +1,4 @@
+import types
 import pytest
 import numpy as np
 import discretisedfield as df
@@ -37,7 +38,7 @@ class TestMesh:
                            [(0, 0, 0), (5e-9, 5e-9, 5e-9),
                             (5, 5, 5), None],
                            [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9),
-                            None, (0.15e-9, 0.1e-9, 10e-9)],
+                            None, (1.5e-9, 0.5e-9, 10e-9)],
                            [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9),
                             (3, 50, 2), None],
                            [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)),
@@ -45,7 +46,7 @@ class TestMesh:
                            [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)),
                             (5, 5, 7), None],
                            [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6),
-                            None, (0.5e-6, 1e-6, 5e-9)],
+                            None, (0.5e-6, 1e-6, 2.5e-6)],
                            [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6),
                             (1, 10, 100), None],
                            [(0, 125e-9, 0), (500e-9, 0, -3e-9),
@@ -422,6 +423,7 @@ class TestMesh:
 
         tol = 1e-12
         line = mesh.line((0, 0, 0), (10, 10, 10), n=10)
+        assert isinstance(line, types.GeneratorType)
         assert len(list(line))
         for point in line:
             assert isinstance(point, tuple)
@@ -447,6 +449,7 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         plane = mesh.plane(z=3, n=(2, 2))
+        assert isinstance(plane, types.GeneratorType)
         assert len(list(plane)) == 4
         for point in plane:
             assert isinstance(point, tuple)

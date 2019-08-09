@@ -288,7 +288,7 @@ class Field:
 
     def __repr__(self):
         """Representation method."""
-        return f'<Field(mesh={repr(self.mesh)}, dim={self.dim}, name=\'{self.name}\')>'
+        return f'Field(mesh={repr(self.mesh)}, dim={self.dim}, name=\'{self.name}\')'
 
     def __call__(self, point):
         """Sample the field at `point`.
@@ -631,21 +631,3 @@ class Field:
 
         k3d_scalar(field_component, self.mesh, k3d_plot=k3d_plot,
                    **kwargs)
-
-
-    def plot3d_isosurface(self, level, k3d_plot=None, **kwargs):
-        """Plots isosurface where norm of field.array equal the `level`.
-
-        This function is called as a display function in Jupyter notebook.
-
-        Parameters
-        ----------
-            level : float
-                The field surface value.
-            k3d_plot : k3d.plot.Plot, optional
-                We transfer a k3d.plot.Plot object to add the current 3d figure
-                to the canvas(?).
-
-        """
-        k3d_isosurface(self.array, level, self.mesh, k3d_plot=k3d_plot,
-                       **kwargs)

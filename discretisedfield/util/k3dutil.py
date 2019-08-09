@@ -114,21 +114,3 @@ def k3d_scalar(field_component, mesh, k3d_plot=None, colormap='viridis',
                            zmin=zmin, zmax=zmax,
                            outlines=False,
                            **kwargs)
-
-
-def k3d_isosurface(field, level, mesh, k3d_plot=None, **kwargs):
-    xmin, ymin, zmin = mesh.pmin
-    xmax, ymax, zmax = mesh.pmax
-
-    plot_array = np.sum(field**2, axis=-1)
-    plot_array = plot_array.astype(np.float32)  # to avoid the warning
-
-    if k3d_plot is None:
-        k3d_plot = k3d.plot()
-        k3d_plot.display()
-    k3d_plot += k3d.marching_cubes(plot_array,
-                                   level=level,
-                                   xmin=xmin, xmax=xmax,
-                                   ymin=ymin, ymax=ymax,
-                                   zmin=zmin, zmax=zmax,
-                                   **kwargs)
