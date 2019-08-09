@@ -822,6 +822,15 @@ class Mesh:
         Plot(...)
 
         """
+        # Generate random colours if necessary
+        if len(self.regions) > 6:
+            for i in range(len(self.regions)-6):
+                found = False
+                while not found:
+                    color = random.randint(0, 16777215)
+                    found = True
+                colormap.append(color)
+            
         plot_array = np.zeros(self.n)
         for i, name in enumerate(self.regions.keys()):
             for index in self.indices:
