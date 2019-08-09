@@ -1,11 +1,10 @@
 import random
 import itertools
 import numpy as np
+import discretisedfield as df
 import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
-import discretisedfield as df
 import discretisedfield.util as dfu
-from .plot3d import voxels, points
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -751,8 +750,8 @@ class Mesh:
         """
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
-        voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
-               outlines=outlines, plot=plot, **kwargs)
+        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
+                   outlines=outlines, plot=plot, **kwargs)
 
     def k3d_points(self, point_size=0.5, color=0x3498db, plot=None, **kwargs):
         """Plots the points at discretisation cell centres.
@@ -783,8 +782,8 @@ class Mesh:
 
         """
         plot_array = np.array(list(self.coordinates))
-        points(plot_array, point_size=point_size, color=color,
-               plot=plot, **kwargs)
+        dfu.points(plot_array, point_size=point_size, color=color,
+                   plot=plot, **kwargs)
 
     def k3d_regions(self,
                     colormap=[0x3498db, 0xe74c3c, 0x27ae60,
@@ -829,8 +828,8 @@ class Mesh:
                 if self.index2point(index) in self.regions[name]:
                     plot_array[index] = i+1  # i+1 to avoid 0 value for k3d.voxels
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
-        voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
-               outlines=outlines, plot=plot, **kwargs)
+        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
+                   outlines=outlines, plot=plot, **kwargs)
 
     @property
     def _script(self):

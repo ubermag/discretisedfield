@@ -526,6 +526,7 @@ class TestMesh:
         with pytest.raises(AttributeError):
             mesh.name = 'new_object_name'
 
+        # Make sure the attributes have not changed.
         assert mesh.p1 == p1
         assert mesh.p2 == p2
         assert mesh.cell == cell

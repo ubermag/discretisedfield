@@ -2,13 +2,11 @@ import pyvtk
 import struct
 import matplotlib
 import numpy as np
-import ubermagutil.typesystem as ts
 import discretisedfield as df
+import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from . plot3d import voxels, points, k3d_vectors, \
-                     k3d_scalar, k3d_isosurface
 
 
 representations = ['txt', 'bin4', 'bin8']
@@ -17,7 +15,7 @@ representations = ['txt', 'bin4', 'bin8']
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True),
                name=ts.Name(const=True))
-class Field(dfu.Field):
+class Field:
     """Finite difference field.
 
     This class defines a finite difference field and enables certain
