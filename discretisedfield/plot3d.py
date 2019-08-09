@@ -3,18 +3,21 @@ import numpy as np
 import matplotlib
 
 
+def bounds(pmin, pmax):
+    xmin, ymin, zmin = pmin
+    xmax, ymax, zmax = pmax
+    return [xmin, xmax, ymin, ymax, zmin, zmax]
+
+
 def voxels(plot_array, pmin, pmax, colormap, outlines=False,
            plot=None, **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
-    xmin, ymin, zmin = pmin
-    xmax, ymax, zmax = pmax
-
     if plot is None:
         plot = k3d.plot()
         plot.display()
     plot += k3d.voxels(plot_array,
                        color_map=colormap,
-                       bounds=[xmin, xmax, ymin, ymax, zmin, zmax],
+                       bounds=bounds(pmin, pmax),
                        outlines=outlines,
                        **kwargs)
 

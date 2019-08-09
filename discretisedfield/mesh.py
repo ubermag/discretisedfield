@@ -692,6 +692,21 @@ class Mesh:
         """Plots the mesh domain and the discretisation cell using a
         `matplotlib` 3D plot.
 
+        Parameters
+        ----------
+        figsize : tuple, optional
+            Length-2 tuple passed to the `matplotlib.figure` function.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-6, -3, -3)
+        >>> p2 = (6, 3, 3)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.mpl()
+
         """
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111, projection="3d")
@@ -710,9 +725,26 @@ class Mesh:
 
         Parameters
         ----------
-        k3d_plot : k3d.plot.Plot, optional
+        colormap : list, optional
+            Length-2 list of colours in hexadecimal format. The first
+            element is the colour of the domain, whereas the second
+            one is the colour of the discretisation cell.
+        outlines : bool, optional
+            If True, outlines of regions are plotted.
+        plot : k3d.plot.Plot, optional
             If this argument is passed, plot is added to
             it. Otherwise, a new k3d plot is created.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-6, -3, -3)
+        >>> p2 = (6, 3, 3)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.k3d()
+        Plot(...)
 
         """
         plot_array = np.ones(tuple(reversed(self.n)))
