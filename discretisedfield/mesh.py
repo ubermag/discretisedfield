@@ -48,6 +48,10 @@ class Mesh:
         Periodic boundary conditions in x, y, or z direction. Its value
         is an iterable consisting of one or more characters `x`, `y`,
         or `z`, denoting the direction(s) in which the mesh is periodic.
+    regions : dict, optional
+        A dictionary defining regions inside the mesh. The keys of the
+        dictionary are the region names (str), whereas the values are
+        `discretisedfield.Region` objects.
     name : str, optional
         Mesh name (the default is 'mesh'). The mesh name must be a valid
         Python variable name string. More specifically, it must not
@@ -92,7 +96,18 @@ class Mesh:
     >>> pbc = 'xy'
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc, name=name)
 
-    4. An attempt to define a mesh with invalid parameters, so that
+    4. Defining a mesh with two regions.
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (100, 100, 100)
+    >>> n = (10, 10, 10)
+    >>> regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+    ...            'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
+
+    5. An attempt to define a mesh with invalid parameters, so that
     the ``ValueError`` is raised. In this example, the mesh domain is
     not an aggregate of discretisation cells in the :math:`z`
     direction.
@@ -108,11 +123,12 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, n=None, cell=None, pbc=set(), name='mesh'):
+    def __init__(self, p1, p2, n=None, cell=None, pbc=set(), regions={}, name='mesh'):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.pbc = pbc
         self.name = name
+        self.regions = regions
 
         # Is any edge length of the domain equal to zero?
         if np.equal(self.l, 0).any():
@@ -735,6 +751,51 @@ class Mesh:
         """
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
+        voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
+               outlines=outlines, plot=plot, **kwargs)
+
+    def k3d_regions(self,
+                    colormap=[0x3498db, 0xe74c3c, 0x27ae60,
+                              0xf1c40f, 0x8e44ad, 0xecf0f1],
+                    outlines=False,
+                    plot=None, **kwargs):
+        """Plots the mesh domain and emphasises defined regions.
+
+        All arguments allowed in `k3d.voxels()` can be passed.
+
+        Parameters
+        ----------
+        colormap : list, optional
+            List of colours in hexadecimal format. The order of
+            colours should be the same as the order of regions defined
+            in `discretisedfield.Mesh.regions`. By default 6 colours
+            are defined.
+        outlines : bool, optional
+            If True, outlines of regions are plotted.
+        plot : k3d.plot.Plot, optional
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+        ...            'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
+        >>> mesh.k3d_regions()
+        Plot(...)
+
+        """
+        plot_array = np.zeros(self.n)
+        for i, name in enumerate(self.regions.keys()):
+            for index in self.indices:
+                if self.index2point(index) in self.regions[name]:
+                    plot_array[index] = i+1  # i+1 to avoid 0 value for k3d.voxels
+        plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
         voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
                outlines=outlines, plot=plot, **kwargs)
 

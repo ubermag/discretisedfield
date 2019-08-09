@@ -1,4 +1,5 @@
 import numpy as np
+import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
 
@@ -6,8 +7,8 @@ import discretisedfield.util as dfu
                pmax=ts.Vector(size=3, const=True))
 class Region:
     def __init__(self, p1, p2):
-        self.pmin = dfu.array2tuple(np.minimum(self.p1, self.p2))
-        self.pmax = dfu.array2tuple(np.maximum(self.p1, self.p2))
+        self.pmin = dfu.array2tuple(np.minimum(p1, p2))
+        self.pmax = dfu.array2tuple(np.maximum(p1, p2))
 
     def __contains__(self, item):
         """Determine whether `point` is inside the region. If it is, it returns
@@ -31,10 +32,9 @@ class Region:
 
         >>> import discretisedfield as df
         ...
-        >>> pmin = (0, 0, 0)
-        >>> pmax = (2, 2, 1)
-        >>> name = 'Cobalt'
-        >>> region = df.Region(pmin=pmin, pmax=pmax, name=name)
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> region = df.Region(p1=p1, p2=p2)
         >>> point1 = (1, 1, 1)
         >>> point1 in region
         True
