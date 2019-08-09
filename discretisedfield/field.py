@@ -7,7 +7,7 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from . plot3d import voxels, k3d_points, k3d_vectors, \
+from . plot3d import voxels, points, k3d_vectors, \
                      k3d_scalar, k3d_isosurface
 
 
@@ -545,25 +545,6 @@ class Field(dfu.Field):
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
         plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
         voxels(plot_array, self.mesh.pmin, self.mesh.pmax, k3d_plot=k3d_plot, **kwargs)
-
-    def plot3d_domain_coordinates(self, k3d_plot=None, **kwargs):
-        """Plots the mesh coordinates where norm is not zero
-        (where the material is present).
-
-        This function is called as a display function in Jupyter notebook.
-
-        Parameters
-        ----------
-        k3d_plot : k3d.plot.Plot, optional
-               We transfer a k3d.plot.Plot object to add the current 3d figure
-               to the canvas(?).
-
-        """
-        # TODO can use np.fromiter
-        plot_array = np.array([i for i in self.mesh.coordinates
-                               if self.norm(i) > 0],
-                              dtype=np.float32)
-        k3d_points(plot_array, k3d_plot=k3d_plot, **kwargs)
 
     def get_coord_and_vect(self, raw):
         # Get arrows only with norm > 0.

@@ -22,6 +22,7 @@ def check_mesh(mesh):
     assert isinstance(mesh.ntotal, int)
     assert isinstance(mesh.pbc, set)
     assert all(isinstance(i, str) for i in mesh.pbc)
+    assert isinstance(mesh.regions, dict)
     assert isinstance(mesh.name, str)
 
 
@@ -209,6 +210,23 @@ class TestMesh:
                 mymesh = df.Mesh(p1=p1, p2=p2, cell=cell)
             assert 'not an aggregate' in str(excinfo.value)
 
+    def test_regions(self):
+        p1 = (0, 0, 0)
+        p2 = (100, 50, 10)
+        cell = (1, 1, 1)
+        regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
+                   'r2': df.Region(p1=(50, 0, 0), p2=(100, 50, 10))}
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, regions=regions)
+
+        assert (0, 0, 0) in mesh.regions['r1']
+        assert (0, 0, 0) not in mesh.regions['r2']
+        assert (25, 25, 5) in mesh.regions['r1']
+        assert (25, 25, 5) not in mesh.regions['r2']
+        assert (51, 10, 10) in mesh.regions['r2']
+        assert (51, 10, 10) not in mesh.regions['r1']
+        assert (100, 50, 10) in mesh.regions['r2']
+        assert (100, 50, 10) not in mesh.regions['r1']
+        
     def test_centre(self):
         p1 = (0, 0, 0)
         p2 = (100, 100, 100)
@@ -467,6 +485,11 @@ class TestMesh:
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             mesh.k3d()
+
+    def test_k3d_points(self):
+        for p1, p2, n, cell in self.valid_args:
+            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+            mesh.k3d_points()
 
     def test_k3d_regions(self):
         p1 = (0, 0, 0)

@@ -21,7 +21,20 @@ def voxels(plot_array, pmin, pmax, colormap, outlines=False,
                        outlines=outlines,
                        **kwargs)
 
+
+def points(plot_array, point_size=0.15, color=0x99bbff,
+               plot=None, **kwargs):
+    plot_array = plot_array.astype(np.float32)  # to avoid k3d warning
     
+    if plot is None:
+        plot = k3d.plot()
+        plot.display()
+    plot += k3d.points(plot_array,
+                       point_size=point_size,
+                       color=color,
+                       **kwargs)
+
+
 def get_colors(vectors, colormap='viridis'):
     """Return list of color for each verctor in 0xaabbcc format."""
     cmap = matplotlib.cm.get_cmap(colormap, 256)
@@ -34,15 +47,6 @@ def get_colors(vectors, colormap='viridis'):
     colors = list(zip(colors, colors))
 
     return colors
-
-
-def k3d_points(plot_array, k3d_plot=None, point_size=0.15,
-               color=0x99bbff, **kwargs):
-    if k3d_plot is None:
-        k3d_plot = k3d.plot()
-        k3d_plot.display()
-    k3d_plot += k3d.points(plot_array, point_size=point_size, color=color,
-                           **kwargs)
 
 
 def k3d_vectors(coordinates, vectors, k3d_plot=None, points=False,

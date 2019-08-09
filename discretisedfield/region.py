@@ -6,6 +6,45 @@ import discretisedfield.util as dfu
 @ts.typesystem(pmin=ts.Vector(size=3, const=True),
                pmax=ts.Vector(size=3, const=True))
 class Region:
+    """A rectangular region.
+
+    A rectangular region spans between two corner points
+    :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`.
+
+    Parameters
+    ----------
+    p1, p2 : (3,) array_like
+        Points between which the region spans :math:`\\mathbf{p}
+        = (p_{x}, p_{y}, p_{z})`.
+
+    Raises
+    ------
+    ValueError
+        If the length of one or more region edges is zero.
+
+    Examples
+    --------
+    1. Defining a nano-sized region
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (-50e-9, -25e-9, 0)
+    >>> p2 = (50e-9, 25e-9, 5e-9)
+    >>> region = df.Region(p1=p1, p2=p2)
+
+    2. An attempt to define a region, where one of the edge lengths is
+    zero.
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (-25, 3, 1)
+    >>> p2 = (25, 6, 1)
+    >>> region = df.Region(p1=p1, p2=p2)
+    Traceback (most recent call last):
+        ...
+    ValueError: ...
+
+    """
     def __init__(self, p1, p2):
         self.pmin = dfu.array2tuple(np.minimum(p1, p2))
         self.pmax = dfu.array2tuple(np.maximum(p1, p2))
@@ -29,7 +68,7 @@ class Region:
 
         Example
         -------
-        1. Getting mesh representation string.x
+        1. Getting region representation string.x
 
         >>> import discretisedfield as df
         ...
@@ -37,7 +76,7 @@ class Region:
         >>> p2 = (2, 2, 1)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> repr(region)
-        "Region(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'}, name='m')"
+        'Region(p1=(0, 0, 0), p2=(2, 2, 1))'
 
         """
         return f'Region(p1={self.pmin}, p2={self.pmax})'
@@ -49,7 +88,7 @@ class Region:
         Parameters
         ----------
         item : (3,) array_like
-            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+            The point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------

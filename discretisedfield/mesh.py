@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
 import discretisedfield as df
 import discretisedfield.util as dfu
-from .plot3d import voxels
+from .plot3d import voxels, points
 from mpl_toolkits.mplot3d import Axes3D
 
 
@@ -754,6 +754,38 @@ class Mesh:
         voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
                outlines=outlines, plot=plot, **kwargs)
 
+    def k3d_points(self, point_size=0.5, color=0x3498db, plot=None, **kwargs):
+        """Plots the points at discretisation cell centres.
+
+        All arguments allowed in `k3d.points()` can be passed. This
+        function is to be called in Jupyter notebook.
+
+        Parameters
+        ----------
+        point_size : float, optional
+            The size of a single point
+        color : hex, optional
+            Colour of a single point.
+        plot : k3d.plot.Plot, optional
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (20, 20, 10)
+        >>> n = (10, 10, 5)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> mesh.k3d_points()
+        Plot(...)
+
+        """
+        plot_array = np.array(list(self.coordinates))
+        points(plot_array, point_size=point_size, color=color,
+               plot=plot, **kwargs)
+
     def k3d_regions(self,
                     colormap=[0x3498db, 0xe74c3c, 0x27ae60,
                               0xf1c40f, 0x8e44ad, 0xecf0f1],
@@ -761,7 +793,8 @@ class Mesh:
                     plot=None, **kwargs):
         """Plots the mesh domain and emphasises defined regions.
 
-        All arguments allowed in `k3d.voxels()` can be passed.
+        All arguments allowed in `k3d.voxels()` can be passed. This
+        function is to be called in Jupyter notebook.
 
         Parameters
         ----------
