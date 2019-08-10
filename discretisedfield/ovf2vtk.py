@@ -3,14 +3,12 @@ import discretisedfield as df
 
 
 def convert_files(inputs, outputs):
-
     for in_, out_ in zip(inputs, outputs):
-        field = df.read(in_)
+        field = df.Field.fromfile(in_)
         field.write(out_)
 
 
 def main():
-
     parser = argparse.ArgumentParser(
         prog='ovf2vtk',
         description='ovf2vtk - data conversion from omf/ovf file format to VTK'

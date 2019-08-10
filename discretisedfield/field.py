@@ -333,95 +333,6 @@ class Field:
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
-    def _extract_plot_data(self):
-        points, values = list(zip(*list(self)))
-        return list(zip(*points)), list(zip(*values))
-
-    def mpl(self, figsize=None):
-        if not hasattr(self.mesh, 'info'):
-            msg = ('Only sliced field can be plotted using mpl. '
-                   'For instance, field.plane(\'x\').mpl().')
-            raise ValueError(msg)
-
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111)
-
-        planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
-        
-        if self.dim > 1:
-            self.quiver(ax=ax)
-            scfield = getattr(self, planeaxis)
-        else:
-            scfield = self
-
-        colouredplot = scfield.imshow(ax=ax)
-        cbar = self.colorbar(ax, colouredplot)
-
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']])
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']])
-        if self.dim > 1:
-            cbar.ax.set_ylabel(planeaxis + ' component')
-
-    def imshow(self, ax=None, **kwargs):
-        if not hasattr(self.mesh, 'info'):
-            msg = ('Only sliced field can be plotted using imshow. '
-                   'For instance, field.plane(\'x\').imshow(ax=ax).')
-            raise ValueError(msg)
-
-        points, values = self._extract_plot_data()
-
-        extent = [self.mesh.pmin[self.mesh.info['axis1']],
-                  self.mesh.pmax[self.mesh.info['axis1']],
-                  self.mesh.pmin[self.mesh.info['axis2']],
-                  self.mesh.pmax[self.mesh.info['axis2']]]
-        n = (self.mesh.n[self.mesh.info['axis2']],
-             self.mesh.n[self.mesh.info['axis1']])
-
-        imax = ax.imshow(np.array(values).reshape(n), origin='lower',
-                         extent=extent, **kwargs)
-
-        return imax
-
-    def quiver(self, ax=None, color=None, **kwargs):
-        if not hasattr(self.mesh, 'info'):
-            msg = ('Only sliced field can be plotted using quiver. '
-                   'For instance, field.plane(\'x\').quiver(ax=ax).')
-            raise ValueError(msg)
-
-        points, values = self._extract_plot_data()
-
-        # Are there any vectors pointing out-of-plane?
-        if not any(values[self.mesh.info['axis1']] + values[self.mesh.info['axis2']]):
-            kwargs['scale'] = 1
-
-        kwargs['pivot'] = 'mid'  # arrows at the cell centres
-
-        if color is None:
-            qvax = ax.quiver(points[self.mesh.info['axis1']],
-                             points[self.mesh.info['axis2']],
-                             values[self.mesh.info['axis1']],
-                             values[self.mesh.info['axis2']],
-                             **kwargs)
-
-        elif color in dfu.axesdict.keys():
-            qvax = ax.quiver(points[self.mesh.info['axis1']],
-                             points[self.mesh.info['axis2']],
-                             values[self.mesh.info['axis1']],
-                             values[self.mesh.info['axis2']],
-                             values[dfu.axesdict[colour]],
-                             **kwargs)
-
-        return qvax
-
-    def colorbar(self, ax, colouredplot, cax=None, **kwargs):
-        if cax is None:
-            divider = make_axes_locatable(ax)
-            cax = divider.append_axes('right', size='5%', pad=0.1)
-
-        cbar = plt.colorbar(colouredplot, cax=cax, **kwargs)
-
-        return cbar
-
     def write(self, filename, representation='txt'):
         if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
             self._writeovf(filename, representation=representation)
@@ -621,25 +532,140 @@ class Field:
         field.norm = norm  # Normalise if norm is passed
 
         return field
+
+    def _extract_plot_data(self):
+        points, values = list(zip(*list(self)))
+        return list(zip(*points)), list(zip(*values))
+
+    def mpl(self, figsize=None):
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Only sliced field can be plotted using mpl. '
+                   'For instance, field.plane(\'x\').mpl().')
+            raise ValueError(msg)
+
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
+
+        planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
+        
+        if self.dim > 1:
+            self.quiver(ax=ax)
+            scfield = getattr(self, planeaxis)
+        else:
+            scfield = self
+
+        colouredplot = scfield.imshow(ax=ax)
+        cbar = self.colorbar(ax, colouredplot)
+
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']])
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']])
+        if self.dim > 1:
+            cbar.ax.set_ylabel(planeaxis + ' component')
+
+    def imshow(self, ax=None, **kwargs):
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Only sliced field can be plotted using imshow. '
+                   'For instance, field.plane(\'x\').imshow(ax=ax).')
+            raise ValueError(msg)
+
+        points, values = self._extract_plot_data()
+
+        extent = [self.mesh.pmin[self.mesh.info['axis1']],
+                  self.mesh.pmax[self.mesh.info['axis1']],
+                  self.mesh.pmin[self.mesh.info['axis2']],
+                  self.mesh.pmax[self.mesh.info['axis2']]]
+        n = (self.mesh.n[self.mesh.info['axis2']],
+             self.mesh.n[self.mesh.info['axis1']])
+
+        imax = ax.imshow(np.array(values).reshape(n), origin='lower',
+                         extent=extent, **kwargs)
+
+        return imax
+
+    def quiver(self, ax=None, color=None, **kwargs):
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Only sliced field can be plotted using quiver. '
+                   'For instance, field.plane(\'x\').quiver(ax=ax).')
+            raise ValueError(msg)
+
+        points, values = self._extract_plot_data()
+
+        # Are there any vectors pointing out-of-plane?
+        if not any(values[self.mesh.info['axis1']] + values[self.mesh.info['axis2']]):
+            kwargs['scale'] = 1
+
+        kwargs['pivot'] = 'mid'  # arrows at the cell centres
+
+        if color is None:
+            qvax = ax.quiver(points[self.mesh.info['axis1']],
+                             points[self.mesh.info['axis2']],
+                             values[self.mesh.info['axis1']],
+                             values[self.mesh.info['axis2']],
+                             **kwargs)
+
+        elif color in dfu.axesdict.keys():
+            qvax = ax.quiver(points[self.mesh.info['axis1']],
+                             points[self.mesh.info['axis2']],
+                             values[self.mesh.info['axis1']],
+                             values[self.mesh.info['axis2']],
+                             values[dfu.axesdict[colour]],
+                             **kwargs)
+
+        return qvax
+
+    def colorbar(self, ax, colouredplot, cax=None, **kwargs):
+        if cax is None:
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.1)
+
+        cbar = plt.colorbar(colouredplot, cax=cax, **kwargs)
+
+        return cbar
     
-    def plot3d_domain(self, k3d_plot=None, **kwargs):
-        """Plots only an aria where norm is not zero
-        (where the material is present).
-
-        This function is called as a display function in Jupyter notebook.
-
-        Parameters
-        ----------
-        k3d_plot : k3d.plot.Plot, optional
-               We transfer a k3d.plot.Plot object to add the current 3d figure
-               to the canvas(?).
-
-        """
-        plot_array = np.squeeze(self.x.array)
+    def k3d_nonzero(self, colormap=[0x3498db], outlines=False,
+                    plot=None, **kwargs):
+        if self.dim > 1:
+            msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
+                   'one component, e.g. field.x.k3d_nonzero() or norm '
+                   'field.norm.k3d_nonzero().')
+            raise ValueError(msg)
+        plot_array = np.copy(self.array)  # make a deep copy
+        plot_array = np.squeeze(plot_array)  # remove an empty dimension
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
         plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
-        voxels(plot_array, self.mesh.pmin, self.mesh.pmax, k3d_plot=k3d_plot, **kwargs)
+        dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
+                   colormap=colormap, outlines=outlines, plot=plot, **kwargs)
 
+    def k3d_voxels(self, norm=None, outlines=False, plot=None, **kwargs):
+        if self.dim > 1:
+            msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
+                   'one component, e.g. field.x.k3d_nonzero() or norm '
+                   'field.norm.k3d_nonzero().')
+            raise ValueError(msg)
+
+        plot_array = np.copy(self.array)  # make a deep copy
+        plot_array = plot_array[..., 0]  # remove an empty dimension
+
+        plot_array -= plot_array.min()
+        plot_array /= plot_array.max()
+        plot_array *= 254
+        plot_array += 1
+        plot_array = plot_array.round()
+        plot_array = plot_array.astype(int)
+
+        if norm is not None:
+            for index in self.mesh.indices:
+                if norm(self.mesh.index2point(index)) == 0:
+                    plot_array[index] = 0
+    
+        plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
+
+        cmap = matplotlib.cm.get_cmap('viridis', 256)
+        colormap = [int(matplotlib.colors.rgb2hex(cmap(i)[:3])[1:], 16) for i in range(cmap.N)]
+
+        dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
+                   colormap=colormap, outlines=outlines, plot=plot, **kwargs)
+    
     def get_coord_and_vect(self, raw):
         # Get arrows only with norm > 0.
         data = [(i, self(i)) for i in raw
@@ -671,57 +697,3 @@ class Field:
 
         k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
                     **kwargs)
-
-    def plot3d_vectors_slice(self, x=None, y=None, z=None,
-                             k3d_plot=None, points=False, **kwargs):
-        """Plots the slice of vector field by X,Y or Z plane, where norm
-         is not zero (where the material is present). Shift the vector
-         so that its center passes through the center of the cell.
-
-        This function is called as a display function in Jupyter notebook.
-
-        Parameters
-        ----------
-            x, y, z : float
-                The coordinate of the axis along which the volume is cut.
-            k3d_plot : k3d.plot.Plot, optional
-                We transfer a k3d.plot.Plot object to add the current 3d figure
-                to the canvas(?).
-
-        """
-        coordinates, vectors = self.get_coord_and_vect(self.mesh.plane(x=x, y=y, z=z))
-
-        k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
-                    **kwargs)
-
-    def plot3d_scalar(self, k3d_plot=None, **kwargs):
-        """Plots the scalar fields.
-
-        This function is called as a display function in Jupyter notebook.
-
-        Parameters
-        ----------
-        k3d_plot : k3d.plot.Plot, optional
-               We transfer a k3d.plot.Plot object to add the current 3d figure
-               to the canvas(?).
-
-        """
-        field_array = self.array.copy()
-        array_shape = self.array.shape  # TODO rewrite
-
-        nx, ny, nz, _ = array_shape
-
-        norm = np.linalg.norm(field_array, axis=3)[..., None]
-
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    if norm[i, j, k] == 0:
-                        field_array[i, j, k] = np.nan
-
-        component = 0
-
-        field_component = field_array[..., component]
-
-        k3d_scalar(field_component, self.mesh, k3d_plot=k3d_plot,
-                   **kwargs)
