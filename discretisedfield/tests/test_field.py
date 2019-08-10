@@ -296,7 +296,7 @@ class TestField:
         for mesh in self.meshes:
             f = df.Field(mesh, dim=1, value=3)
             plane = f.plane('x', n=(3, 3))
-            assert isinstance(plane, types.GeneratorType)
+            assert isinstance(plane, df.Field)
 
             p, v = zip(*list(plane))
             assert len(p) == 9
@@ -312,7 +312,7 @@ class TestField:
             f_out = df.Field(mesh, dim=dim, value=value)
             for rep in representations:
                 f_out.write(filename, representation=rep)
-                f_in = df.read(filename)
+                f_in = df.Field.fromfile(filename)
                 assert mesh.p1 == f_in.mesh.p1
                 assert mesh.p2 == f_in.mesh.p2
                 assert mesh.cell == f_in.mesh.cell
@@ -349,7 +349,7 @@ class TestField:
         for f in filenames:
             path = os.path.join(test_sample_dirname, f)
 
-            f = df.read(path)
+            f = df.Field.fromfile(path)
 
             # comparison with human readable part of file
             assert f.dim == 3

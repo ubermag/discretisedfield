@@ -7,7 +7,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 axesdict = collections.OrderedDict([('x', 0), ('y', 1), ('z', 2)])
-
+raxesdict = {value: key for key, value in axesdict.items()}
 
 def array2tuple(array):
     return tuple(array.tolist())

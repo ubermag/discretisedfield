@@ -441,7 +441,6 @@ class TestMesh:
         with pytest.raises(ValueError):
             line = list(mesh.line((0, 0, 0), (11, 0, 0), n=30))
 
-
     def test_plane(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)

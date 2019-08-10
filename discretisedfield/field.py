@@ -328,101 +328,204 @@ class Field:
     def line(self, p1, p2, n=100):
         for point in self.mesh.line(p1=p1, p2=p2, n=n):
             yield point, self.__call__(point)
-
-    def slice(self, *args, n=None, **kwargs):
-        pl = list(self.mesh.plane(*args, n=n, **kwargs))
-        pl = list(zip(*pl))
-        d = np.divide(self.mesh.cell, 2)
-        p1 = np.array(list(map(min, pl))) - d
-        p2 = np.array(list(map(max, pl))) + d
-        mesh = df.Mesh(p1=p1, p2=p2, cell=self.mesh.cell)
-        field = df.Field(mesh, value=self)
-        return field
     
     def plane(self, *args, n=None, **kwargs):
-        for point in self.mesh.plane(*args, n=n, **kwargs):
-            yield point, self.__call__(point)
+        plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
+        return self.__class__(plane_mesh, dim=self.dim, value=self)
 
-    def plot_plane(self, *args, n=None, ax=None, figsize=None, **kwargs):
-        info, points, values, n, ax = self._plot_data(*args,
-                                                      n=n, ax=ax, figsize=figsize, **kwargs)
+    def _extract_plot_data(self):
+        points, values = list(zip(*list(self)))
+        return list(zip(*points)), list(zip(*values))
 
+    def mpl(self, figsize=None):
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Only sliced field can be plotted using mpl. '
+                   'For instance, field.plane(\'x\').mpl().')
+            raise ValueError(msg)
+
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
+
+        planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
+        
         if self.dim > 1:
-            self.quiver(*args, n=n, ax=ax, **kwargs)
-            scfield = getattr(self, list(dfu.axesdict.keys())[info["planeaxis"]])
+            self.quiver(ax=ax)
+            scfield = getattr(self, planeaxis)
         else:
             scfield = self
 
-        colouredplot = scfield.imshow(*args, n=n, ax=ax, **kwargs)
-        self.colorbar(ax, colouredplot)
+        colouredplot = scfield.imshow(ax=ax)
+        cbar = self.colorbar(ax, colouredplot)
 
-        ax.set_xlabel(list(dfu.axesdict.keys())[info["axis1"]])
-        ax.set_ylabel(list(dfu.axesdict.keys())[info["axis2"]])
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']])
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']])
+        if self.dim > 1:
+            cbar.ax.set_ylabel(planeaxis + ' component')
 
-    def _plot_data(self, *args, n=None, ax=None, figsize=None, **kwargs):
-        info = dfu.plane_info(*args, **kwargs)
-        data = list(self.plane(*args, n=n, **kwargs))
-        ps, vs = list(zip(*data))
-        points = list(zip(*ps))
-        values = list(zip(*vs))
+    def imshow(self, ax=None, **kwargs):
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Only sliced field can be plotted using imshow. '
+                   'For instance, field.plane(\'x\').imshow(ax=ax).')
+            raise ValueError(msg)
 
-        if n is None:
-            n = (self.mesh.n[info["axis1"]], self.mesh.n[info["axis2"]])
+        points, values = self._extract_plot_data()
 
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        extent = [self.mesh.pmin[self.mesh.info['axis1']],
+                  self.mesh.pmax[self.mesh.info['axis1']],
+                  self.mesh.pmin[self.mesh.info['axis2']],
+                  self.mesh.pmax[self.mesh.info['axis2']]]
+        n = (self.mesh.n[self.mesh.info['axis2']],
+             self.mesh.n[self.mesh.info['axis1']])
 
-        return info, points, values, n, ax
-
-    def imshow(self, *args, n=None, ax=None, **kwargs):
-        info, points, values, n, ax = self._plot_data(*args, n=n, ax=ax, **kwargs)
-
-        for i in 'xyz':
-            if i in kwargs.keys():
-                del kwargs[i]
-
-        extent = [self.mesh.pmin[info["axis1"]], self.mesh.pmax[info["axis1"]],
-                  self.mesh.pmin[info["axis2"]], self.mesh.pmax[info["axis2"]]]
-        imax = ax.imshow(np.array(values).reshape(n).T, origin="lower",
+        imax = ax.imshow(np.array(values).reshape(n), origin='lower',
                          extent=extent, **kwargs)
 
         return imax
 
-    def quiver(self, *args, n=None, ax=None, colour=None, **kwargs):
-        info, points, values, n, ax = self._plot_data(*args, n=n, ax=ax, **kwargs)
+    def quiver(self, ax=None, color=None, **kwargs):
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Only sliced field can be plotted using quiver. '
+                   'For instance, field.plane(\'x\').quiver(ax=ax).')
+            raise ValueError(msg)
 
-        if not any(values[info["axis1"]] + values[info["axis2"]]):
-            kwargs["scale"] = 1
+        points, values = self._extract_plot_data()
 
-        for i in 'xyz':
-            if i in kwargs.keys():
-                del kwargs[i]
+        # Are there any vectors pointing out-of-plane?
+        if not any(values[self.mesh.info['axis1']] + values[self.mesh.info['axis2']]):
+            kwargs['scale'] = 1
 
-        if colour is None:
-            qvax = ax.quiver(points[info["axis1"]], points[info["axis2"]],
-                             values[info["axis1"]], values[info["axis2"]],
-                             pivot='mid', **kwargs)
-        elif colour in dfu.axesdict.keys():
-            qvax = ax.quiver(points[info["axis1"]], points[info["axis2"]],
-                             values[info["axis1"]], values[info["axis2"]],
+        kwargs['pivot'] = 'mid'  # arrows at the cell centres
+
+        if color is None:
+            qvax = ax.quiver(points[self.mesh.info['axis1']],
+                             points[self.mesh.info['axis2']],
+                             values[self.mesh.info['axis1']],
+                             values[self.mesh.info['axis2']],
+                             **kwargs)
+
+        elif color in dfu.axesdict.keys():
+            qvax = ax.quiver(points[self.mesh.info['axis1']],
+                             points[self.mesh.info['axis2']],
+                             values[self.mesh.info['axis1']],
+                             values[self.mesh.info['axis2']],
                              values[dfu.axesdict[colour]],
-                             pivot='mid', **kwargs)
+                             **kwargs)
 
         return qvax
 
     def colorbar(self, ax, colouredplot, cax=None, **kwargs):
         if cax is None:
             divider = make_axes_locatable(ax)
-            cax = divider.append_axes("right", size="5%", pad=0.1)
+            cax = divider.append_axes('right', size='5%', pad=0.1)
 
-        plt.colorbar(colouredplot, cax=cax, **kwargs)
+        cbar = plt.colorbar(colouredplot, cax=cax, **kwargs)
 
-    def write(self, filename, **kwargs):
-        if any([filename.endswith(ext) for ext in [".omf", ".ovf", ".ohf"]]):
-            self._writeovf(filename, **kwargs)
-        elif filename.endswith(".vtk"):
+        return cbar
+
+    def write(self, filename, representation='txt'):
+        if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
+            self._writeovf(filename, representation=representation)
+        elif filename.endswith('.vtk'):
             self._writevtk(filename)
+        else:
+            msg = ('Allowed extensions for writing the field are '
+                   '.omf, .ovf, .ohf, and .vtk.')
+            raise ValueError(msg)
+
+    def _writeovf(self, filename, representation='txt'):
+        header = ['OOMMF OVF 2.0',
+                  '',
+                  'Segment count: 1',
+                  '',
+                  'Begin: Segment',
+                  'Begin: Header',
+                  '',
+                  'Title: Field generated omf file',
+                  'Desc: File generated by Field class',
+                  'meshunit: m',
+                  'meshtype: rectangular',
+                  f'xbase: {self.mesh.pmin[0] + self.mesh.cell[0]/2}',
+                  f'ybase: {self.mesh.pmin[1] + self.mesh.cell[1]/2}',
+                  f'zbase: {self.mesh.pmin[2] + self.mesh.cell[2]/2}',
+                  f'xnodes: {self.mesh.n[0]}',
+                  f'ynodes: {self.mesh.n[1]}',
+                  f'znodes: {self.mesh.n[2]}',
+                  f'xstepsize: {self.mesh.cell[0]}',
+                  f'ystepsize: {self.mesh.cell[1]}',
+                  f'zstepsize: {self.mesh.cell[2]}',
+                  f'xmin: {self.mesh.pmin[0]}',
+                  f'ymin: {self.mesh.pmin[1]}',
+                  f'zmin: {self.mesh.pmin[2]}',
+                  f'xmax: {self.mesh.pmax[0]}',
+                  f'ymax: {self.mesh.pmax[1]}',
+                  f'zmax: {self.mesh.pmax[2]}',
+                  f'valuedim: {self.dim}',
+                  f'valuelabels: {self.name}_x {self.name}_y {self.name}_z',
+                  'valueunits: A/m A/m A/m',
+                  '',
+                  'End: Header',
+                  '']
+
+        if representation == 'bin4':
+            header.append('Begin: Data Binary 4')
+            footer = ['End: Data Binary 4',
+                      'End: Segment']
+        elif representation == 'bin8':
+            header.append('Begin: Data Binary 8')
+            footer = ['End: Data Binary 8',
+                      'End: Segment']
+        elif representation == 'txt':
+            header.append('Begin: Data Text')
+            footer = ['End: Data Text',
+                      'End: Segment']
+
+        # Write header lines to the ovf file.
+        f = open(filename, 'w')
+        f.write(''.join(map(lambda line: f'# {line}\n', header)))
+        f.close()
+
+        binary_reps = {'bin4': (1234567.0, 'f'),
+                       'bin8': (123456789012345.0, 'd')}
+                
+        if representation in binary_reps:
+            # Reopen the file with binary write, appending to the end
+            # of the file.
+            f = open(filename, 'ab')
+
+            # Add the 8 bit binary check value that OOMMF uses.
+            packarray = [binary_reps[representation][0]]
+
+            # Write data to the ovf file.
+            for i in self.mesh.indices:
+                for vi in self.array[i]:
+                    packarray.append(vi)
+
+            v_binary = struct.pack(binary_reps[representation][1]*len(packarray),
+                                   *packarray)
+            f.write(v_binary)
+            f.close()
+
+        else:
+            # Reopen the file for txt representation, appending to the
+            # file.
+            f = open(filename, 'a')
+            for i in self.mesh.indices:
+                if self.dim == 3:
+                    v = [vi for vi in self.array[i]]
+                elif self.dim == 1:
+                    v = [self.array[i][0]]
+                else:
+                    msg = (f'Cannot write dim={self.dim} field.')
+                    raise TypeError(msg)
+                for vi in v:
+                    f.write(' ' + str(vi))
+                f.write('\n')
+            f.close()
+
+        # Write footer lines to OOMMF file.
+        f = open(filename, 'a')
+        f.write(''.join(map(lambda line: f'# {line}\n', footer)))
+        f.close()
 
     def _writevtk(self, filename):
         grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
@@ -431,113 +534,94 @@ class Field:
         structure = pyvtk.RectilinearGrid(*grid)
         vtkdata = pyvtk.VtkData(structure)
 
-        vectors = [self.__call__(i) for i in self.mesh.coordinates]
+        vectors = [self.__call__(coord) for coord in self.mesh.coordinates]
         vtkdata.cell_data.append(pyvtk.Vectors(vectors, self.name))
         for i, component in enumerate(dfu.axesdict.keys()):
-            name = "{}_{}".format(self.name, component)
+            name = f'{self.name}_{component}'
             vtkdata.cell_data.append(pyvtk.Scalars(list(zip(*vectors))[i],
                                                    name))
 
         vtkdata.tofile(filename)
 
-    def _writeovf(self, filename, **kwargs):
-        representation = kwargs['representation'] if 'representation' in kwargs else 'txt'
-        dim = kwargs['dim'] if 'dim' in kwargs else self.dim
-        header = ["OOMMF OVF 2.0",
-                  "",
-                  "Segment count: 1",
-                  "",
-                  "Begin: Segment",
-                  "Begin: Header",
-                  "",
-                  "Title: Field generated omf file",
-                  "Desc: File generated by Field class",
-                  "meshunit: m",
-                  "meshtype: rectangular",
-                  "xbase: {}".format(self.mesh.pmin[0] +
-                                     self.mesh.cell[0]/2),
-                  "ybase: {}".format(self.mesh.pmin[1] +
-                                     self.mesh.cell[1]/2),
-                  "zbase: {}".format(self.mesh.pmin[2] +
-                                     self.mesh.cell[2]/2),
-                  "xnodes: {}".format(self.mesh.n[0]),
-                  "ynodes: {}".format(self.mesh.n[1]),
-                  "znodes: {}".format(self.mesh.n[2]),
-                  "xstepsize: {}".format(self.mesh.cell[0]),
-                  "ystepsize: {}".format(self.mesh.cell[1]),
-                  "zstepsize: {}".format(self.mesh.cell[2]),
-                  "xmin: {}".format(self.mesh.pmin[0]),
-                  "ymin: {}".format(self.mesh.pmin[1]),
-                  "zmin: {}".format(self.mesh.pmin[2]),
-                  "xmax: {}".format(self.mesh.pmax[0]),
-                  "ymax: {}".format(self.mesh.pmax[1]),
-                  "zmax: {}".format(self.mesh.pmax[2]),
-                  "valuedim: {}".format(self.dim),
-                  "valuelabels: {0}_x {0}_y {0}_z".format(self.name),
-                  "valueunits: A/m A/m A/m",
-                  "",
-                  "End: Header",
-                  ""]
+    @classmethod
+    def fromfile(cls, filename, norm=None, name='field'):
+        mdatalist = ['xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax',
+                 'xstepsize', 'ystepsize', 'zstepsize', 'valuedim']
+        mdatadict = dict()
 
-        if representation == "bin4":
-            header.append("Begin: Data Binary 4")
-            footer = ["End: Data Binary 4",
-                      "End: Segment"]
-        elif representation == "bin8":
-            header.append("Begin: Data Binary 8")
-            footer = ["End: Data Binary 8",
-                      "End: Segment"]
-        elif representation == "txt":
-            header.append("Begin: Data Text")
-            footer = ["End: Data Text",
-                      "End: Segment"]
+        try:
+            with open(filename, 'r', encoding='utf-8') as ovffile:
+                f = ovffile.read()
+                lines = f.split('\n')
 
-        f = open(filename, "w")
+            mdatalines = filter(lambda s: s.startswith('#'), lines)
+            datalines = np.loadtxt(filter(lambda s: not s.startswith('#'), lines))
 
-        # Write header lines to OOMMF file.
-        headerstr = "".join(map(lambda line: "# {}\n".format(line), header))
-        f.write(headerstr)
+            for line in mdatalines:
+                for mdatum in mdatalist:
+                    if mdatum in line:
+                        mdatadict[mdatum] = float(line.split()[-1])
+                        break
 
-        binary_reps = {'bin4': (1234567.0, 'f'),
-            'bin8': (123456789012345.0, 'd')}
+        except UnicodeDecodeError:
+            with open(filename, 'rb') as ovffile:
+                f = ovffile.read()
+                lines = f.split(b'\n')
 
-        if representation in binary_reps:
-            # Close the file and reopen with binary write
-            # appending to the end of file.
-            f.close()
-            f = open(filename, "ab")
+            mdatalines = filter(lambda s: s.startswith(bytes('#', 'utf-8')), lines)
 
-            # Add the 8 bit binary check value that OOMMF uses
-            packarray = [binary_reps[representation][0]]
-            # Write data lines to OOMMF file.
-            for i in self.mesh.indices:
-                [packarray.append(vi) for vi in self.array[i]]
+            for line in mdatalines:
+                for mdatum in mdatalist:
+                    if bytes(mdatum, 'utf-8') in line:
+                        mdatadict[mdatum] = float(line.split()[-1])
+                        break
 
-            v_binary = struct.pack(binary_reps[representation][1]*len(packarray), *packarray)
-            f.write(v_binary)
-            f.close()
-            f = open(filename, "a")
+            header = b'# Begin: Data Binary '
+            data_start = f.find(header)
+            header = f[data_start:data_start + len(header) + 1]
 
-        else:
-            for i in self.mesh.indices:
-                if self.dim == 3:
-                    v = [vi for vi in self.array[i]]
-                elif self.dim == 1:
-                    v = [self.array[i][0]]
-                else:
-                    msg = ("Cannot write dim={} field to "
-                           "omf file.".format(self.dim))
-                    raise TypeError(msg)
-                for vi in v:
-                    f.write(" " + str(vi))
-                f.write("\n")
+            data_start += len(b'# Begin: Data Binary 8')
+            data_end = f.find(b'# End: Data Binary ')
 
-        # Write footer lines to OOMMF file.
-        footerstr = "".join(map(lambda line: "# {}\n".format(line), footer))
-        f.write(footerstr)
+            # ordered by length
+            newlines = [b'\n\r', b'\r\n', b'\n']
+            for nl in newlines:
+                if f.startswith(nl, data_start):
+                    data_start += len(nl)
+                    break
 
-        f.close()
+            if b'4' in header:
+                formatstr = '@f'
+                checkvalue = 1234567.0
+            elif b'8' in header:
+                formatstr = '@d'
+                checkvalue = 123456789012345.0
 
+            listdata = list(struct.iter_unpack(formatstr, f[data_start:data_end]))
+            datalines = np.array(listdata)
+
+            if datalines[0] != checkvalue:
+                msg = 'Something has gone wrong with reading Binary Data.'
+                raise AssertionError(msg)
+
+            datalines = datalines[1:]  # check value removal
+
+        p1 = (mdatadict[key] for key in ['xmin', 'ymin', 'zmin'])
+        p2 = (mdatadict[key] for key in ['xmax', 'ymax', 'zmax'])
+        cell = (mdatadict[key] for key in ['xstepsize', 'ystepsize', 'zstepsize'])
+        dim = int(mdatadict['valuedim'])
+
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        field = df.Field(mesh, dim=dim, name=name)
+
+        r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict['valuedim']),)
+        t_tuple = tuple(reversed(range(3))) + (3,)
+        field.array = datalines.reshape(r_tuple).transpose(t_tuple)
+        field.norm = norm  # Normalise if norm is passed
+
+        return field
+    
     def plot3d_domain(self, k3d_plot=None, **kwargs):
         """Plots only an aria where norm is not zero
         (where the material is present).

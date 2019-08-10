@@ -688,7 +688,9 @@ class Mesh:
         ns[ilist] = n + (1,)
         ns = dfu.array2tuple(ns.astype(int))
 
-        return self.__class__(p1=p1s, p2=p2s, n=ns)
+        plane_mesh = self.__class__(p1=p1s, p2=p2s, n=ns)
+        plane_mesh.info = info  # Add info so it can be interpreted easier
+        return plane_mesh
     
     def mpl(self, figsize=None):
         """Plots the mesh domain and the discretisation cell using a
