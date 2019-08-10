@@ -721,8 +721,7 @@ class Mesh:
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
-    def k3d(self, colormap=[0x3498db, 0xe74c3c], outlines=False,
-            plot=None, **kwargs):
+    def k3d(self, colormap=[0x3498db, 0xe74c3c], plot=None, **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
 
         All arguments allowed in `k3d.voxels()` can be passed.
@@ -733,8 +732,6 @@ class Mesh:
             Length-2 list of colours in hexadecimal format. The first
             element is the colour of the domain, whereas the second
             one is the colour of the discretisation cell.
-        outlines : bool, optional
-            If True, outlines of regions are plotted.
         plot : k3d.plot.Plot, optional
             If this argument is passed, plot is added to
             it. Otherwise, a new k3d plot is created.
@@ -754,7 +751,7 @@ class Mesh:
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
         dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
-                   outlines=outlines, plot=plot, **kwargs)
+                   plot=plot, **kwargs)
 
     def k3d_points(self, point_size=0.5, color=0x3498db, plot=None, **kwargs):
         """Plots the points at discretisation cell centres.
@@ -791,7 +788,6 @@ class Mesh:
     def k3d_regions(self,
                     colormap=[0x3498db, 0xe74c3c, 0x27ae60,
                               0xf1c40f, 0x8e44ad, 0xecf0f1],
-                    outlines=False,
                     plot=None, **kwargs):
         """Plots the mesh domain and emphasises defined regions.
 
@@ -805,8 +801,6 @@ class Mesh:
             colours should be the same as the order of regions defined
             in `discretisedfield.Mesh.regions`. By default 6 colours
             are defined.
-        outlines : bool, optional
-            If True, outlines of regions are plotted.
         plot : k3d.plot.Plot, optional
             If this argument is passed, plot is added to
             it. Otherwise, a new k3d plot is created.
@@ -841,7 +835,7 @@ class Mesh:
                     plot_array[index] = i+1  # i+1 to avoid 0 value for k3d.voxels
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
         dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
-                   outlines=outlines, plot=plot, **kwargs)
+                   plot=plot, **kwargs)
 
     @property
     def _script(self):

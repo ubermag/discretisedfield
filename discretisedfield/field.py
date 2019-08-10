@@ -533,10 +533,6 @@ class Field:
 
         return field
 
-    def _extract_plot_data(self):
-        points, values = list(zip(*list(self)))
-        return list(zip(*points)), list(zip(*values))
-
     def mpl(self, figsize=None):
         if not hasattr(self.mesh, 'info'):
             msg = ('Only sliced field can be plotted using mpl. '
@@ -551,10 +547,12 @@ class Field:
         if self.dim > 1:
             self.quiver(ax=ax)
             scfield = getattr(self, planeaxis)
+            norm_field = self.norm
         else:
             scfield = self
+            norm_field = None
 
-        colouredplot = scfield.imshow(ax=ax)
+        colouredplot = scfield.imshow(ax=ax, norm_field=norm_field)
         cbar = self.colorbar(ax, colouredplot)
 
         ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']])
@@ -562,14 +560,35 @@ class Field:
         if self.dim > 1:
             cbar.ax.set_ylabel(planeaxis + ' component')
 
-    def imshow(self, ax=None, **kwargs):
+    def imshow(self, ax=None, norm_field=None, **kwargs):
         if not hasattr(self.mesh, 'info'):
             msg = ('Only sliced field can be plotted using imshow. '
                    'For instance, field.plane(\'x\').imshow(ax=ax).')
             raise ValueError(msg)
 
-        points, values = self._extract_plot_data()
+        points, values = list(zip(*list(self)))
 
+        # Set values where norm=0 to NaN
+        if norm_field is not None:
+            values = list(values)
+            for i, point in enumerate(points):
+                if norm_field(point) == 0:
+                    values[i] = np.nan
+
+            # "Unpack" values inside arrays
+            vals = []
+            for v in values:
+                if not np.isnan(v):
+                    vals.append(v[0])
+                else:
+                    vals.append(v)
+            values = vals
+            
+        else:
+            values = list(zip(*values))
+            
+        points = list(zip(*points))
+ 
         extent = [self.mesh.pmin[self.mesh.info['axis1']],
                   self.mesh.pmax[self.mesh.info['axis1']],
                   self.mesh.pmin[self.mesh.info['axis2']],
@@ -588,7 +607,11 @@ class Field:
                    'For instance, field.plane(\'x\').quiver(ax=ax).')
             raise ValueError(msg)
 
-        points, values = self._extract_plot_data()
+        points, values = list(zip(*list(self)))
+
+
+        
+        points, values = list(zip(*points)), list(zip(*values))
 
         # Are there any vectors pointing out-of-plane?
         if not any(values[self.mesh.info['axis1']] + values[self.mesh.info['axis2']]):
@@ -622,8 +645,7 @@ class Field:
 
         return cbar
     
-    def k3d_nonzero(self, colormap=[0x3498db], outlines=False,
-                    plot=None, **kwargs):
+    def k3d_nonzero(self, colormap=[0x3498db], plot=None, **kwargs):
         if self.dim > 1:
             msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
                    'one component, e.g. field.x.k3d_nonzero() or norm '
@@ -634,9 +656,9 @@ class Field:
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
         plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
         dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
-                   colormap=colormap, outlines=outlines, plot=plot, **kwargs)
+                   colormap=colormap, plot=plot, **kwargs)
 
-    def k3d_voxels(self, norm=None, outlines=False, plot=None, **kwargs):
+    def k3d_voxels(self, norm=None, plot=None, **kwargs):
         if self.dim > 1:
             msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
                    'one component, e.g. field.x.k3d_nonzero() or norm '
@@ -661,17 +683,22 @@ class Field:
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
 
         cmap = matplotlib.cm.get_cmap('viridis', 256)
-        colormap = [int(matplotlib.colors.rgb2hex(cmap(i)[:3])[1:], 16) for i in range(cmap.N)]
+        colormap = [dfu.num2hexcolor(i, cmap) for i in range(cmap.N)]
 
         dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
-                   colormap=colormap, outlines=outlines, plot=plot, **kwargs)
+                   colormap=colormap, plot=plot, **kwargs)
     
-    def k3d_vectors(self, color_field=None, plot=None, points=False, **kwargs):
+    def k3d_vectors(self, color_field=None, points=False, plot=None, **kwargs):
+        if self.dim != 3:
+            msg = 'Only three-dimensional (dim=3) fields can be plotted.'
+            raise ValueError(msg)
+
         coordinates, vectors, color_values = [], [], []
-        for coord in self.mesh:
-            if self.norm(coord) > 0:
+        norm = self.norm  # assigned to be computed only once
+        for coord, value in self:
+            if norm(coord) > 0:
                 coordinates.append(coord)
-                vectors.append(self(coord))
+                vectors.append(value)
                 if color_field is not None:
                     color_values.append(color_field(coord)[0])
 
@@ -691,11 +718,12 @@ class Field:
             cmap = matplotlib.cm.get_cmap('viridis', 256)
             colors = []
             for c in color_values:
-                color = int(matplotlib.colors.rgb2hex(cmap(c)[:3])[1:], 16)
-                colors.append((color, color))            
+                color = dfu.num2hexcolor(c, cmap)
+                colors.append((color, color))
+        else:
+            colors = []    
             
         plot = dfu.vectors(coordinates, vectors, colors=colors, plot=plot, **kwargs)
 
         if points:
-            coordinates = coordinates + 0.5 * vectors
-            dfu.points(coordinates, plot=plot)
+            dfu.points(coordinates + 0.5 * vectors, plot=plot)

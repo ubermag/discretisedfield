@@ -1,6 +1,7 @@
 import k3d
 import numbers
 import collections
+import matplotlib
 import numpy as np
 import itertools as it
 import matplotlib.pyplot as plt
@@ -109,15 +110,7 @@ def as_array(mesh, dim, val):
     return array
 
 
-def addcolorbar(ax, imax):
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes('right', size='3%', pad=0.05)
-    cbar = plt.colorbar(imax, cax=cax)
-    return ax, cbar
-
-
-def voxels(plot_array, pmin, pmax, colormap, outlines=False,
-           plot=None, **kwargs):
+def voxels(plot_array, pmin, pmax, colormap, outlines=False, plot=None, **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
     if plot is None:
         plot = k3d.plot()
@@ -136,30 +129,29 @@ def voxels(plot_array, pmin, pmax, colormap, outlines=False,
     return plot
 
 
-def points(plot_array, point_size=0.15, color=0x99bbff,
-           plot=None, **kwargs):
+def points(plot_array, point_size=0.2, color=0x99bbff, plot=None, **kwargs):
     plot_array = plot_array.astype(np.float32)  # to avoid k3d warning
     
     if plot is None:
         plot = k3d.plot()
         plot.display()
-    plot += k3d.points(plot_array,
-                       point_size=point_size,
-                       color=color,
+    plot += k3d.points(plot_array, point_size=point_size, color=color,
                        **kwargs)
 
     return plot
 
 
-def vectors(coordinates, vectors, colors=None, plot=None, plot_points=False,
-            **kwargs):
+def vectors(coordinates, vectors, colors=[], plot=None, **kwargs):
     coordinates = coordinates.astype(np.float32)  # to avoid k3d warning
     vectors = vectors.astype(np.float32)  # to avoid k3d warning
-    #colors = get_colors(vectors, **kwargs)
 
     if plot is None:
         plot = k3d.plot()
         plot.display()
-    plot += k3d.vectors(coordinates, vectors, colors=colors)
+    plot += k3d.vectors(coordinates, vectors, colors=colors, **kwargs)
 
     return plot
+
+
+def num2hexcolor(n, cmap):
+    return int(matplotlib.colors.rgb2hex(cmap(n)[:3])[1:], 16)
