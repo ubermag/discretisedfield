@@ -623,9 +623,9 @@ class Mesh:
         dl = np.subtract(p2, p1)/(n-1)
         for i in range(n):
             yield dfu.array2tuple(np.add(p1, i*dl))
-
+        
     def plane(self, *args, n=None, **kwargs):
-        """Plane generator.
+        """Slices the mesh with a plane.
 
         If one of the axes (`'x'`, `'y'`, or `'z'`) is passed as a
         string, a plane perpendicular to that axis is generated which
@@ -633,17 +633,18 @@ class Mesh:
         argument is passed (e.g. `x=1`), a plane perpendicular to the
         x-axis and intersecting it at x=1 is generated. The number of
         points in two dimensions on the plane can be defined using `n`
-        (e.g. `n=(10, 15)`).
+        (e.g. `n=(10, 15)`). Using the generated plane, a new
+        "two-dimensional" mesh is created and returned.
 
         Parameters
         ----------
         n : tuple of length 2
             The number of points on the plane in two dimensions
 
-        Yields
+        Returns
         ------
-        tuple
-            :math:`\\mathbf{r}_{i}`
+        discretisedfield.Mesh
+            A mesh obtained as an intersection of mesh and the plane.
 
         Example
         -------
@@ -653,8 +654,8 @@ class Mesh:
         >>> p2 = (2, 2, 2)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> list(mesh.plane(x=0, n=(2, 2)))
-        [(0, 0.5, 0.5), (0, 0.5, 1.5), (0, 1.5, 0.5), (0, 1.5, 1.5)]
+        >>> mesh.slice(y=1)
+        'Mesh(...)'
 
         """
         info = dfu.plane_info(*args, **kwargs)
@@ -675,20 +676,20 @@ class Mesh:
         if n is None:
             n = (self.n[info['axis1']], self.n[info['axis2']])
 
-        # Get values for in-plane axes.
-        daxis1, daxis2 = self.l[info['axis1']]/n[0], self.l[info['axis2']]/n[1]
-        axis1 = np.linspace(self.pmin[info['axis1']]+daxis1/2,
-                            self.pmax[info['axis1']]-daxis1/2, n[0])
-        axis2 = np.linspace(self.pmin[info['axis2']]+daxis2/2,
-                            self.pmax[info['axis2']]-daxis2/2, n[1])
+        # Build a mesh.
+        p1s, p2s, ns = np.zeros(3), np.zeros(3), np.zeros(3)
+        ilist = [info['axis1'], info['axis2'], info['planeaxis']]
+        p1s[ilist] = (self.pmin[info['axis1']],
+                      self.pmin[info['axis2']],
+                      info['point'] - self.cell[info['planeaxis']]/2)
+        p2s[ilist] = (self.pmax[info['axis1']],
+                      self.pmax[info['axis2']],
+                      info['point'] + self.cell[info['planeaxis']]/2)
+        ns[ilist] = n + (1,)
+        ns = dfu.array2tuple(ns.astype(int))
 
-        for x, y in itertools.product(axis1, axis2):
-            point = 3*[None]
-            point[info['planeaxis']] = info['point']
-            point[info['axis1']] = x
-            point[info['axis2']] = y
-            yield tuple(point)
-
+        return self.__class__(p1=p1s, p2=p2s, n=ns)
+    
     def mpl(self, figsize=None):
         """Plots the mesh domain and the discretisation cell using a
         `matplotlib` 3D plot.

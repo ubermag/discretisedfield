@@ -449,7 +449,7 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         plane = mesh.plane(z=3, n=(2, 2))
-        assert isinstance(plane, types.GeneratorType)
+        assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 4
         for point in plane:
             assert isinstance(point, tuple)
@@ -457,6 +457,7 @@ class TestMesh:
             assert point[2] == 3
 
         plane = mesh.plane(y=9.2, n=(3, 2))
+        assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 6
         for point in plane:
             assert isinstance(point, tuple)
@@ -464,6 +465,7 @@ class TestMesh:
             assert point[1] == 9.2
 
         plane = mesh.plane('x')
+        assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 100
         for point in plane:
             assert isinstance(point, tuple)
@@ -478,6 +480,12 @@ class TestMesh:
 
         with pytest.raises(ValueError):
             plane = list(mesh.plane(z=-1e-9))
+
+        with pytest.raises(ValueError):
+            plane = list(mesh.plane('x', z=-1e-9))
+
+        with pytest.raises(ValueError):
+            plane = list(mesh.plane('z', z=-1e-9))
 
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
