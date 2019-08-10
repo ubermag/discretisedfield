@@ -654,8 +654,8 @@ class Mesh:
         >>> p2 = (2, 2, 2)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.slice(y=1)
-        'Mesh(...)'
+        >>> mesh.plane(y=1)
+        Mesh(p1=(0.0, 0.5, 0.0), p2=(2.0, 1.5, 2.0), ...)
 
         """
         info = dfu.plane_info(*args, **kwargs)
