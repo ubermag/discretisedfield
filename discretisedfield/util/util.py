@@ -1,3 +1,4 @@
+import k3d
 import numbers
 import collections
 import numpy as np
@@ -113,3 +114,52 @@ def addcolorbar(ax, imax):
     cax = divider.append_axes('right', size='3%', pad=0.05)
     cbar = plt.colorbar(imax, cax=cax)
     return ax, cbar
+
+
+def voxels(plot_array, pmin, pmax, colormap, outlines=False,
+           plot=None, **kwargs):
+    plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
+    if plot is None:
+        plot = k3d.plot()
+        plot.display()
+
+    xmin, ymin, zmin = pmin
+    xmax, ymax, zmax = pmax
+    bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+
+    plot += k3d.voxels(plot_array,
+                       color_map=colormap,
+                       bounds=bounds,
+                       outlines=outlines,
+                       **kwargs)
+
+    return plot
+
+
+def points(plot_array, point_size=0.15, color=0x99bbff,
+           plot=None, **kwargs):
+    plot_array = plot_array.astype(np.float32)  # to avoid k3d warning
+    
+    if plot is None:
+        plot = k3d.plot()
+        plot.display()
+    plot += k3d.points(plot_array,
+                       point_size=point_size,
+                       color=color,
+                       **kwargs)
+
+    return plot
+
+
+def vectors(coordinates, vectors, colors=None, plot=None, plot_points=False,
+            **kwargs):
+    coordinates = coordinates.astype(np.float32)  # to avoid k3d warning
+    vectors = vectors.astype(np.float32)  # to avoid k3d warning
+    #colors = get_colors(vectors, **kwargs)
+
+    if plot is None:
+        plot = k3d.plot()
+        plot.display()
+    plot += k3d.vectors(coordinates, vectors, colors=colors)
+
+    return plot

@@ -666,34 +666,36 @@ class Field:
         dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
                    colormap=colormap, outlines=outlines, plot=plot, **kwargs)
     
-    def get_coord_and_vect(self, raw):
-        # Get arrows only with norm > 0.
-        data = [(i, self(i)) for i in raw
-                if self.norm(i) > 0]
-        coordinates, vectors = zip(*data)
-        coordinates, vectors = np.array(coordinates, dtype=np.float32), \
-                               np.array(vectors, dtype=np.float32)
+    def k3d_vectors(self, color_field=None, plot=None, points=False, **kwargs):
+        coordinates, vectors, color_values = [], [], []
+        for coord in self.mesh:
+            if self.norm(coord) > 0:
+                coordinates.append(coord)
+                vectors.append(self(coord))
+                if color_field is not None:
+                    color_values.append(color_field(coord)[0])
 
-        # Middle of the arrow at the cell centre.
+        coordinates, vectors = np.array(coordinates), np.array(vectors)
+
+        # Middle of the arrow is at the cell centre.
         coordinates -= 0.5 * vectors
 
-        return coordinates, vectors
+        if color_field is not None:
+            color_values = np.array(color_values)
+            color_values -= color_values.min()
+            color_values /= color_values.max()
+            color_values *= 256
+            color_values = color_values.round()
+            color_values = color_values.astype(int)
 
-    def plot3d_vectors(self, k3d_plot=None, points=False, **kwargs):
-        """Plots the vector fields where norm is not zero
-        (where the material is present). Shift the vector so that
-        its center passes through the center of the cell.
+            cmap = matplotlib.cm.get_cmap('viridis', 256)
+            colors = []
+            for c in color_values:
+                color = int(matplotlib.colors.rgb2hex(cmap(c)[:3])[1:], 16)
+                colors.append((color, color))            
+            
+        plot = dfu.vectors(coordinates, vectors, colors=colors, plot=plot, **kwargs)
 
-        This function is called as a display function in Jupyter notebook.
-
-        Parameters
-        ----------
-        k3d_plot : k3d.plot.Plot, optional
-               We transfer a k3d.plot.Plot object to add the current 3d figure
-               to the canvas(?).
-
-        """
-        coordinates, vectors = self.get_coord_and_vect(self.mesh.coordinates)
-
-        k3d_vectors(coordinates, vectors, k3d_plot=k3d_plot, points=points,
-                    **kwargs)
+        if points:
+            coordinates = coordinates + 0.5 * vectors
+            dfu.points(coordinates, plot=plot)
