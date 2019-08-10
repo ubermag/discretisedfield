@@ -608,9 +608,12 @@ class Field:
             raise ValueError(msg)
 
         points, values = list(zip(*list(self)))
-
-
         
+        # Remove values where norm is 0
+        points, values = list(points), list(values)
+        points = [p for p, v in zip(points, values) if not v[0] == v[1] == v[2] == 0]
+        values = [v for v in values if not v[0] == v[1] == v[2] == 0]
+
         points, values = list(zip(*points)), list(zip(*values))
 
         # Are there any vectors pointing out-of-plane?
