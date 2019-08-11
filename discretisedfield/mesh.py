@@ -168,8 +168,8 @@ class Mesh:
             Point with minimum mesh coordinates :math:`(p_{x}^\\text{min},
             p_{y}^\\text{min}, p_{z}^\\text{min})`.
 
-        Example
-        -------
+        Examples
+        --------
         1. Getting the minimum mesh point.
 
         >>> import discretisedfield as df
@@ -202,8 +202,8 @@ class Mesh:
             Point with maximum mesh coordinates :math:`(p_{x}^\\text{max},
             p_{y}^\\text{max}, p_{z}^\\text{max})`.
 
-        Example
-        -------
+        Examples
+        --------
         1. Getting the maximum mesh point.
 
         >>> import discretisedfield as df
@@ -234,8 +234,8 @@ class Mesh:
         tuple (3,)
             Lengths of mesh domain edges :math:`(l_{x}, l_{y}, l_{z})`.
 
-        Example
-        -------
+        Examples
+        --------
         1. Getting the mesh domain edge lengths.
 
         >>> import discretisedfield as df
@@ -264,8 +264,8 @@ class Mesh:
         int
             The total number of discretisation cells
 
-        Example
-        -------
+        Examples
+        --------
         1. Getting the number of discretisation cells in a mesh.
 
         >>> import discretisedfield as df
@@ -298,8 +298,8 @@ class Mesh:
             Mesh domain centre point :math:`(p_{c}^{x}, p_{c}^{y},
             p_{c}^{z})`.
 
-        Example
-        -------
+        Examples
+        --------
         1. Getting the mesh centre point.
 
         >>> import discretisedfield as df
@@ -324,8 +324,8 @@ class Mesh:
         tuple (3,)
             Mesh cell indices :math:`(i_{x}, i_{y}, i_{z})`.
 
-        Example
-        -------
+        Examples
+        --------
         1. Getting all mesh cell indices.
 
         >>> import discretisedfield as df
@@ -355,8 +355,8 @@ class Mesh:
         tuple (3,)
             Mesh cell coordinates (`px`, `py`, `pz`).
 
-        Example
-        -------
+        Examples
+        --------
         1. Getting all mesh cell coordinates.
 
         >>> import discretisedfield as df
@@ -401,8 +401,8 @@ class Mesh:
         False
             If `item` is outside the mesh.
 
-        Example
-        -------
+        Examples
+        --------
         1. Check whether point is inside the mesh.
 
         >>> import discretisedfield as df
@@ -423,7 +423,7 @@ class Mesh:
         return item in region
 
     def __repr__(self):
-        """Mesh representation.
+        """Mesh representation string.
 
         This method returns the string that can be copied in another
         Python script so that exactly the same mesh object could be
@@ -432,11 +432,11 @@ class Mesh:
         Returns
         -------
         str
-           Mesh representation string.
+            Mesh representation string.
 
-        Example
-        -------
-        1. Getting mesh representation string.x
+        Examples
+        --------
+        1. Getting mesh representation string.
 
         >>> import discretisedfield as df
         ...
@@ -465,8 +465,8 @@ class Mesh:
             Coordinates of a random point inside that belongs to the mesh
             :math:`(x_\\text{rand}, y_\\text{rand}, z_\\text{rand})`.
 
-        Example
-        -------
+        Examples
+        --------
         1. Generating a random mesh point.
 
         >>> import discretisedfield as df
@@ -505,8 +505,8 @@ class Mesh:
         ValueError
             If the cell's index is out of range.
 
-        Example
-        -------
+        Examples
+        --------
         1. Converting cell's index to its coordinate.
 
         >>> import discretisedfield as df
@@ -546,8 +546,8 @@ class Mesh:
         ValueError
             If `point` is outside the mesh domain.
 
-        Example
-        -------
+        Examples
+        --------
         1. Converting point's coordinate to the cell index.
 
         >>> import discretisedfield as df
@@ -604,8 +604,8 @@ class Mesh:
         ValueError
             If `p1` or `p2` is outside the mesh domain.
 
-        Example
-        -------
+        Examples
+        --------
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
@@ -646,8 +646,10 @@ class Mesh:
         discretisedfield.Mesh
             A mesh obtained as an intersection of mesh and the plane.
 
-        Example
-        -------
+        Examples
+        --------
+        1. Intersecting the mesh with a plane.
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
@@ -702,8 +704,10 @@ class Mesh:
             Length-2 tuple passed to the `matplotlib.pyplot.figure`
             function.
 
-        Example
-        -------
+        Examples
+        --------
+        1. Visualising the mesh using `matplotlib`
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (-6, -3, -3)
@@ -742,8 +746,10 @@ class Mesh:
             If this argument is passed, plot is added to
             it. Otherwise, a new k3d plot is created.
 
-        Example
-        -------
+        Examples
+        --------
+        1. Visualising the mesh using `k3d`
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (-6, -3, -3)
@@ -779,8 +785,10 @@ class Mesh:
             If this argument is passed, plot is added to
             it. Otherwise, a new k3d plot is created.
 
-        Example
-        -------
+        Examples
+        --------
+        1. Plotting discretisation cell centres using `k3d.points`
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
@@ -818,8 +826,10 @@ class Mesh:
             If this argument is passed, plot is added to
             it. Otherwise, a new k3d plot is created.
 
-        Example
-        -------
+        Examples
+        --------
+        1. Visualising defined regions in the mesh
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)

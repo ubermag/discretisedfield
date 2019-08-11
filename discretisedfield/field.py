@@ -2,11 +2,11 @@ import pyvtk
 import struct
 import matplotlib
 import numpy as np
+import mpl_toolkits.axes_grid1
 import discretisedfield as df
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
@@ -16,7 +16,7 @@ class Field:
     """Finite difference field.
 
     This class defines a finite difference field and enables certain
-    operations for the analysis and visualisation. The field is
+    operations for its analysis and visualisation. The field is
     defined on a finite difference mesh (`discretisedfield.Mesh`).
 
     Parameters
@@ -25,21 +25,22 @@ class Field:
         Finite difference rectangular mesh.
     dim : int, optional
         Dimension of the field value. For instance, if `dim=3` the
-        field is a three-dimensional vector field; and for ``dim=1``
+        field is a three-dimensional vector field and for `dim=1`
         the field is a scalar field. Defaults to `dim=3`.
     value : array_like, callable, optional
         Please refer to the `value` property:
         :py:func:`~discretisedfield.Field.value`. Defaults to 0,
         meaning that if the value is not provided in the
-        initialisation pricess, "zero-field" will be defined.
+        initialisation process, "zero-field" will be defined.
     norm : numbers.Real, callable, optional
         Please refer to the `norm` property:
         :py:func:`~discretisedfield.Field.norm`. Defaults to `None`
         (`norm=None` defines no norm).
     name : str, optional
-        Field name (defaults to "field"). The field name must be a valid
-        Python variable name string. More specifically, it must not
-        contain spaces, or start with underscore or numeric character.
+        Field name (defaults to `'field'`). The field name must be a
+        valid Python variable name string. More specifically, it must
+        not contain spaces, or start with underscore or numeric
+        character.
 
     Examples
     --------
@@ -52,14 +53,31 @@ class Field:
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> cell = (1e-9, 1e-9, 0.1e-9)
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    ...
     >>> dim = 3
     >>> value = (0, 0, 1)
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
+    >>> field
+    Field(mesh=...)
+
+    2. Creating a scalar field.
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (-10, -10, -10)
+    >>> p2 = (10, 10, 10)
+    >>> n = (1, 1, 1)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    >>> dim = 1
+    >>> value = 3.14
+    >>> field = df.Field(mesh=mesh, dim=dim, value=value)
+    >>> field
+    Field(mesh=...)
 
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
     """
-    def __init__(self, mesh, dim=3, value=0, norm=None, name="field"):
+    def __init__(self, mesh, dim=3, value=0, norm=None, name='field'):
         self.mesh = mesh
         self.dim = dim
         self.value = value
@@ -78,10 +96,11 @@ class Field:
         ----------
         value : 0, array_like, callable
             For scalar fields (`dim=1`) `numbers.Real` values are
-            allowed. In the case of vector fields, array_like value
-            with length equal to `dim` should be used. Finally, the
-            value can also be a callable (e.g. Python function), which
-            for every coordinate in the mesh returns a valid value. If
+            allowed. In the case of vector fields, "array_like" (list,
+            tuple, numpy.ndarray) value with length equal to `dim`
+            should be used. Finally, the value can also be a callable
+            (e.g. Python function or another field), which for every
+            coordinate in the mesh returns a valid value. If
             `value=0`, all values in the field will be set to zero
             independent of the field dimension.
 
@@ -92,6 +111,11 @@ class Field:
             returned. However, if the actual value of the field does
             not correspond to the initially used value anymore, a
             `numpy.ndarray` is returned containing all field values.
+
+        Raises
+        ------
+        ValueError
+            If unsupported type is passed
 
         Examples
         --------
@@ -146,11 +170,14 @@ class Field:
     def array(self):
         """Numpy array of a field value.
 
+        `array` has shape of `(self.mesh.n[0], self.mesh.n[1],
+        self.mesh.n[2], dim)`.
+
         Parameters
         ----------
-        numpy.ndarray
-            Numpy array with dimensions `(field.mesh.n[0],
-            field.mesh.n[1], field.mesh.n[2], dim)`
+        array : numpy.ndarray
+            Numpy array with dimensions `(self.mesh.n[0],
+            self.mesh.n[1], self.mesh.n[2], dim)`
 
         Returns
         -------
@@ -200,6 +227,10 @@ class Field:
     def norm(self):
         """Norm of a field.
 
+        This property computes the norm of the field and returns it as
+        a `discretisedfield.Field` object with `dim=1`. Norm of a
+        scalar field cannot be set and `ValueError` is raised.
+
         Parameters
         ----------
         numbers.Real, numpy.ndarray
@@ -213,7 +244,9 @@ class Field:
         Raises
         ------
         ValueError
-            If setting the norm with wrong type, shape, or value.
+            If setting the norm with wrong type, shape, or value. In
+            addition, if the field is scalar (dim=1) or it contains
+            zero vector values.
 
         Examples
         --------
@@ -229,8 +262,8 @@ class Field:
         >>> field.norm
         Field(...)
         >>> field.norm = 2
-        >>> field.norm.array
-        array([[[[2.]]]])
+        >>> field.norm
+        Field(...)
         >>> field.value = (1, 0, 0)
         >>> field.norm.array
         array([[[[1.]]]])
@@ -257,6 +290,9 @@ class Field:
     def average(self):
         """Field average.
 
+        It computes the average of the field over the entire volume of
+        the mesh.
+
         Returns
         -------
         tuple
@@ -265,7 +301,7 @@ class Field:
 
         Examples
         --------
-        1. Getting the field average.
+        1. Computing the vector field average.
 
         >>> import discretisedfield as df
         ...
@@ -284,18 +320,67 @@ class Field:
         return tuple(self.array.mean(axis=(0, 1, 2)))
 
     def __repr__(self):
-        """Representation method."""
+        """Field representation string.
+
+        This method returns the string that can ideally be copied in
+        another Python script so that exactly the same field object
+        could be defined. However, this is usually not the case due to
+        complex values used.
+
+        Returns
+        -------
+        str
+            Field representation string.
+
+        Example
+        -------
+        1. Getting field representation string.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh, dim=1, value=1)
+        >>> repr(field)
+        "Field(mesh=...)"
+
+        """
         return f'Field(mesh={repr(self.mesh)}, dim={self.dim}, name=\'{self.name}\')'
 
     def __call__(self, point):
         """Sample the field at `point`.
 
+        It returns the value of the discreatisation cell `point`
+        belongs to. It always returns a tuple, whose length is the
+        same as the dimension of the field.
+
         Parameters
         ----------
-        p (tuple): point coordinate at which the field is sampled
+        point : (3,) array_like
+            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
 
-        Returns:
-          Field value in cell containing point p
+        Returns
+        -------
+        tuple
+            A tuple, whose length is the same as the dimension of the
+            field.
+
+        Example
+        -------
+        1. Sampling the field value
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (20, 20, 20)
+        >>> n = (20, 20, 20)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 3, 4))
+        >>> point = (10, 2, 3)
+        >>> field(point)
+        (1.0, 3.0, 4.0)
 
         """
         value = self.array[self.mesh.point2index(point)]
@@ -330,6 +415,42 @@ class Field:
             yield point, self.__call__(point)
     
     def plane(self, *args, n=None, **kwargs):
+        """Slices the field with a plane.
+
+        If one of the axes (`'x'`, `'y'`, or `'z'`) is passed as a
+        string, a plane perpendicular to that axis is generated which
+        intersects the field at its centre. Alternatively, if a keyword
+        argument is passed (e.g. `x=1`), a plane perpendicular to the
+        x-axis and intersecting it at x=1 is generated. The number of
+        points in two dimensions on the plane can be defined using `n`
+        (e.g. `n=(10, 15)`). Using the generated plane, a new
+        "two-dimensional" field is created and returned.
+
+        Parameters
+        ----------
+        n : tuple of length 2
+            The number of points on the plane in two dimensions
+
+        Returns
+        ------
+        discretisedfield.Field
+            A field obtained as an intersection of mesh and the plane.
+
+        Example
+        -------
+        1. Intersecting the field with a plane.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh, dim=3)
+        >>> field.plane(y=1)
+        Field(mesh=...)
+
+        """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
@@ -966,7 +1087,7 @@ class Field:
 
         """
         if cax is None:
-            divider = make_axes_locatable(ax)
+            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.1)
 
         cbar = plt.colorbar(coloredplot, cax=cax, **kwargs)
