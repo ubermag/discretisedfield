@@ -967,7 +967,7 @@ class Field:
 
         if self.dim > 1:
             # Vector field has both quiver and imshow plots.
-            self.quiver(ax=ax)
+            self.quiver(ax=ax, headwidth=5)
             scfield = getattr(self, planeaxis)
             coloredplot = scfield.imshow(ax=ax, norm_field=self.norm)
         else:
@@ -1276,8 +1276,15 @@ class Field:
         plot_array = np.squeeze(plot_array)  # remove an empty dimension
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
         plot_array[plot_array != 0] = 1  # all cells have the same colour
-        dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
-                   colormap=color, plot=plot, **kwargs)
+
+        # In the case of nano-sized samples, fix the order of
+        # magnitude of the plot extent to avoid freezing the k3d plot.
+        if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
+            pmin = np.divide(self.mesh.pmin, 1e-9)
+            pmax = np.divide(self.mesh.pmax, 1e-9)
+
+        dfu.voxels(plot_array, pmin, pmax, colormap=color,
+                   plot=plot, **kwargs)
 
     def k3d_voxels(self, norm_field=None, plot=None, **kwargs):
         """Plots the scalar field as a coloured `k3d.voxels()` plot.
@@ -1354,8 +1361,14 @@ class Field:
         cmap = matplotlib.cm.get_cmap('viridis', 256)
         colormap = [dfu.num2hexcolor(i, cmap) for i in range(cmap.N)]
 
-        dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
-                   colormap=colormap, plot=plot, **kwargs)
+        # In the case of nano-sized samples, fix the order of
+        # magnitude of the plot extent to avoid freezing the k3d plot.
+        if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
+            pmin = np.divide(self.mesh.pmin, 1e-9)
+            pmax = np.divide(self.mesh.pmax, 1e-9)
+
+        dfu.voxels(plot_array, pmin, pmax, colormap=colormap,
+                   plot=plot, **kwargs)
 
     def k3d_vectors(self, color_field=None, points=True, plot=None, **kwargs):
         """Plots the vector field as a `k3d.vectors()` plot.
@@ -1426,9 +1439,17 @@ class Field:
 
         coordinates, vectors = np.array(coordinates), np.array(vectors)
 
+        # In the case of nano-sized samples, fix the order of
+        # magnitude of the coordinates to avoid freezing the k3d plot.
+        if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
+            coordinates /= 1e-9
+            cell = np.divide(self.mesh.cell, 1e-9)
+        else:
+            cell = self.mesh.cell
+
         # Scale the vectors to correspond to the size of cells.
         vectors /= vectors.max()
-        vectors *= 0.8*np.array(self.mesh.cell)
+        vectors *= 0.8*np.array(cell)
 
         # Middle of the arrow is at the cell centre.
         coordinates -= 0.5 * vectors

@@ -134,7 +134,7 @@ def voxels(plot_array, pmin, pmax, colormap, outlines=False,
     return plot
 
 
-def points(plot_array, point_size=0.2, color=0x99bbff, plot=None, **kwargs):
+def points(plot_array, point_size=0.1, color=0x99bbff, plot=None, **kwargs):
     plot_array = plot_array.astype(np.float32)  # to avoid k3d warning
 
     if plot is None:
