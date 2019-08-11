@@ -699,7 +699,8 @@ class Mesh:
         Parameters
         ----------
         figsize : tuple, optional
-            Length-2 tuple passed to the `matplotlib.figure` function.
+            Length-2 tuple passed to the `matplotlib.pyplot.figure`
+            function.
 
         Example
         -------

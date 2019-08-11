@@ -534,6 +534,42 @@ class Field:
         return field
 
     def mpl(self, figsize=None):
+        """Plots a field plane using matplotlib.
+
+        Before the field can be plotted, it must be sliced with a
+        plane (e.g. `field.plane(`z`)`). Otherwise, ValueError is
+        raised. For vector fields, this method plots both `quiver`
+        (vector) and `imshow` (scalar) plots. The `imshow` plot
+        represents the value of the out-of-plane vector component and
+        the `quiver` plot is not coloured. On the other hand, only
+        `imshow` is plotted for scalar fields. Where the norm of the
+        field is zero, no vectors are shown and those `imshow` pixels
+        are not coloured. In order to use this function inside Jupyter
+        notebook `%matplotlib inline` must be activated after
+        `discretisedfield` is imported.
+
+        Parameters
+        ----------
+        figsize : tuple, optional
+            Length-2 tuple passed to the `matplotlib.figure` function.
+
+        Raises
+        ------
+        ValueError
+            If the field has not been sliced with a plane.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> field.plane(z=50, n=(5, 5)).mpl()
+
+        """
         if not hasattr(self.mesh, 'info'):
             msg = ('Only sliced field can be plotted using mpl. '
                    'For instance, field.plane(\'x\').mpl().')
@@ -545,48 +581,95 @@ class Field:
         planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
         
         if self.dim > 1:
+            # Vector field has both quiver and imshow plots.
             self.quiver(ax=ax)
             scfield = getattr(self, planeaxis)
-            norm_field = self.norm
+            colouredplot = scfield.imshow(ax=ax, norm_field=self.norm)
         else:
+            # Scalar field has only imshow.
             scfield = self
-            norm_field = None
+            colouredplot = scfield.imshow(ax=ax, norm_field=None)
 
-        colouredplot = scfield.imshow(ax=ax, norm_field=norm_field)
+        # Add colorbar to imshow plot.
         cbar = self.colorbar(ax, colouredplot)
 
+        # Add labels.
         ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']])
         ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']])
         if self.dim > 1:
             cbar.ax.set_ylabel(planeaxis + ' component')
 
-    def imshow(self, ax=None, norm_field=None, **kwargs):
+    def imshow(self, ax, norm_field=None, **kwargs):
+        """Plots a scalar field plane using `matplotlib.pyplot.imshow`.
+
+        Before the field can be plotted, it must be sliced with a
+        plane (e.g. `field.plane(`y`)`) and field must be of dimension
+        1 (scalar field). Otherwise, ValueError is raised. `imshow`
+        adds the plot to `matplotlib.axes.Axes` passed via `ax`
+        argument. If the scalar field plotted is extracted from a
+        vector field, which has coordinates where the norm of the
+        field is zero, the norm of that vector field can be passed
+        using `norm_field` argument, so that pixels at those
+        coordinates are not coloured. All other parameters accepted by
+        `matplotlib.pyplot.imshow` can be passed. In order to use this
+        function inside Jupyter notebook `%matplotlib inline` must be
+        activated after `discretisedfield` is imported.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object on which the scalar plot will be added.
+        norm_field : discretisedfield.Field, optional
+            A (scalar) norm field used for determining whether certain
+            pixels should be coloured.
+
+        Raises
+        ------
+        ValueError
+            If the field has not been sliced with a plane or its
+            dimension is not 1.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=1, value=2)
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(111)
+        >>> field.plane('y').imshow(ax=ax)
+        <matplotlib.image.AxesImage object at ...>
+
+        """
         if not hasattr(self.mesh, 'info'):
             msg = ('Only sliced field can be plotted using imshow. '
                    'For instance, field.plane(\'x\').imshow(ax=ax).')
             raise ValueError(msg)
+        if self.dim > 1:
+            msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
+                   'one component, e.g. field.x.imshow(ax=ax) or norm '
+                   'field.norm.imshow(ax=ax).')
+            raise ValueError(msg)
 
         points, values = list(zip(*list(self)))
 
-        # Set values where norm=0 to NaN
+        # If norm_field is passed, set values where norm=0 to np.nan,
+        # so that they are not plotted.
         if norm_field is not None:
-            values = list(values)
+            values = list(values)  # make values mutable
             for i, point in enumerate(points):
                 if norm_field(point) == 0:
                     values[i] = np.nan
 
-            # "Unpack" values inside arrays
-            vals = []
-            for v in values:
-                if not np.isnan(v):
-                    vals.append(v[0])
-                else:
-                    vals.append(v)
-            values = vals
-            
+            # "Unpack" values inside arrays.
+            values  = [v[0] if not np.isnan(v) else v for v in values]
         else:
+            # "Unpack" values inside arrays.
             values = list(zip(*values))
-            
+
         points = list(zip(*points))
  
         extent = [self.mesh.pmin[self.mesh.info['axis1']],
@@ -601,40 +684,94 @@ class Field:
 
         return imax
 
-    def quiver(self, ax=None, color=None, **kwargs):
+    def quiver(self, ax=None, color_field=None, **kwargs):
+        """Plots a vector field plane using `matplotlib.pyplot.quiver`.
+
+        Before the field can be plotted, it must be sliced with a
+        plane (e.g. `field.plane(`y`)`) and field must be of dimension
+        3 (vector field). Otherwise, ValueError is raised. `quiver`
+        adds the plot to `matplotlib.axes.Axes` passed via `ax`
+        argument. If there are coordinates where the norm of the field
+        is zero, vectors are not plotted at those coordinates. By
+        default, plot is not coloured, but by passing a
+        `discretisedfield.Field` object of dimension 1 as
+        `color_field`, quiver plot will be coloured based on the
+        values from the field. All other parameters accepted by
+        `matplotlib.pyplot.quiver` can be passed. In order to use this
+        function inside Jupyter notebook `%matplotlib inline` must be
+        activated after `discretisedfield` is imported.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object on which the scalar plot will be added.
+        color_field : discretisedfield.Field, optional
+            A (scalar) field used for determining the colour of the
+            quiver plot.
+
+        Raises
+        ------
+        ValueError
+            If the field has not been sliced with a plane or its
+            dimension is not 3.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(111)
+        >>> field.plane(z=50).quiver(ax=ax, color_field=field.z)
+        <matplotlib.quiver.Quiver object at ...>
+
+        """
         if not hasattr(self.mesh, 'info'):
             msg = ('Only sliced field can be plotted using quiver. '
                    'For instance, field.plane(\'x\').quiver(ax=ax).')
+            raise ValueError(msg)
+        if self.dim != 3:
+            msg = 'Only three-dimensional (dim=3) fields can be plotted.'
             raise ValueError(msg)
 
         points, values = list(zip(*list(self)))
         
         # Remove values where norm is 0
-        points, values = list(points), list(values)
-        points = [p for p, v in zip(points, values) if not v[0] == v[1] == v[2] == 0]
-        values = [v for v in values if not v[0] == v[1] == v[2] == 0]
+        points, values = list(points), list(values)  # make them mutable
+        points = [p for p, v in zip(points, values) if not np.equal(v, 0).all()]
+        values = [v for v in values if not np.equal(v, 0).all()]
+        if color_field is not None:
+            colors = [color_field(p) for p in points]
+            colors = list(zip(*colors))
 
+        # "Unpack" values inside arrays.
         points, values = list(zip(*points)), list(zip(*values))
 
-        # Are there any vectors pointing out-of-plane?
+        # Are there any vectors pointing out-of-plane? If yes, set the scale.
         if not any(values[self.mesh.info['axis1']] + values[self.mesh.info['axis2']]):
             kwargs['scale'] = 1
 
-        kwargs['pivot'] = 'mid'  # arrows at the cell centres
+        kwargs['pivot'] = 'mid'  # arrow at the centre of the cell
 
-        if color is None:
+        if color_field is None:
+            # quiver plot is not coloured.
             qvax = ax.quiver(points[self.mesh.info['axis1']],
                              points[self.mesh.info['axis2']],
                              values[self.mesh.info['axis1']],
                              values[self.mesh.info['axis2']],
                              **kwargs)
 
-        elif color in dfu.axesdict.keys():
+        else:
+            # quiver plot is coloured.
             qvax = ax.quiver(points[self.mesh.info['axis1']],
                              points[self.mesh.info['axis2']],
                              values[self.mesh.info['axis1']],
                              values[self.mesh.info['axis2']],
-                             values[dfu.axesdict[colour]],
+                             colors,
                              **kwargs)
 
         return qvax
