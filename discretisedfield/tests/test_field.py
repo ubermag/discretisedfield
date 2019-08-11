@@ -290,6 +290,11 @@ class TestField:
             assert 'y' in f.__dir__()
             assert 'z' in f.__dir__()
 
+            f = df.Field(mesh, dim=1, value=1)
+            assert 'x' not in f.__dir__()
+            assert 'y' not in f.__dir__()
+            assert 'z' not in f.__dir__()
+
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, value=(1, 2, 3))
@@ -315,7 +320,30 @@ class TestField:
             assert len(p) == 9
             assert len(v) == 9
 
-    def test_write_read_ovf_file(self):
+    def test_writevtk(self):
+        vtkfilename = 'test_file.ovf'
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=3, value=(1, 2, -5))
+        f.write(vtkfilename)
+        os.remove(vtkfilename)
+
+    def test_write_wrong_file(self):
+        wrongfilename = 'test_file.jpg'
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=3, value=(1, 2, -5))
+        with pytest.raises(ValueError) as excinfo:
+            f.write(wrongfilename)
+        assert 'Allowed extensions' in str(excinfo.value)
+
+    def test_wrong_dim_field(self):
+        ovffilename = 'test_file.ovf'
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=2, value=(1, 2))
+        with pytest.raises(TypeError) as excinfo:
+            f.write(ovffilename)
+        assert 'Cannot write' in str(excinfo.value)
+        
+    def test_writeovf(self):
         representations = ['txt', 'bin4', 'bin8']
         tolerance = {'txt':0, 'bin4':1e-6, 'bin8':1e-12}
         filename = 'test_file.ovf'
@@ -396,6 +424,7 @@ class TestField:
         assert 'Only sliced field' in str(excinfo.value)
 
         self.pf.plane('x', n=(3, 4)).mpl()
+        self.pf.z.plane('x', n=(3, 4)).mpl()
 
     def test_imshow(self):
         fig = plt.figure()
@@ -409,8 +438,8 @@ class TestField:
             self.pf.plane('z').imshow(ax=ax)
         assert 'Only scalar' in str(excinfo.value)
 
-        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
-        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax, norm_field=self.pf)
+        self.pf.x.plane('y', n=(3, 4)).imshow(ax=ax)
+        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax, norm_field=self.pf.norm)
 
     def test_quiver(self):
         fig = plt.figure()
@@ -457,3 +486,5 @@ class TestField:
         self.pf.k3d_vectors()
         self.pf.k3d_vectors(color_field=self.pf.x)
         self.pf.k3d_vectors(points=False)
+
+        
