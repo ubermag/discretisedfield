@@ -1,2 +1,3 @@
 include README.md
 include LICENSE
+recursive-include ubermagtable/tests/test_sample *
