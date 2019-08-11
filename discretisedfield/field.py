@@ -217,10 +217,11 @@ class Field:
 
     @array.setter
     def array(self, val):
-        if isinstance(val, np.ndarray) and val.shape == self.mesh.n + (self.dim,):
+        if isinstance(val, np.ndarray) and val.shape == self.array.shape:
             self._array = val
         else:
-            msg = f'Unsupported type(val)={type(val)} or invalid value dimensions.'
+            msg = (f'Unsupported type(val)={type(val)} '
+                   'or invalid value dimensions.')
             raise ValueError(msg)
 
     @property
@@ -347,7 +348,8 @@ class Field:
         "Field(mesh=...)"
 
         """
-        return f'Field(mesh={repr(self.mesh)}, dim={self.dim}, name=\'{self.name}\')'
+        return (f'Field(mesh={repr(self.mesh)}, '
+                f'dim={self.dim}, name=\'{self.name}\')')
 
     def __call__(self, point):
         """Sample the field at `point`.
@@ -426,7 +428,8 @@ class Field:
             # with typical dimensions 2 and 3.
             component_array = self.array[..., dfu.axesdict[name]][..., None]
             fieldname = f'{self.name}-{name}'.format(self.name, name)
-            return Field(mesh=self.mesh, dim=1, value=component_array, name=fieldname)
+            return Field(mesh=self.mesh, dim=1,
+                         value=component_array, name=fieldname)
         else:
             msg = f'{type(self).__name__} object has no attribute {name}.'
             raise AttributeError(msg.format(type(self).__name__, name))
@@ -527,11 +530,11 @@ class Field:
         (0.0, 0.0, 0.0) (0.0, 3.0)
         (1.0, 0.0, 0.0) (0.0, 3.0)
         (2.0, 0.0, 0.0) (0.0, 3.0)
-        
+
         """
         for point in self.mesh.line(p1=p1, p2=p2, n=n):
             yield point, self.__call__(point)
-    
+
     def plane(self, *args, n=None, **kwargs):
         """Slices the field with a plane.
 
@@ -592,7 +595,7 @@ class Field:
             In the case of OOMMF files (`.ovf`, `.omf`, or `.ohf`),
             representation can be specified (`bin4`, `bin8`, or
             `txt`). Defaults to 'txt'.
-     
+
         Example
         -------
         1. Write an .omf file and delete it from the disk
@@ -635,7 +638,7 @@ class Field:
         representation : str
             Representation of the file (`bin4`, `bin8`, or
             `txt`). Defaults to 'txt'.
-     
+
         Example
         -------
         1. Write an .omf file and delete it from the disk
@@ -706,7 +709,7 @@ class Field:
 
         binary_reps = {'bin4': (1234567.0, 'f'),
                        'bin8': (123456789012345.0, 'd')}
-                
+
         if representation in binary_reps:
             # Reopen the file with binary write, appending to the end
             # of the file.
@@ -720,9 +723,9 @@ class Field:
                 for vi in self.array[i]:
                     packarray.append(vi)
 
-            v_binary = struct.pack(binary_reps[representation][1]*len(packarray),
-                                   *packarray)
-            f.write(v_binary)
+            v_bin = struct.pack(binary_reps[representation][1]*len(packarray),
+                                *packarray)
+            f.write(v_bin)
             f.close()
 
         else:
@@ -756,7 +759,7 @@ class Field:
         ----------
         filename : str
             Name of the file written.
-     
+
         Example
         -------
         1. Write a .vtk file and delete it from the disk
@@ -807,7 +810,7 @@ class Field:
             For details, refer to :py:func:`~discretisedfield.Field.value`.
         name : str
             Name of the field read.
-     
+
         Returns
         -------
         discretisedfield.Field
@@ -830,7 +833,7 @@ class Field:
 
         """
         mdatalist = ['xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax',
-                 'xstepsize', 'ystepsize', 'zstepsize', 'valuedim']
+                     'xstepsize', 'ystepsize', 'zstepsize', 'valuedim']
         mdatadict = dict()
 
         try:
@@ -839,7 +842,8 @@ class Field:
                 lines = f.split('\n')
 
             mdatalines = filter(lambda s: s.startswith('#'), lines)
-            datalines = np.loadtxt(filter(lambda s: not s.startswith('#'), lines))
+            datalines = np.loadtxt(filter(lambda s: not s.startswith('#'),
+                                          lines))
 
             for line in mdatalines:
                 for mdatum in mdatalist:
@@ -852,7 +856,8 @@ class Field:
                 f = ovffile.read()
                 lines = f.split(b'\n')
 
-            mdatalines = filter(lambda s: s.startswith(bytes('#', 'utf-8')), lines)
+            mdatalines = filter(lambda s: s.startswith(bytes('#', 'utf-8')),
+                                lines)
 
             for line in mdatalines:
                 for mdatum in mdatalist:
@@ -881,7 +886,8 @@ class Field:
                 formatstr = '@d'
                 checkvalue = 123456789012345.0
 
-            listdata = list(struct.iter_unpack(formatstr, f[data_start:data_end]))
+            listdata = list(struct.iter_unpack(formatstr,
+                                               f[data_start:data_end]))
             datalines = np.array(listdata)
 
             if datalines[0] != checkvalue:
@@ -894,7 +900,8 @@ class Field:
 
         p1 = (mdatadict[key] for key in ['xmin', 'ymin', 'zmin'])
         p2 = (mdatadict[key] for key in ['xmax', 'ymax', 'zmax'])
-        cell = (mdatadict[key] for key in ['xstepsize', 'ystepsize', 'zstepsize'])
+        cell = (mdatadict[key] for key in ['xstepsize', 'ystepsize',
+                                           'zstepsize'])
         dim = int(mdatadict['valuedim'])
 
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -956,7 +963,7 @@ class Field:
         ax = fig.add_subplot(111)
 
         planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
-        
+
         if self.dim > 1:
             # Vector field has both quiver and imshow plots.
             self.quiver(ax=ax)
@@ -1023,7 +1030,7 @@ class Field:
         >>> ax = fig.add_subplot(111)
         >>> field.plane('y').imshow(ax=ax)
         <matplotlib.image.AxesImage object at ...>
-        
+
         .. seealso:: :py:func:`~discretisedfield.Field.quiver`
 
         """
@@ -1032,9 +1039,9 @@ class Field:
                    'For instance, field.plane(\'x\').imshow(ax=ax).')
             raise ValueError(msg)
         if self.dim > 1:
-            msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
-                   'one component, e.g. field.x.imshow(ax=ax) or norm '
-                   'field.norm.imshow(ax=ax).')
+            msg = ('Only scalar (dim=1) fields can be plotted. Consider '
+                   'plotting one component, e.g. field.x.imshow(ax=ax) '
+                   'or norm field.norm.imshow(ax=ax).')
             raise ValueError(msg)
 
         points, values = list(zip(*list(self)))
@@ -1048,13 +1055,13 @@ class Field:
                     values[i] = np.nan
 
             # "Unpack" values inside arrays.
-            values  = [v[0] if not np.isnan(v) else v for v in values]
+            values = [v[0] if not np.isnan(v) else v for v in values]
         else:
             # "Unpack" values inside arrays.
             values = list(zip(*values))
 
         points = list(zip(*points))
- 
+
         extent = [self.mesh.pmin[self.mesh.info['axis1']],
                   self.mesh.pmax[self.mesh.info['axis1']],
                   self.mesh.pmin[self.mesh.info['axis2']],
@@ -1128,10 +1135,11 @@ class Field:
             raise ValueError(msg)
 
         points, values = list(zip(*list(self)))
-        
+
         # Remove values where norm is 0
         points, values = list(points), list(values)  # make them mutable
-        points = [p for p, v in zip(points, values) if not np.equal(v, 0).all()]
+        points = [p for p, v in zip(points, values)
+                  if not np.equal(v, 0).all()]
         values = [v for v in values if not np.equal(v, 0).all()]
         if color_field is not None:
             colors = [color_field(p) for p in points]
@@ -1141,7 +1149,8 @@ class Field:
         points, values = list(zip(*points)), list(zip(*values))
 
         # Are there any vectors pointing out-of-plane? If yes, set the scale.
-        if not any(values[self.mesh.info['axis1']] + values[self.mesh.info['axis2']]):
+        if not any(values[self.mesh.info['axis1']] +
+                   values[self.mesh.info['axis2']]):
             kwargs['scale'] = 1
 
         kwargs['pivot'] = 'mid'  # arrow at the centre of the cell
@@ -1213,7 +1222,7 @@ class Field:
         cbar = plt.colorbar(coloredplot, cax=cax, **kwargs)
 
         return cbar
-    
+
     def k3d_nonzero(self, color=dfu.colormap[0], plot=None, **kwargs):
         """Plots the voxels where the value of a scalar field is nonzero.
 
@@ -1258,14 +1267,14 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
         """
         if self.dim > 1:
-            msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
-                   'one component, e.g. field.x.k3d_nonzero() or norm '
-                   'field.norm.k3d_nonzero().')
+            msg = ('Only scalar (dim=1) fields can be plotted. Consider '
+                   'plotting one component, e.g. field.x.k3d_nonzero() '
+                   'or norm field.norm.k3d_nonzero().')
             raise ValueError(msg)
         plot_array = np.copy(self.array)  # make a deep copy
         plot_array = np.squeeze(plot_array)  # remove an empty dimension
-        plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
-        plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
+        plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
+        plot_array[plot_array != 0] = 1  # all cells have the same colour
         dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
                    colormap=color, plot=plot, **kwargs)
 
@@ -1316,9 +1325,9 @@ class Field:
 
         """
         if self.dim > 1:
-            msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
-                   'one component, e.g. field.x.k3d_nonzero() or norm '
-                   'field.norm.k3d_nonzero().')
+            msg = ('Only scalar (dim=1) fields can be plotted. Consider '
+                   'plotting one component, e.g. field.x.k3d_nonzero() '
+                   'or norm field.norm.k3d_nonzero().')
             raise ValueError(msg)
 
         plot_array = np.copy(self.array)  # make a deep copy
@@ -1327,7 +1336,7 @@ class Field:
         plot_array -= plot_array.min()
         # In the case of uniform fields, division by zero can be
         # encountered.
-        if plot_array.max() !=0:
+        if plot_array.max() != 0:
             plot_array /= plot_array.max()
         plot_array *= 254
         plot_array += 1
@@ -1338,15 +1347,15 @@ class Field:
             for index in self.mesh.indices:
                 if norm_field(self.mesh.index2point(index)) == 0:
                     plot_array[index] = 0
-    
-        plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
+
+        plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
 
         cmap = matplotlib.cm.get_cmap('viridis', 256)
         colormap = [dfu.num2hexcolor(i, cmap) for i in range(cmap.N)]
 
         dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
                    colormap=colormap, plot=plot, **kwargs)
-    
+
     def k3d_vectors(self, color_field=None, points=True, plot=None, **kwargs):
         """Plots the vector field as a `k3d.vectors()` plot.
 
@@ -1419,7 +1428,7 @@ class Field:
         # Scale the vectors to correspond to the size of cells.
         vectors /= vectors.max()
         vectors *= 0.8*np.array(self.mesh.cell)
-        
+
         # Middle of the arrow is at the cell centre.
         coordinates -= 0.5 * vectors
 
@@ -1440,9 +1449,10 @@ class Field:
                 color = dfu.num2hexcolor(c, cmap)
                 colors.append((color, color))
         else:
-            colors = []    
-            
-        plot = dfu.vectors(coordinates, vectors, colors=colors, plot=plot, **kwargs)
+            colors = []
+
+        plot = dfu.vectors(coordinates, vectors, colors=colors,
+                           plot=plot, **kwargs)
 
         if points:
             dfu.points(coordinates + 0.5 * vectors, plot=plot)
