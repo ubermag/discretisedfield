@@ -885,8 +885,10 @@ class Field:
             datalines = np.array(listdata)
 
             if datalines[0] != checkvalue:
-                msg = 'Something has gone wrong with reading Binary Data.'
-                raise AssertionError(msg)
+                # These two lines cannot be accessed via
+                # tests. Therefore, they are excluded from coverage.
+                msg = 'Binary Data cannot be read.'  # pragma: no cover
+                raise AssertionError(msg)  # pragma: no cover
 
             datalines = datalines[1:]  # check value removal
 

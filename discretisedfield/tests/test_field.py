@@ -53,7 +53,7 @@ class TestField:
 
         # Create a field for plotting
         mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
-        self.pf = df.Field(mesh, dim=3, value=(2, 2, 2))
+        self.pf = df.Field(mesh, dim=3, value=(0, 0, 2))
 
         def normfun(pos):
             x, y, z = pos
@@ -121,6 +121,10 @@ class TestField:
             check_field(f)
             assert isinstance(f.value, np.ndarray)
             assert np.equal(f.array, 0).all()
+
+            with pytest.raises(ValueError) as excinfo:
+                f.array = (1, 2, 3)
+            assert 'Unsupported' in str(excinfo.value)
 
     def test_set_with_function(self):
         for mesh in self.meshes:
@@ -438,7 +442,7 @@ class TestField:
             self.pf.plane('z').imshow(ax=ax)
         assert 'Only scalar' in str(excinfo.value)
 
-        self.pf.x.plane('y', n=(3, 4)).imshow(ax=ax)
+        self.pf.x.plane('z', n=(3, 4)).imshow(ax=ax)
         self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax, norm_field=self.pf.norm)
 
     def test_quiver(self):
@@ -484,7 +488,7 @@ class TestField:
         assert 'Only three-dimensional' in str(excinfo.value)
 
         self.pf.k3d_vectors()
-        self.pf.k3d_vectors(color_field=self.pf.x)
+        self.pf.k3d_vectors(color_field=self.pf.z)
         self.pf.k3d_vectors(points=False)
 
         
