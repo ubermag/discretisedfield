@@ -334,6 +334,45 @@ class Field:
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
     def write(self, filename, representation='txt'):
+        """Write the field in .ovf, .omf, .ohf, or vtk format.
+
+        If the extension of the `filename` is `.vtk`, a VTK file is
+        written
+        (:py:func:`~discretisedfield.Field._writevtk`). Otherwise, for
+        `.ovf`, `.omf`, or `.ohf` extensions, an OOMMF file is written
+        (:py:func:`~discretisedfield.Field._writeovf`). The
+        representation (`bin4`, 'bin8', or 'txt') is passed using
+        `representation` argument.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file written. It depends on its extension the
+            format it is going to be written as.
+        representation : str
+            In the case of OOMMF files (`.ovf`, `.omf`, or `.ohf`),
+            representation can be specified (`bin4`, `bin8`, or
+            `txt`). Defaults to 'txt'.
+     
+        Example
+        -------
+        1. Write an .omf file and delete it from the disk
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, -5)
+        >>> p2 = (5, 15, 15)
+        >>> n = (5, 15, 20)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, value=(5, 6, 7))
+        >>> filename = 'mytestfile.omf'
+        >>> field.write(filename)  # write the file
+        >>> os.remove(filename)  # delete the file
+
+        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
+
+        """
         if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
             self._writeovf(filename, representation=representation)
         elif filename.endswith('.vtk'):
@@ -344,6 +383,37 @@ class Field:
             raise ValueError(msg)
 
     def _writeovf(self, filename, representation='txt'):
+        """Write the field in .ovf, .omf, or .ohf format.
+
+        The extension of the `filename` should be `.ovf`, `.omf`, or
+        `.ohf`. The representation (`bin4`, 'bin8', or 'txt') is
+        passed using `representation` argument.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file written.
+        representation : str
+            Representation of the file (`bin4`, `bin8`, or
+            `txt`). Defaults to 'txt'.
+     
+        Example
+        -------
+        1. Write an .omf file and delete it from the disk
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, -5)
+        >>> p2 = (5, 15, 15)
+        >>> n = (5, 15, 20)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, value=(5, 6, 7))
+        >>> filename = 'mytestfile.omf'
+        >>> field._writeovf(filename)  # write the file
+        >>> os.remove(filename)  # delete the file
+
+        """
         header = ['OOMMF OVF 2.0',
                   '',
                   'Segment count: 1',
@@ -439,6 +509,32 @@ class Field:
         f.close()
 
     def _writevtk(self, filename):
+        """Write the field in the VTK format.
+
+        The extension of the `filename` should be `.vtk`.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file written.
+     
+        Example
+        -------
+        1. Write a .vtk file and delete it from the disk
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, -5)
+        >>> p2 = (5, 15, 15)
+        >>> n = (5, 15, 20)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, value=(5, 6, 7))
+        >>> filename = 'mytestfile.vtk'
+        >>> field._writevtk(filename)  # write the file
+        >>> os.remove(filename)  # delete the file
+
+        """
         grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
                 zip(self.mesh.pmin, self.mesh.l, self.mesh.n)]
 
@@ -456,6 +552,44 @@ class Field:
 
     @classmethod
     def fromfile(cls, filename, norm=None, name='field'):
+        """Read the field from .ovf, .omf, or .ohf file.
+
+        The extension of the `filename` should be `.ovf`, `.omf`, or
+        `.ohf`. If the field should be normalised, `norm` argument can
+        be passed. The `name` of the field defaults to `'field'`. This
+        is a `classmethod` and should be called as
+        `discretisedfield.Field.fromfile('myfile.omf')`.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to be read.
+        norm : numbers.Real, numpy.ndarray, callable
+            For details, refer to :py:func:`~discretisedfield.Field.value`.
+        name : str
+            Name of the field read.
+     
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Read a field from the .ovf file
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> ovffile = os.path.join(os.path.dirname(__file__),
+        ...                        'tests', 'test_sample',
+        ...                        'mumax-output-linux.ovf')
+        >>> field = df.Field.fromfile(ovffile)
+        >>> field
+        Field(mesh=...)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.write`
+
+        """
         mdatalist = ['xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax',
                  'xstepsize', 'ystepsize', 'zstepsize', 'valuedim']
         mdatadict = dict()
@@ -569,6 +703,8 @@ class Field:
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
         >>> field.plane(z=50, n=(5, 5)).mpl()
 
+        .. seealso:: :py:func:`~discretisedfield.Field.k3d_vectors`
+
         """
         if not hasattr(self.mesh, 'info'):
             msg = ('Only sliced field can be plotted using mpl. '
@@ -646,6 +782,8 @@ class Field:
         >>> ax = fig.add_subplot(111)
         >>> field.plane('y').imshow(ax=ax)
         <matplotlib.image.AxesImage object at ...>
+        
+        .. seealso:: :py:func:`~discretisedfield.Field.quiver`
 
         """
         if not hasattr(self.mesh, 'info'):
@@ -736,6 +874,8 @@ class Field:
         >>> ax = fig.add_subplot(111)
         >>> field.plane(z=50).quiver(ax=ax, color_field=field.z)
         <matplotlib.quiver.Quiver object at ...>
+
+        .. seealso:: :py:func:`~discretisedfield.Field.imshow`
 
         """
         if not hasattr(self.mesh, 'info'):
@@ -874,6 +1014,7 @@ class Field:
         >>> field.norm.k3d_nonzero()
         Plot(...)
 
+        .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
         """
         if self.dim > 1:
             msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
@@ -929,6 +1070,8 @@ class Field:
         >>> field.norm = normfun
         >>> field.x.k3d_voxels(norm_field=field.norm)
         Plot(...)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.k3d_vectors`
 
         """
         if self.dim > 1:
@@ -1013,6 +1156,8 @@ class Field:
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
         >>> field.plane('x').k3d_vectors(color_field=field.x)
         Plot(...)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
 
         """
         if self.dim != 3:
