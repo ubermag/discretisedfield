@@ -80,7 +80,7 @@ class Region:
 
         """
         return f'Region(p1={self.pmin}, p2={self.pmax})'
-    
+
     def __contains__(self, item):
         """Determine whether `point` is inside the region. If it is, it returns
         `True`, otherwise `False`.

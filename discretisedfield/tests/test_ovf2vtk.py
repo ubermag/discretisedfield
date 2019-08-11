@@ -14,6 +14,7 @@ def check_vtk(vtkfile):
                 break
     assert pattern == 'CELL_DATA 8'
 
+
 def test_ovf2vtk():
     mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
     f = df.Field(mesh, dim=3, value=(1, 2, -3.14))

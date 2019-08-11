@@ -227,7 +227,7 @@ class TestMesh:
         assert (51, 10, 10) not in mesh.regions['r1']
         assert (100, 50, 10) in mesh.regions['r2']
         assert (100, 50, 10) not in mesh.regions['r1']
-        
+
     def test_centre(self):
         p1 = (0, 0, 0)
         p2 = (100, 100, 100)
@@ -414,7 +414,7 @@ class TestMesh:
         assert (5e-9, 5e-9, 5e-9) in mesh
         assert (11e-9, 11e-9, 11e-9) not in mesh
         assert (-1e-9, -1e-9, -1e-9) not in mesh
-        
+
     def test_line(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)

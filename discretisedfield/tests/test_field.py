@@ -43,7 +43,7 @@ class TestField:
                        lambda c: c[0] + c[1] + c[2] + 1,
                        lambda c: (c[0]-1)**2 - c[1]+7 + c[2]*0.1,
                        lambda c: np.sin(c[0]) + np.cos(c[1]) - np.sin(2*c[2])]
-        
+
         self.vfuncs = [lambda c: (1, 2, 0),
                        lambda c: (-2.4, 1e-3, 9),
                        lambda c: (c[0], c[1], c[2] + 100),
@@ -63,7 +63,7 @@ class TestField:
                 return 0
 
         self.pf.norm = normfun
-        
+
     def test_init(self):
         p1 = (0, 0, 0)
         p2 = (5, 10, 15)
@@ -102,7 +102,7 @@ class TestField:
             for value in self.vfuncs:
                 f = df.Field(mesh, dim=3, value=value)
                 check_field(f)
-        
+
     def test_invalid_init(self):
         with pytest.raises(TypeError):
             mesh = 'wrong_mesh_string'
@@ -186,7 +186,7 @@ class TestField:
         assert np.all(f.norm.value == 2*np.sqrt(3))
         assert np.all(f.norm.array == 2*np.sqrt(3))
         assert np.all(f.array == 2)
-        
+
         f.norm = 1
         assert np.all(f.norm.value == 1)
         assert np.all(f.norm.array == 1)
@@ -210,7 +210,7 @@ class TestField:
                     assert norm.shape == f.mesh.n
                     assert f.norm.array.shape == f.mesh.n + (1,)
                     assert np.all(abs(norm - norm_value) < 1e-12)
-        
+
     def test_norm_is_not_preserved(self):
         for mesh in self.meshes:
             f = df.Field(mesh, dim=3)
@@ -235,7 +235,7 @@ class TestField:
             f = df.Field(mesh, dim=3, value=(0, 0, 0))
             with pytest.raises(ValueError):
                 f.norm = 1
-                
+
     def test_average(self):
         value = -1e-3 + np.pi
         tol = 1e-12
@@ -346,10 +346,10 @@ class TestField:
         with pytest.raises(TypeError) as excinfo:
             f.write(ovffilename)
         assert 'Cannot write' in str(excinfo.value)
-        
+
     def test_writeovf(self):
         representations = ['txt', 'bin4', 'bin8']
-        tolerance = {'txt':0, 'bin4':1e-6, 'bin8':1e-12}
+        tolerance = {'txt': 0, 'bin4': 1e-6, 'bin8': 1e-12}
         filename = 'test_file.ovf'
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
 
@@ -403,7 +403,8 @@ class TestField:
             assert f.mesh.pmax == (5e-07, 1.25e-07, 3e-09)
             assert f.array.shape == (128, 32, 1, 3)
 
-            # comparison with vector field (we know from the script shown above)
+            # comparison with vector field (we know from the script
+            # shown above)
             #
             # m vector in mumax (uses 4 bytes)
             m = np.array([1, 0.1, 0], dtype=np.float32)
@@ -433,11 +434,11 @@ class TestField:
     def test_imshow(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        
+
         with pytest.raises(ValueError) as excinfo:
             self.pf.imshow(ax=ax)
         assert 'Only sliced field' in str(excinfo.value)
-        
+
         with pytest.raises(ValueError) as excinfo:
             self.pf.plane('z').imshow(ax=ax)
         assert 'Only scalar' in str(excinfo.value)
@@ -448,11 +449,11 @@ class TestField:
     def test_quiver(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        
+
         with pytest.raises(ValueError) as excinfo:
             self.pf.quiver(ax=ax)
         assert 'Only sliced field' in str(excinfo.value)
-        
+
         with pytest.raises(ValueError) as excinfo:
             self.pf.x.plane('y').quiver(ax=ax)
         assert 'Only three-dimensional' in str(excinfo.value)
@@ -471,7 +472,7 @@ class TestField:
         with pytest.raises(ValueError) as excinfo:
             self.pf.k3d_nonzero()
         assert 'Only scalar' in str(excinfo.value)
-        
+
         self.pf.norm.k3d_nonzero()
 
     def test_k3d_voxels(self):
@@ -490,5 +491,3 @@ class TestField:
         self.pf.k3d_vectors()
         self.pf.k3d_vectors(color_field=self.pf.z)
         self.pf.k3d_vectors(points=False)
-
-        

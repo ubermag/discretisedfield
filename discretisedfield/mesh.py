@@ -11,7 +11,8 @@ from mpl_toolkits.mplot3d import Axes3D
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True),
                cell=ts.Vector(size=3, positive=True, const=True),
-               n=ts.Vector(size=3, component_type=int, unsigned=True, const=True),
+               n=ts.Vector(size=3, component_type=int, unsigned=True,
+                           const=True),
                pbc=ts.Subset(sample_set="xyz"),
                name=ts.Name(const=True))
 class Mesh:
@@ -122,7 +123,8 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, n=None, cell=None, pbc=set(), regions={}, name='mesh'):
+    def __init__(self, p1, p2, n=None, cell=None, pbc=set(),
+                 regions={}, name='mesh'):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.pbc = pbc
@@ -137,12 +139,15 @@ class Mesh:
         # Determine whether cell or n was passed and define them both.
         if cell is not None and n is None:
             self.cell = tuple(cell)
-            self.n = dfu.array2tuple(np.divide(self.l, self.cell).round().astype(int))
+            n = np.divide(self.l, self.cell).round().astype(int)
+            self.n = dfu.array2tuple(n)
         elif n is not None and cell is None:
             self.n = tuple(n)
-            self.cell = dfu.array2tuple(np.divide(self.l, self.n).astype(float))
+            cell = np.divide(self.l, self.n).astype(float)
+            self.cell = dfu.array2tuple(cell)
         else:
-            msg = 'One and only one of the mesh parameters n or cell should be defined.'
+            msg = ('One and only one of the parameters '
+                   '(n or cell) should be defined.')
             raise ValueError(msg)
 
         # Is the mesh domain not an aggregate of discretisation cells?
@@ -522,7 +527,8 @@ class Mesh:
 
         """
         # Does index refer to a cell outside the mesh?
-        if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
+        if np.logical_or(np.less(index, 0),
+                         np.greater_equal(index, self.n)).any():
             msg = 'Index out of range.'
             raise ValueError(msg)
 
@@ -625,7 +631,7 @@ class Mesh:
         dl = np.subtract(p2, p1)/(n-1)
         for i in range(n):
             yield dfu.array2tuple(np.add(p1, i*dl))
-        
+
     def plane(self, *args, n=None, **kwargs):
         """Slices the mesh with a plane.
 
@@ -695,7 +701,7 @@ class Mesh:
         plane_mesh = self.__class__(p1=p1s, p2=p2s, n=ns)
         plane_mesh.info = info  # Add info so it can be interpreted easier
         return plane_mesh
-    
+
     def mpl(self, figsize=None):
         """Plots the mesh domain and the discretisation cell using a
         `matplotlib` 3D plot.
@@ -764,8 +770,8 @@ class Mesh:
         """
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
-        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
-                   plot=plot, **kwargs)
+        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
+                   colormap=colormap, plot=plot, **kwargs)
 
     def k3d_points(self, point_size=0.5, color=dfu.colormap[0],
                    plot=None, **kwargs):
@@ -852,15 +858,15 @@ class Mesh:
                     color = random.randint(0, 16777215)
                     found = True
                 colormap.append(color)
-            
+
         plot_array = np.zeros(self.n)
         for i, name in enumerate(self.regions.keys()):
             for index in self.indices:
                 if self.index2point(index) in self.regions[name]:
-                    plot_array[index] = i+1  # i+1 to avoid 0 value for k3d.voxels
+                    plot_array[index] = i+1  # i+1 to avoid 0 value
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
-        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
-                   plot=plot, **kwargs)
+        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
+                   colormap=colormap, plot=plot, **kwargs)
 
     @property
     def _script(self):

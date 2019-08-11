@@ -25,13 +25,15 @@ def main():
             input_files = [f.name for f in args.infile]
             output_files = [f.name for f in args.outfile]
         else:
-            print('\nError: The number of input and output files does not match.')
-            return
+            print('\nError: The number of input and output '
+                  'files does not match.')
+            return 0
     else:
         input_files = [f.name for f in args.infile]
         output_files = [f'{f.split(".")[0]}.vtk' for f in input_files]
 
     convert_files(input_files, output_files)
+
 
 if __name__ == "__main__":
     main()

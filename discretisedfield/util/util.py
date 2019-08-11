@@ -50,7 +50,8 @@ def plane_info(*args, **kwargs):
     info['point'] = point
 
     # Get indices of in-plane axes.
-    axes = tuple(filter(lambda val: val != info['planeaxis'], axesdict.values()))
+    axes = tuple(filter(lambda val: val != info['planeaxis'],
+                        axesdict.values()))
     info['axis1'], info['axis2'] = axes
 
     return info
@@ -107,12 +108,14 @@ def as_array(mesh, dim, val):
         for index, point in zip(mesh.indices, mesh.coordinates):
             array[index] = val(point)
     else:
-        msg = f'Unsupported type(val)={type(val)} or invalid value dimensions.'
+        msg = (f'Unsupported type(val)={type(val)} '
+               'or invalid value dimensions.')
         raise ValueError(msg)
     return array
 
 
-def voxels(plot_array, pmin, pmax, colormap, outlines=False, plot=None, **kwargs):
+def voxels(plot_array, pmin, pmax, colormap, outlines=False,
+           plot=None, **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
     if plot is None:
         plot = k3d.plot()
@@ -133,7 +136,7 @@ def voxels(plot_array, pmin, pmax, colormap, outlines=False, plot=None, **kwargs
 
 def points(plot_array, point_size=0.2, color=0x99bbff, plot=None, **kwargs):
     plot_array = plot_array.astype(np.float32)  # to avoid k3d warning
-    
+
     if plot is None:
         plot = k3d.plot()
         plot.display()

@@ -6,6 +6,7 @@ import discretisedfield.util as dfu
 def test_array2tuple():
     dfu.array2tuple(np.array([1, 2, 3])) == (1, 2, 3)
 
+
 def test_plane_info():
     info = dfu.plane_info('x')
     assert info['planeaxis'] == 0

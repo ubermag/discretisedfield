@@ -217,7 +217,8 @@ class Field:
 
     @array.setter
     def array(self, val):
-        if isinstance(val, np.ndarray) and val.shape == self.array.shape:
+        if isinstance(val, np.ndarray) and \
+           val.shape == self.mesh.n + (self.dim,):
             self._array = val
         else:
             msg = (f'Unsupported type(val)={type(val)} '
