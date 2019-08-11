@@ -10,6 +10,8 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 axesdict = collections.OrderedDict([('x', 0), ('y', 1), ('z', 2)])
 raxesdict = {value: key for key, value in axesdict.items()}
+colormap = [0x3498db, 0xe74c3c, 0x27ae60, 0xf1c40f, 0x8e44ad, 0xecf0f1]
+
 
 def array2tuple(array):
     return tuple(array.tolist())

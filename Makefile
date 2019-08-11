@@ -18,7 +18,7 @@ test-docs:
 test-ipynb:
 	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
 
-test-all: test-test test-coverage test-docs test-ipynb
+test-all: test-test test-coverage test-docs
 
 upload-coverage: SHELL:=/bin/bash
 upload-coverage:

@@ -722,10 +722,15 @@ class Mesh:
 
         ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
 
-    def k3d(self, colormap=[0x3498db, 0xe74c3c], plot=None, **kwargs):
+    def k3d(self, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
 
-        All arguments allowed in `k3d.voxels()` can be passed.
+        The first element of `colormap` is the colour of the domain,
+        whereas the second one is the colour of the discretisation
+        cell. If `plot` is passed as a `k3d.plot.Plot`, plot is added
+        to it. Otherwise, a new k3d plot is created. All arguments
+        allowed in `k3d.voxels()` can be passed. This function is to
+        be called in Jupyter notebook.
 
         Parameters
         ----------
@@ -754,16 +759,20 @@ class Mesh:
         dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax, colormap=colormap,
                    plot=plot, **kwargs)
 
-    def k3d_points(self, point_size=0.5, color=0x3498db, plot=None, **kwargs):
+    def k3d_points(self, point_size=0.5, color=dfu.colormap[0],
+                   plot=None, **kwargs):
         """Plots the points at discretisation cell centres.
 
-        All arguments allowed in `k3d.points()` can be passed. This
-        function is to be called in Jupyter notebook.
+        The size of points can be defined with `point_size` argument
+        and their colours with `color`. If `plot` is passed as a
+        `k3d.plot.Plot`, plot is added to it. Otherwise, a new k3d
+        plot is created. All arguments allowed in `k3d.points()` can
+        be passed. This function is to be called in Jupyter notebook.
 
         Parameters
         ----------
         point_size : float, optional
-            The size of a single point
+            The size of a single point.
         color : hex, optional
             Colour of a single point.
         plot : k3d.plot.Plot, optional
@@ -786,13 +795,16 @@ class Mesh:
         dfu.points(plot_array, point_size=point_size, color=color,
                    plot=plot, **kwargs)
 
-    def k3d_regions(self,
-                    colormap=[0x3498db, 0xe74c3c, 0x27ae60,
-                              0xf1c40f, 0x8e44ad, 0xecf0f1],
-                    plot=None, **kwargs):
+    def k3d_regions(self, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises defined regions.
 
-        All arguments allowed in `k3d.voxels()` can be passed. This
+        The order of colours in `colormap` should be the same as the
+        order of regions defined in
+        `discretisedfield.Mesh.regions`. By default 6 colours are
+        defined and for all additional regions, the colours will be
+        generated randomly. If `plot` is passed as a `k3d.plot.Plot`,
+        plot is added to it. Otherwise, a new k3d plot is created. All
+        arguments allowed in `k3d.voxels()` can be passed. This
         function is to be called in Jupyter notebook.
 
         Parameters

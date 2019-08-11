@@ -584,14 +584,14 @@ class Field:
             # Vector field has both quiver and imshow plots.
             self.quiver(ax=ax)
             scfield = getattr(self, planeaxis)
-            colouredplot = scfield.imshow(ax=ax, norm_field=self.norm)
+            coloredplot = scfield.imshow(ax=ax, norm_field=self.norm)
         else:
             # Scalar field has only imshow.
             scfield = self
-            colouredplot = scfield.imshow(ax=ax, norm_field=None)
+            coloredplot = scfield.imshow(ax=ax, norm_field=None)
 
         # Add colorbar to imshow plot.
-        cbar = self.colorbar(ax, colouredplot)
+        cbar = self.colorbar(ax, coloredplot)
 
         # Add labels.
         ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']])
@@ -618,10 +618,14 @@ class Field:
         Parameters
         ----------
         ax : matplotlib.axes.Axes
-            Axes object on which the scalar plot will be added.
+            Axes object to which the scalar plot will be added.
         norm_field : discretisedfield.Field, optional
             A (scalar) norm field used for determining whether certain
             pixels should be coloured.
+
+        Returns
+        -------
+        matplotlib.image.AxesImage object
 
         Raises
         ------
@@ -704,10 +708,14 @@ class Field:
         Parameters
         ----------
         ax : matplotlib.axes.Axes
-            Axes object on which the scalar plot will be added.
+            Axes object to which the quiver plot will be added.
         color_field : discretisedfield.Field, optional
             A (scalar) field used for determining the colour of the
             quiver plot.
+
+        Returns
+        -------
+        matplotlib.quiver.Quiver object
 
         Raises
         ------
@@ -776,16 +784,97 @@ class Field:
 
         return qvax
 
-    def colorbar(self, ax, colouredplot, cax=None, **kwargs):
+    def colorbar(self, ax, coloredplot, cax=None, **kwargs):
+        """Adds a colorbar to the axes using `matplotlib.pyplot.colorbar`.
+
+        Axes to which the colorbar should be added is passed via `ax`
+        argument. If the colorbar axes are made before the method is
+        called, they should be passed as `cax`. The plot to which the
+        colorbar should correspond to is passed via `coloredplot`. All
+        other parameters accepted by `matplotlib.pyplot.colorbar` can
+        be passed. In order to use this function inside Jupyter
+        notebook `%matplotlib inline` must be activated after
+        `discretisedfield` is imported.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            Axes object to which the colorbar will be added.
+        coloredplot : matplotlib.quiver.Quiver, matplotlib.image.AxesImage
+            A plot to which the colorbar should correspond
+        cax : matplotlib.axes.Axes, optional
+            Colorbar axes.
+
+        Returns
+        -------
+        matplotlib.colorbar.Colorbar
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> fig = plt.figure()
+        >>> ax = fig.add_subplot(111)
+        >>> coloredplot = field.plane(z=50).quiver(ax=ax, color_field=field.z)
+        >>> field.colorbar(ax=ax, coloredplot=coloredplot)
+        <matplotlib.colorbar.Colorbar object at ...>
+
+        """
         if cax is None:
             divider = make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.1)
 
-        cbar = plt.colorbar(colouredplot, cax=cax, **kwargs)
+        cbar = plt.colorbar(coloredplot, cax=cax, **kwargs)
 
         return cbar
     
-    def k3d_nonzero(self, colormap=[0x3498db], plot=None, **kwargs):
+    def k3d_nonzero(self, color=dfu.colormap[0], plot=None, **kwargs):
+        """Plots the voxels where the value of a scalar field is nonzero.
+
+        All mesh cells where the value of the field is not zero will
+        be marked using the same color. Only scalar fields can be
+        plotted. Otherwise, ValueError is raised. Different colour of
+        voxels can be passed in the RGB format using `color`
+        parameter. This function is often used to look at the defined
+        sample in the finite difference mesh, by inspecting its norm
+        (`field.norm.k3d_nonzero`). If `plot` is passed as a
+        `k3d.plot.Plot`, plot is added to it. Otherwise, a new k3d
+        plot is created. All arguments allowed in `k3d.voxels()` can
+        be passed. This function is to be called in Jupyter notebook.
+
+        Parameters
+        ----------
+        color : int/hex, optional
+            Voxel color in hexadecimal format.
+        plot : k3d.plot.Plot, optional
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50, -50, -50)
+        >>> p2 = (50, 50, 50)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> def normfun(pos):
+        ...     x, y, z = pos
+        ...     if x**2 + y**2 < 30**2:
+        ...         return 1
+        ...     else:
+        ...         return 0
+        >>> field.norm = normfun
+        >>> field.norm.k3d_nonzero()
+        Plot(...)
+
+        """
         if self.dim > 1:
             msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
                    'one component, e.g. field.x.k3d_nonzero() or norm '
@@ -796,9 +885,52 @@ class Field:
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
         plot_array[plot_array != 0] = 1  # make all domain cells to have the same colour
         dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
-                   colormap=colormap, plot=plot, **kwargs)
+                   colormap=color, plot=plot, **kwargs)
 
-    def k3d_voxels(self, norm=None, plot=None, **kwargs):
+    def k3d_voxels(self, norm_field=None, plot=None, **kwargs):
+        """Plots the scalar field as a coloured `k3d.voxels()` plot.
+
+        At all mesh cells, a voxel will be plotted anc coloured
+        according to its value. If the scalar field plotted is
+        extracted from a vector field, which has coordinates where the
+        norm of the field is zero, the norm of that vector field can
+        be passed using `norm_field` argument, so that voxels at those
+        coordinates are not showed. Only scalar fields can be
+        plotted. Otherwise, ValueError is raised. If `plot` is passed
+        as a `k3d.plot.Plot`, plot is added to it. Otherwise, a new
+        k3d plot is created. All arguments allowed in `k3d.voxels()`
+        can be passed. This function is to be called in Jupyter
+        notebook.
+
+        Parameters
+        ----------
+        norm_field : discretisedfield.Field, optional
+            A (scalar) norm field used for determining whether certain
+            voxels should be plotted.
+        plot : k3d.plot.Plot, optional
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
+
+        Example
+        -------
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50, -50, -50)
+        >>> p2 = (50, 50, 50)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> def normfun(pos):
+        ...     x, y, z = pos
+        ...     if x**2 + y**2 < 30**2:
+        ...         return 1
+        ...     else:
+        ...         return 0
+        >>> field.norm = normfun
+        >>> field.x.k3d_voxels(norm_field=field.norm)
+        Plot(...)
+
+        """
         if self.dim > 1:
             msg = ('Only scalar (dim=1) fields can be plotted. Consider plotting '
                    'one component, e.g. field.x.k3d_nonzero() or norm '
@@ -809,15 +941,18 @@ class Field:
         plot_array = plot_array[..., 0]  # remove an empty dimension
 
         plot_array -= plot_array.min()
-        plot_array /= plot_array.max()
+        # In the case of uniform fields, division by zero can be
+        # encountered.
+        if plot_array.max() !=0:
+            plot_array /= plot_array.max()
         plot_array *= 254
         plot_array += 1
         plot_array = plot_array.round()
         plot_array = plot_array.astype(int)
 
-        if norm is not None:
+        if norm_field is not None:
             for index in self.mesh.indices:
-                if norm(self.mesh.index2point(index)) == 0:
+                if norm_field(self.mesh.index2point(index)) == 0:
                     plot_array[index] = 0
     
         plot_array = np.swapaxes(plot_array, 0, 2)  # in k3d, numpy arrays are (z, y, x)
@@ -828,7 +963,58 @@ class Field:
         dfu.voxels(plot_array, self.mesh.pmin, self.mesh.pmax,
                    colormap=colormap, plot=plot, **kwargs)
     
-    def k3d_vectors(self, color_field=None, points=False, plot=None, **kwargs):
+    def k3d_vectors(self, color_field=None, points=True, plot=None, **kwargs):
+        """Plots the vector field as a `k3d.vectors()` plot.
+
+        At all mesh cells, a vector will be plotted if its norm is not
+        zero. Vectors can be coloured according to the values of the
+        scalar field passed as `color_field`. Only vector fields can
+        be plotted. Otherwise, ValueError is raised. Points at the
+        discretisation cell centres can be added by setting
+        `points=True`. If `plot` is passed as a `k3d.plot.Plot`, plot
+        is added to it. Otherwise, a new k3d plot is created. All
+        arguments allowed in `k3d.vectors()` can be passed. This
+        function is to be called in Jupyter notebook.
+
+        Parameters
+        ----------
+        color_field : discretisedfield.Field, optional
+            A (scalar) field used for determining the colours of
+            vectors.
+        points : bool, optional
+            If `True`, points will be added to the discretisation cell
+            centres.
+        plot : k3d.plot.Plot, optional
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
+
+        Example
+        -------
+        1. Plotting an entire vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50, -50, -50)
+        >>> p2 = (50, 50, 50)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> field.k3d_vectors(color_field=field.x)
+        Plot(...)
+
+        2. Plotting the slice of a vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50, -50, -50)
+        >>> p2 = (50, 50, 50)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> field.plane('x').k3d_vectors(color_field=field.x)
+        Plot(...)
+
+        """
         if self.dim != 3:
             msg = 'Only three-dimensional (dim=3) fields can be plotted.'
             raise ValueError(msg)
@@ -844,13 +1030,20 @@ class Field:
 
         coordinates, vectors = np.array(coordinates), np.array(vectors)
 
+        # Scale the vectors to correspond to the size of cells.
+        vectors /= vectors.max()
+        vectors *= 0.8*np.array(self.mesh.cell)
+        
         # Middle of the arrow is at the cell centre.
         coordinates -= 0.5 * vectors
 
         if color_field is not None:
             color_values = np.array(color_values)
             color_values -= color_values.min()
-            color_values /= color_values.max()
+            # In the case of uniform fields, division by zero can be
+            # encountered.
+            if color_values.max() != 0:
+                color_values /= color_values.max()
             color_values *= 256
             color_values = color_values.round()
             color_values = color_values.astype(int)
