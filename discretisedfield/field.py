@@ -389,6 +389,38 @@ class Field:
         return value
 
     def __getattr__(self, name):
+        """Extracting the component of the vector field.
+
+        If `'x'`, `'y'`, or `'z'` is accessed, a new scalar field of
+        that component will be returned. This method is effective for
+        vector fields with dimension 2 or 3.
+
+        Returns
+        -------
+        discretisedfield.Field
+            Scalar field with vector field component values.
+
+        Examples
+        --------
+        1. Accessing the vector field components.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
+        >>> field.x
+        Field(...)
+        >>> field.y
+        Field(...)
+        >>> field.z
+        Field(...)
+        >>> field.z.dim
+        1
+
+        """
         if name in list(dfu.axesdict.keys())[:self.dim] and 1 < self.dim <= 3:
             # Components x, y, and z make sense only for vector fields
             # with typical dimensions 2 and 3.
@@ -400,6 +432,13 @@ class Field:
             raise AttributeError(msg.format(type(self).__name__, name))
 
     def __dir__(self):
+        """Extension of the tab-completion list.
+
+        Adds `'x'`, `'y'`, and `'z'`, depending on the dimension of
+        the field, to the tab-completion list. This is effective in
+        IPython or Jupyter notebook environment.
+
+        """
         if 1 < self.dim <= 3:
             extension = list(dfu.axesdict.keys())[:self.dim]
         else:
@@ -407,10 +446,89 @@ class Field:
         return list(self.__dict__.keys()) + extension
 
     def __iter__(self):
+        """Generator yielding coordinates and values of all field cells.
+
+        The discretisation cell coordinate corresponds to the cell
+        centre point.
+
+        Yields
+        ------
+        tuple (2,)
+            The first value is the mesh cell coordinates (`px`, `py`,
+            `pz`), whereas the second one is the field value.
+
+        Examples
+        --------
+        1. Iterating through the field coordinates and values
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> for coord, value in field:
+        ...     print (coord, value)
+        (0.5, 0.5, 0.5) (0.0, 0.0, 1.0)
+        (1.5, 0.5, 0.5) (0.0, 0.0, 1.0)
+        (0.5, 1.5, 0.5) (0.0, 0.0, 1.0)
+        (1.5, 1.5, 0.5) (0.0, 0.0, 1.0)
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
+
+        """
         for point in self.mesh.coordinates:
             yield point, self.__call__(point)
 
     def line(self, p1, p2, n=100):
+        """Sampling the field along the line.
+
+        Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n`
+        position coordinates are generated and the corresponding field
+        values.
+
+        .. math::
+
+           \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} -
+           \\mathbf{p}_{1}}{n-1}
+
+        Parameters
+        ----------
+        p1, p2 : (3,) array_like
+            Two points between which the line is generated.
+        n : int
+            Number of points on the line.
+
+        Yields
+        ------
+        tuple
+            The first element is the coordinate of the point on the
+            line, whereas the second one is the value of the field.
+
+        Raises
+        ------
+        ValueError
+            If `p1` or `p2` is outside the mesh domain.
+
+        Examples
+        --------
+        1. Sampling the field along the line.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh, dim=2, value=(0, 3))
+        >>> for coord, value in field.line(p1=(0, 0, 0), p2=(2, 0, 0), n=3):
+        ...     print(coord, value)
+        (0.0, 0.0, 0.0) (0.0, 3.0)
+        (1.0, 0.0, 0.0) (0.0, 3.0)
+        (2.0, 0.0, 0.0) (0.0, 3.0)
+        
+        """
         for point in self.mesh.line(p1=p1, p2=p2, n=n):
             yield point, self.__call__(point)
     

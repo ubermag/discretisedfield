@@ -606,6 +606,8 @@ class Mesh:
 
         Examples
         --------
+        1. Creating a line generator.
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
