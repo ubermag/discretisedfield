@@ -1282,6 +1282,9 @@ class Field:
         if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
             pmin = np.divide(self.mesh.pmin, 1e-9)
             pmax = np.divide(self.mesh.pmax, 1e-9)
+        else:
+            pmin = self.mesh.pmin
+            pmax = self.mesh.pmax
 
         dfu.voxels(plot_array, pmin, pmax, colormap=color,
                    plot=plot, **kwargs)
@@ -1366,6 +1369,9 @@ class Field:
         if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
             pmin = np.divide(self.mesh.pmin, 1e-9)
             pmax = np.divide(self.mesh.pmax, 1e-9)
+        else:
+            pmin = self.mesh.pmin
+            pmax = self.mesh.pmax
 
         dfu.voxels(plot_array, pmin, pmax, colormap=colormap,
                    plot=plot, **kwargs)
