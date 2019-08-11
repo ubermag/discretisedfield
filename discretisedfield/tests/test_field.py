@@ -5,6 +5,7 @@ import pytest
 import itertools
 import numpy as np
 import discretisedfield as df
+import matplotlib.pyplot as plt
 import discretisedfield.tests as dft
 
 
@@ -50,6 +51,19 @@ class TestField:
                        lambda c: (c[0]-1, c[1]+70, c[2]*0.1),
                        lambda c: (np.sin(c[0]), np.cos(c[1]), -np.sin(2*c[2]))]
 
+        # Create a field for plotting
+        mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
+        self.pf = df.Field(mesh, dim=3, value=(2, 2, 2))
+
+        def normfun(pos):
+            x, y, z = pos
+            if x**2 + y**2 <= 5**2:
+                return 1
+            else:
+                return 0
+
+        self.pf.norm = normfun
+        
     def test_init(self):
         p1 = (0, 0, 0)
         p2 = (5, 10, 15)
@@ -272,7 +286,6 @@ class TestField:
     def test_dir(self):
         for mesh in self.meshes:
             f = df.Field(mesh, value=(5, 6, -9))
-
             assert 'x' in f.__dir__()
             assert 'y' in f.__dir__()
             assert 'z' in f.__dir__()
@@ -376,3 +389,71 @@ class TestField:
 
             # expect each vector to be v
             assert np.max(np.abs(f.array[:, :, :] - m / norm)) == 0.
+
+    def test_mpl(self):
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.mpl()
+        assert 'Only sliced field' in str(excinfo.value)
+
+        self.pf.plane('x', n=(3, 4)).mpl()
+
+    def test_imshow(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.imshow(ax=ax)
+        assert 'Only sliced field' in str(excinfo.value)
+        
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.plane('z').imshow(ax=ax)
+        assert 'Only scalar' in str(excinfo.value)
+
+        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
+        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax, norm_field=self.pf)
+
+    def test_quiver(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.quiver(ax=ax)
+        assert 'Only sliced field' in str(excinfo.value)
+        
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.x.plane('y').quiver(ax=ax)
+        assert 'Only three-dimensional' in str(excinfo.value)
+
+        self.pf.plane('x', n=(3, 4)).quiver(ax=ax)
+        self.pf.plane('x', n=(3, 4)).quiver(ax=ax, color_field=self.pf.y)
+
+    def test_colorbar(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        coloredplot = self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
+        self.pf.colorbar(ax=ax, coloredplot=coloredplot)
+
+    def test_k3d_nonzero(self):
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.k3d_nonzero()
+        assert 'Only scalar' in str(excinfo.value)
+        
+        self.pf.norm.k3d_nonzero()
+
+    def test_k3d_voxels(self):
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.k3d_voxels()
+        assert 'Only scalar' in str(excinfo.value)
+
+        self.pf.x.k3d_voxels()
+        self.pf.x.k3d_voxels(norm_field=self.pf.norm)
+
+    def test_k3d_vectors(self):
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.x.k3d_vectors()
+        assert 'Only three-dimensional' in str(excinfo.value)
+
+        self.pf.k3d_vectors()
+        self.pf.k3d_vectors(color_field=self.pf.x)
+        self.pf.k3d_vectors(points=False)

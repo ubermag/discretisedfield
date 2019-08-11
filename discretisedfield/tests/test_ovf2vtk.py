@@ -39,5 +39,12 @@ def test_ovf2vtk():
     assert proc_return.returncode == 0
     check_vtk(filename_vtk)
 
+    # Number of input and output files do not match.
+    cmd = [interpreter, '-m', 'discretisedfield.ovf2vtk',
+           '--infile', f'{filename_omf}', '--outfile',
+           f'{filename_vtk}', f'anotherfile.vtk']
+    proc_return = subprocess.run(cmd)
+    assert proc_return.returncode == 0
+
     os.remove(f'{filename_omf}')
     os.remove(f'{filename_vtk}')

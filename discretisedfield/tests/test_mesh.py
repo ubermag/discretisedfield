@@ -503,11 +503,17 @@ class TestMesh:
 
     def test_k3d_regions(self):
         p1 = (0, 0, 0)
-        p2 = (100, 50, 10)
-        n = (10, 10, 10)
+        p2 = (100, 80, 10)
+        cell = (2, 2, 2)
         regions = {'r1': df.Region(p1=(0, 0, 0), p2=(100, 10, 10)),
-                   'r2': df.Region(p1=(0, 10, 0), p2=(100, 50, 10))}
-        mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
+                   'r2': df.Region(p1=(0, 10, 0), p2=(100, 20, 10)),
+                   'r3': df.Region(p1=(0, 20, 0), p2=(100, 30, 10)),
+                   'r4': df.Region(p1=(0, 30, 0), p2=(100, 40, 10)),
+                   'r5': df.Region(p1=(0, 40, 0), p2=(100, 50, 10)),
+                   'r6': df.Region(p1=(0, 50, 0), p2=(100, 60, 10)),
+                   'r7': df.Region(p1=(0, 60, 0), p2=(100, 70, 10)),
+                   'r8': df.Region(p1=(0, 70, 0), p2=(100, 80, 10))}
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, regions=regions)
         mesh.k3d_regions()
 
     def test_script(self):
