@@ -1,6 +1,6 @@
 PROJECT=discretisedfield
 IPYNBPATH=docs/ipynb/*.ipynb
-CODECOVTOKEN=a96f2545-67ea-442e-a1b6-fdebc595cf52
+CODECOVTOKEN=ec842dd4-be45-4f5d-acfb-66857fa13de0
 PYTHON?=python3
 
 test:
