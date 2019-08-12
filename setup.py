@@ -7,7 +7,7 @@ setuptools.setup(
     name='discretisedfield',
     version='0.8.4',
     description=('Python package for definition, reading, '
-                 'and visualisation of finite difference fields.),
+                 'and visualisation of finite difference fields.'),
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://ubermag.github.io',
