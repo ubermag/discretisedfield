@@ -19,8 +19,7 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 
 This Python package provides:
 
-- Creation of finite difference meshes
-- Creation, analysis, and plotting of finite difference fields
+- Definition of finite difference meshes and fields
 - Reading and writing of different file types, such as `.ovf` and `.vtk`
 - Visualisation of finite difference meshes and fields using `matplotlib` and `k3d`
 
