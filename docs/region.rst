@@ -1,5 +1,5 @@
-Region class
-============
+``discretisedfield.Region``
+===========================
 
 .. autoclass:: discretisedfield.Region
    :members:

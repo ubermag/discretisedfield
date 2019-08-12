@@ -1,5 +1,5 @@
-Mesh class
-==========
+``discretisedfield.Mesh``
+=========================
 
 .. autoclass:: discretisedfield.Mesh
    :members:

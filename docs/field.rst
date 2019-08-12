@@ -1,5 +1,5 @@
-Field class
-===========
+``discretisedfield.Field``
+==========================
 
 .. autoclass:: discretisedfield.Field
    :members:
