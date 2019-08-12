@@ -17,76 +17,29 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 
 ## About
 
-`discretisedfield` is a Python package that provides:
+This Python package provides:
 
-- Creation of finite difference meshes
-
-- Creation, analysis, and plotting of finite difference fields
-
+- Definition of finite difference meshes and fields
 - Reading and writing of different file types, such as `.ovf` and `.vtk`
+- Visualisation of finite difference meshes and fields using `matplotlib` and `k3d`
 
-It is available on all major operating systems (Windows, MacOS, Linux) and requires Python 3.5 or higher.
+It is available on all major operating systems (Windows, MacOS, Linux) and requires Python 3.6 or higher.
 
-## Installation
+## Installation, testing, and upgrade
 
-We recommend installing `discretisedfield` by using either of the `pip` or `conda` package managers.
-
-#### Python requirements
-
-Before installing `discretisedfield` via `pip`, please make sure you have Python 3.5 or higher on your system. You can check that by running
-
-    python3 --version
-
-If you are on Linux, it is likely that you already have Python installed. However, on MacOS and Windows, this is usually not the case. If you do not have Python 3.5 or higher on your machine, we strongly recommend installing the [Anaconda](https://www.anaconda.com/) Python distribution. [Download Anaconda](https://www.anaconda.com/download) for your operating system and follow instructions on the download page. Further information about installing Anaconda can be found [here](https://conda.io/docs/user-guide/install/download.html).
-
-#### `pip`
-
-After installing Anaconda on MacOS or Windows, `pip` will also be installed. However, on Linux, if you do not already have `pip`, you can install it with
-
-    sudo apt install python3-pip
-
-To install the `discretisedfield` version currently in the Python Package Index repository [PyPI](https://pypi.org/project/discretisedfield/) on all operating systems run:
-
-    python3 -m pip install discretisedfield
-
-#### `conda`
-
-`discretisedfield` is installed using `conda` by running
-
-    conda install --channel conda-forge discretisedfield
-
-For further information on the `conda` package, dependency, and environment management, please have a look at its [documentation](https://conda.io/docs/). 
-
-## Updating
-
-If you used pip to install `discretisedfield`, you can update to the latest released version in [PyPI](https://pypi.org/project/discretisedfield/) by running
-
-    python3 -m pip install --upgrade discretisedfield
-
-On the other hand, if you used `conda` for installation, update `discretisedfield` with
-
-    conda upgrade discretisedfield
-
-#### Development version
-
-The most recent development version of `discretisedfield` that is not yet released can be installed/updated with
-
-    git clone https://github.com/ubermag/discretisedfield.git
-    python3 -m pip install --upgrade discretisedfield
-
-**Note**: If you do not have `git` on your system, it can be installed by following the instructions [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+We support installation using `conda` and `pip` package managers. Instructions can be found [here](https://ubermagtable.readthedocs.io/en/latest/ipynb/installation-testing-upgrade.html).
 
 ## Binder
 
-`discretisedfield` can be used in the cloud via Binder. This does not require you to have anything installed and no files will be created on your machine. To use `discretisedfield` in the cloud, follow this [link](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=index.ipynb).
+This package can be used in the cloud via Binder. This does not require you to have anything installed and no files will be created on your machine. To access Binder, use this [link](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=docs%2Fipynb%2Findex.ipynb).
 
 ## Documentation
 
-Documentation for `discretisedfield` is available [here](http://discretisedfield.readthedocs.io/en/latest/?badge=latest), where APIs and tutorials (in the form of Jupyter notebooks) are available.
+Documentation is available [here](https://discretisedfield.readthedocs.io/en/latest/), where APIs and tutorials as Jupyter notebooks are available.
 
 ## Support
 
-If you require support on installation or usage of `discretisedfield` or if you want to report a problem, you are welcome to raise an issue in our [ubermag/help](https://github.com/ubermag/help) repository.
+If you require support or have any questions, you are welcome to raise an issue in our [ubermag/help](https://github.com/ubermag/help) repository.
 
 ## License
 
@@ -94,7 +47,7 @@ Licensed under the BSD 3-Clause "New" or "Revised" License. For details, please 
 
 ## How to cite
 
-If you use `discretisedfield` in your research, please cite it as:
+If you use this package in your research, please cite it as:
 
 1. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [AIP Advances, 7, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
 
@@ -102,4 +55,4 @@ If you use `discretisedfield` in your research, please cite it as:
 
 ## Acknowledgements
 
-`discretisedfield` was developed as a part of [OpenDreamKit](http://opendreamkit.org/) – Horizon 2020 European Research Infrastructure project (676541).
+Developed as a part of [OpenDreamKit](http://opendreamkit.org/) – Horizon 2020 European Research Infrastructure project (676541).
