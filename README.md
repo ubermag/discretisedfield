@@ -27,7 +27,7 @@ It is available on all major operating systems (Windows, MacOS, Linux) and requi
 
 ## Installation, testing, and upgrade
 
-We support installation using `conda` and `pip` package managers. Instructions can be found [here](https://ubermagtable.readthedocs.io/en/latest/ipynb/installation-testing-upgrade.html).
+We support installation using `conda` and `pip` package managers. Instructions can be found [here](https://discretisedfield.readthedocs.io/en/latest/ipynb/00-tutorial-installation-testing-upgrade.html).
 
 ## Binder
 
