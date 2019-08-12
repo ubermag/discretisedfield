@@ -10,5 +10,5 @@ discretisedfield documentation
    :maxdepth: 2
    :caption: Contents:
 
-   api_documentation
    tutorials
+   api_documentation
