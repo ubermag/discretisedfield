@@ -27,7 +27,7 @@ upload-coverage:
 travis-build: SHELL:=/bin/bash
 travis-build:
 	ci_env=`bash <(curl -s https://codecov.io/env)`
-	docker build -f docker/Dockerfile -t dockertestimage .
+	docker build -f Dockerfile -t dockertestimage .
 	docker run -e ci_env -ti -d --name testcontainer dockertestimage
 	docker exec testcontainer make test-all
 	docker exec testcontainer make upload-coverage
