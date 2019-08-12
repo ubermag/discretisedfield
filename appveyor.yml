@@ -17,6 +17,6 @@ install:
   - python -m pip install --upgrade pip pytest nbval .
 
 test_script:
-  - python -c "import discretisedfield as d; import sys; sys.exit(d.test())"
+  - python -c "import discretisedfield as df; import sys; sys.exit(df.test())"
   - python -m pytest --nbval docs\ipynb\
   - python -m pytest --doctest-modules --ignore=discretisedfield\tests discretisedfield

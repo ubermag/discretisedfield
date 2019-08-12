@@ -5,7 +5,6 @@ RUN apt install -y git python3-pip curl
 RUN python3 -m pip install --upgrade pip pytest-cov nbval \
       git+git://github.com/ubermag/ubermagutil.git
 
-WORKDIR /usr/local
 COPY . /usr/local/discretisedfield/
 WORKDIR /usr/local/discretisedfield
 RUN python3 -m pip install .

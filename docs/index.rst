@@ -11,4 +11,4 @@ discretisedfield
    :caption: Contents:
 
    tutorials
-   api_reference
+   api-reference
