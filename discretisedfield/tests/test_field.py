@@ -491,3 +491,16 @@ class TestField:
         self.pf.k3d_vectors()
         self.pf.k3d_vectors(color_field=self.pf.z)
         self.pf.k3d_vectors(points=False)
+
+    def test_k3d_nanosized_sample(self):
+        p1 = (0, 0, 0)
+        p2 = (50e-9, 50e-9, 50e-9)
+        cell = (2e-9, 2e-9, 2e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        Ms = 1e6
+        value = (Ms, Ms, Ms)
+        field = df.Field(mesh, dim=3, value=value)
+
+        field.norm.k3d_nonzero()
+        field.x.k3d_voxels()
+        field.k3d_vectors()
