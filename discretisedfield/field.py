@@ -576,7 +576,7 @@ class Field:
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
-    def write(self, filename, representation='txt'):
+    def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field in .ovf, .omf, .ohf, or vtk format.
 
         If the extension of the `filename` is `.vtk`, a VTK file is
@@ -596,6 +596,11 @@ class Field:
             In the case of OOMMF files (`.ovf`, `.omf`, or `.ohf`),
             representation can be specified (`bin4`, `bin8`, or
             `txt`). Defaults to 'txt'.
+        extend_scalar : bool
+            If True, a scalar field will be saved as a vector
+            field. More precisely, if the value at a cell is 3, that
+            cell will be saved as (3, 0, 0). This is valid only for
+            the OVF file formats.
 
         Example
         -------
@@ -617,7 +622,8 @@ class Field:
 
         """
         if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
-            self._writeovf(filename, representation=representation)
+            self._writeovf(filename, representation=representation,
+                           extend_scalar=extend_scalar)
         elif filename.endswith('.vtk'):
             self._writevtk(filename)
         else:
@@ -625,7 +631,7 @@ class Field:
                    '.omf, .ovf, .ohf, and .vtk.')
             raise ValueError(msg)
 
-    def _writeovf(self, filename, representation='txt'):
+    def _writeovf(self, filename, representation='txt', extend_scalar=False):
         """Write the field in .ovf, .omf, or .ohf format.
 
         The extension of the `filename` should be `.ovf`, `.omf`, or
@@ -639,6 +645,10 @@ class Field:
         representation : str
             Representation of the file (`bin4`, `bin8`, or
             `txt`). Defaults to 'txt'.
+        extend_scalar : bool
+            If True, a scalar field will be saved as a vector
+            field. More precisely, if the value at a cell is 3, that
+            cell will be saved as (3, 0, 0).
 
         Example
         -------
@@ -657,6 +667,10 @@ class Field:
         >>> os.remove(filename)  # delete the file
 
         """
+        if extend_scalar and self.dim == 1:
+            write_dim = 3
+        else:
+            write_dim = self.dim
         header = ['OOMMF OVF 2.0',
                   '',
                   'Segment count: 1',
@@ -683,7 +697,7 @@ class Field:
                   f'xmax: {self.mesh.pmax[0]}',
                   f'ymax: {self.mesh.pmax[1]}',
                   f'zmax: {self.mesh.pmax[2]}',
-                  f'valuedim: {self.dim}',
+                  f'valuedim: {write_dim}',
                   f'valuelabels: {self.name}_x {self.name}_y {self.name}_z',
                   'valueunits: A/m A/m A/m',
                   '',
@@ -737,7 +751,10 @@ class Field:
                 if self.dim == 3:
                     v = [vi for vi in self.array[i]]
                 elif self.dim == 1:
-                    v = [self.array[i][0]]
+                    if extend_scalar:
+                        v = [self.array[i][0], 0.0, 0.0]
+                    else:
+                        v = [self.array[i][0]]
                 else:
                     msg = (f'Cannot write dim={self.dim} field.')
                     raise TypeError(msg)

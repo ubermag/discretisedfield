@@ -347,6 +347,12 @@ class TestField:
             f.write(ovffilename)
         assert 'Cannot write' in str(excinfo.value)
 
+    def test_write_extend_scalar(self):
+        ovffilename = 'test_file.omf'
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=1, value=1)
+        f.write(ovffilename, extend_scalar=True)
+
     def test_writeovf(self):
         representations = ['txt', 'bin4', 'bin8']
         tolerance = {'txt': 0, 'bin4': 1e-6, 'bin8': 1e-12}
