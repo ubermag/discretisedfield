@@ -143,6 +143,18 @@ class TestField:
                     c = f.mesh.index2point(f.mesh.point2index(c))
                     assert np.all(f(c) == func(c))
 
+    def set_with_dict(self):
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 10e-9)
+        n = (5, 5, 5)
+        regions = {'r1': df.Region(p1=(0, 0, 0), p2=(5e-9, 10e-9, 10e-9)),
+                   'r2': df.Region(p1=(5e-9, 0, 0), p2=(10e-9, 10e-9, 10e-9))}
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, regions=regions)
+                 
+        field = df.Field(mesh, dim=2, value={'r1': (0, 0, 1), 'r2': (0, 0, 2)})
+        assert np.all(field(3e-9, 7e-9, 9e-9) == (0, 0, 1))
+        assert np.all(field(5.5e-9, 2e-9, 9e-9) == (0, 0, 1))
+                       
     def test_set_exception(self):
         for mesh in self.meshes:
             f = df.Field(mesh)
