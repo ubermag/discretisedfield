@@ -770,7 +770,17 @@ class Mesh:
         """
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
-        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
+
+        # In the case of nano-sized samples, fix the order of
+        # magnitude of the plot extent to avoid freezing the k3d plot.
+        if np.any(np.divide(self.cell, 1e-9) < 1e3):
+            pmin = np.divide(self.pmin, 1e-9)
+            pmax = np.divide(self.pmax, 1e-9)
+        else:
+            pmin = self.pmin
+            pmax = self.pmax
+
+        dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
                    colormap=colormap, plot=plot, **kwargs)
 
     def k3d_points(self, point_size=0.5, color=dfu.colormap[0],
@@ -865,7 +875,17 @@ class Mesh:
                 if self.index2point(index) in self.regions[name]:
                     plot_array[index] = i+1  # i+1 to avoid 0 value
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
-        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
+
+        # In the case of nano-sized samples, fix the order of
+        # magnitude of the plot extent to avoid freezing the k3d plot.
+        if np.any(np.divide(self.cell, 1e-9) < 1e3):
+            pmin = np.divide(self.pmin, 1e-9)
+            pmax = np.divide(self.pmax, 1e-9)
+        else:
+            pmin = self.pmin
+            pmax = self.pmax
+
+        dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
                    colormap=colormap, plot=plot, **kwargs)
 
     @property
