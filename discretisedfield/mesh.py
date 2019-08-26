@@ -13,7 +13,7 @@ from mpl_toolkits.mplot3d import Axes3D
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
-               pbc=ts.Subset(sample_set="xyz"),
+               pbc=ts.Subset(sample_set='xyz'),
                name=ts.Name(const=True))
 class Mesh:
     """Finite difference mesh.
@@ -72,7 +72,7 @@ class Mesh:
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> cell = (1e-9, 1e-9, 0.1e-9)
-    >>> name = "mesh_name"
+    >>> name = 'mesh_name'
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
 
     2. Defining a nano-sized thin film mesh by passing `n` parameter
@@ -82,7 +82,7 @@ class Mesh:
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> n = (100, 50, 5)
-    >>> name = "mesh_name"
+    >>> name = 'mesh_name'
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, name=name)
 
     3. Defining a mesh with periodic boundary conditions in x and y
@@ -726,13 +726,13 @@ class Mesh:
 
         """
         fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111, projection="3d")
+        ax = fig.add_subplot(111, projection='3d')
 
-        dfu.plot_box(ax, self.pmin, self.pmax, "b-", linewidth=1.5)
+        dfu.plot_box(ax, self.pmin, self.pmax, 'b-', linewidth=1.5)
         dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell),
-                     "r--", linewidth=1)
+                     'r--', linewidth=1)
 
-        ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
+        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
 
     def k3d(self, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
