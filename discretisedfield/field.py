@@ -447,7 +447,7 @@ class Field:
             extension = list(dfu.axesdict.keys())[:self.dim]
         else:
             extension = []
-        return list(self.__dict__.keys()) + extension
+        return dir(self.__class__) + extension
 
     def __iter__(self):
         """Generator yielding coordinates and values of all field cells.
