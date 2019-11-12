@@ -54,7 +54,7 @@ If you use this package in your research, please cite it as:
 
 1. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [AIP Advances, 7, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
 
-2. M. Beg, R. Pepper, T. Kluyver, and Hans Fangohr. ubermag/discretisedfield: Python package for definition, reading, and visualisation of finite difference fields. Zenodo. http://doi.org/10.5281/zenodo.3539461 (2019)
+2. M. Beg, R. A. Pepper, T. Kluyver, and H. Fangohr. ubermag/discretisedfield: Python package for definition, reading, and visualisation of finite difference fields. Zenodo. http://doi.org/10.5281/zenodo.3539461 (2019).
 
 ## Acknowledgements
 
