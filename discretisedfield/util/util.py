@@ -1,4 +1,5 @@
 import k3d
+import random
 import numbers
 import collections
 import matplotlib
@@ -56,6 +57,19 @@ def plane_info(*args, **kwargs):
 
     return info
 
+
+def add_random_colors(colormap, regions):
+    """Generate random colours if necessary and add them to colormap
+    list."""
+    if len(regions) > 6:
+        for i in range(len(regions)-6):
+            found = False
+            while not found:
+                color = random.randint(0, 16777215)
+                found = True
+            colormap.append(color)
+
+    return colormap
 
 def plot_line(ax, p1, p2, *args, **kwargs):
     """Plot a line between points p1 and p2 on axis ax."""

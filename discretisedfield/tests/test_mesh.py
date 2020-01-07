@@ -501,7 +501,7 @@ class TestMesh:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             mesh.k3d_points()
 
-    def test_k3d_regions(self):
+    def test_k3d_mpl_regions(self):
         p1 = (0, 0, 0)
         p2 = (100, 80, 10)
         cell = (2, 2, 2)
@@ -514,6 +514,7 @@ class TestMesh:
                    'r7': df.Region(p1=(0, 60, 0), p2=(100, 70, 10)),
                    'r8': df.Region(p1=(0, 70, 0), p2=(100, 80, 10))}
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, regions=regions)
+        mesh.mpl_regions()
         mesh.k3d_regions()
 
     def test_script(self):

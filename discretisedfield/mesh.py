@@ -1,5 +1,6 @@
 import random
 import itertools
+import matplotlib
 import numpy as np
 import discretisedfield as df
 import matplotlib.pyplot as plt
@@ -847,15 +848,20 @@ class Mesh:
         >>> regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
         ...            'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
-        >>> mesh.k3d_regions()
+        >>> mesh.mpl_regions()
 
         """
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111, projection='3d')
 
-        dfu.plot_box(ax, self.pmin, self.pmax, 'b-', linewidth=1.5)
-        dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell),
-                     'r--', linewidth=1)
+        # Add random colours if necessary.
+        colormap = dfu.add_random_colors(colormap, self.regions)
+
+        cmap = matplotlib.cm.get_cmap('hsv', 256)
+        for i, name in enumerate(self.regions.keys()):
+            hexcolor = matplotlib.colors.rgb2hex(cmap(colormap[i]/16777215)[:3])
+            dfu.plot_box(ax, self.regions[name].pmin, self.regions[name].pmax,
+                         color=hexcolor, linewidth=1.5)
 
         ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
 
@@ -898,14 +904,8 @@ class Mesh:
         Plot(...)
 
         """
-        # Generate random colours if necessary
-        if len(self.regions) > 6:
-            for i in range(len(self.regions)-6):
-                found = False
-                while not found:
-                    color = random.randint(0, 16777215)
-                    found = True
-                colormap.append(color)
+        # Add random colours if necessary.
+        colormap = dfu.add_random_colors(colormap, self.regions)
 
         plot_array = np.zeros(self.n)
         for i, name in enumerate(self.regions.keys()):
