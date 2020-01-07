@@ -821,6 +821,44 @@ class Mesh:
         dfu.points(plot_array, point_size=point_size, color=color,
                    plot=plot, **kwargs)
 
+    def mpl_regions(self, colormap=dfu.colormap, figsize=None, **kwargs):
+        """Plots the mesh regions using a `matplotlib` 3D plot.
+
+        Parameters
+        ----------
+        colormap : list, optional
+            List of colours in hexadecimal format. The order of
+            colours should be the same as the order of regions defined
+            in `discretisedfield.Mesh.regions`. By default 6 colours
+            are defined.
+        figsize : tuple, optional
+            Length-2 tuple passed to the `matplotlib.pyplot.figure`
+            function.
+
+        Examples
+        --------
+        1. Visualising the mesh regions using `matplotlib`
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+        ...            'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
+        >>> mesh.k3d_regions()
+
+        """
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(111, projection='3d')
+
+        dfu.plot_box(ax, self.pmin, self.pmax, 'b-', linewidth=1.5)
+        dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell),
+                     'r--', linewidth=1)
+
+        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
+
     def k3d_regions(self, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises defined regions.
 
