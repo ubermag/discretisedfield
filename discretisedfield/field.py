@@ -706,7 +706,7 @@ class Field:
         >>> assert np.all(res.y.array == 10)
         >>> assert np.all(res.z.array == 25)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.__add__`
+        .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
 
         """
         if isinstance(other, (int, float)):
@@ -833,7 +833,7 @@ class Field:
 
         """
         return other * self**(-1)
-    
+
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 

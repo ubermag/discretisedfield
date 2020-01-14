@@ -572,4 +572,3 @@ class TestMesh:
         assert not mesh2 == mesh3
         assert mesh1 != mesh3
         assert mesh2 != mesh3
-    

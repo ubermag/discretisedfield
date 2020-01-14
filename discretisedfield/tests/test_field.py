@@ -150,11 +150,11 @@ class TestField:
         regions = {'r1': df.Region(p1=(0, 0, 0), p2=(5e-9, 10e-9, 10e-9)),
                    'r2': df.Region(p1=(5e-9, 0, 0), p2=(10e-9, 10e-9, 10e-9))}
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, regions=regions)
-                 
+
         field = df.Field(mesh, dim=2, value={'r1': (0, 0, 1), 'r2': (0, 0, 2)})
         assert np.all(field(3e-9, 7e-9, 9e-9) == (0, 0, 1))
         assert np.all(field(5.5e-9, 2e-9, 9e-9) == (0, 0, 1))
-                       
+
     def test_set_exception(self):
         for mesh in self.meshes:
             f = df.Field(mesh)
@@ -321,7 +321,7 @@ class TestField:
         f = df.Field(mesh, dim=1, value=np.pi)
         res = -f
         assert np.all(res.array == -np.pi)
-        
+
         # Vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -3))
         res = -f
@@ -343,7 +343,7 @@ class TestField:
         assert np.all(res.array == 8)
         res = f**(-1)
         assert np.all(res.array == 0.5)
-        
+
         # Vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -5))
         res = f**2
@@ -368,7 +368,7 @@ class TestField:
         assert np.all(ares.array == 1)
         sres = f1 - f2
         assert np.all(sres.array == 1.4)
-        
+
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, 3))
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
@@ -399,7 +399,7 @@ class TestField:
         assert np.all(res.array == 10)
         res = 3 * f1
         assert np.all(res.array == 15)
-        
+
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
@@ -437,7 +437,7 @@ class TestField:
         assert np.all(res.array == 2.5)
         res = 1 / f
         assert np.all(res.array == 0.2)
-        
+
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))

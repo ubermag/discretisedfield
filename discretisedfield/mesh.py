@@ -453,7 +453,7 @@ class Mesh:
             If two meshes are equal.
         False
             If two meshes are not equal.
-        
+
         Examples
         --------
         1. Check if meshes are equal.
@@ -503,7 +503,7 @@ class Mesh:
             If two meshes are not equal.
         False
             If two meshes are equal.
-        
+
         Examples
         --------
         1. Check if meshes are not equal.

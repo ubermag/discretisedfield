@@ -99,6 +99,7 @@ def add_random_colors(colormap, regions):
 
     return colormap
 
+
 def plot_line(ax, p1, p2, *args, **kwargs):
     """Plot a line between points p1 and p2 on axis ax."""
     ax.plot(*zip(p1, p2), *args, **kwargs)
