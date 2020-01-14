@@ -457,6 +457,17 @@ class TestField:
         assert np.all(res.y.array == 0.5e-6)
         assert np.all(res.z.array == 10)
 
+    def test_operators(self):
+        p1 = (0, 0, 0)
+        p2 = (5e-9, 5e-9, 10e-9)
+        n = (2, 2, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        f1 = df.Field(mesh, dim=1, value=2)
+        f2 = df.Field(mesh, dim=3, value=(-4, 0, 1))
+        res = ((f1/2 + f2.x)**2 - 2*f1*3)/(-f2.z) - 2*f2.y + 1/f2.z**2
+        assert np.all(res.array == 4)
+
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, value=(1, 2, 3))
