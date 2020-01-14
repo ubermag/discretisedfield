@@ -336,7 +336,45 @@ class TestField:
         assert np.all(sres.x.array == 2)
         assert np.all(sres.y.array == 5)
         assert np.all(sres.z.array == 8)
-            
+
+    def test_mul(self):
+        p1 = (0, 0, 0)
+        p2 = (5e-9, 5e-9, 5e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Scalar fields
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        f2 = df.Field(mesh, dim=1, value=-2)
+        mres = f1 * f2
+        assert np.all(mres.array == -2.4)
+
+        # Scalar field with a scalar
+        f1 = df.Field(mesh, dim=1, value=5)
+        mres = f1 * 2
+        assert np.all(mres.array == 10)
+        mres = 3 * f1
+        assert np.all(mres.array == 15)
+        
+        # Vector fields
+        f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+        mres = f1 * f2
+        assert np.all(mres.x.array == -1)
+        assert np.all(mres.y.array == -6)
+        assert np.all(mres.z.array == 15)
+
+        # Vector field with a scalar
+        f1 = df.Field(mesh, dim=3, value=(1.1, 2e6, 0))
+        mres = f1 * 2
+        assert np.all(mres.x.array == 2.2)
+        assert np.all(mres.y.array == 4e6)
+        assert np.all(mres.z.array == 0)
+        mres = 5 * f1
+        assert np.all(mres.x.array == 5.5)
+        assert np.all(mres.y.array == 10e6)
+        assert np.all(mres.z.array == 0)
+
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, value=(1, 2, 3))

@@ -519,7 +519,7 @@ class Field:
         >>> res = f1 + f2
         >>> assert np.all(res.array == 0)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.subtract`
+        .. seealso:: :py:func:`~discretisedfield.Field.__sub__`
 
         """
         return dfu.add(self, other)
@@ -558,10 +558,97 @@ class Field:
         >>> res = f1 - f2
         >>> assert np.all(res.array == 0)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.add`
+        .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
         """
         return dfu.subtract(self, other)
+
+    def __mul__(self, other):
+        """Multiplication operator.
+
+        This method defines the binary operator `*`, which can be
+        applied between two fields or between the field and a
+        scalar. Both `discretisedfield.Field` objects must be defined
+        on the same mesh and have the same dimensions.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field, int, float
+            Field object or a scalar value
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Multiply two fields.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        >>> f1 = df.Field(mesh, dim=3, value=(2, 3, 4))
+        >>> f2 = df.Field(mesh, dim=3, value=(1, 2, -3))
+        >>> res = f1 * f2
+        >>> assert np.all(res.x.array == 2)
+        >>> assert np.all(res.y.array == 6)
+        >>> assert np.all(res.z.array == -12)
+
+        2. Multiply field with a scalar.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 3, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
+        >>> res = f1 * 5
+        >>> assert np.all(res.x.array == 0)
+        >>> assert np.all(res.y.array == 10)
+        >>> assert np.all(res.z.array == 25)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__add__`
+
+        """
+        return dfu.multiply(self, other)
+
+    def __rmul__(self, other):
+        """Multiplication operator covering `discretisedfield.Field` object as
+        the second operator.
+
+        For details, please refer to `discretisedfield.Field.__mul__`
+        method.
+
+        Example
+        -------
+        1. Multiply field with a scalar.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 3, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
+        >>> res = 10 * f1
+        >>> assert np.all(res.x.array == 0)
+        >>> assert np.all(res.y.array == 20)
+        >>> assert np.all(res.z.array == 50)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
+
+        """
+        return dfu.multiply(self, other)
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.

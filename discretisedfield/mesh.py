@@ -439,8 +439,8 @@ class Mesh:
           2. They have the same number of discretisation cells in all
           three directions (`n`).
 
-        Mesh name is not considered to be a necessary condition for
-        determining equality between meshes.
+        Mesh name and `pbc` are not considered to be necessary
+        conditions for determining equality between meshes.
 
         Parameters
         ----------
@@ -491,9 +491,6 @@ class Mesh:
 
         This method returns `not self == other`. For details, please
         refer to `discretisedfield.Mesh.__eq__()` method.
-
-        Mesh name is not considered to be a condition for determining
-        equality.
 
         Parameters
         ----------
