@@ -485,6 +485,50 @@ class Field:
         for point in self.mesh.coordinates:
             yield point, self.__call__(point)
 
+    def __neg__(self):
+        """Unary negation operator.
+
+        This method defines the unary operator `-`.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Applying unary negation operator on a scalar field.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5e-9, 5e-9, 5e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        >>> f = df.Field(mesh, dim=1, value=np.pi)
+        >>> res = -f
+        >>> assert np.all(res.array == -np.pi)
+
+        2. Applying unary negation operator on a vector field.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5e-9, 5e-9, 5e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        >>> f = df.Field(mesh, dim=3, value=(0, -1, -3.1))
+        >>> res = -f
+        >>> assert np.all(res.x.array == 0)
+        >>> assert np.all(res.y.array == 1)
+        >>> assert np.all(res.z.array == 3.1)
+
+        """
+        return df.Field(self.mesh, dim=self.dim, value=-self.array)
+
     def __add__(self, other):
         """Addition operator.
 
@@ -561,7 +605,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
         """
-        return dfu.subtract(self, other)
+        return self + (-other)
 
     def __mul__(self, other):
         """Multiplication operator.
@@ -640,15 +684,15 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
-        >>> res = 10 * f1
+        >>> res = 10.1 * f1
         >>> assert np.all(res.x.array == 0)
-        >>> assert np.all(res.y.array == 20)
-        >>> assert np.all(res.z.array == 50)
+        >>> assert np.all(res.y.array == 20.2)
+        >>> assert np.all(res.z.array == 50.5)
 
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
         """
-        return dfu.multiply(self, other)
+        return self * other
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
