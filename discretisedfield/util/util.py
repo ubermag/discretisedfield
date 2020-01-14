@@ -5,6 +5,7 @@ import collections
 import matplotlib
 import numpy as np
 import itertools as it
+import discretisedfield as df
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -16,6 +17,33 @@ colormap = [0x3498db, 0xe74c3c, 0x27ae60, 0xf1c40f, 0x8e44ad, 0xecf0f1]
 
 def array2tuple(array):
     return tuple(array.tolist())
+
+
+def compatible_for_binary_operator(field1, field2):
+    """Check if a binary operator can be applied to two fields.
+
+    A binary operator (`+`, `-`, `*`, `/`) can be applied between two
+    fields (`field1` and `field2`) if both fields are:
+
+    1. defined on the same mesh and
+
+    2. have the same dimension.
+
+    """
+    if not isinstance(field1, df.Field) or \
+       not isinstance(field2, df.Field):
+        msg = ('Binary operator can be applied only on '
+               'discretisedfield.Field objects.')
+        raise TypeError(msg)
+    elif field1.mesh != field2.mesh:
+        msg = 'Fields must be defined on the same mesh.'
+        raise ValueError(msg)
+    elif field1.dim != field2.dim:
+        msg = 'Fields must have the same dimension.'
+        raise ValueError(msg)
+    else:
+        # A binary operator can be applied between two fields.
+        return True
 
 
 def plane_info(*args, **kwargs):

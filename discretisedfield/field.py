@@ -529,6 +529,51 @@ class Field:
         """
         return df.Field(self.mesh, dim=self.dim, value=-self.array)
 
+    def __pow__(self, other):
+        """Unary power operator.
+
+        This method defines the unary operator `**`.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Applying unary power operator on a scalar field.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (50e-9, 50e-9, 50e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        >>> f = df.Field(mesh, dim=1, value=2)
+        >>> res = f**(-1)
+        >>> assert np.all(res.array == 0.5)
+
+        2. Applying unary power operator on a vector field.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5e-9, 5e-9, 5e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        >>> f = df.Field(mesh, dim=3, value=(0, -1, -3))
+        >>> res = f**2
+        >>> assert np.all(res.x.array == 0)
+        >>> assert np.all(res.y.array == 1)
+        >>> assert np.all(res.z.array == 9)
+
+        """
+        return df.Field(self.mesh, dim=self.dim,
+                        value=np.power(self.array, other))
+
     def __add__(self, other):
         """Addition operator.
 
@@ -566,7 +611,9 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__sub__`
 
         """
-        return dfu.add(self, other)
+        if dfu.compatible_for_binary_operator(self, other):
+            return df.Field(self.mesh, dim=self.dim,
+                            value=self.array + other.array)
 
     def __sub__(self, other):
         """Subtraction operator.
@@ -662,11 +709,17 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
         """
-        return dfu.multiply(self, other)
+        if isinstance(other, (int, float)):
+            return df.Field(self.mesh, dim=self.dim, value=self.array*other)
+
+        else:
+            if dfu.compatible_for_binary_operator(self, other):
+                return df.Field(self.mesh, dim=self.dim,
+                                value=np.multiply(self.array, other.array))
 
     def __rmul__(self, other):
         """Multiplication operator covering `discretisedfield.Field` object as
-        the second operator.
+        the second operand.
 
         For details, please refer to `discretisedfield.Field.__mul__`
         method.
@@ -694,6 +747,93 @@ class Field:
         """
         return self * other
 
+    def __truediv__(self, other):
+        """Division operator.
+
+        This method defines the binary operator `/`, which can be
+        applied between two fields or between the field and a
+        scalar. Both `discretisedfield.Field` objects must be defined
+        on the same mesh and have the same dimensions.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field, int, float
+            Field object or a scalar value
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Divide two fields.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> n = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        >>> f1 = df.Field(mesh, dim=3, value=(20, 20, 4))
+        >>> f2 = df.Field(mesh, dim=3, value=(20, 10, -1))
+        >>> res = f1 / f2
+        >>> assert np.all(res.x.array == 1)
+        >>> assert np.all(res.y.array == 2)
+        >>> assert np.all(res.z.array == -4)
+
+        2. Multiply field with a scalar.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 3, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
+        >>> res = f1 * 5
+        >>> assert np.all(res.x.array == 0)
+        >>> assert np.all(res.y.array == 10)
+        >>> assert np.all(res.z.array == 25)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
+
+        """
+        return self * other**(-1)
+
+    def __rtruediv__(self, other):
+        """Division operator covering `discretisedfield.Field` object as
+        the second operand.
+
+        For details, please refer to `discretisedfield.Field.__truediv__`
+        method.
+
+        Example
+        -------
+        1. Divide field with a scalar.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 3, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, 5))
+        >>> res = 1 / f
+        >>> assert np.all(res.x.array == 1)
+        >>> assert np.all(res.y.array == 0.5)
+        >>> assert np.all(res.z.array == 0.2)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
+
+        """
+        return other * self**(-1)
+    
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 

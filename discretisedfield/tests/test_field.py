@@ -311,6 +311,50 @@ class TestField:
             assert 'y' not in f.__dir__()
             assert 'z' not in f.__dir__()
 
+    def test_neg(self):
+        p1 = (-5e-9, -5e-9, -5e-9)
+        p2 = (5e-9, 5e-9, 5e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Scalar field
+        f = df.Field(mesh, dim=1, value=np.pi)
+        res = -f
+        assert np.all(res.array == -np.pi)
+        
+        # Vector field
+        f = df.Field(mesh, dim=3, value=(1, 2, -3))
+        res = -f
+        assert np.all(res.x.array == -1)
+        assert np.all(res.y.array == -2)
+        assert np.all(res.z.array == 3)
+
+    def test_pow(self):
+        p1 = (0, 0, 0)
+        p2 = (15e-9, 15e-9, 15e-9)
+        cell = (3e-9, 3e-9, 3e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Scalar field
+        f = df.Field(mesh, dim=1, value=2)
+        res = f**2
+        assert np.all(res.array == 4)
+        res = f**3
+        assert np.all(res.array == 8)
+        res = f**(-1)
+        assert np.all(res.array == 0.5)
+        
+        # Vector field
+        f = df.Field(mesh, dim=3, value=(1, 2, -5))
+        res = f**2
+        assert np.all(res.x.array == 1)
+        assert np.all(res.y.array == 4)
+        assert np.all(res.z.array == 25)
+        res = f**(-1)
+        assert np.all(res.x.array == 1)
+        assert np.all(res.y.array == 0.5)
+        assert np.all(res.z.array == -0.2)
+
     def test_add_subtract(self):
         p1 = (0, 0, 0)
         p2 = (5e-9, 5e-9, 5e-9)
@@ -346,34 +390,72 @@ class TestField:
         # Scalar fields
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=1, value=-2)
-        mres = f1 * f2
-        assert np.all(mres.array == -2.4)
+        res = f1 * f2
+        assert np.all(res.array == -2.4)
 
         # Scalar field with a scalar
         f1 = df.Field(mesh, dim=1, value=5)
-        mres = f1 * 2
-        assert np.all(mres.array == 10)
-        mres = 3 * f1
-        assert np.all(mres.array == 15)
+        res = f1 * 2
+        assert np.all(res.array == 10)
+        res = 3 * f1
+        assert np.all(res.array == 15)
         
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
-        mres = f1 * f2
-        assert np.all(mres.x.array == -1)
-        assert np.all(mres.y.array == -6)
-        assert np.all(mres.z.array == 15)
+        res = f1 * f2
+        assert np.all(res.x.array == -1)
+        assert np.all(res.y.array == -6)
+        assert np.all(res.z.array == 15)
 
         # Vector field with a scalar
         f1 = df.Field(mesh, dim=3, value=(1.1, 2e6, 0))
-        mres = f1 * 2
-        assert np.all(mres.x.array == 2.2)
-        assert np.all(mres.y.array == 4e6)
-        assert np.all(mres.z.array == 0)
-        mres = 5 * f1
-        assert np.all(mres.x.array == 5.5)
-        assert np.all(mres.y.array == 10e6)
-        assert np.all(mres.z.array == 0)
+        res = f1 * 2
+        assert np.all(res.x.array == 2.2)
+        assert np.all(res.y.array == 4e6)
+        assert np.all(res.z.array == 0)
+        res = 5 * f1
+        assert np.all(res.x.array == 5.5)
+        assert np.all(res.y.array == 10e6)
+        assert np.all(res.z.array == 0)
+
+    def test_truediv(self):
+        p1 = (0, 0, 0)
+        p2 = (5e-9, 5e-9, 10e-9)
+        cell = (1e-9, 5e-9, 2e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Scalar fields
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        f2 = df.Field(mesh, dim=1, value=-2)
+        res = f1 / f2
+        assert np.all(res.array == -0.6)
+
+        # Scalar field with a scalar
+        f = df.Field(mesh, dim=1, value=5)
+        res = f / 2
+        assert np.all(res.array == 2.5)
+        res = 1 / f
+        assert np.all(res.array == 0.2)
+        
+        # Vector fields
+        f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+        res = f1 * f2
+        assert np.all(res.x.array == -1)
+        assert np.all(res.y.array == -6)
+        assert np.all(res.z.array == 15)
+
+        # Vector field with a scalar
+        f = df.Field(mesh, dim=3, value=(2, 2e6, 0.1))
+        res = f / 2
+        assert np.all(res.x.array == 1)
+        assert np.all(res.y.array == 1e6)
+        assert np.all(res.z.array == 0.05)
+        res = 1 / f
+        assert np.all(res.x.array == 0.5)
+        assert np.all(res.y.array == 0.5e-6)
+        assert np.all(res.z.array == 10)
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
