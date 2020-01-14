@@ -428,6 +428,49 @@ class Mesh:
         region = df.Region(self.p1, self.p2)
         return item in region
 
+    def __eq__(self, other):
+        """Determine whether two meshes are equal.
+
+        Two meshes are considered to be equal if:
+
+          1. They have the same minimum and maximum coordinate points
+          (`pmin` and `pmax`).
+
+          2. They have the same number of discretisation cells in all
+          three directions (`n`).
+
+        Mesh name is not considered to be a condition for determining
+        equality.
+
+        Examples
+        --------
+        1. Compare meshes.
+
+        >>> import discretisedfield as df
+        ...
+        >>> mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> mesh2 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> mesh3 = df.Mesh(p1=(1, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> mesh4 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(5, 1, 1))
+        >>> mesh1 == mesh2
+        True
+        >>> mesh1 == mesh3
+        False
+        >>> mesh2 == mesh4
+        False
+
+        """
+        if not isinstance(other, df.Mesh):
+            msg = 'Only discretisedfield.Mesh can be compared for equality.'
+            raise TypeError(msg)
+
+        if self.pmin == other.pmin and \
+           self.pmax == other.pmax and \
+           self.n == other.n:
+            return True
+        else:
+            return False
+
     def __repr__(self):
         """Mesh representation string.
 

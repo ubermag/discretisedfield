@@ -550,3 +550,18 @@ class TestMesh:
         assert mesh.name == name
         assert mesh.l == (10, 10, 10)
         assert mesh.n == (10, 10, 10)
+
+    def test_eq(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh1 = df.Mesh(p1=p1, p2=p2, cell=cell)
+        mesh2 = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert mesh1 == mesh2
+
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 5e-9, 3e-9)
+        cell = (1e-9, 2.5e-9, 0.5e-9)
+        mesh3 = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert not mesh1 == mesh3
+        assert not mesh2 == mesh3
