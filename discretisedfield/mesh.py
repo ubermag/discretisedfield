@@ -902,9 +902,9 @@ class Mesh:
 
         cmap = matplotlib.cm.get_cmap('hsv', 256)
         for i, name in enumerate(self.regions.keys()):
-            hexcolor = matplotlib.colors.rgb2hex(cmap(colormap[i]/16777215)[:3])
+            hc = matplotlib.colors.rgb2hex(cmap(colormap[i]/16777215)[:3])
             dfu.plot_box(ax, self.regions[name].pmin, self.regions[name].pmax,
-                         color=hexcolor, linewidth=1.5)
+                         color=hc, linewidth=1.5)
 
         ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
 
