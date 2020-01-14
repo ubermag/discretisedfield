@@ -311,6 +311,32 @@ class TestField:
             assert 'y' not in f.__dir__()
             assert 'z' not in f.__dir__()
 
+    def test_add_subtract(self):
+        p1 = (0, 0, 0)
+        p2 = (5e-9, 5e-9, 5e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Scalar fields
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        f2 = df.Field(mesh, dim=1, value=-0.2)
+        ares = f1 + f2
+        assert np.all(ares.array == 1)
+        sres = f1 - f2
+        assert np.all(sres.array == 1.4)
+        
+        # Vector fields
+        f1 = df.Field(mesh, dim=3, value=(1, 2, 3))
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+        ares = f1 + f2
+        assert np.all(ares.x.array == 0)
+        assert np.all(ares.y.array == -1)
+        assert np.all(ares.z.array == -2)
+        sres = f1 - f2
+        assert np.all(sres.x.array == 2)
+        assert np.all(sres.y.array == 5)
+        assert np.all(sres.z.array == 8)
+            
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, value=(1, 2, 3))

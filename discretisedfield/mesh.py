@@ -439,12 +439,24 @@ class Mesh:
           2. They have the same number of discretisation cells in all
           three directions (`n`).
 
-        Mesh name is not considered to be a condition for determining
-        equality.
+        Mesh name is not considered to be a necessary condition for
+        determining equality between meshes.
 
+        Parameters
+        ----------
+        other : discretisedfield.Mesh
+            Mesh object, which is compared to self.
+
+        Returns
+        -------
+        True
+            If two meshes are equal.
+        False
+            If two meshes are not equal.
+        
         Examples
         --------
-        1. Compare meshes.
+        1. Check if meshes are equal.
 
         >>> import discretisedfield as df
         ...
@@ -459,9 +471,12 @@ class Mesh:
         >>> mesh2 == mesh4
         False
 
+        .. seealso:: :py:func:`~discretisedfield.Mesh.__ne__`
+
         """
         if not isinstance(other, df.Mesh):
-            msg = 'Only discretisedfield.Mesh can be compared for equality.'
+            msg = ('Only discretisedfield.Mesh objects '
+                   'can be compared for equality.')
             raise TypeError(msg)
 
         if self.pmin == other.pmin and \
@@ -470,6 +485,46 @@ class Mesh:
             return True
         else:
             return False
+
+    def __ne__(self, other):
+        """Determine whether two meshes are not equal.
+
+        This method returns `not self == other`. For details, please
+        refer to `discretisedfield.Mesh.__eq__()` method.
+
+        Mesh name is not considered to be a condition for determining
+        equality.
+
+        Parameters
+        ----------
+        other : discretisedfield.Mesh
+            Mesh object, which is compared to self.
+
+        Returns
+        -------
+        True
+            If two meshes are not equal.
+        False
+            If two meshes are equal.
+        
+        Examples
+        --------
+        1. Check if meshes are not equal.
+
+        >>> import discretisedfield as df
+        ...
+        >>> mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> mesh2 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> mesh3 = df.Mesh(p1=(1, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> mesh1 != mesh2
+        False
+        >>> mesh1 != mesh3
+        True
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.__eq__`
+
+        """
+        return not self == other
 
     def __repr__(self):
         """Mesh representation string.

@@ -485,6 +485,84 @@ class Field:
         for point in self.mesh.coordinates:
             yield point, self.__call__(point)
 
+    def __add__(self, other):
+        """Addition operator.
+
+        This method defines the binary operator `+`, which can be
+        applied between two fields. Both `discretisedfield.Field`
+        objects must be defined on the same mesh and have the same
+        dimensions.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field
+            Field object
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Add two vector fields.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 3, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        >>> f1 = df.Field(mesh, dim=3, value=(0, -1, -3.1))
+        >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3.1))
+        >>> res = f1 + f2
+        >>> assert np.all(res.array == 0)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.subtract`
+
+        """
+        return dfu.add(self, other)
+
+    def __sub__(self, other):
+        """Subtraction operator.
+
+        This method defines the binary operator `-`, which can be
+        applied between two fields. Both `discretisedfield.Field`
+        objects must be defined on the same mesh and have the same
+        dimensions.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field
+            Field object
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Subtract two vector fields.
+
+        >>> import numpy as np
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 3, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        >>> f1 = df.Field(mesh, dim=3, value=(0, 1, 3.14))
+        >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3.14))
+        >>> res = f1 - f2
+        >>> assert np.all(res.array == 0)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.add`
+
+        """
+        return dfu.subtract(self, other)
+
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 
