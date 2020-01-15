@@ -318,16 +318,14 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         # Scalar field
-        f = df.Field(mesh, dim=1, value=np.pi)
+        f = df.Field(mesh, dim=1, value=3)
         res = -f
-        assert np.all(res.array == -np.pi)
+        assert res.average == (-3,)
 
         # Vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -3))
         res = -f
-        assert np.all(res.x.array == -1)
-        assert np.all(res.y.array == -2)
-        assert np.all(res.z.array == 3)
+        assert res.average == (-1, -2, 3)
 
     def test_pow(self):
         p1 = (0, 0, 0)
@@ -338,124 +336,102 @@ class TestField:
         # Scalar field
         f = df.Field(mesh, dim=1, value=2)
         res = f**2
-        assert np.all(res.array == 4)
-        res = f**3
-        assert np.all(res.array == 8)
+        assert res.average == (4,)
         res = f**(-1)
-        assert np.all(res.array == 0.5)
+        assert res.average == (0.5,)
 
         # Vector field
-        f = df.Field(mesh, dim=3, value=(1, 2, -5))
+        f = df.Field(mesh, dim=3, value=(1, 2, -2))
         res = f**2
-        assert np.all(res.x.array == 1)
-        assert np.all(res.y.array == 4)
-        assert np.all(res.z.array == 25)
+        assert res.average == (1, 4, 4)
         res = f**(-1)
-        assert np.all(res.x.array == 1)
-        assert np.all(res.y.array == 0.5)
-        assert np.all(res.z.array == -0.2)
+        assert res.average == (1, 0.5, -0.5)
 
     def test_add_subtract(self):
         p1 = (0, 0, 0)
-        p2 = (5e-9, 5e-9, 5e-9)
-        cell = (1e-9, 1e-9, 1e-9)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        p2 = (5e-9, 10e-9, -5e-9)
+        n = (2, 2, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
         # Scalar fields
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=1, value=-0.2)
-        ares = f1 + f2
-        assert np.all(ares.array == 1)
-        sres = f1 - f2
-        assert np.all(sres.array == 1.4)
+        res = f1 + f2
+        assert res.average == (1,)
+        res = f1 - f2
+        assert res.average == (1.4,)
 
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, 3))
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
-        ares = f1 + f2
-        assert np.all(ares.x.array == 0)
-        assert np.all(ares.y.array == -1)
-        assert np.all(ares.z.array == -2)
-        sres = f1 - f2
-        assert np.all(sres.x.array == 2)
-        assert np.all(sres.y.array == 5)
-        assert np.all(sres.z.array == 8)
+        res = f1 + f2
+        assert res.average == (0, -1, -2)
+        res = f1 - f2
+        assert res.average == (2, 5, 8)
 
-    def test_mul(self):
+    def test_mul_rmul(self):
         p1 = (0, 0, 0)
         p2 = (5e-9, 5e-9, 5e-9)
-        cell = (1e-9, 1e-9, 1e-9)
+        cell = (1e-9, 5e-9, 1e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         # Scalar fields
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=1, value=-2)
         res = f1 * f2
-        assert np.all(res.array == -2.4)
+        assert res.average == (-2.4,)
 
         # Scalar field with a scalar
         f1 = df.Field(mesh, dim=1, value=5)
-        res = f1 * 2
-        assert np.all(res.array == 10)
-        res = 3 * f1
-        assert np.all(res.array == 15)
+        res = f1 * 2  # __mul__
+        assert res.average == (10,)
+        res = 3 * f1  # __rmul__
+        assert res.average == (15,)
 
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
         res = f1 * f2
-        assert np.all(res.x.array == -1)
-        assert np.all(res.y.array == -6)
-        assert np.all(res.z.array == 15)
+        assert res.average == (-1, -6, 15)
 
         # Vector field with a scalar
-        f1 = df.Field(mesh, dim=3, value=(1.1, 2e6, 0))
+        f1 = df.Field(mesh, dim=3, value=(1, 2e6, 0))
         res = f1 * 2
-        assert np.all(res.x.array == 2.2)
-        assert np.all(res.y.array == 4e6)
-        assert np.all(res.z.array == 0)
+        assert res.average == (2, 4e6, 0)
         res = 5 * f1
-        assert np.all(res.x.array == 5.5)
-        assert np.all(res.y.array == 10e6)
-        assert np.all(res.z.array == 0)
+        assert res.average == (5, 10e6, 0)
 
-    def test_truediv(self):
+    def test_truediv_rtruediv(self):
         p1 = (0, 0, 0)
         p2 = (5e-9, 5e-9, 10e-9)
         cell = (1e-9, 5e-9, 2e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         # Scalar fields
-        f1 = df.Field(mesh, dim=1, value=1.2)
+        f1 = df.Field(mesh, dim=1, value=2)
         f2 = df.Field(mesh, dim=1, value=-2)
         res = f1 / f2
-        assert np.all(res.array == -0.6)
+        assert res.average == (-1,)
 
         # Scalar field with a scalar
         f = df.Field(mesh, dim=1, value=5)
-        res = f / 2
-        assert np.all(res.array == 2.5)
-        res = 1 / f
-        assert np.all(res.array == 0.2)
+        res = f / 2  # __truediv__
+        assert res.average == (2.5,)
+        res = 10 / f  # __rtruediv__
+        assert res.average == (2,)
 
         # Vector fields
-        f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
-        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
-        res = f1 * f2
-        assert np.all(res.x.array == -1)
-        assert np.all(res.y.array == -6)
-        assert np.all(res.z.array == 15)
+        f1 = df.Field(mesh, dim=3, value=(1, 4, 10))
+        f2 = df.Field(mesh, dim=3, value=(-1, 2, -5))
+        res = f1 / f2
+        assert res.average == (-1, 2, -2)
 
         # Vector field with a scalar
-        f = df.Field(mesh, dim=3, value=(2, 2e6, 0.1))
-        res = f / 2
-        assert np.all(res.x.array == 1)
-        assert np.all(res.y.array == 1e6)
-        assert np.all(res.z.array == 0.05)
-        res = 1 / f
-        assert np.all(res.x.array == 0.5)
-        assert np.all(res.y.array == 0.5e-6)
-        assert np.all(res.z.array == 10)
+        f = df.Field(mesh, dim=3, value=(2, 2e6, -4))
+        res = f / 2  # __truediv__
+        assert res.average == (1, 1e6, -2)
+        res = 4e6 / f  # __rturediv__
+        assert res.average == (2e6, 2, -1e6)
 
     def test_operators(self):
         p1 = (0, 0, 0)

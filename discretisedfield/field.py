@@ -612,7 +612,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__sub__`
 
         """
-        if dfu.compatible_for_binary_operator(self, other):
+        if dfu.compatible(self, other):
             return self.__class__(self.mesh, dim=self.dim,
                                   value=self.array + other.array)
 
@@ -711,13 +711,15 @@ class Field:
 
         """
         if isinstance(other, numbers.Real):
-            return self.__class__(self.mesh, dim=self.dim, value=self.array*other)
+            return self.__class__(self.mesh, dim=self.dim,
+                                  value=self.array*other)
 
         else:
             # Both operands are field objects.
-            if dfu.compatible_for_binary_operator(self, other):
+            if dfu.compatible(self, other):
                 return self.__class__(self.mesh, dim=self.dim,
-                                      value=np.multiply(self.array, other.array))
+                                      value=np.multiply(self.array,
+                                                        other.array))
 
     def __rmul__(self, other):
         """Multiplication operator covering the case when

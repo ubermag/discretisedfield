@@ -19,7 +19,7 @@ def array2tuple(array):
     return tuple(array.tolist())
 
 
-def compatible_for_binary_operator(field1, field2):
+def compatible(field1, field2):
     """Check if a binary operator can be applied to two fields.
 
     A binary operator (`+`, `-`, `*`, `/`) can be applied between two
