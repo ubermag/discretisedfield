@@ -311,6 +311,26 @@ class TestField:
             assert 'y' not in f.__dir__()
             assert 'z' not in f.__dir__()
 
+    def test_eq_ne(self):
+        p1 = (-5e-9, -5e-9, -5e-9)
+        p2 = (15e-9, 5e-9, 5e-9)
+        cell = (5e-9, 1e-9, 2.5e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f1 = df.Field(mesh, dim=1, value=0.2)
+        f2 = df.Field(mesh, dim=1, value=0.2)
+        f3 = df.Field(mesh, dim=1, value=3.1)
+        f4 = df.Field(mesh, dim=3, value=(1, -6, 0))
+        f5 = df.Field(mesh, dim=3, value=(1, -6, 0))
+        assert f1 == f2
+        assert not f1 != f2
+        assert not f1 == f3
+        assert f1 != f3
+        assert not f2 == f4
+        assert f2 != f4
+        assert f4 == f5
+        assert not f4 != f5
+
     def test_neg(self):
         p1 = (-5e-9, -5e-9, -5e-9)
         p2 = (5e-9, 5e-9, 5e-9)

@@ -474,7 +474,7 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.__ne__`
 
         """
-        if not isinstance(other, df.Mesh):
+        if not isinstance(other, self.__class__):
             msg = ('Only discretisedfield.Mesh objects '
                    'can be compared for equality.')
             raise TypeError(msg)

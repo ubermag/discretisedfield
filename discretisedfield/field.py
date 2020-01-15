@@ -486,6 +486,104 @@ class Field:
         for point in self.mesh.coordinates:
             yield point, self.__call__(point)
 
+    def __eq__(self, other):
+        """Determine whether two fields are equal.
+
+        Two fields are considered to be equal if:
+
+          1. They are defined on the same mesh.
+
+          2. They have the same dimension.
+
+          3. They both contain the same values in array attributes.
+
+        Names and `pbc` are not considered to be necessary
+        conditions for determining equality between fields.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field
+            Field object, which is compared to self.
+
+        Returns
+        -------
+        True
+            If two field are equal.
+        False
+            If two fields are not equal.
+
+        Examples
+        --------
+        1. Check if fields are equal.
+
+        >>> import discretisedfield as df
+        ...
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> f1 = df.Field(mesh, dim=1, value=3)
+        >>> f2 = df.Field(mesh, dim=1, value=4-1)
+        >>> f3 = df.Field(mesh, dim=3, value=(1, 4, 3))
+        >>> f1 == f2
+        True
+        >>> f1 == f3
+        False
+        >>> f2 == f3
+        False
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__ne__`
+
+        """
+        if not isinstance(other, self.__class__):
+            msg = ('Only discretisedfield.Field objects '
+                   'can be compared for equality.')
+            raise TypeError(msg)
+
+        if self.mesh == other.mesh and \
+           self.dim == other.dim and \
+           np.array_equal(self.array, other.array):
+            return True
+        else:
+            return False
+
+    def __ne__(self, other):
+        """Determine whether two fields are not equal.
+
+        This method returns `not self == other`. For details, please
+        refer to `discretisedfield.Field.__eq__()` method.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field
+            Field object, which is compared to self.
+
+        Returns
+        -------
+        True
+            If two fields are not equal.
+        False
+            If two fields are equal.
+
+        Examples
+        --------
+        1. Check if fields are equal.
+
+        >>> import discretisedfield as df
+        ...
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        >>> f1 = df.Field(mesh, dim=1, value=3)
+        >>> f2 = df.Field(mesh, dim=1, value=4-1)
+        >>> f3 = df.Field(mesh, dim=3, value=(1, 4, 3))
+        >>> f1 != f2
+        False
+        >>> f1 != f3
+        True
+        >>> f2 != f3
+        True
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__eq__`
+
+        """
+        return not self == other
+
     def __neg__(self):
         """Unary negation operator.
 
