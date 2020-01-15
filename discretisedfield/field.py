@@ -905,6 +905,13 @@ class Field:
         if isinstance(direction, str):
             direction = dfu.axesdict[direction]
 
+        # Derivative cannot be computed if only one cell exists in a
+        # certain direction. In that case, a zero field is
+        # returned. More precisely, it is assumed that the field does
+        # not change in that direction.
+        if self.mesh.n[direction] == 1:
+            return self.__class__(self.mesh, dim=self.dim, value=0)
+
         if self.dim == 1:
             grad_f_array = np.gradient(self.array[..., 0],
                                        self.mesh.cell[direction],

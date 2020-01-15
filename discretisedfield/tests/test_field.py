@@ -585,6 +585,26 @@ class TestField:
         assert f.derivative('y')((7, 5, 1)) == (7, -2, 7)
         assert f.derivative('z')((7, 5, 1)) == (0, 0, 35)
 
+    def test_derivative_single_cell(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 2)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        def value_fun(pos):
+            x, y, z = pos
+            return x + y + z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.derivative('x').average == (1,)
+        assert f.derivative('y').average == (1,)
+        # only one cell in the z-direction
+        assert f.plane('x').derivative('x').average == (0,)
+        assert f.plane('y').derivative('y').average == (0,)
+        assert f.derivative('z').average == (0,)
+
     def test_grad(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
