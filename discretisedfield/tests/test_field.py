@@ -600,6 +600,7 @@ class TestField:
 
         assert f.derivative('x').average == (1,)
         assert f.derivative('y').average == (1,)
+
         # only one cell in the z-direction
         assert f.plane('x').derivative('x').average == (0,)
         assert f.plane('y').derivative('y').average == (0,)
