@@ -901,6 +901,68 @@ class Field:
         """
         return other * self**(-1)
 
+    @property
+    def grad(self):
+        """Gradient.
+
+        This method computes the gradient of a scalar (dim=1) field
+        and returns a vector field. If the field is not of dimension
+        1, `ValueError` is raised.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Raises
+        ------
+        ValueError
+            If the dimension of the field is not 1.
+
+        Example
+        -------
+        1. Compute gradient of a contant field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=5)
+        >>> f.grad.average
+        (0.0, 0.0, 0.0)
+
+        2. Compute gradient of a spatially varying field. For a field
+        we choose f(x, y, z) = 2*x + 3*y - 5*z. Accordingly, we expect
+        the gradient to be a constant vector field
+        grad(f) = (2, 3, -5).
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 100e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> def value_fun(pos):
+        ...     x, y, z = pos
+        ...     return 2*x + 3*y - 5*z
+        ...
+        >>> f = df.Field(mesh, dim=1, value=value_fun)
+        >>> f.grad.average
+        (2.0, 3.0, -5.0)
+
+        """
+        if self.dim != 1:
+            msg = 'Gradient can be computed only on a scalar field.'
+            raise ValueError(msg)
+
+        f_array = self.array[..., 0]  # Remove an empty dimension.
+        grad_f_array = np.gradient(f_array, *self.mesh.cell)
+        return self.__class__(self.mesh, dim=3,
+                              value=np.stack(grad_f_array, axis=3))
+
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 

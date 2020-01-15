@@ -340,11 +340,13 @@ class TestField:
         # Scalar field
         f = df.Field(mesh, dim=1, value=3)
         res = -f
+        check_field(res)
         assert res.average == (-3,)
 
         # Vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -3))
         res = -f
+        check_field(res)
         assert res.average == (-1, -2, 3)
 
     def test_pow(self):
@@ -463,6 +465,46 @@ class TestField:
         f2 = df.Field(mesh, dim=3, value=(-4, 0, 1))
         res = ((f1/2 + f2.x)**2 - 2*f1*3)/(-f2.z) - 2*f2.y + 1/f2.z**2
         assert np.all(res.array == 4)
+
+    def test_grad(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
+        f = df.Field(mesh, dim=1, value=0)
+
+        assert f.grad.average == (0, 0, 0)
+
+        # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        def value_fun(pos):
+            x, y, z = pos
+            return x + y + z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.grad.average == (1, 1, 1)
+
+        # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
+        def value_fun(pos):
+            x, y, z = pos
+            return x*y + y + z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.grad((3, 1, 3)) == (1, 4, 1)
+        assert f.grad((5, 3, 5)) == (3, 6, 1)
+
+        # f(x, y, z) = x*y + 2*y + x*y*z ->
+        # grad(f) = (y+y*z, x+2+x*z, x*y)
+        def value_fun(pos):
+            x, y, z = pos
+            return x*y + 2*y + x*y*z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.grad((7, 5, 1)) == (10, 16, 35)
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
