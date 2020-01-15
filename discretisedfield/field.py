@@ -980,6 +980,28 @@ class Field:
                          self.derivative('z')])
 
     @property
+    def div(self):
+        if self.dim != 3:
+            msg = ('Divergence can be computed only for '
+                   'three-dimensional (dim=3) vector fields.')
+            raise ValueError(msg)
+
+        return self.x.derivative('x') + self.y.derivative('y') + self.z.derivative('z')
+
+    @property
+    def curl(self):
+        if self.dim != 3:
+            msg = ('Curl can be computed only for three-dimensional '
+                   '(dim=3) vector fields.')
+            raise ValueError(msg)
+
+        curl_x = self.z.derivative('y') - self.y.derivative('z')
+        curl_y = self.x.derivative('z') - self.z.derivative('x')
+        curl_z = self.y.derivative('x') - self.x.derivative('y')
+
+        return df.stack([curl_x, curl_y, curl_z])
+
+    @property
     def integral(self):
         """Volume integral.
 

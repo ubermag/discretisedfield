@@ -629,6 +629,64 @@ class TestField:
         assert f.grad.y == f.derivative('y')
         assert f.grad.z == f.derivative('z')
 
+    def test_div_curl(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # f(x, y, z) = (0, 0, 0)
+        # -> div(f) = 0
+        # -> curl(f) = (0, 0, 0)
+        f = df.Field(mesh, dim=3, value=(0, 0, 0))
+
+        check_field(f.div)
+        assert f.div.dim == 1
+        assert f.div.average == (0,)
+
+        check_field(f.curl)
+        assert f.curl.dim == 3
+        assert f.curl.average == (0, 0, 0)
+
+        # f(x, y, z) = (x, y, z)
+        # -> div(f) = 3
+        # -> curl(f) = (0, 0, 0)
+        def value_fun(pos):
+            x, y, z = pos
+            return (x, y, z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.div.average == (3,)
+        assert f.curl.average == (0, 0, 0)
+
+        # f(x, y, z) = (x*y, y*z, x*y*z)
+        # -> div(f) = y + z + x*y
+        # -> curl(f) = (x*z-y, -y*z, -x)
+        def value_fun(pos):
+            x, y, z = pos
+            return (x*y, y*z, x*y*z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.div((3, 1, 3)) == 7
+        assert f.div((5, 3, 5)) == 23
+
+        assert f.curl((3, 1, 3)) == (8, -3, -3)
+        assert f.curl((5, 3, 5)) == (22, -15, -5)
+
+        # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
+        # -> div(f) = y - 2 + x*y
+        # -> curl(f) = (x*z, -y*z, 1-x)
+        def value_fun(pos):
+            x, y, z = pos
+            return (3+x*y, x-2*y, x*y*z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.div((7, 5, 1)) == 38
+        assert f.curl((7, 5, 1)) == (7, -5, -6)
+
     def test_integral(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
