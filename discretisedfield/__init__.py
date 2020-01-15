@@ -5,6 +5,7 @@ matplotlib.use('Agg')
 from .mesh import Mesh
 from .field import Field
 from .region import Region
+from .operators import dot
 
 __version__ = pkg_resources.get_distribution(__name__).version
 __dependencies__ = pkg_resources.require(__name__)

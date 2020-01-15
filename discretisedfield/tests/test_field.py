@@ -475,6 +475,7 @@ class TestField:
         # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
         f = df.Field(mesh, dim=1, value=0)
 
+        check_field(f.grad)
         assert f.grad.average == (0, 0, 0)
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
