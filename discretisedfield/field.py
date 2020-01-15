@@ -1013,6 +1013,21 @@ class Field:
         return dfu.array2tuple(np.sum(self.array, axis=(0, 1, 2)) * \
                                cell_volume)
 
+    def topological_charge_density(self):
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Topological charge can be computed only on a 2D '
+                   'sample. Please slice the field using plane method, '
+                   'for example, field.plane(\'z\').topological_charge().')
+            raise ValueError(msg)
+
+        return df.dot(self, df.cross(self.derivative(self.mesh.info['axis1']),
+                                     self.derivative(self.mesh.info['axis2'])))
+
+    def topological_charge(self):
+        plane_thickness = self.mesh.cell[self.mesh.info['planeaxis']]
+        prefactor = 1/(4*np.pi*plane_thickness)
+        return prefactor * self.topological_charge_density().integral[0]
+
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 
