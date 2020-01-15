@@ -391,6 +391,10 @@ class TestField:
         res = f1 - f2
         assert res.average == (2, 5, 8)
 
+        # Check if commutative
+        assert f1 + f2 == f2 + f1
+        assert f1 - f2 == -(f2 - f1)
+
     def test_mul_rmul(self):
         p1 = (0, 0, 0)
         p2 = (5e-9, 5e-9, 5e-9)
@@ -423,6 +427,10 @@ class TestField:
         res = 5 * f1
         assert res.average == (5, 10e6, 0)
 
+        # Check if commutative
+        assert f1 * f2 == f2 * f1
+        assert -5 * f2 == f2 * (-5)
+
     def test_truediv_rtruediv(self):
         p1 = (0, 0, 0)
         p2 = (5e-9, 5e-9, 10e-9)
@@ -454,6 +462,10 @@ class TestField:
         assert res.average == (1, 1e6, -2)
         res = 4e6 / f  # __rturediv__
         assert res.average == (2e6, 2, -1e6)
+
+        # Check if commutative
+        assert f1 / f2 != f2 / f1
+        assert (f1 / f2) == (f2 / f1)**(-1)
 
     def test_operators(self):
         p1 = (0, 0, 0)
