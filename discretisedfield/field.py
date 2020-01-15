@@ -901,6 +901,18 @@ class Field:
         """
         return other * self**(-1)
 
+    def derivative(self, direction):
+        if isinstance(direction, str):
+            direction = dfu.axesdict[direction]
+
+        if self.dim == 1:
+            grad_f_array = np.gradient(self.array[..., 0],
+                                       self.mesh.cell[direction],
+                                       axis=direction)
+            grad_f_array = grad_f_array[..., np.newaxis]
+
+        return self.__class__(self.mesh, dim=self.dim, value=grad_f_array)
+
     @property
     def grad(self):
         """Gradient.

@@ -478,6 +478,57 @@ class TestField:
         res = ((f1/2 + f2.x)**2 - 2*f1*3)/(-f2.z) - 2*f2.y + 1/f2.z**2
         assert np.all(res.array == 4)
 
+    def test_derivative(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
+        f = df.Field(mesh, dim=1, value=0)
+
+        check_field(f.derivative('x'))
+        assert f.derivative('x').average == (0,)
+        assert f.derivative('y').average == (0,)
+        assert f.derivative('z').average == (0,)
+
+        # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        def value_fun(pos):
+            x, y, z = pos
+            return x + y + z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.derivative('x').average == (1,)
+        assert f.derivative('y').average == (1,)
+        assert f.derivative('z').average == (1,)
+
+        # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
+        def value_fun(pos):
+            x, y, z = pos
+            return x*y + y + z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.derivative(0)((3, 1, 3)) == (1,)
+        assert f.derivative(1)((3, 1, 3)) == (4,)
+        assert f.derivative(2)((3, 1, 3)) == (1,)
+        assert f.derivative(0)((5, 3, 5)) == (3,)
+        assert f.derivative(1)((5, 3, 5)) == (6,)
+        assert f.derivative(2)((5, 3, 5)) == (1,)
+
+        # f(x, y, z) = x*y + 2*y + x*y*z ->
+        # grad(f) = (y+y*z, x+2+x*z, x*y)
+        def value_fun(pos):
+            x, y, z = pos
+            return x*y + 2*y + x*y*z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.derivative('x')((7, 5, 1)) == (10,)
+        assert f.derivative('y')((7, 5, 1)) == (16,)
+        assert f.derivative('z')((7, 5, 1)) == (35,)
+
     def test_grad(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
