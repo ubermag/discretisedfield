@@ -911,6 +911,11 @@ class Field:
                                        axis=direction)
             grad_f_array = grad_f_array[..., np.newaxis]
 
+        elif self.dim == 3:
+            grad_f_array = np.gradient(self.array,
+                                       self.mesh.cell[direction],
+                                       axis=direction)
+
         return self.__class__(self.mesh, dim=self.dim, value=grad_f_array)
 
     @property

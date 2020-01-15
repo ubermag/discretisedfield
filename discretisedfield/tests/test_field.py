@@ -529,6 +529,62 @@ class TestField:
         assert f.derivative('y')((7, 5, 1)) == (16,)
         assert f.derivative('z')((7, 5, 1)) == (35,)
 
+        # f(x, y, z) = (0, 0, 0)
+        # -> dfdx = (0, 0, 0)
+        # -> dfdy = (0, 0, 0)
+        # -> dfdz = (0, 0, 0)
+        f = df.Field(mesh, dim=3, value=(0, 0, 0))
+
+        check_field(f.derivative('y'))
+        assert f.derivative('x').average == (0, 0, 0)
+        assert f.derivative('y').average == (0, 0, 0)
+        assert f.derivative('z').average == (0, 0, 0)
+
+        # f(x, y, z) = (x,  y,  z)
+        # -> dfdx = (1, 0, 0)
+        # -> dfdy = (0, 1, 0)
+        # -> dfdz = (0, 0, 1)
+        def value_fun(pos):
+            x, y, z = pos
+            return (x, y, z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.derivative('x').average == (1, 0, 0)
+        assert f.derivative('y').average == (0, 1, 0)
+        assert f.derivative('z').average == (0, 0, 1)
+
+        # f(x, y, z) = (x*y, y*z, x*y*z)
+        # -> dfdx = (y, 0, y*z)
+        # -> dfdy = (x, z, x*z)
+        # -> dfdz = (0, y, x*y)
+        def value_fun(pos):
+            x, y, z = pos
+            return (x*y, y*z, x*y*z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.derivative(0)((3, 1, 3)) == (1, 0, 3)
+        assert f.derivative(1)((3, 1, 3)) == (3, 3, 9)
+        assert f.derivative(2)((3, 1, 3)) == (0, 1, 3)
+        assert f.derivative(0)((5, 3, 5)) == (3, 0, 15)
+        assert f.derivative(1)((5, 3, 5)) == (5, 5, 25)
+        assert f.derivative(2)((5, 3, 5)) == (0, 3, 15)
+
+        # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
+        # -> dfdx = (y, 1, y*z)
+        # -> dfdy = (x, -2, x*z)
+        # -> dfdz = (0, 0, x*y)
+        def value_fun(pos):
+            x, y, z = pos
+            return (3+x*y, x-2*y, x*y*z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.derivative('x')((7, 5, 1)) == (5, 1, 5)
+        assert f.derivative('y')((7, 5, 1)) == (7, -2, 7)
+        assert f.derivative('z')((7, 5, 1)) == (0, 0, 35)
+
     def test_grad(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
@@ -569,6 +625,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=value_fun)
 
         assert f.grad((7, 5, 1)) == (10, 16, 35)
+        assert f.grad.x == f.derivative('x')
+        assert f.grad.y == f.derivative('y')
+        assert f.grad.z == f.derivative('z')
 
     def test_integral(self):
         p1 = (0, 0, 0)
