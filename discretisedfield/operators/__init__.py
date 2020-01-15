@@ -1,1 +1,1 @@
-from .operators import dot, cross
+from .operators import dot, cross, stack

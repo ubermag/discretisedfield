@@ -95,3 +95,18 @@ def cross(f1, f2):
     if dfu.compatible(f1, f2):
         res_array = np.cross(f1.array, f2.array)
         return df.Field(f1.mesh, dim=3, value=res_array)
+
+
+def stack(fields):
+    array_list = []
+    for f in fields:
+        if f.dim != 1:
+            msg = 'Only scalar (dim=1) fields can be stacked.'
+            raise ValueError(msg)
+        # An exception will be raised if any of the fields is not
+        # compatible with the first one in the list.
+        if dfu.compatible(fields[0], f):
+            array_list.append(f.array[..., 0])
+
+    return df.Field(fields[0].mesh, dim=len(fields),
+                    value=np.stack(array_list, axis=3))

@@ -967,13 +967,12 @@ class Field:
 
         """
         if self.dim != 1:
-            msg = 'Gradient can be computed only on a scalar field.'
+            msg = 'Gradient can be computed only for a scalar field.'
             raise ValueError(msg)
 
-        f_array = self.array[..., 0]  # Remove an empty dimension.
-        grad_f_array = np.gradient(f_array, *self.mesh.cell)
-        return self.__class__(self.mesh, dim=3,
-                              value=np.stack(grad_f_array, axis=3))
+        return df.stack([self.derivative('x'),
+                         self.derivative('y'),
+                         self.derivative('z')])
 
     @property
     def integral(self):
