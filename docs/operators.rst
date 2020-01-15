@@ -1,6 +1,5 @@
 ``discretisedfield.operators``
 ==============================
 
-.. autoclass:: discretisedfield.operators
-   :members:
-   :special-members:
+.. autofunction:: discretisedfield.operators.dot
+.. autofunction:: discretisedfield.operators.cross
