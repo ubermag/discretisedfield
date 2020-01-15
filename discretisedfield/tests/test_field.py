@@ -507,6 +507,31 @@ class TestField:
 
         assert f.grad((7, 5, 1)) == (10, 16, 35)
 
+    def test_integral(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f = df.Field(mesh, dim=1, value=0)
+        assert f.integral == (0,)
+
+        f = df.Field(mesh, dim=1, value=2)
+        assert f.integral == (2000,)
+
+        f = df.Field(mesh, dim=3, value=(-1, 0, 3))
+        assert f.integral == (-1000, 0, 3000)
+
+        def value_fun(pos):
+            x, y, z = pos
+            if x <= 5:
+                return (-1, -2, -3)
+            else:
+                return (1, 2, 3)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+        assert f.integral == (0, 0, 0)
+
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, value=(1, 2, 3))

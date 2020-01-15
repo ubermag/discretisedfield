@@ -963,6 +963,40 @@ class Field:
         return self.__class__(self.mesh, dim=3,
                               value=np.stack(grad_f_array, axis=3))
 
+    @property
+    def integral(self):
+        """Volume integral.
+
+        This method computes the volume integral of a field and
+        returns a single (scalar or vector) value. This value can be
+        understood as the product of field's average value and the
+        mesh volume, because the volume of discretisation cells is the
+        same.
+
+        Returns
+        -------
+        tuple
+
+        Example
+        -------
+        1. Compute the volume integral of a scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=5)
+        >>> f.integral
+        (5000.0,)
+
+        """
+        cell_volume = self.mesh.volume / self.mesh.ntotal
+        return dfu.array2tuple(np.sum(self.array, axis=(0, 1, 2)) * \
+                               cell_volume)
+
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 

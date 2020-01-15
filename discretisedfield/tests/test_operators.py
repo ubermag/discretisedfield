@@ -25,6 +25,9 @@ def test_dot():
     assert df.dot(f2, f2).average == (1,)
     assert df.dot(f3, f3).average == (1,)
 
+    # Check if commutative
+    assert df.dot(f1, f2) == df.dot(f2, f1)
+
     # Spatially varying vectors
     def value_fun1(pos):
         x, y, z = pos
@@ -37,6 +40,9 @@ def test_dot():
     f1 = df.Field(mesh, dim=3, value=value_fun1)
     f2 = df.Field(mesh, dim=3, value=value_fun2)
 
+    # Check if commutative
+    assert df.dot(f1, f2) == df.dot(f2, f1)
+    
     # The dot product should be x*z + y*x + z*y
     assert df.dot(f1, f2)((1, 1, 1)) == (3,)
     assert df.dot(f1, f2)((3, 1, 1)) == (7,)

@@ -289,6 +289,35 @@ class Mesh:
         return int(np.prod(self.n))
 
     @property
+    def volume(self):
+        """Mesh volume.
+
+        It is computed by multiplying all elements of `self.l`.
+
+        Returns
+        -------
+        float
+            The volume of the mesh.
+
+        Examples
+        --------
+        1. Computing the mesh volume.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 10, 2)
+        >>> cell = (1, 0.1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.volume
+        100.0
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.n`
+
+        """
+        return float(np.prod(self.l))
+
+    @property
     def centre(self):
         """Mesh domain centre point.
 

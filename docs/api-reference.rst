@@ -8,4 +8,5 @@ API Reference
    mesh
    region
    field
+   operators
 

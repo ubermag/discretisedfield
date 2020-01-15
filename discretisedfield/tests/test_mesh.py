@@ -228,6 +228,19 @@ class TestMesh:
         assert (100, 50, 10) in mesh.regions['r2']
         assert (100, 50, 10) not in mesh.regions['r1']
 
+    def test_volume(self):
+        p1 = (-10, 0, 0)
+        p2 = (10, 1, 1)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert mesh.volume == 20
+
+        p1 = (-18.5e-9, 10e-9, 0)
+        p2 = (10e-9, 5e-9, 10e-9)
+        cell = (0.5e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert abs(mesh.volume - 1425 * (1e-9**3)) < 1e-30
+        
     def test_centre(self):
         p1 = (0, 0, 0)
         p2 = (100, 100, 100)
