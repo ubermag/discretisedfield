@@ -1,4 +1,5 @@
 import k3d
+import cmath
 import random
 import numbers
 import collections
@@ -46,6 +47,31 @@ def compatible(field1, field2):
         return True
 
 
+def bergluescher_angle(v1, v2, v3):
+    rho = (2 *
+           (1 + np.dot(v1, v2)) *
+           (1 + np.dot(v2, v3)) *
+           (1 + np.dot(v3, v1)))**0.5
+
+    numerator = (1 + \
+                 np.dot(v1, v2) + \
+                 np.dot(v2, v3) + \
+                 np.dot(v3, v1) + \
+                 1j*(np.dot(v1, np.cross(v2, v3))))
+
+    exp_omega = numerator/rho
+    
+    return cmath.log(exp_omega).imag * 2
+
+
+def assemble_index(index_dict):
+    index = [0, 0, 0]
+    for key, value in index_dict.items():
+        index[key] = value
+
+    return tuple(index)
+
+    
 def plane_info(*args, **kwargs):
     info = dict()
     # The plane is defined with: planeaxis and point. They are

@@ -8,6 +8,27 @@ def test_array2tuple():
     dfu.array2tuple(np.array([1, 2, 3])) == (1, 2, 3)
 
 
+def test_bergluescher_angle():
+    v1 = (1, 0, 0)
+    v2 = (0, 1, 0)
+    v3 = (0, 0, 1)
+
+    angle = dfu.bergluescher_angle(v1, v2, v3)
+    print(angle)
+    assert dfu.bergluescher_angle(v1, v2, v3)
+    
+
+def test_assemble_index():
+    index_dict = {0: 5, 1: 3, 2: 4}
+    assert dfu.assemble_index(index_dict) == (5, 3, 4)
+    index_dict = {2: 4}
+    assert dfu.assemble_index(index_dict) == (0, 0, 4)
+    index_dict = {1: 5, 2: 3, 0: 4}
+    assert dfu.assemble_index(index_dict) == (4, 5, 3)
+    index_dict = {1: 3, 2: 4}
+    assert dfu.assemble_index(index_dict) == (0, 3, 4)
+
+
 def test_compatible():
     # One of the operands is not a field.
     mesh = df.Mesh(p1=(0, 0, 0), p2=(2, 2, 2), cell=(1, 1, 1))

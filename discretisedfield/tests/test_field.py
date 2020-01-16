@@ -773,6 +773,29 @@ class TestField:
         assert q.average != (0,)
         assert f.plane('z').topological_charge != 0
 
+    def test_bergluescher(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # f(x, y, z) = (0, 0, 0)
+        # -> Q(f) = 0
+        f = df.Field(mesh, dim=3, value=(0, 0, 0))
+
+        assert f.plane('z').bergluescher == 0
+
+        # f(x, y, z) = (x, y, z)
+        # -> Q(f) != 0
+        def value_fun(pos):
+            x, y, z = pos
+            return (x, y, z)
+
+        f = df.Field(mesh, dim=3, value=value_fun, norm=1)
+        
+        assert f.plane('z').bergluescher != 0
+        #assert f.plane('z').bergluescher == f.plane('z').topological_charge
+
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, value=(1, 2, 3))

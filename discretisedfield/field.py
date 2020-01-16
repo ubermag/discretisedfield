@@ -1445,6 +1445,42 @@ class Field:
         prefactor = 1/(4*np.pi*plane_thickness)
         return prefactor * self.topological_charge_density.integral[0]
 
+    @property
+    def bergluescher(self):
+        if self.dim != 3:
+            msg = ('Topological charge density can be computed only for '
+                   'vector fields (dim=3).')
+            raise ValueError(msg)
+        if not hasattr(self.mesh, 'info'):
+            msg = ('Topological charge density can be computed only on '
+                   'a 2D sample. Please slice the field using plane '
+                   'method, for example, field.plane(\'z\').'
+                   'topological_charge_density().')
+            raise ValueError(msg)
+
+        axis1 = self.mesh.info['axis1']
+        axis2 = self.mesh.info['axis2']
+
+        s = 0
+        for i in range(self.mesh.n[axis1]-1):
+            for j in range(self.mesh.n[axis2]-1):
+                index1 = dfu.assemble_index({axis1: i, axis2: j})
+                index2 = dfu.assemble_index({axis1: i+1, axis2: j})
+                index3 = dfu.assemble_index({axis1: i, axis2: j+1})
+                index4 = dfu.assemble_index({axis1: i+1, axis2: j+1})
+
+                v1 = self.array[index1]
+                v2 = self.array[index2]
+                v3 = self.array[index3]
+                v4 = self.array[index4]
+
+                triangle1 = dfu.bergluescher_angle(v1, v2, v3)
+                triangle2 = dfu.bergluescher_angle(v2, v3, v4)
+
+                s += triangle1 + triangle2
+
+        return s / (4*np.pi)
+
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 
