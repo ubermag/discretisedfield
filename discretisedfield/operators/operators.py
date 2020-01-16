@@ -98,6 +98,51 @@ def cross(f1, f2):
 
 
 def stack(fields):
+    """Stacking multiple scalar fields into a single vector field.
+
+    This method takes a list of scalar (dim=1) fields and returns a
+    vector field, whose components are defined by the scalar fields
+    passed. If any of the fields passed is not of dimension 1 or they
+    are not defined on the same mesh, an exception will be raised. The
+    dimension of the resulting field with be equal to the length of
+    the passed list.
+
+    Returns
+    -------
+    disrectisedfield.Field
+
+    Raises
+    ------
+    ValueError
+        If the dimension of any of the fields is not 1, or the fields
+        passed are not defined on the same mesh.
+
+    Example
+    -------
+    1. Stack 3 scalar fields.
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (10, 10, 10)
+    >>> cell = (2, 2, 2)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    ...
+    >>> f1 = df.Field(mesh, dim=1, value=1)
+    >>> f2 = df.Field(mesh, dim=1, value=5)
+    >>> f3 = df.Field(mesh, dim=1, value=-3)
+    ...
+    >>> f = df.stack([f1, f2, f3])
+    >>> f.dim
+    3
+    >>> f.x == f1
+    True
+    >>> f.y == f2
+    True
+    >>> f.z == f3
+    True
+
+    """
     array_list = []
     for f in fields:
         if f.dim != 1:
