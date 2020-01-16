@@ -904,21 +904,24 @@ class Field:
     def derivative(self, direction):
         """Directional derivative.
 
-        This method computes a directional derivative of a field and
-        returns a field as a result. The direction in which the
-        derivative is computed is passed via `direction` argument,
-        which can be `'x'`, `'y'`, or `'z'`. Alternatively, 0, 1, or 2
-        can be passed, respectively.
+        This method computes a directional derivative of the field and
+        returns a field as a result. The dimensionality of the output
+        field is the same as the dimensionality of the input
+        field. The direction in which the derivative is computed is
+        passed via `direction` argument, which can be `'x'`, `'y'`, or
+        `'z'`. Alternatively, 0, 1, or 2 can be passed, respectively.
 
         Directional derivative cannot be computed if only one
-        discretisation cell exists in a certain direction. In that
+        discretisation cell exists in a specified direction. In that
         case, a zero field is returned. More precisely, it is assumed
         that the field does not change in that direction.
 
         Parameters
         ----------
         direction : str, int
-            The direction in which the derivative is computed.
+            The direction in which the derivative is computed. It can
+            be `'x'`, `'y'`, or `'z'` (alternatively, 0, 1, or 2,
+            respectively).
 
         Returns
         -------
@@ -927,7 +930,7 @@ class Field:
         Example
         -------
         1. Compute directional derivative of a scalar field in the
-        y-direction of a spatially varying field. For a field we
+        y-direction of a spatially varying field. For the field we
         choose f(x, y, z) = 2*x + 3*y - 5*z. Accordingly, we expect
         the derivative in the y-direction to be to be a constant
         scalar field df/dy = 3.
@@ -935,7 +938,7 @@ class Field:
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
-        >>> p2 = (100e-9, 100e-9, 100e-9)
+        >>> p2 = (100e-9, 100e-9, 10e-9)
         >>> cell = (10e-9, 10e-9, 10e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
@@ -946,6 +949,33 @@ class Field:
         >>> f = df.Field(mesh, dim=1, value=value_fun)
         >>> f.derivative('y').average
         (3.0,)
+
+        2. Try to compute directional derivatives of the vector field
+        which has only one cell in the z-direction. For the field we
+        choose f(x, y, z) = (2*x, 3*y, -5*z). Accordingly, we expect
+        the directional derivatives to be: df/dx = (2, 0, 0), df/dy =
+        (0, 3, 0), df/dz = (0, 0, -5). However, because there is only
+        one discretisation cell in the z-direction, the derivative
+        cannot be computed and a zero field is returned.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 10e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> def value_fun(pos):
+        ...     x, y, z = pos
+        ...     return (2*x, 3*y, -5*z)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=value_fun)
+        >>> f.derivative('x').average
+        (2.0, 0.0, 0.0)
+        >>> f.derivative('y').average
+        (0.0, 3.0, 0.0)
+        >>> f.derivative('z').average  # derivative cannot be calculated
+        (0.0, 0.0, 0.0)
 
         """
         if isinstance(direction, str):
@@ -959,17 +989,17 @@ class Field:
             return self.__class__(self.mesh, dim=self.dim, value=0)
 
         if self.dim == 1:
-            grad_f_array = np.gradient(self.array[..., 0],
-                                       self.mesh.cell[direction],
-                                       axis=direction)
-            grad_f_array = grad_f_array[..., np.newaxis]
+            grad_array = np.gradient(self.array[..., 0],
+                                     self.mesh.cell[direction],
+                                     axis=direction)
+            grad_array = grad_array[..., np.newaxis]
 
         elif self.dim == 3:
-            grad_f_array = np.gradient(self.array,
-                                       self.mesh.cell[direction],
-                                       axis=direction)
+            grad_array = np.gradient(self.array,
+                                     self.mesh.cell[direction],
+                                     axis=direction)
 
-        return self.__class__(self.mesh, dim=self.dim, value=grad_f_array)
+        return self.__class__(self.mesh, dim=self.dim, value=grad_array)
 
     @property
     def grad(self):
@@ -978,6 +1008,12 @@ class Field:
         This method computes the gradient of a scalar (dim=1) field
         and returns a vector field. If the field is not of dimension
         1, `ValueError` is raised.
+
+        Directional derivative cannot be computed if only one
+        discretisation cell exists in a certain direction. In that
+        case, a zero field is considered to be that directional
+        derivative. More precisely, it is assumed that the field does
+        not change in that direction.
 
         Returns
         -------
@@ -1023,6 +1059,23 @@ class Field:
         >>> f.grad.average
         (2.0, 3.0, -5.0)
 
+        2. Attempt to compute the gradient of a vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 100e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, -3))
+        >>> f.grad
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        .. seealso:: :py:func:`~discretisedfield.Field.derivative`
+
         """
         if self.dim != 1:
             msg = 'Gradient can be computed only for a scalar field.'
@@ -1036,9 +1089,9 @@ class Field:
     def div(self):
         """Divergence.
 
-        This method computes the divergence of a vector field and
-        returns a scalar field as a result. If the field is not of
-        dimension 3, `ValueError` is raised.
+        This method computes the divergence of a vector field (dim=3)
+        and returns a scalar field (dim=1) as a result. If the field
+        is not of dimension 3, `ValueError` is raised.
 
         Directional derivative cannot be computed if only one
         discretisation cell exists in a certain direction. In that
@@ -1057,9 +1110,9 @@ class Field:
 
         Example
         -------
-        1. Compute divergence of a vector field. For a field we choose
-        f(x, y, z) = (2*x, -2*y, 5*z). Accordingly, we expect the
-        divergence to be to be a constant scalar field div(f) = 5.
+        1. Compute the divergence of a vector field. For a field we
+        choose f(x, y, z) = (2*x, -2*y, 5*z). Accordingly, we expect
+        the divergence to be to be a constant scalar field div(f) = 5.
 
         >>> import discretisedfield as df
         ...
@@ -1076,21 +1129,40 @@ class Field:
         >>> f.div.average
         (5.0,)
 
+        2. Attempt to compute the divergence of a scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 100e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=3.14)
+        >>> f.div
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        .. seealso:: :py:func:`~discretisedfield.Field.derivative`
+
         """
         if self.dim != 3:
             msg = ('Divergence can be computed only for '
                    'three-dimensional (dim=3) vector fields.')
             raise ValueError(msg)
 
-        return self.x.derivative('x') + self.y.derivative('y') + self.z.derivative('z')
+        return (self.x.derivative('x') + 
+                self.y.derivative('y') +
+                self.z.derivative('z'))
 
     @property
     def curl(self):
         """Curl.
 
-        This method computes the curl of a vector field and returns a
-        vector field as a result. If the field is not of dimension 3,
-        `ValueError` is raised.
+        This method computes the curl of a vector field (dim=3) and
+        returns a vector field (dim=3) as a result. If the field is
+        not of dimension 3, `ValueError` is raised.
 
         Directional derivative cannot be computed if only one
         discretisation cell exists in a certain direction. In that
@@ -1109,7 +1181,6 @@ class Field:
 
         Example
         -------
-
         1. Compute curl of a vector field. For a field we choose 
         f(x, y, z) = (2*x*y, -2*y, 5*x*z). Accordingly, we expect 
         the curl to be to be a constant vector field
@@ -1130,6 +1201,23 @@ class Field:
         >>> f.curl((1, 1, 1))
         (0.0, -5.0, -2.0)
 
+        2. Attempt to compute the curl of a scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 100e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=3.14)
+        >>> f.curl
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        .. seealso:: :py:func:`~discretisedfield.Field.derivative`
+
         """
         if self.dim != 3:
             msg = ('Curl can be computed only for three-dimensional '
@@ -1146,11 +1234,11 @@ class Field:
     def integral(self):
         """Volume integral.
 
-        This method computes the volume integral of a field and
-        returns a single (scalar or vector) value. This value can be
-        understood as the product of field's average value and the
-        mesh volume, because the volume of discretisation cells is the
-        same.
+        This method computes the volume integral of the field and
+        returns a single (scalar or vector) value as tuple. This value
+        can be understood as the product of field's average value and
+        the mesh volume, because the volume of all discretisation
+        cells is the same.
 
         Returns
         -------
@@ -1171,25 +1259,191 @@ class Field:
         >>> f.integral
         (5000.0,)
 
+        2. Compute the volume integral of a vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (0.5, 0.5, 0.5)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
+        >>> f.integral
+        (-8.0, -16.0, -24.0)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.average`
+
         """
         cell_volume = self.mesh.volume / self.mesh.ntotal
-        return dfu.array2tuple(np.sum(self.array, axis=(0, 1, 2)) * \
-                               cell_volume)
+        field_sum = np.sum(self.array, axis=(0, 1, 2))
+        return dfu.array2tuple(field_sum * cell_volume)
 
+    @property
     def topological_charge_density(self):
+        """Topological charge density.
+
+        This method computes the topological charge density for the
+        vector field (dim=3). Topological charge is defined on
+        two-dimensional samples. Therefore, the field must be "sliced"
+        using the `discretisedfield.Field.plane` method. If the field
+        is not three-dimensional or the field is not sliced,
+        ValueError is returned.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Raises
+        ------
+        ValueError
+            If the field is not three-dimensional or the field is not
+            sliced            
+
+        Example
+        -------
+        1. Compute the topological charge density of a spatially
+        constant vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+        >>> f.plane('z').topological_charge_density.average
+        (0.0,)
+
+        2. Attempt to compute the topological charge density of a
+        scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=12)
+        >>> f.plane('z').topological_charge_density
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        3. Attempt to compute the topological charge density of a
+        vector field, which is not sliced.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10e-9, 10e-9, 10e-9)
+        >>> cell = (2e-9, 2e-9, 2e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> f.topological_charge_density
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        .. seealso:: :py:func:`~discretisedfield.Field.topological_charge`
+
+        """
+        if self.dim != 3:
+            msg = ('Topological charge density can be computed only for '
+                   'vector fields (dim=3).')
+            raise ValueError(msg)
         if not hasattr(self.mesh, 'info'):
-            msg = ('Topological charge can be computed only on a 2D '
-                   'sample. Please slice the field using plane method, '
-                   'for example, field.plane(\'z\').topological_charge().')
+            msg = ('Topological charge density can be computed only on '
+                   'a 2D sample. Please slice the field using plane '
+                   'method, for example, field.plane(\'z\').'
+                   'topological_charge_density().')
             raise ValueError(msg)
 
-        return df.dot(self, df.cross(self.derivative(self.mesh.info['axis1']),
-                                     self.derivative(self.mesh.info['axis2'])))
+        return df.dot(self,
+                      df.cross(self.derivative(self.mesh.info['axis1']),
+                               self.derivative(self.mesh.info['axis2'])))
 
+    @property
     def topological_charge(self):
+        """Topological charge.
+
+        This method computes the topological charge for the vector
+        field (dim=3). More precisely, it integrates the topological
+        charge density. Topological charge is defined on
+        two-dimensional samples. Therefore, the field must be "sliced"
+        using the `discretisedfield.Field.plane` method. If the field
+        is not three-dimensional or the field is not sliced,
+        ValueError is returned.
+
+        Returns
+        -------
+        float
+            Topological charge
+
+        Raises
+        ------
+        ValueError
+            If the field is not three-dimensional or the field is not
+            sliced            
+
+        Example
+        -------
+        1. Compute the topological charge of a spatially constant
+        vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+        >>> f.plane('z').topological_charge
+        0.0
+
+        2. Attempt to compute the topological charge of a scalar
+        field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=12)
+        >>> f.plane('z').topological_charge
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        3. Attempt to compute the topological charge of a vector
+        field, which is not sliced.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10e-9, 10e-9, 10e-9)
+        >>> cell = (2e-9, 2e-9, 2e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> f.topological_charge_density
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        .. seealso::
+            :py:func:`~discretisedfield.Field.topological_charge_density`
+
+        """
         plane_thickness = self.mesh.cell[self.mesh.info['planeaxis']]
         prefactor = 1/(4*np.pi*plane_thickness)
-        return prefactor * self.topological_charge_density().integral[0]
+        return prefactor * self.topological_charge_density.integral[0]
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
