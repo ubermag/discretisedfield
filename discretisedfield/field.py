@@ -902,6 +902,52 @@ class Field:
         return other * self**(-1)
 
     def derivative(self, direction):
+        """Directional derivative.
+
+        This method computes a directional derivative of a field and
+        returns a field as a result. The direction in which the
+        derivative is computed is passed via `direction` argument,
+        which can be `'x'`, `'y'`, or `'z'`. Alternatively, 0, 1, or 2
+        can be passed, respectively.
+
+        Directional derivative cannot be computed if only one
+        discretisation cell exists in a certain direction. In that
+        case, a zero field is returned. More precisely, it is assumed
+        that the field does not change in that direction.
+
+        Parameters
+        ----------
+        direction : str, int
+            The direction in which the derivative is computed.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Compute directional derivative of a scalar field in the
+        y-direction of a spatially varying field. For a field we
+        choose f(x, y, z) = 2*x + 3*y - 5*z. Accordingly, we expect
+        the derivative in the y-direction to be to be a constant
+        scalar field df/dy = 3.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 100e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> def value_fun(pos):
+        ...     x, y, z = pos
+        ...     return 2*x + 3*y - 5*z
+        ...
+        >>> f = df.Field(mesh, dim=1, value=value_fun)
+        >>> f.derivative('y').average
+        (3.0,)
+
+        """
         if isinstance(direction, str):
             direction = dfu.axesdict[direction]
 
@@ -988,6 +1034,49 @@ class Field:
 
     @property
     def div(self):
+        """Divergence.
+
+        This method computes the divergence of a vector field and
+        returns a scalar field as a result. If the field is not of
+        dimension 3, `ValueError` is raised.
+
+        Directional derivative cannot be computed if only one
+        discretisation cell exists in a certain direction. In that
+        case, a zero field is considered to be that directional
+        derivative. More precisely, it is assumed that the field does
+        not change in that direction.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Raises
+        ------
+        ValueError
+            If the dimension of the field is not 3.
+
+        Example
+        -------
+        1. Compute divergence of a vector field. For a field we choose
+        f(x, y, z) = (2*x, -2*y, 5*z). Accordingly, we expect the
+        divergence to be to be a constant scalar field div(f) = 5.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 100e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> def value_fun(pos):
+        ...     x, y, z = pos
+        ...     return (2*x, -2*y, 5*z)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=value_fun)
+        >>> f.div.average
+        (5.0,)
+
+        """
         if self.dim != 3:
             msg = ('Divergence can be computed only for '
                    'three-dimensional (dim=3) vector fields.')
@@ -997,6 +1086,51 @@ class Field:
 
     @property
     def curl(self):
+        """Curl.
+
+        This method computes the curl of a vector field and returns a
+        vector field as a result. If the field is not of dimension 3,
+        `ValueError` is raised.
+
+        Directional derivative cannot be computed if only one
+        discretisation cell exists in a certain direction. In that
+        case, a zero field is considered to be that directional
+        derivative. More precisely, it is assumed that the field does
+        not change in that direction.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Raises
+        ------
+        ValueError
+            If the dimension of the field is not 3.
+
+        Example
+        -------
+
+        1. Compute curl of a vector field. For a field we choose 
+        f(x, y, z) = (2*x*y, -2*y, 5*x*z). Accordingly, we expect 
+        the curl to be to be a constant vector field
+        curl(f) = (0, -5*z, -2*x).
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> def value_fun(pos):
+        ...     x, y, z = pos
+        ...     return (2*x*y, -2*y, 5*x*z)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=value_fun)
+        >>> f.curl((1, 1, 1))
+        (0.0, -5.0, -2.0)
+
+        """
         if self.dim != 3:
             msg = ('Curl can be computed only for three-dimensional '
                    '(dim=3) vector fields.')
