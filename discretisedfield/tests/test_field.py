@@ -143,17 +143,17 @@ class TestField:
                     c = f.mesh.index2point(f.mesh.point2index(c))
                     assert np.all(f(c) == func(c))
 
-    def set_with_dict(self):
+    def test_set_with_dict(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
         n = (5, 5, 5)
         regions = {'r1': df.Region(p1=(0, 0, 0), p2=(5e-9, 10e-9, 10e-9)),
                    'r2': df.Region(p1=(5e-9, 0, 0), p2=(10e-9, 10e-9, 10e-9))}
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, regions=regions)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
 
-        field = df.Field(mesh, dim=2, value={'r1': (0, 0, 1), 'r2': (0, 0, 2)})
-        assert np.all(field(3e-9, 7e-9, 9e-9) == (0, 0, 1))
-        assert np.all(field(5.5e-9, 2e-9, 9e-9) == (0, 0, 1))
+        field = df.Field(mesh, dim=3, value={'r1': (0, 0, 1), 'r2': (0, 0, 2)})
+        assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
+        assert np.all(field((8e-9, 2e-9, 9e-9)) == (0, 0, 2))
 
     def test_set_exception(self):
         for mesh in self.meshes:
@@ -743,6 +743,35 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
         assert f.integral == (0, 0, 0)
+
+    def test_topological_charge(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # f(x, y, z) = (0, 0, 0)
+        # -> Q(f) = 0
+        f = df.Field(mesh, dim=3, value=(0, 0, 0))
+
+        q = f.plane('z').topological_charge_density
+        check_field(q)
+        assert q.dim == 1
+        assert q.average == (0,)
+        assert f.plane('z').topological_charge == 0
+
+        # f(x, y, z) = (x, y, z)
+        # -> Q(f) != 0
+        def value_fun(pos):
+            x, y, z = pos
+            return (x, y, z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        q = f.plane('z').topological_charge_density
+        assert q.dim == 1
+        assert q.average != (0,)
+        assert f.plane('z').topological_charge != 0
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
