@@ -248,6 +248,28 @@ class TestField:
             with pytest.raises(ValueError):
                 f.norm = 1
 
+    def test_orientation(self):
+        p1 = (-5e-9, -5e-9, -5e-9)
+        p2 = (5e-9, 5e-9, 5e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # No zero-norm cells
+        f = df.Field(mesh, dim=3, value=(2, 0, 0))
+        assert f.orientation.average == (1, 0, 0)
+
+        # With zero-norm cells
+        def value_fun(pos):
+            x, y, z = pos
+            if x <= 0:
+                return (0, 0, 0)
+            else:
+                return (3, 0, 4)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+        assert f.orientation((-1.5e-9, 3e-9, 0)) == (0, 0, 0)
+        assert f.orientation((1.5e-9, 3e-9, 0)) == (0.6, 0, 0.8)
+
     def test_average(self):
         value = -1e-3 + np.pi
         tol = 1e-12
@@ -775,8 +797,8 @@ class TestField:
 
     def test_bergluescher(self):
         p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
-        cell = (2, 2, 2)
+        p2 = (2, 2, 2)
+        cell = (0.1, 0.1, 2)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         # f(x, y, z) = (0, 0, 0)
@@ -794,7 +816,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=value_fun, norm=1)
         
         assert f.plane('z').bergluescher != 0
-        #assert f.plane('z').bergluescher == f.plane('z').topological_charge
+        assert abs(f.plane('z').bergluescher - f.plane('z').topological_charge) < 0.01
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))

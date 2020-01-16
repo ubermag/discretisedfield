@@ -61,7 +61,7 @@ def bergluescher_angle(v1, v2, v3):
 
     exp_omega = numerator/rho
     
-    return cmath.log(exp_omega).imag * 2
+    return 2 * cmath.log(exp_omega).imag / (4*np.pi)
 
 
 def assemble_index(index_dict):

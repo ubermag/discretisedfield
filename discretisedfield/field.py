@@ -272,8 +272,10 @@ class Field:
         array([[[[1.]]]])
 
         """
-        current_norm = np.linalg.norm(self.array, axis=-1)[..., None]
-        return Field(self.mesh, dim=1, value=current_norm, name='norm')
+        return self.__class__(self.mesh,
+                              dim=1,
+                              value=np.linalg.norm(self.array, axis=-1)[..., None],
+                              name='norm')
 
     @norm.setter
     def norm(self, val):
@@ -289,6 +291,19 @@ class Field:
             self.array /= self.norm.array  # normalise to 1
             self.array *= dfu.as_array(self.mesh, dim=1, val=val)
 
+    @property
+    def orientation(self):
+        if self.dim == 1:
+            msg = (f'Cannot derive orientation field for a '
+                   f'field with dim={self.dim}.')
+            raise ValueError(msg)
+
+        orientation_array = np.divide(self.array,
+                                      self.norm.array,
+                                      out=np.zeros_like(self.array),
+                                      where=(self.norm.array!=0))
+        return self.__class__(self.mesh, dim=self.dim, value=orientation_array)
+        
     @property
     def average(self):
         """Field average.
@@ -1362,9 +1377,10 @@ class Field:
                    'topological_charge_density().')
             raise ValueError(msg)
 
-        return df.dot(self,
-                      df.cross(self.derivative(self.mesh.info['axis1']),
-                               self.derivative(self.mesh.info['axis2'])))
+        of = self.orientation
+        return df.dot(of,
+                      df.cross(of.derivative(self.mesh.info['axis1']),
+                               of.derivative(self.mesh.info['axis2'])))
 
     @property
     def topological_charge(self):
@@ -1466,20 +1482,20 @@ class Field:
             for j in range(self.mesh.n[axis2]-1):
                 index1 = dfu.assemble_index({axis1: i, axis2: j})
                 index2 = dfu.assemble_index({axis1: i+1, axis2: j})
-                index3 = dfu.assemble_index({axis1: i, axis2: j+1})
-                index4 = dfu.assemble_index({axis1: i+1, axis2: j+1})
+                index3 = dfu.assemble_index({axis1: i+1, axis2: j+1})
+                index4 = dfu.assemble_index({axis1: i, axis2: j+1})
 
                 v1 = self.array[index1]
                 v2 = self.array[index2]
                 v3 = self.array[index3]
                 v4 = self.array[index4]
 
-                triangle1 = dfu.bergluescher_angle(v1, v2, v3)
+                triangle1 = dfu.bergluescher_angle(v1, v2, v4)
                 triangle2 = dfu.bergluescher_angle(v2, v3, v4)
 
                 s += triangle1 + triangle2
 
-        return s / (4*np.pi)
+        return s
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
