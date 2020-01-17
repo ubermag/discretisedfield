@@ -220,11 +220,10 @@ class Field:
     @array.setter
     def array(self, val):
         if isinstance(val, np.ndarray) and \
-           val.shape == self.mesh.n + (self.dim,):
+           val.shape == (*self.mesh.n, self.dim):
             self._array = val
         else:
-            msg = (f'Unsupported type(val)={type(val)} '
-                   'or invalid value dimensions.')
+            msg = f'Unsupported {type(val)} or invalid value dimensions.'
             raise ValueError(msg)
 
     @property
@@ -254,7 +253,7 @@ class Field:
 
         Examples
         --------
-        1. Manipulating the field norm
+        1. Manipulating the field norm.
 
         >>> import discretisedfield as df
         ...
@@ -262,21 +261,21 @@ class Field:
         >>> p2 = (1, 1, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.norm
         Field(...)
         >>> field.norm = 2
-        >>> field.norm
-        Field(...)
+        >>> field.average
+        (0.0, 0.0, 2.0)
         >>> field.value = (1, 0, 0)
-        >>> field.norm.array
-        array([[[[1.]]]])
+        >>> field.norm.average
+        (1.0,)
 
         """
         return self.__class__(self.mesh,
                               dim=1,
-                              value=np.linalg.norm(self.array, axis=-1)[..., None],
-                              name='norm')
+                              value=np.linalg.norm(self.array, axis=-1)[..., np.newaxis])
 
     @norm.setter
     def norm(self, val):
@@ -374,7 +373,7 @@ class Field:
         (55.0,)
 
         """
-        return tuple(self.array.mean(axis=(0, 1, 2)))
+        return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
 
     def __repr__(self):
         """Field representation string.
@@ -443,15 +442,20 @@ class Field:
         """
         value = self.array[self.mesh.point2index(point)]
         if self.dim > 1:
-            value = tuple(value)
+            value = dfu.array2tuple(value)
         return value
 
-    def __getattr__(self, name):
+    def __getattr__(self, attr):
         """Extracting the component of the vector field.
 
         If `'x'`, `'y'`, or `'z'` is accessed, a new scalar field of
         that component will be returned. This method is effective for
         vector fields with dimension 2 or 3.
+
+        Parameters
+        ----------
+        attr : str
+            Vector field component (`'x'`, `'y'`, or `'z'`)
 
         Returns
         -------
@@ -479,16 +483,12 @@ class Field:
         1
 
         """
-        if name in list(dfu.axesdict.keys())[:self.dim] and 1 < self.dim <= 3:
-            # Components x, y, and z make sense only for vector fields
-            # with typical dimensions 2 and 3.
-            component_array = self.array[..., dfu.axesdict[name]][..., None]
-            fieldname = f'{self.name}-{name}'.format(self.name, name)
-            return Field(mesh=self.mesh, dim=1,
-                         value=component_array, name=fieldname)
+        if attr in list(dfu.axesdict.keys())[:self.dim] and self.dim in (2, 3):
+            attr_array = self.array[..., dfu.axesdict[attr]][..., np.newaxis]
+            return Field(mesh=self.mesh, dim=1, value=attr_array)
         else:
-            msg = f'{type(self).__name__} object has no attribute {name}.'
-            raise AttributeError(msg.format(type(self).__name__, name))
+            msg = f'Object has no attribute {attr}.'
+            raise AttributeError(msg)
 
     def __dir__(self):
         """Extension of the tab-completion list.
@@ -498,7 +498,7 @@ class Field:
         IPython or Jupyter notebook environment.
 
         """
-        if 1 < self.dim <= 3:
+        if self.dim in (2, 3):
             extension = list(dfu.axesdict.keys())[:self.dim]
         else:
             extension = []
@@ -551,8 +551,8 @@ class Field:
 
           3. They both contain the same values in `array` attributes.
 
-        `name` and `pbc` attributes are not considered to be necessary
-        conditions for determining equality between fields.
+        `name` and `pbc` attributes are not considered to be the
+        necessary conditions for determining equality between fields.
 
         Parameters
         ----------
@@ -563,7 +563,6 @@ class Field:
         -------
         bool
 
-        Raises
         Examples
         --------
         1. Check if fields are equal.
@@ -1078,18 +1077,17 @@ class Field:
             direction = dfu.axesdict[direction]
 
         if self.mesh.n[direction] == 1:
-            grad_array = 0
+            derivative_array = 0  # derivative cannot be computed
         elif self.dim == 1:
-            grad_array = np.gradient(self.array[..., 0],
-                                     self.mesh.cell[direction],
-                                     axis=direction)
-            grad_array = grad_array[..., np.newaxis]
+            derivative_array = np.gradient(self.array[..., 0],
+                                           self.mesh.cell[direction],
+                                           axis=direction)[..., np.newaxis]
         else:
-            grad_array = np.gradient(self.array,
-                                     self.mesh.cell[direction],
-                                     axis=direction)
+            derivative_array = np.gradient(self.array,
+                                           self.mesh.cell[direction],
+                                           axis=direction)
 
-        return self.__class__(self.mesh, dim=self.dim, value=grad_array)
+        return self.__class__(self.mesh, dim=self.dim, value=derivative_array)
 
     @property
     def grad(self):
@@ -1450,7 +1448,7 @@ class Field:
 
         of = self.orientation  # unit (orientation) field
         thickness = self.mesh.cell[self.mesh.info['planeaxis']]
-        prefactor = 1 / (4 * np.pi* thickness)
+        prefactor = 1 / (4 * np.pi * thickness)
         q = df.dot(of, df.cross(of.derivative(self.mesh.info['axis1']),
                                 of.derivative(self.mesh.info['axis2'])))
         return prefactor * q
@@ -1485,16 +1483,29 @@ class Field:
 
         return topological_charge
 
-    def topological_charge(self, method='berg-luescher'):
+    def topological_charge(self, method='continuous'):
         """Topological charge.
 
         This method computes the topological charge for the vector
-        field (dim=3). More precisely, it integrates the topological
-        charge density. Topological charge is defined on
-        two-dimensional samples. Therefore, the field must be "sliced"
-        using the `discretisedfield.Field.plane` method. If the field
-        is not three-dimensional or the field is not sliced,
-        ValueError is returned.
+        field (`dim=3`). There are two possible methods:
+
+        1. `continuous`: Topological charge density is integrated.
+
+        2. `berg-luescher`: Topological charge is computed on a
+        discrete lattice, as described in Berg and Luescher, Nuclear
+        Physics, Section B, Volume 190, Issue 2, p. 412-424.
+
+        Topological charge is defined on two-dimensional
+        samples. Therefore, the field must be "sliced" using
+        `discretisedfield.Field.plane` method. If the field is not
+        three-dimensional or the field is not sliced, `ValueError` is
+        raised.
+
+        Parameters
+        ----------
+        method : str, optional
+            Method how the topological charge is computed. It can be
+            `continuous` or `berg-luescher`. Default is `continuous`.
 
         Returns
         -------
@@ -1504,13 +1515,13 @@ class Field:
         Raises
         ------
         ValueError
-            If the field is not three-dimensional or the field is not
-            sliced            
+            If the field does not have `dim=3` or the field is not
+            sliced.
 
         Example
         -------
         1. Compute the topological charge of a spatially constant
-        vector field.
+        vector field. Zero value is expected.
 
         >>> import discretisedfield as df
         ...
@@ -1520,7 +1531,9 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
-        >>> f.plane('z').topological_charge()
+        >>> f.plane('z').topological_charge(method='continuous')
+        0.0
+        >>> f.plane('z').topological_charge(method='berg-luescher')
         0.0
 
         2. Attempt to compute the topological charge of a scalar
@@ -1554,9 +1567,6 @@ class Field:
         Traceback (most recent call last):
         ...
         ValueError: ...
-
-        .. seealso::
-            :py:func:`~discretisedfield.Field.topological_charge_density`
 
         """
         if method == 'continuous':
