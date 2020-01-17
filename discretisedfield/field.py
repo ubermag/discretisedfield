@@ -546,25 +546,23 @@ class Field:
 
           1. They are defined on the same mesh.
 
-          2. They have the same dimension.
+          2. They have the same dimension (`dim`).
 
-          3. They both contain the same values in array attributes.
+          3. They both contain the same values in `array` attributes.
 
-        Names and `pbc` are not considered to be necessary
+        `name` and `pbc` attributes are not considered to be necessary
         conditions for determining equality between fields.
 
         Parameters
         ----------
         other : discretisedfield.Field
-            Field object, which is compared to self.
+            Field object, which is compared to `self`.
 
         Returns
         -------
-        True
-            If two field are equal.
-        False
-            If two fields are not equal.
+        bool
 
+        Raises
         Examples
         --------
         1. Check if fields are equal.
@@ -572,6 +570,7 @@ class Field:
         >>> import discretisedfield as df
         ...
         >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        ...
         >>> f1 = df.Field(mesh, dim=1, value=3)
         >>> f2 = df.Field(mesh, dim=1, value=4-1)
         >>> f3 = df.Field(mesh, dim=3, value=(1, 4, 3))
@@ -581,18 +580,18 @@ class Field:
         False
         >>> f2 == f3
         False
+        >>> f1 == 'a'
+        False
+        >>> f2 == 5
+        False
 
         .. seealso:: :py:func:`~discretisedfield.Field.__ne__`
 
         """
         if not isinstance(other, self.__class__):
-            msg = ('Only discretisedfield.Field objects '
-                   'can be compared for equality.')
-            raise TypeError(msg)
-
-        if self.mesh == other.mesh and \
-           self.dim == other.dim and \
-           np.array_equal(self.array, other.array):
+            return False
+        elif self.mesh == other.mesh and self.dim == other.dim and \
+             np.array_equal(self.array, other.array):
             return True
         else:
             return False
@@ -600,28 +599,26 @@ class Field:
     def __ne__(self, other):
         """Determine whether two fields are not equal.
 
-        This method returns `not self == other`. For details, please
-        refer to `discretisedfield.Field.__eq__()` method.
+        This method returns `not (self == other)`. For details, refer
+        to `discretisedfield.Field.__eq__` method.
 
         Parameters
         ----------
         other : discretisedfield.Field
-            Field object, which is compared to self.
+            Field object, which is compared to `self`.
 
         Returns
         -------
-        True
-            If two fields are not equal.
-        False
-            If two fields are equal.
+        bool
 
         Examples
         --------
-        1. Check if fields are equal.
+        1. Check if fields are not equal.
 
         >>> import discretisedfield as df
         ...
         >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        ...
         >>> f1 = df.Field(mesh, dim=1, value=3)
         >>> f2 = df.Field(mesh, dim=1, value=4-1)
         >>> f3 = df.Field(mesh, dim=3, value=(1, 4, 3))
@@ -640,7 +637,9 @@ class Field:
     def __neg__(self):
         """Unary negation operator.
 
-        This method defines the unary operator `-`.
+        This method defines the unary operator `-`. It negates the
+        value of each discretisation cell. It is equivalent to
+        multiplication with -1.
 
         Returns
         -------
@@ -677,13 +676,18 @@ class Field:
         (0.0, 1000.0, 3.0)
 
         """
-        return self.__class__(self.mesh, dim=self.dim, value=-self.array)
+        return -1 * self
 
     def __pow__(self, other):
         """Unary power operator.
 
-        This method defines the unary operator `**`. If the field is a
-        vector field, then each component is raised to the power.
+        This method defines the unary operator `**` for scalar
+        (`dim=1`) fields. This operator is not defined for vector
+        (`dim=3`) fields, and in that case, ValueError is raised.
+
+        Parameters
+        ----------
+        other : numbers.Real
 
         Returns
         -------
@@ -695,20 +699,26 @@ class Field:
 
         >>> import discretisedfield as df
         ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (50e-9, 50e-9, 50e-9)
+        >>> p1 = (-25e-3, -25e-3, -25e-3)
+        >>> p2 = (25e-3, 25e-3, 25e-3)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
         >>> f = df.Field(mesh, dim=1, value=2)
         >>> res = f**(-1)
+        >>> res
+        Field(...)
         >>> res.average
         (0.5,)
         >>> res = f**2
         >>> res.average
         (4.0,)
+        >>> f**f  # the power must be numbers.Real
+        Traceback (most recent call last):
+        ...
+        TypeError: ...
 
-        2. Applying unary power operator on a vector field.
+        2. Attempt to apply power operator on a vector field.
 
         >>> import discretisedfield as df
         ...
@@ -718,26 +728,35 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
         >>> f = df.Field(mesh, dim=3, value=(0, -1, -3))
-        >>> res = f**2
-        >>> res.average
-        (0.0, 1.0, 9.0)
+        >>> f**2
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
 
         """
-        return self.__class__(self.mesh, dim=self.dim,
+        if self.dim != 1:
+            msg = f'Cannot apply power operator on dim={self.dim} field.'
+            raise ValueError(msg)
+        if not isinstance(other, numbers.Real):
+            msg = (f'Unsupported operand type(s) for **: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+
+        return self.__class__(self.mesh, dim=1,
                               value=np.power(self.array, other))
 
     def __add__(self, other):
         """Addition operator.
 
         This method defines the binary operator `+`, which can be
-        applied between two fields only. Both `discretisedfield.Field`
-        objects must be defined on the same mesh and have the same
-        dimensions.
+        applied only between two `discretisedfield.Field`
+        objects. Both `discretisedfield.Field` objects must be defined
+        on the same mesh and have the same dimensions.
 
         Parameters
         ----------
         other : discretisedfield.Field
-            Field object
+            Second operand
 
         Returns
         -------
@@ -759,26 +778,40 @@ class Field:
         >>> res = f1 + f2
         >>> res.average
         (0.0, 0.0, 0.0)
+        >>> f1 + 3
+        Traceback (most recent call last):
+        ...
+        TypeError: ...
 
         .. seealso:: :py:func:`~discretisedfield.Field.__sub__`
 
         """
-        if dfu.compatible(self, other):
-            return self.__class__(self.mesh, dim=self.dim,
-                                  value=self.array + other.array)
+        if not isinstance(other, self.__class__):
+            msg = (f'Unsupported operand type(s) for +: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+        if self.dim != other.dim:
+            msg = f'Cannot add dim={self.dim} and dim={other.dim} fields.'
+            raise ValueError(msg)
+        if self.mesh != other.mesh:
+            msg = f'Cannot add fields defined on different meshes.'
+            raise ValueError(msg)
+
+        return self.__class__(self.mesh, dim=self.dim,
+                              value=self.array + other.array)
 
     def __sub__(self, other):
         """Subtraction operator.
 
         This method defines the binary operator `-`, which can be
-        applied between two fields. Both `discretisedfield.Field`
-        objects must be defined on the same mesh and have the same
-        dimensions.
+        applied only between two `discretisedfield.Field`
+        objects. Both `discretisedfield.Field` objects must be defined
+        on the same mesh and have the same dimensions.
 
         Parameters
         ----------
         other : discretisedfield.Field
-            Field object
+            Second operand
 
         Returns
         -------
@@ -786,7 +819,7 @@ class Field:
 
         Example
         -------
-        1. Subtract two vector fields.
+        1. Add two vector fields.
 
         >>> import discretisedfield as df
         ...
@@ -795,11 +828,15 @@ class Field:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> f1 = df.Field(mesh, dim=3, value=(0, 1, 3.14))
-        >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3.14))
+        >>> f1 = df.Field(mesh, dim=3, value=(0, 1, 6))
+        >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3))
         >>> res = f1 - f2
         >>> res.average
-        (0.0, 0.0, 0.0)
+        (0.0, 0.0, 3.0)
+        >>> f1 - 3.14
+        Traceback (most recent call last):
+        ...
+        TypeError: ...
 
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
@@ -810,15 +847,21 @@ class Field:
         """Multiplication operator.
 
         This method defines the binary operator `*`, which can be
-        applied between two fields or between the field and a scalar
-        (`numbers.Real`). If both operands are
-        `discretisedfield.Field` objects, they must be defined on the
-        same mesh and have the same dimensions.
+        applied between:
+
+        1. Two scalar (`dim=1`) fields,
+
+        2. A field of any dimension and `numbers.Real`, or
+
+        3. A field of any dimension and a scalar (`dim=1`) field.
+
+        If both operands are `discretisedfield.Field` objects, they
+        must be defined on the same mesh.
 
         Parameters
         ----------
         other : discretisedfield.Field, numbers.Real
-            Field object or a scalar
+            Second operand
 
         Returns
         -------
@@ -826,7 +869,7 @@ class Field:
 
         Example
         -------
-        1. Multiply two fields.
+        1. Multiply two scalar fields.
 
         >>> import discretisedfield as df
         ...
@@ -835,13 +878,15 @@ class Field:
         >>> cell = (2, 2, 2)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> f1 = df.Field(mesh, dim=3, value=(2, 3, 4))
-        >>> f2 = df.Field(mesh, dim=3, value=(1, 2, -3))
+        >>> f1 = df.Field(mesh, dim=1, value=5)
+        >>> f2 = df.Field(mesh, dim=1, value=9)
         >>> res = f1 * f2
         >>> res.average
-        (2.0, 6.0, -12.0)
+        (45.0,)
+        >>> f1 * f2 == f2 * f1
+        True
 
-        2. Multiply field with a scalar.
+        2. Multiply vector field with a scalar.
 
         >>> import discretisedfield as df
         ...
@@ -861,43 +906,46 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
 
         """
+        if not isinstance(other, (self.__class__, numbers.Real)):
+            msg = (f'Unsupported operand type(s) for *: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+        if isinstance(other, self.__class__):
+            if self.mesh != other.mesh:
+                msg = f'Cannot multiply fields defined on different meshes.'
+                raise ValueError(msg)
+            if not (self.dim == 1 or other.dim == 1):
+                msg = f'Cannot multiply dim={self.dim} and dim={other.dim} fields.'
+                raise ValueError(msg)
+            res_array = np.multiply(self.array, other.array)
         if isinstance(other, numbers.Real):
-            return self.__class__(self.mesh, dim=self.dim,
-                                  value=self.array*other)
+            res_array = np.multiply(self.array, other)
 
-        else:
-            # Both operands are field objects.
-            if dfu.compatible(self, other):
-                return self.__class__(self.mesh, dim=self.dim,
-                                      value=np.multiply(self.array,
-                                                        other.array))
+        return self.__class__(self.mesh, dim=res_array.shape[-1],
+                              value=res_array)
 
     def __rmul__(self, other):
-        """Multiplication operator covering the case when
-        `discretisedfield.Field` object is the second operand and
-        multiplied with a scalar.
-
-        For details, please refer to `discretisedfield.Field.__mul__`
-        method.
-
-        .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
-
-        """
         return self * other
 
     def __truediv__(self, other):
         """Division operator.
 
         This method defines the binary operator `/`, which can be
-        applied between two fields or between the field and a scalar
-        (`numbers.Real`). If both operands are
-        `discretisedfield.Field` objects, they must be defined on the
-        same mesh and have the same dimensions.
+        applied between:
+
+        1. Two scalar (`dim=1`) fields,
+
+        2. A field of any dimension and `numbers.Real`, or
+
+        3. A field of any dimension and a scalar (`dim=1`) field.
+
+        If both operands are `discretisedfield.Field` objects, they
+        must be defined on the same mesh.
 
         Parameters
         ----------
         other : discretisedfield.Field, numbers.Real
-            Field object or a scalar value
+            Second operand
 
         Returns
         -------
@@ -905,22 +953,24 @@ class Field:
 
         Example
         -------
-        1. Divide two fields.
+        1. Divide two scalar fields.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10, 10, 10)
-        >>> n = (2, 2, 2)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-
-        >>> f1 = df.Field(mesh, dim=3, value=(20, 20, 4))
-        >>> f2 = df.Field(mesh, dim=3, value=(20, 10, -1))
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f1 = df.Field(mesh, dim=1, value=100)
+        >>> f2 = df.Field(mesh, dim=1, value=20)
         >>> res = f1 / f2
         >>> res.average
-        (1.0, 2.0, -4.0)
+        (5.0,)
+        >>> f1 / f2 == (f2 / f1)**(-1)
+        True
 
-        2. Multiply field with a scalar.
+        2. Divide vector field by a scalar.
 
         >>> import discretisedfield as df
         ...
@@ -928,14 +978,15 @@ class Field:
         >>> p2 = (5, 3, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
-        >>> res = f1 * 5  # discretisedfield.Field.__truediv__ is called
+        ...
+        >>> f1 = df.Field(mesh, dim=3, value=(0, 10, 5))
+        >>> res = f1 / 5  # discretisedfield.Field.__mul__ is called
         >>> res.average
-        (0.0, 10.0, 25.0)
-        >>> res = 10 * f1  # discretisedfield.Field.__rtruediv__ is called
-        >>> res.average
-        (0.0, 20.0, 50.0)
+        (0.0, 2.0, 1.0)
+        >>> 10 / f1  # division by a vector is not allowed
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
 
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
@@ -943,16 +994,7 @@ class Field:
         return self * other**(-1)
 
     def __rtruediv__(self, other):
-        """Division operator covering the case when `discretisedfield.Field`
-        object is the second operand and a scalar is divided by it.
-
-        For details, please refer to
-        `discretisedfield.Field.__truediv__` method.
-
-        .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
-
-        """
-        return other * self**(-1)
+        return self**(-1) * other
 
     def derivative(self, direction):
         """Directional derivative.

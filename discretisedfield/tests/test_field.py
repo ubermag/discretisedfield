@@ -344,6 +344,7 @@ class TestField:
         f3 = df.Field(mesh, dim=1, value=3.1)
         f4 = df.Field(mesh, dim=3, value=(1, -6, 0))
         f5 = df.Field(mesh, dim=3, value=(1, -6, 0))
+
         assert f1 == f2
         assert not f1 != f2
         assert not f1 == f3
@@ -352,6 +353,8 @@ class TestField:
         assert f2 != f4
         assert f4 == f5
         assert not f4 != f5
+        assert not f1 == 0.2
+        assert f1 != 0.2
 
     def test_neg(self):
         p1 = (-5e-9, -5e-9, -5e-9)
@@ -373,7 +376,7 @@ class TestField:
 
     def test_pow(self):
         p1 = (0, 0, 0)
-        p2 = (15e-9, 15e-9, 15e-9)
+        p2 = (15e-9, 6e-9, 6e-9)
         cell = (3e-9, 3e-9, 3e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
@@ -384,12 +387,17 @@ class TestField:
         res = f**(-1)
         assert res.average == (0.5,)
 
-        # Vector field
+        # Attempt vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -2))
-        res = f**2
-        assert res.average == (1, 4, 4)
-        res = f**(-1)
-        assert res.average == (1, 0.5, -0.5)
+        with pytest.raises(ValueError):
+            res = f**2
+
+        # Attempt to raise to non numbers.Real
+        f = df.Field(mesh, dim=1, value=2)
+        with pytest.raises(TypeError):
+            res = f**'a'
+        with pytest.raises(TypeError):
+            res = f**f
 
     def test_add_subtract(self):
         p1 = (0, 0, 0)
@@ -413,11 +421,32 @@ class TestField:
         res = f1 - f2
         assert res.average == (2, 5, 8)
 
-        # Check if commutative
+        # Artithmetic checks
         assert f1 + f2 == f2 + f1
         assert f1 - f2 == -(f2 - f1)
+        assert f1 + (f1 + f2) == (f1 + f1) + f2
+        assert f1 - (f1 + f2) == f1 - f1 - f2
+        assert f1 + f2 - f1 == f2
 
-    def test_mul_rmul(self):
+        # Exceptions
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+        with pytest.raises(TypeError):
+            res = f1 + 2
+        with pytest.raises(TypeError):
+            res = 2 + f2
+        with pytest.raises(ValueError):
+            res = f1 + f2
+
+        # Fields defined on different meshes
+        mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
+        mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
+        f1 = df.Field(mesh1, dim=1, value=1.2)
+        f2 = df.Field(mesh2, dim=1, value=1)
+        with pytest.raises(ValueError):
+            res = f1 + f2
+
+    def test_mul_truediv(self):
         p1 = (0, 0, 0)
         p2 = (5e-9, 5e-9, 5e-9)
         cell = (1e-9, 5e-9, 1e-9)
@@ -428,66 +457,77 @@ class TestField:
         f2 = df.Field(mesh, dim=1, value=-2)
         res = f1 * f2
         assert res.average == (-2.4,)
-
-        # Scalar field with a scalar
-        f1 = df.Field(mesh, dim=1, value=5)
-        res = f1 * 2  # __mul__
-        assert res.average == (10,)
-        res = 3 * f1  # __rmul__
-        assert res.average == (15,)
-
-        # Vector fields
-        f1 = df.Field(mesh, dim=3, value=(1, 2, -3))
-        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
-        res = f1 * f2
-        assert res.average == (-1, -6, 15)
-
-        # Vector field with a scalar
-        f1 = df.Field(mesh, dim=3, value=(1, 2e6, 0))
-        res = f1 * 2
-        assert res.average == (2, 4e6, 0)
-        res = 5 * f1
-        assert res.average == (5, 10e6, 0)
-
-        # Check if commutative
-        assert f1 * f2 == f2 * f1
-        assert -5 * f2 == f2 * (-5)
-
-    def test_truediv_rtruediv(self):
-        p1 = (0, 0, 0)
-        p2 = (5e-9, 5e-9, 10e-9)
-        cell = (1e-9, 5e-9, 2e-9)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        # Scalar fields
-        f1 = df.Field(mesh, dim=1, value=2)
-        f2 = df.Field(mesh, dim=1, value=-2)
         res = f1 / f2
-        assert res.average == (-1,)
+        assert res.average == (-0.6,)
 
         # Scalar field with a scalar
         f = df.Field(mesh, dim=1, value=5)
-        res = f / 2  # __truediv__
+        res = f * 2  # __mul__
+        assert res.average == (10,)
+        res = 3 * f  # __rmul__
+        assert res.average == (15,)
+        res = f / 2  # __mul__
         assert res.average == (2.5,)
-        res = 10 / f  # __rtruediv__
+        res = 10 / f  # __rmul__
         assert res.average == (2,)
 
-        # Vector fields
-        f1 = df.Field(mesh, dim=3, value=(1, 4, 10))
-        f2 = df.Field(mesh, dim=3, value=(-1, 2, -5))
-        res = f1 / f2
-        assert res.average == (-1, 2, -2)
+        # Vector field with a scalar field
+        f1 = df.Field(mesh, dim=1, value=2)
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, 5))
+        res = f1 * f2  # __mul__
+        assert res.average == (-2, -6, 10)
+        res = f2 * f1  # __rmul__
+        assert res.average == (-2, -6, 10)
+        res = f2 / f1  # __truediv__
+        assert res.average == (-0.5, -1.5, 2.5)
+        with pytest.raises(ValueError):
+            res = f1 / f2  # __rtruediv__
 
         # Vector field with a scalar
-        f = df.Field(mesh, dim=3, value=(2, 2e6, -4))
-        res = f / 2  # __truediv__
-        assert res.average == (1, 1e6, -2)
-        res = 4e6 / f  # __rturediv__
-        assert res.average == (2e6, 2, -1e6)
+        f = df.Field(mesh, dim=3, value=(1, 2, 0))
+        res = f * 2
+        assert res.average == (2, 4, 0)
+        res = 5 * f
+        assert res.average == (5, 10, 0)
+        res = f / 2
+        assert res.average == (0.5, 1, 0)
+        with pytest.raises(ValueError):
+            res = 10 / f
 
-        # Check if commutative
-        assert f1 / f2 != f2 / f1
-        assert (f1 / f2) == (f2 / f1)**(-1)
+        # Further checks
+        f1 = df.Field(mesh, dim=1, value=2)
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+        assert f1 * f2 == f2 * f1
+        assert 1.3 * f2 == f2 * 1.3
+        assert -5 * f2 == f2 * (-5)
+        assert f1 * (f1 * f2) == (f1 * f1) * f2
+        assert f1 * f2 / f1 == f2
+
+        # Exceptions
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+        with pytest.raises(TypeError):
+            res = f2 * 'a'
+        with pytest.raises(TypeError):
+            res = 'a' / f1
+        with pytest.raises(ValueError):
+            res = f2 * f2
+        with pytest.raises(ValueError):
+            res = f2 / f2
+        with pytest.raises(ValueError):
+            res = 1 / f2
+        with pytest.raises(ValueError):
+            res = f1 / f2
+
+        # Fields defined on different meshes
+        mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
+        mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
+        f1 = df.Field(mesh1, dim=1, value=1.2)
+        f2 = df.Field(mesh2, dim=1, value=1)
+        with pytest.raises(ValueError):
+            res = f1 * f2
+        with pytest.raises(ValueError):
+            res = f1 / f2
 
     def test_operators(self):
         p1 = (0, 0, 0)
@@ -498,6 +538,7 @@ class TestField:
         f1 = df.Field(mesh, dim=1, value=2)
         f2 = df.Field(mesh, dim=3, value=(-4, 0, 1))
         res = ((f1/2 + f2.x)**2 - 2*f1*3)/(-f2.z) - 2*f2.y + 1/f2.z**2
+
         assert np.all(res.array == 4)
 
     def test_derivative(self):
