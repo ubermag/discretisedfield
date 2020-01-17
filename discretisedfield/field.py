@@ -293,6 +293,44 @@ class Field:
 
     @property
     def orientation(self):
+        """Orientation field.
+
+        This method computes the orientation (direction) field of a
+        vector (`dim=3`) field and returns a `discretisedfield.Field`
+        object with `dim=3`. More precisely, at every discretisation
+        cell, the vector is divided by its norm, so that a unit vector
+        is obtained. However, if the vector at a discretisation cell
+        is a zero-vector, it remains unchanged. In the case of a
+        scalar (`dim=1`) field, `ValueError` is raised.
+
+        Returns
+        -------
+        discretisedfield.Field
+            Orientation field.
+
+        Raises
+        ------
+        ValueError
+            If the field is not a `dim=3` field.
+
+        Examples
+        --------
+        1. Computing the orientation field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(6, 0, 8))
+        >>> field.orientation
+        Field(...)
+        >>> field.orientation.norm.average
+        (1.0,)
+
+        """
         if self.dim == 1:
             msg = (f'Cannot derive orientation field for a '
                    f'field with dim={self.dim}.')
