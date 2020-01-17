@@ -871,7 +871,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(1, 2, -5))
         with pytest.raises(ValueError) as excinfo:
             f.write(wrongfilename)
-        assert 'Allowed extensions' in str(excinfo.value)
+        assert 'Allowed file extensions' in str(excinfo.value)
 
     def test_wrong_dim_field(self):
         ovffilename = 'test_file.ovf'
