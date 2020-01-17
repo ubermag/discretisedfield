@@ -21,16 +21,6 @@ def array2tuple(array):
 
 
 def compatible(field1, field2):
-    """Check if a binary operator can be applied to two fields.
-
-    A binary operator (`+`, `-`, `*`, `/`) can be applied between two
-    fields (`field1` and `field2`) if both fields are:
-
-    1. defined on the same mesh and
-
-    2. have the same dimension.
-
-    """
     if not isinstance(field1, df.Field) or \
        not isinstance(field2, df.Field):
         msg = ('Binary operator can be applied only on '

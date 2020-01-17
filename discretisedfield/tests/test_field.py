@@ -529,7 +529,7 @@ class TestField:
         with pytest.raises(ValueError):
             res = f1 / f2
 
-    def test_operators(self):
+    def test_all_operators(self):
         p1 = (0, 0, 0)
         p2 = (5e-9, 5e-9, 10e-9)
         n = (2, 2, 1)
@@ -821,43 +821,17 @@ class TestField:
         check_field(q)
         assert q.dim == 1
         assert q.average == (0,)
-        assert f.plane('z').topological_charge == 0
+        assert f.plane('z').topological_charge(method='continuous') == 0
+        assert f.plane('z').topological_charge(method='berg-luescher') == 0
 
-        # f(x, y, z) = (x, y, z)
-        # -> Q(f) != 0
-        def value_fun(pos):
-            x, y, z = pos
-            return (x, y, z)
-
-        f = df.Field(mesh, dim=3, value=value_fun)
-
-        q = f.plane('z').topological_charge_density
-        assert q.dim == 1
-        assert q.average != (0,)
-        assert f.plane('z').topological_charge != 0
-
-    def test_bergluescher(self):
-        p1 = (0, 0, 0)
-        p2 = (2, 2, 2)
-        cell = (0.1, 0.1, 2)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        # f(x, y, z) = (0, 0, 0)
-        # -> Q(f) = 0
-        f = df.Field(mesh, dim=3, value=(0, 0, 0))
-
-        assert f.plane('z').bergluescher == 0
-
-        # f(x, y, z) = (x, y, z)
-        # -> Q(f) != 0
-        def value_fun(pos):
-            x, y, z = pos
-            return (x, y, z)
-
-        f = df.Field(mesh, dim=3, value=value_fun, norm=1)
-        
-        assert f.plane('z').bergluescher != 0
-        assert abs(f.plane('z').bergluescher - f.plane('z').topological_charge) < 0.01
+        # Skyrmion from a file
+        test_filename = os.path.join(os.path.dirname(__file__),
+                                     'test_sample/', 'skyrmion.omf')
+        f = df.Field.fromfile(test_filename)
+        Qc = f.plane('z').topological_charge(method='continuous')
+        Qbl = f.plane('z').topological_charge(method='berg-luescher')
+        assert abs(Qc - 1) < 0.15
+        assert abs(Qbl - 1) < 1e-3
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))

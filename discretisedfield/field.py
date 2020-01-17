@@ -1,6 +1,7 @@
 import pyvtk
 import struct
 import numbers
+import itertools
 import matplotlib
 import numpy as np
 import mpl_toolkits.axes_grid1
@@ -1076,20 +1077,14 @@ class Field:
         if isinstance(direction, str):
             direction = dfu.axesdict[direction]
 
-        # Derivative cannot be computed if only one cell exists in a
-        # certain direction. In that case, a zero field is
-        # returned. More precisely, it is assumed that the field does
-        # not change in that direction.
         if self.mesh.n[direction] == 1:
-            return self.__class__(self.mesh, dim=self.dim, value=0)
-
-        if self.dim == 1:
+            grad_array = 0
+        elif self.dim == 1:
             grad_array = np.gradient(self.array[..., 0],
                                      self.mesh.cell[direction],
                                      axis=direction)
             grad_array = grad_array[..., np.newaxis]
-
-        elif self.dim == 3:
+        else:
             grad_array = np.gradient(self.array,
                                      self.mesh.cell[direction],
                                      axis=direction)
@@ -1100,7 +1095,7 @@ class Field:
     def grad(self):
         """Gradient.
 
-        This method computes the gradient of a scalar (dim=1) field
+        This method computes the gradient of a scalar (`dim=1`) field
         and returns a vector field. If the field is not of dimension
         1, `ValueError` is raised.
 
@@ -1173,7 +1168,7 @@ class Field:
 
         """
         if self.dim != 1:
-            msg = 'Gradient can be computed only for a scalar field.'
+            msg = f'Cannot compute gradient for dim={self.dim} field.'
             raise ValueError(msg)
 
         return df.stack([self.derivative('x'),
@@ -1184,9 +1179,9 @@ class Field:
     def div(self):
         """Divergence.
 
-        This method computes the divergence of a vector field (dim=3)
-        and returns a scalar field (dim=1) as a result. If the field
-        is not of dimension 3, `ValueError` is raised.
+        This method computes the divergence of a vector field
+        (`dim=3`) and returns a scalar field (`dim=1`) as a result. If
+        the field is not of dimension 3, `ValueError` is raised.
 
         Directional derivative cannot be computed if only one
         discretisation cell exists in a certain direction. In that
@@ -1243,8 +1238,7 @@ class Field:
 
         """
         if self.dim != 3:
-            msg = ('Divergence can be computed only for '
-                   'three-dimensional (dim=3) vector fields.')
+            msg = f'Cannot compute divergence for dim={self.dim} field.'
             raise ValueError(msg)
 
         return (self.x.derivative('x') + 
@@ -1255,8 +1249,8 @@ class Field:
     def curl(self):
         """Curl.
 
-        This method computes the curl of a vector field (dim=3) and
-        returns a vector field (dim=3) as a result. If the field is
+        This method computes the curl of a vector field (`dim=3`) and
+        returns a vector field (`dim=3`) as a result. If the field is
         not of dimension 3, `ValueError` is raised.
 
         Directional derivative cannot be computed if only one
@@ -1315,8 +1309,7 @@ class Field:
 
         """
         if self.dim != 3:
-            msg = ('Curl can be computed only for three-dimensional '
-                   '(dim=3) vector fields.')
+            msg = f'Cannot compute curl for dim={self.dim} field.'
             raise ValueError(msg)
 
         curl_x = self.z.derivative('y') - self.y.derivative('z')
@@ -1379,11 +1372,11 @@ class Field:
         """Topological charge density.
 
         This method computes the topological charge density for the
-        vector field (dim=3). Topological charge is defined on
-        two-dimensional samples. Therefore, the field must be "sliced"
+        vector field (`dim=3`). Topological charge is defined on
+        two-dimensional samples only. Therefore, the field must be "sliced"
         using the `discretisedfield.Field.plane` method. If the field
         is not three-dimensional or the field is not sliced,
-        ValueError is returned.
+        `ValueError` is raised.
 
         Returns
         -------
@@ -1447,23 +1440,52 @@ class Field:
 
         """
         if self.dim != 3:
-            msg = ('Topological charge density can be computed only for '
-                   'vector fields (dim=3).')
+            msg = (f'Cannot compute topological charge density '
+                   f'for dim={self.dim} field.')
             raise ValueError(msg)
         if not hasattr(self.mesh, 'info'):
-            msg = ('Topological charge density can be computed only on '
-                   'a 2D sample. Please slice the field using plane '
-                   'method, for example, field.plane(\'z\').'
-                   'topological_charge_density().')
+            msg = ('The field must be sliced before the topological '
+                   'charge density can be computed.')
             raise ValueError(msg)
 
-        of = self.orientation
-        return df.dot(of,
-                      df.cross(of.derivative(self.mesh.info['axis1']),
-                               of.derivative(self.mesh.info['axis2'])))
+        of = self.orientation  # unit (orientation) field
+        thickness = self.mesh.cell[self.mesh.info['planeaxis']]
+        prefactor = 1 / (4 * np.pi* thickness)
+        q = df.dot(of, df.cross(of.derivative(self.mesh.info['axis1']),
+                                of.derivative(self.mesh.info['axis2'])))
+        return prefactor * q
 
     @property
-    def topological_charge(self):
+    def _bergluescher(self):
+        if self.dim != 3:
+            msg = (f'Cannot compute Berg-Luescher topological charge '
+                   f'for dim={self.dim} field.')
+            raise ValueError(msg)
+        if not hasattr(self.mesh, 'info'):
+            msg = ('The field must be sliced before the Berg-Luescher '
+                   'topological charge can be computed.')
+            raise ValueError(msg)
+
+        axis1 = self.mesh.info['axis1']
+        axis2 = self.mesh.info['axis2']
+        of = self.orientation  # unit (orientation) field
+
+        topological_charge = 0
+        for i, j in itertools.product(range(of.mesh.n[axis1]-1),
+                                      range(of.mesh.n[axis2]-1)):
+            v1 = of.array[dfu.assemble_index({axis1: i, axis2: j})]
+            v2 = of.array[dfu.assemble_index({axis1: i+1, axis2: j})]
+            v3 = of.array[dfu.assemble_index({axis1: i+1, axis2: j+1})]
+            v4 = of.array[dfu.assemble_index({axis1: i, axis2: j+1})]
+
+            triangle1 = dfu.bergluescher_angle(v1, v2, v4)
+            triangle2 = dfu.bergluescher_angle(v2, v3, v4)
+
+            topological_charge += triangle1 + triangle2
+
+        return topological_charge
+
+    def topological_charge(self, method='berg-luescher'):
         """Topological charge.
 
         This method computes the topological charge for the vector
@@ -1498,7 +1520,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
-        >>> f.plane('z').topological_charge
+        >>> f.plane('z').topological_charge()
         0.0
 
         2. Attempt to compute the topological charge of a scalar
@@ -1512,7 +1534,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=12)
-        >>> f.plane('z').topological_charge
+        >>> f.plane('z').topological_charge()
         Traceback (most recent call last):
         ...
         ValueError: ...
@@ -1528,7 +1550,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        >>> f.topological_charge_density
+        >>> f.topological_charge_density()
         Traceback (most recent call last):
         ...
         ValueError: ...
@@ -1537,45 +1559,10 @@ class Field:
             :py:func:`~discretisedfield.Field.topological_charge_density`
 
         """
-        plane_thickness = self.mesh.cell[self.mesh.info['planeaxis']]
-        prefactor = 1/(4*np.pi*plane_thickness)
-        return prefactor * self.topological_charge_density.integral[0]
-
-    @property
-    def bergluescher(self):
-        if self.dim != 3:
-            msg = ('Topological charge density can be computed only for '
-                   'vector fields (dim=3).')
-            raise ValueError(msg)
-        if not hasattr(self.mesh, 'info'):
-            msg = ('Topological charge density can be computed only on '
-                   'a 2D sample. Please slice the field using plane '
-                   'method, for example, field.plane(\'z\').'
-                   'topological_charge_density().')
-            raise ValueError(msg)
-
-        axis1 = self.mesh.info['axis1']
-        axis2 = self.mesh.info['axis2']
-
-        s = 0
-        for i in range(self.mesh.n[axis1]-1):
-            for j in range(self.mesh.n[axis2]-1):
-                index1 = dfu.assemble_index({axis1: i, axis2: j})
-                index2 = dfu.assemble_index({axis1: i+1, axis2: j})
-                index3 = dfu.assemble_index({axis1: i+1, axis2: j+1})
-                index4 = dfu.assemble_index({axis1: i, axis2: j+1})
-
-                v1 = self.array[index1]
-                v2 = self.array[index2]
-                v3 = self.array[index3]
-                v4 = self.array[index4]
-
-                triangle1 = dfu.bergluescher_angle(v1, v2, v4)
-                triangle2 = dfu.bergluescher_angle(v2, v3, v4)
-
-                s += triangle1 + triangle2
-
-        return s
+        if method == 'continuous':
+            return self.topological_charge_density.integral[0]
+        elif method == 'berg-luescher':
+            return self._bergluescher
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
