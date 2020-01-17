@@ -275,7 +275,8 @@ class Field:
         """
         return self.__class__(self.mesh,
                               dim=1,
-                              value=np.linalg.norm(self.array, axis=-1)[..., np.newaxis])
+                              value=np.linalg.norm(self.array, axis=-1)[..., np.newaxis],
+                              name='norm')
 
     @norm.setter
     def norm(self, val):
@@ -1716,8 +1717,8 @@ class Field:
         elif filename.endswith('.vtk'):
             self._writevtk(filename)
         else:
-            msg = ('Allowed extensions for writing the field are '
-                   '.omf, .ovf, .ohf, and .vtk.')
+            msg = ('Allowed file extensions for are .omf, .ovf, '
+                   '.ohf, and .vtk.')
             raise ValueError(msg)
 
     def _writeovf(self, filename, representation='txt', extend_scalar=False):
