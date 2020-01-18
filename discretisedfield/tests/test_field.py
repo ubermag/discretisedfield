@@ -849,15 +849,60 @@ class TestField:
         assert v[-1] == (1, 2, 3)
 
     def test_plane(self):
-        for mesh in self.meshes:
+        for mesh, direction in itertools.product(self.meshes,
+                                                 ['x', 'y', 'z']):
             f = df.Field(mesh, dim=1, value=3)
-            plane = f.plane('x', n=(3, 3))
+            plane = f.plane(direction, n=(3, 3))
             assert isinstance(plane, df.Field)
 
             p, v = zip(*list(plane))
             assert len(p) == 9
             assert len(v) == 9
 
+    def test_squeeze(self):
+        p1 = (-5, -5, -5)
+        p2 = (5, 5, 5)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Constant scalar field
+        f = df.Field(mesh, dim=1, value=5)
+        assert f.squeeze('x').array.shape == (1, 10, 10, 1)
+        assert f.squeeze('y').array.shape == (10, 1, 10, 1)
+        assert f.squeeze('z').array.shape == (10, 10, 1, 1)
+
+        # Constant vector field
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        assert f.squeeze('x').array.shape == (1, 10, 10, 3)
+        assert f.squeeze('y').array.shape == (10, 1, 10, 3)
+        assert f.squeeze('z').array.shape == (10, 10, 1, 3)
+
+        # Spatially varying scalar field
+        def value_fun(pos):
+            x, y, z = pos
+            if z <= 0:
+                return 1
+            else:
+                return -1
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+        sf = f.squeeze('z')
+        assert sf.array.shape == (10, 10, 1, 1)
+        assert sf.average == (0,)
+
+        # Spatially varying vector field
+        def value_fun(pos):
+            x, y, z = pos
+            if z <= 0:
+                return (3, 2, 1)
+            else:
+                return (3, 2, -1)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+        sf = f.squeeze('z')
+        assert sf.array.shape == (10, 10, 1, 3)
+        assert sf.average == (3, 2, 0)
+        
     def test_writevtk(self):
         vtkfilename = 'test_file.ovf'
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))

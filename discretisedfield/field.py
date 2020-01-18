@@ -1666,6 +1666,50 @@ class Field:
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
+    def squeeze(self, *args, n=None):
+        """Squeezes the field along one direction and averages it out along
+        that direction.
+
+        One of the axes (`'x'`, `'y'`, or `'z'`) is passed and the
+        field is sqeezed (averaged) along that direction. For example
+        `squeeze('z')` would average the field in the z-direction and
+        return the field which has only one discretisation cell in the
+        z-direction. The number of points in two dimensions on the
+        plane can be defined using `n` (e.g. `n=(10, 15)`). The
+        resulting field has the same dimension as the field itself.
+
+        Parameters
+        ----------
+        n : tuple of length 2
+            The number of points on the plane in two dimensions
+
+        Returns
+        ------
+        discretisedfield.Field
+            A field squeezed along a certain direction.
+
+        Example
+        -------
+        1. Squeezing the field along a certain direction.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> field.squeeze('z')
+        Field(...)
+        >>> field.squeeze('z').array.shape
+        (2, 2, 1, 3)
+
+        """
+        plane_mesh = self.mesh.plane(*args, n=n)
+        plane_array = self.array.mean(axis=plane_mesh.info['planeaxis'], keepdims=True)
+        return self.__class__(plane_mesh, dim=self.dim, value=plane_array)
+
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field in .ovf, .omf, .ohf, or vtk format.
 
