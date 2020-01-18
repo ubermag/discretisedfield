@@ -931,6 +931,7 @@ class TestField:
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
         f = df.Field(mesh, dim=1, value=1)
         f.write(ovffilename, extend_scalar=True)
+        os.remove(ovffilename)
 
     def test_writeovf(self):
         representations = ['txt', 'bin4', 'bin8']
