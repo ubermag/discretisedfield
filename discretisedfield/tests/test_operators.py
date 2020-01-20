@@ -60,8 +60,8 @@ def test_dot():
     # Fields defined on different meshes
     mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
     mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
-    f1 = df.Field(mesh1, dim=1, value=1.2)
-    f2 = df.Field(mesh2, dim=1, value=1)
+    f1 = df.Field(mesh1, dim=3, value=(1, 2, 3))
+    f2 = df.Field(mesh2, dim=3, value=(3, 2, 1))
     with pytest.raises(ValueError):
         res = df.dot(f1, f2)
 
@@ -124,8 +124,8 @@ def test_cross():
     # Fields defined on different meshes
     mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
     mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
-    f1 = df.Field(mesh1, dim=1, value=1.2)
-    f2 = df.Field(mesh2, dim=1, value=1)
+    f1 = df.Field(mesh1, dim=3, value=(1, 2, 3))
+    f2 = df.Field(mesh2, dim=3, value=(3, 2, 1))
     with pytest.raises(ValueError):
         res = df.cross(f1, f2)
 
