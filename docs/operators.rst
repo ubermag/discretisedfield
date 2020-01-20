@@ -1,6 +1,6 @@
 ``discretisedfield.operators``
 ==============================
 
-.. autofunction:: discretisedfield.operators.dot
-.. autofunction:: discretisedfield.operators.cross
-.. autofunction:: discretisedfield.operators.stack
+.. autofunction:: discretisedfield.dot
+.. autofunction:: discretisedfield.cross
+.. autofunction:: discretisedfield.stack

@@ -795,7 +795,7 @@ class Field:
             msg = f'Cannot add dim={self.dim} and dim={other.dim} fields.'
             raise ValueError(msg)
         if self.mesh != other.mesh:
-            msg = f'Cannot add fields defined on different meshes.'
+            msg = 'Cannot add fields defined on different meshes.'
             raise ValueError(msg)
 
         return self.__class__(self.mesh, dim=self.dim,
@@ -1684,7 +1684,7 @@ class Field:
             The number of points on the plane in two dimensions
 
         Returns
-        ------
+        -------
         discretisedfield.Field
             A field squeezed along a certain direction.
 

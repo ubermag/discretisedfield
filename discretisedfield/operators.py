@@ -41,13 +41,21 @@ def dot(f1, f2):
     (5.0,)
 
     """
+    if not isinstance(f1, df.Field) or not isinstance(f2, df.Field):
+        msg = (f'Unsupported operand type(s) for the dot product: '
+               f'{type(f1)} and {type(f2)}.')
+        raise TypeError(msg)
     if f1.dim != 3 or f2.dim != 3:
-        msg = ('Dot product can be calculated only '
-               'on three-dimensional fields.')
+        msg = (f'Cannot compute the cross product on '
+               f'dim={f1.dim} and dim={f2.dim} fields.')
         raise ValueError(msg)
-    if dfu.compatible(f1, f2):
-        res_array = np.einsum('ijkl,ijkl->ijk', f1.array, f2.array)
-        return df.Field(f1.mesh, dim=1, value=res_array[..., np.newaxis])
+    if f1.mesh != f2.mesh:
+        msg = ('Cannot compute the dot product of '
+               'fields defined on different meshes.')
+        raise ValueError(msg)
+
+    res_array = np.einsum('ijkl,ijkl->ijk', f1.array, f2.array)
+    return df.Field(f1.mesh, dim=1, value=res_array[..., np.newaxis])
 
 
 def cross(f1, f2):
@@ -88,13 +96,21 @@ def cross(f1, f2):
     (0.0, 0.0, 1.0)
 
     """
+    if not isinstance(f1, df.Field) or not isinstance(f2, df.Field):
+        msg = (f'Unsupported operand type(s) for the cross product: '
+               f'{type(f1)} and {type(f2)}.')
+        raise TypeError(msg)
     if f1.dim != 3 or f2.dim != 3:
-        msg = ('Cross product can be calculated only '
-               'on three-dimensional fields.')
+        msg = (f'Cannot compute the cross product on '
+               f'dim={f1.dim} and dim={f2.dim} fields.')
         raise ValueError(msg)
-    if dfu.compatible(f1, f2):
-        res_array = np.cross(f1.array, f2.array)
-        return df.Field(f1.mesh, dim=3, value=res_array)
+    if f1.mesh != f2.mesh:
+        msg = ('Cannot compute the cross product of '
+               'fields defined on different meshes.')
+        raise ValueError(msg)
+
+    res_array = np.cross(f1.array, f2.array)
+    return df.Field(f1.mesh, dim=3, value=res_array)
 
 
 def stack(fields):
@@ -143,15 +159,19 @@ def stack(fields):
     True
 
     """
+    if not all(isinstance(f, df.Field) for f in fields):
+        msg = 'Only discretisedfield.Field objects can be stacked.'
+        raise TypeError(msg)
+    if not all(f.dim == 1 for f in fields):
+        msg = 'Only dim=1 fields can be stacked.'
+        raise ValueError(msg)
+    if not all(f.mesh == fields[0].mesh for f in fields):
+        msg = 'Fields defined on different meshes cannot be stacked.'
+        raise ValueError(msg)
+
     array_list = []
     for f in fields:
-        if f.dim != 1:
-            msg = 'Only scalar (dim=1) fields can be stacked.'
-            raise ValueError(msg)
-        # An exception will be raised if any of the fields is not
-        # compatible with the first one in the list.
-        if dfu.compatible(fields[0], f):
-            array_list.append(f.array[..., 0])
+        array_list.append(f.array[..., 0])
 
     return df.Field(fields[0].mesh, dim=len(fields),
                     value=np.stack(array_list, axis=3))
