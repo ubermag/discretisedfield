@@ -724,6 +724,12 @@ class TestField:
         assert f.grad.y == f.derivative('y')
         assert f.grad.z == f.derivative('z')
 
+        # Exception
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+
+        with pytest.raises(ValueError):
+            res = f.grad
+
     def test_div_curl(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
@@ -782,6 +788,14 @@ class TestField:
         assert f.div((7, 5, 1)) == 38
         assert f.curl((7, 5, 1)) == (7, -5, -6)
 
+        # Exception
+        f = df.Field(mesh, dim=1, value=3.11)
+
+        with pytest.raises(ValueError):
+            res = f.div
+        with pytest.raises(ValueError):
+            res = f.curl
+
     def test_integral(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
@@ -832,6 +846,24 @@ class TestField:
         Qbl = f.plane('z').topological_charge(method='berg-luescher')
         assert abs(Qc - 1) < 0.15
         assert abs(Qbl - 1) < 1e-3
+
+        # Not sliced
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        with pytest.raises(ValueError):
+            res = f.topological_charge(method='continuous')
+        with pytest.raises(ValueError):
+            res = f.topological_charge(method='berg-luescher')
+
+        # Scalar field
+        f = df.Field(mesh, dim=1, value=3.14)
+        with pytest.raises(ValueError):
+            res = f.plane('z').topological_charge(method='continuous')
+        with pytest.raises(ValueError):
+            res = f.plane('z').topological_charge(method='berg-luescher')
+
+        # Method does not exist
+        with pytest.raises(ValueError):
+            res = f.plane('z').topological_charge(method='some-method')
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))

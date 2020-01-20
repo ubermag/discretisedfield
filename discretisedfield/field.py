@@ -1574,6 +1574,9 @@ class Field:
             return self.topological_charge_density.integral[0]
         elif method == 'berg-luescher':
             return self._bergluescher
+        else:
+            msg = 'Method can be either continuous or berg-luescher'
+            raise ValueError(msg)
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
