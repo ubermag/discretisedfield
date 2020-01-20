@@ -20,23 +20,6 @@ def array2tuple(array):
     return tuple(array.tolist())
 
 
-def compatible(field1, field2):
-    if not isinstance(field1, df.Field) or \
-       not isinstance(field2, df.Field):
-        msg = ('Binary operator can be applied only on '
-               'discretisedfield.Field objects.')
-        raise TypeError(msg)
-    elif field1.mesh != field2.mesh:
-        msg = 'Fields must be defined on the same mesh.'
-        raise ValueError(msg)
-    elif field1.dim != field2.dim:
-        msg = 'Fields must have the same dimension.'
-        raise ValueError(msg)
-    else:
-        # A binary operator can be applied between two fields.
-        return True
-
-
 def bergluescher_angle(v1, v2, v3):
     rho = (2 *
            (1 + np.dot(v1, v2)) *

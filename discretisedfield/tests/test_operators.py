@@ -49,11 +49,21 @@ def test_dot():
     assert df.dot(f1, f2)((3, 1, 1)) == (7,)
     assert df.dot(f1, f2)((5, 7, 1)) == (47,)
 
-    # Try to compute the dot product between two scalar fields.
-    f1 = df.Field(mesh, dim=1, value=1)
-    f2 = df.Field(mesh, dim=1, value=2)
+    # Exceptions
+    f1 = df.Field(mesh, dim=1, value=1.2)
+    f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+    with pytest.raises(TypeError):
+        res = df.dot(f1, 2)
     with pytest.raises(ValueError):
-        df.dot(f1, f2)
+        res = df.dot(f1, f2)
+
+    # Fields defined on different meshes
+    mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
+    mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
+    f1 = df.Field(mesh1, dim=1, value=1.2)
+    f2 = df.Field(mesh2, dim=1, value=1)
+    with pytest.raises(ValueError):
+        res = df.dot(f1, f2)
 
 def test_cross():
     p1 = (0, 0, 0)
@@ -103,11 +113,21 @@ def test_cross():
     assert df.cross(f2, f1)((3, 1, 1)) == (2, 2, -8)
     assert df.cross(f1, f2)((5, 7, 1)) == (44, -34, 18)
 
-    # Try to compute the cross product between two scalar fields.
-    f1 = df.Field(mesh, dim=1, value=1)
-    f2 = df.Field(mesh, dim=1, value=2)
+    # Exceptions
+    f1 = df.Field(mesh, dim=1, value=1.2)
+    f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+    with pytest.raises(TypeError):
+        res = df.cross(f1, 2)
     with pytest.raises(ValueError):
-        df.cross(f1, f2)
+        res = df.cross(f1, f2)
+
+    # Fields defined on different meshes
+    mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
+    mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
+    f1 = df.Field(mesh1, dim=1, value=1.2)
+    f2 = df.Field(mesh2, dim=1, value=1)
+    with pytest.raises(ValueError):
+        res = df.cross(f1, f2)
 
 def test_stack():
     p1 = (0, 0, 0)
@@ -124,8 +144,18 @@ def test_stack():
     assert res.dim == 3
     assert res.average == (1, -3, 5)
 
-    # Try to stack vector fields.
-    f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
-    f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
+    # Exceptions
+    f1 = df.Field(mesh, dim=1, value=1.2)
+    f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+    with pytest.raises(TypeError):
+        res = df.stack([f1, 2])
     with pytest.raises(ValueError):
-        df.stack([f1, f2])
+        res = df.stack([f1, f2])
+
+    # Fields defined on different meshes
+    mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
+    mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
+    f1 = df.Field(mesh1, dim=1, value=1.2)
+    f2 = df.Field(mesh2, dim=1, value=1)
+    with pytest.raises(ValueError):
+        res = df.stack([f1, f2])

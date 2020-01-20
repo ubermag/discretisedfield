@@ -46,7 +46,7 @@ def dot(f1, f2):
                f'{type(f1)} and {type(f2)}.')
         raise TypeError(msg)
     if f1.dim != 3 or f2.dim != 3:
-        msg = (f'Cannot compute the cross product on '
+        msg = (f'Cannot compute the dot product on '
                f'dim={f1.dim} and dim={f2.dim} fields.')
         raise ValueError(msg)
     if f1.mesh != f2.mesh:
