@@ -26,8 +26,7 @@ class Mesh:
     dimensions. Either `cell` or `n` should be defined to discretise
     the domain, not both. Periodic boundary conditions can be
     specified by passing `pbc` argument, which is an iterable
-    containing one or more elements from ``['x', 'y', 'z']``. The
-    parameter `name` is optional and defaults to 'mesh'.
+    containing one or more elements from ``['x', 'y', 'z']``.
 
     In order to properly define a mesh, the length of all mesh domain
     edges must not be zero and the mesh domain must be an aggregate of
@@ -52,10 +51,6 @@ class Mesh:
         A dictionary defining regions inside the mesh. The keys of the
         dictionary are the region names (str), whereas the values are
         `discretisedfield.Region` objects.
-    name : str, optional
-        Mesh name (the default is 'mesh'). The mesh name must be a valid
-        Python variable name string. More specifically, it must not
-        contain spaces, or start with underscore or numeric character.
 
     Raises
     ------
@@ -72,8 +67,7 @@ class Mesh:
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> cell = (1e-9, 1e-9, 0.1e-9)
-    >>> name = 'mesh_name'
-    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     2. Defining a nano-sized thin film mesh by passing `n` parameter
 
@@ -82,8 +76,7 @@ class Mesh:
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> n = (100, 50, 5)
-    >>> name = 'mesh_name'
-    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, name=name)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
     3. Defining a mesh with periodic boundary conditions in x and y
     directions.
@@ -94,7 +87,7 @@ class Mesh:
     >>> p2 = (100, 100, 1)
     >>> n = (100, 100, 1)
     >>> pbc = 'xy'
-    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc, name=name)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc)
 
     4. Defining a mesh with two regions.
 
@@ -117,7 +110,7 @@ class Mesh:
     >>> p1 = (-25, 3, 0)
     >>> p2 = (25, 6, 1)
     >>> cell = (5, 3, 0.4)
-    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
     Traceback (most recent call last):
         ...
     ValueError: ...
@@ -145,7 +138,7 @@ class Mesh:
             self.cell = dfu.array2tuple(cell)
         else:
             msg = ('One and only one of the parameters '
-                   '(n or cell) should be defined.')
+                   'n or cell should be defined.')
             raise ValueError(msg)
 
         # Is the mesh domain not an aggregate of discretisation cells?
@@ -283,7 +276,8 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.n`
 
         """
-        return int(np.prod(self.n))
+        res = np.prod(self.n)
+        return int(res)
 
     @property
     def volume(self):
