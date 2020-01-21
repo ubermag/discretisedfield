@@ -223,7 +223,7 @@ class Field:
            val.shape == (*self.mesh.n, self.dim):
             self._array = val
         else:
-            msg = f'Unsupported {type(val)} or invalid value dimensions.'
+            msg = f'Unsupported {type(val)} or invalid value shape.'
             raise ValueError(msg)
 
     @property
@@ -913,7 +913,7 @@ class Field:
             raise TypeError(msg)
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
-                msg = f'Cannot multiply fields defined on different meshes.'
+                msg = 'Cannot multiply fields defined on different meshes.'
                 raise ValueError(msg)
             if not (self.dim == 1 or other.dim == 1):
                 msg = f'Cannot multiply dim={self.dim} and dim={other.dim} fields.'
