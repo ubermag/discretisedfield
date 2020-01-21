@@ -14,8 +14,7 @@ from mpl_toolkits.mplot3d import Axes3D
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
-               pbc=ts.Subset(sample_set='xyz'),
-               name=ts.Name(const=True))
+               pbc=ts.Subset(sample_set='xyz'))
 class Mesh:
     """Finite difference mesh.
 
@@ -124,17 +123,15 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, n=None, cell=None, pbc=set(),
-                 regions={}, name='mesh'):
+    def __init__(self, p1, p2, n=None, cell=None, pbc=set(), regions={}):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.pbc = pbc
-        self.name = name
         self.regions = regions
 
         # Is any edge length of the domain equal to zero?
         if np.equal(self.l, 0).any():
-            msg = 'The length of one of the domain edges is zero.'
+            msg = 'The length of one of the mesh domain edges is zero.'
             raise ValueError(msg)
 
         # Determine whether cell or n was passed and define them both.
@@ -183,7 +180,7 @@ class Mesh:
         >>> p1 = (-1.1, 2.9, 0)
         >>> p2 = (5, 0, -0.1)
         >>> cell = (0.1, 0.1, 0.005)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name='mesh')
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.pmin
         (-1.1, 0.0, -0.1)
 
@@ -468,8 +465,8 @@ class Mesh:
           2. They have the same number of discretisation cells in all
           three directions (`n`).
 
-        Mesh name and `pbc` are not considered to be necessary
-        conditions for determining equality between meshes.
+        Mesh `pbc` are not considered to be necessary conditions for
+        determining equality between meshes.
 
         Parameters
         ----------
@@ -574,14 +571,13 @@ class Mesh:
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
         >>> pbc = 'x'
-        >>> name = 'm'
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
         >>> repr(mesh)
-        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'}, name='m')"
+        "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'})"
 
         """
         return (f'Mesh(p1={self.p1}, p2={self.p2}, cell={self.cell}, '
-                f'pbc={self.pbc}, name=\'{self.name}\')')
+                f'pbc={self.pbc})')
 
     def random_point(self):
         """Generate the random point belonging to the mesh.

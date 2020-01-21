@@ -24,7 +24,6 @@ def check_mesh(mesh):
     assert isinstance(mesh.pbc, set)
     assert all(isinstance(i, str) for i in mesh.pbc)
     assert isinstance(mesh.regions, dict)
-    assert isinstance(mesh.name, str)
 
 
 class TestMesh:
@@ -82,15 +81,13 @@ class TestMesh:
         p2 = (15, 10.1, 11)
         cell = (1, 0.1, 0.5)
         pbc = 'yxz'
-        name = 'test_mesh'
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
 
         check_mesh(mesh)
         assert mesh.p1 == p1
         assert mesh.p2 == p2
         assert mesh.cell == cell
         assert mesh.pbc == set(pbc)
-        assert mesh.name == name
         assert mesh.pmin == (0, -4, 11)
         assert mesh.pmax == (15, 10.1, 16.5)
         assert mesh.l[0] == 15 - 0
@@ -106,14 +103,12 @@ class TestMesh:
         p2 = (15, 10.1, 11)
         n = (15, 141, 11)
         pbc = 'yx'
-        name = 'test_mesh'
-        mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc)
 
         check_mesh(mesh)
         assert mesh.p1 == p1
         assert mesh.p2 == p2
         assert mesh.pbc == set(pbc)
-        assert mesh.name == name
         assert mesh.pmin == (0, -4, 11)
         assert mesh.pmax == (15, 10.1, 16.5)
         assert mesh.l[0] == 15 - 0
@@ -130,9 +125,8 @@ class TestMesh:
         n = (15, 141, 11)
         cell = (1, 0.1, 0.5)
         pbc = 'x'
-        name = 'test_mesh'
         with pytest.raises(ValueError) as excinfo:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell, pbc=pbc, name=name)
+            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell, pbc=pbc)
         assert 'One and only one' in str(excinfo.value)
 
     def test_init_valid_args(self):
@@ -140,7 +134,6 @@ class TestMesh:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
 
             check_mesh(mesh)
-            assert mesh.name == 'mesh'  # default name value
             assert mesh.pbc == set()  # default pbc value
 
     def test_init_invalid_args(self):
@@ -148,15 +141,6 @@ class TestMesh:
             with pytest.raises((TypeError, ValueError)):
                 # Exceptions are raised by descriptors.
                 mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-
-    def test_init_invalid_name(self):
-        p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
-        n = (10, 100, 2)
-        for name in ['mesh name', '2name', ' ', 5, '-name', '+mn']:
-            with pytest.raises((TypeError, ValueError)):
-                # Exception is raised by the descriptor for mesh.name.
-                mesh = df.Mesh(p1=p1, p2=p2, n=n, name=name)
 
     def test_init_valid_pbc(self):
         for p1, p2, n, cell in self.valid_args:
@@ -278,11 +262,10 @@ class TestMesh:
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
-        name = 'meshname'
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         rstr = ('Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), '
-                'cell=(1, 0.1, 0.5), pbc=set(), name=\'meshname\')')
+                'cell=(1, 0.1, 0.5), pbc=set())')
         assert repr(mesh) == rstr
 
     def test_repr_pbc(self):
@@ -290,11 +273,10 @@ class TestMesh:
         p2 = (15, 10, 12.5)
         n = (16, 140, 3)
         pbc = 'x'
-        name = 'meshname'
-        mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n, pbc=pbc)
 
         rstr = ('Mesh(p1=(-1, -4, 11), p2=(15, 10, 12.5), '
-                'cell=(1.0, 0.1, 0.5), pbc={\'x\'}, name=\'meshname\')')
+                'cell=(1.0, 0.1, 0.5), pbc={\'x\'})')
         assert repr(mesh) == rstr
 
     def test_index2point(self):
@@ -540,27 +522,22 @@ class TestMesh:
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
-        name = 'object_name'
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, name=name)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         assert mesh.p1 == p1
         assert mesh.p2 == p2
         assert mesh.cell == cell
-        assert mesh.name == name
         assert mesh.l == (10, 10, 10)
         assert mesh.n == (10, 10, 10)
 
         # Attempt to change attribute
         with pytest.raises(AttributeError):
             mesh.p2 = (15, 15, 15)
-        with pytest.raises(AttributeError):
-            mesh.name = 'new_object_name'
 
         # Make sure the attributes have not changed.
         assert mesh.p1 == p1
         assert mesh.p2 == p2
         assert mesh.cell == cell
-        assert mesh.name == name
         assert mesh.l == (10, 10, 10)
         assert mesh.n == (10, 10, 10)
 
