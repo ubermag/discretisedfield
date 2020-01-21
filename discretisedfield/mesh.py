@@ -18,15 +18,14 @@ from mpl_toolkits.mplot3d import Axes3D
 class Mesh:
     """Finite difference mesh.
 
-    A rectangular mesh domain spans between two points
-    :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`. The domain is
-    discretised using a finite difference cell, whose dimensions are
-    defined with `cell`. Alternatively, the domain can be discretised
-    by passing the number of discretisation cells `n` in all three
-    dimensions. Either `cell` or `n` should be defined to discretise
-    the domain, not both. Periodic boundary conditions can be
-    specified by passing `pbc` argument, which is an iterable
-    containing one or more elements from ``['x', 'y', 'z']``.
+    A rectangular mesh domain spans between two points :math:`\\mathbf{p}_{1}`
+    and :math:`\\mathbf{p}_{2}`. The domain is discretised using a finite
+    difference cell, whose dimensions are defined with `cell`. Alternatively,
+    the domain can be discretised by passing the number of discretisation cells
+    `n` in all three dimensions. Either `cell` or `n` should be defined to
+    discretise the domain, not both. Periodic boundary conditions can be
+    specified by passing `pbc` argument, which is an iterable containing one or
+    more elements from ``['x', 'y', 'z']``.
 
     In order to properly define a mesh, the length of all mesh domain
     edges must not be zero and the mesh domain must be an aggregate of
