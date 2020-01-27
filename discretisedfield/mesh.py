@@ -14,7 +14,11 @@ from mpl_toolkits.mplot3d import Axes3D
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
-               pbc=ts.Subset(sample_set='xyz'))
+               pbc=ts.Subset(sample_set='xyz', unpack=True),
+               regions=ts.Dictionary(key_descriptor=ts.Name(),
+                                     value_descriptor=ts.Typed(expected_type=
+                                                               df.Region),
+                                     allow_empty=True))
 class Mesh:
     """Finite difference mesh.
 
