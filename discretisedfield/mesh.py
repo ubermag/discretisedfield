@@ -1,4 +1,3 @@
-import random
 import itertools
 import matplotlib
 import numpy as np
@@ -9,16 +8,15 @@ import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
 
-@ts.typesystem(p1=ts.Vector(size=3, const=True),
-               p2=ts.Vector(size=3, const=True),
+@ts.typesystem(region=ts.Typed(expected_type=df.Region),
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
                pbc=ts.Subset(sample_set='xyz', unpack=True),
-               regions=ts.Dictionary(key_descriptor=ts.Name(),
-                                     value_descriptor=ts.Typed(expected_type=
-                                                               df.Region),
-                                     allow_empty=True))
+               subregions=ts.Dictionary(key_descriptor=ts.Name(),
+                                        value_descriptor=
+                                        ts.Typed(expected_type=df.Region),
+                                        allow_empty=True))
 class Mesh:
     """Finite difference mesh.
 
@@ -119,138 +117,40 @@ class Mesh:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2, n=None, cell=None, pbc=set(), regions={}):
-        self.p1 = tuple(p1)
-        self.p2 = tuple(p2)
+    def __init__(self, region=None, p1=None, p2=None, n=None, cell=None,
+                 pbc=set(), subregions={}):
         self.pbc = pbc
-        self.regions = regions
+        self.subregions = subregions
 
-        # Is any edge length of the domain equal to zero?
-        if np.equal(self.l, 0).any():
-            msg = 'The length of one of the mesh domain edges is zero.'
+        # Determine whether region or p1 and p2 were passed.
+        if region is not None and p1 is None and p2 is None:
+            self.region = region
+        elif region is None and p1 is not None and p2 is not None:
+            self.region = df.Region(p1=p1, p2=p2)
+        else:
+            msg = ('Either region or p1 and p2 must be defined.')
             raise ValueError(msg)
 
         # Determine whether cell or n was passed and define them both.
         if cell is not None and n is None:
             self.cell = tuple(cell)
-            n = np.divide(self.l, self.cell).round().astype(int)
+            n = np.divide(self.region.l, self.cell).round().astype(int)
             self.n = dfu.array2tuple(n)
         elif n is not None and cell is None:
             self.n = tuple(n)
-            cell = np.divide(self.l, self.n).astype(float)
+            cell = np.divide(self.region.l, self.n).astype(float)
             self.cell = dfu.array2tuple(cell)
         else:
-            msg = ('One and only one of the parameters '
-                   'n or cell should be defined.')
+            msg = ('Either n or cell must be defined.')
             raise ValueError(msg)
 
-        # Is the mesh domain not an aggregate of discretisation cells?
+        # Is the mesh region not an aggregate of the discretisation cell?
         tol = 1e-12  # picometre tolerance
-        rem = np.remainder(self.l, self.cell)
+        rem = np.remainder(self.region.l, self.cell)
         if np.logical_and(np.greater(rem, tol),
                           np.less(rem, np.subtract(self.cell, tol))).any():
-            msg = 'Mesh domain is not an aggregate of the discretisation cell.'
+            msg = 'Mesh region is not an aggregate of the discretisation cell.'
             raise ValueError(msg)
-
-    @property
-    def pmin(self):
-        """Mesh point with minimum coordinates.
-
-        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{min}`
-        is computed from points :math:`p_{1}` and :math:`p_{2}`
-        between which the mesh domain spans: :math:`p_\\text{min}^{i}
-        = \\text{min}(p_{1}^{i}, p_{2}^{i})`.
-
-        Returns
-        -------
-        tuple (3,)
-            Point with minimum mesh coordinates :math:`(p_{x}^\\text{min},
-            p_{y}^\\text{min}, p_{z}^\\text{min})`.
-
-        Examples
-        --------
-        1. Getting the minimum mesh point.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-1.1, 2.9, 0)
-        >>> p2 = (5, 0, -0.1)
-        >>> cell = (0.1, 0.1, 0.005)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.pmin
-        (-1.1, 0.0, -0.1)
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.pmax`
-
-        """
-        res = np.minimum(self.p1, self.p2)
-        return dfu.array2tuple(res)
-
-    @property
-    def pmax(self):
-        """Mesh point with maximum coordinates.
-
-        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{max}`
-        is computed from points :math:`p_{1}` and :math:`p_{2}`
-        between which the mesh domain spans: :math:`p_\\text{min}^{i}
-        = \\text{max}(p_{1}^{i}, p_{2}^{i})`.
-
-        Returns
-        -------
-        tuple (3,)
-            Point with maximum mesh coordinates :math:`(p_{x}^\\text{max},
-            p_{y}^\\text{max}, p_{z}^\\text{max})`.
-
-        Examples
-        --------
-        1. Getting the maximum mesh point.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-1.1, 2.9, 0)
-        >>> p2 = (5, 0, -0.1)
-        >>> cell = (0.1, 0.1, 0.005)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.pmax
-        (5.0, 2.9, 0.0)
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.pmin`
-
-        """
-        res = np.maximum(self.p1, self.p2)
-        return dfu.array2tuple(res)
-
-    @property
-    def l(self):
-        """Mesh domain edge lengths.
-
-        Edge length in any direction :math:`i` is computed from the
-        points between which the mesh domain spans :math:`l^{i} =
-        |p_{2}^{i} - p_{1}^{i}|`.
-
-        Returns
-        -------
-        tuple (3,)
-            Lengths of mesh domain edges :math:`(l_{x}, l_{y}, l_{z})`.
-
-        Examples
-        --------
-        1. Getting the mesh domain edge lengths.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, -5)
-        >>> p2 = (5, 15, 15)
-        >>> n = (5, 15, 20)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> mesh.l
-        (5, 15, 20)
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.n`
-
-        """
-        res = np.abs(np.subtract(self.p1, self.p2))
-        return dfu.array2tuple(res)
 
     @property
     def ntotal(self):
@@ -261,7 +161,7 @@ class Mesh:
         Returns
         -------
         int
-            The total number of discretisation cells
+            Total number of discretisation cells
 
         Examples
         --------
@@ -281,68 +181,6 @@ class Mesh:
         """
         res = np.prod(self.n)
         return int(res)
-
-    @property
-    def volume(self):
-        """Mesh volume.
-
-        It is computed by multiplying all elements of `self.l`.
-
-        Returns
-        -------
-        float
-            The volume of the mesh.
-
-        Examples
-        --------
-        1. Computing the mesh volume.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 10, 2)
-        >>> cell = (1, 0.1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.volume
-        100.0
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.n`
-
-        """
-        return float(np.prod(self.l))
-
-    @property
-    def centre(self):
-        """Mesh domain centre point.
-
-        It is computed as the middle point between minimum and maximum
-        coordinates :math:`\\mathbf{p}_\\text{c} = \\frac{1}{2}
-        (\\mathbf{p}_\\text{min} + \\mathbf{p}_\\text{max})` This
-        point does not necessarily coincide with the discretisation
-        cell centre.
-
-        Returns
-        -------
-        tuple (3,)
-            Mesh domain centre point :math:`(p_{c}^{x}, p_{c}^{y},
-            p_{c}^{z})`.
-
-        Examples
-        --------
-        1. Getting the mesh centre point.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 15, 20)
-        >>> n = (5, 15, 20)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> mesh.centre
-        (2.5, 7.5, 10.0)
-
-        """
-        res = np.multiply(np.add(self.pmin, self.pmax), 0.5)
-        return dfu.array2tuple(res)
 
     @property
     def indices(self):
@@ -414,43 +252,6 @@ class Mesh:
         """
         return self.coordinates
 
-    def __contains__(self, item):
-        """Determine whether `point` is inside the mesh. If it is, it returns
-        `True`, otherwise `False`.
-
-        Parameters
-        ----------
-        item : (3,) array_like
-            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
-
-        Returns
-        -------
-        True
-            If `item` is inside the mesh.
-        False
-            If `item` is outside the mesh.
-
-        Examples
-        --------
-        1. Check whether point is inside the mesh.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 1)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> point1 = (1, 1, 1)
-        >>> point1 in mesh
-        True
-        >>> point2 = (1, 3, 1)
-        >>> point2 in mesh
-        False
-
-        """
-        region = df.Region(self.p1, self.p2)
-        return item in region
-
     def __eq__(self, other):
         """Determine whether two meshes are equal.
 
@@ -498,13 +299,11 @@ class Mesh:
 
         """
         if not isinstance(other, self.__class__):
-            msg = ('Only discretisedfield.Mesh objects '
-                   'can be compared for equality.')
+            msg = (f'Unsupported operand type(s) for ==: '
+                   f'{type(self)} and {type(other)}.')
             raise TypeError(msg)
 
-        if self.pmin == other.pmin and \
-           self.pmax == other.pmax and \
-           self.n == other.n:
+        if self.region == other.region and self.n == other.n:
             return True
         else:
             return False
@@ -514,34 +313,6 @@ class Mesh:
 
         This method returns `not self == other`. For details, please
         refer to `discretisedfield.Mesh.__eq__()` method.
-
-        Parameters
-        ----------
-        other : discretisedfield.Mesh
-            Mesh object, which is compared to self.
-
-        Returns
-        -------
-        True
-            If two meshes are not equal.
-        False
-            If two meshes are equal.
-
-        Examples
-        --------
-        1. Check if meshes are not equal.
-
-        >>> import discretisedfield as df
-        ...
-        >>> mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
-        >>> mesh2 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
-        >>> mesh3 = df.Mesh(p1=(1, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
-        >>> mesh1 != mesh2
-        False
-        >>> mesh1 != mesh3
-        True
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.__eq__`
 
         """
         return not self == other
@@ -573,43 +344,8 @@ class Mesh:
         "Mesh(p1=(0, 0, 0), p2=(2, 2, 1), cell=(1, 1, 1), pbc={'x'})"
 
         """
-        return (f'Mesh(p1={self.p1}, p2={self.p2}, cell={self.cell}, '
-                f'pbc={self.pbc})')
-
-    def random_point(self):
-        """Generate the random point belonging to the mesh.
-
-        The use of this function is mostly limited for writing tests
-        for packages based on `discretisedfield`.
-
-        Returns
-        -------
-        tuple (3,)
-            Coordinates of a random point inside that belongs to the mesh
-            :math:`(x_\\text{rand}, y_\\text{rand}, z_\\text{rand})`.
-
-        Examples
-        --------
-        1. Generating a random mesh point.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (200e-9, 200e-9, 1e-9)
-        >>> cell = (1e-9, 1e-9, 0.5e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.random_point()
-        (...)
-
-        .. note::
-
-           In the example, ellipsis is used instead of an exact tuple
-           because the result differs each time ``random_point``
-           method is called.
-
-        """
-        res = np.add(self.pmin, np.multiply(np.random.random(3), self.l))
-        return dfu.array2tuple(res)
+        return (f'Mesh(region={repr(self.region)}, n={self.n}, '
+                f'pbc={self.pbc}, subregions={self.subregions})')
 
     def index2point(self, index):
         """Convert cell's index to the cell's centre coordinate.
@@ -647,10 +383,11 @@ class Mesh:
         # Does index refer to a cell outside the mesh?
         if np.logical_or(np.less(index, 0),
                          np.greater_equal(index, self.n)).any():
-            msg = 'Index out of range.'
+            msg = f'Index {index} out of range.'
             raise ValueError(msg)
 
-        res = np.add(self.pmin, np.multiply(np.add(index, 0.5), self.cell))
+        res = np.add(self.region.pmin,
+                     np.multiply(np.add(index, 0.5), self.cell))
         return dfu.array2tuple(res)
 
     def point2index(self, point):
@@ -686,11 +423,11 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.index2point`
 
         """
-        if point not in self:
+        if point not in self.region:
             msg = f'Point {point} is outside the mesh.'
             raise ValueError(msg)
 
-        index = np.subtract(np.divide(np.subtract(point, self.pmin),
+        index = np.subtract(np.divide(np.subtract(point, self.region.pmin),
                                       self.cell), 0.5).round().astype(int)
         # If index is rounded to the out-of-range values.
         index = np.clip(index, 0, np.subtract(self.n, 1))
@@ -742,8 +479,8 @@ class Mesh:
         ((0.0, 0.0, 0.0), (2.0, 0.0, 0.0))
 
         """
-        if p1 not in self or p2 not in self:
-            msg = f'Point {p1} or point {p2} is outside the mesh.'
+        if p1 not in self.region or p2 not in self.region:
+            msg = f'Point {p1} or point {p2} is outside the mesh region.'
             raise ValueError(msg)
 
         dl = np.subtract(p2, p1)/(n-1)
@@ -790,13 +527,13 @@ class Mesh:
 
         if info['point'] is None:
             # Plane info was extracted from args.
-            info['point'] = self.centre[info['planeaxis']]
+            info['point'] = self.region.centre[info['planeaxis']]
         else:
             # Plane info was extracted from kwargs and should be
             # tested whether it is inside the mesh.
-            test_point = list(self.centre)
+            test_point = list(self.region.centre)
             test_point[info['planeaxis']] = info['point']
-            if test_point not in self:
+            if test_point not in self.region:
                 msg = f'Point {test_point} is outside the mesh.'
                 raise ValueError(msg)
 
@@ -807,11 +544,11 @@ class Mesh:
         # Build a mesh.
         p1s, p2s, ns = np.zeros(3), np.zeros(3), np.zeros(3)
         ilist = [info['axis1'], info['axis2'], info['planeaxis']]
-        p1s[ilist] = (self.pmin[info['axis1']],
-                      self.pmin[info['axis2']],
+        p1s[ilist] = (self.region.pmin[info['axis1']],
+                      self.region.pmin[info['axis2']],
                       info['point'] - self.cell[info['planeaxis']]/2)
-        p2s[ilist] = (self.pmax[info['axis1']],
-                      self.pmax[info['axis2']],
+        p2s[ilist] = (self.region.pmax[info['axis1']],
+                      self.region.pmax[info['axis2']],
                       info['point'] + self.cell[info['planeaxis']]/2)
         ns[ilist] = n + (1,)
         ns = dfu.array2tuple(ns.astype(int))
@@ -846,8 +583,9 @@ class Mesh:
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111, projection='3d')
 
-        dfu.plot_box(ax, self.pmin, self.pmax, 'b-', linewidth=1.5)
-        dfu.plot_box(ax, self.pmin, np.add(self.pmin, self.cell),
+        dfu.plot_box(ax, self.region.pmin, self.region.pmax,
+                     'b-', linewidth=1.5)
+        dfu.plot_box(ax, self.region.pmin, np.add(self.region.pmin, self.cell),
                      'r--', linewidth=1)
 
         ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
@@ -892,11 +630,11 @@ class Mesh:
         # In the case of nano-sized samples, fix the order of
         # magnitude of the plot extent to avoid freezing the k3d plot.
         if np.any(np.divide(self.cell, 1e-9) < 1e3):
-            pmin = np.divide(self.pmin, 1e-9)
-            pmax = np.divide(self.pmax, 1e-9)
+            pmin = np.divide(self.region.pmin, 1e-9)
+            pmax = np.divide(self.region.pmax, 1e-9)
         else:
-            pmin = self.pmin
-            pmax = self.pmax
+            pmin = self.region.pmin
+            pmax = self.region.pmax
 
         dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
                    colormap=colormap, plot=plot, **kwargs)
@@ -939,7 +677,7 @@ class Mesh:
         dfu.points(plot_array, point_size=point_size, color=color,
                    plot=plot, **kwargs)
 
-    def mpl_regions(self, colormap=dfu.colormap, figsize=None, **kwargs):
+    def mpl_subregions(self, colormap=dfu.colormap, figsize=None, **kwargs):
         """Plots the mesh regions using a `matplotlib` 3D plot.
 
         Parameters
@@ -972,17 +710,18 @@ class Mesh:
         ax = fig.add_subplot(111, projection='3d')
 
         # Add random colours if necessary.
-        colormap = dfu.add_random_colors(colormap, self.regions)
+        colormap = dfu.add_random_colors(colormap, self.subregions)
 
         cmap = matplotlib.cm.get_cmap('hsv', 256)
-        for i, name in enumerate(self.regions.keys()):
+        for i, name in enumerate(self.subregions.keys()):
             hc = matplotlib.colors.rgb2hex(cmap(colormap[i]/16777215)[:3])
-            dfu.plot_box(ax, self.regions[name].pmin, self.regions[name].pmax,
+            dfu.plot_box(ax, self.subregions[name].pmin,
+                         self.subregions[name].pmax,
                          color=hc, linewidth=1.5)
 
         ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
 
-    def k3d_regions(self, colormap=dfu.colormap, plot=None, **kwargs):
+    def k3d_subregions(self, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises defined regions.
 
         The order of colours in `colormap` should be the same as the
@@ -1022,36 +761,23 @@ class Mesh:
 
         """
         # Add random colours if necessary.
-        colormap = dfu.add_random_colors(colormap, self.regions)
+        colormap = dfu.add_random_colors(colormap, self.subregions)
 
         plot_array = np.zeros(self.n)
-        for i, name in enumerate(self.regions.keys()):
+        for i, name in enumerate(self.subregions.keys()):
             for index in self.indices:
-                if self.index2point(index) in self.regions[name]:
+                if self.index2point(index) in self.subregions[name]:
                     plot_array[index] = i+1  # i+1 to avoid 0 value
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
 
         # In the case of nano-sized samples, fix the order of
         # magnitude of the plot extent to avoid freezing the k3d plot.
         if np.any(np.divide(self.cell, 1e-9) < 1e3):
-            pmin = np.divide(self.pmin, 1e-9)
-            pmax = np.divide(self.pmax, 1e-9)
+            pmin = np.divide(self.region.pmin, 1e-9)
+            pmax = np.divide(self.region.pmax, 1e-9)
         else:
-            pmin = self.pmin
-            pmax = self.pmax
+            pmin = self.region.pmin
+            pmax = self.region.pmax
 
         dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
                    colormap=colormap, plot=plot, **kwargs)
-
-    @property
-    def _script(self):
-        """This abstract method should be implemented by a specific
-        calculator.
-
-        Raises
-        ------
-        NotImplementedError
-            If not implemented by a specific calculator.
-
-        """
-        raise NotImplementedError
