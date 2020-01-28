@@ -20,7 +20,7 @@ from mpl_toolkits.mplot3d import Axes3D
 class Mesh:
     """Finite difference mesh.
 
-    A rectangular mesh domain spans between two points :math:`\\mathbf{p}_{1}`
+    A rectangular mesh region spans between two points :math:`\\mathbf{p}_{1}`
     and :math:`\\mathbf{p}_{2}`. The domain is discretised using a finite
     difference cell, whose dimensions are defined with `cell`. Alternatively,
     the domain can be discretised by passing the number of discretisation cells
