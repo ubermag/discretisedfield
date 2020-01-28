@@ -394,7 +394,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> field = df.Field(mesh, dim=1, value=1)
         >>> repr(field)
-        "Field(mesh=...)"
+        'Field(mesh=..., dim=1)'
 
         """
         return f'Field(mesh={repr(self.mesh)}, dim={self.dim})'
