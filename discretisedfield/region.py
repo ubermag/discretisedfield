@@ -39,6 +39,7 @@ class Region:
 
     >>> import discretisedfield as df
     ...
+    >>> # The edge length in the z-direction is zero.
     >>> p1 = (-25, 3, 1)
     >>> p2 = (25, 6, 1)
     >>> region = df.Region(p1=p1, p2=p2)
@@ -52,13 +53,13 @@ class Region:
         self.p2 = tuple(p2)
 
         # Is any edge length of the region equal to zero?
-        if np.equal(self.l, 0).any():
-            msg = 'The length of one of the region edges is zero.'
+        if np.equal(self.edges, 0).any():
+            msg = f'One of the region edges {self.edges} is zero.'
             raise ValueError(msg)
 
     @property
     def pmin(self):
-        """Point with minimum coordinates.
+        """Point with minimum coordinates in the region.
 
         The :math:`i`-th component of :math:`\\mathbf{p}_\\text{min}` is
         computed from points :math:`p_{1}` and :math:`p_{2}` between which the
@@ -86,12 +87,11 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        res = np.minimum(self.p1, self.p2)
-        return dfu.array2tuple(res)
+        return dfu.array2tuple(np.minimum(self.p1, self.p2))
 
     @property
     def pmax(self):
-        """Point with maximum coordinates.
+        """Point with maximum coordinates in the region.
 
         The :math:`i`-th component of :math:`\\mathbf{p}_\\text{max}` is
         computed from points :math:`p_{1}` and :math:`p_{2}` between which the
@@ -119,12 +119,11 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        res = np.maximum(self.p1, self.p2)
-        return dfu.array2tuple(res)
+        return dfu.array2tuple(np.maximum(self.p1, self.p2))
 
     @property
-    def l(self):
-        """Edge lengths.
+    def edges(self):
+        """Edge lengths of the region.
 
         Edge length in any direction :math:`i` is computed from the points
         between which the region spans :math:`l^{i} = |p_{2}^{i} - p_{1}^{i}|`.
@@ -143,12 +142,11 @@ class Region:
         >>> p1 = (0, 0, -5)
         >>> p2 = (5, 15, 15)
         >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.l
+        >>> region.edges
         (5, 15, 20)
 
         """
-        res = np.abs(np.subtract(self.p1, self.p2))
-        return dfu.array2tuple(res)
+        return dfu.array2tuple(np.abs(np.subtract(self.p1, self.p2)))
 
     @property
     def centre(self):
@@ -176,23 +174,23 @@ class Region:
         (2.5, 7.5, 10.0)
 
         """
-        res = np.multiply(np.add(self.pmin, self.pmax), 0.5)
-        return dfu.array2tuple(res)
+        return dfu.array2tuple(np.multiply(np.add(self.pmin, self.pmax), 0.5))
 
     @property
     def volume(self):
-        """Volume.
+        """Volume of the region.
 
-        It is computed by multiplying all elements of `self.l`.
+        It is computed by multiplying all elements of `self.edges`:
+        :math:`V = l_{x} l_{y} l_{z}`.
 
         Returns
         -------
         float
-            Volume
+            Volume of the region
 
         Examples
         --------
-        1. Computing the volume.
+        1. Computing the volume of the region.
 
         >>> import discretisedfield as df
         ...
@@ -203,13 +201,14 @@ class Region:
         100.0
 
         """
-        return float(np.prod(self.l))
+        return float(np.prod(self.edges))
 
     def random_point(self):
         """Generate a random point in the region.
 
         The use of this function is mostly limited for writing tests for
-        packages based on `discretisedfield`.
+        packages based on `discretisedfield`. This method is not a property.
+        Therefore, it is called as `discretisedfield.Region.random_point()`.
 
         Returns
         -------
@@ -232,10 +231,11 @@ class Region:
         .. note::
 
            In the example, ellipsis is used instead of an exact tuple because
-           the result differs each time ``random_point`` method is called.
+           the result differs each time `discretisedfield.Region.random_point`
+           method is called.
 
         """
-        res = np.add(self.pmin, np.multiply(np.random.random(3), self.l))
+        res = np.add(self.pmin, np.multiply(np.random.random(3), self.edges))
         return dfu.array2tuple(res)
 
     def __repr__(self):
@@ -268,12 +268,13 @@ class Region:
         """Determine whether two regions are equal.
 
         Two regions are considered to be equal if they have the same minimum
-        and maximum coordinate points (`pmin` and `pmax`).
+        and maximum coordinate points: :math:`p^\\text{max}_{1} =
+        p^\\text{max}_{2}` and :math:`p^\\text{min}_{1} = p^\\text{min}_{2}`.
 
         Parameters
         ----------
-        other : discretisedfield.region
-            Region object, which is compared to self.
+        other : discretisedfield.Region
+            Region object, which is compared to `self`.
 
         Returns
         -------
@@ -298,11 +299,8 @@ class Region:
 
         """
         if not isinstance(other, self.__class__):
-            msg = (f'Unsupported operand type(s) for ==: '
-                   f'{type(self)} and {type(other)}.')
-            raise TypeError(msg)
-
-        if self.pmin == other.pmin and self.pmax == other.pmax:
+            return False
+        elif self.pmin == other.pmin and self.pmax == other.pmax:
             return True
         else:
             return False
@@ -318,6 +316,9 @@ class Region:
 
     def __contains__(self, point):
         """Determine whether `point` belongs to the region.
+
+        Point is considered to be in the region if :math:`p^\\text{min}_{i}
+        \\le p_{i} \\le p^\\text{max}_{i}` for :math:`i = x, y, z`.
 
         Parameters
         ----------

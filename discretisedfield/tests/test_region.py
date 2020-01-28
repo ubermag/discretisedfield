@@ -1,4 +1,6 @@
+import re
 import pytest
+import numbers
 import numpy as np
 import discretisedfield as df
 
@@ -6,25 +8,44 @@ import discretisedfield as df
 def check_region(region):
     assert isinstance(region.p1, tuple)
     assert len(region.p1) == 3
+    assert all(isinstance(i, numbers.Real) for i in region.p1)
+    assert region.p1 in region
+
     assert isinstance(region.p2, tuple)
     assert len(region.p2) == 3
+    assert all(isinstance(i, numbers.Real) for i in region.p2)
+    assert region.p2 in region
+
     assert isinstance(region.pmin, tuple)
     assert len(region.pmin) == 3
+    assert all(isinstance(i, numbers.Real) for i in region.pmin)
     assert region.pmin in region
+
     assert isinstance(region.pmax, tuple)
     assert len(region.pmax) == 3
+    assert all(isinstance(i, numbers.Real) for i in region.pmax)
     assert region.pmax in region
-    assert isinstance(region.l, tuple)
-    assert len(region.l) == 3
-    assert isinstance(region.volume, float)
+
+    assert isinstance(region.edges, tuple)
+    assert len(region.edges) == 3
+    assert all(isinstance(i, numbers.Real) for i in region.edges)
+
     assert isinstance(region.centre, tuple)
     assert len(region.centre) == 3
+    assert all(isinstance(i, numbers.Real) for i in region.centre)
     assert region.centre in region
+
     assert isinstance(region.random_point(), tuple)
     assert len(region.random_point()) == 3
+    assert all(isinstance(i, numbers.Real) for i in region.random_point())
     assert region.random_point() in region
+
+    assert isinstance(region.volume, float)
+
     assert isinstance(repr(region), str)
-    assert 'Region' in repr(region)
+    pattern = r'^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$'
+    assert re.search(pattern, repr(region))
+
     assert region == region
     assert not region != region
 
@@ -62,9 +83,9 @@ class TestRegion:
         for p1, p2 in args:
             with pytest.raises(ValueError) as excinfo:
                 region = df.Region(p1=p1, p2=p2)
-            assert 'is zero' in str(excinfo.value)
+            assert re.search(r'is zero.$', str(excinfo.value))
 
-    def test_pmin_pmax_l_centre_volume(self):
+    def test_pmin_pmax_edges_centre_volume(self):
         p1 = (0, -4, 16.5)
         p2 = (15, -6, 11)
         region = df.Region(p1=p1, p2=p2)
@@ -72,7 +93,7 @@ class TestRegion:
         check_region(region)
         assert region.pmin == (0, -6, 11)
         assert region.pmax == (15, -4, 16.5)
-        assert region.l == (15, 2, 5.5)
+        assert region.edges == (15, 2, 5.5)
         assert region.centre == (7.5, -5, 13.75)
         assert region.volume == 165
 
@@ -83,7 +104,7 @@ class TestRegion:
         check_region(region)
         assert region.pmin == (-10, 0, 0)
         assert region.pmax == (10, 1, 1)
-        assert region.l == (20, 1, 1)
+        assert region.edges == (20, 1, 1)
         assert region.centre == (0, 0.5, 0.5)
         assert region.volume == 20
 
@@ -94,7 +115,7 @@ class TestRegion:
         check_region(region)
         assert np.allclose(region.pmin, (-18.5e-9, 5e-9, -10e-9))
         assert np.allclose(region.pmax, (10e-9, 10e-9, 0))
-        assert np.allclose(region.l, (28.5e-9, 5e-9, 10e-9))
+        assert np.allclose(region.edges, (28.5e-9, 5e-9, 10e-9))
         assert np.allclose(region.centre, (-4.25e-9, 7.5e-9, -5e-9))
         assert abs(region.volume - 1425 * (1e-9**3)) < 1e-30
 
@@ -103,6 +124,7 @@ class TestRegion:
         p2 = (15, 10.1, 12.5)
         region = df.Region(p1=p1, p2=p2)
 
+        check_region(region)
         rstr = 'Region(p1=(-1.0, -4.0, 11.0), p2=(15.0, 10.1, 12.5))'
         assert repr(region) == rstr
 
@@ -111,6 +133,9 @@ class TestRegion:
         region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10))
 
+        check_region(region1)
+        check_region(region2)
+        check_region(region3)
         assert region1 == region2
         assert not region1 != region2
         assert region1 != region3
@@ -121,8 +146,13 @@ class TestRegion:
         p2 = (10e-9, 0, 20e-9)
         region = df.Region(p1=p1, p2=p2)
 
+        check_region(region)
+        tol = 1e-18
         assert (0, 0, 0) in region
+        assert (0-tol, 0, 0) not in region
+        assert (0, 0-tol, 0) not in region
+        assert (0, 0, 0-tol) not in region
         assert (10e-9, 10e-9, 20e-9) in region
-        assert (5e-9, 5e-9, 5e-9) in region
-        assert (11e-9, 11e-9, 11e-9) not in region
-        assert (-1e-9, -1e-9, -1e-9) not in region
+        assert (10e-9+tol, 10e-9, 20e-9) not in region
+        assert (10e-9, 10e-9+tol, 20e-9) not in region
+        assert (10e-9, 10e-9, 20e-9+tol) not in region
