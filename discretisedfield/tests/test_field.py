@@ -410,6 +410,10 @@ class TestField:
         assert res.average == (1,)
         res = f1 - f2
         assert res.average == (1.4,)
+        f1 += f2
+        assert f1.average == (1,)
+        f1 -= f2
+        assert f1.average == (1.2,)
 
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, 3))
@@ -418,6 +422,10 @@ class TestField:
         assert res.average == (0, -1, -2)
         res = f1 - f2
         assert res.average == (2, 5, 8)
+        f1 += f2
+        assert f1.average == (0, -1, -2)
+        f1 -= f2
+        assert f1.average == (1, 2, 3)
 
         # Artithmetic checks
         assert f1 + f2 == f2 + f1
@@ -432,6 +440,10 @@ class TestField:
         with pytest.raises(TypeError):
             res = f1 + 2
         with pytest.raises(TypeError):
+            f1 += 2
+        with pytest.raises(TypeError):
+            f1 -= 5.1
+        with pytest.raises(TypeError):
             res = 2 + f2
         with pytest.raises(ValueError):
             res = f1 + f2
@@ -443,6 +455,10 @@ class TestField:
         f2 = df.Field(mesh2, dim=1, value=1)
         with pytest.raises(ValueError):
             res = f1 + f2
+        with pytest.raises(ValueError):
+            f1 += f2
+        with pytest.raises(ValueError):
+            f1 -= f2
 
     def test_mul_truediv(self):
         p1 = (0, 0, 0)
@@ -457,6 +473,10 @@ class TestField:
         assert res.average == (-2.4,)
         res = f1 / f2
         assert res.average == (-0.6,)
+        f1 *= f2
+        assert f1.average == (-2.4,)
+        f1 /= f2
+        assert f1.average == (1.2,)
 
         # Scalar field with a scalar
         f = df.Field(mesh, dim=1, value=5)
@@ -468,6 +488,10 @@ class TestField:
         assert res.average == (2.5,)
         res = 10 / f  # __rmul__
         assert res.average == (2,)
+        f *= 10  # __imul__
+        assert f.average == (50,)
+        f /= 10  # __idiv__
+        assert f.average == (5,)
 
         # Vector field with a scalar field
         f1 = df.Field(mesh, dim=1, value=2)
@@ -478,6 +502,10 @@ class TestField:
         assert res.average == (-2, -6, 10)
         res = f2 / f1  # __truediv__
         assert res.average == (-0.5, -1.5, 2.5)
+        f2 *= f1  # __imul__
+        assert f2.average == (-2, -6, 10)
+        f2 /= f1  # __truediv__
+        assert f2.average == (-1, -3, 5)
         with pytest.raises(ValueError):
             res = f1 / f2  # __rtruediv__
 
@@ -489,6 +517,10 @@ class TestField:
         assert res.average == (5, 10, 0)
         res = f / 2
         assert res.average == (0.5, 1, 0)
+        f *= 2
+        assert f.average == (2, 4, 0)
+        f /= 2
+        assert f.average == (1, 2, 0)
         with pytest.raises(ValueError):
             res = 10 / f
 
@@ -516,6 +548,12 @@ class TestField:
             res = 1 / f2
         with pytest.raises(ValueError):
             res = f1 / f2
+        with pytest.raises(TypeError):
+            f2 *= 'a'
+        with pytest.raises(TypeError):
+            f2 /= 'a'
+        with pytest.raises(ValueError):
+            f1 /= f2
 
         # Fields defined on different meshes
         mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
@@ -526,6 +564,10 @@ class TestField:
             res = f1 * f2
         with pytest.raises(ValueError):
             res = f1 / f2
+        with pytest.raises(ValueError):
+            f1 *= f2
+        with pytest.raises(ValueError):
+            f1 /= f2
 
     def test_all_operators(self):
         p1 = (0, 0, 0)
