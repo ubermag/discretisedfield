@@ -1028,7 +1028,7 @@ class TestField:
             assert len(p) == 9
             assert len(v) == 9
 
-    def test_squeeze(self):
+    def test_project(self):
         p1 = (-5, -5, -5)
         p2 = (5, 5, 5)
         cell = (1, 1, 1)
@@ -1036,15 +1036,15 @@ class TestField:
 
         # Constant scalar field
         f = df.Field(mesh, dim=1, value=5)
-        assert f.squeeze('x').array.shape == (1, 10, 10, 1)
-        assert f.squeeze('y').array.shape == (10, 1, 10, 1)
-        assert f.squeeze('z').array.shape == (10, 10, 1, 1)
+        assert f.project('x').array.shape == (1, 10, 10, 1)
+        assert f.project('y').array.shape == (10, 1, 10, 1)
+        assert f.project('z').array.shape == (10, 10, 1, 1)
 
         # Constant vector field
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        assert f.squeeze('x').array.shape == (1, 10, 10, 3)
-        assert f.squeeze('y').array.shape == (10, 1, 10, 3)
-        assert f.squeeze('z').array.shape == (10, 10, 1, 3)
+        assert f.project('x').array.shape == (1, 10, 10, 3)
+        assert f.project('y').array.shape == (10, 1, 10, 3)
+        assert f.project('z').array.shape == (10, 10, 1, 3)
 
         # Spatially varying scalar field
         def value_fun(pos):
@@ -1055,7 +1055,7 @@ class TestField:
                 return -1
 
         f = df.Field(mesh, dim=1, value=value_fun)
-        sf = f.squeeze('z')
+        sf = f.project('z')
         assert sf.array.shape == (10, 10, 1, 1)
         assert sf.average == (0,)
 
@@ -1068,7 +1068,7 @@ class TestField:
                 return (3, 2, -1)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-        sf = f.squeeze('z')
+        sf = f.project('z')
         assert sf.array.shape == (10, 10, 1, 3)
         assert sf.average == (3, 2, 0)
 
