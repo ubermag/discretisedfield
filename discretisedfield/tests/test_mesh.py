@@ -19,9 +19,6 @@ def check_mesh(mesh):
     assert all(isinstance(i, int) for i in mesh.n)
     assert all(i > 0 for i in mesh.n)
 
-    assert isinstance(mesh.ntotal, int)
-    assert mesh.ntotal > 0
-
     assert isinstance(mesh.pbc, set)
     assert all(isinstance(i, str) for i in mesh.pbc)
     assert all(i in 'xyz' for i in mesh.pbc)
@@ -30,9 +27,30 @@ def check_mesh(mesh):
     assert all(isinstance(i, str) for i in mesh.subregions.keys())
     assert all(isinstance(i, df.Region) for i in mesh.subregions.values())
 
+    assert isinstance(len(mesh), int)
+    assert len(mesh) > 0
+
     assert isinstance(repr(mesh), str)
-    pattern = r'^Mesh\(region=.+\)$'
+    pattern = r'^Mesh\(region=Region\(p1=.+\), n=.+\)$'
     assert re.search(pattern, repr(mesh))
+
+    assert isinstance(mesh.indices, types.GeneratorType)
+    assert isinstance(mesh.coordinates, types.GeneratorType)
+    assert isinstance(mesh.__iter__(), types.GeneratorType)
+    assert len(list(mesh.indices)) == len(mesh)
+    assert len(list(mesh.coordinates)) == len(mesh)
+    assert len(list(mesh)) == len(mesh)
+
+    line = mesh.line(p1=mesh.region.pmin, p2=mesh.region.pmax)
+    assert isinstance(line, types.GeneratorType)
+
+    plane_mesh = mesh.plane('z')
+    assert isinstance(plane_mesh, df.Mesh)
+    assert isinstance(plane_mesh.info, dict)
+    assert plane_mesh.info
+    assert 1 in plane_mesh.n
+
+    assert mesh.point2index(mesh.index2point((0, 0, 0))) == (0, 0, 0)
 
     assert mesh == mesh
     assert not mesh != mesh
@@ -108,7 +126,7 @@ class TestMesh:
 
     def test_init_pbc(self):
         for p1, p2, n, cell in self.valid_args:
-            for pbc in ['x', 'z', 'zx', 'xyxzz', 'yz', 'y']:
+            for pbc in ['x', 'z', 'zx', 'xyxzz', 'yz', 'yy']:
                 mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell, pbc=pbc)
                 check_mesh(mesh)
                 assert mesh.pbc == set(pbc)
@@ -123,7 +141,6 @@ class TestMesh:
         subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
                       'r2': df.Region(p1=(50, 0, 0), p2=(100, 50, 10))}
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-
         check_mesh(mesh)
 
     def test_init_with_region_and_points(self):
@@ -171,19 +188,21 @@ class TestMesh:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
             assert 'not an aggregate' in str(excinfo.value)
 
-    def test_ntotal(self):
+    def test_len(self):
         p1 = (0, 0, 0)
         p2 = (5, 4, 3)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
 
-        assert mesh.ntotal == 5*4*3
+        assert len(mesh) == 5*4*3
 
     def test_indices_coordinates_iter(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         n = (5, 5, 5)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        check_mesh(mesh)
 
         assert len(list(mesh.indices)) == 125
         for index in mesh.indices:
@@ -211,7 +230,9 @@ class TestMesh:
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
         mesh1 = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh1)
         mesh2 = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh2)
 
         assert mesh1 == mesh2
         assert not mesh1 != mesh2
@@ -222,6 +243,7 @@ class TestMesh:
         p2 = (10e-9, 5e-9, 3e-9)
         cell = (1e-9, 2.5e-9, 0.5e-9)
         mesh3 = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh3)
 
         assert not mesh1 == mesh3
         assert not mesh2 == mesh3
@@ -234,6 +256,7 @@ class TestMesh:
         cell = (1, 0.1, 0.5)
 
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc='x')
+        check_mesh(mesh)
 
         rstr = ('Mesh(region=Region(p1=(-1.0, -4.0, 11.0), '
                 'p2=(15.0, 10.1, 12.5)), n=(16, 141, 3), '
@@ -245,6 +268,7 @@ class TestMesh:
         p2 = (-1, 10.1, 11)
         cell = (1, 0.1, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
 
         assert mesh.index2point((5, 10, 1)) == (4.5, -2.95, 11.75)
 
@@ -277,6 +301,7 @@ class TestMesh:
         p2 = (10e-9, 5e-9, 0)
         cell = (1e-9, 5e-9, 1e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
 
         # (0, 0, 0) cell
         assert mesh.point2index((-10e-9, -5e-9, 0)) == (0, 0, 0)
@@ -297,6 +322,7 @@ class TestMesh:
         p2 = (10, -5, 10e-9)
         n = (10, 5, 5)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        check_mesh(mesh)
 
         tol = 1e-12  # picometer tolerance
         with pytest.raises(ValueError):
@@ -317,6 +343,7 @@ class TestMesh:
         p2 = (-1, 10.1, 11)
         cell = (1, 0.1, 0.5)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        check_mesh(mesh)
 
         for p in [(-0.5, -3.95, 11.25), (14.5, 10.05, 12.25)]:
             assert mesh.index2point(mesh.point2index(p)) == p
@@ -329,6 +356,7 @@ class TestMesh:
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
 
         tol = 1e-12
         line = mesh.line(p1=(0, 0, 0), p2=(10, 10, 10), n=10)
@@ -356,8 +384,10 @@ class TestMesh:
         p2 = (10, 5, 3)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
 
         plane = mesh.plane(z=1, n=(2, 2))
+        check_mesh(plane)
         assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 4
         for point in plane:
@@ -366,6 +396,7 @@ class TestMesh:
             assert point[2] == 1
 
         plane = mesh.plane(y=4.2, n=(3, 2))
+        check_mesh(plane)
         assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 6
         for point in plane:
@@ -374,6 +405,7 @@ class TestMesh:
             assert point[1] == 4.2
 
         plane = mesh.plane('x')
+        check_mesh(plane)
         assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 15
         for point in plane:
@@ -382,6 +414,7 @@ class TestMesh:
             assert point[0] == 5
 
         plane = mesh.plane('y', n=(10, 10))
+        check_mesh(plane)
         assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 100
         for point in plane:

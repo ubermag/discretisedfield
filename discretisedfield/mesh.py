@@ -172,8 +172,7 @@ class Mesh:
         self.pbc = pbc
         self.subregions = subregions
 
-    @property
-    def ntotal(self):
+    def __len__(self):
         """Number of discretisation cells.
 
         It is computed by multiplying all elements of `self.n`:
@@ -194,7 +193,7 @@ class Mesh:
         >>> p2 = (5, 15, 2)
         >>> cell = (1, 0.1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-        >>> mesh.ntotal
+        >>> len(mesh)
         1000
 
         """
@@ -460,8 +459,8 @@ class Mesh:
         Parameters
         ----------
         p1, p2 : (3,) array_like
-            Two points between which the line is generated.
-        n : int
+            Points between which the line is generated.
+        n : int, optional
             Number of points on the line. Defaults to 100.
 
         Yields
@@ -505,7 +504,7 @@ class Mesh:
         `x=1`), a plane perpendicular to the x-axis (parallel to yz-plane) and
         intersecting it at `x=1` is generated. The number of points in two
         dimensions on the plane can be defined using `n` (e.g. `n=(10, 15)`).
-        Using the generated plane, a new "two-dimensional" mesh is created and
+        Using generated plane, a new "two-dimensional" mesh is created and
         returned. The resulting mesh has an attribute `info`, which is a
         dictionary containing basic information about the mesh plane.
 
@@ -546,26 +545,26 @@ class Mesh:
         """
         if args and not kwargs:
             if len(args) != 1:
-                msg = f'Multiple args {args} passed.'
+                msg = f'Multiple args ({args}) passed.'
                 raise ValueError(msg)
 
-            # Only planeaxis is provided via args and the point is defined a
+            # Only planeaxis is provided via args and the point is defined the
             # centre of the sample.
             planeaxis = dfu.axesdict[args[0]]
             point = self.region.centre[planeaxis]
         elif kwargs and not args:
             if len(kwargs) != 1:
-                msg = f'Multiple kwargs {kwargs} passed.'
+                msg = f'Multiple kwargs ({kwargs}) passed.'
                 raise ValueError(msg)
 
-            planeaxis = dfu.axesdict[list(kwargs.keys())[0]]
-            point = list(kwargs.values())[0]
+            planeaxis, point = list(kwargs.items())[0]
+            planeaxis = dfu.axesdict[planeaxis]
 
             # Check if point is outside the mesh region.
             test_point = list(self.region.centre)
             test_point[planeaxis] = point
             if test_point not in self.region:
-                msg = f'Point {test_point} is outside the mesh.'
+                msg = f'Point {test_point} is outside the mesh region.'
                 raise ValueError(msg)
         else:
             msg = 'Either one arg or one kwarg can be passed, not both.'
@@ -579,7 +578,7 @@ class Mesh:
             n = (self.n[axis1], self.n[axis2])
 
         # Build plane-mesh.
-        p1pm, p2pm, npm = np.zeros(3), np.zeros(3), np.zeros(3)
+        p1pm, p2pm, npm = np.zeros(3), np.zeros(3), np.zeros(3, dtype=int)
         ilist = [axis1, axis2, planeaxis]
         p1pm[ilist] = (self.region.pmin[axis1],
                        self.region.pmin[axis2],
@@ -588,9 +587,8 @@ class Mesh:
                        self.region.pmax[axis2],
                        point + self.cell[planeaxis]/2)
         npm[ilist] = (*n, 1)
-        npm = dfu.array2tuple(npm.astype(int))
 
-        plane_mesh = self.__class__(p1=p1pm, p2=p2pm, n=npm)
+        plane_mesh = self.__class__(p1=p1pm, p2=p2pm, n=dfu.array2tuple(npm))
 
         # Add info dictionary, so that the mesh can be interpreted easier.
         info = dict()

@@ -1056,7 +1056,7 @@ class TestField:
 
             # comparison with human readable part of file
             assert f.dim == 3
-            assert f.mesh.ntotal == 4096
+            assert len(f.mesh) == 4096
             assert f.mesh.region.pmin == (0., 0., 0.)
             assert f.mesh.region.pmax == (5e-07, 1.25e-07, 3e-09)
             assert f.array.shape == (128, 32, 1, 3)

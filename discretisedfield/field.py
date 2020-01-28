@@ -1351,7 +1351,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.average`
 
         """
-        cell_volume = self.mesh.region.volume / self.mesh.ntotal
+        cell_volume = self.mesh.region.volume / len(self.mesh)
         field_sum = np.sum(self.array, axis=(0, 1, 2))
         return dfu.array2tuple(field_sum * cell_volume)
 
