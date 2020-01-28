@@ -494,6 +494,29 @@ class TestMesh:
         with pytest.raises(ValueError):
             info = mesh.plane('z', x=5).info
 
+    def test_getitem(self):
+        p1 = (0, 0, 0)
+        p2 = (100, 50, 10)
+        cell = (5, 5, 5)
+        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
+                      'r2': df.Region(p1=(50, 0, 0), p2=(100, 50, 10))}
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+        check_mesh(mesh)
+
+        submesh1 = mesh['r1']
+        check_mesh(submesh1)
+        assert submesh1.region.pmin == (0, 0, 0)
+        assert submesh1.region.pmax == (50, 50, 10)
+        assert submesh1.cell == (5, 5, 5)
+
+        submesh2 = mesh['r2']
+        check_mesh(submesh2)
+        assert submesh2.region.pmin == (50, 0, 0)
+        assert submesh2.region.pmax == (100, 50, 10)
+        assert submesh2.cell == (5, 5, 5)
+
+        assert len(submesh1) + len(submesh2) == len(mesh)
+
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)

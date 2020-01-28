@@ -599,6 +599,52 @@ class Mesh:
 
         return plane_mesh
 
+    def __getitem__(self, key):
+        """Extract mesh of a subregion.
+
+        If subregions are defined, this method returns a mesh defined on a
+        subregion `subregions[key]` with the same discretisation cell as
+        the parent mesh.
+
+        Parameters
+        ----------
+        key : str
+            The key associated to the region in `self.subregions`
+
+        Returns
+        -------
+        disretisedfield.Mesh
+            Mesh of a subregion
+
+        Example
+        -------
+        1. Extract subregion mesh.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+        ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+        >>> len(mesh)
+        1000
+        >>> mesh.region.pmin
+        (0, 0, 0)
+        >>> mesh.region.pmax
+        (100, 100, 100)
+        >>> submesh = mesh['r1']
+        >>> len(submesh)
+        500
+        >>> submesh.region.pmin
+        (0, 0, 0)
+        >>> submesh.region.pmax
+        (50, 100, 100)
+
+        """
+        return self.__class__(region=self.subregions[key], cell=self.cell)
+
     def mpl(self, figsize=None):
         """Plots the mesh domain and the discretisation cell using a
         `matplotlib` 3D plot.
