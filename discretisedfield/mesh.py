@@ -526,10 +526,21 @@ class Mesh:
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 2)
+        >>> p2 = (5, 5, 5)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.plane(y=1)
+        Mesh(...)
+
+        2. Specifying the number of points.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.plane('z', n=(3, 3))
         Mesh(...)
 
         """
