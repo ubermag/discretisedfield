@@ -353,48 +353,56 @@ class TestMesh:
 
     def test_plane(self):
         p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
+        p2 = (10, 5, 3)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        plane = mesh.plane(z=3, n=(2, 2))
+        plane = mesh.plane(z=1, n=(2, 2))
         assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 4
         for point in plane:
             assert isinstance(point, tuple)
             assert len(point) == 3
-            assert point[2] == 3
+            assert point[2] == 1
 
-        plane = mesh.plane(y=9.2, n=(3, 2))
+        plane = mesh.plane(y=4.2, n=(3, 2))
         assert isinstance(plane, df.Mesh)
         assert len(list(plane)) == 6
         for point in plane:
             assert isinstance(point, tuple)
             assert len(point) == 3
-            assert point[1] == 9.2
+            assert point[1] == 4.2
 
         plane = mesh.plane('x')
         assert isinstance(plane, df.Mesh)
-        assert len(list(plane)) == 100
+        assert len(list(plane)) == 15
         for point in plane:
             assert isinstance(point, tuple)
             assert len(point) == 3
             assert point[0] == 5
 
+        plane = mesh.plane('y', n=(10, 10))
+        assert isinstance(plane, df.Mesh)
+        assert len(list(plane)) == 100
+        for point in plane:
+            assert isinstance(point, tuple)
+            assert len(point) == 3
+            assert point[1] == 2.5
+
         with pytest.raises(ValueError):
             plane = list(mesh.plane(x=-1))
 
         with pytest.raises(ValueError):
-            plane = list(mesh.plane(y=11))
+            plane = list(mesh.plane(y=6))
 
         with pytest.raises(ValueError):
             plane = list(mesh.plane(z=-1e-9))
 
         with pytest.raises(ValueError):
-            plane = list(mesh.plane('x', z=-1e-9))
+            plane = list(mesh.plane('x', z=1))
 
         with pytest.raises(ValueError):
-            plane = list(mesh.plane('z', z=-1e-9))
+            plane = list(mesh.plane('z', z=1))
 
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
@@ -416,13 +424,13 @@ class TestMesh:
         p2 = (100, 80, 10)
         cell = (2, 2, 2)
         subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(100, 10, 10)),
-                   'r2': df.Region(p1=(0, 10, 0), p2=(100, 20, 10)),
-                   'r3': df.Region(p1=(0, 20, 0), p2=(100, 30, 10)),
-                   'r4': df.Region(p1=(0, 30, 0), p2=(100, 40, 10)),
-                   'r5': df.Region(p1=(0, 40, 0), p2=(100, 50, 10)),
-                   'r6': df.Region(p1=(0, 50, 0), p2=(100, 60, 10)),
-                   'r7': df.Region(p1=(0, 60, 0), p2=(100, 70, 10)),
-                   'r8': df.Region(p1=(0, 70, 0), p2=(100, 80, 10))}
+                      'r2': df.Region(p1=(0, 10, 0), p2=(100, 20, 10)),
+                      'r3': df.Region(p1=(0, 20, 0), p2=(100, 30, 10)),
+                      'r4': df.Region(p1=(0, 30, 0), p2=(100, 40, 10)),
+                      'r5': df.Region(p1=(0, 40, 0), p2=(100, 50, 10)),
+                      'r6': df.Region(p1=(0, 50, 0), p2=(100, 60, 10)),
+                      'r7': df.Region(p1=(0, 60, 0), p2=(100, 70, 10)),
+                      'r8': df.Region(p1=(0, 70, 0), p2=(100, 80, 10))}
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
         mesh.mpl_subregions()
         mesh.k3d_subregions()
@@ -434,7 +442,7 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         assert mesh.cell == cell
-        assert mesh.region.l == (10, 10, 10)
+        assert mesh.region.edges == (10, 10, 10)
         assert mesh.n == (10, 10, 10)
 
         # Attempt to change attribute
@@ -443,5 +451,5 @@ class TestMesh:
 
         # Make sure the attributes have not changed.
         assert mesh.cell == cell
-        assert mesh.region.l == (10, 10, 10)
+        assert mesh.region.edges == (10, 10, 10)
         assert mesh.n == (10, 10, 10)

@@ -119,8 +119,8 @@ class Mesh:
     >>> p1 = (0, 0, 0)
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
-    >>> regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
-    ...            'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+    >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+    ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
     >>> mesh
     Mesh(...)
@@ -352,7 +352,7 @@ class Mesh:
         >>> pbc = 'x'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
         >>> repr(mesh)
-        "Mesh(region=Region(p1=(0, 0, 0), p2=(2, 2, 1)), cell=(1, 1, 1), ...)"
+        "Mesh(region=Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), ...)"
 
         """
         return (f'Mesh(region={repr(self.region)}, n={self.n}, '
@@ -530,26 +530,23 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.plane(y=1)
-        Mesh(p1=(0.0, 0.5, 0.0), p2=(2.0, 1.5, 2.0), ...)
+        Mesh(...)
 
         """
-        # The plane is defined with: planeaxis and point. They are extracted
-        # from *args and **kwargs.
         if args and not kwargs:
             if len(args) != 1:
                 msg = f'Multiple args {args} passed.'
                 raise ValueError(msg)
 
-            # Only planeaxis is provided via args and the point is defined
-            # later as a centre of the sample.
+            # Only planeaxis is provided via args and the point is defined a
+            # centre of the sample.
             planeaxis = dfu.axesdict[args[0]]
             point = self.region.centre[planeaxis]
         elif kwargs and not args:
-            if len(kwargs.keys()) != 1:
+            if len(kwargs) != 1:
                 msg = f'Multiple kwargs {kwargs} passed.'
                 raise ValueError(msg)
 
-            # Both planeaxis and point are provided via kwargs.
             planeaxis = dfu.axesdict[list(kwargs.keys())[0]]
             point = list(kwargs.values())[0]
 
@@ -567,30 +564,29 @@ class Mesh:
         axis1, axis2 = tuple(filter(lambda val: val != planeaxis,
                                     dfu.axesdict.values()))
 
-        # Determine the n tuple.
         if n is None:
             n = (self.n[axis1], self.n[axis2])
 
-        # Build a mesh.
-        p1s, p2s, ns = np.zeros(3), np.zeros(3), np.zeros(3)
+        # Build plane-mesh.
+        p1pm, p2pm, npm = np.zeros(3), np.zeros(3), np.zeros(3)
         ilist = [axis1, axis2, planeaxis]
-        p1s[ilist] = (self.region.pmin[axis1],
-                      self.region.pmin[axis2],
-                      point - self.cell[planeaxis]/2)
-        p2s[ilist] = (self.region.pmax[axis1],
-                      self.region.pmax[axis2],
-                      point + self.cell[planeaxis]/2)
-        ns[ilist] = (*n, 1)
-        ns = dfu.array2tuple(ns.astype(int))
+        p1pm[ilist] = (self.region.pmin[axis1],
+                       self.region.pmin[axis2],
+                       point - self.cell[planeaxis]/2)
+        p2pm[ilist] = (self.region.pmax[axis1],
+                       self.region.pmax[axis2],
+                       point + self.cell[planeaxis]/2)
+        npm[ilist] = (*n, 1)
+        npm = dfu.array2tuple(npm.astype(int))
 
-        plane_mesh = self.__class__(p1=p1s, p2=p2s, n=ns)
+        plane_mesh = self.__class__(p1=p1pm, p2=p2pm, n=npm)
 
+        # Add info dictionary, so that the mesh can be interpreted easier.
         info = dict()
         info['planeaxis'] = planeaxis
         info['point'] = point
         info['axis1'], info['axis2'] = axis1, axis2
-
-        plane_mesh.info = info  # Add info so it can be interpreted easier
+        plane_mesh.info = info
 
         return plane_mesh
 
@@ -737,10 +733,10 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
-        >>> regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
-        ...            'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
-        >>> mesh.mpl_regions()
+        >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+        ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+        >>> mesh.mpl_subregions()
 
         """
         fig = plt.figure(figsize=figsize)
@@ -790,10 +786,10 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
-        >>> regions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
-        ...            'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
-        >>> mesh.k3d_regions()
+        >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+        ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+        >>> mesh.k3d_subregions()
         Plot(...)
 
         """
