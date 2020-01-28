@@ -674,9 +674,9 @@ class TestField:
 
         f1 = df.Field(mesh, dim=1, value=2)
         f2 = df.Field(mesh, dim=3, value=(-4, 0, 1))
-        res = ((f1/2 + f2.x)**2 - 2*f1*3)/(-f2.z) - 2*f2.y + 1/f2.z**2
+        res = ((+f1/2 + f2.x)**2 - 2*f1*3)/(-f2.z) - 2*f2.y + 1/f2.z**2 + f2@f2
 
-        assert np.all(res.array == 4)
+        assert np.all(res.array == 21)
 
     def test_derivative(self):
         p1 = (0, 0, 0)
