@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
-axesdict = collections.OrderedDict([('x', 0), ('y', 1), ('z', 2)])
+axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
 colormap = [0x3498db, 0xe74c3c, 0x27ae60, 0xf1c40f, 0x8e44ad, 0xecf0f1]
 
@@ -97,7 +97,7 @@ def plot_box(ax, p1, p2, *args, **kwargs):
 
 
 def as_array(mesh, dim, val):
-    array = np.empty(mesh.n + (dim,))
+    array = np.empty((*mesh.n, dim))
     if isinstance(val, numbers.Real) and (dim == 1 or val == 0):
         # The array for a scalar field with numbers.Real value or any
         # field with zero value.
@@ -116,8 +116,7 @@ def as_array(mesh, dim, val):
                     array[index] = val[region]
                     break
     else:
-        msg = (f'Unsupported type(val)={type(val)} '
-               'or invalid value dimensions.')
+        msg = f'Unsupported {type(val)} or invalid value dimensions.'
         raise ValueError(msg)
     return array
 

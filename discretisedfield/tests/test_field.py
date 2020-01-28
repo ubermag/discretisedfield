@@ -221,6 +221,12 @@ class TestField:
                     assert f.norm.array.shape == f.mesh.n + (1,)
                     assert np.all(abs(norm - norm_value) < 1e-12)
 
+        # Scalar field norm
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        f = df.Field(mesh, dim=1, value=-5)
+
+        assert f.norm.average == (5,)
+
     def test_norm_is_not_preserved(self):
         for mesh in self.meshes:
             f = df.Field(mesh, dim=3)
@@ -371,6 +377,25 @@ class TestField:
         res = -f
         check_field(res)
         assert res.average == (-1, -2, 3)
+
+    def test_abs(self):
+        p1 = (-5e-9, -5e-9, -5e-9)
+        p2 = (5e-9, 5e-9, 5e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Scalar field
+        f = df.Field(mesh, dim=1, value=-3)
+        res = abs(f)
+        check_field(res)
+        assert res == -f
+        assert res.average == (3,)
+
+        # Vector field
+        f = df.Field(mesh, dim=3, value=(3, 0, -4))
+        res = abs(f)
+        check_field(res)
+        assert res.average == (5,)
 
     def test_pow(self):
         p1 = (0, 0, 0)

@@ -213,7 +213,7 @@ class Field:
     @array.setter
     def array(self, val):
         if isinstance(val, np.ndarray) and \
-           val.shape == (*self.mesh.n, self.dim):
+        val.shape == (*self.mesh.n, self.dim):
             self._array = val
         else:
             msg = f'Unsupported {type(val)} or invalid value shape.'
@@ -267,9 +267,7 @@ class Field:
 
         """
         computed_norm = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
-        return self.__class__(self.mesh,
-                              dim=1,
-                              value=computed_norm)
+        return self.__class__(self.mesh, dim=1, value=computed_norm)
 
     @norm.setter
     def norm(self, val):
@@ -326,7 +324,7 @@ class Field:
 
         """
         if self.dim == 1:
-            msg = (f'Cannot derive orientation field for a '
+            msg = (f'Cannot compute orientation field for a '
                    f'field with dim={self.dim}.')
             raise ValueError(msg)
 
@@ -530,8 +528,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
 
         """
-        for point in self.mesh.coordinates:
-            yield point, self.__call__(point)
+        for point in self.mesh:
+            yield point, self(point)
 
     def __eq__(self, other):
         """Determine whether two fields are equal.
@@ -623,6 +621,43 @@ class Field:
 
         """
         return not self == other
+
+    def __abs__(self):
+        """Field norm.
+
+        This method implements abs() built-in method. If the field is a scalar
+        field (`dim=1`), absolute value is returned. On the other hand, if the
+        field is a vector field (`dim=3`), norm of the field is returned. For
+        more details, refer to `discretisedfield.Field.norm()` method.
+
+        Returns
+        -------
+        discretisedfield.Field
+            Absolute value or norm of the field (`self.norm`).
+
+        Examples
+        --------
+        1. Applying abs() built-in method on field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        ...
+        >>> f1 = df.Field(mesh, dim=1, value=-3)
+        >>> f2 = df.Field(mesh, dim=3, value=(-6, 8, 0))
+        >>> abs(f1)
+        Field(...)
+        >>> abs(f1).average
+        (3.0,)
+        >>> abs(f2)
+        Field(...)
+        >>> abs(f2).average
+        (10.0,)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.norm`
+
+        """
+        return self.norm
 
     def __neg__(self):
         """Unary negation operator.
