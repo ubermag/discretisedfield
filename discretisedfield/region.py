@@ -265,7 +265,7 @@ class Region:
         return f'Region(p1={self.pmin}, p2={self.pmax})'
 
     def __eq__(self, other):
-        """Determine whether two regions are equal.
+        """Equality operator.
 
         Two regions are considered to be equal if they have the same minimum
         and maximum coordinate points: :math:`p^\\text{max}_{1} =
@@ -274,7 +274,7 @@ class Region:
         Parameters
         ----------
         other : discretisedfield.Region
-            Region object, which is compared to `self`.
+            Region compared to `self`.
 
         Returns
         -------
@@ -292,8 +292,12 @@ class Region:
         >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
         >>> region1 == region2
         True
+        >>> region1 != region2
+        False
         >>> region1 == region3
         False
+        >>> region1 != region3
+        True
 
         .. seealso:: :py:func:`~discretisedfield.Region.__ne__`
 
@@ -306,10 +310,11 @@ class Region:
             return False
 
     def __ne__(self, other):
-        """Determine whether two regions are not equal.
+        """Inverse of equality operator.
 
-        This method returns `not self == other`. For details, please
-        refer to `discretisedfield.Region.__eq__()` method.
+        This method returns `not self == other`.
+
+        .. seealso:: :py:func:`~discretisedfield.Region.__ne__`
 
         """
         return not self == other

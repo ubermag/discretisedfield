@@ -33,7 +33,7 @@ def bergluescher_angle(v1, v2, v3):
                  1j*(np.dot(v1, np.cross(v2, v3))))
 
     exp_omega = numerator/rho
-    
+
     return 2 * cmath.log(exp_omega).imag / (4*np.pi)
 
 
@@ -44,14 +44,14 @@ def assemble_index(index_dict):
 
     return tuple(index)
 
-    
+
 def plane_info(*args, **kwargs):
     info = dict()
     # The plane is defined with: planeaxis and point. They are
-    # extracted from *args and *kwargs.
+    # extracted from *args and **kwargs.
     if args and not kwargs:
         if len(args) != 1:
-            msg = 'Only one arg can be passed.'
+            msg = f'Multiple args {args} passed.'
             raise ValueError(msg)
 
         # Only planeaxis is provided via args and the point will be
