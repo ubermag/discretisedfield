@@ -1053,6 +1053,60 @@ class Field:
     def __rtruediv__(self, other):
         return self**(-1) * other
 
+    def __matmul__(self, other):
+        """Dot product operator (@).
+
+        This function computes the dot product between two fields. Both
+        fields must be three-dimensional and defined on the same mesh. If
+        any of the fields is not of dimension 3, `ValueError` is raised.
+
+        Parameter
+        ---------
+        other : discretisedfield.Field
+            Three-dimensional fields
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Raises
+        ------
+        ValueError
+            If the dimension of any of the fields is not 3.
+
+        Example
+        -------
+        1. Compute the dot product of two vector fields.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f1 = df.Field(mesh, dim=3, value=(1, 3, 6))
+        >>> f2 = df.Field(mesh, dim=3, value=(-1, -2, 2))
+        >>> (f1@f2).average
+        (5.0,)
+
+        """
+        if not isinstance(other, df.Field):
+            msg = (f'Unsupported operand type(s) for @: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+        if self.dim != 3 or other.dim != 3:
+            msg = (f'Cannot compute the dot product on '
+                   f'dim={self.dim} and dim={other.dim} fields.')
+            raise ValueError(msg)
+        if self.mesh != other.mesh:
+            msg = ('Cannot compute the dot product of '
+                   'fields defined on different meshes.')
+            raise ValueError(msg)
+
+        res_array = np.einsum('ijkl,ijkl->ijk', self.array, other.array)
+        return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
+
     def derivative(self, direction):
         """Directional derivative.
 
@@ -1506,8 +1560,8 @@ class Field:
         of = self.orientation  # unit (orientation) field
         thickness = self.mesh.cell[self.mesh.info['planeaxis']]
         prefactor = 1 / (4 * np.pi * thickness)
-        q = df.dot(of, df.cross(of.derivative(self.mesh.info['axis1']),
-                                of.derivative(self.mesh.info['axis2'])))
+        q = of @ df.cross(of.derivative(self.mesh.info['axis1']),
+                          of.derivative(self.mesh.info['axis2']))
         return prefactor * q
 
     @property
