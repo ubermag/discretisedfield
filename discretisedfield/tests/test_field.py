@@ -12,12 +12,13 @@ import discretisedfield.tests as dft
 def check_field(field):
     assert isinstance(field.mesh, df.Mesh)
     assert isinstance(field.dim, int)
-    assert isinstance(field.name, str)
     assert isinstance(field.array, np.ndarray)
     assert field.array.shape[-1] == field.dim
     assert isinstance(field.norm.array, np.ndarray)
     assert field.norm.array.shape[-1] == 1
 
+    assert field == field
+    assert not field != field
 
 class TestField:
     def setup(self):
@@ -70,12 +71,10 @@ class TestField:
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         dim = 2
-        name = 'test_field'
         value = [1, 2]
-        f = df.Field(mesh, dim=dim, value=value, name=name)
+        f = df.Field(mesh, dim=dim, value=value)
 
         check_field(f)
-        assert f.name == name
         assert f.array.shape == (5, 10, 15, 2)
         assert np.all(f.array[..., 0] == value[0])
         assert np.all(f.array[..., 1] == value[1])
@@ -88,8 +87,8 @@ class TestField:
                 check_field(f)
                 assert f.value == value
                 assert np.all(f.array == value)
-                assert f(f.mesh.random_point()) == value
-                assert f(f.mesh.centre) == value
+                assert f(f.mesh.region.random_point()) == value
+                assert f(f.mesh.region.centre) == value
             for value in self.sfuncs:
                 f = df.Field(mesh, dim=1, value=value)
                 check_field(f)
@@ -97,8 +96,8 @@ class TestField:
                 f = df.Field(mesh, dim=3, value=value)
                 check_field(f)
                 assert np.equal(f.value, value).all()
-                assert np.equal(f(f.mesh.random_point()), value).all()
-                assert np.equal(f(f.mesh.centre), value).all()
+                assert np.equal(f(f.mesh.region.random_point()), value).all()
+                assert np.equal(f(f.mesh.region.centre), value).all()
             for value in self.vfuncs:
                 f = df.Field(mesh, dim=3, value=value)
                 check_field(f)
@@ -131,7 +130,7 @@ class TestField:
             for func in self.sfuncs:
                 f = df.Field(mesh, dim=1, value=func)
                 for j in range(10):
-                    c = f.mesh.random_point()
+                    c = f.mesh.region.random_point()
                     c = f.mesh.index2point(f.mesh.point2index(c))
                     assert f(c) == func(c)
 
@@ -139,7 +138,7 @@ class TestField:
             for func in self.vfuncs:
                 f = df.Field(mesh, dim=3, value=func)
                 for j in range(10):
-                    c = f.mesh.random_point()
+                    c = f.mesh.region.random_point()
                     c = f.mesh.index2point(f.mesh.point2index(c))
                     assert np.all(f(c) == func(c))
 
@@ -147,9 +146,10 @@ class TestField:
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
         n = (5, 5, 5)
-        regions = {'r1': df.Region(p1=(0, 0, 0), p2=(5e-9, 10e-9, 10e-9)),
-                   'r2': df.Region(p1=(5e-9, 0, 0), p2=(10e-9, 10e-9, 10e-9))}
-        mesh = df.Mesh(p1=p1, p2=p2, n=n, regions=regions)
+        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(5e-9, 10e-9, 10e-9)),
+                      'r2': df.Region(p1=(5e-9, 0, 0),
+                                      p2=(10e-9, 10e-9, 10e-9))}
+        mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
 
         field = df.Field(mesh, dim=3, value={'r1': (0, 0, 1), 'r2': (0, 0, 2)})
         assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
@@ -171,7 +171,6 @@ class TestField:
             assert isinstance(rstr, str)
             assert 'mesh=' in rstr
             assert 'dim=1' in rstr
-            assert 'name=' in rstr
 
             f = df.Field(mesh, dim=3)
             check_field(f)
@@ -179,7 +178,6 @@ class TestField:
             assert isinstance(rstr, str)
             assert 'mesh=' in rstr
             assert 'dim=3' in rstr
-            assert 'name=' in rstr
 
     def test_value_is_not_preserved(self):
         for mesh in self.meshes:
@@ -934,7 +932,7 @@ class TestField:
         sf = f.squeeze('z')
         assert sf.array.shape == (10, 10, 1, 3)
         assert sf.average == (3, 2, 0)
-        
+
     def test_writevtk(self):
         vtkfilename = 'test_file.ovf'
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
@@ -976,8 +974,8 @@ class TestField:
             for rep in representations:
                 f_out.write(filename, representation=rep)
                 f_in = df.Field.fromfile(filename)
-                assert mesh.p1 == f_in.mesh.p1
-                assert mesh.p2 == f_in.mesh.p2
+                assert mesh.region.p1 == f_in.mesh.region.p1
+                assert mesh.region.p2 == f_in.mesh.region.p2
                 assert mesh.cell == f_in.mesh.cell
                 np.testing.assert_allclose(f_out.array, f_in.array,
                                            rtol=tolerance[rep])
@@ -1017,8 +1015,8 @@ class TestField:
             # comparison with human readable part of file
             assert f.dim == 3
             assert f.mesh.ntotal == 4096
-            assert f.mesh.pmin == (0., 0., 0.)
-            assert f.mesh.pmax == (5e-07, 1.25e-07, 3e-09)
+            assert f.mesh.region.pmin == (0., 0., 0.)
+            assert f.mesh.region.pmax == (5e-07, 1.25e-07, 3e-09)
             assert f.array.shape == (128, 32, 1, 3)
 
             # comparison with vector field (we know from the script

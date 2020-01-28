@@ -404,6 +404,63 @@ class TestMesh:
         with pytest.raises(ValueError):
             plane = list(mesh.plane('z', z=1))
 
+        info = mesh.plane('x').info
+        assert info['planeaxis'] == 0
+        assert info['axis1'] == 1
+        assert info['axis2'] == 2
+        assert info['point'] == 5
+
+        info = mesh.plane('y').info
+        assert info['planeaxis'] == 1
+        assert info['axis1'] == 0
+        assert info['axis2'] == 2
+        assert info['point'] == 2.5
+
+        info = mesh.plane('z').info
+        assert info['planeaxis'] == 2
+        assert info['axis1'] == 0
+        assert info['axis2'] == 1
+        assert info['point'] == 1.5
+
+        info = mesh.plane(x=0).info
+        assert info['planeaxis'] == 0
+        assert info['axis1'] == 1
+        assert info['axis2'] == 2
+        assert info['point'] == 0
+
+        info = mesh.plane(y=0).info
+        assert info['planeaxis'] == 1
+        assert info['axis1'] == 0
+        assert info['axis2'] == 2
+        assert info['point'] == 0
+
+        info = mesh.plane(z=0).info
+        assert info['planeaxis'] == 2
+        assert info['axis1'] == 0
+        assert info['axis2'] == 1
+        assert info['point'] == 0
+
+        info = mesh.plane(x=5).info
+        assert info['planeaxis'] == 0
+        assert info['axis1'] == 1
+        assert info['axis2'] == 2
+        assert info['point'] == 5
+
+        with pytest.raises(KeyError):
+            info = mesh.plane('xy').info
+        with pytest.raises(KeyError):
+            info = mesh.plane('zy').info
+        with pytest.raises(ValueError):
+            info = mesh.plane('y', 'x').info
+        with pytest.raises(KeyError):
+            info = mesh.plane('xzy').info
+        with pytest.raises(ValueError):
+            info = mesh.plane('z', x=3).info
+        with pytest.raises(ValueError):
+            info = mesh.plane('y', y=5).info
+        with pytest.raises(ValueError):
+            info = mesh.plane('z', x=5).info
+
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)

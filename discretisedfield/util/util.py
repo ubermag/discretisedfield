@@ -109,10 +109,10 @@ def as_array(mesh, dim, val):
     elif callable(val):
         for index, point in zip(mesh.indices, mesh.coordinates):
             array[index] = val(point)
-    elif isinstance(val, dict) and mesh.regions:
+    elif isinstance(val, dict) and mesh.subregions:
         for index, point in zip(mesh.indices, mesh.coordinates):
-            for region in mesh.regions.keys():
-                if point in mesh.regions[region]:
+            for region in mesh.subregions.keys():
+                if point in mesh.subregions[region]:
                     array[index] = val[region]
                     break
     else:
