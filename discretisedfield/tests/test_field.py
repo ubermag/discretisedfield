@@ -360,7 +360,7 @@ class TestField:
         assert not f1 == 0.2
         assert f1 != 0.2
 
-    def test_neg(self):
+    def test_pos_neg(self):
         p1 = (-5e-9, -5e-9, -5e-9)
         p2 = (5e-9, 5e-9, 5e-9)
         cell = (1e-9, 1e-9, 1e-9)
@@ -371,12 +371,18 @@ class TestField:
         res = -f
         check_field(res)
         assert res.average == (-3,)
+        assert f == +f
+        assert f == -(-f)
+        assert f == +(-(-f))
 
         # Vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -3))
         res = -f
         check_field(res)
         assert res.average == (-1, -2, 3)
+        assert f == +f
+        assert f == -(-f)
+        assert f == +(-(-f))
 
     def test_abs(self):
         p1 = (-5e-9, -5e-9, -5e-9)

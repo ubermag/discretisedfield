@@ -659,8 +659,38 @@ class Field:
         """
         return self.norm
 
+    def __pos__(self):
+        """Unary + operator.
+
+        This method defines the unary operator `+`. It returns the field itself.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Applying unary + operator on a field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5e-9, 5e-9, 5e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(0, -1000, -3))
+        >>> res = +f
+        >>> res.average
+        (0.0, -1000.0, -3.0)
+        >>> res == f
+        True
+
+        """
+        return self
+
     def __neg__(self):
-        """Unary negation operator.
+        """Unary - operator.
 
         This method defines the unary operator `-`. It negates the
         value of each discretisation cell. It is equivalent to
@@ -685,6 +715,8 @@ class Field:
         >>> res = -f
         >>> res.average
         (-3.1,)
+        >>> f == -(-f)
+        True
 
         2. Applying unary negation operator on a vector field.
 
