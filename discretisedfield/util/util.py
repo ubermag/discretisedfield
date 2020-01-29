@@ -15,6 +15,34 @@ axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
 colormap = [0x3498db, 0xe74c3c, 0x27ae60, 0xf1c40f, 0x8e44ad, 0xecf0f1]
 
+si_prefix = {'y': 1e-24,  # yocto
+             'z': 1e-21,  # zepto
+             'a': 1e-18,  # atto
+             'f': 1e-15,  # femto
+             'p': 1e-12,  # pico
+             'n': 1e-9,   # nano
+             'u': 1e-6,   # micro
+             'm': 1e-3,   # mili
+             '' : 1,      # no prefix
+             'k': 1e3,    # kilo
+             'M': 1e6,    # mega
+             'G': 1e9,    # giga
+             'T': 1e12,   # tera
+             'P': 1e15,   # peta
+             'E': 1e18,   # exa
+             'Z': 1e21,   # zetta
+             'Y': 1e24,   # yotta
+    }
+
+def rescale(value):
+    if np.all(value==0):
+        return value, ''
+    for p, m in si_prefix.items():
+        if np.any(1 <= np.divide(value, m) < 1e3):
+            prefix, multiplier = p, m
+
+    return np.divide(value, multiplier), prefix
+
 
 def array2tuple(array):
     return tuple(array.tolist())

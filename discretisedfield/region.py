@@ -1,5 +1,7 @@
 import random
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
@@ -355,3 +357,100 @@ class Region:
             return False
         else:
             return True
+
+    def mpl(self, ax=None, figsize=None, color=sns.color_palette()[0],
+            linewidth=2, **kwargs):
+        """Plots the region using `matplotlib` 3D plot.
+
+        Axes to which the plot of the region is going to be added. Defaults to
+        `None` - new axes will be created in figure with size defined as
+        `figsize`. This method plots the region using
+        `matplotlib.pyplot.plot()`, so any args or kwargs accepted by that
+        function can be passed.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+            Axes to which region plot should be added. Defaults to `None` - new
+            axes will be created in figure with size defined as `figsize`.
+        figsize : (2,) tuple, optional
+            Length-2 tuple passed to the `matplotlib.pyplot.figure` to create a
+            figure and axes if `ax=None`.
+        color : any matplotlib color, optional
+            Defaults to `seaborn.color_pallette()[0]`.
+        linewidth : float
+            Width of the line
+
+        Examples
+        --------
+        1. Visualising the region using `matplotlib`.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-6, -3, -3)
+        >>> p2 = (6, 3, 3)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> mesh.mpl()
+
+        """
+        sns.set(style='whitegrid')
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111, projection='3d')
+
+        dfu.plot_box(ax, self.pmin, self.pmax, color=color,
+                     linewidth=linewidth, **kwargs)
+
+        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
+        ax.figure.tight_layout()
+
+        return ax
+
+    def k3d(self, colormap=dfu.colormap, plot=None, **kwargs):
+        """Plots the mesh domain and emphasises the discretisation cell.
+
+        The first element of `colormap` is the colour of the domain,
+        whereas the second one is the colour of the discretisation
+        cell. If `plot` is passed as a `k3d.plot.Plot`, plot is added
+        to it. Otherwise, a new k3d plot is created. All arguments
+        allowed in `k3d.voxels()` can be passed. This function is to
+        be called in Jupyter notebook.
+
+        Parameters
+        ----------
+        colormap : list, optional
+            Length-2 list of colours in hexadecimal format. The first
+            element is the colour of the domain, whereas the second
+            one is the colour of the discretisation cell.
+        plot : k3d.plot.Plot, optional
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
+
+        Examples
+        --------
+        1. Visualising the mesh using `k3d`
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-6, -3, -3)
+        >>> p2 = (6, 3, 3)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.k3d()
+        Plot(...)
+
+        """
+        plot_array = np.ones(tuple(reversed(self.n)))
+        plot_array[0, 0, -1] = 2  # mark the discretisation cell
+
+        # In the case of nano-sized samples, fix the order of
+        # magnitude of the plot extent to avoid freezing the k3d plot.
+        if np.any(np.divide(self.cell, 1e-9) < 1e3):
+            pmin = np.divide(self.region.pmin, 1e-9)
+            pmax = np.divide(self.region.pmax, 1e-9)
+        else:
+            pmin = self.region.pmin
+            pmax = self.region.pmax
+
+        dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
+                   colormap=colormap, plot=plot, **kwargs)

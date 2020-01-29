@@ -1,6 +1,7 @@
 import itertools
 import matplotlib
 import numpy as np
+import seaborn as sns
 import discretisedfield as df
 import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
@@ -646,14 +647,14 @@ class Mesh:
         return self.__class__(region=self.subregions[key], cell=self.cell)
 
     def mpl(self, figsize=None):
-        """Plots the mesh domain and the discretisation cell using a
+        """Plots the mesh domain and the discretisation cell using
         `matplotlib` 3D plot.
 
         Parameters
         ----------
-        figsize : tuple, optional
-            Length-2 tuple passed to the `matplotlib.pyplot.figure`
-            function.
+        figsize : (2,) tuple, optional
+            Length-2 tuple passed to the `matplotlib.pyplot.figure` to create a
+            figure and axes if `ax=None`.
 
         Examples
         --------
@@ -664,19 +665,20 @@ class Mesh:
         >>> p1 = (-6, -3, -3)
         >>> p2 = (6, 3, 3)
         >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         >>> mesh.mpl()
 
         """
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111, projection='3d')
 
-        dfu.plot_box(ax, self.region.pmin, self.region.pmax,
-                     'b-', linewidth=1.5)
-        dfu.plot_box(ax, self.region.pmin, np.add(self.region.pmin, self.cell),
-                     'r--', linewidth=1)
+        self.region.mpl(ax=ax, color=sns.color_palette()[0])
+        cell_region = df.Region(p1=self.region.pmin,
+                                p2=np.add(self.region.pmin, self.cell))
+        cell_region.mpl(ax=ax, color=sns.color_palette()[1])
 
-        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
+        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$ (nm)')
+        ax.figure.tight_layout()
 
     def k3d(self, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
