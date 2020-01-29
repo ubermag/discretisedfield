@@ -10,6 +10,10 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
+# TODO: Laplacian, h5, vtk, tutorials, check rtd requirements, line object,
+# plotting, plotting small samples, refactor plotting, pycodestyle, coverage,
+# plotting line, remove numbers from tutorials, add more random numbers in tests
+# add math equations in doc strings, check doc string consistency,
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True))
