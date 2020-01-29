@@ -454,7 +454,7 @@ class Region:
         unit = f' ({prefix}m)'
 
         plot = dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
-                          colormap=sns.color_palette(), plot=plot, **kwargs)
+                          colormap=colormap, plot=plot, **kwargs)
         plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
 
         return plot
