@@ -21,9 +21,6 @@ cp_rgb_cat = sns.color_palette(n_colors=10)
 cp_int_cat = list(map(lambda c: int(c[1:], 16), cp_rgb_cat.as_hex()))
 
 
-colormap = [0x3498db, 0xe74c3c, 0x27ae60, 0xf1c40f, 0x8e44ad, 0xecf0f1]
-
-
 def array2tuple(array):
     return tuple(array.tolist())
 
@@ -51,20 +48,6 @@ def assemble_index(index_dict):
         index[key] = value
 
     return tuple(index)
-
-
-def add_random_colors(colormap, regions):
-    """Generate random colours if necessary and add them to colormap
-    list."""
-    if len(regions) > 6:
-        for i in range(len(regions)-6):
-            found = False
-            while not found:
-                color = random.randint(0, 16777215)
-                found = True
-            colormap.append(color)
-
-    return colormap
 
 
 def plot_line(ax, p1, p2, *args, **kwargs):
@@ -151,16 +134,20 @@ def voxels(plot_array, pmin, pmax, color_palette, multiplier=1,
     plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
 
 
-def points(plot_array, point_size=0.1, color=0x99bbff, plot=None, **kwargs):
+def points(plot_array, color, point_size, multiplier=1, plot=None, **kwargs):
     plot_array = plot_array.astype(np.float32)  # to avoid k3d warning
 
     if plot is None:
         plot = k3d.plot()
         plot.display()
-    plot += k3d.points(plot_array, point_size=point_size, color=color,
-                       **kwargs)
 
-    return plot
+    plot_array = np.divide(plot_array, multiplier)
+
+    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
+    plot += k3d.points(plot_array, point_size=point_size,
+                       color=color, **kwargs)
+    plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
 
 
 def vectors(coordinates, vectors, colors=[], plot=None, **kwargs):

@@ -830,8 +830,8 @@ class Mesh:
                    color_palette=color_palette, multiplier=multiplier,
                    plot=plot, **kwargs)
 
-    def k3d_points(self, point_size=0.5, color=dfu.colormap[0],
-                   plot=None, **kwargs):
+    def k3d_points(self, plot=None, point_size=None, multiplier=None,
+                   color=dfu.cp_int_cat[0], **kwargs):
         """Plots the points at discretisation cell centres.
 
         The size of points can be defined with `point_size` argument
@@ -864,6 +864,15 @@ class Mesh:
         Plot(...)
 
         """
-        plot_array = np.array(list(self.coordinates))
-        dfu.points(plot_array, point_size=point_size, color=color,
-                   plot=plot, **kwargs)
+        plot_array = np.array(list(self))
+
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.region.edges[0])
+
+        if point_size is None:
+            # If undefined, the size of the point is 1/4 of the smallest cell
+            # dimension.
+            point_size = np.divide(self.cell, multiplier).min() / 4
+
+        dfu.points(plot_array, color=color, point_size=point_size,
+                   multiplier=multiplier, plot=plot, **kwargs)
