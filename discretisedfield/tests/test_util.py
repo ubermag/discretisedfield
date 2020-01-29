@@ -4,34 +4,6 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
-def test_rescale():
-    tol = 1e-6
-    assert (dfu.rescale(1e-9)[0] - 1) < tol
-    assert dfu.rescale(1e-9)[1] == 'n'
-    assert (dfu.rescale(50e-9)[0] - 50) < tol
-    assert dfu.rescale(50e-9)[1] == 'n'
-    assert (dfu.rescale(100e-9)[0] - 100) < tol
-    assert dfu.rescale(100e-9)[1] == 'n'
-    assert (dfu.rescale(1001e-9)[0] - 1.001) < tol
-    assert dfu.rescale(1001e-9)[1] == 'u'
-    assert (dfu.rescale(0)[0] - 0) < tol
-    assert dfu.rescale(0)[1] == ''
-    assert (dfu.rescale(1e3)[0] - 1) < tol
-    assert dfu.rescale(1e3)[1] == 'k'
-    assert (dfu.rescale(0.5e-9)[0] - 500) < tol
-    assert dfu.rescale(0.5e-9)[1] == 'p'
-    assert (dfu.rescale(0.5)[0] - 500) < tol
-    assert dfu.rescale(0.5)[1] == 'm'
-    assert (dfu.rescale(0.05)[0] - 50) < tol
-    assert dfu.rescale(0.05)[1] == 'm'
-    assert (dfu.rescale(5)[0] - 5) < tol
-    assert dfu.rescale(5)[1] == ''
-    assert (dfu.rescale(50)[0] - 50) < tol
-    assert dfu.rescale(50)[1] == ''
-    assert (dfu.rescale(500)[0] - 500) < tol
-    assert dfu.rescale(500)[1] == ''
-
-
 def test_array2tuple():
     dfu.array2tuple(np.array([1, 2, 3])) == (1, 2, 3)
 

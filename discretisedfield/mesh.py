@@ -1,9 +1,11 @@
+import k3d
 import itertools
 import matplotlib
 import numpy as np
 import seaborn as sns
 import discretisedfield as df
 import matplotlib.pyplot as plt
+import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
@@ -646,7 +648,8 @@ class Mesh:
         """
         return self.__class__(region=self.subregions[key], cell=self.cell)
 
-    def mpl(self, figsize=None):
+    def mpl(self, ax=None, figsize=None, multiplier=None,
+            color_palette=dfu.cp_rgb_cat[:2], linewidth=2, **kwargs):
         """Plots the mesh domain and the discretisation cell using
         `matplotlib` 3D plot.
 
@@ -669,16 +672,67 @@ class Mesh:
         >>> mesh.mpl()
 
         """
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111, projection='3d')
+        sns.set(style='whitegrid')
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111, projection='3d')
+
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.region.edges[0])
 
         cell_region = df.Region(p1=self.region.pmin,
                                 p2=np.add(self.region.pmin, self.cell))
-        _, prefix = dfu.rescale(self.region.edges)
-        cell_region.mpl(ax=ax, prefix=prefix, color=sns.color_palette()[1])
-        self.region.mpl(ax=ax, prefix=prefix, color=sns.color_palette()[0])
+        self.region.mpl(ax=ax, multiplier=multiplier, color=color_palette[0],
+                        linewidth=linewidth, **kwargs)
+        cell_region.mpl(ax=ax, multiplier=multiplier, color=color_palette[1],
+                        linewidth=linewidth, **kwargs)
 
-    def k3d(self, colormap=dfu.colormap, plot=None, **kwargs):
+    def mpl_subregions(self, ax=None, figsize=None, multiplier=None,
+                       color_palette=dfu.cp_rgb_cat,
+                       linewidth=2, **kwargs):
+        """Plots the mesh regions using a `matplotlib` 3D plot.
+
+        Parameters
+        ----------
+        colormap : list, optional
+            List of colours in hexadecimal format. The order of
+            colours should be the same as the order of regions defined
+            in `discretisedfield.Mesh.regions`. By default 6 colours
+            are defined.
+        figsize : tuple, optional
+            Length-2 tuple passed to the `matplotlib.pyplot.figure`
+            function.
+
+        Examples
+        --------
+        1. Visualising the mesh regions using `matplotlib`
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+        ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+        >>> mesh.mpl_subregions()
+
+        """
+        sns.set(style='whitegrid')
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111, projection='3d')
+
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.region.edges[0])
+
+        for i, subregion in enumerate(self.subregions.values()):
+            subregion.mpl(ax=ax, multiplier=multiplier,
+                          color=color_palette[i%10], linewidth=linewidth,
+                          **kwargs)
+
+    def k3d(self, plot=None, multiplier=None,
+            color_palette=dfu.cp_int_cat[:2], **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
 
         The first element of `colormap` is the colour of the domain,
@@ -715,101 +769,15 @@ class Mesh:
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
 
-        # In the case of nano-sized samples, fix the order of
-        # magnitude of the plot extent to avoid freezing the k3d plot.
-        if np.any(np.divide(self.cell, 1e-9) < 1e3):
-            pmin = np.divide(self.region.pmin, 1e-9)
-            pmax = np.divide(self.region.pmax, 1e-9)
-        else:
-            pmin = self.region.pmin
-            pmax = self.region.pmax
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.region.edges[0])
 
-        dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
-                   colormap=colormap, plot=plot, **kwargs)
-
-    def k3d_points(self, point_size=0.5, color=dfu.colormap[0],
-                   plot=None, **kwargs):
-        """Plots the points at discretisation cell centres.
-
-        The size of points can be defined with `point_size` argument
-        and their colours with `color`. If `plot` is passed as a
-        `k3d.plot.Plot`, plot is added to it. Otherwise, a new k3d
-        plot is created. All arguments allowed in `k3d.points()` can
-        be passed. This function is to be called in Jupyter notebook.
-
-        Parameters
-        ----------
-        point_size : float, optional
-            The size of a single point.
-        color : hex, optional
-            Colour of a single point.
-        plot : k3d.plot.Plot, optional
-            If this argument is passed, plot is added to
-            it. Otherwise, a new k3d plot is created.
-
-        Examples
-        --------
-        1. Plotting discretisation cell centres using `k3d.points`
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (20, 20, 10)
-        >>> n = (10, 10, 5)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> mesh.k3d_points()
-        Plot(...)
-
-        """
-        plot_array = np.array(list(self.coordinates))
-        dfu.points(plot_array, point_size=point_size, color=color,
+        dfu.voxels(plot_array, pmin=self.region.pmin, pmax=self.region.pmax,
+                   color_palette=color_palette, multiplier=multiplier,
                    plot=plot, **kwargs)
 
-    def mpl_subregions(self, colormap=dfu.colormap, figsize=None, **kwargs):
-        """Plots the mesh regions using a `matplotlib` 3D plot.
-
-        Parameters
-        ----------
-        colormap : list, optional
-            List of colours in hexadecimal format. The order of
-            colours should be the same as the order of regions defined
-            in `discretisedfield.Mesh.regions`. By default 6 colours
-            are defined.
-        figsize : tuple, optional
-            Length-2 tuple passed to the `matplotlib.pyplot.figure`
-            function.
-
-        Examples
-        --------
-        1. Visualising the mesh regions using `matplotlib`
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
-        ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
-        >>> mesh.mpl_subregions()
-
-        """
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111, projection='3d')
-
-        # Add random colours if necessary.
-        colormap = dfu.add_random_colors(colormap, self.subregions)
-
-        cmap = matplotlib.cm.get_cmap('hsv', 256)
-        for i, name in enumerate(self.subregions.keys()):
-            hc = matplotlib.colors.rgb2hex(cmap(colormap[i]/16777215)[:3])
-            dfu.plot_box(ax, self.subregions[name].pmin,
-                         self.subregions[name].pmax,
-                         color=hc, linewidth=1.5)
-
-        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
-
-    def k3d_subregions(self, colormap=dfu.colormap, plot=None, **kwargs):
+    def k3d_subregions(self, plot=None, multiplier=None,
+                       color_palette=dfu.cp_int_cat, **kwargs):
         """Plots the mesh domain and emphasises defined regions.
 
         The order of colours in `colormap` should be the same as the
@@ -848,24 +816,54 @@ class Mesh:
         Plot(...)
 
         """
-        # Add random colours if necessary.
-        colormap = dfu.add_random_colors(colormap, self.subregions)
-
         plot_array = np.zeros(self.n)
-        for i, name in enumerate(self.subregions.keys()):
-            for index in self.indices:
-                if self.index2point(index) in self.subregions[name]:
-                    plot_array[index] = i+1  # i+1 to avoid 0 value
+        for index in self.indices:
+            for i, region in enumerate(self.subregions.values()):
+                if self.index2point(index) in region:
+                    plot_array[index] = (i%10) + 1  # +1 to avoid 0 value
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
 
-        # In the case of nano-sized samples, fix the order of
-        # magnitude of the plot extent to avoid freezing the k3d plot.
-        if np.any(np.divide(self.cell, 1e-9) < 1e3):
-            pmin = np.divide(self.region.pmin, 1e-9)
-            pmax = np.divide(self.region.pmax, 1e-9)
-        else:
-            pmin = self.region.pmin
-            pmax = self.region.pmax
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.region.edges[0])
 
-        dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
-                   colormap=colormap, plot=plot, **kwargs)
+        dfu.voxels(plot_array, pmin=self.region.pmin, pmax=self.region.pmax,
+                   color_palette=color_palette, multiplier=multiplier,
+                   plot=plot, **kwargs)
+
+    def k3d_points(self, point_size=0.5, color=dfu.colormap[0],
+                   plot=None, **kwargs):
+        """Plots the points at discretisation cell centres.
+
+        The size of points can be defined with `point_size` argument
+        and their colours with `color`. If `plot` is passed as a
+        `k3d.plot.Plot`, plot is added to it. Otherwise, a new k3d
+        plot is created. All arguments allowed in `k3d.points()` can
+        be passed. This function is to be called in Jupyter notebook.
+
+        Parameters
+        ----------
+        point_size : float, optional
+            The size of a single point.
+        color : hex, optional
+            Colour of a single point.
+        plot : k3d.plot.Plot, optional
+            If this argument is passed, plot is added to
+            it. Otherwise, a new k3d plot is created.
+
+        Examples
+        --------
+        1. Plotting discretisation cell centres using `k3d.points`
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (20, 20, 10)
+        >>> n = (10, 10, 5)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> mesh.k3d_points()
+        Plot(...)
+
+        """
+        plot_array = np.array(list(self.coordinates))
+        dfu.points(plot_array, point_size=point_size, color=color,
+                   plot=plot, **kwargs)

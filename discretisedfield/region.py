@@ -2,6 +2,7 @@ import random
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
@@ -358,8 +359,8 @@ class Region:
         else:
             return True
 
-    def mpl(self, ax=None, figsize=None, prefix=None,
-            color=sns.color_palette()[0], linewidth=2, **kwargs):
+    def mpl(self, ax=None, figsize=None, multiplier=None,
+            color=dfu.cp_rgb_cat[0], linewidth=2, **kwargs):
         """Plots the region using `matplotlib` 3D plot.
 
         Axes to which the plot of the region is going to be added. Defaults to
@@ -398,20 +399,20 @@ class Region:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection='3d')
 
-        if prefix is None:
-            _, prefix = dfu.rescale(self.edges)
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.edges[0])
 
-        pmin = np.divide(self.pmin, dfu.si_prefix[prefix])
-        pmax = np.divide(self.pmax, dfu.si_prefix[prefix])
-        unit = f' ({prefix}m)'
+        pmin = np.divide(self.pmin, multiplier)
+        pmax = np.divide(self.pmax, multiplier)
+        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
 
-        dfu.plot_box(ax, pmin, pmax, color=color, linewidth=linewidth,
-                     **kwargs)
-
-        ax.set(xlabel=r'$x$'+unit, ylabel=r'$y$'+unit, zlabel=r'$z$'+unit)
+        dfu.plot_box(ax, pmin, pmax, color=color,
+                     linewidth=linewidth, **kwargs)
+        ax.set(xlabel='x'+unit, ylabel='y'+unit, zlabel='z'+unit)
         ax.figure.tight_layout()
 
-    def k3d(self, prefix=None, colormap=dfu.colormap, plot=None, **kwargs):
+    def k3d(self, plot=None, multiplier=None,
+            color=dfu.cp_int_cat[0], **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
 
         The first element of `colormap` is the colour of the domain,
@@ -446,15 +447,9 @@ class Region:
         """
         plot_array = np.ones((1, 1, 1))
 
-        if prefix is None:
-            _, prefix = dfu.rescale(self.edges)
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.edges[0])
 
-        pmin = np.divide(self.pmin, dfu.si_prefix[prefix])
-        pmax = np.divide(self.pmax, dfu.si_prefix[prefix])
-        unit = f' ({prefix}m)'
-
-        plot = dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
-                          colormap=colormap, plot=plot, **kwargs)
-        plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
-
-        return plot
+        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
+                   color_palette=color, multiplier=multiplier,
+                   plot=plot, **kwargs)

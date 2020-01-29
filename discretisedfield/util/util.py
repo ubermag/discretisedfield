@@ -5,45 +5,23 @@ import numbers
 import collections
 import matplotlib
 import numpy as np
+import seaborn as sns
 import itertools as it
 import discretisedfield as df
+import ubermagutil.units as uu
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
+
+# Color palettes
+cp_rgb_cat = sns.color_palette(n_colors=10)
+cp_int_cat = list(map(lambda c: int(c[1:], 16), cp_rgb_cat.as_hex()))
+
+
 colormap = [0x3498db, 0xe74c3c, 0x27ae60, 0xf1c40f, 0x8e44ad, 0xecf0f1]
-
-si_prefix = {'y': 1e-24,  # yocto
-             'z': 1e-21,  # zepto
-             'a': 1e-18,  # atto
-             'f': 1e-15,  # femto
-             'p': 1e-12,  # pico
-             'n': 1e-9,   # nano
-             'u': 1e-6,   # micro
-             'm': 1e-3,   # mili
-             '' : 1,      # no prefix
-             'k': 1e3,    # kilo
-             'M': 1e6,    # mega
-             'G': 1e9,    # giga
-             'T': 1e12,   # tera
-             'P': 1e15,   # peta
-             'E': 1e18,   # exa
-             'Z': 1e21,   # zetta
-             'Y': 1e24,   # yotta
-    }
-
-def rescale(value):
-    if np.all(value==0):
-        return value, ''
-    for p, m in reversed(si_prefix.items()):
-        rescaled_value = np.divide(value, m)
-        if np.logical_and(np.greater_equal(rescaled_value, 1),
-                          np.less(rescaled_value, 1000)).any():
-            prefix, multiplier = p, m
-
-    return np.divide(value, multiplier), prefix
 
 
 def array2tuple(array):
@@ -151,24 +129,26 @@ def as_array(mesh, dim, val):
     return array
 
 
-def voxels(plot_array, pmin, pmax, colormap, outlines=False, axes=None,
-           plot=None, **kwargs):
+def voxels(plot_array, pmin, pmax, color_palette, multiplier=1,
+           outlines=False, plot=None, **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
+
     if plot is None:
         plot = k3d.plot()
         plot.display()
 
-    xmin, ymin, zmin = pmin
-    xmax, ymax, zmax = pmax
+    xmin, ymin, zmin = np.divide(pmin, multiplier)
+    xmax, ymax, zmax = np.divide(pmax, multiplier)
     bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
 
+    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
     plot += k3d.voxels(plot_array,
-                       color_map=colormap,
+                       color_map=color_palette,
                        bounds=bounds,
                        outlines=outlines,
                        **kwargs)
-
-    return plot
+    plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
 
 
 def points(plot_array, point_size=0.1, color=0x99bbff, plot=None, **kwargs):

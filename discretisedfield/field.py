@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 # plotting, plotting small samples, refactor plotting, pycodestyle, coverage,
 # plotting line, remove numbers from tutorials, add more random numbers in tests
 # add math equations in doc strings, check doc string consistency,
+# do only test-coverage instead of twice, 
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True))
