@@ -37,8 +37,10 @@ si_prefix = {'y': 1e-24,  # yocto
 def rescale(value):
     if np.all(value==0):
         return value, ''
-    for p, m in si_prefix.items():
-        if np.any(1 <= np.divide(value, m) < 1e3):
+    for p, m in reversed(si_prefix.items()):
+        rescaled_value = np.divide(value, m)
+        if np.logical_and(np.greater_equal(rescaled_value, 1),
+                          np.less(rescaled_value, 1000)).any():
             prefix, multiplier = p, m
 
     return np.divide(value, multiplier), prefix
@@ -149,7 +151,7 @@ def as_array(mesh, dim, val):
     return array
 
 
-def voxels(plot_array, pmin, pmax, colormap, outlines=False,
+def voxels(plot_array, pmin, pmax, colormap, outlines=False, axes=None,
            plot=None, **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
     if plot is None:

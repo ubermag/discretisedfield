@@ -12,8 +12,8 @@ def test_rescale():
     assert dfu.rescale(50e-9)[1] == 'n'
     assert (dfu.rescale(100e-9)[0] - 100) < tol
     assert dfu.rescale(100e-9)[1] == 'n'
-    assert (dfu.rescale(1000e-9)[0] - 1) < tol
-    assert dfu.rescale(1000e-9)[1] == 'u'
+    assert (dfu.rescale(1001e-9)[0] - 1.001) < tol
+    assert dfu.rescale(1001e-9)[1] == 'u'
     assert (dfu.rescale(0)[0] - 0) < tol
     assert dfu.rescale(0)[1] == ''
     assert (dfu.rescale(1e3)[0] - 1) < tol

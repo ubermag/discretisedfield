@@ -672,13 +672,11 @@ class Mesh:
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111, projection='3d')
 
-        self.region.mpl(ax=ax, color=sns.color_palette()[0])
         cell_region = df.Region(p1=self.region.pmin,
                                 p2=np.add(self.region.pmin, self.cell))
-        cell_region.mpl(ax=ax, color=sns.color_palette()[1])
-
-        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$ (nm)')
-        ax.figure.tight_layout()
+        _, prefix = dfu.rescale(self.region.edges)
+        cell_region.mpl(ax=ax, prefix=prefix, color=sns.color_palette()[1])
+        self.region.mpl(ax=ax, prefix=prefix, color=sns.color_palette()[0])
 
     def k3d(self, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.

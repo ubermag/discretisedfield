@@ -358,8 +358,8 @@ class Region:
         else:
             return True
 
-    def mpl(self, ax=None, figsize=None, color=sns.color_palette()[0],
-            linewidth=2, **kwargs):
+    def mpl(self, ax=None, figsize=None, prefix=None,
+            color=sns.color_palette()[0], linewidth=2, **kwargs):
         """Plots the region using `matplotlib` 3D plot.
 
         Axes to which the plot of the region is going to be added. Defaults to
@@ -390,7 +390,7 @@ class Region:
         >>> p1 = (-6, -3, -3)
         >>> p2 = (6, 3, 3)
         >>> region = df.Region(p1=p1, p2=p2)
-        >>> mesh.mpl()
+        >>> region.mpl()
 
         """
         sns.set(style='whitegrid')
@@ -398,15 +398,20 @@ class Region:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection='3d')
 
-        dfu.plot_box(ax, self.pmin, self.pmax, color=color,
-                     linewidth=linewidth, **kwargs)
+        if prefix is None:
+            _, prefix = dfu.rescale(self.edges)
 
-        ax.set(xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$')
+        pmin = np.divide(self.pmin, dfu.si_prefix[prefix])
+        pmax = np.divide(self.pmax, dfu.si_prefix[prefix])
+        unit = f' ({prefix}m)'
+
+        dfu.plot_box(ax, pmin, pmax, color=color, linewidth=linewidth,
+                     **kwargs)
+
+        ax.set(xlabel=r'$x$'+unit, ylabel=r'$y$'+unit, zlabel=r'$z$'+unit)
         ax.figure.tight_layout()
 
-        return ax
-
-    def k3d(self, colormap=dfu.colormap, plot=None, **kwargs):
+    def k3d(self, prefix=None, colormap=dfu.colormap, plot=None, **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
 
         The first element of `colormap` is the colour of the domain,
@@ -434,23 +439,22 @@ class Region:
         ...
         >>> p1 = (-6, -3, -3)
         >>> p2 = (6, 3, 3)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> mesh.k3d()
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> region.k3d()
         Plot(...)
 
         """
-        plot_array = np.ones(tuple(reversed(self.n)))
-        plot_array[0, 0, -1] = 2  # mark the discretisation cell
+        plot_array = np.ones((1, 1, 1))
 
-        # In the case of nano-sized samples, fix the order of
-        # magnitude of the plot extent to avoid freezing the k3d plot.
-        if np.any(np.divide(self.cell, 1e-9) < 1e3):
-            pmin = np.divide(self.region.pmin, 1e-9)
-            pmax = np.divide(self.region.pmax, 1e-9)
-        else:
-            pmin = self.region.pmin
-            pmax = self.region.pmax
+        if prefix is None:
+            _, prefix = dfu.rescale(self.edges)
 
-        dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
-                   colormap=colormap, plot=plot, **kwargs)
+        pmin = np.divide(self.pmin, dfu.si_prefix[prefix])
+        pmax = np.divide(self.pmax, dfu.si_prefix[prefix])
+        unit = f' ({prefix}m)'
+
+        plot = dfu.voxels(plot_array, pmin=pmin, pmax=pmax,
+                          colormap=sns.color_palette(), plot=plot, **kwargs)
+        plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
+
+        return plot
