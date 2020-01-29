@@ -1779,6 +1779,53 @@ class Field:
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
+    def __getitem__(self, key):
+        """Extract field of a subregion defined in mesh.
+
+        If subregions are defined in mesh, this method returns a field on a
+        subregion `mesh.subregions[key]` with the same discretisation cell as
+        the parent mesh.
+
+        Parameters
+        ----------
+        key : str
+            The key associated to the region in `self.mesh.subregions`
+
+        Returns
+        -------
+        disretisedfield.Field
+            Field of a subregion
+
+        Example
+        -------
+        1. Extract subregion field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
+        ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+        >>> def value_fun(pos):
+        ...     x, y, z = pos
+        ...     if x <= 50:
+        ...         return (1, 2, 3)
+        ...     else:
+        ...         return (-1, -2, -3)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=value_fun)
+        >>> f.average
+        (0.0, 0.0, 0.0)
+        >>> f['r1'].average
+        (1.0, 2.0, 3.0)
+        >>> f['r2'].average
+        (-1.0, -2.0, -3.0)
+
+        """
+        return self.__class__(self.mesh[key], dim=self.dim, value=self)
+
     def project(self, *args, n=None):
         """Projects the field along one direction and averages it out along
         that direction.

@@ -535,7 +535,7 @@ class TestMesh:
     def test_k3d_mpl_subregions(self):
         p1 = (0, 0, 0)
         p2 = (100, 80, 10)
-        cell = (2, 2, 2)
+        cell = (100, 5, 10)
         subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(100, 10, 10)),
                       'r2': df.Region(p1=(0, 10, 0), p2=(100, 20, 10)),
                       'r3': df.Region(p1=(0, 20, 0), p2=(100, 30, 10)),

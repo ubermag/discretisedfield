@@ -1028,6 +1028,31 @@ class TestField:
             assert len(p) == 9
             assert len(v) == 9
 
+    def test_getitem(self):
+        p1 = (0, 0, 0)
+        p2 = (90, 50, 10)
+        cell = (5, 5, 5)
+        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(30, 50, 10)),
+                      'r2': df.Region(p1=(30, 0, 0), p2=(90, 50, 10))}
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+
+        def value_fun(pos):
+            x, y, z = pos
+            if x <= 60:
+                return (-1, -2, -3)
+            else:
+                return (1, 2, 3)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        check_field(f['r1'])
+        check_field(f['r2'])
+
+        assert f['r1'].average == (-1, -2, -3)
+        assert f['r2'].average == (0, 0, 0)
+
+        assert len(f['r1'].mesh) + len(f['r2'].mesh) == len(f.mesh)
+
     def test_project(self):
         p1 = (-5, -5, -5)
         p2 = (5, 5, 5)
