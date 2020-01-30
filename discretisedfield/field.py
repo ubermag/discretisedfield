@@ -2671,13 +2671,7 @@ class Field:
         # All values must be in (1, 255) -> (1, n-1), for n=256 range, with
         # maximum n=256. This is the limitation of k3d.voxels(). Voxels where
         # values are zero, are invisible.
-        plot_array -= plot_array.min()  # minimum value is 0
-        if plot_array.max() != 0:  # for uniform fields, avoid division by zero
-            plot_array /= plot_array.max()  # all values in (0, 1)
-        plot_array *= (n - 2)  # all values in (0, n-2)
-        plot_array += 1  # all values in (1, n-1)
-        plot_array = plot_array.round()
-        plot_array = plot_array.astype(int)
+        plot_array = dfu.normalise_to_range(plot_array, (1, n-1))
 
         # Remove voxels where filter_field = 0.
         if filter_field is not None:
@@ -2776,23 +2770,19 @@ class Field:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
         if vector_multiplier is None:
-            vector_multiplier = 0.8*np.divide(self.mesh.cell, multiplier).min()
+            vector_multiplier = (vectors.max() /
+                                 np.divide(self.mesh.cell, multiplier).min())
 
         if color_field is not None:
-            color_values = np.array(color_values)
-            color_values -= color_values.min()  # min value is 0
-            if color_values.max() != 0:  # for uniform fields, avoid division by zero
-                color_values /= color_values.max()  # all values in (0, 1)
-            color_values *= (n - 1)
-            color_values = color_values.round()
-            color_values = color_values.astype(int)
+            color_values = dfu.normalise_to_range(color_values, (0, n-1))
 
-            color_palette = dfu.color_palette('viridis', 256, 'int')
+            # Generate double pairs (body, head) for colouring vectors.
+            color_palette = dfu.color_palette(cmap, n, 'int')
             colors = []
             for cval in color_values:
-                colors.append((color_palette[cval], color_palette[cval]))
+                colors.append(2*(color_palette[cval],))
         else:
-            colors = []  # TODO: change to palette color
+            colors = len(vectors)*([2*(dfu.cp_int_cat[1],)])  # uniform colour
 
         if plot is None:
             plot = k3d.plot()

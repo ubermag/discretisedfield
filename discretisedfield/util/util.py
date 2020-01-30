@@ -120,6 +120,20 @@ def as_array(mesh, dim, val):
     return array
 
 
+def normalise_to_range(values, value_range):
+    values = np.array(values)
+
+    values -= values.min()  # min value is 0
+    # For uniform fields, avoid division by zero.
+    if values.max() != 0:
+        values /= values.max()  # all values in (0, 1)
+    values *= (value_range[1] - value_range[0]) # all values in (0, r[1]-r[0])
+    values += value_range[0]  # all values is range (r[0], r[1])
+    values = values.round()
+    values = values.astype(int)
+
+    return values
+
 def voxels(plot_array, pmin, pmax, color_palette, multiplier=1,
            outlines=False, plot=None, **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
@@ -168,7 +182,7 @@ def vectors(coordinates, vectors, colors=[], multiplier=1, vector_multiplier=1,
         plot.display()
 
     coordinates = np.divide(coordinates, multiplier)
-    vectors = np.divide(vectors, vectors.max()/vector_multiplier)
+    vectors = np.divide(vectors, vector_multiplier)
 
     # Plot middle of the arrow is at the cell centre.
     coordinates = coordinates - 0.5*vectors
