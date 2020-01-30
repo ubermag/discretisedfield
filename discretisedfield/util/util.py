@@ -191,7 +191,3 @@ def vectors(coordinates, vectors, colors=[], multiplier=1, vector_multiplier=1,
 
     plot += k3d.vectors(coordinates, vectors, colors=colors, **kwargs)
     plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
-
-
-def num2hexcolor(n, cmap):
-    return int(matplotlib.colors.rgb2hex(cmap(n)[:3])[1:], 16)

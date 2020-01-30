@@ -5,6 +5,7 @@ import numbers
 import itertools
 import matplotlib
 import numpy as np
+import seaborn as sns
 import mpl_toolkits.axes_grid1
 import discretisedfield as df
 import ubermagutil.units as uu
@@ -2276,10 +2277,10 @@ class Field:
 
         """
         if not hasattr(self.mesh, 'info'):
-            msg = ('Only sliced field can be plotted using mpl. '
-                   'For instance, field.plane(\'x\').mpl().')
+            msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
+        sns.set(style='whitegrid')
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
 
@@ -2288,14 +2289,13 @@ class Field:
         if self.dim > 1:
             # Vector field has both quiver and imshow plots.
             self.quiver(ax=ax, headwidth=5)
-            scfield = getattr(self, planeaxis)
-            coloredplot = scfield.imshow(ax=ax, norm_field=self.norm)
+            scalar_field = getattr(self, planeaxis)
+            coloredplot = scalar_field.imshow(ax=ax, filter_field=self.norm,
+                                              cmap='cividis')
         else:
             # Scalar field has only imshow.
-            scfield = self
-            coloredplot = scfield.imshow(ax=ax, norm_field=None)
+            coloredplot = self.imshow(ax=ax, filter_field=None)
 
-        # Add colorbar to imshow plot.
         cbar = self.colorbar(ax, coloredplot)
 
         # Add labels.
@@ -2304,7 +2304,9 @@ class Field:
         if self.dim > 1:
             cbar.ax.set_ylabel(planeaxis + ' component')
 
-    def imshow(self, ax, norm_field=None, **kwargs):
+        ax.figure.tight_layout()
+
+    def imshow(self, ax, filter_field=None, **kwargs):
         """Plots a scalar field plane using `matplotlib.pyplot.imshow`.
 
         Before the field can be plotted, it must be sliced with a
@@ -2356,32 +2358,25 @@ class Field:
 
         """
         if not hasattr(self.mesh, 'info'):
-            msg = ('Only sliced field can be plotted using imshow. '
-                   'For instance, field.plane(\'x\').imshow(ax=ax).')
+            msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
-        if self.dim > 1:
-            msg = ('Only scalar (dim=1) fields can be plotted. Consider '
-                   'plotting one component, e.g. field.x.imshow(ax=ax) '
-                   'or norm field.norm.imshow(ax=ax).')
+
+        if self.dim != 1:
+            msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
         points, values = list(zip(*list(self)))
 
-        # If norm_field is passed, set values where norm=0 to np.nan,
+        # If filter_field is passed, set values where norm=0 to np.nan,
         # so that they are not plotted.
-        if norm_field is not None:
-            values = list(values)  # make values mutable
+        if filter_field is not None:
+            values = list(values)  # tuple -> list to make values mutable
             for i, point in enumerate(points):
-                if norm_field(point) == 0:
-                    values[i] = np.nan
+                if filter_field(point) == 0:
+                    values[i] = np.array([np.nan])
 
-            # "Unpack" values inside arrays.
-            values = [v[0] if not np.isnan(v) else v for v in values]
-        else:
-            # "Unpack" values inside arrays.
-            values = list(zip(*values))
-
-        points = list(zip(*points))
+        # "Unpack" values inside arrays.
+        values =  list(zip(*values))
 
         extent = [self.mesh.region.pmin[self.mesh.info['axis1']],
                   self.mesh.region.pmax[self.mesh.info['axis1']],
@@ -2392,7 +2387,6 @@ class Field:
 
         imax = ax.imshow(np.array(values).reshape(n), origin='lower',
                          extent=extent, **kwargs)
-
         return imax
 
     def quiver(self, ax=None, color_field=None, **kwargs):
@@ -2448,11 +2442,11 @@ class Field:
 
         """
         if not hasattr(self.mesh, 'info'):
-            msg = ('Only sliced field can be plotted using quiver. '
-                   'For instance, field.plane(\'x\').quiver(ax=ax).')
+            msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
+
         if self.dim != 3:
-            msg = 'Only three-dimensional (dim=3) fields can be plotted.'
+            msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
         points, values = list(zip(*list(self)))
@@ -2477,7 +2471,6 @@ class Field:
         kwargs['pivot'] = 'mid'  # arrow at the centre of the cell
 
         if color_field is None:
-            # quiver plot is not coloured.
             qvax = ax.quiver(points[self.mesh.info['axis1']],
                              points[self.mesh.info['axis2']],
                              values[self.mesh.info['axis1']],
@@ -2485,7 +2478,6 @@ class Field:
                              **kwargs)
 
         else:
-            # quiver plot is coloured.
             qvax = ax.quiver(points[self.mesh.info['axis1']],
                              points[self.mesh.info['axis2']],
                              values[self.mesh.info['axis1']],
