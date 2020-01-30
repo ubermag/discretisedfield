@@ -6,6 +6,7 @@ import matplotlib
 import numpy as np
 import mpl_toolkits.axes_grid1
 import discretisedfield as df
+import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
@@ -2542,7 +2543,8 @@ class Field:
 
         return cbar
 
-    def k3d_nonzero(self, color=dfu.cp_int_cat[0], plot=None, **kwargs):
+    def k3d_nonzero(self, plot=None, multiplier=None,
+                    color=dfu.cp_int_cat[0], **kwargs):
         """Plots the voxels where the value of a scalar field is nonzero.
 
         All mesh cells where the value of the field is not zero will
@@ -2585,29 +2587,25 @@ class Field:
 
         .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
         """
-        if self.dim > 1:
-            msg = ('Only scalar (dim=1) fields can be plotted. Consider '
-                   'plotting one component, e.g. field.x.k3d_nonzero() '
-                   'or norm field.norm.k3d_nonzero().')
+        if self.dim != 1:
+            msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
-        plot_array = np.copy(self.array)  # make a deep copy
-        plot_array = np.squeeze(plot_array)  # remove an empty dimension
+
+        plot_array = np.ones_like(self.array)  # all voxels have the same color
+        plot_array[self.array == 0] = 0  # remove voxels where field is zero
+        plot_array = plot_array[..., 0]  # remove an empty dimension
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
-        plot_array[plot_array != 0] = 1  # all cells have the same colour
 
-        # In the case of nano-sized samples, fix the order of
-        # magnitude of the plot extent to avoid freezing the k3d plot.
-        if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
-            pmin = np.divide(self.mesh.region.pmin, 1e-9)
-            pmax = np.divide(self.mesh.region.pmax, 1e-9)
-        else:
-            pmin = self.mesh.region.pmin
-            pmax = self.mesh.region.pmax
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.mesh.region.edges[0])
 
-        dfu.voxels(plot_array, pmin, pmax, colormap=color,
+        dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
+                   pmax=self.mesh.region.pmax,
+                   color_palette=color, multiplier=multiplier,
                    plot=plot, **kwargs)
 
-    def k3d_voxels(self, norm_field=None, plot=None, **kwargs):
+    def k3d_voxels(self, plot=None, norm_field=None, multiplier=None,
+                   cmap='viridis', n=256, **kwargs):
         """Plots the scalar field as a coloured `k3d.voxels()` plot.
 
         At all mesh cells, a voxel will be plotted anc coloured
@@ -2653,22 +2651,20 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.k3d_vectors`
 
         """
-        if self.dim > 1:
-            msg = ('Only scalar (dim=1) fields can be plotted. Consider '
-                   'plotting one component, e.g. field.x.k3d_nonzero() '
-                   'or norm field.norm.k3d_nonzero().')
+        if self.dim != 1:
+            msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
         plot_array = np.copy(self.array)  # make a deep copy
         plot_array = plot_array[..., 0]  # remove an empty dimension
 
+        # All values must be in (1, n-1) range, with maximum n=256
         plot_array -= plot_array.min()
-        # In the case of uniform fields, division by zero can be
-        # encountered.
         if plot_array.max() != 0:
-            plot_array /= plot_array.max()
-        plot_array *= 254
-        plot_array += 1
+            # In the case of uniform fields, avoid division by zero.
+            plot_array /= plot_array.max()  # all values in (0, 1)
+        plot_array *= (n - 2)  # all values in (0, n-2)
+        plot_array += 1  # all values in (1, n-1)
         plot_array = plot_array.round()
         plot_array = plot_array.astype(int)
 
@@ -2679,20 +2675,14 @@ class Field:
 
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
 
-        cmap = matplotlib.cm.get_cmap('viridis', 256)
-        colormap = [dfu.num2hexcolor(i, cmap) for i in range(cmap.N)]
+        color_palette = dfu.color_palette(cmap, n, 'int')
 
-        # In the case of nano-sized samples, fix the order of
-        # magnitude of the plot extent to avoid freezing the k3d plot.
-        if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
-            pmin = np.divide(self.mesh.region.pmin, 1e-9)
-            pmax = np.divide(self.mesh.region.pmax, 1e-9)
-        else:
-            pmin = self.mesh.region.pmin
-            pmax = self.mesh.region.pmax
+        if multiplier is None:
+            _, multiplier = uu.si_multiplier(self.mesh.region.edges[0])
 
-        dfu.voxels(plot_array, pmin, pmax, colormap=colormap,
-                   plot=plot, **kwargs)
+        dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
+                   pmax=self.mesh.region.pmax, color_palette=color_palette,
+                   multiplier=multiplier, plot=plot, **kwargs)
 
     def k3d_vectors(self, color_field=None, points=True, plot=None, **kwargs):
         """Plots the vector field as a `k3d.vectors()` plot.

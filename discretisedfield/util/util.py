@@ -20,6 +20,12 @@ raxesdict = {value: key for key, value in axesdict.items()}
 cp_rgb_cat = sns.color_palette(n_colors=10)
 cp_int_cat = list(map(lambda c: int(c[1:], 16), cp_rgb_cat.as_hex()))
 
+def color_palette(cmap, n, value_type):
+    cp = sns.color_palette(cmap, n_colors=n)
+    if value_type == 'rgb':
+        return cp
+    else:
+        return list(map(lambda c: int(c[1:], 16), cp.as_hex()))
 
 def array2tuple(array):
     return tuple(array.tolist())
