@@ -2237,7 +2237,7 @@ class Field:
 
         return field
 
-    def mpl(self, figsize=None):
+    def mpl(self, figsize=None, multiplier=None):
         """Plots a field plane using matplotlib.
 
         Before the field can be plotted, it must be sliced with a
@@ -2286,27 +2286,34 @@ class Field:
 
         planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
 
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+
+        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
         if self.dim > 1:
             # Vector field has both quiver and imshow plots.
-            self.quiver(ax=ax, headwidth=5)
+            self.quiver(ax=ax, headwidth=5, multiplier=multiplier)
             scalar_field = getattr(self, planeaxis)
             coloredplot = scalar_field.imshow(ax=ax, filter_field=self.norm,
-                                              cmap='cividis')
+                                              cmap='cividis',
+                                              multiplier=multiplier)
         else:
             # Scalar field has only imshow.
-            coloredplot = self.imshow(ax=ax, filter_field=None)
+            coloredplot = self.imshow(ax=ax, filter_field=None,
+                                      multiplier=multiplier)
 
         cbar = self.colorbar(ax, coloredplot)
 
         # Add labels.
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']])
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']])
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
         if self.dim > 1:
             cbar.ax.set_ylabel(planeaxis + ' component')
 
         ax.figure.tight_layout()
 
-    def imshow(self, ax, filter_field=None, **kwargs):
+    def imshow(self, ax, filter_field=None, multiplier=1, **kwargs):
         """Plots a scalar field plane using `matplotlib.pyplot.imshow`.
 
         Before the field can be plotted, it must be sliced with a
@@ -2375,21 +2382,24 @@ class Field:
                 if filter_field(point) == 0:
                     values[i] = np.array([np.nan])
 
-        # "Unpack" values inside arrays.
-        values =  list(zip(*values))
+        # "Unpack" values inside arrays and convert to nd.array.
+        values =  np.array(list(zip(*values)))
 
-        extent = [self.mesh.region.pmin[self.mesh.info['axis1']],
-                  self.mesh.region.pmax[self.mesh.info['axis1']],
-                  self.mesh.region.pmin[self.mesh.info['axis2']],
-                  self.mesh.region.pmax[self.mesh.info['axis2']]]
+        pmin = np.divide(self.mesh.region.pmin, multiplier)
+        pmax = np.divide(self.mesh.region.pmax, multiplier)
+
+        extent = [pmin[self.mesh.info['axis1']],
+                  pmax[self.mesh.info['axis1']],
+                  pmin[self.mesh.info['axis2']],
+                  pmax[self.mesh.info['axis2']]]
         n = (self.mesh.n[self.mesh.info['axis2']],
              self.mesh.n[self.mesh.info['axis1']])
 
-        imax = ax.imshow(np.array(values).reshape(n), origin='lower',
+        imax = ax.imshow(values.reshape(n), origin='lower',
                          extent=extent, **kwargs)
         return imax
 
-    def quiver(self, ax=None, color_field=None, **kwargs):
+    def quiver(self, ax=None, color_field=None, multiplier=1, **kwargs):
         """Plots a vector field plane using `matplotlib.pyplot.quiver`.
 
         Before the field can be plotted, it must be sliced with a
@@ -2460,8 +2470,11 @@ class Field:
             colors = [color_field(p) for p in points]
             colors = list(zip(*colors))
 
-        # "Unpack" values inside arrays.
-        points, values = list(zip(*points)), list(zip(*values))
+        # "Unpack" values inside arrays and convert to np.ndarray.
+        points = np.array(list(zip(*points)))
+        values = np.array(list(zip(*values)))
+
+        points = np.divide(points, multiplier)
 
         # Are there any vectors pointing out-of-plane? If yes, set the scale.
         if not any(values[self.mesh.info['axis1']] +
