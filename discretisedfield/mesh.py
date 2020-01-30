@@ -678,7 +678,7 @@ class Mesh:
             ax = fig.add_subplot(111, projection='3d')
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.region.edges[0])
+            multiplier = uu.si_max_multiplier(self.region.edges)
 
         cell_region = df.Region(p1=self.region.pmin,
                                 p2=np.add(self.region.pmin, self.cell))
@@ -724,7 +724,7 @@ class Mesh:
             ax = fig.add_subplot(111, projection='3d')
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.region.edges[0])
+            multiplier = uu.si_max_multiplier(self.region.edges)
 
         for i, subregion in enumerate(self.subregions.values()):
             subregion.mpl(ax=ax, multiplier=multiplier,
@@ -770,7 +770,7 @@ class Mesh:
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.region.edges[0])
+            multiplier = uu.si_max_multiplier(self.region.edges)
 
         dfu.voxels(plot_array, pmin=self.region.pmin, pmax=self.region.pmax,
                    color_palette=color_palette, multiplier=multiplier,
@@ -824,7 +824,7 @@ class Mesh:
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.region.edges[0])
+            multiplier = uu.si_max_multiplier(self.region.edges)
 
         dfu.voxels(plot_array, pmin=self.region.pmin, pmax=self.region.pmax,
                    color_palette=color_palette, multiplier=multiplier,
@@ -867,7 +867,7 @@ class Mesh:
         plot_array = np.array(list(self))
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.region.edges[0])
+            multiplier = uu.si_max_multiplier(self.region.edges)
 
         if point_size is None:
             # If undefined, the size of the point is 1/4 of the smallest cell

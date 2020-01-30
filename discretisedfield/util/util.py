@@ -16,9 +16,10 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
 
-# Color palettes
+# Categorical (qualitative) color palettes
 cp_rgb_cat = sns.color_palette(n_colors=10)
 cp_int_cat = list(map(lambda c: int(c[1:], 16), cp_rgb_cat.as_hex()))
+
 
 def color_palette(cmap, n, value_type):
     cp = sns.color_palette(cmap, n_colors=n)
@@ -26,6 +27,7 @@ def color_palette(cmap, n, value_type):
         return cp
     else:
         return list(map(lambda c: int(c[1:], 16), cp.as_hex()))
+
 
 def array2tuple(array):
     return tuple(array.tolist())
@@ -156,16 +158,25 @@ def points(plot_array, color, point_size, multiplier=1, plot=None, **kwargs):
     plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
 
 
-def vectors(coordinates, vectors, colors=[], plot=None, **kwargs):
+def vectors(coordinates, vectors, colors=[], multiplier=1, vector_multiplier=1,
+            plot=None, **kwargs):
     coordinates = coordinates.astype(np.float32)  # to avoid k3d warning
     vectors = vectors.astype(np.float32)  # to avoid k3d warning
 
     if plot is None:
         plot = k3d.plot()
         plot.display()
-    plot += k3d.vectors(coordinates, vectors, colors=colors, **kwargs)
 
-    return plot
+    coordinates = np.divide(coordinates, multiplier)
+    vectors = np.divide(vectors, vectors.max()/vector_multiplier)
+
+    # Plot middle of the arrow is at the cell centre.
+    coordinates = coordinates - 0.5*vectors
+
+    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
+    plot += k3d.vectors(coordinates, vectors, colors=colors, **kwargs)
+    plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
 
 
 def num2hexcolor(n, cmap):

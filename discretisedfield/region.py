@@ -400,7 +400,7 @@ class Region:
             ax = fig.add_subplot(111, projection='3d')
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.edges[0])
+            multiplier = uu.si_max_multiplier(self.edges)
 
         pmin = np.divide(self.pmin, multiplier)
         pmax = np.divide(self.pmax, multiplier)
@@ -448,7 +448,7 @@ class Region:
         plot_array = np.ones((1, 1, 1))
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.edges[0])
+            multiplier = uu.si_max_multiplier(self.edges)
 
         dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
                    color_palette=color, multiplier=multiplier,

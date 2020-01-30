@@ -1,3 +1,4 @@
+import k3d
 import pyvtk
 import struct
 import numbers
@@ -2597,14 +2598,14 @@ class Field:
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.mesh.region.edges[0])
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
         dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
                    pmax=self.mesh.region.pmax,
                    color_palette=color, multiplier=multiplier,
                    plot=plot, **kwargs)
 
-    def k3d_voxels(self, plot=None, norm_field=None, multiplier=None,
+    def k3d_voxels(self, plot=None, filter_field=None, multiplier=None,
                    cmap='viridis', n=256, **kwargs):
         """Plots the scalar field as a coloured `k3d.voxels()` plot.
 
@@ -2655,22 +2656,33 @@ class Field:
             msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
+        if filter_field is not None:
+            if filter_field.dim != 1:
+                msg = f'Cannot use dim={self.dim} filter_field.'
+                raise ValueError(msg)
+
+        if n > 256:
+            msg = f'Cannot use n={n}. Maximum value is 256.'
+            raise ValueError(msg)
+
         plot_array = np.copy(self.array)  # make a deep copy
         plot_array = plot_array[..., 0]  # remove an empty dimension
 
-        # All values must be in (1, n-1) range, with maximum n=256
-        plot_array -= plot_array.min()
-        if plot_array.max() != 0:
-            # In the case of uniform fields, avoid division by zero.
+        # All values must be in (1, 255) -> (1, n-1), for n=256 range, with
+        # maximum n=256. This is the limitation of k3d.voxels(). Voxels where
+        # values are zero, are invisible.
+        plot_array -= plot_array.min()  # minimum value is 0
+        if plot_array.max() != 0:  # for uniform fields, avoid division by zero
             plot_array /= plot_array.max()  # all values in (0, 1)
         plot_array *= (n - 2)  # all values in (0, n-2)
         plot_array += 1  # all values in (1, n-1)
         plot_array = plot_array.round()
         plot_array = plot_array.astype(int)
 
-        if norm_field is not None:
+        # Remove voxels where filter_field = 0.
+        if filter_field is not None:
             for index in self.mesh.indices:
-                if norm_field(self.mesh.index2point(index)) == 0:
+                if filter_field(self.mesh.index2point(index)) == 0:
                     plot_array[index] = 0
 
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
@@ -2678,13 +2690,16 @@ class Field:
         color_palette = dfu.color_palette(cmap, n, 'int')
 
         if multiplier is None:
-            _, multiplier = uu.si_multiplier(self.mesh.region.edges[0])
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
         dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
                    pmax=self.mesh.region.pmax, color_palette=color_palette,
                    multiplier=multiplier, plot=plot, **kwargs)
 
-    def k3d_vectors(self, color_field=None, points=True, plot=None, **kwargs):
+    def k3d_vectors(self, plot=None, color_field=None, points=True,
+                    point_color=dfu.cp_int_cat[0], point_size=None,
+                    multiplier=None, vector_multiplier=None,
+                    cmap='viridis', n=256, **kwargs):
         """Plots the vector field as a `k3d.vectors()` plot.
 
         At all mesh cells, a vector will be plotted if its norm is not
@@ -2739,56 +2754,59 @@ class Field:
 
         """
         if self.dim != 3:
-            msg = 'Only three-dimensional (dim=3) fields can be plotted.'
+            msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
+        if color_field is not None:
+            if color_field.dim != 1:
+                msg = f'Cannot use dim={self.dim} color_field.'
+                raise ValueError(msg)
+
         coordinates, vectors, color_values = [], [], []
-        norm = self.norm  # assigned to be computed only once
+        norm_field = self.norm  # assigned to be computed only once
         for coord, value in self:
-            if norm(coord) > 0:
+            if norm_field(coord) > 0:
                 coordinates.append(coord)
                 vectors.append(value)
                 if color_field is not None:
                     color_values.append(color_field(coord)[0])
-
         coordinates, vectors = np.array(coordinates), np.array(vectors)
 
-        # In the case of nano-sized samples, fix the order of
-        # magnitude of the coordinates to avoid freezing the k3d plot.
-        if np.any(np.divide(self.mesh.cell, 1e-9) < 1e3):
-            coordinates /= 1e-9
-            cell = np.divide(self.mesh.cell, 1e-9)
-        else:
-            cell = self.mesh.cell
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        # Scale the vectors to correspond to the size of cells.
-        vectors /= vectors.max()
-        vectors *= 0.8*np.array(cell)
-
-        # Middle of the arrow is at the cell centre.
-        coordinates -= 0.5 * vectors
+        if vector_multiplier is None:
+            vector_multiplier = 0.8*np.divide(self.mesh.cell, multiplier).min()
 
         if color_field is not None:
             color_values = np.array(color_values)
-            color_values -= color_values.min()
-            # In the case of uniform fields, division by zero can be
-            # encountered.
-            if color_values.max() != 0:
-                color_values /= color_values.max()
-            color_values *= 256
+            color_values -= color_values.min()  # min value is 0
+            if color_values.max() != 0:  # for uniform fields, avoid division by zero
+                color_values /= color_values.max()  # all values in (0, 1)
+            color_values *= (n - 1)
             color_values = color_values.round()
             color_values = color_values.astype(int)
 
-            cmap = matplotlib.cm.get_cmap('viridis', 256)
+            color_palette = dfu.color_palette('viridis', 256, 'int')
             colors = []
-            for c in color_values:
-                color = dfu.num2hexcolor(c, cmap)
-                colors.append((color, color))
+            for cval in color_values:
+                colors.append((color_palette[cval], color_palette[cval]))
         else:
-            colors = []
+            colors = []  # TODO: change to palette color
 
-        plot = dfu.vectors(coordinates, vectors, colors=colors,
-                           plot=plot, **kwargs)
+        if plot is None:
+            plot = k3d.plot()
+            plot.display()
+
+        dfu.vectors(coordinates, vectors, colors=colors,
+                    multiplier=multiplier, vector_multiplier=vector_multiplier,
+                    plot=plot, **kwargs)
 
         if points:
-            dfu.points(coordinates + 0.5 * vectors, plot=plot)
+            if point_size is None:
+                # If undefined, the size of the point is 1/4 of the smallest
+                # cell dimension.
+                point_size = np.divide(self.mesh.cell, multiplier).min() / 4
+
+            dfu.points(coordinates, color=point_color, point_size=point_size,
+                       multiplier=multiplier, plot=plot)
