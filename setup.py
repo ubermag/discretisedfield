@@ -21,6 +21,8 @@ setuptools.setup(
     include_package_data = True,
     install_requires=['ubermagutil',
                       'matplotlib',
+                      'seaborn',
+                      'h5py',
                       'pyvtk',
                       'k3d'],
     classifiers=['Development Status :: 3 - Alpha',
