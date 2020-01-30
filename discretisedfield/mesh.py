@@ -10,6 +10,9 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
+# Activate seaborn
+sns.set(style='whitegrid')
+
 
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
                cell=ts.Vector(size=3, positive=True, const=True),
@@ -672,7 +675,6 @@ class Mesh:
         >>> mesh.mpl()
 
         """
-        sns.set(style='whitegrid')
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection='3d')
@@ -718,7 +720,6 @@ class Mesh:
         >>> mesh.mpl_subregions()
 
         """
-        sns.set(style='whitegrid')
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection='3d')

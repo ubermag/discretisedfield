@@ -6,6 +6,9 @@ import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
+# Activate seaborn
+sns.set(style='whitegrid')
+
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True))
@@ -394,7 +397,6 @@ class Region:
         >>> region.mpl()
 
         """
-        sns.set(style='whitegrid')
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection='3d')

@@ -1,4 +1,5 @@
 import k3d
+import h5py
 import pyvtk
 import struct
 import numbers
@@ -13,11 +14,13 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
+# Activate seaborn
+sns.set(style='whitegrid')
 # TODO: Laplacian, h5, vtk, tutorials, check rtd requirements, line object,
-# plotting, plotting small samples, refactor plotting, pycodestyle, coverage,
+# pycodestyle, coverage, context for writing files,
 # plotting line, remove numbers from tutorials, add more random numbers in tests
 # add math equations in doc strings, check doc string consistency,
-# do only test-coverage instead of twice,
+# do only test-coverage instead of testing twice, fix berg-luescher exception
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True))
@@ -1925,13 +1928,16 @@ class Field:
 
         """
         if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
-            self._writeovf(filename, representation=representation,
+            self._writeovf(filename,
+                           representation=representation,
                            extend_scalar=extend_scalar)
         elif filename.endswith('.vtk'):
             self._writevtk(filename)
+        elif filename.endswith('.hdf5'):
+            self._writehdf5(filename)
         else:
-            msg = ('Allowed file extensions for are .omf, .ovf, '
-                   '.ohf, and .vtk.')
+            msg = (f'Writing file with extension {filename.split(".")[-1]} '
+                   f'not supported.')
             raise ValueError(msg)
 
     def _writeovf(self, filename, representation='txt', extend_scalar=False):
@@ -2116,8 +2122,31 @@ class Field:
 
         vtkdata.tofile(filename)
 
+    def _writehdf5(self, filename):
+        with h5py.File(filename, 'w') as f:
+            gfield = f.create_group('field')
+            gmesh = gfield.create_group('mesh')
+            gregion = gmesh.create_group('region')
+
+            gregion.create_dataset('p1', data=self.mesh.region.p1)
+            gregion.create_dataset('p2', data=self.mesh.region.p2)
+            gmesh.create_dataset('n', dtype='i4', data=self.mesh.n)
+            gfield.create_dataset('dim', dtype='i4', data=self.dim)
+            gfield.create_dataset('array', data=self.array)
+
     @classmethod
     def fromfile(cls, filename, norm=None):
+        if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
+            return cls._fromovf(filename, norm=norm)
+        elif filename.endswith('.hdf5'):
+            return cls._fromhdf5(filename)
+        else:
+            msg = (f'Reading file with extension {filename.split(".")[-1]} '
+                   f'not supported.')
+            raise ValueError(msg)
+
+    @classmethod
+    def _fromovf(cls, filename, norm=None):
         """Read the field from .ovf, .omf, or .ohf file.
 
         The extension of the `filename` should be `.ovf`, `.omf`, or
@@ -2228,14 +2257,27 @@ class Field:
 
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        field = df.Field(mesh, dim=dim)
+        field = cls(mesh, dim=dim)
 
         r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict['valuedim']),)
         t_tuple = tuple(reversed(range(3))) + (3,)
         field.array = datalines.reshape(r_tuple).transpose(t_tuple)
         field.norm = norm  # Normalise if norm is passed
-
+        # TODO: check if norm is necessary
         return field
+
+    @classmethod
+    def _fromhdf5(cls, filename):
+        with h5py.File(filename, 'r') as f:
+            p1 = f['field/mesh/region/p1']
+            p2 = f['field/mesh/region/p2']
+            n = np.array(f['field/mesh/n']).tolist()
+            dim = np.array(f['field/dim']).tolist()
+            array = f['field/array']
+
+            region = df.Region(p1=p1, p2=p2)
+            mesh = df.Mesh(region=region, n=n)
+            return cls(mesh, dim=dim, value=array[:])
 
     def mpl(self, figsize=None, multiplier=None):
         """Plots a field plane using matplotlib.
@@ -2280,7 +2322,6 @@ class Field:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
-        sns.set(style='whitegrid')
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
 

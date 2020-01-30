@@ -1110,7 +1110,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(1, 2, -5))
         with pytest.raises(ValueError) as excinfo:
             f.write(wrongfilename)
-        assert 'Allowed file extensions' in str(excinfo.value)
+        assert 'not supported' in str(excinfo.value)
 
     def test_wrong_dim_field(self):
         ovffilename = 'test_file.ovf'
@@ -1143,6 +1143,20 @@ class TestField:
                 assert mesh.cell == f_in.mesh.cell
                 np.testing.assert_allclose(f_out.array, f_in.array,
                                            rtol=tolerance[rep])
+
+        os.remove(filename)
+
+    def test_writehdf5(self):
+        filename = 'test_file.hdf5'
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
+
+        for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5, 6))]:
+            f_out = df.Field(mesh, dim=dim, value=value)
+
+            f_out.write(filename)
+            f_in = df.Field.fromfile(filename)
+
+            assert f_out == f_in
 
         os.remove(filename)
 
@@ -1206,7 +1220,7 @@ class TestField:
     def test_mpl(self):
         with pytest.raises(ValueError) as excinfo:
             self.pf.mpl()
-        assert 'Only sliced field' in str(excinfo.value)
+        assert 'must be sliced' in str(excinfo.value)
 
         self.pf.plane('x', n=(3, 4)).mpl()
         self.pf.z.plane('x', n=(3, 4)).mpl()
@@ -1217,14 +1231,14 @@ class TestField:
 
         with pytest.raises(ValueError) as excinfo:
             self.pf.imshow(ax=ax)
-        assert 'Only sliced field' in str(excinfo.value)
+        assert 'must be sliced' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
             self.pf.plane('z').imshow(ax=ax)
-        assert 'Only scalar' in str(excinfo.value)
+        assert 'Cannot plot' in str(excinfo.value)
 
         self.pf.x.plane('z', n=(3, 4)).imshow(ax=ax)
-        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax, norm_field=self.pf.norm)
+        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax, filter_field=self.pf.norm)
 
     def test_quiver(self):
         fig = plt.figure()
@@ -1232,11 +1246,11 @@ class TestField:
 
         with pytest.raises(ValueError) as excinfo:
             self.pf.quiver(ax=ax)
-        assert 'Only sliced field' in str(excinfo.value)
+        assert 'must be sliced' in str(excinfo.value)
 
         with pytest.raises(ValueError) as excinfo:
             self.pf.x.plane('y').quiver(ax=ax)
-        assert 'Only three-dimensional' in str(excinfo.value)
+        assert 'Cannot plot' in str(excinfo.value)
 
         self.pf.plane('x', n=(3, 4)).quiver(ax=ax)
         self.pf.plane('x', n=(3, 4)).quiver(ax=ax, color_field=self.pf.y)
@@ -1251,22 +1265,22 @@ class TestField:
     def test_k3d_nonzero(self):
         with pytest.raises(ValueError) as excinfo:
             self.pf.k3d_nonzero()
-        assert 'Only scalar' in str(excinfo.value)
+        assert 'Cannot plot' in str(excinfo.value)
 
         self.pf.norm.k3d_nonzero()
 
     def test_k3d_voxels(self):
         with pytest.raises(ValueError) as excinfo:
             self.pf.k3d_voxels()
-        assert 'Only scalar' in str(excinfo.value)
+        assert 'Cannot plot' in str(excinfo.value)
 
         self.pf.x.k3d_voxels()
-        self.pf.x.k3d_voxels(norm_field=self.pf.norm)
+        self.pf.x.k3d_voxels(filter_field=self.pf.norm)
 
     def test_k3d_vectors(self):
         with pytest.raises(ValueError) as excinfo:
             self.pf.x.k3d_vectors()
-        assert 'Only three-dimensional' in str(excinfo.value)
+        assert 'Cannot plot' in str(excinfo.value)
 
         self.pf.k3d_vectors()
         self.pf.k3d_vectors(color_field=self.pf.z)
