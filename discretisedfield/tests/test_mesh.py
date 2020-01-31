@@ -35,10 +35,8 @@ def check_mesh(mesh):
     assert re.search(pattern, repr(mesh))
 
     assert isinstance(mesh.indices, types.GeneratorType)
-    assert isinstance(mesh.coordinates, types.GeneratorType)
     assert isinstance(mesh.__iter__(), types.GeneratorType)
     assert len(list(mesh.indices)) == len(mesh)
-    assert len(list(mesh.coordinates)) == len(mesh)
     assert len(list(mesh)) == len(mesh)
 
     line = mesh.line(p1=mesh.region.pmin, p2=mesh.region.pmax)
@@ -211,8 +209,8 @@ class TestMesh:
             assert all(isinstance(i, int) for i in index)
             assert all([0 <= i <= 4 for i in index])
 
-        assert len(list(mesh.coordinates)) == 125
-        for point in mesh.coordinates:
+        assert len(list(mesh)) == 125
+        for point in mesh:
             assert isinstance(point, tuple)
             assert len(point) == 3
             assert all(isinstance(i, numbers.Real) for i in point)

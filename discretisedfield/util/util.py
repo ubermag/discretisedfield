@@ -100,10 +100,10 @@ def as_array(mesh, dim, val):
     elif isinstance(val, np.ndarray) and val.shape == array.shape:
         array = val
     elif callable(val):
-        for index, point in zip(mesh.indices, mesh.coordinates):
+        for index, point in zip(mesh.indices, mesh):
             array[index] = val(point)
     elif isinstance(val, dict) and mesh.subregions:
-        for index, point in zip(mesh.indices, mesh.coordinates):
+        for index, point in zip(mesh.indices, mesh):
             for region in mesh.subregions.keys():
                 if point in mesh.subregions[region]:
                     array[index] = val[region]

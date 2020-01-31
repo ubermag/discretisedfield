@@ -2050,7 +2050,7 @@ class Field:
         structure = pyvtk.RectilinearGrid(*grid)
         vtkdata = pyvtk.VtkData(structure)
 
-        vectors = [self.__call__(coord) for coord in self.mesh.coordinates]
+        vectors = [self.__call__(coord) for coord in self.mesh]
         vtkdata.cell_data.append(pyvtk.Vectors(vectors, 'field'))
         for i, component in enumerate(dfu.axesdict.keys()):
             name = f'field_{component}'
