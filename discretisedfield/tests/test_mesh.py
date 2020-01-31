@@ -137,7 +137,7 @@ class TestMesh:
     def test_init_subregions(self):
         p1 = (0, 0, 0)
         p2 = (100, 50, 10)
-        cell = (1, 1, 1)
+        cell = (10, 10, 10)
         subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
                       'r2': df.Region(p1=(50, 0, 0), p2=(100, 50, 10))}
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)

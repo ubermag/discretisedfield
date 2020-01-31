@@ -190,7 +190,7 @@ class TestField:
             assert isinstance(f.value, np.ndarray)
 
     def test_norm(self):
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
         assert np.all(f.norm.value == 2*np.sqrt(3))
@@ -240,11 +240,10 @@ class TestField:
 
     def test_norm_scalar_field_exception(self):
         for mesh in self.meshes:
-            for value in self.consts + self.sfuncs:
-                for norm in [1, 2.1, 50, 1e-3, np.pi]:
-                    f = df.Field(mesh, dim=1, value=value)
-                    with pytest.raises(ValueError):
-                        f.norm = norm
+            value = 1
+            f = df.Field(mesh, dim=1, value=4)
+            with pytest.raises(ValueError):
+                f.norm = 1
 
     def test_norm_zero_field_exception(self):
         for mesh in self.meshes:
@@ -1150,7 +1149,14 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(1e6, 2e6, -5e6))
 
         f.write(filename)
-        # no assertions can be made
+
+        with open(filename, 'r') as f:
+            for line in f.readlines():
+                if 'CELL_DATA' in line:
+                    pattern = line.strip()
+                    break
+        assert pattern == 'CELL_DATA 150'
+
         os.remove(filename)
 
     def test_writehdf5(self):
@@ -1294,10 +1300,9 @@ class TestField:
     def test_k3d_nanosized_sample(self):
         p1 = (0, 0, 0)
         p2 = (50e-9, 50e-9, 50e-9)
-        cell = (2e-9, 2e-9, 2e-9)
+        cell = (25e-9, 25e-9, 25e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        Ms = 1e6
-        value = (Ms, Ms, Ms)
+        value = (1e6, 1e6, 1e6)
         field = df.Field(mesh, dim=3, value=value)
 
         field.norm.k3d_nonzero()

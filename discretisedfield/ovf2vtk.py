@@ -25,9 +25,8 @@ def main():
             input_files = [f.name for f in args.infile]
             output_files = [f.name for f in args.outfile]
         else:
-            print('\nError: The number of input and output '
-                  'files does not match.')
-            return 0
+            msg = 'The number of input and output files do not match.'
+            raise ValueError(msg)
     else:
         input_files = [f.name for f in args.infile]
         output_files = [f'{f.split(".")[0]}.vtk' for f in input_files]

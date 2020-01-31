@@ -16,37 +16,42 @@ def check_vtk(vtkfile):
 
 
 def test_ovf2vtk():
-    mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
+    p1 = (0, 0, 0)
+    p2 = (10, 10, 10)
+    cell = (5, 5, 5)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
     f = df.Field(mesh, dim=3, value=(1, 2, -3.14))
 
-    filename_omf = 'test_ovf2vtk_file.omf'
-    filename_vtk = 'test_ovf2vtk_file.vtk'
-    f.write(filename_omf)
+    omffilename = 'test_ovf2vtk_file.omf'
+    vtkfilename = 'test_ovf2vtk_file.vtk'
+    f.write(omffilename)
 
     interpreter = sys.executable.split('/')[-1]
 
     # No output filename provided.
     cmd = [interpreter, '-m', 'discretisedfield.ovf2vtk',
-           '--infile', f'{filename_omf}']
+           '--infile', omffilename]
     proc_return = subprocess.run(cmd)
     assert proc_return.returncode == 0
-    check_vtk(filename_vtk)
+    check_vtk(vtkfilename)
+    os.remove(vtkfilename)
 
     # Output filename provided.
     cmd = [interpreter, '-m', 'discretisedfield.ovf2vtk',
-           '--infile', f'{filename_omf}', '--outfile',
-           f'{filename_vtk}']
+           '--infile', omffilename, '--outfile', vtkfilename]
     proc_return = subprocess.run(cmd)
     assert proc_return.returncode == 0
-    check_vtk(filename_vtk)
+    check_vtk(vtkfilename)
+    os.remove(vtkfilename)
 
     # Number of input and output files do not match.
     cmd = [interpreter, '-m', 'discretisedfield.ovf2vtk',
-           '--infile', f'{filename_omf}', '--outfile',
-           f'{filename_vtk}', 'anotherfile.vtk']
+           '--infile', omffilename, '--outfile',
+           vtkfilename, 'anotherfile.vtk']
     proc_return = subprocess.run(cmd)
-    assert proc_return.returncode == 0
+    assert proc_return.returncode == 1
 
-    os.remove(f'{filename_omf}')
-    os.remove(f'{filename_vtk}')
+    os.remove(omffilename)
+    os.remove(vtkfilename)
     os.remove('anotherfile.vtk')
