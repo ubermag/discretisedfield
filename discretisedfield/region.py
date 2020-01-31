@@ -133,9 +133,12 @@ class Region:
         """Edge lengths of the region.
 
         Edge length is computed from the points between which the region spans
-        :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`: :math:`\\mathbf{l} =
-        (|p_{2}^{x} - p_{1}^{x}|, |p_{2}^{y} - p_{1}^{y}|, |p_{2}^{z} -
-        p_{1}^{z}|)`.
+        :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`:
+
+        .. math::
+
+            \\mathbf{l} = (|p_{2}^{x} - p_{1}^{x}|, |p_{2}^{y} - p_{1}^{y}|,
+            |p_{2}^{z} - p_{1}^{z}|).
 
         Returns
         -------
@@ -163,8 +166,12 @@ class Region:
         """Centre point.
 
         It is computed as the middle point between minimum and maximum point
-        coordinates :math:`\\mathbf{p}_\\text{centre} = \\frac{1}{2}
-        (\\mathbf{p}_\\text{min} + \\mathbf{p}_\\text{max})`.
+        coordinates:
+
+        .. math::
+
+            \\mathbf{p}_\\text{centre} = \\frac{1}{2} (\\mathbf{p}_\\text{min} +
+            \\mathbf{p}_\\text{max}).
 
         Returns
         -------
@@ -191,8 +198,11 @@ class Region:
     def volume(self):
         """Volume of the region.
 
-        It is computed by multiplying edge lengths of the region: :math:`V =
-        l_{x} l_{y} l_{z}`.
+        It is computed by multiplying edge lengths of the region:
+
+        .. math::
+
+            V = l_{x} l_{y} l_{z}.
 
         Returns
         -------
@@ -337,8 +347,12 @@ class Region:
     def __contains__(self, point):
         """Determine whether `point` belongs to the region.
 
-        Point is considered to be in the region if :math:`p^\\text{min}_{i}
-        \\le p_{i} \\le p^\\text{max}_{i}`, for :math:`i = x, y, z`.
+        Point is considered to be in the region if
+
+        .. math::
+
+            p^\\text{min}_{i} \\le p_{i} \\le p^\\text{max}_{i}, \\text{for}\\,
+            i = x, y, z.
 
         Parameters
         ----------

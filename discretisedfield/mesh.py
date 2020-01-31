@@ -23,62 +23,75 @@ sns.set(style='whitegrid')
                                         ts.Typed(expected_type=df.Region),
                                         allow_empty=True))
 class Mesh:
-    """Finite difference mesh.
+    """Finite difference cubic mesh.
 
-    Mesh discretises cubic `discretisedfield.Region`, passed as `region`, using
-    a regular finite difference mesh. Since cubic region spans between two
-    points :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`, these points
-    can be passed as `p1` and `p2`, instead of passing
-    `discretisedfield.Region` object. In this case `discretisedfield.Region` is
-    created internally, based on points `p1` and `p2`. Either `region` or `p1`
-    and `p2` must be passed, not both. The region is discretised using a finite
-    difference cell, whose dimensions are defined with `cell`. Alternatively,
-    the domain can be discretised by passing the number of discretisation cells
-    `n` in all three dimensions. Either `cell` or `n` should be defined to
-    discretise the region, not both. Periodic boundary conditions can be
-    specified by passing `pbc` argument, which is an iterable containing one or
-    more elements from ``['x', 'y', 'z']``. If it is necessary to define
-    subregions in the mesh, a dictionary can be passed as `subregions`. More
-    precisely, dictionary keys are strings representing valid Python variable
-    names, whereas values are `discretisedfield.Region` objects.
+    Mesh discretises cubic ``discretisedfield.Region``, passed as ``region``,
+    using a regular finite difference mesh. Since cubic region spans between
+    two points :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`, these
+    points can be passed as ``p1`` and ``p2``, instead of passing
+    ``discretisedfield.Region`` object. In this case
+    ``discretisedfield.Region`` is created internally, based on points ``p1``
+    and ``p2``. Either ``region`` or ``p1`` and ``p2`` must be passed, not
+    both. The region is discretised using a finite difference cell, whose
+    dimensions are defined with ``cell``. Alternatively, the domain can be
+    discretised by passing the number of discretisation cells ``n`` in all
+    three dimensions. Either ``cell`` or ``n`` should be passed to discretise
+    the region, not both. Periodic boundary conditions can be specified by
+    passing ``pbc`` argument, which is an iterable containing one or more
+    elements from ``{'x', 'y', 'z'}``. If it is necessary to define subregions
+    in the mesh, a dictionary can be passed as ``subregions``. More precisely,
+    dictionary keys are strings (as valid Python variable names), whereas
+    values are ``discretisedfield.Region`` objects.
 
     In order to properly define a mesh, mesh region must be an aggregate of
     discretisation cells.
 
     Parameters
     ----------
-    region : discretisedfield.Region
-        Cubic region to be discretised on a regular mesh. Either `region` or
-        `p1` and `p2` should be defined, not both.
-    p1, p2 : (3,) array_like
+    region : discretisedfield.Region, optional
+
+        Cubic region to be discretised on a regular mesh. Either ``region`` or
+        ``p1`` and ``p2`` should be defined, not both.
+
+    p1/p2 : (3,) array_like, optional
+
         Points between which the mesh region spans :math:`\\mathbf{p} = (p_{x},
-        p_{y}, p_{z})`. Either `region` or `p1` and `p2` should be defined, not
-        both.
+        p_{y}, p_{z})`. Either ``region`` or ``p1`` and ``p2`` should be
+        defined, not both.
+
     cell : (3,) array_like, optional
-        Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`. Either `cell`
-        or `n` should be defined, not both.
+
+        Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`. Either ``cell``
+        or ``n`` should be defined, not both.
+
     n : (3,) array_like, optional
+
         The number of discretisation cells :math:`(n_{x}, n_{y}, n_{z})`.
-        Either `cell` or `n` should be defined, not both.
+        Either ``cell`` or ``n`` should be defined, not both.
+
     pbc : iterable, optional
-        Periodic boundary conditions in x, y, or z direction. Its value is an
-        iterable consisting of one or more characters `x`, `y`, or `z`,
-        denoting the direction(s) along which the mesh is periodic.
+
+        Periodic boundary conditions in x, y, or z directions. Its value is an
+        iterable consisting of one or more characters ``'x'``, ``'y'``, or
+        ``'z'``, denoting the direction(s) along which the mesh is periodic.
+
     subregions : dict, optional
+
         A dictionary defining subregions in the mesh. The keys of the
         dictionary are the region names (str), whereas the values are
-        `discretisedfield.Region` objects.
+        ``discretisedfield.Region`` objects.
 
     Raises
     ------
     ValueError
+
         If mesh domain is not an aggregate of discretisation cells.
-        Alternatively, if both `region` and `p1`/`p2` or both `cell` and `n`
-        are passed.
+        Alternatively, if both ``region`` and ``p1``/``p2`` or both ``cell``
+        and ``n`` are passed.
 
     Examples
     --------
-    1. Defining a nano-sized thin film mesh by passing `region` and `cell`
+    1. Defining a nano-sized thin film mesh by passing ``region`` and ``cell``
     parameters.
 
     >>> import discretisedfield as df
@@ -91,26 +104,16 @@ class Mesh:
     >>> mesh
     Mesh(...)
 
-    2. Defining a nano-sized thin film mesh by passing `p1`, `p2` and `n`
+    2. Defining a nano-sized thin film mesh by passing ``p1``, ``p2`` and ``n``
     parameters.
 
-    >>> import discretisedfield as df
-    ...
-    >>> p1 = (-50e-9, -25e-9, 0)
-    >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> n = (100, 50, 5)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> mesh
     Mesh(...)
 
-    3. Defining a mesh with periodic boundary conditions in x and y
-    directions.
+    3. Defining a mesh with periodic boundary conditions in x and y directions.
 
-    >>> import discretisedfield as df
-    ...
-    >>> p1 = (0, 0, 0)
-    >>> p2 = (100, 100, 1)
-    >>> n = (100, 100, 1)
     >>> pbc = 'xy'
     >>> region = df.Region(p1=p1, p2=p2)
     >>> mesh = df.Mesh(region=region, n=n, pbc=pbc)
@@ -119,8 +122,6 @@ class Mesh:
 
     4. Defining a mesh with two subregions.
 
-    >>> import discretisedfield as df
-    ...
     >>> p1 = (0, 0, 0)
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
@@ -133,8 +134,6 @@ class Mesh:
     5. An attempt to define a mesh, whose region is not an aggregate of
     discretisation cells in the :math:`z` direction.
 
-    >>> import discretisedfield as df
-    ...
     >>> p1 = (-25, 3, 0)
     >>> p2 = (25, 6, 1)
     >>> cell = (5, 3, 0.4)
@@ -166,7 +165,7 @@ class Mesh:
             msg = ('Either n or cell must be passed, not both.')
             raise ValueError(msg)
 
-        # Is the mesh region not an aggregate of the discretisation cell?
+        # Check if the mesh region is an aggregate of the discretisation cell.
         tol = 1e-12  # picometre tolerance
         rem = np.remainder(self.region.edges, self.cell)
         if np.logical_and(np.greater(rem, tol),
@@ -178,15 +177,19 @@ class Mesh:
         self.subregions = subregions
 
     def __len__(self):
-        """Number of discretisation cells.
+        """Number of discretisation cells in the mesh.
 
-        It is computed by multiplying all elements of `self.n`:
-        :math:`n_\\text{total} = n_{x}n_{y}n_{z}`.
+        It is computed by multiplying all elements of ``n``:
+
+        .. math::
+
+            n_\\text{total} = n_{x} n_{y} n_{z}.
 
         Returns
         -------
         int
-            Total number of discretisation cells
+
+            Total number of discretisation cells.
 
         Examples
         --------
@@ -198,6 +201,8 @@ class Mesh:
         >>> p2 = (5, 15, 2)
         >>> cell = (1, 0.1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        >>> mesh.n
+        (5, 100, 2)
         >>> len(mesh)
         1000
 
@@ -211,6 +216,7 @@ class Mesh:
         Yields
         ------
         tuple (3,)
+
             Mesh cell indices :math:`(i_{x}, i_{y}, i_{z})`.
 
         Examples
@@ -226,14 +232,14 @@ class Mesh:
         >>> list(mesh.indices)
         [(0, 0, 0), (1, 0, 0), (2, 0, 0), (0, 1, 0), (1, 1, 0), (2, 1, 0)]
 
-        .. seealso:: :py:func:`~discretisedfield.Mesh.coordinates`
+        .. seealso:: :py:func:`~discretisedfield.Mesh.__iter__`
 
         """
         for index in itertools.product(*map(range, reversed(self.n))):
             yield tuple(reversed(index))
 
-    @property
-    def coordinates(self):
+
+    def __iter__(self):
         """Generator yielding coordinates of all mesh cells.
 
         The discretisation cell coordinate corresponds to its centre point.
@@ -241,7 +247,9 @@ class Mesh:
         Yields
         ------
         tuple (3,)
-            Mesh cell coordinates :math:`(p_{x}, p_{y}, p_{z})`.
+
+            Mesh cell coordinates point :math:`\\mathbf{p} = (p_{x}, p_{y},
+            p_{z})`.
 
         Examples
         --------
@@ -253,7 +261,7 @@ class Mesh:
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-        >>> list(mesh.coordinates)
+        >>> list(mesh)
         [(0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 1.5, 0.5), (1.5, 1.5, 0.5)]
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
@@ -262,39 +270,30 @@ class Mesh:
         for index in self.indices:
             yield self.index2point(index)
 
-    def __iter__(self):
-        """This method enables `discretisedfield.Mesh` object to be iterable.
-
-        It iterates through the coodinates of the mesh cells
-        (`df.Mesh.coordinates`).
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
-
-        """
-        return self.coordinates
-
     def __eq__(self, other):
-        """Equality operator.
+        """Equality relational operator.
 
         Two meshes are considered to be equal if:
 
           1. Regions of both meshes are equal.
 
           2. They have the same number of discretisation cells in all three
-          directions :math:`n^{1}_{i} = n^{2}_{i}`.
+          directions :math:`n^{1}_{i} = n^{2}_{i}`, for :math:`i = x, y, z`.
 
-        Periodic boundary conditions `pbc` and `subregions` are not considered
-        to be necessary conditions for determining equality.
+        Periodic boundary conditions ``pbc`` and ``subregions`` are not
+        considered to be necessary conditions for determining equality.
 
         Parameters
         ----------
         other : discretisedfield.Mesh
-            Mesh compared to self.
+
+            Mesh compared to ``self``.
 
         Returns
         -------
         bool
-            `True` if two regions are equal and `False` otherwise.
+
+            ``True`` if two regions are equal and ``False`` otherwise.
 
         Examples
         --------
@@ -325,10 +324,12 @@ class Mesh:
             return False
 
     def __ne__(self, other):
-        """Inverse of equality operator.
+        """Inverse of equality relational operator.
 
-        This method returns `not self == other`. For details, please
-        refer to `discretisedfield.Mesh.__eq__()` method.
+        This method returns ``not self == other``. For details, please
+        refer to ``discretisedfield.Mesh.__eq__`` method.
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.__eq__`
 
         """
         return not self == other
@@ -336,16 +337,17 @@ class Mesh:
     def __repr__(self):
         """Mesh representation string.
 
-        This method returns the string that can be copied in another Python
-        script so that exactly the same mesh object can be defined.
+        This method returns the string that can be copied so that exactly the
+        same mesh object can be defined.
 
         Returns
         -------
         str
-            Mesh representation string.
 
-        Examples
-        --------
+           Mesh representation string.
+
+        Example
+        -------
         1. Getting mesh representation string.
 
         >>> import discretisedfield as df
@@ -368,16 +370,21 @@ class Mesh:
         Parameters
         ----------
         index : (3,) array_like
+
             The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Returns
         -------
-            The cell's centre point :math:`(p_{x}, p_{y}, p_{z})`.
+        (3,) tuple
+
+            The cell's centre point :math:`\\mathbf{p} = (p_{x}, p_{y},
+            p_{z})`.
 
         Raises
         ------
         ValueError
-            If `index` is out of range.
+
+            If ``index`` is out of range.
 
         Examples
         --------
@@ -389,42 +396,47 @@ class Mesh:
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.index2point((0, 0, 0))
+        (0.5, 0.5, 0.5)
         >>> mesh.index2point((0, 1, 0))
         (0.5, 1.5, 0.5)
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
         """
-        # Does index refer to a cell outside the mesh?
         if np.logical_or(np.less(index, 0),
                          np.greater_equal(index, self.n)).any():
             msg = f'Index {index} out of range.'
             raise ValueError(msg)
 
         point = np.add(self.region.pmin,
-                        np.multiply(np.add(index, 0.5), self.cell))
+                       np.multiply(np.add(index, 0.5), self.cell))
         return dfu.array2tuple(point)
 
     def point2index(self, point):
-        """Convert coordinate to cell's index.
+        """Convert coordinate to the index of a cell which contains it.
 
         Parameters
         ----------
-        p : (3,) array_like
-            The point's coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+        point : (3,) array_like
+
+            Point :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------
+        (3,) tuple
+
             The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Raises
         ------
         ValueError
-            If `point` is outside the mesh.
+
+            If ``point`` is outside the mesh.
 
         Examples
         --------
-        1. Converting coordinate to cell's index.
+        1. Converting cell's coordinate to its index.
 
         >>> import discretisedfield as df
         ...
