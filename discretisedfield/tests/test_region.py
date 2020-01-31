@@ -3,6 +3,7 @@ import pytest
 import numbers
 import numpy as np
 import discretisedfield as df
+import discretisedfield.util as dfu
 
 
 def check_region(region):
@@ -75,7 +76,7 @@ class TestRegion:
             with pytest.raises((TypeError, ValueError)):
                 region = df.Region(p1=p1, p2=p2)  # Raised by descriptors.
 
-    def test_zero_edge_length(self):
+    def test_init_zero_edge_length(self):
         args = [[(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9)],
                 [(0, 101e-9, -1), (150e-9, 101e-9, 0)],
                 [(10e9, 10e3, 0), (0.01e12, 11e3, 5)]]
@@ -83,7 +84,7 @@ class TestRegion:
         for p1, p2 in args:
             with pytest.raises(ValueError) as excinfo:
                 region = df.Region(p1=p1, p2=p2)
-            assert re.search(r'is zero.$', str(excinfo.value))
+            assert 'is zero' in str(excinfo.value)
 
     def test_pmin_pmax_edges_centre_volume(self):
         p1 = (0, -4, 16.5)
@@ -97,16 +98,16 @@ class TestRegion:
         assert region.centre == (7.5, -5, 13.75)
         assert region.volume == 165
 
-        p1 = (-10, 0, 0)
-        p2 = (10, 1, 1)
+        p1 = (-10e6, 0, 0)
+        p2 = (10e6, 1e6, 1e6)
         region = df.Region(p1=p1, p2=p2)
 
         check_region(region)
-        assert region.pmin == (-10, 0, 0)
-        assert region.pmax == (10, 1, 1)
-        assert region.edges == (20, 1, 1)
-        assert region.centre == (0, 0.5, 0.5)
-        assert region.volume == 20
+        assert region.pmin == (-10e6, 0, 0)
+        assert region.pmax == (10e6, 1e6, 1e6)
+        assert region.edges == (20e6, 1e6, 1e6)
+        assert region.centre == (0, 0.5e6, 0.5e6)
+        assert abs(region.volume - 20 * (1e6)**3) < 1
 
         p1 = (-18.5e-9, 10e-9, 0)
         p2 = (10e-9, 5e-9, -10e-9)
@@ -156,3 +157,29 @@ class TestRegion:
         assert (10e-9+tol, 10e-9, 20e-9) not in region
         assert (10e-9, 10e-9+tol, 20e-9) not in region
         assert (10e-9, 10e-9, 20e-9+tol) not in region
+
+    def test_mpl(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        region = df.Region(p1=p1, p2=p2)
+
+        check_region(region)
+
+        # Check if runs.
+        region.mpl()
+        region.mpl(figsize=(10, 10), multiplier=1e-9,
+                   color=dfu.color_palette('deep', 10, 'rgb')[1],
+                   linewidth=3, linestyle='dashed')
+
+    def test_k3d(self):
+        p1 = (-50e9, -50e9, 0)
+        p2 = (50e9, 50e9, 20e9)
+        region = df.Region(p1=p1, p2=p2)
+
+        check_region(region)
+
+        # Check if runs.
+        region.k3d()
+        region.k3d(multiplier=1e9,
+                   color=dfu.color_palette('deep', 10, 'int')[3],
+                   wireframe=True)
