@@ -1155,12 +1155,12 @@ class TestField:
                 if 'CELL_DATA' in line:
                     pattern = line.strip()
                     break
-        assert pattern == 'CELL_DATA 150'
+        assert pattern == f'CELL_DATA {len(mesh)}'
 
         os.remove(filename)
 
     def test_writehdf5(self):
-        filename = 'testfile.hdf5'
+        filenames = ['testfile.hdf5', 'testfile.h5']
 
         p1 = (0, 0, 0)
         p2 = (10e-12, 5e-12, 3e-12)
@@ -1169,12 +1169,13 @@ class TestField:
 
         for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]:
             f = df.Field(mesh, dim=dim, value=value)
-            f.write(filename)
-            f_read = df.Field.fromfile(filename)
+            for filename in filenames:
+                f.write(filename)
+                f_read = df.Field.fromfile(filename)
 
-            assert f == f_read
+                assert f == f_read
 
-        os.remove(filename)
+                os.remove(filename)
 
     def test_write_wrong_extension(self):
         filename = 'testfile.jpg'
