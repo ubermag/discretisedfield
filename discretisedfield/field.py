@@ -14,13 +14,11 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
-# Activate seaborn
 sns.set(style='whitegrid')
-# TODO: Laplacian, h5, vtk, tutorials, check rtd requirements, line object,
-# pycodestyle, coverage, context for writing files,
-# plotting line, remove numbers from tutorials, add more random numbers in tests
-# add math equations in doc strings, check doc string consistency,
-# do only test-coverage instead of testing twice, fix berg-luescher exception
+# TODO: Laplacian, tutorials, check rtd requirements, line object (plotting
+# line), pycodestyle, coverage, context for writing files, remove numbers from
+# tutorials, add math equations in doc strings, check doc string consistency,
+# do only test-coverage instead of testing twice
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True))
@@ -69,8 +67,6 @@ class Field:
 
     2. Creating a scalar field.
 
-    >>> import discretisedfield as df
-    ...
     >>> p1 = (-10, -10, -10)
     >>> p2 = (10, 10, 10)
     >>> n = (1, 1, 1)
@@ -731,13 +727,6 @@ class Field:
 
         2. Applying unary negation operator on a vector field.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5e-9, 5e-9, 5e-9)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        ...
         >>> f = df.Field(mesh, dim=3, value=(0, -1000, -3))
         >>> res = -f
         >>> res.average
@@ -788,8 +777,6 @@ class Field:
 
         2. Attempt to apply power operator on a vector field.
 
-        >>> import discretisedfield as df
-        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (5e-9, 5e-9, 5e-9)
         >>> n = (10, 10, 10)
@@ -956,13 +943,6 @@ class Field:
 
         2. Multiply vector field with a scalar.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 3, 1)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
         >>> res = f1 * 5  # discretisedfield.Field.__mul__ is called
         >>> res.average
@@ -1040,13 +1020,6 @@ class Field:
 
         2. Divide vector field by a scalar.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 3, 1)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f1 = df.Field(mesh, dim=3, value=(0, 10, 5))
         >>> res = f1 / 5  # discretisedfield.Field.__mul__ is called
         >>> res.average
@@ -1175,13 +1148,6 @@ class Field:
         one discretisation cell in the z-direction, the derivative
         cannot be computed and a zero field is returned.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100e-9, 100e-9, 10e-9)
-        >>> cell = (10e-9, 10e-9, 10e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> def value_fun(pos):
         ...     x, y, z = pos
         ...     return (2*x, 3*y, -5*z)
@@ -1241,8 +1207,8 @@ class Field:
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
-        >>> p2 = (10, 10, 10)
-        >>> cell = (2, 2, 2)
+        >>> p2 = (10e-9, 10e-9, 10e-9)
+        >>> cell = (2e-9, 2e-9, 2e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
@@ -1254,13 +1220,6 @@ class Field:
         the gradient to be a constant vector field
         grad(f) = (2, 3, -5).
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100e-9, 100e-9, 100e-9)
-        >>> cell = (10e-9, 10e-9, 10e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> def value_fun(pos):
         ...     x, y, z = pos
         ...     return 2*x + 3*y - 5*z
@@ -1269,15 +1228,8 @@ class Field:
         >>> f.grad.average
         (2.0, 3.0, -5.0)
 
-        2. Attempt to compute the gradient of a vector field.
+        3. Attempt to compute the gradient of a vector field.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100e-9, 100e-9, 100e-9)
-        >>> cell = (10e-9, 10e-9, 10e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=3, value=(1, 2, -3))
         >>> f.grad
         Traceback (most recent call last):
@@ -1341,13 +1293,6 @@ class Field:
 
         2. Attempt to compute the divergence of a scalar field.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100e-9, 100e-9, 100e-9)
-        >>> cell = (10e-9, 10e-9, 10e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=1, value=3.14)
         >>> f.div
         Traceback (most recent call last):
@@ -1412,13 +1357,6 @@ class Field:
 
         2. Attempt to compute the curl of a scalar field.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100e-9, 100e-9, 100e-9)
-        >>> cell = (10e-9, 10e-9, 10e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=1, value=3.14)
         >>> f.curl
         Traceback (most recent call last):
@@ -1469,16 +1407,9 @@ class Field:
 
         2. Compute the volume integral of a vector field.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 2)
-        >>> cell = (0.5, 0.5, 0.5)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
         >>> f.integral
-        (-8.0, -16.0, -24.0)
+        (-1000.0, -2000.0, -3000.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.average`
 
@@ -1510,8 +1441,8 @@ class Field:
 
         Example
         -------
-        1. Compute the topological charge density of a spatially
-        constant vector field.
+        1. Compute the topological charge density of a spatially constant
+        vector field.
 
         >>> import discretisedfield as df
         ...
@@ -1524,32 +1455,17 @@ class Field:
         >>> f.plane('z').topological_charge_density.average
         (0.0,)
 
-        2. Attempt to compute the topological charge density of a
-        scalar field.
+        2. Attempt to compute the topological charge density of a scalar field.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10, 10, 10)
-        >>> cell = (2, 2, 2)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=1, value=12)
         >>> f.plane('z').topological_charge_density
         Traceback (most recent call last):
         ...
         ValueError: ...
 
-        3. Attempt to compute the topological charge density of a
-        vector field, which is not sliced.
+        3. Attempt to compute the topological charge density of a vector field,
+        which is not sliced.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10e-9, 10e-9, 10e-9)
-        >>> cell = (2e-9, 2e-9, 2e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f.topological_charge_density
         Traceback (most recent call last):
@@ -1642,8 +1558,8 @@ class Field:
 
         Example
         -------
-        1. Compute the topological charge of a spatially constant
-        vector field. Zero value is expected.
+        1. Compute the topological charge of a spatially constant vector field.
+        Zero value is expected.
 
         >>> import discretisedfield as df
         ...
@@ -1658,32 +1574,17 @@ class Field:
         >>> f.plane('z').topological_charge(method='berg-luescher')
         0.0
 
-        2. Attempt to compute the topological charge of a scalar
-        field.
+        2. Attempt to compute the topological charge of a scalar field.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10, 10, 10)
-        >>> cell = (2, 2, 2)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=1, value=12)
         >>> f.plane('z').topological_charge()
         Traceback (most recent call last):
         ...
         ValueError: ...
 
-        3. Attempt to compute the topological charge of a vector
-        field, which is not sliced.
+        3. Attempt to compute the topological charge of a vector field, which
+        is not sliced.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10e-9, 10e-9, 10e-9)
-        >>> cell = (2e-9, 2e-9, 2e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f.topological_charge_density()
         Traceback (most recent call last):
@@ -2004,7 +1905,7 @@ class Field:
         >>> field = df.Field(mesh, dim=3, value=value_fun)
         ...
         >>> filename = 'mytestfile.ohf'
-        >>> field.write(filename, representation='bin8')  # write the file
+        >>> field._writeovf(filename, representation='bin8')  # write the file
         >>> os.path.isfile(filename)
         True
         >>> field_read = df.Field.fromfile(filename)  # read the file
@@ -2047,7 +1948,6 @@ class Field:
                   f'ymax: {self.mesh.region.pmax[1]}',
                   f'zmax: {self.mesh.region.pmax[2]}',
                   f'valuedim: {write_dim}',
-                  # TODO: fix names
                   f'valuelabels: field_x field_y field_z',
                   'valueunits: A/m A/m A/m',
                   '',
@@ -2067,82 +1967,79 @@ class Field:
             footer = ['End: Data Text',
                       'End: Segment']
 
-        # Write header lines to the ovf file.
-        f = open(filename, 'w')
-        f.write(''.join(map(lambda line: f'# {line}\n', header)))
-        f.close()
+        # Write header lines
+        with open(filename, 'w') as f:
+            f.write(''.join(map(lambda line: f'# {line}\n', header)))
 
         binary_reps = {'bin4': (1234567.0, 'f'),
                        'bin8': (123456789012345.0, 'd')}
 
         if representation in binary_reps:
-            # Reopen the file with binary write, appending to the end
-            # of the file.
-            f = open(filename, 'ab')
+            # Reopen with binary write, appending to the end of the file.
+            with open(filename, 'ab') as f:
 
-            # Add the 8 bit binary check value that OOMMF uses.
-            packarray = [binary_reps[representation][0]]
+                # Add the 8 bit binary check value that OOMMF uses.
+                packarray = [binary_reps[representation][0]]
 
-            # Write data to the ovf file.
-            for i in self.mesh.indices:
-                for vi in self.array[i]:
-                    packarray.append(vi)
+                # Write data to the ovf file.
+                for i in self.mesh.indices:
+                    for vi in self.array[i]:
+                        packarray.append(vi)
 
-            v_bin = struct.pack(binary_reps[representation][1]*len(packarray),
-                                *packarray)
-            f.write(v_bin)
-            f.close()
+                pack_fmt = binary_reps[representation][1]*len(packarray)
+                f.write(struct.pack(pack_fmt, *packarray))
 
         else:
-            # Reopen the file for txt representation, appending to the
-            # file.
-            f = open(filename, 'a')
-            for i in self.mesh.indices:
-                if self.dim == 3:
-                    v = [vi for vi in self.array[i]]
-                elif self.dim == 1:
-                    if extend_scalar:
-                        v = [self.array[i][0], 0.0, 0.0]
+            # Reopen with txt representation, appending to the end of the file.
+            with open(filename, 'a') as f:
+                for i in self.mesh.indices:
+                    if self.dim == 3:
+                        v = [vi for vi in self.array[i]]
+                    elif self.dim == 1:
+                        if extend_scalar:
+                            v = [self.array[i][0], 0.0, 0.0]
+                        else:
+                            v = [self.array[i][0]]
                     else:
-                        v = [self.array[i][0]]
-                else:
-                    msg = (f'Cannot write dim={self.dim} field.')
-                    raise TypeError(msg)
-                for vi in v:
-                    f.write(' ' + str(vi))
-                f.write('\n')
-            f.close()
+                        msg = (f'Cannot write dim={self.dim} field.')
+                        raise TypeError(msg)
+                    for vi in v:
+                        f.write(f' {str(vi)}')
+                    f.write('\n')
 
         # Write footer lines to OOMMF file.
-        f = open(filename, 'a')
-        f.write(''.join(map(lambda line: f'# {line}\n', footer)))
-        f.close()
+        with open(filename, 'a') as f:
+            f.write(''.join(map(lambda line: f'# {line}\n', footer)))
 
     def _writevtk(self, filename):
-        """Write the field in the VTK format.
-
-        The extension of the `filename` should be `.vtk`.
+        """Write the field to a VTK file.
 
         Parameters
         ----------
         filename : str
-            Name of the file written.
+            Name with an extension of the file written.
 
         Example
         -------
-        1. Write a .vtk file and delete it from the disk
+        1. Write field to a VTK file.
 
         >>> import os
         >>> import discretisedfield as df
         ...
-        >>> p1 = (0, 0, -5)
-        >>> p2 = (5, 15, 15)
-        >>> n = (5, 15, 20)
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10e-9, 5e-9, 3e-9)
+        >>> n = (10, 5, 3)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, value=(5, 6, 7))
+        >>> value_fun = lambda pos: (pos[0], pos[1], pos[2])
+        >>> field = df.Field(mesh, dim=3, value=value_fun)
+        ...
         >>> filename = 'mytestfile.vtk'
         >>> field._writevtk(filename)  # write the file
+        >>> os.path.isfile(filename)
+        True
         >>> os.remove(filename)  # delete the file
+
+        .. seealso:: :py:func:`~discretisedfield.Field.write`
 
         """
         grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
@@ -2163,11 +2060,46 @@ class Field:
         vtkdata.tofile(filename)
 
     def _writehdf5(self, filename):
+        """Write the field to an HDF5 file.
+
+        Parameters
+        ----------
+        filename : str
+            Name with an extension of the file written.
+
+        Example
+        -------
+        1. Write field to an HDF5 file.
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10e-9, 5e-9, 3e-9)
+        >>> n = (10, 5, 3)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> value_fun = lambda pos: (pos[0], pos[1], pos[2])
+        >>> field = df.Field(mesh, dim=3, value=value_fun)
+        ...
+        >>> filename = 'mytestfile.h5'
+        >>> field._writehdf5(filename)  # write the file
+        >>> os.path.isfile(filename)
+        True
+        >>> field_read = df.Field.fromfile(filename)  # read the file
+        >>> field_read == field
+        True
+        >>> os.remove(filename)  # delete the file
+
+        .. seealso:: :py:func:`~discretisedfield.Field.write`
+
+        """
         with h5py.File(filename, 'w') as f:
+            # Set up the file structure
             gfield = f.create_group('field')
             gmesh = gfield.create_group('mesh')
             gregion = gmesh.create_group('region')
 
+            # Save everything as datasets
             gregion.create_dataset('p1', data=self.mesh.region.p1)
             gregion.create_dataset('p2', data=self.mesh.region.p2)
             gmesh.create_dataset('n', dtype='i4', data=self.mesh.n)
@@ -2175,9 +2107,49 @@ class Field:
             gfield.create_dataset('array', data=self.array)
 
     @classmethod
-    def fromfile(cls, filename, norm=None):
+    def fromfile(cls, filename):
+        """Read the field from an OVF or HDF5 file.
+
+        The extension of the `filename` should be suitable for OVF format
+        (`.ovf`, `.omf`, `.ohf`) or for HDF5 (`.hdf5` or `.h5`). This is a
+        `classmethod` and should be called as, for instance,
+        `discretisedfield.Field.fromfile('myfile.omf')`.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to be read.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Read a field from the OVF file.
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> dirname = os.path.join(os.path.dirname(__file__),
+        ...                        'tests', 'test_sample')
+        >>> filename = os.path.join(dirname, 'mumax-output-linux.ovf')
+        >>> field = df.Field.fromfile(filename)
+        >>> field
+        Field(mesh=...)
+
+        2. Read a field from the HDF5 file.
+
+        >>> filename = os.path.join(dirname, 'testfile.hdf5')
+        >>> field = df.Field.fromfile(filename)
+        >>> field
+        Field(mesh=...)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.write`
+
+        """
         if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
-            return cls._fromovf(filename, norm=norm)
+            return cls._fromovf(filename)
         elif any([filename.endswith(ext) for ext in ['.hdf5', '.h5']]):
             return cls._fromhdf5(filename)
         else:
@@ -2186,21 +2158,17 @@ class Field:
             raise ValueError(msg)
 
     @classmethod
-    def _fromovf(cls, filename, norm=None):
-        """Read the field from .ovf, .omf, or .ohf file.
+    def _fromovf(cls, filename):
+        """Read the field from an OVF file.
 
-        The extension of the `filename` should be `.ovf`, `.omf`, or
-        `.ohf`. If the field should be normalised, `norm` argument can
-        be passed. The `name` of the field defaults to `'field'`. This
-        is a `classmethod` and should be called as
-        `discretisedfield.Field.fromfile('myfile.omf')`.
+        The extension of the `filename` should be suitable for OVF format
+        (`.ovf`, `.omf`, `.ohf`). This is a `classmethod` and should be called
+        as, for instance, `discretisedfield.Field._fromovf('myfile.omf')`.
 
         Parameters
         ----------
         filename : str
             Name of the file to be read.
-        norm : numbers.Real, numpy.ndarray, callable
-            For details, refer to :py:func:`~discretisedfield.Field.value`.
 
         Returns
         -------
@@ -2208,19 +2176,19 @@ class Field:
 
         Example
         -------
-        1. Read a field from the .ovf file
+        1. Read a field from the OVF file.
 
         >>> import os
         >>> import discretisedfield as df
         ...
-        >>> ovffile = os.path.join(os.path.dirname(__file__),
-        ...                        'tests', 'test_sample',
-        ...                        'mumax-output-linux.ovf')
-        >>> field = df.Field.fromfile(ovffile)
+        >>> dirname = os.path.join(os.path.dirname(__file__),
+        ...                        'tests', 'test_sample')
+        >>> filename = os.path.join(dirname, 'mumax-output-linux.ovf')
+        >>> field = df.Field._fromovf(filename)
         >>> field
         Field(mesh=...)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.write`
+        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
         mdatalist = ['xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax',
@@ -2282,8 +2250,8 @@ class Field:
             datalines = np.array(listdata)
 
             if datalines[0] != checkvalue:
-                # These two lines cannot be accessed via
-                # tests. Therefore, they are excluded from coverage.
+                # These two lines cannot be accessed via tests. Therefore, they
+                # are excluded from coverage.
                 msg = 'Binary Data cannot be read.'  # pragma: no cover
                 raise AssertionError(msg)  # pragma: no cover
 
@@ -2295,26 +2263,59 @@ class Field:
                                            'zstepsize'])
         dim = int(mdatadict['valuedim'])
 
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         field = cls(mesh, dim=dim)
 
         r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict['valuedim']),)
         t_tuple = tuple(reversed(range(3))) + (3,)
         field.array = datalines.reshape(r_tuple).transpose(t_tuple)
-        field.norm = norm  # Normalise if norm is passed
-        # TODO: check if norm is necessary
+
         return field
 
     @classmethod
     def _fromhdf5(cls, filename):
+        """Read the field from an HDF5 file.
+
+        The extension of the `filename` should be suitable for the HDF5 format
+        (`.hdf5` or `.h5`). This is a `classmethod` and should be called
+        as, for instance, `discretisedfield.Field._fromhdf5('myfile.h5')`.
+
+        Parameters
+        ----------
+        filename : str
+            Name of the file to be read.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+        Example
+        -------
+        1. Read a field from the HDF5 file.
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> dirname = os.path.join(os.path.dirname(__file__),
+        ...                        'tests', 'test_sample')
+        >>> filename = os.path.join(dirname, 'testfile.hdf5')
+        >>> field = df.Field._fromhdf5(filename)
+        >>> field
+        Field(mesh=...)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
+
+        """
         with h5py.File(filename, 'r') as f:
+            # Read data from the file.
             p1 = f['field/mesh/region/p1']
             p2 = f['field/mesh/region/p2']
             n = np.array(f['field/mesh/n']).tolist()
             dim = np.array(f['field/dim']).tolist()
             array = f['field/array']
 
+            # Create field.
             region = df.Region(p1=p1, p2=p2)
             mesh = df.Mesh(region=region, n=n)
             return cls(mesh, dim=dim, value=array[:])
@@ -2631,7 +2632,7 @@ class Field:
         return cbar
 
     def k3d_nonzero(self, plot=None, multiplier=None,
-                    color=dfu.cp_int_cat[0], **kwargs):
+                    color=dfu.color_palette('deep', 10, 'int')[0], **kwargs):
         """Plots the voxels where the value of a scalar field is nonzero.
 
         All mesh cells where the value of the field is not zero will
@@ -2777,8 +2778,8 @@ class Field:
                    multiplier=multiplier, plot=plot, **kwargs)
 
     def k3d_vectors(self, plot=None, color_field=None, points=True,
-                    point_color=dfu.cp_int_cat[0], point_size=None,
-                    multiplier=None, vector_multiplier=None,
+                    point_color=dfu.color_palette('deep', 10, 'int')[0],
+                    point_size=None, multiplier=None, vector_multiplier=None,
                     cmap='viridis', n=256, **kwargs):
         """Plots the vector field as a `k3d.vectors()` plot.
 
@@ -2868,7 +2869,9 @@ class Field:
             for cval in color_values:
                 colors.append(2*(color_palette[cval],))
         else:
-            colors = len(vectors)*([2*(dfu.cp_int_cat[1],)])  # uniform colour
+            # Uniform colour.
+            colors = (len(vectors) *
+                      ([2*(dfu.color_palette('deep', 10, 'int')[1],)]))
 
         if plot is None:
             plot = k3d.plot()

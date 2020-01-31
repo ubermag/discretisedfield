@@ -10,7 +10,6 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
-# Activate seaborn
 sns.set(style='whitegrid')
 
 
@@ -652,7 +651,8 @@ class Mesh:
         return self.__class__(region=self.subregions[key], cell=self.cell)
 
     def mpl(self, ax=None, figsize=None, multiplier=None,
-            color_palette=dfu.cp_rgb_cat[:2], linewidth=2, **kwargs):
+            color_palette=dfu.color_palette('deep', 10, 'rgb')[:2],
+            linewidth=2, **kwargs):
         """Plots the mesh domain and the discretisation cell using
         `matplotlib` 3D plot.
 
@@ -690,7 +690,7 @@ class Mesh:
                         linewidth=linewidth, **kwargs)
 
     def mpl_subregions(self, ax=None, figsize=None, multiplier=None,
-                       color_palette=dfu.cp_rgb_cat,
+                       color_palette=dfu.color_palette('deep', 10, 'rgb'),
                        linewidth=2, **kwargs):
         """Plots the mesh regions using a `matplotlib` 3D plot.
 
@@ -733,7 +733,7 @@ class Mesh:
                           **kwargs)
 
     def k3d(self, plot=None, multiplier=None,
-            color_palette=dfu.cp_int_cat[:2], **kwargs):
+            color_palette=dfu.color_palette('deep', 10, 'int')[:2], **kwargs):
         """Plots the mesh domain and emphasises the discretisation cell.
 
         The first element of `colormap` is the colour of the domain,
@@ -778,7 +778,8 @@ class Mesh:
                    plot=plot, **kwargs)
 
     def k3d_subregions(self, plot=None, multiplier=None,
-                       color_palette=dfu.cp_int_cat, **kwargs):
+                       color_palette=dfu.color_palette('deep', 10, 'int'),
+                       **kwargs):
         """Plots the mesh domain and emphasises defined regions.
 
         The order of colours in `colormap` should be the same as the
@@ -832,7 +833,7 @@ class Mesh:
                    plot=plot, **kwargs)
 
     def k3d_points(self, plot=None, point_size=None, multiplier=None,
-                   color=dfu.cp_int_cat[0], **kwargs):
+                   color=dfu.color_palette('deep', 10, 'int')[0], **kwargs):
         """Plots the points at discretisation cell centres.
 
         The size of points can be defined with `point_size` argument

@@ -1096,7 +1096,7 @@ class TestField:
         assert sf.array.shape == (10, 10, 1, 3)
         assert sf.average == (3, 2, 0)
 
-    def test_writeovf(self):
+    def test_write_read_ovf(self):
         representations = ['txt', 'bin4', 'bin8']
         tolerance = dict(zip(representations, (0, 1e-6, 1e-12)))
         filename = 'testfile.ovf'
@@ -1126,12 +1126,13 @@ class TestField:
             f_read = df.Field.fromfile(filename)
 
             assert f.mesh == f_read.mesh
+            assert f_read.dim == 3
             np.testing.assert_allclose(f.array, f_read.x.array,
                                        rtol=tolerance[rep])
             assert np.equal(f_read.y.array, 0).all()
             assert np.equal(f_read.z.array, 0).all()
 
-        # Writing dim=2 field
+        # Attempt to write dim=2 field.
         f = df.Field(mesh, dim=2, value=(1, 2))
         with pytest.raises(TypeError) as excinfo:
             f.write(filename)
@@ -1139,7 +1140,7 @@ class TestField:
 
         os.remove(filename)
 
-    def test_writevtk(self):
+    def test_write_read_vtk(self):
         filename = 'testfile.vtk'
 
         p1 = (0, 0, 0)
@@ -1159,7 +1160,7 @@ class TestField:
 
         os.remove(filename)
 
-    def test_writehdf5(self):
+    def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']
 
         p1 = (0, 0, 0)
@@ -1211,23 +1212,21 @@ class TestField:
 
             f = df.Field.fromfile(path)
 
-            # comparison with human readable part of file
+            # Compare with the human readable part of file.
             assert f.dim == 3
             assert len(f.mesh) == 4096
             assert f.mesh.region.pmin == (0., 0., 0.)
             assert f.mesh.region.pmax == (5e-07, 1.25e-07, 3e-09)
             assert f.array.shape == (128, 32, 1, 3)
 
-            # comparison with vector field (we know from the script
-            # shown above). m vector in mumax (uses 4 bytes)
+            # Compare with vector field (we know from the script
+            # shown above). m vector in mumax (uses 4 bytes).
             m = np.array([1, 0.1, 0], dtype=np.float32)
 
-            # needs to be normalised
+            # magnetisation is normalised before saving
             v = m / sum(m**2)**0.5
 
-            assert np.all(f.array[:, :, :, 0] == v[0])
-            assert np.all(f.array[:, :, :, 1] == v[1])
-            assert np.all(f.array[:, :, :, 2] == v[2])
+            assert np.equal(f.array[..., :], v).all()
 
     def test_mpl(self):
         with pytest.raises(ValueError) as excinfo:
