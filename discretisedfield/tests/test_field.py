@@ -1097,71 +1097,93 @@ class TestField:
         assert sf.array.shape == (10, 10, 1, 3)
         assert sf.average == (3, 2, 0)
 
-    def test_writevtk(self):
-        vtkfilename = 'test_file.ovf'
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
-        f = df.Field(mesh, dim=3, value=(1, 2, -5))
-        f.write(vtkfilename)
-        os.remove(vtkfilename)
-
-    def test_write_wrong_file(self):
-        wrongfilename = 'test_file.jpg'
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
-        f = df.Field(mesh, dim=3, value=(1, 2, -5))
-        with pytest.raises(ValueError) as excinfo:
-            f.write(wrongfilename)
-        assert 'not supported' in str(excinfo.value)
-
-    def test_wrong_dim_field(self):
-        ovffilename = 'test_file.ovf'
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
-        f = df.Field(mesh, dim=2, value=(1, 2))
-        with pytest.raises(TypeError) as excinfo:
-            f.write(ovffilename)
-        assert 'Cannot write' in str(excinfo.value)
-
-    def test_write_extend_scalar(self):
-        ovffilename = 'test_file.omf'
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
-        f = df.Field(mesh, dim=1, value=1)
-        f.write(ovffilename, extend_scalar=True)
-        os.remove(ovffilename)
-
     def test_writeovf(self):
         representations = ['txt', 'bin4', 'bin8']
-        tolerance = {'txt': 0, 'bin4': 1e-6, 'bin8': 1e-12}
-        filename = 'test_file.ovf'
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
+        tolerance = dict(zip(representations, (0, 1e-6, 1e-12)))
+        filename = 'testfile.ovf'
 
-        for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5, 6))]:
-            f_out = df.Field(mesh, dim=dim, value=value)
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 5e-9, 3e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        for dim, value in [(1, -1.23),
+                           (3, (4, 2, -13e6)),
+                           (3, lambda pos: (pos[0], pos[1], pos[2])),
+                           (1, lambda pos: pos[0] + pos[1] + pos[2])]:
+            f = df.Field(mesh, dim=dim, value=value)
             for rep in representations:
-                f_out.write(filename, representation=rep)
-                f_in = df.Field.fromfile(filename)
-                assert mesh.region.p1 == f_in.mesh.region.p1
-                assert mesh.region.p2 == f_in.mesh.region.p2
-                assert mesh.cell == f_in.mesh.cell
-                np.testing.assert_allclose(f_out.array, f_in.array,
+                f.write(filename, representation=rep)
+                f_read = df.Field.fromfile(filename)
+
+                assert f.mesh == f_read.mesh
+                np.testing.assert_allclose(f.array, f_read.array,
                                            rtol=tolerance[rep])
 
+        # Extend scalar
+        for rep in representations:
+            f = df.Field(mesh, dim=1, value=lambda pos: pos[0]+pos[1]+pos[2])
+            f.write(filename, extend_scalar=True)
+            f_read = df.Field.fromfile(filename)
+
+            assert f.mesh == f_read.mesh
+            np.testing.assert_allclose(f.array, f_read.x.array,
+                                       rtol=tolerance[rep])
+            assert np.equal(f_read.y.array, 0).all()
+            assert np.equal(f_read.z.array, 0).all()
+
+        # Writing dim=2 field
+        f = df.Field(mesh, dim=2, value=(1, 2))
+        with pytest.raises(TypeError) as excinfo:
+            f.write(filename)
+        assert 'Cannot write dim=2' in str(excinfo.value)
+
+        os.remove(filename)
+
+    def test_writevtk(self):
+        filename = 'testfile.vtk'
+
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 5e-9, 3e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        f = df.Field(mesh, dim=3, value=(1e6, 2e6, -5e6))
+
+        f.write(filename)
+        # no assertions can be made
         os.remove(filename)
 
     def test_writehdf5(self):
-        filename = 'test_file.hdf5'
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 12, 13), cell=(1, 1, 1))
+        filename = 'testfile.hdf5'
 
-        for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5, 6))]:
-            f_out = df.Field(mesh, dim=dim, value=value)
+        p1 = (0, 0, 0)
+        p2 = (10e-12, 5e-12, 3e-12)
+        cell = (1e-12, 1e-12, 1e-12)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-            f_out.write(filename)
-            f_in = df.Field.fromfile(filename)
+        for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]:
+            f = df.Field(mesh, dim=dim, value=value)
+            f.write(filename)
+            f_read = df.Field.fromfile(filename)
 
-            assert f_out == f_in
+            assert f == f_read
 
         os.remove(filename)
 
+    def test_write_wrong_extension(self):
+        filename = 'testfile.jpg'
+
+        p1 = (0, 0, 0)
+        p2 = (10e-12, 5e-12, 3e-12)
+        cell = (1e-12, 1e-12, 1e-12)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        f = df.Field(mesh, dim=1, value=5e-12)
+        with pytest.raises(ValueError) as excinfo:
+            f.write(filename)
+        assert 'jpg not supported' in str(excinfo.value)
+
     def test_read_mumax3_ovffile(self):
-        """Test reading a file created by mumax, with 4-byte binary data."""
         # Output file has been produced with Mumax ~3.1.0
         # (fd3a50233f0a6625086d390) using this script:
         #
@@ -1174,19 +1196,11 @@ class TestField:
         #
         # m = uniform(1, .1, 0)
         # save(m)
+        filenames = ['mumax-output-linux.ovf', 'mumax-output-win.ovf']
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
 
-        # debug: which folder are we in? (use "py.test -l" to display
-        # local variables on fail)
-        cwd = os.getcwd()
-        # -> tests are run in module base directory, when tests are
-        #    run from discretisedfield.test()
-
-        # here is our test-data from mumax3:
-        filenames = ["mumax-output-linux.ovf", "mumax-output-win.ovf"]
-        test_sample_dirname = os.path.join(os.path.dirname(__file__),
-                                           'test_sample/')
         for f in filenames:
-            path = os.path.join(test_sample_dirname, f)
+            path = os.path.join(dirname, f)
 
             f = df.Field.fromfile(path)
 
@@ -1198,24 +1212,15 @@ class TestField:
             assert f.array.shape == (128, 32, 1, 3)
 
             # comparison with vector field (we know from the script
-            # shown above)
-            #
-            # m vector in mumax (uses 4 bytes)
+            # shown above). m vector in mumax (uses 4 bytes)
             m = np.array([1, 0.1, 0], dtype=np.float32)
 
             # needs to be normalised
-            norm = sum(m**2)**0.5
-            v = m / norm
+            v = m / sum(m**2)**0.5
 
-            # expect the x-component to be v[0]
-            np.alltrue(f.array[:, :, :, 0] == v[0])
-
-            # same for y and z
-            np.alltrue(f.array[:, :, :, 1] == v[1])
-            np.alltrue(f.array[:, :, :, 2] == v[2])
-
-            # expect each vector to be v
-            assert np.max(np.abs(f.array[:, :, :] - m / norm)) == 0.
+            assert np.all(f.array[:, :, :, 0] == v[0])
+            assert np.all(f.array[:, :, :, 1] == v[1])
+            assert np.all(f.array[:, :, :, 2] == v[2])
 
     def test_mpl(self):
         with pytest.raises(ValueError) as excinfo:

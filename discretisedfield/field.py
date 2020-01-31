@@ -1883,34 +1883,36 @@ class Field:
         return self.__class__(plane_mesh, dim=self.dim, value=plane_array)
 
     def write(self, filename, representation='txt', extend_scalar=False):
-        """Write the field in .ovf, .omf, .ohf, or vtk format.
+        """Write the field to `.ovf`, `.hdf5`, or `.vtk` file.
 
-        If the extension of the `filename` is `.vtk`, a VTK file is
-        written
-        (:py:func:`~discretisedfield.Field._writevtk`). Otherwise, for
-        `.ovf`, `.omf`, or `.ohf` extensions, an OOMMF file is written
-        (:py:func:`~discretisedfield.Field._writeovf`). The
-        representation (`bin4`, 'bin8', or 'txt') is passed using
-        `representation` argument.
+        If the extension of `filename` is `.vtk`, a VTK file is written
+        (:py:func:`~discretisedfield.Field._writevtk`). For `.ovf`, `.omf`, or
+        `.ohf` extensions, the field is saved to OVF file
+        (:py:func:`~discretisedfield.Field._writeovf`). In that case, the
+        representation (`bin4`, 'bin8', or 'txt') is passed as
+        `representation`. If `extend_scalar=True`, a scalar field will be saved
+        as a vector field. More precisely, if the value at a cell is X, that
+        cell will be saved as (X, 0, 0). Finally, if the extension of
+        `filename` is `.hdf5`, HDF5 file will be written
+        (:py:func:`~discretisedfield.Field._writehdf5`).
 
         Parameters
         ----------
         filename : str
-            Name of the file written. It depends on its extension the
-            format it is going to be written as.
-        representation : str
+            Name with an extension of the file written.
+        representation : str, optional
             In the case of OOMMF files (`.ovf`, `.omf`, or `.ohf`),
-            representation can be specified (`bin4`, `bin8`, or
-            `txt`). Defaults to 'txt'.
-        extend_scalar : bool
-            If True, a scalar field will be saved as a vector
-            field. More precisely, if the value at a cell is 3, that
-            cell will be saved as (3, 0, 0). This is valid only for
-            the OVF file formats.
+            representation can be specified (`bin4`, `bin8`, or `txt`).
+            Defaults to 'txt'.
+        extend_scalar : bool, optional
+            If `True`, a scalar field will be saved as a vector field. More
+            precisely, if the value at a cell is 3, that cell will be saved as
+            (3, 0, 0). This is valid only for the OVF file formats. Defaults to
+            `False`.
 
         Example
         -------
-        1. Write an .omf file and delete it from the disk
+        1. Write field to the `.omf` file.
 
         >>> import os
         >>> import discretisedfield as df
@@ -1919,8 +1921,22 @@ class Field:
         >>> p2 = (5, 15, 15)
         >>> n = (5, 15, 20)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, value=(5, 6, 7))
+        >>> field = df.Field(mesh, dim=3, value=(5, 6, 7))
         >>> filename = 'mytestfile.omf'
+        ...
+        >>> field.write(filename)  # write the file
+        ...
+        >>> os.remove(filename)  # delete the file
+
+        2. Write field to the `.vtk` file.
+
+        >>> filename = 'mytestfile.vtk'
+        >>> field.write(filename)  # write the file
+        >>> os.remove(filename)  # delete the file
+
+        3. Write field to the `.hdf5` file.
+
+        >>> filename = 'mytestfile.hdf5'
         >>> field.write(filename)  # write the file
         >>> os.remove(filename)  # delete the file
 
@@ -1928,8 +1944,7 @@ class Field:
 
         """
         if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
-            self._writeovf(filename,
-                           representation=representation,
+            self._writeovf(filename, representation=representation,
                            extend_scalar=extend_scalar)
         elif filename.endswith('.vtk'):
             self._writevtk(filename)
