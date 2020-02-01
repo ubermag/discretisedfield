@@ -570,7 +570,7 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> plane_mesh = mesh.plane(`z`)
+        >>> plane_mesh = mesh.plane('z')
 
         3. Specifying the number of points.
 
