@@ -400,13 +400,13 @@ class Region:
         If ``ax`` is not passed, axes will be created automaticaly. In that
         case, the figure size can be changed using ``figsize``. It is often the
         case that the region size is small (e.g. on a nanoscale) or very large
-        (e.g. in units of kilometeres). Accordingly, ``multiplier`` can be
+        (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
         passed as :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6,
         -3, 0, 3, 6,...). According to that value, the axes will be scaled and
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
         passed, the region points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally. The color of
+        is not passed, the optimum one is computed internally. The colour of
         lines depicting the region can be determined using ``color`` as an
         RGB-tuple. Similarly, linewidth can be set up by passing ``linewidth``.
 
@@ -443,11 +443,11 @@ class Region:
 
         linewidth : float, optional
 
-            Width of the line. Defaults to ``None``.
+            Width of the line. Defaults to `2.
 
         Examples
         --------
-        1. Visualising the region using `matplotlib`.
+        1. Visualising the region using ``matplotlib``.
 
         >>> import discretisedfield as df
         ...
@@ -486,7 +486,7 @@ class Region:
         ``multiplier=1e-9`` is passed, the region points will be divided by
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the optimum one is
-        computed internally. The color used for depicting the region can be
+        computed internally. The colour used for depicting the region can be
         determined using ``color`` as ``int``.
 
         This method plots the region using ``k3d.voxels()`` function, so any
