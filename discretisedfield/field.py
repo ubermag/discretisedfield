@@ -14,7 +14,7 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
-# TODO: Laplacian, tutorials, check rtd requirements, line object (plotting
+# TODO: tutorials, check rtd requirements, line object (plotting
 # line), pycodestyle, coverage, context for writing files, remove numbers from
 # tutorials, add math equations in doc strings, check doc string consistency,
 # do only test-coverage instead of testing twice
