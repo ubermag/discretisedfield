@@ -31,7 +31,7 @@ def check_mesh(mesh):
     assert len(mesh) > 0
 
     assert isinstance(repr(mesh), str)
-    pattern = r'^Mesh\(region=Region\(p1=.+\), n=.+\)$'
+    pattern = r'^Mesh\(region=Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$'
     assert re.search(pattern, repr(mesh))
 
     assert isinstance(mesh.indices, types.GeneratorType)
@@ -39,14 +39,20 @@ def check_mesh(mesh):
     assert len(list(mesh.indices)) == len(mesh)
     assert len(list(mesh)) == len(mesh)
 
-    line = mesh.line(p1=mesh.region.pmin, p2=mesh.region.pmax)
+    line = mesh.line(p1=mesh.region.pmin, p2=mesh.region.pmax, n=3)
     assert isinstance(line, types.GeneratorType)
+    assert len(list(line)) == 3
+    assert all(isinstance(i, tuple) for i in line)
+    assert all(i in mesh.region for i in line)
 
-    plane_mesh = mesh.plane('z')
+    plane_mesh = mesh.plane('z', n=(2, 2))
     assert isinstance(plane_mesh, df.Mesh)
     assert isinstance(plane_mesh.info, dict)
     assert plane_mesh.info
     assert 1 in plane_mesh.n
+    assert len(plane_mesh) == 4
+    assert all(isinstance(i, tuple) for i in plane_mesh)
+    assert all(i in mesh.region for i in plane_mesh)
 
     assert mesh.point2index(mesh.index2point((0, 0, 0))) == (0, 0, 0)
 
@@ -162,11 +168,14 @@ class TestMesh:
         assert 'not both.' in str(excinfo.value)
 
     def test_region_not_aggregate_of_cell(self):
-        args = [[(0, 100e-9, 1e-9), (150e-9, 120e-9, 6e-9),
+        args = [[(0, 100e-9, 1e-9),
+                 (150e-9, 120e-9, 6e-9),
                  (4e-9, 1e-9, 1e-9)],
-                [(0, 100e-9, 0), (150e-9, 104e-9, 1e-9),
+                [(0, 100e-9, 0),
+                 (150e-9, 104e-9, 1e-9),
                  (2e-9, 1.5e-9, 0.1e-9)],
-                [(10e9, 10e3, 0), (11e9, 11e3, 5),
+                [(10e9, 10e3, 0),
+                 (11e9, 11e3, 5),
                  (1e9, 1e3, 1.5)]]
 
         for p1, p2, cell in args:
@@ -181,6 +190,7 @@ class TestMesh:
                 (1e-9, 2e-9, 1e-9),
                 (1e-9, 1e-9, 2e-9),
                 (1e-9, 5e-9, 0.1e-9)]
+
         for cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -208,13 +218,6 @@ class TestMesh:
             assert len(index) == 3
             assert all(isinstance(i, int) for i in index)
             assert all([0 <= i <= 4 for i in index])
-
-        assert len(list(mesh)) == 125
-        for point in mesh:
-            assert isinstance(point, tuple)
-            assert len(point) == 3
-            assert all(isinstance(i, numbers.Real) for i in point)
-            assert all([1 <= i <= 9 for i in point])
 
         assert len(list(mesh)) == 125
         for point in mesh:
@@ -372,10 +375,10 @@ class TestMesh:
         assert line[5] == (5, 0, 0)
 
         with pytest.raises(ValueError):
-            line = list(mesh.line((-1e-9, 0, 0), (10, 0, 0), n=100))
+            line = list(mesh.line(p1=(-1e-9, 0, 0), p2=(10, 0, 0), n=100))
 
         with pytest.raises(ValueError):
-            line = list(mesh.line((0, 0, 0), (11, 0, 0), n=100))
+            line = list(mesh.line(p1=(0, 0, 0), p2=(11, 0, 0), n=100))
 
     def test_plane(self):
         p1 = (0, 0, 0)
@@ -478,19 +481,19 @@ class TestMesh:
         assert info['point'] == 5
 
         with pytest.raises(KeyError):
-            info = mesh.plane('xy').info
+            plane_mesh = mesh.plane('xy')
         with pytest.raises(KeyError):
-            info = mesh.plane('zy').info
+            plane_mesh = mesh.plane('zy')
         with pytest.raises(ValueError):
-            info = mesh.plane('y', 'x').info
+            plane_mesh = mesh.plane('y', 'x')
         with pytest.raises(KeyError):
-            info = mesh.plane('xzy').info
+            plane_mesh = mesh.plane('xzy')
         with pytest.raises(ValueError):
-            info = mesh.plane('z', x=3).info
+            plane_mesh = mesh.plane('z', x=3)
         with pytest.raises(ValueError):
-            info = mesh.plane('y', y=5).info
+            plane_mesh = mesh.plane('y', y=5)
         with pytest.raises(ValueError):
-            info = mesh.plane('z', x=5).info
+            plane_mesh = mesh.plane('z', x=5)
 
     def test_getitem(self):
         p1 = (0, 0, 0)
@@ -517,18 +520,21 @@ class TestMesh:
 
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
             mesh.mpl()
+            mesh.plane('z').mpl()
 
     def test_k3d(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             mesh.k3d()
+            mesh.plane('x').k3d()
 
     def test_k3d_points(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             mesh.k3d_points()
+            mesh.plane('y').k3d_points()
 
     def test_k3d_mpl_subregions(self):
         p1 = (0, 0, 0)
@@ -545,22 +551,3 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
         mesh.mpl_subregions()
         mesh.k3d_subregions()
-
-    def test_change_const_attributes(self):
-        p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
-        cell = (1, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        assert mesh.cell == cell
-        assert mesh.region.edges == (10, 10, 10)
-        assert mesh.n == (10, 10, 10)
-
-        # Attempt to change attribute
-        with pytest.raises(AttributeError):
-            mesh.n = (15, 15, 15)
-
-        # Make sure the attributes have not changed.
-        assert mesh.cell == cell
-        assert mesh.region.edges == (10, 10, 10)
-        assert mesh.n == (10, 10, 10)

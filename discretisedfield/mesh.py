@@ -10,8 +10,6 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
-sns.set(style='whitegrid')
-
 
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
                cell=ts.Vector(size=3, positive=True, const=True),
@@ -240,7 +238,7 @@ class Mesh:
 
 
     def __iter__(self):
-        """Generator yielding coordinates of all mesh cells.
+        """Generator yielding coordinates of all mesh cell centres.
 
         The discretisation cell's coordinate corresponds to its centre point.
 
@@ -857,7 +855,8 @@ class Mesh:
 
         for i, subregion in enumerate(self.subregions.values()):
             subregion.mpl(ax=ax, multiplier=multiplier,
-                          color=color_palette[i%10], linewidth=linewidth,
+                          color=color_palette[i%len(color_palette)],
+                          linewidth=linewidth,
                           **kwargs)
 
     def k3d(self, plot=None, multiplier=None,
@@ -992,7 +991,8 @@ class Mesh:
         for index in self.indices:
             for i, region in enumerate(self.subregions.values()):
                 if self.index2point(index) in region:
-                    plot_array[index] = (i%10) + 1  # +1 to avoid 0 value
+                    # +1 to avoid 0 value - invisible voxel
+                    plot_array[index] = (i%len(color_palette)) + 1
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
 
         if multiplier is None:

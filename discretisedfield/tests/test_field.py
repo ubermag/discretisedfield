@@ -157,7 +157,7 @@ class TestField:
 
     def test_set_exception(self):
         for mesh in self.meshes:
-            f = df.Field(mesh)
+            f = df.Field(mesh, dim=3)
             with pytest.raises(ValueError):
                 f.value = 'string'
             with pytest.raises(ValueError):
@@ -319,14 +319,14 @@ class TestField:
 
     def test_get_attribute_exception(self):
         for mesh in self.meshes:
-            f = df.Field(mesh)
+            f = df.Field(mesh, dim=3)
             with pytest.raises(AttributeError) as excinfo:
                 f.__getattr__('nonexisting_attribute')
             assert 'has no attribute' in str(excinfo.value)
 
     def test_dir(self):
         for mesh in self.meshes:
-            f = df.Field(mesh, value=(5, 6, -9))
+            f = df.Field(mesh, dim=3, value=(5, 6, -9))
             assert 'x' in f.__dir__()
             assert 'y' in f.__dir__()
             assert 'z' in f.__dir__()
@@ -1003,7 +1003,7 @@ class TestField:
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
-        f = df.Field(mesh, value=(1, 2, 3))
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
 
         line = f.line(p1=(0, 0, 0), p2=(5, 5, 5), n=20)
         assert isinstance(line, types.GeneratorType)

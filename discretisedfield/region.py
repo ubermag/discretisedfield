@@ -6,7 +6,6 @@ import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
-sns.set(style='whitegrid')
 
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),

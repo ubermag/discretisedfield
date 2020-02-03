@@ -14,58 +14,72 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
-sns.set(style='whitegrid')
 # TODO: Laplacian, tutorials, check rtd requirements, line object (plotting
 # line), pycodestyle, coverage, context for writing files, remove numbers from
 # tutorials, add math equations in doc strings, check doc string consistency,
 # do only test-coverage instead of testing twice
 
-@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh),
+@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True))
 class Field:
     """Finite difference field.
 
-    This class defines a finite difference field and enables certain
-    operations for its analysis and visualisation. The field is
-    defined on a finite difference mesh (`discretisedfield.Mesh`).
+    This class defines a finite difference field and enables certain operations
+    for its analysis and visualisation. The field is defined on a finite
+    difference mesh (`discretisedfield.Mesh`) passed by using ``mesh``. Another
+    value that must be passed is the dimension of the value using ``dim``. More
+    precisely, if the field is a scalar field ``dim=1`` must be passed. On the
+    other hand, for a three-dimensional vector field ``dim=3`` is passed. The
+    value of the field can be set by passing ``value``. For details on how the
+    value can be set, please refer to ``discretisedfield.Field.value``.
+    Similarly, if the field has ``dim>1``, the field can be normalised by
+    passing ``norm``. For details on setting the norm, please refer to
+    ``discretisedfield.Field.norm``.
 
     Parameters
     ----------
     mesh : discretisedfield.Mesh
+
         Finite difference rectangular mesh.
-    dim : int, optional
-        Dimension of the field value. For instance, if `dim=3` the
-        field is a three-dimensional vector field and for `dim=1`
-        the field is a scalar field. Defaults to `dim=3`.
+
+    dim : int
+
+        Dimension of the field's value. For instance, if `dim=3` the field is a
+        three-dimensional vector field and for `dim=1` the field is a scalar
+        field.
+
     value : array_like, callable, optional
-        Please refer to the `value` property:
-        :py:func:`~discretisedfield.Field.value`. Defaults to 0,
-        meaning that if the value is not provided in the
-        initialisation process, "zero-field" will be defined.
+
+        Please refer to ``discretisedfield.Field.value`` property. Defaults to
+        0, meaning that if the value is not provided in the initialisation,
+        "zero-field" will be defined.
+
     norm : numbers.Real, callable, optional
-        Please refer to the `norm` property:
-        :py:func:`~discretisedfield.Field.norm`. Defaults to `None`
-        (`norm=None` defines no norm).
+
+        Please refer to ``discretisedfield.Field.norm`` property. Defaults to
+        ``None`` (``norm=None`` defines no norm).
 
     Examples
     --------
-    1. Creating a uniform three-dimensional vector field on a
-    nano-sized thin film.
+    1. Defining a uniform three-dimensional vector field on a nano-sized thin
+    film.
 
     >>> import discretisedfield as df
     ...
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> cell = (1e-9, 1e-9, 0.1e-9)
-    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    ...
+    >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
     >>> dim = 3
     >>> value = (0, 0, 1)
+    ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
     Field(mesh=...)
+    >>> field.average
+    (0.0, 0.0, 1.0)
 
-    2. Creating a scalar field.
+    2. Defining a scalar field.
 
     >>> p1 = (-10, -10, -10)
     >>> p2 = (10, 10, 10)
@@ -73,14 +87,35 @@ class Field:
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> dim = 1
     >>> value = 3.14
+    ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
     Field(mesh=...)
+    >>> field.average
+    (3.14,)
+
+    3. Defining a uniform three-dimensional normalised vector field.
+
+    >>> import discretisedfield as df
+    ...
+    >>> p1 = (-50e9, -25e9, 0)
+    >>> p2 = (50e9, 25e9, 5e9)
+    >>> cell = (1e9, 1e9, 0.1e9)
+    >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+    >>> dim = 3
+    >>> value = (0, 0, 8)
+    >>> norm = 1
+    ...
+    >>> field = df.Field(mesh=mesh, dim=dim, value=value, norm=norm)
+    >>> field
+    Field(mesh=...)
+    >>> field.average
+    (0.0, 0.0, 1.0)
 
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
     """
-    def __init__(self, mesh, dim=3, value=0, norm=None):
+    def __init__(self, mesh, dim, value=0, norm=None):
         self.mesh = mesh
         self.dim = dim
         self.value = value
@@ -90,34 +125,46 @@ class Field:
     def value(self):
         """Field value representation.
 
-        This propertry returns a representation of the field value if
-        it exists. Otherwise, the `numpy.ndarray` containing all
-        values from the field is returned.
+        This property returns a representation of the field value if it exists.
+        Otherwise, ``discretisedfield.Field.array`` containing all field values
+        is returned.
+
+        The value of the field can be set using a scalar value for ``dim=1``
+        fields (e.g. ``value=3``) or ``array_like`` value for ``dim>1`` fields
+        (e.g. ``value=(1, 2, 3)``). Alternatively, the value can be defined
+        using a callable object, which takes a point tuple as an input argument
+        and returns a value of appropriate dimension. Internally, callable
+        object is called for every point in the mesh on which the field is
+        defined. For instance, callable object can be a Python function or
+        another ``discretisedfield.Field``. Finally, ``numpy.ndarray`` with
+        shape ``(*self.mesh.n, dim)`` can be passed.
 
         Parameters
         ----------
-        value : 0, array_like, callable
-            For scalar fields (`dim=1`) `numbers.Real` values are
-            allowed. In the case of vector fields, "array_like" (list,
-            tuple, numpy.ndarray) value with length equal to `dim`
-            should be used. Finally, the value can also be a callable
-            (e.g. Python function or another field), which for every
-            coordinate in the mesh returns a valid value. If
-            `value=0`, all values in the field will be set to zero
-            independent of the field dimension.
+        value : numbers.Real, array_like, callable
+
+            For scalar fields (``dim=1``) ``numbers.Real`` values are allowed.
+            In the case of vector fields, ``array_like`` (list, tuple,
+            numpy.ndarray) value with length equal to `dim` should be used.
+            Finally, the value can also be a callable (e.g. Python function or
+            another field), which for every coordinate in the mesh returns a
+            valid value. If ``value=0``, all values in the field will be set to
+            zero independent of the field dimension.
 
         Returns
         -------
-        array_like, callable, numbers.Real
-            The value used (representation) for setting the field is
-            returned. However, if the actual value of the field does
-            not correspond to the initially used value anymore, a
-            `numpy.ndarray` is returned containing all field values.
+        array_like, callable, numbers.Real, numpy.ndarray
+
+            The value used (representation) for setting the field is returned.
+            However, if the actual value of the field does not correspond to
+            the initially used value anymore, a ``numpy.ndarray`` is returned
+            containing all field values.
 
         Raises
         ------
         ValueError
-            If unsupported type is passed
+
+            If unsupported type is passed.
 
         Examples
         --------
@@ -130,6 +177,7 @@ class Field:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> value = (0, 0, 1)
+        ...
         >>> # if value is not specified, zero-field is defined
         >>> field = df.Field(mesh=mesh, dim=3)
         >>> field.value
@@ -153,6 +201,8 @@ class Field:
         >>> field.array[0, 0, 0, :] = (0, 0, 0)
         >>> field.value
         array(...)
+        >>> field.value.shape
+        (2, 2, 1, 3)
 
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
@@ -170,26 +220,27 @@ class Field:
 
     @property
     def array(self):
-        """Numpy array of a field value.
+        """Field value as ``numpy.ndarray``.
 
-        `array` has shape of `(self.mesh.n[0], self.mesh.n[1],
-        self.mesh.n[2], dim)`.
+        The shape of the array is ``(*mesh.n, dim)``.
 
         Parameters
         ----------
         array : numpy.ndarray
-            Numpy array with dimensions `(self.mesh.n[0],
-            self.mesh.n[1], self.mesh.n[2], dim)`
+
+            Array with shape ``(*mesh.n, dim)``.
 
         Returns
         -------
         numpy.ndarray
+
             Field values array.
 
         Raises
         ------
         ValueError
-            If setting the array with wrong type, shape, or value.
+
+            If unsupported type or shape is passed.
 
         Examples
         --------
@@ -203,14 +254,19 @@ class Field:
         >>> cell = (0.5, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> value = (0, 0, 1)
+        ...
         >>> field = df.Field(mesh=mesh, dim=3, value=value)
         >>> field.array
         array(...)
+        >>> field.average
+        (0.0, 0.0, 1.0)
         >>> field.array.shape
         (2, 1, 1, 3)
         >>> field.array = np.ones(field.array.shape)
         >>> field.array
         array(...)
+        >>> field.average
+        (1.0, 1.0, 1.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.value`
 
@@ -223,33 +279,42 @@ class Field:
         val.shape == (*self.mesh.n, self.dim):
             self._array = val
         else:
-            msg = f'Unsupported {type(val)} or invalid value shape.'
+            msg = f'Unsupported {type(val)} or invalid shape.'
             raise ValueError(msg)
 
     @property
     def norm(self):
-        """Norm of a field.
+        """Norm of the field.
 
-        This property computes the norm of the field and returns it as
-        a `discretisedfield.Field` object with `dim=1`. Norm of a
-        scalar field cannot be set and `ValueError` is raised.
+        Computes the norm of the field and returns it as
+        ``discretisedfield.Field`` with ``dim=1``. Norm of a scalar field
+        cannot be computed/set and ``ValueError`` is raised. Alternatively,
+        ``discretisedfield.Field.__abs__`` can be called for obtaining the norm
+        of the field.
+
+        The field norm can be set by passing ``numbers.Real``,
+        ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
+        contains zero values, norm cannot be set and ``ValueError`` is raised.
 
         Parameters
         ----------
-        numbers.Real, numpy.ndarray
+        numbers.Real, numpy.ndarray, callable
+
             Norm value
 
         Returns
         -------
         discretisedfield.Field
-            Scalar field with norm values.
+
+            ``dim=1`` norm field.
 
         Raises
         ------
         ValueError
-            If setting the norm with wrong type, shape, or value. In
-            addition, if the field is scalar (dim=1) or it contains
-            zero vector values.
+
+            If the norm is set with wrong type, shape, or value. In addition,
+            if the field is scalar (``dim=1``) or the field contains zero
+            values.
 
         Examples
         --------
@@ -260,17 +325,29 @@ class Field:
         >>> p1 = (0, 0, 0)
         >>> p2 = (1, 1, 1)
         >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.norm
         Field(...)
+        >>> field.norm.average
+        (1.0,)
         >>> field.norm = 2
         >>> field.average
         (0.0, 0.0, 2.0)
         >>> field.value = (1, 0, 0)
         >>> field.norm.average
         (1.0,)
+        >>> # An attempt to set the norm for a zero field.
+        >>> field.value = 0
+        >>> field.average
+        (0.0, 0.0, 0.0)
+        >>> field.norm = 1
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
 
         """
         computed_norm = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
@@ -290,27 +367,38 @@ class Field:
             self.array /= self.norm.array  # normalise to 1
             self.array *= dfu.as_array(self.mesh, dim=1, val=val)
 
+    def __abs__(self):
+        """Field norm.
+
+        This method returns ``discretisedfield.Field.norm``.
+
+        .. seealso:: :py:func:`~discretisedfield.Field.norm`
+
+        """
+        return self.norm
+
     @property
     def orientation(self):
         """Orientation field.
 
-        This method computes the orientation (direction) field of a
-        vector (`dim=3`) field and returns a `discretisedfield.Field`
-        object with `dim=3`. More precisely, at every discretisation
-        cell, the vector is divided by its norm, so that a unit vector
-        is obtained. However, if the vector at a discretisation cell
-        is a zero-vector, it remains unchanged. In the case of a
-        scalar (`dim=1`) field, `ValueError` is raised.
+        This method computes the orientation (direction) of a vector field and
+        returns ``discretisedfield.Field`` with the same dimension. More
+        precisely, at every mesh discretisation cell, the vector is divided by
+        its norm, so that a unit vector is obtained. However, if the vector at
+        a discretisation cell is a zero-vector, it remains unchanged. In the
+        case of a scalar (``dim=1``) field, ``ValueError`` is raised.
 
         Returns
         -------
         discretisedfield.Field
+
             Orientation field.
 
         Raises
         ------
         ValueError
-            If the field is not a `dim=3` field.
+
+            If the field is has ``dim=1``.
 
         Examples
         --------
@@ -332,7 +420,7 @@ class Field:
         """
         if self.dim == 1:
             msg = (f'Cannot compute orientation field for a '
-                   f'field with dim={self.dim}.')
+                   f'dim={self.dim} field.')
             raise ValueError(msg)
 
         orientation_array = np.divide(self.array,
@@ -345,14 +433,15 @@ class Field:
     def average(self):
         """Field average.
 
-        It computes the average of the field over the entire volume of
-        the mesh.
+        It computes the average of the field over the entire volume of the
+        mesh. It returns a tuple with the length same as the dimension
+        (``dim``) of the field.
 
         Returns
         -------
         tuple
-            Field average tuple whose length equals to the field's
-            dimension.
+
+            Field average tuple, whose length equals to the field's dimension.
 
         Examples
         --------
@@ -364,11 +453,15 @@ class Field:
         >>> p2 = (5, 5, 5)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> field1 = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
-        >>> field1.average
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
+        >>> field.average
         (0.0, 0.0, 1.0)
-        >>> field2 = df.Field(mesh=mesh, dim=1, value=55)
-        >>> field2.average
+
+        2. Computing the scalar field average.
+
+        >>> field = df.Field(mesh=mesh, dim=1, value=55)
+        >>> field.average
         (55.0,)
 
         """
@@ -377,14 +470,10 @@ class Field:
     def __repr__(self):
         """Field representation string.
 
-        This method returns the string that can ideally be copied in
-        another Python script so that exactly the same field object
-        could be defined. However, this is usually not the case due to
-        complex values used.
-
         Returns
         -------
         str
+
             Field representation string.
 
         Example
@@ -397,6 +486,7 @@ class Field:
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
         >>> field = df.Field(mesh, dim=1, value=1)
         >>> repr(field)
         'Field(mesh=..., dim=1)'
@@ -405,33 +495,36 @@ class Field:
         return f'Field(mesh={repr(self.mesh)}, dim={self.dim})'
 
     def __call__(self, point):
-        """Sample the field at `point`.
+        """Sample the field value at ``point``.
 
-        It returns the value of the discreatisation cell `point`
-        belongs to. It always returns a tuple, whose length is the
-        same as the dimension of the field.
+        It returns the value of the field in the discretisation cell to which
+        ``point`` belongs to. It returns a tuple, whose length is the same as
+        the dimension (``dim``) of the field.
 
         Parameters
         ----------
         point : (3,) array_like
-            The mesh point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+
+            The mesh point coordinate :math:`\\mathbf{p} = (p_{x}, p_{y},
+            p_{z})`.
 
         Returns
         -------
         tuple
-            A tuple, whose length is the same as the dimension of the
-            field.
+
+            A tuple, whose length is the same as the dimension of the field.
 
         Example
         -------
-        1. Sampling the field value
+        1. Sampling the field value.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (20, 20, 20)
         >>> n = (20, 20, 20)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
+        ...
         >>> field = df.Field(mesh, dim=3, value=(1, 3, 4))
         >>> point = (10, 2, 3)
         >>> field(point)
@@ -446,18 +539,20 @@ class Field:
     def __getattr__(self, attr):
         """Extracting the component of the vector field.
 
-        If `'x'`, `'y'`, or `'z'` is accessed, a new scalar field of
-        that component will be returned. This method is effective for
-        vector fields with dimension 2 or 3.
+        If ``'x'``, ``'y'``, or ``'z'`` is accessed, a scalar field of that
+        component will be returned. This method is effective for vector fields
+        with dimension 2 or 3 only.
 
         Parameters
         ----------
         attr : str
-            Vector field component (`'x'`, `'y'`, or `'z'`)
+
+            Vector field component (``'x'``, ``'y'``, or ``'z'``)
 
         Returns
         -------
         discretisedfield.Field
+
             Scalar field with vector field component values.
 
         Examples
@@ -470,13 +565,20 @@ class Field:
         >>> p2 = (2, 2, 2)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.x
         Field(...)
+        >>> field.x.average
+        (0.0,)
         >>> field.y
         Field(...)
+        >>> field.y.average
+        (0.0,)
         >>> field.z
         Field(...)
+        >>> field.z.average
+        (1.0,)
         >>> field.z.dim
         1
 
@@ -489,11 +591,10 @@ class Field:
             raise AttributeError(msg)
 
     def __dir__(self):
-        """Extension of the tab-completion list.
+        """Extension of the ``dir(self)`` list.
 
-        Adds `'x'`, `'y'`, and `'z'`, depending on the dimension of
-        the field, to the tab-completion list. This is effective in
-        IPython or Jupyter notebook environment.
+        Adds ``'x'``, ``'y'``, or ``'z'``, depending on the dimension of the
+        field, to the ``dir(self)`` list.
 
         """
         if self.dim in (2, 3):
@@ -503,16 +604,15 @@ class Field:
         return dir(self.__class__) + extension
 
     def __iter__(self):
-        """Generator yielding coordinates and values of all field cells.
-
-        The discretisation cell coordinate corresponds to the cell
-        centre point.
+        """Generator yielding coordinates and values of all mesh discretisation
+        cells.
 
         Yields
         ------
         tuple (2,)
-            The first value is the mesh cell coordinates (`px`, `py`,
-            `pz`), whereas the second one is the field value.
+
+            The first value is the mesh cell coordinates :math:`\\mathbf{p} =
+            (p_{x}, p_{y}, p_{z})`, whereas the second one is the field value.
 
         Examples
         --------
@@ -524,6 +624,7 @@ class Field:
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
         >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
         >>> for coord, value in field:
         ...     print (coord, value)
@@ -539,28 +640,31 @@ class Field:
             yield point, self(point)
 
     def __eq__(self, other):
-        """Determine whether two fields are equal.
+        """Equality relational operator.
 
         Two fields are considered to be equal if:
 
           1. They are defined on the same mesh.
 
-          2. They have the same dimension (`dim`).
+          2. They have the same dimension (``dim``).
 
-          3. They both contain the same values in `array` attributes.
+          3. They both contain the same values in ``array``.
 
         Parameters
         ----------
         other : discretisedfield.Field
-            Field object, which is compared to `self`.
+
+            Field object, which is compared to ``self``.
 
         Returns
         -------
         bool
 
+            ``True`` if two fields are equal, ``False`` otherwise.
+
         Examples
         --------
-        1. Check if fields are equal.
+        1. Check if two fields are (not) equal.
 
         >>> import discretisedfield as df
         ...
@@ -571,13 +675,15 @@ class Field:
         >>> f3 = df.Field(mesh, dim=3, value=(1, 4, 3))
         >>> f1 == f2
         True
+        >>> f1 != f2
+        False
         >>> f1 == f3
         False
+        >>> f1 != f3
+        True
         >>> f2 == f3
         False
         >>> f1 == 'a'
-        False
-        >>> f2 == 5
         False
 
         .. seealso:: :py:func:`~discretisedfield.Field.__ne__`
@@ -592,92 +698,35 @@ class Field:
             return False
 
     def __ne__(self, other):
-        """Determine whether two fields are not equal.
+        """Inequality relational operator.
 
-        This method returns `not (self == other)`. For details, refer
-        to `discretisedfield.Field.__eq__` method.
-
-        Parameters
-        ----------
-        other : discretisedfield.Field
-            Field object, which is compared to `self`.
-
-        Returns
-        -------
-        bool
-
-        Examples
-        --------
-        1. Check if fields are not equal.
-
-        >>> import discretisedfield as df
-        ...
-        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
-        ...
-        >>> f1 = df.Field(mesh, dim=1, value=3)
-        >>> f2 = df.Field(mesh, dim=1, value=4-1)
-        >>> f3 = df.Field(mesh, dim=3, value=(1, 4, 3))
-        >>> f1 != f2
-        False
-        >>> f1 != f3
-        True
-        >>> f2 != f3
-        True
+        This method returns ``not self == other``. For details, please
+        refer to ``discretisedfield.Field.__eq__`` method.
 
         .. seealso:: :py:func:`~discretisedfield.Field.__eq__`
 
         """
         return not self == other
 
-    def __abs__(self):
-        """Field norm.
-
-        This method implements abs() built-in method. If the field is a scalar
-        field (`dim=1`), absolute value is returned. On the other hand, if the
-        field is a vector field (`dim=3`), norm of the field is returned. For
-        more details, refer to `discretisedfield.Field.norm()` method.
-
-        Returns
-        -------
-        discretisedfield.Field
-            Absolute value or norm of the field (`self.norm`).
-
-        Examples
-        --------
-        1. Applying abs() built-in method on field.
-
-        >>> import discretisedfield as df
-        ...
-        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
-        ...
-        >>> f1 = df.Field(mesh, dim=1, value=-3)
-        >>> f2 = df.Field(mesh, dim=3, value=(-6, 8, 0))
-        >>> abs(f1)
-        Field(...)
-        >>> abs(f1).average
-        (3.0,)
-        >>> abs(f2)
-        Field(...)
-        >>> abs(f2).average
-        (10.0,)
-
-        .. seealso:: :py:func:`~discretisedfield.Field.norm`
-
-        """
-        return self.norm
-
     def __pos__(self):
-        """Unary + operator.
+        """Unary ``+`` operator.
 
-        This method defines the unary operator `+`. It returns the field itself.
+        This method defines the unary operator `+`. It returns the field
+        itself:
+
+        .. math::
+
+            +f(x, y, z) = f(x, y, z)
 
         Returns
         -------
         discretisedfield.Field
+
+            Field itself.
 
         Example
         -------
-        1. Applying unary + operator on a field.
+        1. Applying unary ``+`` operator on a field.
 
         >>> import discretisedfield as df
         ...
@@ -697,19 +746,24 @@ class Field:
         return self
 
     def __neg__(self):
-        """Unary - operator.
+        """Unary ``-`` operator.
 
-        This method defines the unary operator `-`. It negates the
-        value of each discretisation cell. It is equivalent to
-        multiplication with -1.
+        This method negates the value of each discretisation cell. It is
+        equivalent to multiplication with -1.
+
+        .. math::
+
+            -f(x, y, z) = -1 \cdot f(x, y, z)
 
         Returns
         -------
         discretisedfield.Field
 
+            Field multiplied with -1.
+
         Example
         -------
-        1. Applying unary negation operator on a scalar field.
+        1. Applying unary ``-`` operator on a scalar field.
 
         >>> import discretisedfield as df
         ...
@@ -736,30 +790,40 @@ class Field:
         return -1 * self
 
     def __pow__(self, other):
-        """Unary power operator.
+        """Unary ``**`` operator.
 
-        This method defines the unary operator `**` for scalar
-        (`dim=1`) fields. This operator is not defined for vector
-        (`dim=3`) fields, and in that case, ValueError is raised.
+        This method defines the "power" operator for scalar (``dim=1``) fields
+        only. This operator is not defined for vector (``dim>1``) fields, and
+        ``ValueError`` is raised.
 
         Parameters
         ----------
         other : numbers.Real
 
+            Value to which the field is raised.
+
         Returns
         -------
         discretisedfield.Field
 
+            Resulting field.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
         Example
         -------
-        1. Applying unary power operator on a scalar field.
+        1. Applying unary ``**`` operator on a scalar field.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (-25e-3, -25e-3, -25e-3)
         >>> p2 = (25e-3, 25e-3, 25e-3)
         >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
         ...
         >>> f = df.Field(mesh, dim=1, value=2)
         >>> res = f**(-1)
@@ -790,7 +854,7 @@ class Field:
 
         """
         if self.dim != 1:
-            msg = f'Cannot apply power operator on dim={self.dim} field.'
+            msg = f'Cannot apply ** operator on dim={self.dim} field.'
             raise ValueError(msg)
         if not isinstance(other, numbers.Real):
             msg = (f'Unsupported operand type(s) for **: '
@@ -801,21 +865,29 @@ class Field:
                               value=np.power(self.array, other))
 
     def __add__(self, other):
-        """Addition operator.
+        """Binary ``+`` operator.
 
-        This method defines the binary operator `+`, which can be
-        applied only between two `discretisedfield.Field`
-        objects. Both `discretisedfield.Field` objects must be defined
-        on the same mesh and have the same dimensions.
+        It can be applied only between two ``discretisedfield.Field`` objects.
+        Both ``discretisedfield.Field`` objects must be defined on the same
+        mesh and have the same dimensions.
 
         Parameters
         ----------
         other : discretisedfield.Field
+
             Second operand
 
         Returns
         -------
         discretisedfield.Field
+
+            Resulting field.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
 
         Example
         -------
@@ -833,6 +905,8 @@ class Field:
         >>> res = f1 + f2
         >>> res.average
         (0.0, 0.0, 0.0)
+        >>> f1 + f2 == f2 + f1
+        True
         >>> f1 + 3
         Traceback (most recent call last):
         ...
@@ -856,25 +930,33 @@ class Field:
                               value=self.array + other.array)
 
     def __sub__(self, other):
-        """Subtraction operator.
+        """Binary ``-`` operator.
 
-        This method defines the binary operator `-`, which can be
-        applied only between two `discretisedfield.Field`
-        objects. Both `discretisedfield.Field` objects must be defined
-        on the same mesh and have the same dimensions.
+        It can be applied only between two ``discretisedfield.Field`` objects.
+        Both ``discretisedfield.Field`` objects must be defined on the same
+        mesh and have the same dimensions.
 
         Parameters
         ----------
         other : discretisedfield.Field
+
             Second operand
 
         Returns
         -------
         discretisedfield.Field
 
+            Resulting field.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
         Example
         -------
-        1. Add two vector fields.
+        1. Subtract two vector fields.
 
         >>> import discretisedfield as df
         ...
@@ -888,6 +970,8 @@ class Field:
         >>> res = f1 - f2
         >>> res.average
         (0.0, 0.0, 3.0)
+        >>> f1 - f2 == -(f2 - f1)
+        True
         >>> f1 - 3.14
         Traceback (most recent call last):
         ...
@@ -899,28 +983,36 @@ class Field:
         return self + (-other)
 
     def __mul__(self, other):
-        """Multiplication operator.
+        """Binary ``*`` operator.
 
-        This method defines the binary operator `*`, which can be
-        applied between:
+        It can be applied between:
 
-        1. Two scalar (`dim=1`) fields,
+        1. Two scalar (``dim=1``) fields,
 
-        2. A field of any dimension and `numbers.Real`, or
+        2. A field of any dimension and ``numbers.Real``, or
 
-        3. A field of any dimension and a scalar (`dim=1`) field.
+        3. A field of any dimension and a scalar (``dim=1``) field.
 
-        If both operands are `discretisedfield.Field` objects, they
-        must be defined on the same mesh.
+        If both operands are ``discretisedfield.Field`` objects, they must be
+        defined on the same mesh.
 
         Parameters
         ----------
         other : discretisedfield.Field, numbers.Real
+
             Second operand
 
         Returns
         -------
         discretisedfield.Field
+
+            Resulting field
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
 
         Example
         -------
@@ -944,6 +1036,7 @@ class Field:
         2. Multiply vector field with a scalar.
 
         >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
+        ...
         >>> res = f1 * 5  # discretisedfield.Field.__mul__ is called
         >>> res.average
         (0.0, 10.0, 25.0)
@@ -963,7 +1056,8 @@ class Field:
                 msg = 'Cannot multiply fields defined on different meshes.'
                 raise ValueError(msg)
             if not (self.dim == 1 or other.dim == 1):
-                msg = f'Cannot multiply dim={self.dim} and dim={other.dim} fields.'
+                msg = (f'Cannot multiply dim={self.dim} and '
+                       f'dim={other.dim} fields.')
                 raise ValueError(msg)
             res_array = np.multiply(self.array, other.array)
         if isinstance(other, numbers.Real):
@@ -976,28 +1070,36 @@ class Field:
         return self * other
 
     def __truediv__(self, other):
-        """Division operator.
+        """Binary ``/`` operator.
 
-        This method defines the binary operator `/`, which can be
-        applied between:
+        It can be applied between:
 
-        1. Two scalar (`dim=1`) fields,
+        1. Two scalar (``dim=1``) fields,
 
-        2. A field of any dimension and `numbers.Real`, or
+        2. A field of any dimension and ``numbers.Real``, or
 
-        3. A field of any dimension and a scalar (`dim=1`) field.
+        3. A field of any dimension and a scalar (``dim=1``) field.
 
-        If both operands are `discretisedfield.Field` objects, they
-        must be defined on the same mesh.
+        If both operands are ``discretisedfield.Field`` objects, they must be
+        defined on the same mesh.
 
         Parameters
         ----------
         other : discretisedfield.Field, numbers.Real
+
             Second operand
 
         Returns
         -------
         discretisedfield.Field
+
+            Resulting field
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
 
         Example
         -------
@@ -1038,25 +1140,28 @@ class Field:
         return self**(-1) * other
 
     def __matmul__(self, other):
-        """Dot product operator (@).
+        """Binary ``@`` operator.
 
-        This function computes the dot product between two fields. Both
-        fields must be three-dimensional and defined on the same mesh. If
-        any of the fields is not of dimension 3, `ValueError` is raised.
+        This function computes the dot product between two fields. Both fields
+        must be three-dimensional (``dim=3``) and defined on the same mesh.
 
         Parameter
         ---------
         other : discretisedfield.Field
-            Three-dimensional fields
+
+            Second operand
 
         Returns
         -------
         discretisedfield.Field
 
+            Resulting field.
+
         Raises
         ------
-        ValueError
-            If the dimension of any of the fields is not 3.
+        ValueError, TypeError
+
+            If the operator cannot be applied.
 
         Example
         -------
@@ -1094,36 +1199,39 @@ class Field:
     def derivative(self, direction):
         """Directional derivative.
 
-        This method computes a directional derivative of the field and
-        returns a field as a result. The dimensionality of the output
-        field is the same as the dimensionality of the input
-        field. The direction in which the derivative is computed is
-        passed via `direction` argument, which can be `'x'`, `'y'`, or
-        `'z'`. Alternatively, 0, 1, or 2 can be passed, respectively.
+        This method computes a directional derivative of the field and returns
+        a field (with the same dimension). The direction in which the
+        derivative is computed is passed via ``direction`` argument, which can
+        be ``'x'``, ``'y'``, or ``'z'``. Alternatively, ``0``, ``1``, or ``2``
+        can be passed, respectively.
 
-        Directional derivative cannot be computed if only one
-        discretisation cell exists in a specified direction. In that
-        case, a zero field is returned. More precisely, it is assumed
-        that the field does not change in that direction.
+        Directional derivative cannot be computed if only one discretisation
+        cell exists in a specified direction. In that case, a zero field is
+        returned. More precisely, it is assumed that the field does not change
+        in that direction.
 
         Parameters
         ----------
         direction : str, int
-            The direction in which the derivative is computed. It can
-            be `'x'`, `'y'`, or `'z'` (alternatively, 0, 1, or 2,
+
+            The direction in which the derivative is computed. It can be
+            ``'x'``, ``'y'``, or ``'z'`` (alternatively, 0, 1, or 2,
             respectively).
 
         Returns
         -------
         discretisedfield.Field
 
+            Resulting field.
+
         Example
         -------
-        1. Compute directional derivative of a scalar field in the
-        y-direction of a spatially varying field. For the field we
-        choose f(x, y, z) = 2*x + 3*y - 5*z. Accordingly, we expect
-        the derivative in the y-direction to be to be a constant
-        scalar field df/dy = 3.
+
+        1. Compute the directional derivative of a scalar field in the
+        y-direction of a spatially varying field. For the field we choose
+        :math:`f(x, y, z) = 2*x + 3*y - 5*z`. Accordingly, we expect the
+        derivative in the y-direction to be to be a constant scalar field
+        :math:`df/dy = 3`.
 
         >>> import discretisedfield as df
         ...
@@ -1132,21 +1240,18 @@ class Field:
         >>> cell = (10e-9, 10e-9, 10e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> def value_fun(pos):
-        ...     x, y, z = pos
-        ...     return 2*x + 3*y - 5*z
-        ...
+        >>> value_fun = lambda pos: 2*pos[0] + 3*pos[1] - 5*pos[2]
         >>> f = df.Field(mesh, dim=1, value=value_fun)
         >>> f.derivative('y').average
         (3.0,)
 
-        2. Try to compute directional derivatives of the vector field
-        which has only one cell in the z-direction. For the field we
-        choose f(x, y, z) = (2*x, 3*y, -5*z). Accordingly, we expect
-        the directional derivatives to be: df/dx = (2, 0, 0), df/dy =
-        (0, 3, 0), df/dz = (0, 0, -5). However, because there is only
-        one discretisation cell in the z-direction, the derivative
-        cannot be computed and a zero field is returned.
+        2. Try to compute directional derivatives of the vector field which has
+        only one discretisation cell in the z-direction. For the field we
+        choose :math:`f(x, y, z) = (2x, 3y, -5z)`. Accordingly, we expect the
+        directional derivatives to be: :math:`df/dx = (2, 0, 0)`, :math:`df/dy =
+        (0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because there is only
+        one discretisation cell in the z-direction, the derivative cannot be
+        computed and a zero field is returned.
 
         >>> def value_fun(pos):
         ...     x, y, z = pos
@@ -1181,23 +1286,30 @@ class Field:
     def grad(self):
         """Gradient.
 
-        This method computes the gradient of a scalar (`dim=1`) field
-        and returns a vector field. If the field is not of dimension
-        1, `ValueError` is raised.
+        This method computes the gradient of a scalar (``dim=1``) field and
+        returns a vector field:
 
-        Directional derivative cannot be computed if only one
-        discretisation cell exists in a certain direction. In that
-        case, a zero field is considered to be that directional
-        derivative. More precisely, it is assumed that the field does
-        not change in that direction.
+        .. math::
+
+            \\nabla f = (\\frac{\\partial f}{\\partial x},
+                         \\frac{\\partial f}{\\partial y},
+                         \\frac{\\partial f}{\\partial z})
+
+        Directional derivative cannot be computed if only one discretisation
+        cell exists in a certain direction. In that case, a zero field is
+        considered to be that directional derivative. More precisely, it is
+        assumed that the field does not change in that direction.
 
         Returns
         -------
         discretisedfield.Field
 
+            Resulting field.
+
         Raises
         ------
         ValueError
+
             If the dimension of the field is not 1.
 
         Example
@@ -1215,10 +1327,9 @@ class Field:
         >>> f.grad.average
         (0.0, 0.0, 0.0)
 
-        2. Compute gradient of a spatially varying field. For a field
-        we choose f(x, y, z) = 2*x + 3*y - 5*z. Accordingly, we expect
-        the gradient to be a constant vector field
-        grad(f) = (2, 3, -5).
+        2. Compute gradient of a spatially varying field. For a field we choose
+        :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the gradient
+        to be a constant vector field :math:`\\nabla f = (2, 3, -5)`.
 
         >>> def value_fun(pos):
         ...     x, y, z = pos
@@ -1251,30 +1362,39 @@ class Field:
     def div(self):
         """Divergence.
 
-        This method computes the divergence of a vector field
-        (`dim=3`) and returns a scalar field (`dim=1`) as a result. If
-        the field is not of dimension 3, `ValueError` is raised.
+        This method computes the divergence of a vector (``dim=3``) field and
+        returns a scalar (``dim=1``) field as a result.
 
-        Directional derivative cannot be computed if only one
-        discretisation cell exists in a certain direction. In that
-        case, a zero field is considered to be that directional
-        derivative. More precisely, it is assumed that the field does
-        not change in that direction.
+        .. math::
+
+            \\nabla\\cdot\\mathbf{v} = \\frac{\\partial v_{x}}{\\partial x} +
+                                       \\frac{\\partial v_{y}}{\\partial y} +
+                                       \\frac{\\partial v_{z}}{\\partial z}
+
+        Directional derivative cannot be computed if only one discretisation
+        cell exists in a certain direction. In that case, a zero field is
+        considered to be that directional derivative. More precisely, it is
+        assumed that the field does not change in that direction.
 
         Returns
         -------
         discretisedfield.Field
 
+            Resulting field
+
         Raises
         ------
         ValueError
+
             If the dimension of the field is not 3.
 
         Example
         -------
-        1. Compute the divergence of a vector field. For a field we
-        choose f(x, y, z) = (2*x, -2*y, 5*z). Accordingly, we expect
-        the divergence to be to be a constant scalar field div(f) = 5.
+
+        1. Compute the divergence of a vector field. For a field we choose
+        :math:`\\mathbf{v}(x, y, z) = (2x, -2y, 5z)`. Accordingly, we expect
+        the divergence to be to be a constant scalar field :math:`\\nabla\\cdot
+        \\mathbf{v} = 5`.
 
         >>> import discretisedfield as df
         ...
