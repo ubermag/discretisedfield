@@ -1434,31 +1434,40 @@ class Field:
     def curl(self):
         """Curl.
 
-        This method computes the curl of a vector field (`dim=3`) and
-        returns a vector field (`dim=3`) as a result. If the field is
-        not of dimension 3, `ValueError` is raised.
+        This method computes the curl of a vector (``dim=3``) field and returns
+        a vector (``dim=3``) as a result:
 
-        Directional derivative cannot be computed if only one
-        discretisation cell exists in a certain direction. In that
-        case, a zero field is considered to be that directional
-        derivative. More precisely, it is assumed that the field does
-        not change in that direction.
+        .. math::
+
+            \\nabla \\times \\mathbf{v} = \\left(\\frac{\\partial
+            v_{z}}{\\partial y} - \\frac{\\partial v_{y}}{\\partial z},
+            \\frac{\\partial v_{x}}{\\partial z} - \\frac{\\partial
+            v_{z}}{\\partial x}, \\frac{\\partial v_{y}}{\\partial x} -
+            \\frac{\\partial v_{x}}{\\partial y},\\right)
+
+        Directional derivative cannot be computed if only one discretisation
+        cell exists in a certain direction. In that case, a zero field is
+        considered to be that directional derivative. More precisely, it is
+        assumed that the field does not change in that direction.
 
         Returns
         -------
         discretisedfield.Field
 
+            Resulting field
+
         Raises
         ------
         ValueError
+
             If the dimension of the field is not 3.
 
         Example
         -------
         1. Compute curl of a vector field. For a field we choose
-        f(x, y, z) = (2*x*y, -2*y, 5*x*z). Accordingly, we expect
-        the curl to be to be a constant vector field
-        curl(f) = (0, -5*z, -2*x).
+        :math:`\\mathbf{v}(x, y, z) = (2xy, -2y, 5xz)`. Accordingly, we expect
+        the curl to be to be a constant vector field :math:`\\nabla\\times
+        \\mathbf{v} = (0, -5z, -2x)`.
 
         >>> import discretisedfield as df
         ...
