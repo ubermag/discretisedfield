@@ -741,7 +741,7 @@ class Mesh:
 
         color_palette : (2,) tuple, optional
 
-            An RGB length-2 tuple, whose elements are length-3 tuples of RGB
+            An RGB length-2 list, whose elements are length-3 tuples of RGB
             colours. Defaults to
             ``seaborn.color_pallette(palette='deep')[:2]``.
 
@@ -827,7 +827,7 @@ class Mesh:
 
             A list of RGB tuples, whose elements are length-3 tuples of RGB
             colours. Defaults to
-            ``seaborn.color_pallette(palette='deep')[:2]``.
+            ``seaborn.color_pallette(palette='deep')``.
 
         linewidth : float, optional
 
@@ -900,8 +900,11 @@ class Mesh:
 
         color_palette : list, optional
 
-            Colour of the mesh and the discretisation cell. Defaults to
-            ``seaborn.color_pallette(palette='deep')``.
+            A length-2 list, whose elements are integers of colours. Defaults
+            to ``seaborn.color_pallette(palette='deep')[:2]``. The first
+            element is the colour of the mesh region, whereas the second colour
+            is the colour of the discretisation cell.
+
 
         Examples
         --------
@@ -964,9 +967,9 @@ class Mesh:
             be used as axis labels. If ``multiplier`` is not passed, the
             optimum one is computed internally. Defaults to ``None``.
 
-        color_palette : int, optional
+        color_palette : list, optional
 
-            Colour of the subregions. Defaults to
+            List of integers for the colours of subregions. Defaults to
             ``seaborn.color_pallette(palette='deep')``.
 
         Examples
@@ -1013,7 +1016,7 @@ class Mesh:
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the optimum one is
         computed internally. The colour of points can be determined using
-        ``color`` as an integers, whereas the size of the points can be passed
+        ``color`` as an integer, whereas the size of the points can be passed
         using ``point_size``. If ``point_size`` is not passed, optimum size is
         computed intenally.
 
