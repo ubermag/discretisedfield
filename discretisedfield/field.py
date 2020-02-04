@@ -14,10 +14,11 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
-# TODO: tutorials, check rtd requirements, line object (plotting
-# line), pycodestyle, coverage, context for writing files, remove numbers from
+# TODO: tutorials, check rtd requirements, line object (plotting line),
+# pycodestyle, coverage, context for writing files, remove numbers from
 # tutorials, add math equations in doc strings, check doc string consistency,
-# do only test-coverage instead of testing twice
+# do only test-coverage instead of testing twice, testdir, dir(field) for grad,
+# div...
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, unsigned=True, const=True))
@@ -640,7 +641,7 @@ class Field:
             yield point, self(point)
 
     def __eq__(self, other):
-        """Equality relational operator.
+        """Relational operator ``==``.
 
         Two fields are considered to be equal if:
 
@@ -654,7 +655,7 @@ class Field:
         ----------
         other : discretisedfield.Field
 
-            Field object, which is compared to ``self``.
+            Second operand.
 
         Returns
         -------
@@ -698,10 +699,10 @@ class Field:
             return False
 
     def __ne__(self, other):
-        """Inequality relational operator.
+        """Relational operator ``!=``.
 
-        This method returns ``not self == other``. For details, please
-        refer to ``discretisedfield.Field.__eq__`` method.
+        This method returns ``not self == other``. For details, please refer to
+        ``discretisedfield.Field.__eq__`` method.
 
         .. seealso:: :py:func:`~discretisedfield.Field.__eq__`
 
@@ -711,7 +712,7 @@ class Field:
     def __pos__(self):
         """Unary ``+`` operator.
 
-        This method defines the unary operator `+`. It returns the field
+        This method defines the unary operator ``+``. It returns the field
         itself:
 
         .. math::
@@ -741,6 +742,8 @@ class Field:
         (0.0, -1000.0, -3.0)
         >>> res == f
         True
+        >>> +(+f) == f
+        True
 
         """
         return self
@@ -749,7 +752,7 @@ class Field:
         """Unary ``-`` operator.
 
         This method negates the value of each discretisation cell. It is
-        equivalent to multiplication with -1.
+        equivalent to multiplication with -1:
 
         .. math::
 
@@ -792,7 +795,7 @@ class Field:
     def __pow__(self, other):
         """Unary ``**`` operator.
 
-        This method defines the "power" operator for scalar (``dim=1``) fields
+        This method defines the ``**`` operator for scalar (``dim=1``) fields
         only. This operator is not defined for vector (``dim>1``) fields, and
         ``ValueError`` is raised.
 
@@ -875,7 +878,7 @@ class Field:
         ----------
         other : discretisedfield.Field
 
-            Second operand
+            Second operand.
 
         Returns
         -------
@@ -940,7 +943,7 @@ class Field:
         ----------
         other : discretisedfield.Field
 
-            Second operand
+            Second operand.
 
         Returns
         -------
@@ -1000,13 +1003,13 @@ class Field:
         ----------
         other : discretisedfield.Field, numbers.Real
 
-            Second operand
+            Second operand.
 
         Returns
         -------
         discretisedfield.Field
 
-            Resulting field
+            Resulting field.
 
         Raises
         ------
@@ -1087,13 +1090,13 @@ class Field:
         ----------
         other : discretisedfield.Field, numbers.Real
 
-            Second operand
+            Second operand.
 
         Returns
         -------
         discretisedfield.Field
 
-            Resulting field
+            Resulting field.
 
         Raises
         ------
@@ -1140,16 +1143,16 @@ class Field:
         return self**(-1) * other
 
     def __matmul__(self, other):
-        """Binary ``@`` operator.
+        """Binary ``@`` operator, defined as dot product.
 
         This function computes the dot product between two fields. Both fields
         must be three-dimensional (``dim=3``) and defined on the same mesh.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         other : discretisedfield.Field
 
-            Second operand
+            Second operand.
 
         Returns
         -------
@@ -1226,10 +1229,9 @@ class Field:
 
         Example
         -------
-
         1. Compute the directional derivative of a scalar field in the
         y-direction of a spatially varying field. For the field we choose
-        :math:`f(x, y, z) = 2*x + 3*y - 5*z`. Accordingly, we expect the
+        :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the
         derivative in the y-direction to be to be a constant scalar field
         :math:`df/dy = 3`.
 
@@ -1380,7 +1382,7 @@ class Field:
         -------
         discretisedfield.Field
 
-            Resulting field
+            Resulting field.
 
         Raises
         ------
@@ -1390,7 +1392,6 @@ class Field:
 
         Example
         -------
-
         1. Compute the divergence of a vector field. For a field we choose
         :math:`\\mathbf{v}(x, y, z) = (2x, -2y, 5z)`. Accordingly, we expect
         the divergence to be to be a constant scalar field :math:`\\nabla\\cdot
@@ -1454,7 +1455,7 @@ class Field:
         -------
         discretisedfield.Field
 
-            Resulting field
+            Resulting field.
 
         Raises
         ------
@@ -1509,15 +1510,16 @@ class Field:
     def integral(self):
         """Volume integral.
 
-        This method computes the volume integral of the field and
-        returns a single (scalar or vector) value as tuple. This value
-        can be understood as the product of field's average value and
-        the mesh volume, because the volume of all discretisation
-        cells is the same.
+        This method integrates the field over volume and returns a single
+        (scalar or vector) value as ``tuple``. This value can be understood as
+        the product of field's average value and the mesh volume, because the
+        volume of all discretisation cells is the same.
 
         Returns
         -------
         tuple
+
+            Volume integral.
 
         Example
         -------
@@ -1540,7 +1542,10 @@ class Field:
         >>> f.integral
         (-1000.0, -2000.0, -3000.0)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.average`
+        .. seealso::
+
+            :py:func:`~discretisedfield.Field.average`
+            :py:func:`~discretisedfield.Mesh.volume`
 
         """
         cell_volume = self.mesh.region.volume / len(self.mesh)
@@ -1551,22 +1556,32 @@ class Field:
     def topological_charge_density(self):
         """Topological charge density.
 
-        This method computes the topological charge density for the
-        vector field (`dim=3`). Topological charge is defined on
-        two-dimensional samples only. Therefore, the field must be "sliced"
-        using the `discretisedfield.Field.plane` method. If the field
-        is not three-dimensional or the field is not sliced,
-        `ValueError` is raised.
+        This method computes the topological charge density for the vector
+        (``dim=3``) field:
+
+        .. math::
+
+            q = \\frac{1}{4\\pi} \\mathbf{n} \\cdot \\left(\\frac{\\partial
+            \\mathbf{n}}{\\partial x} \\times \\frac{\\partial
+            \\mathbf{n}}{\\partial x} \\right),
+
+        where :math:`\\mathbf{n}` is the orientation field. Topological charge
+        is defined on two-dimensional samples only. Therefore, the field must
+        be "sliced" using the ``discretisedfield.Field.plane`` method. If the
+        field is not three-dimensional or the field is not sliced,
+        ``ValueError`` is raised.
 
         Returns
         -------
         discretisedfield.Field
 
+            Topological charge density as a scalar field.
+
         Raises
         ------
         ValueError
-            If the field is not three-dimensional or the field is not
-            sliced
+
+            If the field is not three-dimensional or the field is not sliced.
 
         Example
         -------
@@ -1621,7 +1636,54 @@ class Field:
         return prefactor * q
 
     @property
-    def _bergluescher(self):
+    def bergluescher(self):
+        """Topological charge computed using Berg-Luescher method.
+
+        The details of this method can be found in Berg and Luescher, Nuclear
+        Physics, Section B, Volume 190, Issue 2, p. 412-424.
+
+        This method computes the topological charge for the vector field
+        (``dim=3``). Topological charge is defined on two-dimensional samples.
+        Therefore, the field must be "sliced" using
+        ``discretisedfield.Field.plane`` method. If the field is not
+        three-dimensional or the field is not sliced, ``ValueError`` is raised.
+
+        Returns
+        -------
+        float
+
+            Topological charge.
+
+        Raises
+        ------
+        ValueError
+
+            If the field does not have ``dim=3`` or the field is not sliced.
+
+        Example
+        -------
+        1. Compute the topological charge of a spatially constant vector field.
+        Zero value is expected.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+        >>> f.plane('z').bergluescher
+        0.0
+        >>> f.plane('z').bergluescher
+        0.0
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.Field.topological_charge`
+            :py:func:`~discretisedfield.Field.tological_charge_density`
+
+        """
         if self.dim != 3:
             msg = (f'Cannot compute Berg-Luescher topological charge '
                    f'for dim={self.dim} field.')
@@ -1653,37 +1715,39 @@ class Field:
     def topological_charge(self, method='continuous'):
         """Topological charge.
 
-        This method computes the topological charge for the vector
-        field (`dim=3`). There are two possible methods:
+        This method computes the topological charge for the vector field
+        (``dim=3``). There are two possible methods, which can be chosen using
+        ``method`` parameter:
 
-        1. `continuous`: Topological charge density is integrated.
+        1. ``continuous``: Topological charge density is integrated.
 
-        2. `berg-luescher`: Topological charge is computed on a
-        discrete lattice, as described in Berg and Luescher, Nuclear
-        Physics, Section B, Volume 190, Issue 2, p. 412-424.
+        2. ``berg-luescher``: Topological charge is computed on a discrete
+        lattice, as described in: Berg and Luescher, Nuclear Physics, Section
+        B, Volume 190, Issue 2, p. 412-424.
 
-        Topological charge is defined on two-dimensional
-        samples. Therefore, the field must be "sliced" using
-        `discretisedfield.Field.plane` method. If the field is not
-        three-dimensional or the field is not sliced, `ValueError` is
-        raised.
+        Topological charge is defined on two-dimensional samples. Therefore,
+        the field must be "sliced" using ``discretisedfield.Field.plane``
+        method. If the field is not three-dimensional or the field is not
+        sliced, ``ValueError`` is raised.
 
         Parameters
         ----------
         method : str, optional
+
             Method how the topological charge is computed. It can be
-            `continuous` or `berg-luescher`. Default is `continuous`.
+            ``continuous`` or ``berg-luescher``. Defaults to ``continuous``.
 
         Returns
         -------
         float
-            Topological charge
+
+            Topological charge.
 
         Raises
         ------
         ValueError
-            If the field does not have `dim=3` or the field is not
-            sliced.
+
+            If the field does not have ``dim=3`` or the field is not sliced.
 
         Example
         -------
@@ -1720,11 +1784,16 @@ class Field:
         ...
         ValueError: ...
 
+        .. seealso::
+
+            :py:func:`~discretisedfield.Field.tological_charge_density`
+            :py:func:`~discretisedfield.Field.bergluescher`
+
         """
         if method == 'continuous':
             return self.topological_charge_density.integral[0]
         elif method == 'berg-luescher':
-            return self._bergluescher
+            return self.bergluescher
         else:
             msg = 'Method can be either continuous or berg-luescher'
             raise ValueError(msg)
@@ -1781,65 +1850,83 @@ class Field:
             yield point, self.__call__(point)
 
     def plane(self, *args, n=None, **kwargs):
-        """Slices the field with a plane.
+        """Extracts field on the plane mesh.
 
-        If one of the axes (`'x'`, `'y'`, or `'z'`) is passed as a
-        string, a plane perpendicular to that axis is generated which
-        intersects the field at its centre. Alternatively, if a keyword
-        argument is passed (e.g. `x=1`), a plane perpendicular to the
-        x-axis and intersecting it at x=1 is generated. The number of
-        points in two dimensions on the plane can be defined using `n`
-        (e.g. `n=(10, 15)`). Using the generated plane, a new
-        "two-dimensional" field is created and returned.
+        If one of the axes (``'x'``, ``'y'``, or ``'z'``) is passed as a
+        string, a plane mesh perpendicular to that axis is extracted,
+        intersecting the mesh region at its centre, and the field is sampled on
+        that mesh. Alternatively, if a keyword argument is passed (e.g.
+        ``x=1e-9``), a plane perpendicular to the x-axis (parallel to yz-plane)
+        and intersecting it at ``x=1e-9`` is extracted. The number of points in
+        two dimensions on the plane can be defined using ``n`` tuple (e.g.
+        ``n=(10, 15)``).
 
         Parameters
         ----------
-        n : tuple of length 2
-            The number of points on the plane in two dimensions
+        n : (2,) tuple
+
+            The number of points on the plane in two dimensions.
 
         Returns
         ------
         discretisedfield.Field
-            A field obtained as an intersection of mesh and the plane.
 
-        Example
-        -------
-        1. Intersecting the field with a plane.
+            An extracted field.
+
+        Examples
+        --------
+        1. Extracting the field on a plane at a specific point.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 2)
+        >>> p2 = (5, 5, 5)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> field = df.Field(mesh, dim=3)
-        >>> field.plane(y=1)
-        Field(mesh=...)
+        >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
+        ...
+        >>> f.plane(y=1)
+        Field(...)
+
+        2. Extracting the field at the mesh region centre.
+
+        >>> f.plane('z')
+        Field(...)
+
+        3. Specifying the number of points.
+
+        >>> f.plane('z', n=(10, 10))
+        Field(...)
+
+        .. seealso:: :py:func:`~discretisedfield.Mesh.plane`
 
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
     def __getitem__(self, key):
-        """Extract field of a subregion defined in mesh.
+        """Extracts the field on a subregion.
 
-        If subregions are defined in mesh, this method returns a field on a
-        subregion `mesh.subregions[key]` with the same discretisation cell as
-        the parent mesh.
+        If subregions were defined by passing ``subregions`` dictionary when
+        the mesh was created, this method returns a field in a subregion
+        ``subregions[key]`` with the same discretisation cell as the parent
+        mesh.
 
         Parameters
         ----------
         key : str
-            The key associated to the region in `self.mesh.subregions`
+
+            The key of a region in ``subregions`` dictionary.
 
         Returns
         -------
         disretisedfield.Field
-            Field of a subregion
+
+            Field on a subregion.
 
         Example
         -------
-        1. Extract subregion field.
+        1. Extract field on the subregion.
 
         >>> import discretisedfield as df
         ...
@@ -1859,6 +1946,8 @@ class Field:
         >>> f = df.Field(mesh, dim=3, value=value_fun)
         >>> f.average
         (0.0, 0.0, 0.0)
+        >>> f['r1']
+        Field(...)
         >>> f['r1'].average
         (1.0, 2.0, 3.0)
         >>> f['r2'].average
@@ -1871,23 +1960,25 @@ class Field:
         """Projects the field along one direction and averages it out along
         that direction.
 
-        One of the axes (`'x'`, `'y'`, or `'z'`) is passed and the
-        field is projected (averaged) along that direction. For example
-        `project('z')` would average the field in the z-direction and
-        return the field which has only one discretisation cell in the
-        z-direction. The number of points in two dimensions on the
-        plane can be defined using `n` (e.g. `n=(10, 15)`). The
-        resulting field has the same dimension as the field itself.
+        One of the axes (``'x'``, ``'y'``, or ``'z'``) is passed and the field
+        is projected (averaged) along that direction. For example
+        ``project('z')`` would average the field in the z-direction and return
+        the field which has only one discretisation cell in the z-direction.
+        The number of points in two dimensions on the plane can be defined
+        using ``n`` (e.g. ``n=(10, 15)``). The resulting field has the same
+        dimension as the field itself.
 
         Parameters
         ----------
         n : (2,) tuple
-            The number of points on the plane in two dimensions
+
+            The number of points on the plane in two dimensions.
 
         Returns
-        -------
+        ------
         discretisedfield.Field
-            A field projected along a certain direction.
+
+            An extracted field.
 
         Example
         -------
@@ -1899,8 +1990,8 @@ class Field:
         >>> p2 = (2, 2, 2)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        ...
         >>> field.project('z')
         Field(...)
         >>> field.project('z').array.shape
@@ -1915,32 +2006,37 @@ class Field:
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
 
-        If the extension of `filename` is `.vtk`, a VTK file is written
+        If the extension of ``filename`` is ``.vtk``, a VTK file is written
         (:py:func:`~discretisedfield.Field._writevtk`).
 
-        For `.ovf`, `.omf`, or `.ohf` extensions, the field is saved to OVF
-        file (:py:func:`~discretisedfield.Field._writeovf`). In that case, the
-        representation of data (`bin4`, 'bin8', or 'txt') is passed as
-        `representation` and if `extend_scalar=True`, a scalar field will be
-        saved as a vector field. More precisely, if the value at a cell is X,
-        that cell will be saved as (X, 0, 0).
+        For ``.ovf``, ``.omf``, or ``.ohf`` extensions, the field is saved to
+        OVF file (:py:func:`~discretisedfield.Field._writeovf`). In that case,
+        the representation of data (``'bin4'``, ``'bin8'``, or ``'txt'``) is
+        passed as ``representation`` and if ``extend_scalar=True``, a scalar
+        field will be saved as a vector field. More precisely, if the value at
+        a cell is X, that cell will be saved as (X, 0, 0).
 
-        Finally, if the extension of `filename` is `.hdf5`, HDF5 file will be
-        written (:py:func:`~discretisedfield.Field._writehdf5`).
+        Finally, if the extension of ``filename`` is ``.hdf5``, HDF5 file will
+        be written (:py:func:`~discretisedfield.Field._writehdf5`).
 
         Parameters
         ----------
         filename : str
-            Name with an extension of the file written.
+
+            Name of the file written.
+
         representation : str, optional
-            In the case of OVF files (`.ovf`, `.omf`, or `.ohf`),
-            representation can be specified (`bin4`, `bin8`, or `txt`).
-            Defaults to 'txt'.
+
+            In the case of OVF files (``.ovf``, ``.omf``, or ``.ohf``),
+            representation can be specified (``'bin4'``, ``'bin8'``, or
+            ``'txt'``). Defaults to ``'txt'``.
+
         extend_scalar : bool, optional
-            If `True`, a scalar field will be saved as a vector field. More
+
+            If ``True``, a scalar field will be saved as a vector field. More
             precisely, if the value at a cell is 3, that cell will be saved as
             (3, 0, 0). This is valid only for the OVF file formats. Defaults to
-            `False`.
+            ``False``.
 
         Example
         -------
@@ -2001,23 +2097,29 @@ class Field:
     def _writeovf(self, filename, representation='txt', extend_scalar=False):
         """Write the field to an OVF file.
 
-        The extension of the `filename` should be `.ovf`, `.omf`, or `.ohf`.
-        Data representation (`bin4`, 'bin8', or 'txt') can be passed using
-        `representation` argument. If `extend_scalar=True`, a scalar field will
-        be saved as a vector field. More precisely, if the value at a cell is
-        X, that cell will be saved as (X, 0, 0).
+        The extension of ``filename`` should be ``.ovf``, ``.omf``, or
+        ``.ohf``. Data representation (``'bin4'``, ``'bin8'``, or ``'txt'``)
+        can be passed using ``representation`` argument. If
+        ``extend_scalar=True``, a scalar field will be saved as a vector field.
+        More precisely, if the value at a cell is X, that cell will be saved as
+        (X, 0, 0).
 
         Parameters
         ----------
         filename : str
+
             Name with an extension of the file written.
+
         representation : str, optional
-            Representation can be specified by passing `'bin4'`, `'bin8'`, or
-            `'txt'`. Defaults to 'txt'.
+
+            Representation can be specified by passing ``'bin4'``, ``'bin8'``,
+            or ``'txt'``. Defaults to ``'txt'``.
+
         extend_scalar : bool, optional
-            If `True`, a scalar field will be saved as a vector field. More
+
+            If ``True``, a scalar field will be saved as a vector field. More
             precisely, if the value at a cell is 3, that cell will be saved as
-            (3, 0, 0). Defaults to `False`.
+            (3, 0, 0). Defaults to ``False``.
 
         Example
         -------
@@ -2042,7 +2144,7 @@ class Field:
         True
         >>> os.remove(filename)  # delete the file
 
-        .. seealso:: :py:func:`~discretisedfield.Field.write`
+        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
         if extend_scalar and self.dim == 1:
@@ -2146,6 +2248,7 @@ class Field:
         Parameters
         ----------
         filename : str
+
             Name with an extension of the file written.
 
         Example
@@ -2167,8 +2270,6 @@ class Field:
         >>> os.path.isfile(filename)
         True
         >>> os.remove(filename)  # delete the file
-
-        .. seealso:: :py:func:`~discretisedfield.Field.write`
 
         """
         grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
@@ -2194,6 +2295,7 @@ class Field:
         Parameters
         ----------
         filename : str
+
             Name with an extension of the file written.
 
         Example
@@ -2219,7 +2321,7 @@ class Field:
         True
         >>> os.remove(filename)  # delete the file
 
-        .. seealso:: :py:func:`~discretisedfield.Field.write`
+        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
         with h5py.File(filename, 'w') as f:
@@ -2239,19 +2341,22 @@ class Field:
     def fromfile(cls, filename):
         """Read the field from an OVF or HDF5 file.
 
-        The extension of the `filename` should be suitable for OVF format
-        (`.ovf`, `.omf`, `.ohf`) or for HDF5 (`.hdf5` or `.h5`). This is a
-        `classmethod` and should be called as, for instance,
-        `discretisedfield.Field.fromfile('myfile.omf')`.
+        The extension of the ``filename`` should be suitable for OVF format
+        (``.ovf``, ``.omf``, ``.ohf``) or for HDF5 (``.hdf5`` or ``.h5``). This
+        is a ``classmethod`` and should be called as, for instance,
+        ``discretisedfield.Field.fromfile('myfile.omf')``.
 
         Parameters
         ----------
         filename : str
+
             Name of the file to be read.
 
         Returns
         -------
         discretisedfield.Field
+
+            Field read from the file.
 
         Example
         -------
@@ -2290,18 +2395,22 @@ class Field:
     def _fromovf(cls, filename):
         """Read the field from an OVF file.
 
-        The extension of the `filename` should be suitable for OVF format
-        (`.ovf`, `.omf`, `.ohf`). This is a `classmethod` and should be called
-        as, for instance, `discretisedfield.Field._fromovf('myfile.omf')`.
+        The extension of the ``filename`` should be suitable for OVF format
+        (``.ovf``, ``.omf``, ``.ohf``). This is a ``classmethod`` and should be
+        called as, for instance,
+        ``discretisedfield.Field._fromovf('myfile.omf')``.
 
         Parameters
         ----------
         filename : str
+
             Name of the file to be read.
 
         Returns
         -------
         discretisedfield.Field
+
+            Field read from the file.
 
         Example
         -------
@@ -2317,7 +2426,7 @@ class Field:
         >>> field
         Field(mesh=...)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
+        .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
 
         """
         mdatalist = ['xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax',
@@ -2406,18 +2515,22 @@ class Field:
     def _fromhdf5(cls, filename):
         """Read the field from an HDF5 file.
 
-        The extension of the `filename` should be suitable for the HDF5 format
-        (`.hdf5` or `.h5`). This is a `classmethod` and should be called
-        as, for instance, `discretisedfield.Field._fromhdf5('myfile.h5')`.
+        The extension of the ``filename`` should be suitable for the HDF5
+        format (``.hdf5`` or ``.h5``). This is a ``classmethod`` and should be
+        called as, for instance,
+        ``discretisedfield.Field._fromhdf5('myfile.h5')``.
 
         Parameters
         ----------
         filename : str
+
             Name of the file to be read.
 
         Returns
         -------
         discretisedfield.Field
+
+            Field read from the file.
 
         Example
         -------
@@ -2433,7 +2546,7 @@ class Field:
         >>> field
         Field(mesh=...)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
+        .. seealso:: :py:func:`~discretisedfield.Field._writehdf5`
 
         """
         with h5py.File(filename, 'r') as f:
@@ -2449,33 +2562,62 @@ class Field:
             mesh = df.Mesh(region=region, n=n)
             return cls(mesh, dim=dim, value=array[:])
 
-    def mpl(self, figsize=None, multiplier=None):
-        """Plots a field plane using matplotlib.
+    def mpl(self, ax=None, figsize=None, multiplier=None):
+        """Plots the field on a plane using ``matplotlib``.
 
-        Before the field can be plotted, it must be sliced with a
-        plane (e.g. `field.plane(`z`)`). Otherwise, ValueError is
-        raised. For vector fields, this method plots both `quiver`
-        (vector) and `imshow` (scalar) plots. The `imshow` plot
-        represents the value of the out-of-plane vector component and
-        the `quiver` plot is not coloured. On the other hand, only
-        `imshow` is plotted for scalar fields. Where the norm of the
-        field is zero, no vectors are shown and those `imshow` pixels
-        are not coloured. In order to use this function inside Jupyter
-        notebook `%matplotlib inline` must be activated after
-        `discretisedfield` is imported.
+        If ``ax`` is not passed, axes will be created automaticaly. In that
+        case, the figure size can be changed using ``figsize``. It is often the
+        case that the region size is small (e.g. on a nanoscale) or very large
+        (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
+        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6,
+        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
+        appropriate units shown. For instance, if ``multiplier=1e-9`` is
+        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
+        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
+        is not passed, the optimum one is computed internally.
+
+        Before the field can be plotted, it must be sliced with a plane (e.g.
+        ``field.plane('z')``). Otherwise, ``ValueError`` is raised. For vector
+        fields, this method plots both ``quiver`` (vector) and ``imshow``
+        (scalar) plots. The ``imshow`` plot represents the value of the
+        out-of-plane vector component and the ``quiver`` plot is not coloured.
+        On the other hand, only ``imshow`` is plotted for scalar fields. Where
+        the norm of the field is zero, no vectors are shown and those
+        ``imshow`` pixels are not coloured.
 
         Parameters
         ----------
-        figsize : tuple, optional
-            Length-2 tuple passed to the `matplotlib.figure` function.
+        ax : matplotlib.axes.Axes, optional
+
+            Axes to which field plot should be added. Defaults to ``None`` -
+            new axes will be created in figure with size defined as
+            ``figsize``.
+
+        figsize : (2,) tuple, optional
+
+            Length-2 tuple passed to ``matplotlib.pyplot.figure()`` to create a
+            figure and axes if ``ax=None``. Defaults to ``None``.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. If ``multiplier`` is not passed, the
+            optimum one is computed internally. Defaults to ``None``.
 
         Raises
         ------
         ValueError
+
             If the field has not been sliced with a plane.
 
         Example
         -------
+        1. Visualising the field using ``matplotlib``.
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
@@ -2485,15 +2627,19 @@ class Field:
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
         >>> field.plane(z=50, n=(5, 5)).mpl()
 
-        .. seealso:: :py:func:`~discretisedfield.Field.k3d_vectors`
+        .. seealso::
+
+            :py:func:`~discretisedfield.Field.k3d_voxels`
+            :py:func:`~discretisedfield.Field.k3d_vectors`
 
         """
         if not hasattr(self.mesh, 'info'):
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111)
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
 
         planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
 
@@ -2525,41 +2671,59 @@ class Field:
         ax.figure.tight_layout()
 
     def imshow(self, ax, filter_field=None, multiplier=1, **kwargs):
-        """Plots a scalar field plane using `matplotlib.pyplot.imshow`.
+        """Plots the scalar field on a plane using
+        ``matplotlib.pyplot.imshow``.
 
-        Before the field can be plotted, it must be sliced with a
-        plane (e.g. `field.plane(`y`)`) and field must be of dimension
-        1 (scalar field). Otherwise, ValueError is raised. `imshow`
-        adds the plot to `matplotlib.axes.Axes` passed via `ax`
-        argument. If the scalar field plotted is extracted from a
-        vector field, which has coordinates where the norm of the
-        field is zero, the norm of that vector field can be passed
-        using `norm_field` argument, so that pixels at those
-        coordinates are not coloured. All other parameters accepted by
-        `matplotlib.pyplot.imshow` can be passed. In order to use this
-        function inside Jupyter notebook `%matplotlib inline` must be
-        activated after `discretisedfield` is imported.
+        Before the field can be plotted, it must be sliced with a plane (e.g.
+        ``field.plane('z')``). In addition, field must be of dimension 1
+        (scalar field). Otherwise, ``ValueError`` is raised. ``imshow`` adds
+        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. By
+        passing ``filter_field`` the points at which the pixels are not
+        coloured can be determined. More precisely, only discretisation cells
+        where ``filter_field != 0`` are plotted. It is often the case that the
+        region size is small (e.g. on a nanoscale) or very large (e.g. in units
+        of kilometers). Accordingly, ``multiplier`` can be passed as
+        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
+        6,...). According to that value, the axes will be scaled and
+        appropriate units shown. For instance, if ``multiplier=1e-9`` is
+        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
+        :math:`\\text{nm}` units will be used as axis labels.
+
+        This method plots the mesh using ``matplotlib.pyplot.imshow()``
+        function, so any keyword arguments accepted by it can be passed.
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes
-            Axes object to which the scalar plot will be added.
-        norm_field : discretisedfield.Field, optional
-            A (scalar) norm field used for determining whether certain
-            pixels should be coloured.
 
-        Returns
-        -------
-        matplotlib.image.AxesImage object
+            Axes to which field plot should be added.
+
+        filter_field : discretisedfield.Field, optional
+
+            A (scalar) field used for determining whether certain pixels should
+            be coloured. More precisely, only discretisation cells where
+            ``filter_field != 0`` are plotted.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to 1.
 
         Raises
         ------
         ValueError
-            If the field has not been sliced with a plane or its
-            dimension is not 1.
+
+            If the field has not been sliced with a plane or its dimension is
+            not 1.
 
         Example
         -------
+        1. Visualising the scalar field using ``matplotlib``.
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
@@ -2567,6 +2731,7 @@ class Field:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
+        ...
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(111)
         >>> field.plane('y').imshow(ax=ax)
@@ -2606,58 +2771,73 @@ class Field:
         n = (self.mesh.n[self.mesh.info['axis2']],
              self.mesh.n[self.mesh.info['axis1']])
 
-        imax = ax.imshow(values.reshape(n), origin='lower',
+        return ax.imshow(values.reshape(n), origin='lower',
                          extent=extent, **kwargs)
-        return imax
 
-    def quiver(self, ax=None, color_field=None, multiplier=1, **kwargs):
-        """Plots a vector field plane using `matplotlib.pyplot.quiver`.
+    def quiver(self, ax, color_field=None, multiplier=1, **kwargs):
+        """Plots the vector field on a plane using
+        ``matplotlib.pyplot.quiver``.
 
-        Before the field can be plotted, it must be sliced with a
-        plane (e.g. `field.plane(`y`)`) and field must be of dimension
-        3 (vector field). Otherwise, ValueError is raised. `quiver`
-        adds the plot to `matplotlib.axes.Axes` passed via `ax`
-        argument. If there are coordinates where the norm of the field
-        is zero, vectors are not plotted at those coordinates. By
-        default, plot is not coloured, but by passing a
-        `discretisedfield.Field` object of dimension 1 as
-        `color_field`, quiver plot will be coloured based on the
-        values from the field. All other parameters accepted by
-        `matplotlib.pyplot.quiver` can be passed. In order to use this
-        function inside Jupyter notebook `%matplotlib inline` must be
-        activated after `discretisedfield` is imported.
+        Before the field can be plotted, it must be sliced with a plane (e.g.
+        ``field.plane('z')``). In addition, field must be of dimension 3
+        (vector field). Otherwise, ``ValueError`` is raised. ``quiver`` adds
+        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument.
+        Vectors can be coloured by passing ``color_field`` which is a scalar
+        field defining the colour at different points. It is often the case
+        that the region size is small (e.g. on a nanoscale) or very large (e.g.
+        in units of kilometers). Accordingly, ``multiplier`` can be passed as
+        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
+        6,...). According to that value, the axes will be scaled and
+        appropriate units shown. For instance, if ``multiplier=1e-9`` is
+        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
+        :math:`\\text{nm}` units will be used as axis labels.
+
+        This method plots the mesh using ``matplotlib.pyplot.quiver()``
+        function, so any keyword arguments accepted by it can be passed.
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes
-            Axes object to which the quiver plot will be added.
-        color_field : discretisedfield.Field, optional
-            A (scalar) field used for determining the colour of the
-            quiver plot.
 
-        Returns
-        -------
-        matplotlib.quiver.Quiver object
+            Axes to which field plot should be added.
+
+        color_field : discretisedfield.Field, optional
+
+            A (scalar) field used for colouring vectors.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to 1.
 
         Raises
         ------
         ValueError
-            If the field has not been sliced with a plane or its
-            dimension is not 3.
+
+            If the field has not been sliced with a plane or its dimension is
+            not 3.
 
         Example
         -------
+        1. Visualising the vector field using ``matplotlib`` and colour
+        according to its z-component.
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> field = df.Field(mesh, dim=3, value=(2, 1, 0))
+        ...
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(111)
-        >>> field.plane(z=50).quiver(ax=ax, color_field=field.z)
-        <matplotlib.quiver.Quiver object at ...>
+        >>> field.plane('y').quiver(ax=ax, color_field=field.z)
+        <matplotlib.image.AxesImage object at ...>
 
         .. seealso:: :py:func:`~discretisedfield.Field.imshow`
 
@@ -2712,32 +2892,33 @@ class Field:
         return qvax
 
     def colorbar(self, ax, coloredplot, cax=None, **kwargs):
-        """Adds a colorbar to the axes using `matplotlib.pyplot.colorbar`.
+        """Adds a colorbar to the axes using ``matplotlib.pyplot.colorbar``.
 
-        Axes to which the colorbar should be added is passed via `ax`
-        argument. If the colorbar axes are made before the method is
-        called, they should be passed as `cax`. The plot to which the
-        colorbar should correspond to is passed via `coloredplot`. All
-        other parameters accepted by `matplotlib.pyplot.colorbar` can
-        be passed. In order to use this function inside Jupyter
-        notebook `%matplotlib inline` must be activated after
-        `discretisedfield` is imported.
+        Axes to which the colorbar should be added is passed via ``ax``
+        argument. If the colorbar axes are made before the method is called,
+        they should be passed as ``cax``. The plot to which the colorbar should
+        correspond to is passed via ``coloredplot``. All other keyword
+        arguments accepted by ``matplotlib.pyplot.colorbar`` can be
+        passed.
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes
-            Axes object to which the colorbar will be added.
-        coloredplot : matplotlib.quiver.Quiver, matplotlib.image.AxesImage
-            A plot to which the colorbar should correspond
-        cax : matplotlib.axes.Axes, optional
-            Colorbar axes.
 
-        Returns
-        -------
-        matplotlib.colorbar.Colorbar
+            Axes object to which the colorbar will be added.
+
+        coloredplot : matplotlib.quiver.Quiver, matplotlib.image.AxesImage
+
+            A plot to which the colorbar should correspond.
+
+        cax : matplotlib.axes.Axes, optional
+
+            Colorbar axes.
 
         Example
         -------
+        1. Add colorbar to the plot.
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
@@ -2745,6 +2926,7 @@ class Field:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        ...
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(111)
         >>> coloredplot = field.plane(z=50).quiver(ax=ax, color_field=field.z)
@@ -2756,41 +2938,61 @@ class Field:
             divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.1)
 
-        cbar = plt.colorbar(coloredplot, cax=cax, **kwargs)
-
-        return cbar
+        return plt.colorbar(coloredplot, cax=cax, **kwargs)
 
     def k3d_nonzero(self, plot=None, multiplier=None,
                     color=dfu.color_palette('deep', 10, 'int')[0], **kwargs):
-        """Plots the voxels where the value of a scalar field is nonzero.
+        """Plots the mesh discretisation cells where the value of the field is
+        not zero using ``k3d`` voxels.
 
-        All mesh cells where the value of the field is not zero will
-        be marked using the same color. Only scalar fields can be
-        plotted. Otherwise, ValueError is raised. Different colour of
-        voxels can be passed in the RGB format using `color`
-        parameter. This function is often used to look at the defined
-        sample in the finite difference mesh, by inspecting its norm
-        (`field.norm.k3d_nonzero`). If `plot` is passed as a
-        `k3d.plot.Plot`, plot is added to it. Otherwise, a new k3d
-        plot is created. All arguments allowed in `k3d.voxels()` can
-        be passed. This function is to be called in Jupyter notebook.
+        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
+        It is often the case that the mesh region size is small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, the mesh points will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the optimum one is
+        computed internally. The colour of the "non-zero region" can be
+        determined using ``color`` as an integer.
+
+        This method plots the region using ``k3d.voxels()`` function, so any
+        keyword arguments accepted by it can be passed.
 
         Parameters
         ----------
-        color : int/hex, optional
-            Voxel color in hexadecimal format.
-        plot : k3d.plot.Plot, optional
-            If this argument is passed, plot is added to
-            it. Otherwise, a new k3d plot is created.
+        plot : k3d.Plot, optional
 
-        Example
-        -------
+            Plot to which plot should be added. Defaults to ``None`` - new plot
+            will be created.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. If ``multiplier`` is not passed, the
+            optimum one is computed internally. Defaults to ``None``.
+
+        color : list, optional
+
+            Colour of the "non-zero" region. Defaults to
+            ``seaborn.color_pallette(palette='deep')[0]``.
+
+
+        Examples
+        --------
+        1. Visualising the "non-zero" region using ``k3d``.
+
         >>> import discretisedfield as df
         ...
-        >>> p1 = (-50, -50, -50)
-        >>> p2 = (50, 50, 50)
+        >>> p1 = (-50e-9, -50e-9, -50e-9)
+        >>> p2 = (50e-9, 50e-9, 50e-9)
         >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
         >>> def normfun(pos):
         ...     x, y, z = pos
@@ -2803,6 +3005,7 @@ class Field:
         Plot(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
+
         """
         if self.dim != 1:
             msg = f'Cannot plot dim={self.dim} field.'
@@ -2822,47 +3025,77 @@ class Field:
                    plot=plot, **kwargs)
 
     def k3d_voxels(self, plot=None, filter_field=None, multiplier=None,
-                   cmap='viridis', n=256, **kwargs):
-        """Plots the scalar field as a coloured `k3d.voxels()` plot.
+                   cmap='cividis', n=256, **kwargs):
+        """Plots the scalar field as a coloured ``k3d.voxels()`` plot.
 
-        At all mesh cells, a voxel will be plotted anc coloured
-        according to its value. If the scalar field plotted is
-        extracted from a vector field, which has coordinates where the
-        norm of the field is zero, the norm of that vector field can
-        be passed using `norm_field` argument, so that voxels at those
-        coordinates are not showed. Only scalar fields can be
-        plotted. Otherwise, ValueError is raised. If `plot` is passed
-        as a `k3d.plot.Plot`, plot is added to it. Otherwise, a new
-        k3d plot is created. All arguments allowed in `k3d.voxels()`
-        can be passed. This function is to be called in Jupyter
-        notebook.
+        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
+        By passing ``filter_field``, the points at which the voxels are plotted
+        can be determined. More precisely, only voxels where ``filter_field !=
+        0`` are plotted. It is often the case that the mesh region size is
+        small (e.g. on a nanoscale) or very large (e.g. in units of
+        kilometeres). Accordingly, ``multiplier`` can be passed as
+        :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6, -3, 0, 3,
+        6,...). According to that value, the axes will be scaled and
+        appropriate units shown. For instance, if ``multiplier=1e-9`` is
+        passed, the mesh points will be divided by :math:`1\\,\\text{nm}` and
+        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
+        is not passed, the optimum one is computed internally. The colormap and
+        the resolution of the colours can be set by passing ``cmap`` and ``n``.
+
+        This method plots the region using ``k3d.voxels()`` function, so any
+        keyword arguments accepted by it can be passed.
 
         Parameters
         ----------
-        norm_field : discretisedfield.Field, optional
-            A (scalar) norm field used for determining whether certain
-            voxels should be plotted.
-        plot : k3d.plot.Plot, optional
-            If this argument is passed, plot is added to
-            it. Otherwise, a new k3d plot is created.
+        plot : k3d.Plot, optional
+
+            Plot to which plot should be added. Defaults to ``None`` - new plot
+            will be created.
+
+        filter_field : discretisedfield.Field, optional
+
+            A (scalar) field used for determining whether certain voxels should
+            be plotted. More precisely, only discretisation cells where
+            ``filter_field != 0`` are plotted.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. If ``multiplier`` is not passed, the
+            optimum one is computed internally. Defaults to ``None``.
+
+        cmap : str
+
+            Colormap. Defaults to ``'cividis'``.
+
+        n : int
+
+            The resolution of the colormap. Defaults to 256, which is also the
+            maximum possible value.
+
+        Raises
+        ------
+        ValueError
+
+            If the dimension of the field is not 1.
 
         Example
         -------
+        1. Plot the scalar field using ``k3d``.
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (-50, -50, -50)
         >>> p2 = (50, 50, 50)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> def normfun(pos):
-        ...     x, y, z = pos
-        ...     if x**2 + y**2 < 30**2:
-        ...         return 1
-        ...     else:
-        ...         return 0
-        >>> field.norm = normfun
-        >>> field.x.k3d_voxels(norm_field=field.norm)
+        ...
+        >>> field = df.Field(mesh, dim=1, value=5)
+        >>> field.k3d_voxels()
         Plot(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field.k3d_vectors`
@@ -2909,58 +3142,90 @@ class Field:
     def k3d_vectors(self, plot=None, color_field=None, points=True,
                     point_color=dfu.color_palette('deep', 10, 'int')[0],
                     point_size=None, multiplier=None, vector_multiplier=None,
-                    cmap='viridis', n=256, **kwargs):
-        """Plots the vector field as a `k3d.vectors()` plot.
+                    cmap='cividis', n=256, **kwargs):
+        """Plots the vector field using ``k3d``.
 
-        At all mesh cells, a vector will be plotted if its norm is not
-        zero. Vectors can be coloured according to the values of the
-        scalar field passed as `color_field`. Only vector fields can
-        be plotted. Otherwise, ValueError is raised. Points at the
-        discretisation cell centres can be added by setting
-        `points=True`. If `plot` is passed as a `k3d.plot.Plot`, plot
-        is added to it. Otherwise, a new k3d plot is created. All
-        arguments allowed in `k3d.vectors()` can be passed. This
-        function is to be called in Jupyter notebook.
+        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
+        It is often the case that the mesh region size is small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, the mesh points will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the optimum one is
+        computed internally. Similarly, the vectors can be too large or two
+        small to be plotted. In that case, ``vector_multiplier`` can be passed,
+        so that all vectors are divided by that scalar. If not passed, the
+        optimum value is computed internally. The colour of vectors can be
+        determined by passing ``color_field``, whereas the colormap and the
+        resolution can be determined by passing ``cmap`` and ``n``. In addition
+        to vectors, points at which the vectors are defined can be plotted if
+        ``points=True``. The size of the points can be passed using
+        ``point_size`` and if ``point_size`` is not passed, optimum size is
+        computed intenally. Similarly, ``point_color`` can be passed as an
+        integer.
+
+        This method plots the vectors using ``k3d.vectors()`` function, so any
+        keyword arguments accepted by it can be passed.
 
         Parameters
         ----------
+        plot : k3d.Plot, optional
+
+            Plot to which vector plot should be added. Defaults to ``None`` -
+            new plot will be created.
+
         color_field : discretisedfield.Field, optional
-            A (scalar) field used for determining the colours of
-            vectors.
+
+            Field determining the values according to which the vectors are
+            coloured. Defults to ``None``.
+
         points : bool, optional
-            If `True`, points will be added to the discretisation cell
-            centres.
-        plot : k3d.plot.Plot, optional
-            If this argument is passed, plot is added to
-            it. Otherwise, a new k3d plot is created.
 
-        Example
-        -------
-        1. Plotting an entire vector field.
+            If ``True``, points are added to the plot.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50, -50, -50)
-        >>> p2 = (50, 50, 50)
+        point_size : float, optional
+
+            Size of points.
+
+        point_color : int, optional
+
+            Colour of points. Defaults to
+            ``seaborn.color_pallette(palette='deep')[0]``.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. If ``multiplier`` is not passed, the
+            optimum one is computed internally. Defaults to ``None``.
+
+        vector_multiplier : numbers.Real, optional
+
+            Value by which all vectors are divided to fit the plot.
+
+        cmap : str
+
+            Colormap. Defaults to ``'cividis'``.
+
+        n : int
+
+            The resolution of the colormap. Defaults to 256.
+
+        Examples
+        --------
+        1. Visualising the vector field using ``k3d``.
+
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> field.k3d_vectors(color_field=field.x)
+        >>> mesh.k3d_points()
         Plot(...)
-
-        2. Plotting the slice of a vector field.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50, -50, -50)
-        >>> p2 = (50, 50, 50)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> field.plane('x').k3d_vectors(color_field=field.x)
-        Plot(...)
-
-        .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
 
         """
         if self.dim != 3:

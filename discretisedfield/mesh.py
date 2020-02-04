@@ -269,7 +269,7 @@ class Mesh:
             yield self.index2point(index)
 
     def __eq__(self, other):
-        """Equality relational operator.
+        """Relational operator ``==``.
 
         Two meshes are considered to be equal if:
 
@@ -322,7 +322,7 @@ class Mesh:
             return False
 
     def __ne__(self, other):
-        """Inequality relational operator.
+        """Relational operator ``!=``.
 
         This method returns ``not self == other``. For details, please
         refer to ``discretisedfield.Mesh.__eq__`` method.
@@ -544,7 +544,7 @@ class Mesh:
         ------
         discretisedfield.Mesh
 
-            An extracted mesh
+            An extracted mesh.
 
         Examples
         --------
@@ -561,24 +561,10 @@ class Mesh:
 
         2. Extracting the plane mesh at the mesh region centre.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 5, 5)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> plane_mesh = mesh.plane('z')
 
         3. Specifying the number of points.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 5, 5)
-        >>> cell = (1, 1, 1)
-        ...
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> plane_mesh = mesh.plane('z', n=(3, 3))
 
         .. seealso:: :py:func:`~discretisedfield.Region.line`
@@ -749,7 +735,7 @@ class Mesh:
 
         Examples
         --------
-        1. Visualising the mesh using ```matplotlib``.
+        1. Visualising the mesh using ``matplotlib``.
 
         >>> import discretisedfield as df
         ...
@@ -1047,7 +1033,7 @@ class Mesh:
         color : int, optional
 
             Colour of points. Defaults to
-            ``seaborn.color_pallette(palette='deep')``.
+            ``seaborn.color_pallette(palette='deep')[0]``.
 
         Examples
         --------

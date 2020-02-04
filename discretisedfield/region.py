@@ -288,7 +288,7 @@ class Region:
         return f'Region(p1={self.pmin}, p2={self.pmax})'
 
     def __eq__(self, other):
-        """Equality operator.
+        """Relational operator ``==``.
 
         Two regions are considered to be equal if they have the same minimum
         and maximum coordinate points: :math:`\\mathbf{p}^\\text{max}_{1} =
@@ -334,7 +334,7 @@ class Region:
             return False
 
     def __ne__(self, other):
-        """Inverse of equality operator.
+        """Relational operator ``!=``.
 
         This method returns ``not self == other``.
 
