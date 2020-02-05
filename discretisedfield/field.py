@@ -2837,7 +2837,7 @@ class Field:
         >>> fig = plt.figure()
         >>> ax = fig.add_subplot(111)
         >>> field.plane('y').quiver(ax=ax, color_field=field.z)
-        <matplotlib.image.AxesImage object at ...>
+        <matplotlib.quiver.Quiver object at ...>
 
         .. seealso:: :py:func:`~discretisedfield.Field.imshow`
 

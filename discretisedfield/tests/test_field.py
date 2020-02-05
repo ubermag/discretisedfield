@@ -1,7 +1,9 @@
 import os
+import re
 import types
 import random
 import pytest
+import numbers
 import itertools
 import numpy as np
 import discretisedfield as df
@@ -11,23 +13,77 @@ import discretisedfield.tests as dft
 
 def check_field(field):
     assert isinstance(field.mesh, df.Mesh)
+
     assert isinstance(field.dim, int)
+    assert field.dim > 0
+
     assert isinstance(field.array, np.ndarray)
-    assert field.array.shape[-1] == field.dim
-    assert isinstance(field.norm.array, np.ndarray)
-    assert field.norm.array.shape[-1] == 1
+    assert field.array.shape == (*field.mesh.n, field.dim)
+
+    assert isinstance(field.norm, df.Field)
+    assert isinstance(abs(field), df.Field)
+    assert field.norm == abs(field)
+    assert field.norm.dim == 1
+
+    assert isinstance(field.average, tuple)
+    assert len(field.average) == field.dim
+
+    assert isinstance(repr(field), str)
+    pattern = (r'^Field\(mesh=Mesh\(region=Region\(p1=\(.+\), '
+               r'p2=\(.+\)\), .+\), dim=\d+\)$')
+    assert re.search(pattern, repr(field))
+
+    assert isinstance(field.__iter__(), types.GeneratorType)
+    assert len(list(field)) == len(field.mesh)
+
+    assert isinstance(field(field.mesh.region.centre), (tuple, np.ndarray))
 
     assert field == field
     assert not field != field
 
+    assert +field == field
+    assert -(-field) == field
+    assert field + field == 2*field
+    assert 1*field == field
+    assert -1*field == -field
+
+    assert isinstance(field.integral, tuple)
+    assert len(field.integral) == field.dim
+
+    if field.dim == 1:
+        assert isinstance(field.grad, df.Field)
+        assert field.grad.dim == 3
+
+    if field.dim == 3:
+        assert isinstance(field.x, df.Field)
+        assert field.x.dim == 1
+
+        assert isinstance(field.y, df.Field)
+        assert field.y.dim == 1
+
+        assert isinstance(field.z, df.Field)
+        assert field.z.dim == 1
+
+        assert isinstance(field.div, df.Field)
+        assert field.div.dim == 1
+
+        assert isinstance(field.curl, df.Field)
+        assert field.curl.dim == 3
+
+        assert isinstance(field.plane('z').topological_charge_density,
+                          df.Field)
+        assert isinstance(field.plane('z').topological_charge(), numbers.Real)
+        assert isinstance(field.plane('z').bergluescher, numbers.Real)
+
 class TestField:
     def setup(self):
-        # Create meshes using valid arguments from TestMesh.
+        # Get meshes using valid arguments from TestMesh.
         tm = dft.TestMesh()
         tm.setup()
         self.meshes = []
         for p1, p2, n, cell in tm.valid_args:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+            region = df.Region(p1=p1, p2=p2)
+            mesh = df.Mesh(region=region, n=n, cell=cell)
             self.meshes.append(mesh)
 
         # Create lists of field values.
@@ -44,7 +100,6 @@ class TestField:
                        lambda c: c[0] + c[1] + c[2] + 1,
                        lambda c: (c[0]-1)**2 - c[1]+7 + c[2]*0.1,
                        lambda c: np.sin(c[0]) + np.cos(c[1]) - np.sin(2*c[2])]
-
         self.vfuncs = [lambda c: (1, 2, 0),
                        lambda c: (-2.4, 1e-3, 9),
                        lambda c: (c[0], c[1], c[2] + 100),
@@ -53,7 +108,8 @@ class TestField:
                        lambda c: (np.sin(c[0]), np.cos(c[1]), -np.sin(2*c[2]))]
 
         # Create a field for plotting
-        mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
+        mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9),
+                       n=(5, 5, 5))
         self.pf = df.Field(mesh, dim=3, value=(0, 0, 2))
 
         def normfun(pos):
@@ -65,25 +121,11 @@ class TestField:
 
         self.pf.norm = normfun
 
-    def test_init(self):
-        p1 = (0, 0, 0)
-        p2 = (5, 10, 15)
-        cell = (1, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        dim = 2
-        value = [1, 2]
-        f = df.Field(mesh, dim=dim, value=value)
-
-        check_field(f)
-        assert f.array.shape == (5, 10, 15, 2)
-        assert np.all(f.array[..., 0] == value[0])
-        assert np.all(f.array[..., 1] == value[1])
-        assert f.norm.array.shape == (5, 10, 15, 1)
-
-    def test_valid_init(self):
+    def test_init_valid_args(self):
         for mesh in self.meshes:
             for value in self.consts:
                 f = df.Field(mesh, dim=1, value=value)
+
                 check_field(f)
                 assert f.value == value
                 assert np.all(f.array == value)
