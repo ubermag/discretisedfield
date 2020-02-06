@@ -20,23 +20,43 @@ def check_field(field):
     assert isinstance(field.array, np.ndarray)
     assert field.array.shape == (*field.mesh.n, field.dim)
 
-    assert isinstance(field.norm, df.Field)
-    assert isinstance(abs(field), df.Field)
-    assert field.norm == abs(field)
-    assert field.norm.dim == 1
+    norm = field.norm
+    assert isinstance(norm, df.Field)
+    assert norm == abs(field)
+    assert norm.dim == 1
 
-    assert isinstance(field.average, tuple)
-    assert len(field.average) == field.dim
+    average = field.average
+    assert isinstance(average, tuple)
+    assert len(average) == field.dim
 
-    assert isinstance(repr(field), str)
+    rstr = repr(field)
+    assert isinstance(rstr, str)
     pattern = (r'^Field\(mesh=Mesh\(region=Region\(p1=\(.+\), '
                r'p2=\(.+\)\), .+\), dim=\d+\)$')
-    assert re.search(pattern, repr(field))
+    assert re.search(pattern, rstr)
 
     assert isinstance(field.__iter__(), types.GeneratorType)
     assert len(list(field)) == len(field.mesh)
 
+    line = field.line(p1=field.mesh.region.pmin,
+                      p2=field.mesh.region.pmax,
+                      n=5)
+    assert isinstance(line, types.GeneratorType)
+    assert len(list(line)) == 5
+
+    plane = field.plane('z', n=(2, 2))
+    assert isinstance(plane, df.Field)
+    assert len(plane.mesh) == 4
+    assert plane.mesh.n == (2, 2, 1)
+
+    #project = field.project('y', n=(2, 2))
+    #assert isinstance(project, df.Field)
+    #assert len(project.mesh) == 4
+    #assert project.mesh.n == (2, 1, 2)
+
     assert isinstance(field(field.mesh.region.centre), (tuple, np.ndarray))
+    assert isinstance(field(field.mesh.region.random_point()),
+                      (tuple, np.ndarray))
 
     assert field == field
     assert not field != field
@@ -44,15 +64,20 @@ def check_field(field):
     assert +field == field
     assert -(-field) == field
     assert field + field == 2*field
+    assert field - (-field) == field + field
     assert 1*field == field
     assert -1*field == -field
 
-    assert isinstance(field.integral, tuple)
-    assert len(field.integral) == field.dim
+    integral = field.integral
+    assert isinstance(integral, tuple)
+    assert len(integral) == field.dim
 
     if field.dim == 1:
-        assert isinstance(field.grad, df.Field)
-        assert field.grad.dim == 3
+        grad = field.grad
+        assert isinstance(grad, df.Field)
+        assert grad.dim == 3
+
+        assert all(i not in dir(field) for i in 'xyz')
 
     if field.dim == 3:
         assert isinstance(field.x, df.Field)
@@ -64,16 +89,24 @@ def check_field(field):
         assert isinstance(field.z, df.Field)
         assert field.z.dim == 1
 
-        assert isinstance(field.div, df.Field)
-        assert field.div.dim == 1
+        div = field.div
+        assert isinstance(div, df.Field)
+        assert div.dim == 1
 
-        assert isinstance(field.curl, df.Field)
-        assert field.curl.dim == 3
+        curl = field.curl
+        assert isinstance(curl, df.Field)
+        assert curl.dim == 3
 
-        assert isinstance(field.plane('z').topological_charge_density,
-                          df.Field)
-        assert isinstance(field.plane('z').topological_charge(), numbers.Real)
-        assert isinstance(field.plane('z').bergluescher, numbers.Real)
+        field_plane = field.plane('z')
+        assert isinstance(field_plane.topological_charge_density, df.Field)
+        assert isinstance(field_plane.topological_charge(), numbers.Real)
+        assert isinstance(field_plane.bergluescher, numbers.Real)
+
+        orientation = field.orientation
+        assert isinstance(orientation, df.Field)
+        assert orientation.dim == 3
+
+        assert all(i in dir(field) for i in 'xyz')
 
 class TestField:
     def setup(self):
@@ -107,19 +140,19 @@ class TestField:
                        lambda c: (c[0]-1, c[1]+70, c[2]*0.1),
                        lambda c: (np.sin(c[0]), np.cos(c[1]), -np.sin(2*c[2]))]
 
-        # Create a field for plotting
-        mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9),
+        # Create a field for plotting tests
+        mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9),
+                       p2=(5e-9, 5e-9, 5e-9),
                        n=(5, 5, 5))
-        self.pf = df.Field(mesh, dim=3, value=(0, 0, 2))
 
-        def normfun(pos):
+        def norm_fun(pos):
             x, y, z = pos
             if x**2 + y**2 <= 5**2:
                 return 1
             else:
                 return 0
 
-        self.pf.norm = normfun
+        self.pf = df.Field(mesh, dim=3, value=(0, 0, 2), norm=norm_fun)
 
     def test_init_valid_args(self):
         for mesh in self.meshes:
@@ -131,58 +164,63 @@ class TestField:
                 assert np.all(f.array == value)
                 assert f(f.mesh.region.random_point()) == value
                 assert f(f.mesh.region.centre) == value
+
             for value in self.sfuncs:
                 f = df.Field(mesh, dim=1, value=value)
+
                 check_field(f)
+
             for value in self.iters:
                 f = df.Field(mesh, dim=3, value=value)
+
                 check_field(f)
                 assert np.equal(f.value, value).all()
                 assert np.equal(f(f.mesh.region.random_point()), value).all()
                 assert np.equal(f(f.mesh.region.centre), value).all()
+
             for value in self.vfuncs:
                 f = df.Field(mesh, dim=3, value=value)
                 check_field(f)
 
-    def test_invalid_init(self):
+    def test_init_invalid_args(self):
         with pytest.raises(TypeError):
-            mesh = 'wrong_mesh_string'
+            mesh = 'meaningless_mesh_string'
             f = df.Field(mesh, dim=1)
 
         for mesh in self.meshes:
-            with pytest.raises(TypeError):
-                f = df.Field(mesh, dim='wrong_dim')
+            with pytest.raises(ValueError):
+                f = df.Field(mesh, dim=0)
 
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
             f = df.Field(mesh, dim=3)
-            value = np.zeros(f.mesh.n + (f.dim,))
-            f.value = value
+            f.value = np.ones((*f.mesh.n, f.dim,))
 
             check_field(f)
             assert isinstance(f.value, np.ndarray)
-            assert np.equal(f.array, 0).all()
+            assert np.equal(f.array, 1).all()
 
             with pytest.raises(ValueError) as excinfo:
                 f.array = (1, 2, 3)
             assert 'Unsupported' in str(excinfo.value)
 
-    def test_set_with_function(self):
+    def test_set_with_callable(self):
         for mesh in self.meshes:
             for func in self.sfuncs:
                 f = df.Field(mesh, dim=1, value=func)
-                for j in range(10):
-                    c = f.mesh.region.random_point()
-                    c = f.mesh.index2point(f.mesh.point2index(c))
-                    assert f(c) == func(c)
+
+                rp = f.mesh.region.random_point()
+                # Make sure to be at the centre of the cell
+                rp = f.mesh.index2point(f.mesh.point2index(rp))
+                assert f(rp) == func(rp)
 
         for mesh in self.meshes:
             for func in self.vfuncs:
                 f = df.Field(mesh, dim=3, value=func)
-                for j in range(10):
-                    c = f.mesh.region.random_point()
-                    c = f.mesh.index2point(f.mesh.point2index(c))
-                    assert np.all(f(c) == func(c))
+
+                rp = f.mesh.region.random_point()
+                rp = f.mesh.index2point(f.mesh.point2index(rp))
+                assert np.all(f(rp) == func(rp))
 
     def test_set_with_dict(self):
         p1 = (0, 0, 0)
@@ -199,37 +237,25 @@ class TestField:
 
     def test_set_exception(self):
         for mesh in self.meshes:
-            f = df.Field(mesh, dim=3)
             with pytest.raises(ValueError):
-                f.value = 'string'
+                f = df.Field(mesh, dim=3, value='meaningless_string')
+
             with pytest.raises(ValueError):
-                f.value = 1+2j
-
-    def test_repr(self):
-        for mesh in self.meshes:
-            f = df.Field(mesh, dim=1)
-            check_field(f)
-            rstr = repr(f)
-            assert isinstance(rstr, str)
-            assert 'mesh=' in rstr
-            assert 'dim=1' in rstr
-
-            f = df.Field(mesh, dim=3)
-            check_field(f)
-            rstr = repr(f)
-            assert isinstance(rstr, str)
-            assert 'mesh=' in rstr
-            assert 'dim=3' in rstr
+                f = df.Field(mesh, dim=3, value=5+5j)
 
     def test_value_is_not_preserved(self):
-        for mesh in self.meshes:
-            f = df.Field(mesh, dim=3)
-            f.value = (1, 1, 1)
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 10e-9)
+        n = (5, 5, 5)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
-            assert f.value == (1, 1, 1)
+        f = df.Field(mesh, dim=3)
+        f.value = (1, 1, 1)
 
-            f.array[0, 0, 0, 0] = 3
-            assert isinstance(f.value, np.ndarray)
+        assert f.value == (1, 1, 1)
+
+        f.array[0, 0, 0, 0] = 3
+        assert isinstance(f.value, np.ndarray)
 
     def test_norm(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
@@ -270,28 +296,40 @@ class TestField:
         assert f.norm.average == (5,)
 
     def test_norm_is_not_preserved(self):
-        for mesh in self.meshes:
-            f = df.Field(mesh, dim=3)
-            f.value = (0, 3, 0)
-            f.norm = 1
-            assert np.all(f.norm.array == 1)
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 10e-9)
+        n = (5, 5, 5)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
-            f.value = (0, 2, 0)
-            assert np.all(f.norm.value != 1)
-            assert np.all(f.norm.array == 2)
+        f = df.Field(mesh, dim=3)
+
+        f.value = (0, 3, 0)
+        f.norm = 1
+        assert np.all(f.norm.array == 1)
+
+        f.value = (0, 2, 0)
+        assert np.all(f.norm.value != 1)
+        assert np.all(f.norm.array == 2)
 
     def test_norm_scalar_field_exception(self):
-        for mesh in self.meshes:
-            value = 1
-            f = df.Field(mesh, dim=1, value=4)
-            with pytest.raises(ValueError):
-                f.norm = 1
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 10e-9)
+        n = (5, 5, 5)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        f = df.Field(mesh, dim=1, value=4)
+        with pytest.raises(ValueError):
+            f.norm = 1
 
     def test_norm_zero_field_exception(self):
-        for mesh in self.meshes:
-            f = df.Field(mesh, dim=3, value=(0, 0, 0))
-            with pytest.raises(ValueError):
-                f.norm = 1
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 10e-9)
+        n = (5, 5, 5)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        f = df.Field(mesh, dim=3, value=(0, 0, 0))
+        with pytest.raises(ValueError):
+            f.norm = 1
 
     def test_orientation(self):
         p1 = (-5e-9, -5e-9, -5e-9)

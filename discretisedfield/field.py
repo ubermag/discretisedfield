@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 # div...
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
-               dim=ts.Scalar(expected_type=int, unsigned=True, const=True))
+               dim=ts.Scalar(expected_type=int, positive=True, const=True))
 class Field:
     """Finite difference field.
 
