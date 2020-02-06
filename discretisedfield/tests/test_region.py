@@ -49,6 +49,7 @@ def check_region(region):
 
     assert region == region
     assert not region != region
+    assert region != 2
 
 class TestRegion:
     def setup(self):

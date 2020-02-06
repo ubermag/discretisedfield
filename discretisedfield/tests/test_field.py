@@ -147,12 +147,15 @@ class TestField:
 
         def norm_fun(pos):
             x, y, z = pos
-            if x**2 + y**2 <= 5**2:
+            if x**2 + y**2 <= (5e-9)**2:
                 return 1
             else:
                 return 0
 
         self.pf = df.Field(mesh, dim=3, value=(0, 0, 2), norm=norm_fun)
+
+        # Make one vector point out-of-plane
+        self.pf.array[0, 0, 0, :] = (0, 0, 1)
 
     def test_init_valid_args(self):
         for mesh in self.meshes:
@@ -353,24 +356,24 @@ class TestField:
         assert f.orientation((-1.5e-9, 3e-9, 0)) == (0, 0, 0)
         assert f.orientation((1.5e-9, 3e-9, 0)) == (0.6, 0, 0.8)
 
+        f = df.Field(mesh, dim=1, value=0)
+        with pytest.raises(ValueError):
+            of = f.orientation
+
     def test_average(self):
         value = -1e-3 + np.pi
         tol = 1e-12
-        for mesh in self.meshes:
-            f = df.Field(mesh, dim=1, value=value)
 
-            assert isinstance(f.average, tuple)
-            assert len(f.average) == 1
-            assert abs(f.average[0] - value) < tol
+        p1 = (-5e-9, -5e-9, -5e-9)
+        p2 = (5e-9, 5e-9, 5e-9)
+        cell = (1e-9, 1e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        value = np.array([1.1, -2e-3, np.pi])
-        tol = 1e-12
-        for mesh in self.meshes:
-            f = df.Field(mesh, dim=3, value=value)
+        f = df.Field(mesh, dim=1, value=2)
+        assert abs(f.average[0] - 2) < tol
 
-            assert isinstance(f.average, tuple)
-            assert len(f.average) == 3
-            assert np.allclose(f.average, value)
+        f = df.Field(mesh, dim=3, value=(0, 1, 2))
+        assert np.allclose(f.average, (0, 1, 2))
 
     def test_field_component(self):
         for mesh in self.meshes:
@@ -736,6 +739,8 @@ class TestField:
             res = f1 @ f2
         with pytest.raises(ValueError):
             res = f1 @ f2
+        with pytest.raises(TypeError):
+            res = f1 @ 3
 
         # Fields defined on different meshes
         mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
@@ -1258,7 +1263,7 @@ class TestField:
 
                 os.remove(filename)
 
-    def test_write_wrong_extension(self):
+    def test_read_write_invalid_extension(self):
         filename = 'testfile.jpg'
 
         p1 = (0, 0, 0)
@@ -1269,6 +1274,10 @@ class TestField:
         f = df.Field(mesh, dim=1, value=5e-12)
         with pytest.raises(ValueError) as excinfo:
             f.write(filename)
+        assert 'jpg not supported' in str(excinfo.value)
+
+        with pytest.raises(ValueError) as excinfo:
+            f = df.Field.fromfile(filename)
         assert 'jpg not supported' in str(excinfo.value)
 
     def test_read_mumax3_ovffile(self):
@@ -1343,7 +1352,7 @@ class TestField:
             self.pf.x.plane('y').quiver(ax=ax)
         assert 'Cannot plot' in str(excinfo.value)
 
-        self.pf.plane('x', n=(3, 4)).quiver(ax=ax)
+        self.pf.plane('z', n=(3, 4)).quiver(ax=ax)
         self.pf.plane('x', n=(3, 4)).quiver(ax=ax, color_field=self.pf.y)
 
     def test_colorbar(self):
@@ -1368,6 +1377,13 @@ class TestField:
         self.pf.x.k3d_voxels()
         self.pf.x.k3d_voxels(filter_field=self.pf.norm)
 
+        # Exceptions
+        with pytest.raises(ValueError):
+            self.pf.x.k3d_voxels(filter_field=self.pf)  # filter field dim=3
+
+        with pytest.raises(ValueError):
+            self.pf.x.k3d_voxels(filter_field=self.pf.norm, n=300)  # n > 256
+
     def test_k3d_vectors(self):
         with pytest.raises(ValueError) as excinfo:
             self.pf.x.k3d_vectors()
@@ -1376,6 +1392,10 @@ class TestField:
         self.pf.k3d_vectors()
         self.pf.k3d_vectors(color_field=self.pf.z)
         self.pf.k3d_vectors(points=False)
+
+        # Exceptions
+        with pytest.raises(ValueError):
+            self.pf.x.k3d_vectors(color_field=self.pf)  # color field dim=3
 
     def test_k3d_nanosized_sample(self):
         p1 = (0, 0, 0)

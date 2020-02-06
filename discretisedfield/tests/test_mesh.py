@@ -438,6 +438,9 @@ class TestMesh:
         with pytest.raises(ValueError):
             plane = list(mesh.plane('z', z=1))
 
+        with pytest.raises(ValueError):
+            plane = list(mesh.plane(x=2, z=1))
+
         info = mesh.plane('x').info
         assert info['planeaxis'] == 0
         assert info['axis1'] == 1
