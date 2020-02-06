@@ -152,7 +152,14 @@ class TestField:
             else:
                 return 0
 
-        self.pf = df.Field(mesh, dim=3, value=(0, 0, 2), norm=norm_fun)
+        def value_fun(pos):
+            x, y, z = pos
+            if x <= 0:
+                return (0, 0, 1)
+            else:
+                return (0, 0, -1)
+
+        self.pf = df.Field(mesh, dim=3, value=value_fun, norm=norm_fun)
 
         # Make one vector point out-of-plane
         self.pf.array[0, 0, 0, :] = (0, 0, 1)
