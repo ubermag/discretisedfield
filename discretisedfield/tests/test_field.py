@@ -1344,8 +1344,8 @@ class TestField:
             self.pf.plane('z').imshow(ax=ax)
         assert 'Cannot plot' in str(excinfo.value)
 
-        self.pf.x.plane('z', n=(3, 4)).imshow(ax=ax)
-        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax, filter_field=self.pf.norm)
+        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
+        self.pf.x.plane('z').imshow(ax=ax, filter_field=self.pf.norm)
 
     def test_quiver(self):
         fig = plt.figure()
@@ -1377,32 +1377,27 @@ class TestField:
         self.pf.norm.k3d_nonzero()
 
     def test_k3d_voxels(self):
-        with pytest.raises(ValueError) as excinfo:
-            self.pf.k3d_voxels()
-        assert 'Cannot plot' in str(excinfo.value)
-
         self.pf.x.k3d_voxels()
         self.pf.x.k3d_voxels(filter_field=self.pf.norm)
 
         # Exceptions
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.k3d_voxels()
         with pytest.raises(ValueError):
             self.pf.x.k3d_voxels(filter_field=self.pf)  # filter field dim=3
-
         with pytest.raises(ValueError):
             self.pf.x.k3d_voxels(filter_field=self.pf.norm, n=300)  # n > 256
 
     def test_k3d_vectors(self):
-        with pytest.raises(ValueError) as excinfo:
-            self.pf.x.k3d_vectors()
-        assert 'Cannot plot' in str(excinfo.value)
-
         self.pf.k3d_vectors()
         self.pf.k3d_vectors(color_field=self.pf.z)
         self.pf.k3d_vectors(points=False)
 
         # Exceptions
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.x.k3d_vectors()  # dim=1
         with pytest.raises(ValueError):
-            self.pf.x.k3d_vectors(color_field=self.pf)  # color field dim=3
+            self.pf.k3d_vectors(color_field=self.pf)  # color field dim=3
 
     def test_k3d_nanosized_sample(self):
         p1 = (0, 0, 0)

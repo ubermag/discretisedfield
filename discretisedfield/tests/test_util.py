@@ -44,3 +44,11 @@ def test_assemble_index():
     assert dfu.assemble_index(index_dict) == (4, 5, 3)
     index_dict = {1: 3, 2: 4}
     assert dfu.assemble_index(index_dict) == (0, 3, 4)
+
+
+def test_vectors():
+    coordinates = np.array([(0, 0, 0)])
+    vectors = np.array([(1, 1, 1)])
+    colors = [100]
+
+    dfu.vectors(coordinates, vectors, colors)

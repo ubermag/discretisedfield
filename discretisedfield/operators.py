@@ -127,9 +127,6 @@ def stack(fields):
         msg = 'Only fields defined on the same mesh can be stacked.'
         raise ValueError(msg)
 
-    array_list = []
-    for f in fields:
-        array_list.append(f.array[..., 0])
-
+    array_list = [f.array[..., 0] for f in fields]
     return df.Field(fields[0].mesh, dim=len(fields),
                     value=np.stack(array_list, axis=3))
