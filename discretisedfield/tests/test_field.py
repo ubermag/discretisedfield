@@ -4,6 +4,7 @@ import types
 import random
 import pytest
 import numbers
+import tempfile
 import itertools
 import numpy as np
 import discretisedfield as df
@@ -21,8 +22,7 @@ def check_field(field):
     assert field.array.shape == (*field.mesh.n, field.dim)
 
     average = field.average
-    assert isinstance(average, tuple)
-    assert len(average) == field.dim
+    assert isinstance(average, (tuple, numbers.Real))
 
     rstr = repr(field)
     assert isinstance(rstr, str)
@@ -36,8 +36,9 @@ def check_field(field):
     line = field.line(p1=field.mesh.region.pmin,
                       p2=field.mesh.region.pmax,
                       n=5)
-    assert isinstance(line, types.GeneratorType)
-    assert len(list(line)) == 5
+    assert isinstance(line, df.Line)
+    assert len(line.points) == 5
+    assert len(line.values) == 5
 
     plane = field.plane('z', n=(2, 2))
     assert isinstance(plane, df.Field)
@@ -48,9 +49,9 @@ def check_field(field):
     assert isinstance(project, df.Field)
     assert project.mesh.n[2] == 1
 
-    assert isinstance(field(field.mesh.region.centre), (tuple, np.ndarray))
+    assert isinstance(field(field.mesh.region.centre), (tuple, numbers.Real))
     assert isinstance(field(field.mesh.region.random_point()),
-                      (tuple, np.ndarray))
+                      (tuple, numbers.Real))
 
     assert field == field
     assert not field != field
@@ -63,8 +64,7 @@ def check_field(field):
     assert -1*field == -field
 
     integral = field.integral
-    assert isinstance(integral, tuple)
-    assert len(integral) == field.dim
+    assert isinstance(integral, (tuple, numbers.Real))
 
     if field.dim == 1:
         grad = field.grad
@@ -192,6 +192,9 @@ class TestField:
             check_field(f)
             assert isinstance(f.value, np.ndarray)
             assert f.average == (1, 1, 1)
+
+            with pytest.raises(ValueError):
+                f.value = np.ones((2, 2))
 
     def test_set_with_callable(self):
         for mesh in self.meshes:
@@ -352,7 +355,7 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=2)
-        assert abs(f.average[0] - 2) < tol
+        assert abs(f.average - 2) < tol
 
         f = df.Field(mesh, dim=3, value=(0, 1, 2))
         assert np.allclose(f.average, (0, 1, 2))
@@ -422,7 +425,7 @@ class TestField:
         f = df.Field(mesh, dim=1, value=3)
         res = -f
         check_field(res)
-        assert res.average == (-3,)
+        assert res.average == -3
         assert f == +f
         assert f == -(-f)
         assert f == +(-(-f))
@@ -445,9 +448,9 @@ class TestField:
         # Scalar field
         f = df.Field(mesh, dim=1, value=2)
         res = f**2
-        assert res.average == (4,)
+        assert res.average == 4
         res = f**(-1)
-        assert res.average == (0.5,)
+        assert res.average == 0.5
 
         # Attempt vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -2))
@@ -471,13 +474,13 @@ class TestField:
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=1, value=-0.2)
         res = f1 + f2
-        assert res.average == (1,)
+        assert res.average == 1
         res = f1 - f2
-        assert res.average == (1.4,)
+        assert res.average == 1.4
         f1 += f2
-        assert f1.average == (1,)
+        assert f1.average == 1
         f1 -= f2
-        assert f1.average == (1.2,)
+        assert f1.average == 1.2
 
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, 3))
@@ -534,28 +537,28 @@ class TestField:
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=1, value=-2)
         res = f1 * f2
-        assert res.average == (-2.4,)
+        assert res.average == -2.4
         res = f1 / f2
-        assert res.average == (-0.6,)
+        assert res.average == -0.6
         f1 *= f2
-        assert f1.average == (-2.4,)
+        assert f1.average == -2.4
         f1 /= f2
-        assert f1.average == (1.2,)
+        assert f1.average == 1.2
 
         # Scalar field with a scalar
         f = df.Field(mesh, dim=1, value=5)
         res = f * 2  # __mul__
-        assert res.average == (10,)
+        assert res.average == 10
         res = 3 * f  # __rmul__
-        assert res.average == (15,)
+        assert res.average == 15
         res = f / 2  # __mul__
-        assert res.average == (2.5,)
+        assert res.average == 2.5
         res = 10 / f  # __rmul__
-        assert res.average == (2,)
+        assert res.average == 2
         f *= 10  # __imul__
-        assert f.average == (50,)
+        assert f.average == 50
         f /= 10  # __idiv__
-        assert f.average == (5,)
+        assert f.average == 5
 
         # Vector field with a scalar field
         f1 = df.Field(mesh, dim=1, value=2)
@@ -644,18 +647,18 @@ class TestField:
         res = f1@f1
         assert res.dim == 1
         assert res.array.shape == (5, 5, 5, 1)
-        assert res.average == (0,)
+        assert res.average == 0
 
         # Orthogonal vectors
         f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
         f3 = df.Field(mesh, dim=3, value=(0, 0, 1))
-        assert (f1 @ f2).average == (0,)
-        assert (f1 @ f3).average == (0,)
-        assert (f2 @ f3).average == (0,)
-        assert (f1 @ f1).average == (1,)
-        assert (f2 @ f2).average == (1,)
-        assert (f3 @ f3).average == (1,)
+        assert (f1 @ f2).average == 0
+        assert (f1 @ f3).average == 0
+        assert (f2 @ f3).average == 0
+        assert (f1 @ f1).average == 1
+        assert (f2 @ f2).average == 1
+        assert (f3 @ f3).average == 1
 
         # Check if commutative
         assert f1 @ f2 == f2 @ f1
@@ -676,9 +679,9 @@ class TestField:
         assert f1 @ f2 == f2 @ f1
 
         # The dot product should be x*z + y*x + z*y
-        assert (f1 @ f2)((1, 1, 1)) == (3,)
-        assert (f1 @ f2)((3, 1, 1)) == (7,)
-        assert (f1 @ f2)((5, 7, 1)) == (47,)
+        assert (f1 @ f2)((1, 1, 1)) == 3
+        assert (f1 @ f2)((3, 1, 1)) == 7
+        assert (f1 @ f2)((5, 7, 1)) == 47
 
         # Check norm computed using dot product
         assert f1.norm == (f1 @ f1)**(0.5)
@@ -723,9 +726,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=0)
 
         check_field(f.derivative('x'))
-        assert f.derivative('x').average == (0,)
-        assert f.derivative('y').average == (0,)
-        assert f.derivative('z').average == (0,)
+        assert f.derivative('x').average == 0
+        assert f.derivative('y').average == 0
+        assert f.derivative('z').average == 0
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
         def value_fun(pos):
@@ -734,9 +737,9 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative('x').average == (1,)
-        assert f.derivative('y').average == (1,)
-        assert f.derivative('z').average == (1,)
+        assert f.derivative('x').average == 1
+        assert f.derivative('y').average == 1
+        assert f.derivative('z').average == 1
 
         # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
         def value_fun(pos):
@@ -745,12 +748,12 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative(0)((3, 1, 3)) == (1,)
-        assert f.derivative(1)((3, 1, 3)) == (4,)
-        assert f.derivative(2)((3, 1, 3)) == (1,)
-        assert f.derivative(0)((5, 3, 5)) == (3,)
-        assert f.derivative(1)((5, 3, 5)) == (6,)
-        assert f.derivative(2)((5, 3, 5)) == (1,)
+        assert f.derivative(0)((3, 1, 3)) == 1
+        assert f.derivative(1)((3, 1, 3)) == 4
+        assert f.derivative(2)((3, 1, 3)) == 1
+        assert f.derivative(0)((5, 3, 5)) == 3
+        assert f.derivative(1)((5, 3, 5)) == 6
+        assert f.derivative(2)((5, 3, 5)) == 1
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
@@ -760,9 +763,9 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative('x')((7, 5, 1)) == (10,)
-        assert f.derivative('y')((7, 5, 1)) == (16,)
-        assert f.derivative('z')((7, 5, 1)) == (35,)
+        assert f.derivative('x')((7, 5, 1)) == 10
+        assert f.derivative('y')((7, 5, 1)) == 16
+        assert f.derivative('z')((7, 5, 1)) == 35
 
         # f(x, y, z) = (0, 0, 0)
         # -> dfdx = (0, 0, 0)
@@ -835,9 +838,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=value_fun)
 
         # only one cell in the z-direction
-        assert f.plane('x').derivative('x').average == (0,)
-        assert f.plane('y').derivative('y').average == (0,)
-        assert f.derivative('z').average == (0,)
+        assert f.plane('x').derivative('x').average == 0
+        assert f.plane('y').derivative('y').average == 0
+        assert f.derivative('z').average == 0
 
         # Vector field: f(x, y, z) = (x, y, z)
         # -> grad(f) = (1, 1, 1)
@@ -915,7 +918,7 @@ class TestField:
 
         check_field(f.div)
         assert f.div.dim == 1
-        assert f.div.average == (0,)
+        assert f.div.average == 0
 
         check_field(f.curl)
         assert f.curl.dim == 3
@@ -930,7 +933,7 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.div.average == (3,)
+        assert f.div.average == 3
         assert f.curl.average == (0, 0, 0)
 
         # f(x, y, z) = (x*y, y*z, x*y*z)
@@ -975,10 +978,10 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=0)
-        assert f.integral == (0,)
+        assert f.integral == 0
 
         f = df.Field(mesh, dim=1, value=2)
-        assert f.integral == (2000,)
+        assert f.integral == 2000
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
         assert f.integral == (-1000, 0, 3000)
@@ -1006,7 +1009,7 @@ class TestField:
         q = f.plane('z').topological_charge_density
         check_field(q)
         assert q.dim == 1
-        assert q.average == (0,)
+        assert q.average == 0
         assert f.plane('z').topological_charge(method='continuous') == 0
         assert f.plane('z').topological_charge(method='berg-luescher') == 0
 
@@ -1044,15 +1047,14 @@ class TestField:
         check_field(f)
 
         line = f.line(p1=(0, 0, 0), p2=(5, 5, 5), n=20)
-        assert isinstance(line, types.GeneratorType)
-        p, v = zip(*list(line))
+        assert isinstance(line, df.Line)
 
-        assert len(p) == 20
-        assert len(v) == 20
-        assert p[0] == (0, 0, 0)
-        assert p[-1] == (5, 5, 5)
-        assert v[0] == (1, 2, 3)
-        assert v[-1] == (1, 2, 3)
+        assert len(line.points) == 20
+        assert len(line.values) == 20
+        assert line.points[0] == (0, 0, 0)
+        assert line.points[-1] == (5, 5, 5)
+        assert line.values[0] == (1, 2, 3)
+        assert line.values[-1] == (1, 2, 3)
 
     def test_plane(self):
         for mesh, direction in itertools.product(self.meshes, ['x', 'y', 'z']):
@@ -1120,7 +1122,7 @@ class TestField:
         f = df.Field(mesh, dim=1, value=value_fun)
         sf = f.project('z')
         assert sf.array.shape == (10, 10, 1, 1)
-        assert sf.average == (0,)
+        assert sf.average == 0
 
         # Spatially varying vector field
         def value_fun(pos):
@@ -1151,33 +1153,34 @@ class TestField:
                            (1, lambda pos: pos[0] + pos[1] + pos[2])]:
             f = df.Field(mesh, dim=dim, value=value)
             for rep in representations:
-                f.write(filename, representation=rep)
-                f_read = df.Field.fromfile(filename)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    tmpfilename = os.path.join(tmpdir, filename)
+                    f.write(tmpfilename, representation=rep)
+                    f_read = df.Field.fromfile(tmpfilename)
 
-                assert f.mesh == f_read.mesh
-                np.testing.assert_allclose(f.array, f_read.array,
-                                           rtol=tolerance[rep])
+                    assert f.mesh == f_read.mesh
+                    np.testing.assert_allclose(f.array, f_read.array,
+                                               rtol=tolerance[rep])
 
         # Extend scalar
         for rep in representations:
             f = df.Field(mesh, dim=1, value=lambda pos: pos[0]+pos[1]+pos[2])
-            f.write(filename, extend_scalar=True)
-            f_read = df.Field.fromfile(filename)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmpfilename = os.path.join(tmpdir, filename)
+                f.write(tmpfilename, extend_scalar=True)
+                f_read = df.Field.fromfile(tmpfilename)
 
-            assert f.mesh == f_read.mesh
-            assert f_read.dim == 3
-            np.testing.assert_allclose(f.array, f_read.x.array,
-                                       rtol=tolerance[rep])
-            assert np.equal(f_read.y.array, 0).all()
-            assert np.equal(f_read.z.array, 0).all()
+                assert f.mesh == f_read.mesh
+                assert f_read.dim == 3
+                np.testing.assert_allclose(f.array, f_read.x.array,
+                                           rtol=tolerance[rep])
+                assert np.equal(f_read.y.array, 0).all()
+                assert np.equal(f_read.z.array, 0).all()
 
         # Attempt to write dim=2 field.
         f = df.Field(mesh, dim=2, value=(1, 2))
         with pytest.raises(TypeError) as excinfo:
             f.write(filename)
-        assert 'Cannot write dim=2' in str(excinfo.value)
-
-        os.remove(filename)
 
     def test_write_read_vtk(self):
         filename = 'testfile.vtk'
@@ -1188,16 +1191,16 @@ class TestField:
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         f = df.Field(mesh, dim=3, value=(1e6, 2e6, -5e6))
 
-        f.write(filename)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            f.write(tmpfilename)
 
-        with open(filename, 'r') as f:
-            for line in f.readlines():
-                if 'CELL_DATA' in line:
-                    pattern = line.strip()
-                    break
-        assert pattern == f'CELL_DATA {len(mesh)}'
-
-        os.remove(filename)
+            with open(tmpfilename, 'r') as f:
+                for line in f.readlines():
+                    if 'CELL_DATA' in line:
+                        pattern = line.strip()
+                        break
+            assert pattern == f'CELL_DATA {len(mesh)}'
 
     def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']
@@ -1210,12 +1213,12 @@ class TestField:
         for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]:
             f = df.Field(mesh, dim=dim, value=value)
             for filename in filenames:
-                f.write(filename)
-                f_read = df.Field.fromfile(filename)
+                with tempfile.TemporaryDirectory() as tmpdir:
+                    tmpfilename = os.path.join(tmpdir, filename)
+                    f.write(tmpfilename)
+                    f_read = df.Field.fromfile(tmpfilename)
 
-                assert f == f_read
-
-                os.remove(filename)
+                    assert f == f_read
 
     def test_read_write_invalid_extension(self):
         filename = 'testfile.jpg'
@@ -1228,11 +1231,8 @@ class TestField:
         f = df.Field(mesh, dim=1, value=5e-12)
         with pytest.raises(ValueError) as excinfo:
             f.write(filename)
-        assert 'jpg not supported' in str(excinfo.value)
-
         with pytest.raises(ValueError) as excinfo:
             f = df.Field.fromfile(filename)
-        assert 'jpg not supported' in str(excinfo.value)
 
     def test_read_mumax3_ovffile(self):
         # Output file has been produced with Mumax ~3.1.0

@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 # TODO: tutorials, check rtd requirements, line object (plotting line),
 # pycodestyle, coverage, remove numbers from tutorials, do only test-coverage
-# instead of testing twice, testdir
+# instead of testing twice
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
@@ -91,7 +91,7 @@ class Field:
     >>> field
     Field(mesh=...)
     >>> field.average
-    (3.14,)
+    3.14
 
     3. Defining a uniform three-dimensional normalised vector field.
 
@@ -261,7 +261,7 @@ class Field:
         (0.0, 0.0, 1.0)
         >>> field.array.shape
         (2, 1, 1, 3)
-        >>> field.array = np.ones(field.array.shape)
+        >>> field.array = np.ones_like(field.array)
         >>> field.array
         array(...)
         >>> field.average
@@ -274,12 +274,7 @@ class Field:
 
     @array.setter
     def array(self, val):
-        if isinstance(val, np.ndarray) and \
-          val.shape == (*self.mesh.n, self.dim):
-            self._array = val
-        else:
-            msg = f'Unsupported {type(val)} or invalid shape.'
-            raise ValueError(msg)
+        self._array = dfu.as_array(self.mesh, self.dim, val)
 
     @property
     def norm(self):
@@ -330,13 +325,13 @@ class Field:
         >>> field.norm
         Field(...)
         >>> field.norm.average
-        (1.0,)
+        1.0
         >>> field.norm = 2
         >>> field.average
         (0.0, 0.0, 2.0)
         >>> field.value = (1, 0, 0)
         >>> field.norm.average
-        (1.0,)
+        1.0
         >>> # An attempt to set the norm for a zero field.
         >>> field.value = 0
         >>> field.average
@@ -418,7 +413,7 @@ class Field:
         >>> field.orientation
         Field(...)
         >>> field.orientation.norm.average
-        (1.0,)
+        1.0
 
         """
         if self.dim == 1:
@@ -465,7 +460,7 @@ class Field:
 
         >>> field = df.Field(mesh=mesh, dim=1, value=55)
         >>> field.average
-        (55.0,)
+        55.0
 
         """
         return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
@@ -534,10 +529,7 @@ class Field:
         (1.0, 3.0, 4.0)
 
         """
-        value = self.array[self.mesh.point2index(point)]
-        if self.dim > 1:
-            value = dfu.array2tuple(value)
-        return value
+        return dfu.array2tuple(self.array[self.mesh.point2index(point)])
 
     def __getattr__(self, attr):
         """Extracting the component of the vector field.
@@ -573,15 +565,15 @@ class Field:
         >>> field.x
         Field(...)
         >>> field.x.average
-        (0.0,)
+        0.0
         >>> field.y
         Field(...)
         >>> field.y.average
-        (0.0,)
+        0.0
         >>> field.z
         Field(...)
         >>> field.z.average
-        (1.0,)
+        1.0
         >>> field.z.dim
         1
 
@@ -796,7 +788,7 @@ class Field:
         >>> f = df.Field(mesh, dim=1, value=3.1)
         >>> res = -f
         >>> res.average
-        (-3.1,)
+        -3.1
         >>> f == -(-f)
         True
 
@@ -851,10 +843,10 @@ class Field:
         >>> res
         Field(...)
         >>> res.average
-        (0.5,)
+        0.5
         >>> res = f**2
         >>> res.average
-        (4.0,)
+        4.0
         >>> f**f  # the power must be numbers.Real
         Traceback (most recent call last):
         ...
@@ -1050,7 +1042,7 @@ class Field:
         >>> f2 = df.Field(mesh, dim=1, value=9)
         >>> res = f1 * f2
         >>> res.average
-        (45.0,)
+        45.0
         >>> f1 * f2 == f2 * f1
         True
 
@@ -1137,7 +1129,7 @@ class Field:
         >>> f2 = df.Field(mesh, dim=1, value=20)
         >>> res = f1 / f2
         >>> res.average
-        (5.0,)
+        5.0
         >>> f1 / f2 == (f2 / f1)**(-1)
         True
 
@@ -1198,7 +1190,7 @@ class Field:
         >>> f1 = df.Field(mesh, dim=3, value=(1, 3, 6))
         >>> f2 = df.Field(mesh, dim=3, value=(-1, -2, 2))
         >>> (f1@f2).average
-        (5.0,)
+        5.0
 
         """
         if not isinstance(other, df.Field):
@@ -1263,7 +1255,7 @@ class Field:
         >>> value_fun = lambda pos: 2*pos[0] + 3*pos[1] - 5*pos[2]
         >>> f = df.Field(mesh, dim=1, value=value_fun)
         >>> f.derivative('y').average
-        (3.0,)
+        3.0
 
         2. Try to compute directional derivatives of the vector field which has
         only one discretisation cell in the z-direction. For the field we
@@ -1428,7 +1420,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
         >>> f.div.average
-        (5.0,)
+        5.0
 
         2. Attempt to compute the divergence of a scalar field.
 
@@ -1552,7 +1544,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
         >>> f.integral
-        (5000.0,)
+        5000.0
 
         2. Compute the volume integral of a vector field.
 
@@ -1615,7 +1607,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
         >>> f.plane('z').topological_charge_density.average
-        (0.0,)
+        0.0
 
         2. Attempt to compute the topological charge density of a scalar field.
 
@@ -1809,7 +1801,7 @@ class Field:
 
         """
         if method == 'continuous':
-            return self.topological_charge_density.integral[0]
+            return self.topological_charge_density.integral
         elif method == 'berg-luescher':
             return self.bergluescher
         else:
@@ -1857,15 +1849,13 @@ class Field:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> field = df.Field(mesh, dim=2, value=(0, 3))
-        >>> for coord, value in field.line(p1=(0, 0, 0), p2=(2, 0, 0), n=3):
-        ...     print(coord, value)
-        (0.0, 0.0, 0.0) (0.0, 3.0)
-        (1.0, 0.0, 0.0) (0.0, 3.0)
-        (2.0, 0.0, 0.0) (0.0, 3.0)
+        >>> field.line(p1=(0, 0, 0), p2=(2, 0, 0), n=5)
+        Line(...)
 
         """
-        for point in self.mesh.line(p1=p1, p2=p2, n=n):
-            yield point, self.__call__(point)
+        points = list(self.mesh.line(p1=p1, p2=p2, n=n))
+        values = [self(p) for p in points]
+        return df.Line(points=points, values=values)
 
     def plane(self, *args, n=None, **kwargs):
         """Extracts field on the plane mesh.
@@ -2158,6 +2148,10 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
+        if self.dim != 1 and self.dim != 3:
+            msg = (f'Cannot write dim={self.dim} field.')
+            raise TypeError(msg)
+
         if extend_scalar and self.dim == 1:
             write_dim = 3
         else:
@@ -2237,14 +2231,11 @@ class Field:
                 for i in self.mesh.indices:
                     if self.dim == 3:
                         v = [vi for vi in self.array[i]]
-                    elif self.dim == 1:
+                    else:
                         if extend_scalar:
                             v = [self.array[i][0], 0.0, 0.0]
                         else:
                             v = [self.array[i][0]]
-                    else:
-                        msg = (f'Cannot write dim={self.dim} field.')
-                        raise TypeError(msg)
                     for vi in v:
                         f.write(f' {str(vi)}')
                     f.write('\n')
@@ -2516,8 +2507,8 @@ class Field:
 
         field = cls(mesh, dim=dim)
 
-        r_tuple = tuple(reversed(field.mesh.n)) + (int(mdatadict['valuedim']),)
-        t_tuple = tuple(reversed(range(3))) + (3,)
+        r_tuple = (*tuple(reversed(field.mesh.n)), int(mdatadict['valuedim']))
+        t_tuple = (*tuple(reversed(range(3))), 3)
         field.array = datalines.reshape(r_tuple).transpose(t_tuple)
 
         return field
@@ -2767,10 +2758,7 @@ class Field:
             values = list(values)  # tuple -> list to make values mutable
             for i, point in enumerate(points):
                 if filter_field(point) == 0:
-                    values[i] = np.array([np.nan])
-
-        # "Unpack" values inside arrays and convert to nd.array.
-        values = np.array(list(zip(*values)))
+                    values[i] = np.nan
 
         pmin = np.divide(self.mesh.region.pmin, multiplier)
         pmax = np.divide(self.mesh.region.pmax, multiplier)
@@ -2782,7 +2770,7 @@ class Field:
         n = (self.mesh.n[self.mesh.info['axis2']],
              self.mesh.n[self.mesh.info['axis1']])
 
-        return ax.imshow(values.reshape(n), origin='lower',
+        return ax.imshow(np.array(values).reshape(n), origin='lower',
                          extent=extent, **kwargs)
 
     def quiver(self, ax, color_field=None, multiplier=1, **kwargs):
@@ -2870,7 +2858,6 @@ class Field:
         values = [v for v in values if not np.equal(v, 0).all()]
         if color_field is not None:
             colors = [color_field(p) for p in points]
-            colors = list(zip(*colors))
 
         # "Unpack" values inside arrays and convert to np.ndarray.
         points = np.array(list(zip(*points)))
@@ -3255,7 +3242,7 @@ class Field:
                 coordinates.append(coord)
                 vectors.append(value)
                 if color_field is not None:
-                    color_values.append(color_field(coord)[0])
+                    color_values.append(color_field(coord))
         coordinates, vectors = np.array(coordinates), np.array(vectors)
 
         if multiplier is None:

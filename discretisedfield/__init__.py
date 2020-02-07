@@ -4,6 +4,7 @@ import seaborn as sns
 from .region import Region
 from .mesh import Mesh
 from .field import Field
+from .line import Line
 from .operators import cross, stack
 
 sns.set(style='whitegrid')

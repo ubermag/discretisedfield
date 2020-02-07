@@ -12,7 +12,10 @@ raxesdict = {value: key for key, value in axesdict.items()}
 
 
 def array2tuple(array):
-    return tuple(array.tolist())
+    if array.size == 1:
+        return array.item()
+    else:
+        return tuple(array.tolist())
 
 
 def as_array(mesh, dim, val):
