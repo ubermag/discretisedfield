@@ -18,10 +18,10 @@ test-docs:
 test-ipynb:
 	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
 
-test-pep8:
+test-pycodestyle:
 	pycodestyle --filename=*.py .
 
-test-all: test-test test-coverage test-docs test-ipynb test-pep8
+test-all: test-test test-coverage test-docs test-ipynb test-pycodestyle
 
 upload-coverage: SHELL:=/bin/bash
 upload-coverage:
