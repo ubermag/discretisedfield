@@ -52,10 +52,10 @@ def bergluescher_angle(v1, v2, v3):
                (1 + np.dot(v2, v3)) *
                (1 + np.dot(v3, v1)))**0.5
 
-        numerator = (1 + \
-                     np.dot(v1, v2) + \
-                     np.dot(v2, v3) + \
-                     np.dot(v3, v1) + \
+        numerator = (1 +
+                     np.dot(v1, v2) +
+                     np.dot(v2, v3) +
+                     np.dot(v3, v1) +
                      1j*(np.dot(v1, np.cross(v2, v3))))
 
         exp_omega = numerator/rho
@@ -110,7 +110,7 @@ def normalise_to_range(values, value_range):
     # For uniform fields, avoid division by zero.
     if values.max() != 0:
         values /= values.max()  # all values in (0, 1)
-    values *= (value_range[1] - value_range[0]) # all values in (0, r[1]-r[0])
+    values *= (value_range[1] - value_range[0])  # all values in (0, r[1]-r[0])
     values += value_range[0]  # all values is range (r[0], r[1])
     values = values.round()
     values = values.astype(int)

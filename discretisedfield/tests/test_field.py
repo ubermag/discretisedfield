@@ -162,7 +162,7 @@ class TestField:
         self.pf = df.Field(mesh, dim=3, value=value_fun, norm=norm_fun)
 
         # Make one vector point out-of-plane
-        #self.pf.array[0, 0, 0, :] = (0, 0, 1)
+        # self.pf.array[0, 0, 0, :] = (0, 0, 1)
 
     def test_init_valid_args(self):
         for mesh in self.meshes:
@@ -1272,7 +1272,7 @@ class TestField:
             assert np.equal(f.array[..., :], v).all()
 
     def test_mpl(self):
-        self.pf.plane('x', n=(3, 4)).mpl()
+        self.pf.plane('z', n=(3, 4)).mpl()
         self.pf.z.plane('x', n=(3, 4)).mpl()
 
         with pytest.raises(ValueError) as excinfo:

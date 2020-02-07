@@ -18,7 +18,7 @@ setuptools.setup(
             "ovf2vtk = discretisedfield.ovf2vtk:main",
         ],
     },
-    include_package_data = True,
+    include_package_data=True,
     install_requires=['ubermagutil',
                       'matplotlib',
                       'seaborn',

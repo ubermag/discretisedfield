@@ -15,10 +15,8 @@ import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
 # TODO: tutorials, check rtd requirements, line object (plotting line),
-# pycodestyle, coverage, context for writing files, remove numbers from
-# tutorials, add math equations in doc strings, check doc string consistency,
-# do only test-coverage instead of testing twice, testdir, re for reading
-# files?
+# pycodestyle, coverage, remove numbers from tutorials, do only test-coverage
+# instead of testing twice, testdir
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
