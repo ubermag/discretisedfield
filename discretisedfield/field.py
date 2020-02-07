@@ -1145,7 +1145,7 @@ class Field:
     def __matmul__(self, other):
         """Binary ``@`` operator, defined as dot product.
 
-        This function computes the dot product between two fields. Both fields
+        This method computes the dot product between two fields. Both fields
         must be three-dimensional (``dim=3``) and defined on the same mesh.
 
         Parameters
@@ -1173,8 +1173,8 @@ class Field:
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
-        >>> p2 = (10, 10, 10)
-        >>> cell = (2, 2, 2)
+        >>> p2 = (10e-9, 10e-9, 10e-9)
+        >>> cell = (2e-9, 2e-9, 2e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f1 = df.Field(mesh, dim=3, value=(1, 3, 6))
