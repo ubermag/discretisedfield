@@ -20,11 +20,6 @@ def check_field(field):
     assert isinstance(field.array, np.ndarray)
     assert field.array.shape == (*field.mesh.n, field.dim)
 
-    norm = field.norm
-    assert isinstance(norm, df.Field)
-    assert norm == abs(field)
-    assert norm.dim == 1
-
     average = field.average
     assert isinstance(average, tuple)
     assert len(average) == field.dim
@@ -79,6 +74,11 @@ def check_field(field):
         assert all(i not in dir(field) for i in 'xyz')
 
     if field.dim == 3:
+        norm = field.norm
+        assert isinstance(norm, df.Field)
+        assert norm == abs(field)
+        assert norm.dim == 1
+
         assert isinstance(field.x, df.Field)
         assert field.x.dim == 1
 
@@ -162,33 +162,15 @@ class TestField:
         self.pf = df.Field(mesh, dim=3, value=value_fun, norm=norm_fun)
 
         # Make one vector point out-of-plane
-        self.pf.array[0, 0, 0, :] = (0, 0, 1)
+        #self.pf.array[0, 0, 0, :] = (0, 0, 1)
 
     def test_init_valid_args(self):
         for mesh in self.meshes:
-            for value in self.consts:
+            for value in self.consts + self.sfuncs:
                 f = df.Field(mesh, dim=1, value=value)
-
-                check_field(f)
-                assert f.value == value
-                assert np.all(f.array == value)
-                assert f(f.mesh.region.random_point()) == value
-                assert f(f.mesh.region.centre) == value
-
-            for value in self.sfuncs:
-                f = df.Field(mesh, dim=1, value=value)
-
                 check_field(f)
 
-            for value in self.iters:
-                f = df.Field(mesh, dim=3, value=value)
-
-                check_field(f)
-                assert np.equal(f.value, value).all()
-                assert np.equal(f(f.mesh.region.random_point()), value).all()
-                assert np.equal(f(f.mesh.region.centre), value).all()
-
-            for value in self.vfuncs:
+            for value in self.iters + self.vfuncs:
                 f = df.Field(mesh, dim=3, value=value)
                 check_field(f)
 
@@ -198,8 +180,9 @@ class TestField:
             f = df.Field(mesh, dim=1)
 
         for mesh in self.meshes:
-            with pytest.raises(ValueError):
-                f = df.Field(mesh, dim=0)
+            for dim in [0, -1, 'dim', (2, 3)]:
+                with pytest.raises((ValueError, TypeError)):
+                    f = df.Field(mesh, dim=dim)
 
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
@@ -208,16 +191,13 @@ class TestField:
 
             check_field(f)
             assert isinstance(f.value, np.ndarray)
-            assert np.equal(f.array, 1).all()
-
-            with pytest.raises(ValueError) as excinfo:
-                f.array = (1, 2, 3)
-            assert 'Unsupported' in str(excinfo.value)
+            assert f.average == (1, 1, 1)
 
     def test_set_with_callable(self):
         for mesh in self.meshes:
             for func in self.sfuncs:
                 f = df.Field(mesh, dim=1, value=func)
+                check_field(f)
 
                 rp = f.mesh.region.random_point()
                 # Make sure to be at the centre of the cell
@@ -227,6 +207,7 @@ class TestField:
         for mesh in self.meshes:
             for func in self.vfuncs:
                 f = df.Field(mesh, dim=3, value=func)
+                check_field(f)
 
                 rp = f.mesh.region.random_point()
                 rp = f.mesh.index2point(f.mesh.point2index(rp))
@@ -241,7 +222,9 @@ class TestField:
                                       p2=(10e-9, 10e-9, 10e-9))}
         mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
 
-        field = df.Field(mesh, dim=3, value={'r1': (0, 0, 1), 'r2': (0, 0, 2)})
+        field = df.Field(mesh, dim=3, value={'r1': (0, 0, 1),
+                                             'r2': (0, 0, 2),
+                                             'r1:r2': (0, 0, 5)})
         assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
         assert np.all(field((8e-9, 2e-9, 9e-9)) == (0, 0, 2))
 
@@ -253,7 +236,7 @@ class TestField:
             with pytest.raises(ValueError):
                 f = df.Field(mesh, dim=3, value=5+5j)
 
-    def test_value_is_not_preserved(self):
+    def test_value(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
         n = (5, 5, 5)
@@ -296,14 +279,16 @@ class TestField:
                     norm = np.sqrt(norm)
 
                     assert norm.shape == f.mesh.n
-                    assert f.norm.array.shape == f.mesh.n + (1,)
+                    assert f.norm.array.shape == (*f.mesh.n, 1)
                     assert np.all(abs(norm - norm_value) < 1e-12)
 
-        # Scalar field norm
+        # Exception
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=1, value=-5)
-
-        assert f.norm.average == (5,)
+        with pytest.raises(ValueError):
+            norm = f.norm
+        with pytest.raises(ValueError):
+            f.norm = 5
 
     def test_norm_is_not_preserved(self):
         p1 = (0, 0, 0)
@@ -320,16 +305,6 @@ class TestField:
         f.value = (0, 2, 0)
         assert np.all(f.norm.value != 1)
         assert np.all(f.norm.array == 2)
-
-    def test_norm_scalar_field_exception(self):
-        p1 = (0, 0, 0)
-        p2 = (10e-9, 10e-9, 10e-9)
-        n = (5, 5, 5)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-
-        f = df.Field(mesh, dim=1, value=4)
-        with pytest.raises(ValueError):
-            f.norm = 1
 
     def test_norm_zero_field_exception(self):
         p1 = (0, 0, 0)
@@ -385,27 +360,17 @@ class TestField:
     def test_field_component(self):
         for mesh in self.meshes:
             f = df.Field(mesh, dim=3, value=(1, 2, 3))
-            assert isinstance(f.x, df.Field)
-            assert f.x.dim == 1
-            assert np.all(f.x.array == 1)
-            assert isinstance(f.y, df.Field)
-            assert f.y.dim == 1
-            assert np.all(f.y.array == 2)
-            assert isinstance(f.z, df.Field)
-            assert f.z.dim == 1
-            assert np.all(f.z.array == 3)
+            assert all(isinstance(getattr(f, i), df.Field) for i in 'xyz')
+            assert all(getattr(f, i).dim == 1 for i in 'xyz')
 
             f = df.Field(mesh, dim=2, value=(1, 2))
-            assert isinstance(f.x, df.Field)
-            assert f.x.dim == 1
-            assert np.all(f.x.array == 1)
-            assert isinstance(f.y, df.Field)
-            assert f.y.dim == 1
-            assert np.all(f.y.array == 2)
+            assert all(isinstance(getattr(f, i), df.Field) for i in 'xy')
+            assert all(getattr(f, i).dim == 1 for i in 'xy')
 
+            # Exception.
             f = df.Field(mesh, dim=1, value=1)
             with pytest.raises(AttributeError):
-                assert f.x.dim == 1
+                fx = f.x.dim
 
     def test_get_attribute_exception(self):
         for mesh in self.meshes:
@@ -417,14 +382,12 @@ class TestField:
     def test_dir(self):
         for mesh in self.meshes:
             f = df.Field(mesh, dim=3, value=(5, 6, -9))
-            assert 'x' in f.__dir__()
-            assert 'y' in f.__dir__()
-            assert 'z' in f.__dir__()
+            assert all(attr in dir(f) for attr in ['x', 'y', 'z', 'div'])
+            assert 'grad' not in dir(f)
 
             f = df.Field(mesh, dim=1, value=1)
-            assert 'x' not in f.__dir__()
-            assert 'y' not in f.__dir__()
-            assert 'z' not in f.__dir__()
+            assert all(attr not in dir(f) for attr in ['x', 'y', 'z', 'div'])
+            assert 'grad' in dir(f)
 
     def test_eq_ne(self):
         p1 = (-5e-9, -5e-9, -5e-9)
@@ -472,25 +435,6 @@ class TestField:
         assert f == +f
         assert f == -(-f)
         assert f == +(-(-f))
-
-    def test_abs(self):
-        p1 = (-5e-9, -5e-9, -5e-9)
-        p2 = (5e-9, 5e-9, 5e-9)
-        cell = (1e-9, 1e-9, 1e-9)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        # Scalar field
-        f = df.Field(mesh, dim=1, value=-3)
-        res = abs(f)
-        check_field(res)
-        assert res == -f
-        assert res.average == (3,)
-
-        # Vector field
-        f = df.Field(mesh, dim=3, value=(3, 0, -4))
-        res = abs(f)
-        check_field(res)
-        assert res.average == (5,)
 
     def test_pow(self):
         p1 = (0, 0, 0)
@@ -1068,7 +1012,8 @@ class TestField:
 
         # Skyrmion from a file
         test_filename = os.path.join(os.path.dirname(__file__),
-                                     'test_sample/', 'skyrmion.omf')
+                                     'test_sample/',
+                                     'skyrmion.omf')
         f = df.Field.fromfile(test_filename)
         Qc = f.plane('z').topological_charge(method='continuous')
         Qbl = f.plane('z').topological_charge(method='berg-luescher')
@@ -1096,6 +1041,7 @@ class TestField:
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        check_field(f)
 
         line = f.line(p1=(0, 0, 0), p2=(5, 5, 5), n=20)
         assert isinstance(line, types.GeneratorType)
@@ -1109,9 +1055,9 @@ class TestField:
         assert v[-1] == (1, 2, 3)
 
     def test_plane(self):
-        for mesh, direction in itertools.product(self.meshes,
-                                                 ['x', 'y', 'z']):
+        for mesh, direction in itertools.product(self.meshes, ['x', 'y', 'z']):
             f = df.Field(mesh, dim=1, value=3)
+            check_field(f)
             plane = f.plane(direction, n=(3, 3))
             assert isinstance(plane, df.Field)
 
@@ -1135,7 +1081,7 @@ class TestField:
                 return (1, 2, 3)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-
+        check_field(f)
         check_field(f['r1'])
         check_field(f['r2'])
 
@@ -1152,6 +1098,7 @@ class TestField:
 
         # Constant scalar field
         f = df.Field(mesh, dim=1, value=5)
+        check_field(f)
         assert f.project('x').array.shape == (1, 10, 10, 1)
         assert f.project('y').array.shape == (10, 1, 10, 1)
         assert f.project('z').array.shape == (10, 10, 1, 1)
@@ -1325,42 +1272,36 @@ class TestField:
             assert np.equal(f.array[..., :], v).all()
 
     def test_mpl(self):
-        with pytest.raises(ValueError) as excinfo:
-            self.pf.mpl()
-        assert 'must be sliced' in str(excinfo.value)
-
         self.pf.plane('x', n=(3, 4)).mpl()
         self.pf.z.plane('x', n=(3, 4)).mpl()
+
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.mpl()
 
     def test_imshow(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
+        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
+        self.pf.x.plane('y', n=(1, 1)).imshow(ax=ax, cmap='viridis')
+        self.pf.x.plane('z').imshow(ax=ax, filter_field=self.pf.norm)
+
         with pytest.raises(ValueError) as excinfo:
             self.pf.imshow(ax=ax)
-        assert 'must be sliced' in str(excinfo.value)
-
         with pytest.raises(ValueError) as excinfo:
             self.pf.plane('z').imshow(ax=ax)
-        assert 'Cannot plot' in str(excinfo.value)
-
-        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
-        self.pf.x.plane('z').imshow(ax=ax, filter_field=self.pf.norm)
 
     def test_quiver(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        with pytest.raises(ValueError) as excinfo:
-            self.pf.quiver(ax=ax)
-        assert 'must be sliced' in str(excinfo.value)
-
-        with pytest.raises(ValueError) as excinfo:
-            self.pf.x.plane('y').quiver(ax=ax)
-        assert 'Cannot plot' in str(excinfo.value)
-
         self.pf.plane('z', n=(3, 4)).quiver(ax=ax)
         self.pf.plane('x', n=(3, 4)).quiver(ax=ax, color_field=self.pf.y)
+
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.quiver(ax=ax)
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.x.plane('y').quiver(ax=ax)
 
     def test_colorbar(self):
         fig = plt.figure()
@@ -1370,15 +1311,17 @@ class TestField:
         self.pf.colorbar(ax=ax, coloredplot=coloredplot)
 
     def test_k3d_nonzero(self):
+        self.pf.norm.k3d_nonzero()
+        self.pf.x.k3d_nonzero()
+        self.pf.y.k3d_nonzero()
+        self.pf.z.k3d_nonzero()
+
         with pytest.raises(ValueError) as excinfo:
             self.pf.k3d_nonzero()
-        assert 'Cannot plot' in str(excinfo.value)
-
-        self.pf.norm.k3d_nonzero()
 
     def test_k3d_voxels(self):
         self.pf.x.k3d_voxels()
-        self.pf.x.k3d_voxels(filter_field=self.pf.norm)
+        self.pf.y.k3d_voxels(filter_field=self.pf.norm)
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
@@ -1399,14 +1342,15 @@ class TestField:
         with pytest.raises(ValueError):
             self.pf.k3d_vectors(color_field=self.pf)  # color field dim=3
 
-    def test_k3d_nanosized_sample(self):
+    def test_plot_large_sample(self):
         p1 = (0, 0, 0)
-        p2 = (50e-9, 50e-9, 50e-9)
-        cell = (25e-9, 25e-9, 25e-9)
+        p2 = (50e9, 50e9, 50e9)
+        cell = (25e9, 25e9, 25e9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         value = (1e6, 1e6, 1e6)
         field = df.Field(mesh, dim=3, value=value)
 
+        field.plane('z').mpl()
         field.norm.k3d_nonzero()
         field.x.k3d_voxels()
         field.k3d_vectors()

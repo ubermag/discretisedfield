@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 # TODO: tutorials, check rtd requirements, line object (plotting line),
 # pycodestyle, coverage, context for writing files, remove numbers from
 # tutorials, add math equations in doc strings, check doc string consistency,
-# do only test-coverage instead of testing twice, testdir, dir(field) for grad,
-# div...
+# do only test-coverage instead of testing twice, testdir, re for reading
+# files?
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
@@ -351,6 +351,10 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
 
         """
+        if self.dim == 1:
+            msg = f'Cannot compute norm for field with dim={self.dim}.'
+            raise ValueError(msg)
+
         computed_norm = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
         return self.__class__(self.mesh, dim=1, value=computed_norm)
 
@@ -595,14 +599,30 @@ class Field:
         """Extension of the ``dir(self)`` list.
 
         Adds ``'x'``, ``'y'``, or ``'z'``, depending on the dimension of the
-        field, to the ``dir(self)`` list.
+        field, to the ``dir(self)`` list. Similarly, adds or removes methods
+        (``grad``, ``div``,...) depending on the dimension of the field.
+
+        Returns
+        -------
+        list
+
+            Avalilable attributes.
 
         """
+        dirlist = dir(self.__class__)
         if self.dim in (2, 3):
-            extension = list(dfu.axesdict.keys())[:self.dim]
-        else:
-            extension = []
-        return dir(self.__class__) + extension
+            dirlist += list(dfu.axesdict.keys())[:self.dim]
+        if self.dim == 1:
+            need_removing = ['div', 'curl', 'topological_charge',
+                             'topological_charge_density', 'bergluescher',
+                             'norm', 'orientation', 'quiver', 'k3d_vectors']
+        if self.dim == 3:
+            need_removing = ['grad', 'imshow', 'k3d_voxels', 'k3d_nonzero']
+
+        for attr in need_removing:
+            dirlist.remove(attr)
+
+        return dirlist
 
     def __iter__(self):
         """Generator yielding coordinates and values of all mesh discretisation
