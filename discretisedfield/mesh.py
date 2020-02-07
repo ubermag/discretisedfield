@@ -1047,7 +1047,7 @@ class Mesh:
         Plot(...)
 
         """
-        plot_array = np.array(list(self))
+        coordinates = np.array(list(self))
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.region.edges)
@@ -1057,5 +1057,5 @@ class Mesh:
             # dimension.
             point_size = np.divide(self.cell, multiplier).min() / 4
 
-        dfu.points(plot_array, color=color, point_size=point_size,
+        dfu.points(coordinates, color=color, point_size=point_size,
                    multiplier=multiplier, plot=plot, **kwargs)

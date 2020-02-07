@@ -46,6 +46,23 @@ def test_assemble_index():
     assert dfu.assemble_index(index_dict) == (0, 3, 4)
 
 
+def test_voxels():
+    plot_array = np.ones((5, 6, 7))
+    pmin = (0, 0, 0)
+    pmax = (5e6, 6e6, 7e6)
+    color_palette = dfu.color_palette('cividis', 2, 'int')
+
+    dfu.voxels(plot_array, pmin, pmax, color_palette)
+
+
+def test_points():
+    coordinates = np.array([(0, 0, 0)])
+    color = dfu.color_palette('cividis', 1, 'int')[0]
+    point_size = 2
+
+    dfu.points(coordinates, color, point_size)
+
+
 def test_vectors():
     coordinates = np.array([(0, 0, 0)])
     vectors = np.array([(1, 1, 1)])
