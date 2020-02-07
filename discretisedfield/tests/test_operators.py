@@ -12,7 +12,6 @@ def test_cross():
     f1 = df.Field(mesh, dim=3, value=(0, 0, 0))
     res = df.cross(f1, f1)
     assert res.dim == 3
-    assert res.array.shape == (5, 5, 5, 3)
     assert res.average == (0, 0, 0)
 
     # Orthogonal vectors
@@ -31,17 +30,8 @@ def test_cross():
     assert df.cross(f1, f3) == -df.cross(f3, f1)
     assert df.cross(f2, f3) == -df.cross(f3, f2)
 
-    # Spatially varying vectors
-    def value_fun1(pos):
-        x, y, z = pos
-        return (x, y, z)
-
-    def value_fun2(pos):
-        x, y, z = pos
-        return (z, x, y)
-
-    f1 = df.Field(mesh, dim=3, value=value_fun1)
-    f2 = df.Field(mesh, dim=3, value=value_fun2)
+    f1 = df.Field(mesh, dim=3, value=lambda pos: (pos[0], pos[1], pos[2]))
+    f2 = df.Field(mesh, dim=3, value=lambda pos: (pos[2], pos[0], pos[1]))
 
     # The cross product should be
     # (y**2-x*z, z**2-x*y, x**2-y*z)

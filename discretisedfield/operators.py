@@ -6,23 +6,26 @@ import discretisedfield.util as dfu
 def cross(f1, f2):
     """Cross product.
 
-    This function computes the cross product between two fields. Both
-    fields must be three-dimensional and defined on the same mesh. If
-    any of the fields is not of dimension 3, `ValueError` is raised.
+    This function computes the cross product between two fields. Both fields
+    must be three-dimensional (``dim=3``) and defined on the same mesh.
 
     Parameters
     ----------
-    f1, f2 : discretisedfield.Field
-        Three-dimensional fields
+    f1/f2 : discretisedfield.Field
+
+        Operands.
 
     Returns
     -------
     discretisedfield.Field
 
+        Resulting field.
+
     Raises
     ------
-    ValueError
-        If the dimension of any of the fields is not 3.
+    ValueError, TypeError
+
+        If the operator cannot be applied.
 
     Example
     -------
@@ -42,7 +45,7 @@ def cross(f1, f2):
 
     """
     if not isinstance(f1, df.Field) or not isinstance(f2, df.Field):
-        msg = (f'Unsupported operand type(s) for the cross product: '
+        msg = (f'Unsupported operand type(s) for discretisedfield.cross: '
                f'{type(f1)} and {type(f2)}.')
         raise TypeError(msg)
     if f1.dim != 3 or f2.dim != 3:
@@ -59,24 +62,32 @@ def cross(f1, f2):
 
 
 def stack(fields):
-    """Stacking multiple scalar fields into a single vector field.
+    """Stacks multiple scalar fields in a single vector field.
 
-    This method takes a list of scalar (dim=1) fields and returns a
-    vector field, whose components are defined by the scalar fields
-    passed. If any of the fields passed is not of dimension 1 or they
-    are not defined on the same mesh, an exception will be raised. The
-    dimension of the resulting field with be equal to the length of
-    the passed list.
+    This method takes a list of scalar (``dim=1``) fields and returns a vector
+    field, whose components are defined by the scalar fields passed. If any of
+    the fields passed has ``dim!=1` or they are not defined on the same mesh,
+    an exception is raised. The dimension of the resulting field is equal to
+    the length of the passed list.
+
+    Parameters
+    ----------
+    fields : list
+
+        List of ``discretisedfield.Field`` objects with ``dim=1``.
 
     Returns
     -------
     disrectisedfield.Field
 
+        Resulting field.
+
     Raises
     ------
     ValueError
-        If the dimension of any of the fields is not 1, or the fields
-        passed are not defined on the same mesh.
+
+        If the dimension of any of the fields is not 1, or the fields passed
+        are not defined on the same mesh.
 
     Example
     -------
@@ -94,6 +105,8 @@ def stack(fields):
     >>> f3 = df.Field(mesh, dim=1, value=-3)
     ...
     >>> f = df.stack([f1, f2, f3])
+    >>> f.average
+    (1.0, 5.0, -3.0)
     >>> f.dim
     3
     >>> f.x == f1
@@ -111,7 +124,7 @@ def stack(fields):
         msg = 'Only dim=1 fields can be stacked.'
         raise ValueError(msg)
     if not all(f.mesh == fields[0].mesh for f in fields):
-        msg = 'Fields defined on different meshes cannot be stacked.'
+        msg = 'Only fields defined on the same mesh can be stacked.'
         raise ValueError(msg)
 
     array_list = []
