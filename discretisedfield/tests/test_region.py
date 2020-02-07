@@ -51,6 +51,7 @@ def check_region(region):
     assert not region != region
     assert region != 2
 
+
 class TestRegion:
     def setup(self):
         self.valid_args = [[(0, 0, 0), (5, 5, 5)],

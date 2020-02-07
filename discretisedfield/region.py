@@ -7,7 +7,6 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
 
-
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True))
 class Region:
@@ -169,8 +168,8 @@ class Region:
 
         .. math::
 
-            \\mathbf{p}_\\text{centre} = \\frac{1}{2} (\\mathbf{p}_\\text{min} +
-            \\mathbf{p}_\\text{max}).
+            \\mathbf{p}_\\text{centre} = \\frac{1}{2} (\\mathbf{p}_\\text{min}
+            + \\mathbf{p}_\\text{max}).
 
         Returns
         -------

@@ -277,7 +277,7 @@ class Field:
     @array.setter
     def array(self, val):
         if isinstance(val, np.ndarray) and \
-        val.shape == (*self.mesh.n, self.dim):
+          val.shape == (*self.mesh.n, self.dim):
             self._array = val
         else:
             msg = f'Unsupported {type(val)} or invalid shape.'
@@ -427,7 +427,7 @@ class Field:
         orientation_array = np.divide(self.array,
                                       self.norm.array,
                                       out=np.zeros_like(self.array),
-                                      where=(self.norm.array!=0))
+                                      where=(self.norm.array != 0))
         return self.__class__(self.mesh, dim=self.dim, value=orientation_array)
 
     @property
@@ -692,8 +692,8 @@ class Field:
         """
         if not isinstance(other, self.__class__):
             return False
-        elif self.mesh == other.mesh and self.dim == other.dim and \
-             np.array_equal(self.array, other.array):
+        elif (self.mesh == other.mesh and self.dim == other.dim and
+              np.array_equal(self.array, other.array)):
             return True
         else:
             return False
@@ -756,7 +756,7 @@ class Field:
 
         .. math::
 
-            -f(x, y, z) = -1 \cdot f(x, y, z)
+            -f(x, y, z) = -1 \\cdot f(x, y, z)
 
         Returns
         -------
@@ -1250,10 +1250,10 @@ class Field:
         2. Try to compute directional derivatives of the vector field which has
         only one discretisation cell in the z-direction. For the field we
         choose :math:`f(x, y, z) = (2x, 3y, -5z)`. Accordingly, we expect the
-        directional derivatives to be: :math:`df/dx = (2, 0, 0)`, :math:`df/dy =
-        (0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because there is only
-        one discretisation cell in the z-direction, the derivative cannot be
-        computed and a zero field is returned.
+        directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
+        :math:`df/dy=(0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because
+        there is only one discretisation cell in the z-direction, the
+        derivative cannot be computed and a zero field is returned.
 
         >>> def value_fun(pos):
         ...     x, y, z = pos
@@ -1956,7 +1956,7 @@ class Field:
         """
         return self.__class__(self.mesh[key], dim=self.dim, value=self)
 
-    def project(self, *args, n=None):
+    def project(self, *args):
         """Projects the field along one direction and averages it out along
         that direction.
 
@@ -1964,15 +1964,6 @@ class Field:
         is projected (averaged) along that direction. For example
         ``project('z')`` would average the field in the z-direction and return
         the field which has only one discretisation cell in the z-direction.
-        The number of points in two dimensions on the plane can be defined
-        using ``n`` (e.g. ``n=(10, 15)``). The resulting field has the same
-        dimension as the field itself.
-
-        Parameters
-        ----------
-        n : (2,) tuple
-
-            The number of points on the plane in two dimensions.
 
         Returns
         ------
@@ -1994,14 +1985,16 @@ class Field:
         ...
         >>> field.project('z')
         Field(...)
+        >>> field.project('z').average
+        (1.0, 2.0, 3.0)
         >>> field.project('z').array.shape
         (2, 2, 1, 3)
 
         """
-        plane_mesh = self.mesh.plane(*args, n=n)
-        plane_array = self.array.mean(axis=plane_mesh.info['planeaxis'],
-                                      keepdims=True)
-        return self.__class__(plane_mesh, dim=self.dim, value=plane_array)
+        plane_mesh = self.mesh.plane(*args)
+        project_array = self.array.mean(axis=plane_mesh.info['planeaxis'],
+                                        keepdims=True)
+        return self.__class__(plane_mesh, dim=self.dim, value=project_array)
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
@@ -2759,7 +2752,7 @@ class Field:
                     values[i] = np.array([np.nan])
 
         # "Unpack" values inside arrays and convert to nd.array.
-        values =  np.array(list(zip(*values)))
+        values = np.array(list(zip(*values)))
 
         pmin = np.divide(self.mesh.region.pmin, multiplier)
         pmax = np.divide(self.mesh.region.pmax, multiplier)

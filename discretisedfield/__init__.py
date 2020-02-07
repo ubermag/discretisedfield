@@ -1,7 +1,6 @@
 import pytest
 import pkg_resources
-import matplotlib
-matplotlib.use('Agg')
+import matplotlib; matplotlib.use('Agg')
 import seaborn as sns
 from .region import Region
 from .mesh import Mesh

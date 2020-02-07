@@ -16,10 +16,10 @@ from mpl_toolkits.mplot3d import Axes3D
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
                pbc=ts.Subset(sample_set='xyz', unpack=True),
-               subregions=ts.Dictionary(key_descriptor=ts.Name(),
-                                        value_descriptor=
-                                        ts.Typed(expected_type=df.Region),
-                                        allow_empty=True))
+               subregions=ts.Dictionary(
+                   key_descriptor=ts.Name(),
+                   value_descriptor=ts.Typed(expected_type=df.Region),
+                   allow_empty=True))
 class Mesh:
     """Finite difference cubic mesh.
 
@@ -235,7 +235,6 @@ class Mesh:
         """
         for index in itertools.product(*map(range, reversed(self.n))):
             yield tuple(reversed(index))
-
 
     def __iter__(self):
         """Generator yielding coordinates of all mesh cell centres.
@@ -467,7 +466,7 @@ class Mesh:
         .. math::
 
            \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} - \\mathbf{p}_{1}}{n-1},
-           \\text{for}\, i = 0, ..., n-1
+           \\text{for}\\, i = 0, ..., n-1
 
         and this method yields :math:`\\mathbf{r}_{i}` in :math:`n` iterations.
 
@@ -841,7 +840,7 @@ class Mesh:
 
         for i, subregion in enumerate(self.subregions.values()):
             subregion.mpl(ax=ax, multiplier=multiplier,
-                          color=color_palette[i%len(color_palette)],
+                          color=color_palette[i % len(color_palette)],
                           linewidth=linewidth,
                           **kwargs)
 
@@ -978,7 +977,7 @@ class Mesh:
             for i, region in enumerate(self.subregions.values()):
                 if self.index2point(index) in region:
                     # +1 to avoid 0 value - invisible voxel
-                    plot_array[index] = (i%len(color_palette)) + 1
+                    plot_array[index] = (i % len(color_palette)) + 1
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
 
         if multiplier is None:

@@ -49,10 +49,9 @@ def check_field(field):
     assert len(plane.mesh) == 4
     assert plane.mesh.n == (2, 2, 1)
 
-    #project = field.project('y', n=(2, 2))
-    #assert isinstance(project, df.Field)
-    #assert len(project.mesh) == 4
-    #assert project.mesh.n == (2, 1, 2)
+    project = field.project('z')
+    assert isinstance(project, df.Field)
+    assert project.mesh.n[2] == 1
 
     assert isinstance(field(field.mesh.region.centre), (tuple, np.ndarray))
     assert isinstance(field(field.mesh.region.random_point()),
@@ -107,6 +106,7 @@ def check_field(field):
         assert orientation.dim == 3
 
         assert all(i in dir(field) for i in 'xyz')
+
 
 class TestField:
     def setup(self):
