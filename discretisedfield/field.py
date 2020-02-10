@@ -14,9 +14,8 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
-# TODO: tutorials, check rtd requirements, line object (plotting line),
-# pycodestyle, coverage, remove numbers from tutorials, do only test-coverage
-# instead of testing twice
+# TODO: tutorials, check rtd requirements, remove numbers from tutorials, do
+# only test-coverage instead of testing twice
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
