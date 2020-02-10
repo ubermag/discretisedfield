@@ -5,8 +5,8 @@ API Reference
    :maxdepth: 1
    :caption: Contents:
 
-   mesh
    region
+   mesh
    field
+   line
    operators
-
