@@ -121,52 +121,45 @@ def normalise_to_range(values, value_range):
     return values
 
 
-def voxels(plot_array, pmin, pmax, color_palette, multiplier=1, outlines=False,
-           plot=None, **kwargs):
-    plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
-
+def k3d_parameters(plot, multiplier, value):
     if plot is None:
         plot = k3d.plot()
         plot.display()
+
+    if multiplier is None:
+        multiplier = uu.si_max_multiplier(value)
+
+    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+    plot.axes = [i + unit for i in 'xyz']
+
+    return plot, multiplier
+
+
+def voxels(plot_array, pmin, pmax, color_palette, multiplier=1, outlines=False,
+           **kwargs):
+    plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
 
     xmin, ymin, zmin = np.divide(pmin, multiplier)
     xmax, ymax, zmax = np.divide(pmax, multiplier)
     bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
 
-    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
-
-    plot += k3d.voxels(plot_array,
-                       color_map=color_palette,
-                       bounds=bounds,
-                       outlines=outlines,
-                       **kwargs)
-    plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
+    return k3d.voxels(plot_array, color_map=color_palette, bounds=bounds,
+                      outlines=outlines, **kwargs)
 
 
-def points(coordinates, color, point_size, multiplier=1, plot=None, **kwargs):
+def points(coordinates, color, point_size, multiplier=1, **kwargs):
     coordinates = coordinates.astype(np.float32)  # to avoid k3d warning
-
-    if plot is None:
-        plot = k3d.plot()
-        plot.display()
 
     coordinates = np.divide(coordinates, multiplier)
 
-    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
-
-    plot += k3d.points(coordinates, point_size=point_size,
-                       color=color, **kwargs)
-    plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
+    return k3d.points(coordinates, point_size=point_size,
+                      color=color, **kwargs)
 
 
 def vectors(coordinates, vectors, colors=[], multiplier=1, vector_multiplier=1,
-            plot=None, **kwargs):
+            **kwargs):
     coordinates = coordinates.astype(np.float32)  # to avoid k3d warning
     vectors = vectors.astype(np.float32)  # to avoid k3d warning
-
-    if plot is None:
-        plot = k3d.plot()
-        plot.display()
 
     coordinates = np.divide(coordinates, multiplier)
     vectors = np.divide(vectors, vector_multiplier)
@@ -174,7 +167,4 @@ def vectors(coordinates, vectors, colors=[], multiplier=1, vector_multiplier=1,
     # Plot middle of the arrow is at the cell centre.
     coordinates = coordinates - 0.5*vectors
 
-    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
-
-    plot += k3d.vectors(coordinates, vectors, colors=colors, **kwargs)
-    plot.axes = ['x'+unit, 'y'+unit, 'z'+unit]
+    return k3d.vectors(coordinates, vectors, colors=colors, **kwargs)

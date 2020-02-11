@@ -3013,13 +3013,12 @@ class Field:
         plot_array = plot_array[..., 0]  # remove an empty dimension
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
+                                              self.mesh.region.edges)
 
-        dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
-                   pmax=self.mesh.region.pmax,
-                   color_palette=color, multiplier=multiplier,
-                   plot=plot, **kwargs)
+        plot += dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
+                           pmax=self.mesh.region.pmax, color_palette=color,
+                           multiplier=multiplier, **kwargs)
 
     def k3d_voxels(self, plot=None, filter_field=None, multiplier=None,
                    cmap='cividis', n=256, **kwargs):
@@ -3129,17 +3128,19 @@ class Field:
 
         color_palette = dfu.color_palette(cmap, n, 'int')
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
+                                              self.mesh.region.edges)
 
-        dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
-                   pmax=self.mesh.region.pmax, color_palette=color_palette,
-                   multiplier=multiplier, plot=plot, **kwargs)
+        plot += dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
+                           pmax=self.mesh.region.pmax,
+                           color_palette=color_palette, multiplier=multiplier,
+                           **kwargs)
 
     def k3d_vectors(self, plot=None, color_field=None, points=True,
-                    point_color=dfu.color_palette('deep', 10, 'int')[0],
+                    cmap='cividis', n=256,
+                    point_color=dfu.color_palette('deep', 1, 'int')[0],
                     point_size=None, multiplier=None, vector_multiplier=None,
-                    cmap='cividis', n=256, **kwargs):
+                    **kwargs):
         """Plots the vector field using ``k3d``.
 
         If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
@@ -3244,8 +3245,8 @@ class Field:
                     color_values.append(color_field(coord))
         coordinates, vectors = np.array(coordinates), np.array(vectors)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
+                                              self.mesh.region.edges)
 
         if vector_multiplier is None:
             vector_multiplier = (vectors.max() /
@@ -3262,15 +3263,11 @@ class Field:
         else:
             # Uniform colour.
             colors = (len(vectors) *
-                      ([2*(dfu.color_palette('deep', 10, 'int')[1],)]))
+                      ([2*(dfu.color_palette('deep', 2, 'int')[1],)]))
 
-        if plot is None:
-            plot = k3d.plot()
-            plot.display()
-
-        dfu.vectors(coordinates, vectors, colors=colors,
+        plot += dfu.vectors(coordinates, vectors, colors=colors,
                     multiplier=multiplier, vector_multiplier=vector_multiplier,
-                    plot=plot, **kwargs)
+                    **kwargs)
 
         if points:
             if point_size is None:
@@ -3278,5 +3275,5 @@ class Field:
                 # cell dimension.
                 point_size = np.divide(self.mesh.cell, multiplier).min() / 4
 
-            dfu.points(coordinates, color=point_color, point_size=point_size,
-                       multiplier=multiplier, plot=plot)
+            plot += dfu.points(coordinates, color=point_color,
+                               point_size=point_size, multiplier=multiplier)

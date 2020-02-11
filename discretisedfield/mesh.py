@@ -846,7 +846,7 @@ class Mesh:
                           **kwargs)
 
     def k3d(self, plot=None, multiplier=None,
-            color_palette=dfu.color_palette('deep', 10, 'int')[:2], **kwargs):
+            color_palette=dfu.color_palette('deep', 2, 'int'), **kwargs):
         """Plots the mesh region and discretisation cell using ``k3d`` voxels.
 
         If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
@@ -908,12 +908,12 @@ class Mesh:
         plot_array = np.ones(tuple(reversed(self.n)))
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.region.edges)
+        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
+                                              self.region.edges)
 
-        dfu.voxels(plot_array, pmin=self.region.pmin, pmax=self.region.pmax,
-                   color_palette=color_palette, multiplier=multiplier,
-                   plot=plot, **kwargs)
+        plot += dfu.voxels(plot_array, pmin=self.region.pmin,
+                           pmax=self.region.pmax, color_palette=color_palette,
+                           multiplier=multiplier, **kwargs)
 
     def k3d_subregions(self, plot=None, multiplier=None,
                        color_palette=dfu.color_palette('deep', 10, 'int'),
@@ -981,15 +981,15 @@ class Mesh:
                     plot_array[index] = (i % len(color_palette)) + 1
         plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.region.edges)
+        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
+                                              self.region.edges)
 
-        dfu.voxels(plot_array, pmin=self.region.pmin, pmax=self.region.pmax,
-                   color_palette=color_palette, multiplier=multiplier,
-                   plot=plot, **kwargs)
+        plot += dfu.voxels(plot_array, pmin=self.region.pmin,
+                           pmax=self.region.pmax, color_palette=color_palette,
+                           multiplier=multiplier, **kwargs)
 
     def k3d_points(self, plot=None, point_size=None, multiplier=None,
-                   color=dfu.color_palette('deep', 10, 'int')[0], **kwargs):
+                   color=dfu.color_palette('deep', 1, 'int')[0], **kwargs):
         """Plots the points at discretisation cell centres using ``k3d``.
 
         If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
@@ -1049,16 +1049,16 @@ class Mesh:
         """
         coordinates = np.array(list(self))
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.region.edges)
+        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
+                                              self.region.edges)
 
         if point_size is None:
             # If undefined, the size of the point is 1/4 of the smallest cell
             # dimension.
             point_size = np.divide(self.cell, multiplier).min() / 4
 
-        dfu.points(coordinates, color=color, point_size=point_size,
-                   multiplier=multiplier, plot=plot, **kwargs)
+        plot += dfu.points(coordinates, color=color, point_size=point_size,
+                           multiplier=multiplier, **kwargs)
 
     def slider(self, axis, multiplier=None, **kwargs):
         """Slider for interactive plotting.

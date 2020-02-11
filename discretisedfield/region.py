@@ -1,3 +1,4 @@
+import k3d
 import random
 import numpy as np
 import seaborn as sns
@@ -472,7 +473,7 @@ class Region:
         ax.figure.tight_layout()
 
     def k3d(self, plot=None, multiplier=None,
-            color=dfu.color_palette('deep', 10, 'int')[0], **kwargs):
+            color=dfu.color_palette('deep', 1, 'int'), **kwargs):
         """Plots the region using ``k3d`` voxels.
 
         If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
@@ -527,9 +528,8 @@ class Region:
         """
         plot_array = np.ones((1, 1, 1))
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.edges)
+        plot, multiplier = dfu.k3d_parameters(plot, multiplier, self.edges)
 
-        dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
-                   color_palette=color, multiplier=multiplier, plot=plot,
-                   **kwargs)
+        plot += dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
+                           color_palette=color, multiplier=multiplier,
+                           **kwargs)
