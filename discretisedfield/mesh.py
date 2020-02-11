@@ -1,6 +1,7 @@
 import k3d
 import itertools
 import matplotlib
+import ipywidgets
 import numpy as np
 import seaborn as sns
 import discretisedfield as df
@@ -1058,3 +1059,28 @@ class Mesh:
 
         dfu.points(coordinates, color=color, point_size=point_size,
                    multiplier=multiplier, plot=plot, **kwargs)
+
+    def slider(self, axis, multiplier=None, **kwargs):
+        if isinstance(axis, str):
+            axis = dfu.axesdict[axis]
+
+        if multiplier is None:
+            multiplier = uu.si_multiplier(self.region.edges[axis])
+
+        slider_min = self.region.pmin[axis] + self.cell[axis]/2
+        slider_max = self.region.pmax[axis] - self.cell[axis]/2
+        slider_step = self.cell[axis]
+        slider_description = (f'{dfu.raxesdict[axis]} '
+                              f'({uu.rsi_prefixes[multiplier]}m)')
+
+        values = np.arange(slider_min, slider_max+1e-20, slider_step)
+        labels = np.around(values / multiplier, decimals=3)
+        options = list(zip(labels, values))
+
+        # Select middle element for slider value
+        slider_value = values[int(self.n[axis]/2)]
+
+        return ipywidgets.SelectionSlider(options=options,
+                                          value=slider_value,
+                                          description=slider_description,
+                                          **kwargs)
