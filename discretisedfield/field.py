@@ -2658,7 +2658,7 @@ class Field:
                                               multiplier=multiplier)
         else:
             # Scalar field has only imshow.
-            coloredplot = self.imshow(ax=ax, filter_field=None,
+            coloredplot = self.imshow(ax=ax, filter_field=None, cmap='cividis',
                                       multiplier=multiplier)
 
         cbar = self.colorbar(ax, coloredplot)

@@ -1061,6 +1061,52 @@ class Mesh:
                    multiplier=multiplier, plot=plot, **kwargs)
 
     def slider(self, axis, multiplier=None, **kwargs):
+        """Slider for interactive plotting.
+
+        For ``axis``, ``'x'``, ``'y'``, or ``'z'`` can be passed. Based on that
+        value, ``ipywidgets.SelectionSlider`` is returned for navigating
+        interactive plots.
+
+        This method plots the points using ``k3d.points()`` function, so any
+        keyword arguments accepted by it can be passed.
+
+        This method is based on ``ipywidgets.SelectionSlider``, so any keyword
+        argument accepted by it can be passed.
+
+        Parameters
+        ----------
+        axis : struct
+
+            Axis for which the slider is returned.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the slider points will
+            be divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units
+            will be used in the description. If ``multiplier`` is not passed,
+            the optimum one is computed internally. Defaults to ``None``.
+
+        Returns
+        -------
+        ipywidgets.SelectionSlider
+
+            Axis slider.
+
+        Example
+        -------
+        1. Get the slider for the x-coordinate.
+
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10e-9, 10e-9, 10e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> mesh.slider('x')
+        SelectionSlider(...)
+
+        """
         if isinstance(axis, str):
             axis = dfu.axesdict[axis]
 
@@ -1084,3 +1130,51 @@ class Mesh:
                                           value=slider_value,
                                           description=slider_description,
                                           **kwargs)
+
+    def axis_select(self, widget='dropdown', description='axis'):
+        """Axis selection widget.
+
+        For ``widget='dropdown'``, ``ipywidgets.Dropdown`` is returned, whereas
+        for ``widget='radiobuttons'``, ``ipywidgets.RadioButtons`` is returned.
+        Returned widget can later be used for navigating plots. Description of
+        the widget can be passed using ``description``.
+
+        Parameters
+        ----------
+        widget : str
+
+            Type of widget to be returned. Defaults to ``'dropdown'``.
+
+        description : str
+
+            Widget description to be showed. Defaults to ``'axis'``.
+
+        Returns
+        -------
+        ipywidgets.Dropdown, ipywidgets.RadioButtons
+
+            Axis selection widget.
+
+        Example
+        -------
+        1. Get the ``RadioButtons`` slider.
+
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10e-9, 10e-9, 10e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> mesh.axis_select(widget='radiobuttons')
+        RadioButtons(...)
+
+        """
+        if widget.lower() == 'dropdown':
+            return ipywidgets.Dropdown(options=list('xyz'),
+                                       value='z',
+                                       description=description)
+        elif widget == 'radiobuttons':
+            return ipywidgets.RadioButtons(options=list('xyz'),
+                                           value='z',
+                                           description=description)
+        else:
+            msg = f'Widget {widget} is not supported.'
+            raise ValueError(msg)
