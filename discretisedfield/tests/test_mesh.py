@@ -2,6 +2,7 @@ import re
 import types
 import pytest
 import numbers
+import ipywidgets
 import numpy as np
 import discretisedfield as df
 
@@ -554,3 +555,38 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
         mesh.mpl_subregions()
         mesh.k3d_subregions()
+
+    def test_slider(self):
+        p1 = (-10e-9, -5e-9, 10e-9)
+        p2 = (10e-9, 5e-9, 0)
+        cell = (1e-9, 2.5e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
+
+        x_slider = mesh.slider('x')
+        assert isinstance(x_slider, ipywidgets.SelectionSlider)
+
+        y_slider = mesh.slider('y', multiplier=1)
+        assert isinstance(x_slider, ipywidgets.SelectionSlider)
+
+        z_slider = mesh.slider('z', multiplier=1e3)
+        assert isinstance(x_slider, ipywidgets.SelectionSlider)
+
+    def test_axis_selection(self):
+        p1 = (-10e-9, -5e-9, 10e-9)
+        p2 = (10e-9, 5e-9, 0)
+        cell = (1e-9, 2.5e-9, 1e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
+
+        axis_widget = mesh.axis_selection()
+        assert isinstance(axis_widget, ipywidgets.Dropdown)
+
+        axis_widget = mesh.axis_selection(widget='radiobuttons')
+        assert isinstance(axis_widget, ipywidgets.RadioButtons)
+
+        axis_widget = mesh.axis_selection(description='something')
+        assert isinstance(axis_widget, ipywidgets.Dropdown)
+
+        with pytest.raises(ValueError):
+            axis_widget = mesh.axis_selection(widget='something')

@@ -1131,7 +1131,7 @@ class Mesh:
                                           description=slider_description,
                                           **kwargs)
 
-    def axis_select(self, widget='dropdown', description='axis'):
+    def axis_selection(self, widget='dropdown', description='axis'):
         """Axis selection widget.
 
         For ``widget='dropdown'``, ``ipywidgets.Dropdown`` is returned, whereas
@@ -1163,7 +1163,7 @@ class Mesh:
         >>> p2 = (10e-9, 10e-9, 10e-9)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> mesh.axis_select(widget='radiobuttons')
+        >>> mesh.axis_selection(widget='radiobuttons')
         RadioButtons(...)
 
         """
