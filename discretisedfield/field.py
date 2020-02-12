@@ -3021,7 +3021,8 @@ class Field:
                            multiplier=multiplier, **kwargs)
 
     def k3d_voxels(self, plot=None, filter_field=None, multiplier=None,
-                   cmap='cividis', n=256, **kwargs):
+                   cmap='cividis', n=256, interactive=False, total_region=None,
+                   **kwargs):
         """Plots the scalar field as a coloured ``k3d.voxels()`` plot.
 
         If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
@@ -3131,10 +3132,26 @@ class Field:
         plot, multiplier = dfu.k3d_parameters(plot, multiplier,
                                               self.mesh.region.edges)
 
+        if interactive:
+            if not plot.objects:
+                plot += dfu.voxels(np.ones((1, 1, 1)),
+                                pmin=total_region.pmin,
+                                pmax=total_region.pmax,
+                                color_palette=dfu.color_palette('deep', 1, 'int')[0],
+                                multiplier=multiplier,
+                                opacity = 0.05)
+
+            for object in plot.objects[1:]:
+                plot -= object
+
         plot += dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
                            pmax=self.mesh.region.pmax,
                            color_palette=color_palette, multiplier=multiplier,
                            **kwargs)
+
+        if interactive:
+            plot.camera_auto_fit = False
+            plot.grid_auto_fit = False
 
     def k3d_vectors(self, plot=None, color_field=None, points=True,
                     cmap='cividis', n=256,
