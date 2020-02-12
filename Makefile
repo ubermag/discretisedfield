@@ -16,7 +16,7 @@ test-docs:
 	$(PYTHON) -m pytest -v --doctest-modules --ignore=$(PROJECT)/tests $(PROJECT)
 
 test-ipynb:
-	$(PYTHON) -m pytest --nbval $(IPYNBPATH)
+	$(PYTHON) -m pytest -v --nbval $(IPYNBPATH)
 
 test-pycodestyle:
 	pycodestyle --filename=*.py .

@@ -18,8 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'discretisedfield'
-copyright = ('2019, Marijan Beg, Ryan A. Pepper, '
-             'Thomas Kluyver, and Hans Fangohr')
+copyright = '2020, Marijan Beg and Hans Fangohr'
 author = 'Marijan Beg, Ryan A. Pepper, Thomas Kluyver, and Hans Fangohr'
 
 

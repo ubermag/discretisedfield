@@ -14,8 +14,9 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
-# TODO: tutorials, check rtd requirements, remove numbers from tutorials, do
-# only test-coverage instead of testing twice
+# TODO: tutorials (code polishing), check rtd requirements, remove numbers from
+# tutorials, installation instructions (conda environment, k3d jupyterlab), go
+# through other repo files
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
