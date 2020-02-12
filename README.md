@@ -23,7 +23,7 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 This Python package provides:
 
 - Definition of finite difference meshes and fields
-- Reading and writing of different file types, such as `.ovf` and `.vtk`
+- Reading and writing of different file types, such as `.ovf`, `.vtk`, and `.hdf5`
 - Visualisation of finite difference meshes and fields using `matplotlib` and `k3d`
 
 It is available on all major operating systems (Windows, MacOS, Linux) and requires Python 3.6 or higher.
