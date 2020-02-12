@@ -2,7 +2,7 @@ name: binder-environment
 channels:
   - conda-forge
 dependencies:
-  - python=3.8
+  - python==3.8
   - pip
   - pip:
-    - discretisedfield=0.8.8
+    - discretisedfield==0.8.8
