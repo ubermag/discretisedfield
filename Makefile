@@ -19,7 +19,7 @@ test-ipynb:
 	$(PYTHON) -m pytest -v --nbval $(IPYNBPATH)
 
 test-pycodestyle:
-	pycodestyle --filename=*.py .
+	$(PYTHON) -m pycodestyle --filename=*.py .
 
 test-all: test-test test-coverage test-docs test-ipynb test-pycodestyle
 

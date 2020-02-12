@@ -6,7 +6,7 @@ environment:
 platform:
   - x64
 
-build: off
+build: false
 
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
@@ -14,9 +14,10 @@ install:
   - conda update -q conda
   - "conda create -q -n test-environment python=%PYTHON_VERSION%"
   - activate test-environment
-  - python -m pip install --upgrade pip pytest nbval .
+  - python -m pip install --upgrade pip nbval pycodestyle .
 
 test_script:
   - python -c "import discretisedfield as df; import sys; sys.exit(df.test())"
-  - python -m pytest --nbval docs\ipynb\
-  - python -m pytest --doctest-modules --ignore=discretisedfield\tests discretisedfield
+  - python -m pytest -v --doctest-modules --ignore=discretisedfield\tests discretisedfield
+  - python -m pytest -v --nbval docs\ipynb\
+  - python -m pycodestyle --filename=*.py .
