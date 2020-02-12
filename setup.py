@@ -5,7 +5,7 @@ with open('README.md', encoding='utf-8') as f:
 
 setuptools.setup(
     name='discretisedfield',
-    version='0.8.7',
+    version='0.8.8',
     description=('Python package for definition, reading, '
                  'and visualisation of finite difference fields.'),
     long_description=long_description,
