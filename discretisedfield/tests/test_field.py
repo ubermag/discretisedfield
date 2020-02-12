@@ -1,5 +1,6 @@
 import os
 import re
+import k3d
 import types
 import random
 import pytest
@@ -1313,8 +1314,8 @@ class TestField:
     def test_k3d_nonzero(self):
         self.pf.norm.k3d_nonzero()
         self.pf.x.k3d_nonzero()
-        self.pf.y.k3d_nonzero()
-        self.pf.z.k3d_nonzero()
+        self.pf.z.k3d_nonzero(field=self.pf)
+        self.pf.norm.plane('z').k3d_nonzero(field=self.pf, interactive=True)
 
         with pytest.raises(ValueError) as excinfo:
             self.pf.k3d_nonzero()
@@ -1322,6 +1323,8 @@ class TestField:
     def test_k3d_voxels(self):
         self.pf.x.k3d_voxels()
         self.pf.y.k3d_voxels(filter_field=self.pf.norm)
+        self.pf.z.k3d_voxels(field=self.pf)
+        self.pf.norm.plane('z').k3d_voxels(field=self.pf, interactive=True)
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
@@ -1335,6 +1338,12 @@ class TestField:
         self.pf.k3d_vectors()
         self.pf.k3d_vectors(color_field=self.pf.z)
         self.pf.k3d_vectors(points=False)
+        self.pf.k3d_vectors(field=self.pf)
+        self.pf.plane('z').k3d_vectors(field=self.pf, interactive=True)
+
+        plot = k3d.plot()
+        self.pf.plane('z').k3d_vectors(field=self.pf, interactive=True,
+                                       plot=plot)
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:

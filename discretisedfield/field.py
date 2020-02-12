@@ -2938,7 +2938,8 @@ class Field:
         return plt.colorbar(coloredplot, cax=cax, **kwargs)
 
     def k3d_nonzero(self, plot=None, multiplier=None,
-                    color=dfu.color_palette('deep', 10, 'int')[0], **kwargs):
+                    color=dfu.color_palette('deep', 10, 'int')[0], field=None,
+                    interactive=False, **kwargs):
         """Plots the mesh discretisation cells where the value of the field is
         not zero using ``k3d`` voxels.
 
@@ -2952,7 +2953,11 @@ class Field:
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the optimum one is
         computed internally. The colour of the "non-zero region" can be
-        determined using ``color`` as an integer.
+        determined using ``color`` as an integer. When sliced field is plotted,
+        it is sometimes necessary to plot the region of the original field.
+        This can be achieved by passing the field using ``field``. In
+        interactive plots, ``field`` must be passed. ``interactive=True`` must
+        be defined when the method is used for interactive plotting.
 
         This method plots the region using ``k3d.voxels()`` function, so any
         keyword arguments accepted by it can be passed.
@@ -2979,6 +2984,21 @@ class Field:
             Colour of the "non-zero" region. Defaults to
             ``seaborn.color_pallette(palette='deep')[0]``.
 
+        field : discretisedfield.Field
+
+            If ``field`` is passed, then the region of the field is plotted.
+            Defaults to ``None``.
+
+        interactive : bool
+
+            For interactive plotting, ``True`` must be passed. Defaults to
+            ``False``.
+
+        Raises
+        ------
+        ValueError
+
+            If the dimension of the field is not 1.
 
         Examples
         --------
@@ -3016,12 +3036,18 @@ class Field:
         plot, multiplier = dfu.k3d_parameters(plot, multiplier,
                                               self.mesh.region.edges)
 
+        if field is not None:
+            dfu.k3d_plot_region(plot, field.mesh.region, multiplier)
+
+        if interactive:
+            dfu.k3d_setup_interactive_plot(plot)
+
         plot += dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
                            pmax=self.mesh.region.pmax, color_palette=color,
                            multiplier=multiplier, **kwargs)
 
     def k3d_voxels(self, plot=None, filter_field=None, multiplier=None,
-                   cmap='cividis', n=256, interactive=False, total_region=None,
+                   cmap='cividis', n=256, field=None, interactive=False,
                    **kwargs):
         """Plots the scalar field as a coloured ``k3d.voxels()`` plot.
 
@@ -3038,6 +3064,11 @@ class Field:
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
         is not passed, the optimum one is computed internally. The colormap and
         the resolution of the colours can be set by passing ``cmap`` and ``n``.
+        When sliced field is plotted, it is sometimes necessary to plot the
+        region of the original field. This can be achieved by passing the field
+        using ``field``. In interactive plots, ``field`` must be passed.
+        ``interactive=True`` must be defined when the method is used for
+        interactive plotting.
 
         This method plots the region using ``k3d.voxels()`` function, so any
         keyword arguments accepted by it can be passed.
@@ -3073,6 +3104,16 @@ class Field:
 
             The resolution of the colormap. Defaults to 256, which is also the
             maximum possible value.
+
+        field : discretisedfield.Field
+
+            If ``field`` is passed, then the region of the field is plotted.
+            Defaults to ``None``.
+
+        interactive : bool
+
+            For interactive plotting, ``True`` must be passed. Defaults to
+            ``False``.
 
         Raises
         ------
@@ -3132,32 +3173,22 @@ class Field:
         plot, multiplier = dfu.k3d_parameters(plot, multiplier,
                                               self.mesh.region.edges)
 
-        if interactive:
-            if not plot.objects:
-                plot += dfu.voxels(np.ones((1, 1, 1)),
-                                pmin=total_region.pmin,
-                                pmax=total_region.pmax,
-                                color_palette=dfu.color_palette('deep', 1, 'int')[0],
-                                multiplier=multiplier,
-                                opacity = 0.05)
+        if field is not None:
+            dfu.k3d_plot_region(plot, field.mesh.region, multiplier)
 
-            for object in plot.objects[1:]:
-                plot -= object
+        if interactive:
+            dfu.k3d_setup_interactive_plot(plot)
 
         plot += dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
                            pmax=self.mesh.region.pmax,
                            color_palette=color_palette, multiplier=multiplier,
                            **kwargs)
 
-        if interactive:
-            plot.camera_auto_fit = False
-            plot.grid_auto_fit = False
-
     def k3d_vectors(self, plot=None, color_field=None, points=True,
                     cmap='cividis', n=256,
                     point_color=dfu.color_palette('deep', 1, 'int')[0],
                     point_size=None, multiplier=None, vector_multiplier=None,
-                    **kwargs):
+                    field=None, interactive=False, **kwargs):
         """Plots the vector field using ``k3d``.
 
         If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
@@ -3179,7 +3210,11 @@ class Field:
         ``points=True``. The size of the points can be passed using
         ``point_size`` and if ``point_size`` is not passed, optimum size is
         computed intenally. Similarly, ``point_color`` can be passed as an
-        integer.
+        integer. When sliced field is plotted, it is sometimes necessary to
+        plot the region of the original field. This can be achieved by passing
+        the field using ``field``. In interactive plots, ``field`` must be
+        passed. ``interactive=True`` must be defined when the method is used
+        for interactive plotting.
 
         This method plots the vectors using ``k3d.vectors()`` function, so any
         keyword arguments accepted by it can be passed.
@@ -3231,6 +3266,22 @@ class Field:
 
             The resolution of the colormap. Defaults to 256.
 
+        field : discretisedfield.Field
+
+            If ``field`` is passed, then the region of the field is plotted.
+            Defaults to ``None``.
+
+        interactive : bool
+
+            For interactive plotting, ``True`` must be passed. Defaults to
+            ``False``.
+
+        Raises
+        ------
+        ValueError
+
+            If the dimension of the field is not 3.
+
         Examples
         --------
         1. Visualising the vector field using ``k3d``.
@@ -3265,6 +3316,12 @@ class Field:
         plot, multiplier = dfu.k3d_parameters(plot, multiplier,
                                               self.mesh.region.edges)
 
+        if field is not None:
+            dfu.k3d_plot_region(plot, field.mesh.region, multiplier)
+
+        if interactive:
+            dfu.k3d_setup_interactive_plot(plot)
+
         if vector_multiplier is None:
             vector_multiplier = (vectors.max() /
                                  np.divide(self.mesh.cell, multiplier).min())
@@ -3283,8 +3340,8 @@ class Field:
                       ([2*(dfu.color_palette('deep', 2, 'int')[1],)]))
 
         plot += dfu.vectors(coordinates, vectors, colors=colors,
-                    multiplier=multiplier, vector_multiplier=vector_multiplier,
-                    **kwargs)
+                            multiplier=multiplier,
+                            vector_multiplier=vector_multiplier, **kwargs)
 
         if points:
             if point_size is None:

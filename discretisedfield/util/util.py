@@ -135,6 +135,29 @@ def k3d_parameters(plot, multiplier, value):
     return plot, multiplier
 
 
+def k3d_plot_region(plot, region, multiplier):
+    if not plot.objects:  # if plot was not displayed (interactive plotting)
+        plot += voxels(np.ones((1, 1, 1)),
+                       pmin=region.pmin,
+                       pmax=region.pmax,
+                       color_palette=color_palette('deep', 1, 'int')[0],
+                       multiplier=multiplier,
+                       opacity=0.025)
+
+
+def k3d_setup_interactive_plot(plot):
+    # Delete all objects except the field region.
+    for object in plot.objects[1:]:
+        plot -= object
+
+    # Make sure the camera and grid do not move in interactive plots. If
+    # the plot is not displayed (plot.outputs==[]), it will be displayed.
+    if not plot.outputs:
+        plot.display()
+        plot.camera_auto_fit = False
+        plot.grid_auto_fit = False
+
+
 def voxels(plot_array, pmin, pmax, color_palette, multiplier=1, outlines=False,
            **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
