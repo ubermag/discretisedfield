@@ -1341,8 +1341,11 @@ class TestField:
         self.pf.k3d_vectors(field=self.pf)
         self.pf.plane('z').k3d_vectors(field=self.pf, interactive=True)
 
+        # Simulate interactive plotting
         plot = k3d.plot()
         self.pf.plane('z').k3d_vectors(field=self.pf, interactive=True,
+                                       plot=plot)
+        self.pf.plane('y').k3d_vectors(field=self.pf, interactive=True,
                                        plot=plot)
 
         # Exceptions
