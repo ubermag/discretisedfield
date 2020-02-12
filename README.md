@@ -12,7 +12,7 @@ Marijan Beg<sup>1,2</sup>, Ryan A. Pepper<sup>2</sup>, Thomas Kluyver<sup>1</sup
 |       |  [![Build status](https://ci.appveyor.com/api/projects/status/0shhdl5sj6fx07oe?svg=true)](https://ci.appveyor.com/project/marijanbeg/discretisedfield) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/ubermag/discretisedfield) |
 | Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
-| Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=docs%2Fipynb%2Findex.ipynb) |
+| Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?urlpath=lab/tree/docs/ipynb/index.ipynb) |
 | Platforms | [![Platforms](https://anaconda.org/conda-forge/discretisedfield/badges/platforms.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Downloads | [![Downloads](https://anaconda.org/conda-forge/discretisedfield/badges/downloads.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
@@ -34,7 +34,7 @@ We support installation using `conda` and `pip` package managers. Instructions c
 
 ## Binder
 
-This package can be used in the cloud via Binder. This does not require you to have anything installed and no files will be created on your machine. To access Binder, use this [link](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?filepath=docs%2Fipynb%2Findex.ipynb).
+This package can be used in the cloud via Binder. This does not require you to have anything installed and no files will be created on your machine. To access Binder, use this [link](https://mybinder.org/v2/gh/ubermag/discretisedfield/master?urlpath=lab/tree/docs/ipynb/index.ipynb).
 
 ## Documentation
 
