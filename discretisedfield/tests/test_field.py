@@ -10,7 +10,7 @@ import itertools
 import numpy as np
 import discretisedfield as df
 import matplotlib.pyplot as plt
-import discretisedfield.tests as dft
+from .test_mesh import TestMesh
 
 
 def check_field(field):
@@ -112,7 +112,7 @@ def check_field(field):
 class TestField:
     def setup(self):
         # Get meshes using valid arguments from TestMesh.
-        tm = dft.TestMesh()
+        tm = TestMesh()
         tm.setup()
         self.meshes = []
         for p1, p2, n, cell in tm.valid_args:

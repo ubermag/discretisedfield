@@ -6,6 +6,7 @@ from .mesh import Mesh
 from .field import Field
 from .line import Line
 from .operators import cross, stack
+from .interact import interact
 
 sns.set(style='whitegrid')
 
