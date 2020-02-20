@@ -131,7 +131,7 @@ class TestRegion:
         rstr = 'Region(p1=(-1.0, -4.0, 11.0), p2=(15.0, 10.1, 12.5))'
         assert repr(region) == rstr
 
-    def test_eq_ne(self):
+    def test_eq(self):
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10))

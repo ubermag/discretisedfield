@@ -393,7 +393,7 @@ class TestField:
             assert all(attr not in dir(f) for attr in ['x', 'y', 'z', 'div'])
             assert 'grad' in dir(f)
 
-    def test_eq_ne(self):
+    def test_eq(self):
         p1 = (-5e-9, -5e-9, -5e-9)
         p2 = (15e-9, 5e-9, 5e-9)
         cell = (5e-9, 1e-9, 2.5e-9)

@@ -227,7 +227,7 @@ class TestMesh:
             assert all(isinstance(i, numbers.Real) for i in point)
             assert all([1 <= i <= 9 for i in point])
 
-    def test_eq_ne(self):
+    def test_eq(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
