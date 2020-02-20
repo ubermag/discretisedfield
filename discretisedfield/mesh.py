@@ -320,20 +320,17 @@ class Mesh:
             return False
 
     def __repr__(self):
-        """Mesh representation string.
-
-        This method returns a string that can be copied so that exactly the
-        same mesh object can be defined.
+        """Representation string.
 
         Returns
         -------
         str
 
-           Mesh representation string.
+           Representation string.
 
         Example
         -------
-        1. Getting mesh representation string.
+        1. Getting representation string.
 
         >>> import discretisedfield as df
         ...

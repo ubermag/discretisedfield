@@ -261,20 +261,17 @@ class Region:
         return dfu.array2tuple(res)
 
     def __repr__(self):
-        """Region representation string.
-
-        This method returns the string that can be copied so that exactly the
-        same region object can be defined.
+        """Representation string.
 
         Returns
         -------
         str
 
-           Region representation string.
+           Representation string.
 
         Example
         -------
-        1. Getting region representation string.
+        1. Getting representation string.
 
         >>> import discretisedfield as df
         ...

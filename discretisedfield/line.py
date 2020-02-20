@@ -212,17 +212,17 @@ class Line:
         return self.dictionary[point]
 
     def __repr__(self):
-        """Line representation string.
+        """Representation string.
 
         Returns
         -------
         str
 
-           Line representation string.
+           Representation string.
 
         Example
         -------
-        1. Getting line representation string.
+        1. Getting representation string.
 
         >>> import discretisedfield as df
         ...

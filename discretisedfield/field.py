@@ -466,17 +466,17 @@ class Field:
         return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
 
     def __repr__(self):
-        """Field representation string.
+        """Representation string.
 
         Returns
         -------
         str
 
-            Field representation string.
+            Representation string.
 
         Example
         -------
-        1. Getting field representation string.
+        1. Getting representation string.
 
         >>> import discretisedfield as df
         ...
