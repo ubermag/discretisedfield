@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 # TODO: tutorials (code polishing), check rtd requirements, remove numbers from
 # tutorials, installation instructions (conda environment, k3d jupyterlab), go
-# through other repo files
+# through other repo files, probably __ne__ should not be implemeted
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
@@ -697,8 +697,6 @@ class Field:
         >>> f1 == 'a'
         False
 
-        .. seealso:: :py:func:`~discretisedfield.Field.__ne__`
-
         """
         if not isinstance(other, self.__class__):
             return False
@@ -707,17 +705,6 @@ class Field:
             return True
         else:
             return False
-
-    def __ne__(self, other):
-        """Relational operator ``!=``.
-
-        This method returns ``not self == other``. For details, please refer to
-        ``discretisedfield.Field.__eq__`` method.
-
-        .. seealso:: :py:func:`~discretisedfield.Field.__eq__`
-
-        """
-        return not self == other
 
     def __pos__(self):
         """Unary ``+`` operator.

@@ -323,8 +323,6 @@ class Region:
         >>> region1 != region3
         True
 
-        .. seealso:: :py:func:`~discretisedfield.Region.__ne__`
-
         """
         if not isinstance(other, self.__class__):
             return False
@@ -332,16 +330,6 @@ class Region:
             return True
         else:
             return False
-
-    def __ne__(self, other):
-        """Relational operator ``!=``.
-
-        This method returns ``not self == other``.
-
-        .. seealso:: :py:func:`~discretisedfield.Region.__eq__`
-
-        """
-        return not self == other
 
     def __contains__(self, point):
         """Determine whether `point` belongs to the region.

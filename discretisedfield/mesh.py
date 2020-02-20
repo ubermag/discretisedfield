@@ -311,8 +311,6 @@ class Mesh:
         >>> mesh1 != mesh3
         True
 
-        .. seealso:: :py:func:`~discretisedfield.Mesh.__ne__`
-
         """
         if not isinstance(other, self.__class__):
             return False
@@ -320,17 +318,6 @@ class Mesh:
             return True
         else:
             return False
-
-    def __ne__(self, other):
-        """Relational operator ``!=``.
-
-        This method returns ``not self == other``. For details, please
-        refer to ``discretisedfield.Mesh.__eq__`` method.
-
-        .. seealso:: :py:func:`~discretisedfield.Mesh.__eq__`
-
-        """
-        return not self == other
 
     def __repr__(self):
         """Mesh representation string.
