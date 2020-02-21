@@ -1,6 +1,8 @@
+import os
 import re
 import pytest
 import numbers
+import tempfile
 import numpy as np
 import discretisedfield as df
 import discretisedfield.util as dfu
@@ -172,6 +174,11 @@ class TestRegion:
         region.mpl(figsize=(10, 10), multiplier=1e-9,
                    color=dfu.color_palette('deep', 10, 'rgb')[1],
                    linewidth=3, linestyle='dashed')
+
+        filename = 'figure.pdf'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            region.mpl(filename=tmpfilename)
 
     def test_k3d(self):
         p1 = (-50e9, -50e9, 0)

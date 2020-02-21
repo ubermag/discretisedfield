@@ -1279,6 +1279,11 @@ class TestField:
         with pytest.raises(ValueError) as excinfo:
             self.pf.mpl()
 
+        filename = 'figure.pdf'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            self.pf.plane('z').mpl(filename=tmpfilename)
+
     def test_imshow(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)

@@ -378,7 +378,7 @@ class Region:
 
     def mpl(self, ax=None, figsize=None, multiplier=None,
             color=dfu.color_palette('deep', 10, 'rgb')[0],
-            linewidth=2, **kwargs):
+            linewidth=2, filename=None, **kwargs):
         """Plots the region using ``matplotlib`` 3D plot.
 
         If ``ax`` is not passed, axes will be created automaticaly. In that
@@ -393,6 +393,7 @@ class Region:
         is not passed, the optimum one is computed internally. The colour of
         lines depicting the region can be determined using ``color`` as an
         RGB-tuple. Similarly, linewidth can be set up by passing ``linewidth``.
+        If ``filename`` is passed, figure is saved.
 
         This method plots the region using ``matplotlib.pyplot.plot()``
         function, so any keyword arguments accepted by it can be passed.
@@ -429,6 +430,10 @@ class Region:
 
             Width of the line. Defaults to `2.
 
+        filename: str
+
+            Filename to which the plot is saved.
+
         Examples
         --------
         1. Visualising the region using ``matplotlib``.
@@ -456,6 +461,9 @@ class Region:
                      linewidth=linewidth, **kwargs)
         ax.set(xlabel='x'+unit, ylabel='y'+unit, zlabel='z'+unit)
         ax.figure.tight_layout()
+
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight')
 
     def k3d(self, plot=None, multiplier=None,
             color=dfu.color_palette('deep', 1, 'int'), **kwargs):

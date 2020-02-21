@@ -2550,7 +2550,7 @@ class Field:
             mesh = df.Mesh(region=region, n=n)
             return cls(mesh, dim=dim, value=array[:])
 
-    def mpl(self, ax=None, figsize=None, multiplier=None):
+    def mpl(self, ax=None, figsize=None, multiplier=None, filename=None):
         """Plots the field on a plane using ``matplotlib``.
 
         If ``ax`` is not passed, axes will be created automaticaly. In that
@@ -2562,7 +2562,8 @@ class Field:
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
         passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally.
+        is not passed, the optimum one is computed internally. If ``filename``
+        is passed, figure is saved.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). Otherwise, ``ValueError`` is raised. For vector
@@ -2595,6 +2596,10 @@ class Field:
             divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
             be used as axis labels. If ``multiplier`` is not passed, the
             optimum one is computed internally. Defaults to ``None``.
+
+        filename: str
+
+            Filename to which the plot is saved.
 
         Raises
         ------
@@ -2657,6 +2662,9 @@ class Field:
             cbar.ax.set_ylabel(planeaxis + ' component')
 
         ax.figure.tight_layout()
+
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight')
 
     def imshow(self, ax, filter_field=None, multiplier=1, **kwargs):
         """Plots the scalar field on a plane using

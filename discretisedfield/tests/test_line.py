@@ -1,6 +1,8 @@
+import os
 import re
 import pytest
 import numbers
+import tempfile
 import numpy as np
 import discretisedfield as df
 
@@ -75,3 +77,8 @@ class TestLine:
         line.mpl()
         line.mpl(figsize=(8, 6))
         line.mpl(multiplier=1e3)
+
+        filename = 'figure.pdf'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            line.mpl(filename=tmpfilename)

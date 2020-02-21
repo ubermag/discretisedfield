@@ -235,7 +235,8 @@ class Line:
         """
         return 'Line(points=..., values=...)'
 
-    def mpl(self, ax=None, figsize=None, multiplier=None, **kwargs):
+    def mpl(self, ax=None, figsize=None, multiplier=None,
+            filename=None, **kwargs):
         """Plots the values on the line.
 
         If ``ax`` is not passed, axes will be created automaticaly. In that
@@ -247,7 +248,8 @@ class Line:
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
         passed, all points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally.
+        is not passed, the optimum one is computed internally. If ``filename``
+        is passed, figure is saved.
 
         This method plots the mesh using ``matplotlib.pyplot.plot()`` function,
         so any keyword arguments accepted by it can be passed.
@@ -273,6 +275,10 @@ class Line:
             divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
             be used as axis labels. If ``multiplier`` is not passed, the
             optimum one is computed internally. Defaults to ``None``.
+
+        filename: str
+
+            Filename to which the plot is saved.
 
         Examples
         --------
@@ -309,3 +315,6 @@ class Line:
 
         ax.set_xlabel(f'r ({uu.rsi_prefixes[multiplier]}m)')
         ax.set_ylabel('value')
+
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight')

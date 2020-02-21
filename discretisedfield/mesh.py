@@ -722,7 +722,7 @@ class Mesh:
 
     def mpl(self, ax=None, figsize=None, multiplier=None,
             color_palette=dfu.color_palette('deep', 10, 'rgb')[:2],
-            linewidth=2, **kwargs):
+            linewidth=2, filename=None, **kwargs):
         """Plots the mesh region and discretisation cell using ``matplotlib``
         3D plot.
 
@@ -740,7 +740,8 @@ class Mesh:
         determined using ``color_palette`` as an RGB-tuple. More precisely, the
         first element is the colour of the region, whereas the second value is
         the colour of the discretisation cell. Similarly, linewidth can be set
-        up by passing ``linewidth``.
+        up by passing ``linewidth``. If ``filename`` is passed, figure is
+        saved.
 
         This method plots the mesh using ``matplotlib.pyplot.plot()`` function,
         so any keyword arguments accepted by it can be passed.
@@ -777,6 +778,10 @@ class Mesh:
 
             Width of the line. Defaults to 2.
 
+        filename: str
+
+            Filename to which the plot is saved.
+
         Examples
         --------
         1. Visualising the mesh using ``matplotlib``.
@@ -805,6 +810,9 @@ class Mesh:
                         linewidth=linewidth, **kwargs)
         cell_region.mpl(ax=ax, multiplier=multiplier, color=color_palette[1],
                         linewidth=linewidth, **kwargs)
+
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight')
 
     def mpl_subregions(self, ax=None, figsize=None, multiplier=None,
                        color_palette=dfu.color_palette('deep', 10, 'rgb'),

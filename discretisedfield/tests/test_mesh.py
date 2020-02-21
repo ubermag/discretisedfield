@@ -1,7 +1,9 @@
+import os
 import re
 import types
 import pytest
 import numbers
+import tempfile
 import ipywidgets
 import numpy as np
 import discretisedfield as df
@@ -574,7 +576,11 @@ class TestMesh:
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
             mesh.mpl()
-            mesh.plane('z').mpl()
+
+            filename = 'figure.pdf'
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmpfilename = os.path.join(tmpdir, filename)
+                mesh.mpl(filename=tmpfilename)
 
     def test_k3d(self):
         for p1, p2, n, cell in self.valid_args:
