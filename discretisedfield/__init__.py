@@ -8,8 +8,6 @@ from .line import Line
 from .operators import cross, stack
 from .interact import interact
 
-sns.set(style='whitegrid')
-
 __version__ = pkg_resources.get_distribution(__name__).version
 __dependencies__ = pkg_resources.require(__name__)
 

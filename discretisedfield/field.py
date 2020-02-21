@@ -4,7 +4,6 @@ import pyvtk
 import struct
 import numbers
 import itertools
-import matplotlib
 import numpy as np
 import seaborn as sns
 import mpl_toolkits.axes_grid1
@@ -15,7 +14,8 @@ import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
 # TODO: tutorials (code polishing), remove numbers from tutorials, installation
-# instructions (conda environment, k3d jupyterlab), grad PBC, neighbours
+# instructions (conda environment, k3d jupyterlab), grad PBC, neighbours,
+# saving figures, fft
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
