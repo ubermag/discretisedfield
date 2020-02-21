@@ -14,9 +14,8 @@ import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
-# TODO: tutorials (code polishing), check rtd requirements, remove numbers from
-# tutorials, installation instructions (conda environment, k3d jupyterlab), go
-# through other repo files, probably __ne__ should not be implemeted
+# TODO: tutorials (code polishing), remove numbers from tutorials, installation
+# instructions (conda environment, k3d jupyterlab), grad PBC, neighbours
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
