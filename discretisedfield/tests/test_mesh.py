@@ -353,6 +353,54 @@ class TestMesh:
         for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]:
             assert mesh.point2index(mesh.index2point(i)) == i
 
+    def test_neighbours(self):
+        p1 = (0, 0, 0)
+        p2 = (5, 3, 2)
+        n = (5, 3, 2)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
+
+        neighbours = mesh.neighbours((1, 1, 1))
+        assert isinstance(neighbours, list)
+        assert len(neighbours) == 5
+        assert (0, 1, 1) in neighbours
+        assert (2, 1, 1) in neighbours
+        assert (1, 0, 1) in neighbours
+        assert (1, 2, 1) in neighbours
+        assert (1, 1, 0) in neighbours
+
+        neighbours = mesh.neighbours((0, 0, 0))
+        assert isinstance(neighbours, list)
+        assert len(neighbours) == 3
+        assert (1, 0, 0) in neighbours
+        assert (0, 1, 0) in neighbours
+        assert (0, 0, 1) in neighbours
+
+        p1 = (0, 0, 0)
+        p2 = (5, 5, 5)
+        n = (5, 5, 5)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, pbc='xy')
+
+        neighbours = mesh.neighbours((0, 0, 0))
+        assert isinstance(neighbours, list)
+        assert len(neighbours) == 5
+        assert (4, 0, 0) in neighbours
+        assert (1, 0, 0) in neighbours
+        assert (0, 1, 0) in neighbours
+        assert (0, 4, 0) in neighbours
+        assert (0, 0, 1) in neighbours
+
+        neighbours = mesh.neighbours((4, 4, 4))
+        assert isinstance(neighbours, list)
+        assert len(neighbours) == 5
+        assert (3, 4, 4) in neighbours
+        assert (0, 4, 4) in neighbours
+        assert (4, 0, 4) in neighbours
+        assert (4, 3, 4) in neighbours
+        assert (4, 4, 3) in neighbours
+
+        with pytest.raises(ValueError):
+            neighbours = mesh.neighbours((10, 4, 4))
+
     def test_line(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
