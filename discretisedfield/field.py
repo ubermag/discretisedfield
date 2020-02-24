@@ -14,7 +14,7 @@ import discretisedfield.util as dfu
 import matplotlib.pyplot as plt
 
 # TODO: tutorials (code polishing), remove numbers from tutorials, installation
-# instructions (conda environment, k3d jupyterlab), grad PBC, fft
+# instructions (conda environment, k3d jupyterlab), fft
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
