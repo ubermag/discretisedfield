@@ -1268,14 +1268,26 @@ class Field:
 
         if self.mesh.n[direction] == 1:
             derivative_array = 0  # derivative cannot be computed
-        elif self.dim == 1:
-            derivative_array = np.gradient(self.array[..., 0],
-                                           self.mesh.cell[direction],
-                                           axis=direction)[..., np.newaxis]
         else:
-            derivative_array = np.gradient(self.array,
-                                           self.mesh.cell[direction],
-                                           axis=direction)
+            if dfu.raxesdict[direction] in self.mesh.pbc:
+                # Extend the numpy array by 2 in the right dimension.
+                new_array = dfu.extend_array_pbc(self.array, direction)
+            else:
+                new_array = self.array
+
+            if self.dim == 1:
+                derivative_array = np.gradient(new_array[..., 0],
+                                               self.mesh.cell[direction],
+                                               axis=direction)[..., np.newaxis]
+            else:
+                derivative_array = np.gradient(new_array,
+                                               self.mesh.cell[direction],
+                                               axis=direction)
+
+            if dfu.raxesdict[direction] in self.mesh.pbc:
+                # Remove padded values from the array.
+                derivative_array = dfu.extract_array_pbc(derivative_array,
+                                                         direction)
 
         return self.__class__(self.mesh, dim=self.dim, value=derivative_array)
 
@@ -1695,10 +1707,10 @@ class Field:
         topological_charge = 0
         for i, j in itertools.product(range(of.mesh.n[axis1]-1),
                                       range(of.mesh.n[axis2]-1)):
-            v1 = of.array[dfu.assemble_index({axis1: i, axis2: j})]
-            v2 = of.array[dfu.assemble_index({axis1: i+1, axis2: j})]
-            v3 = of.array[dfu.assemble_index({axis1: i+1, axis2: j+1})]
-            v4 = of.array[dfu.assemble_index({axis1: i, axis2: j+1})]
+            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j})]
+            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i+1, axis2: j})]
+            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i+1, axis2: j+1})]
+            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j+1})]
 
             triangle1 = dfu.bergluescher_angle(v1, v2, v4)
             triangle2 = dfu.bergluescher_angle(v2, v3, v4)

@@ -824,6 +824,46 @@ class TestField:
         assert f.derivative('y')((7, 5, 1)) == (7, -2, 7)
         assert f.derivative('z')((7, 5, 1)) == (0, 0, 35)
 
+    def test_derivative_pbc(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 8, 6)
+        cell = (2, 2, 2)
+
+        mesh_nopbc = df.Mesh(p1=p1, p2=p2, cell=cell)
+        mesh_pbc = df.Mesh(p1=p1, p2=p2, cell=cell, pbc='xyz')
+
+        # Scalar field
+        def value_fun(pos):
+            return pos[0]*pos[1]*pos[2]
+
+        # No PBC
+        f = df.Field(mesh_nopbc, dim=1, value=value_fun)
+        assert f.derivative('x')((9, 1, 1)) == 1
+        assert f.derivative('y')((1, 7, 1)) == 1
+        assert f.derivative('z')((1, 1, 5)) == 1
+
+        # No PBC
+        f = df.Field(mesh_pbc, dim=1, value=value_fun)
+        assert f.derivative('x')((9, 1, 1)) == -1.5
+        assert f.derivative('y')((1, 7, 1)) == -1
+        assert f.derivative('z')((1, 1, 5)) == -0.5
+
+        # Vector field
+        def value_fun(pos):
+            return (pos[0]*pos[1]*pos[2],) * 3
+
+        # No PBC
+        f = df.Field(mesh_nopbc, dim=3, value=value_fun)
+        assert f.derivative('x')((9, 1, 1)) == (1, 1, 1)
+        assert f.derivative('y')((1, 7, 1)) == (1, 1, 1)
+        assert f.derivative('z')((1, 1, 5)) == (1, 1, 1)
+
+        # No PBC
+        f = df.Field(mesh_pbc, dim=3, value=value_fun)
+        assert f.derivative('x')((9, 1, 1)) == (-1.5, -1.5, -1.5)
+        assert f.derivative('y')((1, 7, 1)) == (-1, -1, -1)
+        assert f.derivative('z')((1, 1, 5)) == (-0.5, -0.5, -0.5)
+
     def test_derivative_single_cell(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 2)

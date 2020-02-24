@@ -37,13 +37,28 @@ def test_bergluescher_angle():
 
 def test_assemble_index():
     index_dict = {0: 5, 1: 3, 2: 4}
-    assert dfu.assemble_index(index_dict) == (5, 3, 4)
+    assert dfu.assemble_index(0, 3, index_dict) == (5, 3, 4)
     index_dict = {2: 4}
-    assert dfu.assemble_index(index_dict) == (0, 0, 4)
+    assert dfu.assemble_index(0, 3, index_dict) == (0, 0, 4)
     index_dict = {1: 5, 2: 3, 0: 4}
-    assert dfu.assemble_index(index_dict) == (4, 5, 3)
+    assert dfu.assemble_index(0, 3, index_dict) == (4, 5, 3)
     index_dict = {1: 3, 2: 4}
-    assert dfu.assemble_index(index_dict) == (0, 3, 4)
+    assert dfu.assemble_index(0, 4, index_dict) == (0, 3, 4, 0)
+
+
+def test_extend_extract_array_pbc():
+    array = np.zeros((4, 3, 2, 3))
+    array[0, ...] = 1
+    array[-1, ...] = 2
+    extended_array = dfu.extend_array_pbc(array, direction=0)
+
+    assert extended_array.shape == (6, 3, 2, 3)
+    assert np.all(extended_array[0, ...] == 2)
+    assert np.all(extended_array[1, ...] == 1)
+    assert np.all(extended_array[-1, ...] == 1)
+    assert np.all(extended_array[-2, ...] == 2)
+
+    assert np.all(dfu.extract_array_pbc(extended_array, direction=0) == array)
 
 
 def test_voxels():
