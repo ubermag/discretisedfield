@@ -329,7 +329,7 @@ class Region:
             return False
 
     def __contains__(self, point):
-        """Determine whether `point` belongs to the region.
+        """Determine whether ``point`` belongs to the region.
 
         Point is considered to be in the region if
 
