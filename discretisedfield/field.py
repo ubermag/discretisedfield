@@ -2341,9 +2341,9 @@ class Field:
         """Read the field from an OVF or HDF5 file.
 
         The extension of the ``filename`` should be suitable for OVF format
-        (``.ovf``, ``.omf``, ``.ohf``) or for HDF5 (``.hdf5`` or ``.h5``). This
-        is a ``classmethod`` and should be called as, for instance,
-        ``discretisedfield.Field.fromfile('myfile.omf')``.
+        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``) or for HDF5 (``.hdf5`` or
+        ``.h5``). This is a ``classmethod`` and should be called as, for
+        instance, ``discretisedfield.Field.fromfile('myfile.omf')``.
 
         Parameters
         ----------
@@ -2381,7 +2381,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.write`
 
         """
-        if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
+        if any([filename.endswith(ext) for ext in ['.omf', '.ovf',
+                                                   '.ohf', '.oef']]):
             return cls._fromovf(filename)
         elif any([filename.endswith(ext) for ext in ['.hdf5', '.h5']]):
             return cls._fromhdf5(filename)
@@ -2395,8 +2396,8 @@ class Field:
         """Read the field from an OVF file.
 
         The extension of the ``filename`` should be suitable for OVF format
-        (``.ovf``, ``.omf``, ``.ohf``). This is a ``classmethod`` and should be
-        called as, for instance,
+        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``). This is a ``classmethod`` and
+        should be called as, for instance,
         ``discretisedfield.Field._fromovf('myfile.omf')``.
 
         Parameters
