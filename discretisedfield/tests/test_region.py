@@ -4,6 +4,7 @@ import pytest
 import numbers
 import tempfile
 import numpy as np
+import matplotlib.pyplot as plt
 import discretisedfield as df
 import discretisedfield.util as dfu
 
@@ -179,6 +180,8 @@ class TestRegion:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
             region.mpl(filename=tmpfilename)
+
+        plt.close('all')
 
     def test_k3d(self):
         p1 = (-50e9, -50e9, 0)

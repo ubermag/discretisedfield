@@ -7,6 +7,7 @@ import tempfile
 import ipywidgets
 import numpy as np
 import discretisedfield as df
+import matplotlib.pyplot as plt
 
 
 def check_mesh(mesh):
@@ -597,6 +598,8 @@ class TestMesh:
                 tmpfilename = os.path.join(tmpdir, filename)
                 mesh.mpl(filename=tmpfilename)
 
+            plt.close('all')
+
     def test_k3d(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
@@ -624,6 +627,8 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
         mesh.mpl_subregions()
         mesh.k3d_subregions()
+
+        plt.close('all')
 
     def test_slider(self):
         p1 = (-10e-9, -5e-9, 10e-9)

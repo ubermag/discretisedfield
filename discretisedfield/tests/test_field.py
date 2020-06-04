@@ -451,8 +451,12 @@ class TestField:
 
         assert f1.allclose(f2)
         assert not f1.allclose(f3)
+        assert not f1.allclose(f5)
         assert f4.allclose(f5)
         assert not f4.allclose(f6)
+
+        with pytest.raises(TypeError):
+            f1.allclose(2)
 
     def test_pos_neg(self):
         p1 = (-5e-9, -5e-9, -5e-9)
@@ -1033,6 +1037,9 @@ class TestField:
         assert f.derivative('x', n=2).average == (4, 0, 0)
         assert f.derivative('y', n=2).average == (0, 4, 0)
         assert f.derivative('z', n=2).average == (0, 0, 6)
+
+        with pytest.raises(NotImplementedError):
+            res = f.derivative('x', n=3)
 
     def test_derivative_pbc(self):
         p1 = (0, 0, 0)
@@ -1622,6 +1629,8 @@ class TestField:
             tmpfilename = os.path.join(tmpdir, filename)
             self.pf.plane('z').mpl(filename=tmpfilename)
 
+        plt.close('all')
+
     def test_imshow(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -1635,6 +1644,8 @@ class TestField:
         with pytest.raises(ValueError) as excinfo:
             self.pf.plane('z').imshow(ax=ax)
 
+        plt.close('all')
+
     def test_quiver(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -1647,12 +1658,16 @@ class TestField:
         with pytest.raises(ValueError) as excinfo:
             self.pf.x.plane('y').quiver(ax=ax)
 
+        plt.close('all')
+
     def test_colorbar(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
         coloredplot = self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
         self.pf.colorbar(ax=ax, coloredplot=coloredplot)
+
+        plt.close('all')
 
     def test_k3d_nonzero(self):
         self.pf.norm.k3d_nonzero()

@@ -5,6 +5,7 @@ import numbers
 import tempfile
 import numpy as np
 import discretisedfield as df
+import matplotlib.pyplot as plt
 
 
 def check_line(line):
@@ -82,3 +83,5 @@ class TestLine:
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
             line.mpl(filename=tmpfilename)
+
+        plt.close('all')

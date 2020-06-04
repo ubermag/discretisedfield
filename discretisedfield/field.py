@@ -797,6 +797,7 @@ class Field:
         if not isinstance(other, self.__class__):
             msg = (f'Cannot apply allclose method between '
                    f'{type(self)} and {type(other)} objects.')
+            raise TypeError(msg)
 
         if (self.mesh == other.mesh and self.dim == other.dim):
             return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
