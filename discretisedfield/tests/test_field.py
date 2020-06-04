@@ -561,7 +561,7 @@ class TestField:
         assert f2.average == (1, 0, -7)
 
         # Exceptions
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             res = f1 + '2'
 
         # Fields with different dimensions
