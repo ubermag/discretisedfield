@@ -1,6 +1,6 @@
 import pytest
 import pkg_resources
-import seaborn as sns
+import seaborn as sns  # TODO: Is this necessary?
 from .region import Region
 from .mesh import Mesh
 from .field import Field

@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 # TODO: tutorials (code polishing), remove numbers from tutorials, installation
 # instructions (conda environment, k3d jupyterlab), fft
 
+
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
 class Field:
@@ -1224,8 +1225,9 @@ class Field:
     def __and__(self, other):
         """Cross product.
 
-        This function computes the cross product between two fields. Both fields
-        must be three-dimensional (``dim=3``) and defined on the same mesh.
+        This function computes the cross product between two fields. Both
+        fields must be three-dimensional (``dim=3``) and defined on the same
+        mesh.
 
         Parameters
         ----------
@@ -1288,11 +1290,11 @@ class Field:
     def __lshift__(self, other):
         """Stacks multiple scalar fields in a single vector field.
 
-        This method takes a list of scalar (``dim=1``) fields and returns a vector
-        field, whose components are defined by the scalar fields passed. If any of
-        the fields passed has ``dim!=1` or they are not defined on the same mesh,
-        an exception is raised. The dimension of the resulting field is equal to
-        the length of the passed list.
+        This method takes a list of scalar (``dim=1``) fields and returns a
+        vector field, whose components are defined by the scalar fields passed.
+        If any of the fields passed has ``dim!=1` or they are not defined on
+        the same mesh, an exception is raised. The dimension of the resulting
+        field is equal to the length of the passed list.
 
         Parameters
         ----------
@@ -1310,8 +1312,8 @@ class Field:
         ------
         ValueError
 
-            If the dimension of any of the fields is not 1, or the fields passed
-            are not defined on the same mesh.
+            If the dimension of any of the fields is not 1, or the fields
+            passed are not defined on the same mesh.
 
         Example
         -------
@@ -1469,7 +1471,7 @@ class Field:
         elif self.mesh.bc == 'neumann':
             padding_mode = 'edge'
         else:
-            padding_mode = None # The array is not padded
+            padding_mode = None  # the array is not padded
 
         if padding_mode is not None:
             padded_array = self.pad({direction: (1, 1)},
@@ -1533,9 +1535,7 @@ class Field:
                     self.derivative('y', n=2) +
                     self.derivative('z', n=2))
         else:
-            return df.stack([self.x.laplacian,
-                             self.y.laplacian,
-                             self.z.laplacian])
+            return self.x.laplacian << self.y.laplacian << self.z.laplacian
 
     @property
     def grad(self):
@@ -1609,9 +1609,9 @@ class Field:
             msg = f'Cannot compute gradient for dim={self.dim} field.'
             raise ValueError(msg)
 
-        return df.stack([self.derivative('x'),
-                         self.derivative('y'),
-                         self.derivative('z')])
+        return (self.derivative('x') <<
+                self.derivative('y') <<
+                self.derivative('z'))
 
     @property
     def div(self):
@@ -1757,7 +1757,7 @@ class Field:
         curl_y = self.x.derivative('z') - self.z.derivative('x')
         curl_z = self.y.derivative('x') - self.x.derivative('y')
 
-        return df.stack([curl_x, curl_y, curl_z])
+        return curl_x << curl_y << curl_z
 
     @property
     def integral(self):

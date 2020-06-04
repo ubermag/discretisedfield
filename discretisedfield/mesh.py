@@ -12,7 +12,7 @@ import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
 
-#TODO: add descriptor for bc
+# TODO: add descriptor for bc
 
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
                cell=ts.Vector(size=3, positive=True, const=True),
