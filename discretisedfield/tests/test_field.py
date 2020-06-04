@@ -949,6 +949,29 @@ class TestField:
         assert f.derivative('y')((7, 5, 1)) == (7, -2, 7)
         assert f.derivative('z')((7, 5, 1)) == (0, 0, 35)
 
+        # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
+        # -> grad(f) = (4, 4, 6)
+        def value_fun(pos):
+            x, y, z = pos
+            return 2*x*x + 2*y*y + 3*z*z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.derivative('x', n=2).average == 4
+        assert f.derivative('y', n=2).average == 4
+        assert f.derivative('z', n=2).average == 6
+
+        # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
+        def value_fun(pos):
+            x, y, z = pos
+            return (2*x*x, 2*y*y, 3*z*z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.derivative('x', n=2).average == (4, 0, 0)
+        assert f.derivative('y', n=2).average == (0, 4, 0)
+        assert f.derivative('z', n=2).average == (0, 0, 6)
+
     def test_derivative_pbc(self):
         p1 = (0, 0, 0)
         p2 = (10, 8, 6)
@@ -1161,6 +1184,50 @@ class TestField:
             res = f.div
         with pytest.raises(ValueError):
             res = f.curl
+
+    def test_laplace(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # f(x, y, z) = (0, 0, 0)
+        # -> laplace(f) = 0
+        f = df.Field(mesh, dim=3, value=(0, 0, 0))
+
+        check_field(f.laplace)
+        assert f.laplace.dim == 3
+        assert f.laplace.average == (0, 0, 0)
+
+        # f(x, y, z) = x + y + z
+        # -> laplace(f) = 0
+        def value_fun(pos):
+            x, y, z = pos
+            return x + y + z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+        check_field(f.laplace)
+        assert f.laplace.average == 0
+
+        # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
+        # -> laplace(f) = 4 + 4 + 6 = 14
+        def value_fun(pos):
+            x, y, z = pos
+            return 2*x*x + 2*y*y + 3*z*z
+
+        f = df.Field(mesh, dim=1, value=value_fun)
+
+        assert f.laplace.average == 14
+
+        # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
+        # -> laplace(f) = (4, 4, 6)
+        def value_fun(pos):
+            x, y, z = pos
+            return (2*x*x, 2*y*y, 3*z*z)
+
+        f = df.Field(mesh, dim=3, value=value_fun)
+
+        assert f.laplace.average == (4, 4, 6)
 
     def test_integral(self):
         p1 = (0, 0, 0)

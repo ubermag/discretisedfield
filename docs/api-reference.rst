@@ -9,5 +9,4 @@ API Reference
    mesh
    field
    line
-   operators
    interact

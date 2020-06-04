@@ -725,17 +725,58 @@ class Mesh:
         return self.__class__(region=self.subregions[key], cell=self.cell)
 
     def pad(self, pad_width):
+        """Mesh padding.
+
+        This method extends the mesh by adding more cells in chosen direction.
+        The way in which the mesh is going to padded is defined by passing
+        ``pad_width`` dictionary. The keys of the dictionary are the directions
+        (axes), e.g. ``'x'``, ``'y'``, or ``'z'``, whereas the values are the
+        tuples of length 2. The first integer in the tuple is the number of
+        cells added in the negative direction, and the second integer is the
+        number of cells added in the positive direction.
+
+        Parameters
+        ----------
+        pad_width : dict
+
+            The keys of the dictionary are the directions (axes), e.g. ``'x'``,
+            ``'y'``, or ``'z'``, whereas the values are the tuples of length 2.
+            The first integer in the tuple is the number of cells added in the
+            negative direction, and the second integer is the number of cells
+            added in the positive direction.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Extended mesh.
+
+        Examples
+        --------
+        1. Padding a mesh in the x and y directions by 1 cell.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> mesh.region.edges
+        (100, 100, 100)
+        >>> padded_mesh = mesh.pad({'x': (1, 1), 'y': (1, 1)})
+        >>> padded_mesh.region.edges
+        (120, 120, 100)
+        >>> padded_mesh.n
+        (12, 12, 10)
+
+        """
         pmin = np.array(self.region.pmin)
         pmax = np.array(self.region.pmax)
-        if 0 in pad_width.keys():
-            pmin[0] -= pad_width[0][0] * self.cell[0]
-            pmax[0] += pad_width[0][1] * self.cell[0]
-        if 1 in pad_width.keys():
-            pmin[1] -= pad_width[1][0] * self.cell[1]
-            pmax[1] += pad_width[1][1] * self.cell[1]
-        if 2 in pad_width.keys():
-            pmin[2] -= pad_width[2][0] * self.cell[2]
-            pmax[2] += pad_width[2][1] * self.cell[2]
+        for direction in pad_width.keys():
+            axis = dfu.axesdict[direction]
+            pmin[axis] -= pad_width[direction][0] * self.cell[axis]
+            pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
         return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
 

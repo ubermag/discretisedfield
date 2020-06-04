@@ -1375,13 +1375,65 @@ class Field:
         return other << self
 
     def pad(self, pad_width, mode, **kwargs):
-        padding_sequence = dfu.assemble_index((0, 0),
-                                              len(self.array.shape),
-                                              pad_width)
+        """Field padding.
+
+        This method pads the field by adding more cells in chosen direction and
+        assigning to them the values as specified by the ``mode`` argument.
+        The way in which the field is going to padded is defined by passing
+        ``pad_width`` dictionary. The keys of the dictionary are the directions
+        (axes), e.g. ``'x'``, ``'y'``, or ``'z'``, whereas the values are the
+        tuples of length 2. The first integer in the tuple is the number of
+        cells added in the negative direction, and the second integer is the
+        number of cells added in the positive direction.
+
+        This method accepts any other arguments allowed by ``numpy.pad``
+        function.
+
+        Parameters
+        ----------
+        pad_width : dict
+
+            The keys of the dictionary are the directions (axes), e.g. ``'x'``,
+            ``'y'``, or ``'z'``, whereas the values are the tuples of length 2.
+            The first integer in the tuple is the number of cells added in the
+            negative direction, and the second integer is the number of cells
+            added in the positive direction.
+
+        mode: str
+
+            Padding mode as defined in ``numpy.pad``.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Padded field.
+
+        Examples
+        --------
+        1. Padding a field in the x direction by 1 cell with ``constant`` mode.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 1, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh, dim=1, value=1)
+        ...
+        >>> # Two cells with value 1
+        >>> pf = field.pad({'x': (1, 1)}, mode='constant')  # zeros padded
+        >>> pf.average
+        0.5
+
+        """
+        d = {}
+        for key, value in pad_width.items():
+            d[dfu.axesdict[key]] = value
+        padding_sequence = dfu.assemble_index((0, 0), len(self.array.shape), d)
 
         padded_array = np.pad(self.array, padding_sequence,
                               mode=mode, **kwargs)
-
         padded_mesh = self.mesh.pad(pad_width)
 
         return self.__class__(padded_mesh, dim=self.dim, value=padded_array)
@@ -1403,7 +1455,9 @@ class Field:
         field is defined on. More precisely, the values of the derivatives at
         the boundary are different for periodic, Neumann, or no boundary
         conditions. For details on boundary conditions, please refer to the
-        ``disretisedfield.Mesh`` class.
+        ``disretisedfield.Mesh`` class. The derivatives are computed using
+        central differences inside the sample and using forward/backward
+        differences at the boundaries.
 
         Parameters
         ----------
@@ -1472,12 +1526,6 @@ class Field:
         >>> f.derivative('z', n=1).average  # derivative cannot be calculated
         (0.0, 0.0, 0.0)
         >>> # second-order derivatives
-        >>> f.derivative('x', n=2).average
-        (0.0, 0.0, 0.0)
-        >>> f.derivative('y', n=2).average
-        (0.0, 0.0, 0.0)
-        >>> f.derivative('z', n=2).average  # derivative cannot be calculated
-        (0.0, 0.0, 0.0)
 
         """
         direction = dfu.axesdict[direction]
@@ -1490,22 +1538,23 @@ class Field:
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
         # the field array is padded.
-        if dfu.raxesdict[direction] in self.mesh.bc:
-            # PBC
-            pad_width = {direction: (1, 1)}
+        if dfu.raxesdict[direction] in self.mesh.bc:  # PBC
+            pad_width = {dfu.raxesdict[direction]: (1, 1)}
             padding_mode = 'wrap'
         elif self.mesh.bc == 'neumann':
-            pad_width = {direction: (1, 1)}
+            pad_width = {dfu.raxesdict[direction]: (1, 1)}
             padding_mode = 'edge'
-        else:
-            # No BC - no padding
+        else:  # No BC - no padding
             pad_width = {}
             padding_mode = 'constant'
 
         padded_array = self.pad(pad_width, mode=padding_mode).array
 
-        if n == 1:
-            # Computing the first-order derivative using numpy.grad.
+        if n not in (1, 2):
+            msg = f'Derivative of the n={n} order is not implemented.'
+            raise NotImplementedError(msg)
+
+        elif n == 1:
             if self.dim == 1:
                 derivative_array = np.gradient(padded_array[..., 0],
                                                self.mesh.cell[direction],
@@ -1514,6 +1563,7 @@ class Field:
                 derivative_array = np.gradient(padded_array,
                                                self.mesh.cell[direction],
                                                axis=direction)
+
         elif n == 2:
             derivative_array = np.zeros_like(padded_array)
             for i in range(padded_array.shape[direction]):
@@ -1523,44 +1573,22 @@ class Field:
                     i1, i2, i3 = i, i-1, i-2
                 else:
                     i1, i2, i3 = i+1, i, i-1
-                index1 = dfu.assemble_index(slice(None),
-                                            len(padded_array.shape),
-                                            {direction: i1})
-                index2 = dfu.assemble_index(slice(None),
-                                            len(padded_array.shape),
-                                            {direction: i2})
-                index3 = dfu.assemble_index(slice(None),
-                                            len(padded_array.shape),
-                                            {direction: i3})
-                index = dfu.assemble_index(slice(None),
-                                           len(padded_array.shape),
-                                           {direction: i})
-                derivative_array[index] = (padded_array[index1] -
+                index1 = dfu.assemble_index(slice(None), 4, {direction: i1})
+                index2 = dfu.assemble_index(slice(None), 4, {direction: i2})
+                index3 = dfu.assemble_index(slice(None), 4, {direction: i3})
+                index = dfu.assemble_index(slice(None), 4, {direction: i})
+                derivative_array[index] = ((padded_array[index1] -
                                            2*padded_array[index2] +
-                                           padded_array[index3])
-                derivative_array[index] /= self.mesh.cell[direction]**2
+                                           padded_array[index3]) /
+                                           self.mesh.cell[direction]**2)
 
-        else:
-            msg = f'Derivative of the n={n} order is not implemented.'
-            raise NotImplementedError(msg)
-
-        # Remove extra values, which come from padding (if any).
+        # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:
             derivative_array = np.delete(derivative_array,
                                          (0, self.mesh.n[direction]+1),
                                          axis=direction)
 
-        return self.__class__(self.mesh, dim=self.dim,
-                              value=derivative_array)
-
-    @property
-    def laplacian(self):
-        if self.dim == 1:
-            return (self.derivative('x', n=2) +
-                    self.derivative('y', n=2) +
-                    self.derivative('z', n=2))
-        else:
-            return self.x.laplacian << self.y.laplacian << self.z.laplacian
+        return self.__class__(self.mesh, dim=self.dim, value=derivative_array)
 
     @property
     def grad(self):
@@ -1783,6 +1811,72 @@ class Field:
         curl_z = self.y.derivative('x') - self.x.derivative('y')
 
         return curl_x << curl_y << curl_z
+
+    @property
+    def laplace(self):
+        """Laplace operator.
+
+        This method computes the laplacian of a scalar (``dim=1``) or a vector
+        (``dim=3``) field and returns a resulting field:
+
+        .. math::
+
+            \\nabla^2 f = \\frac{\\partial^{2} f}{\\partial x^{2}} +
+                          \\frac{\\partial^{2} f}{\\partial y^{2}} +
+                          \\frac{\\partial^{2} f}{\\partial z^{2}}
+
+        .. math::
+
+            \\nabla^2 \\mathbf{f} = (\\nabla^2 f_{x},
+                                     \\nabla^2 f_{y},
+                                     \\nabla^2 f_{z})
+
+        Directional derivative cannot be computed if only one discretisation
+        cell exists in a certain direction. In that case, a zero field is
+        considered to be that directional derivative. More precisely, it is
+        assumed that the field does not change in that direction.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Resulting field.
+
+        Example
+        -------
+        1. Compute Laplacian of a contant scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10e-9, 10e-9, 10e-9)
+        >>> cell = (2e-9, 2e-9, 2e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=5)
+        >>> f.laplace.average
+        0.0
+
+        2. Compute Laplacian of a spatially varying field. For a field we
+        choose :math:`f(x, y, z) = 2x^{2} + 3y - 5z`. Accordingly, we expect the
+        Laplacian to be a constant vector field :math:`\\nabla f = (4, 0, 0)`.
+
+        >>> def value_fun(pos):
+        ...     x, y, z = pos
+        ...     return 2*x**2 + 3*y - 5*z
+        ...
+        >>> f = df.Field(mesh, dim=1, value=value_fun)
+        >>> assert abs(f.laplace.average - 4) < 1e-3
+
+        .. seealso:: :py:func:`~discretisedfield.Field.derivative`
+
+        """
+        if self.dim == 1:
+            return (self.derivative('x', n=2) +
+                    self.derivative('y', n=2) +
+                    self.derivative('z', n=2))
+        else:
+            return self.x.laplace << self.y.laplace << self.z.laplace
 
     @property
     def integral(self):
