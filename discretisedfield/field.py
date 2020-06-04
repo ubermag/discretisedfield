@@ -1194,7 +1194,7 @@ class Field:
         res_array = np.einsum('ijkl,ijkl->ijk', self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
 
-    def derivative(self, direction):
+    def derivative(self, direction, n=1):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -1267,29 +1267,79 @@ class Field:
             direction = dfu.axesdict[direction]
 
         if self.mesh.n[direction] == 1:
-            derivative_array = 0  # derivative cannot be computed
+            # Derivative cannot be computed because there are no neighbouring
+            # cells in that direction and zero field is returned.
+            return self.__class__(self.mesh, dim=self.dim, value=0)
+
+        # Preparation (padding) for computing the derivative, depending on
+        #   - PBC
+        #   - BC (Neumann=0)
+        #   - no BC defined
+        # The field array is padded by appropriate values if necessary.
+        if dfu.raxesdict[direction] in self.mesh.pbc:
+            padding_mode = 'wrap'
+        elif hasattr(self, 'bc'):
+            padding_mode = 'edge'
         else:
-            if dfu.raxesdict[direction] in self.mesh.pbc:
-                # Extend the numpy array by 2 in the right dimension.
-                new_array = dfu.extend_array_pbc(self.array, direction)
-            else:
-                new_array = self.array
+            padding_mode = None # The array is not padded
 
-            if self.dim == 1:
-                derivative_array = np.gradient(new_array[..., 0],
-                                               self.mesh.cell[direction],
-                                               axis=direction)[..., np.newaxis]
-            else:
-                derivative_array = np.gradient(new_array,
-                                               self.mesh.cell[direction],
-                                               axis=direction)
+        if padding_mode is not None:
+            padding_sequence = dfu.assemble_index((0, 0),
+                                                  len(self.array.shape),
+                                                  {direction: (1, 1)})
+            padded_array = np.pad(self.array,
+                                  padding_sequence,
+                                  mode=padding_mode)
+        else:
+            padded_array = self.array
 
-            if dfu.raxesdict[direction] in self.mesh.pbc:
-                # Remove padded values from the array.
-                derivative_array = dfu.extract_array_pbc(derivative_array,
-                                                         direction)
+        # Computing the first order derivative using numpy.grad.
+        if self.dim == 1:
+            derivative_array = np.gradient(padded_array[..., 0],
+                                           self.mesh.cell[direction],
+                                           axis=direction)[..., np.newaxis]
+        else:
+            derivative_array = np.gradient(padded_array,
+                                           self.mesh.cell[direction],
+                                           axis=direction)
+
+        # Remove extra values, which come from padding (if any).
+        if padding_mode is not None:
+            derivative_array = np.delete(derivative_array,
+                                        (0, self.mesh.n[direction]+1),
+                                        axis=direction)
 
         return self.__class__(self.mesh, dim=self.dim, value=derivative_array)
+
+
+        # if self.mesh.n[direction] == 1:
+        #     derivative_array = 0  # derivative cannot be computed
+        # else:
+        #     if dfu.raxesdict[direction] in self.mesh.pbc:
+        #         # Extend the numpy array by 2 in the right dimension.
+        #         new_array = dfu.extend_array_pbc(self.array, direction)
+        #     else:
+        #         new_array = self.array
+        #
+        #     if self.dim == 1:
+        #         derivative_array = np.gradient(new_array[..., 0],
+        #                                        self.mesh.cell[direction],
+        #                                        edge_order=1,
+        #                                        axis=direction)[..., np.newaxis]
+        #     else:
+        #         derivative_array = np.gradient(new_array,
+        #                                        self.mesh.cell[direction],
+        #                                        axis=direction)
+        #
+        #     index = dfu.assemble_index(slice(None), 4, {direction: 0})
+        #     derivative_array[index] /= 2
+        #     index = dfu.assemble_index(slice(None), 4, {direction: -1})
+        #     derivative_array[index] /= 2
+        #
+        #     if dfu.raxesdict[direction] in self.mesh.pbc:
+        #         # Remove padded values from the array.
+        #         derivative_array = dfu.extract_array_pbc(derivative_array,
+        #                                                  direction)
 
     @property
     def grad(self):
