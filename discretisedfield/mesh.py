@@ -72,7 +72,7 @@ class Mesh:
 
     bc : str, optional
 
-        Periodic boundary conditions in x, y, or z directions is an iterable
+        Periodic boundary conditions in x, y, or z directions is a string
         consisting of one or more characters ``'x'``, ``'y'``, or ``'z'``,
         denoting the direction(s) along which the mesh is periodic. In the case
         of Neumann or Dirichlet boundary condition, string ``'neumann'`` or

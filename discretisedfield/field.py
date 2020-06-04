@@ -866,13 +866,18 @@ class Field:
     def __add__(self, other):
         """Binary ``+`` operator.
 
-        It can be applied only between two ``discretisedfield.Field`` objects.
-        Both ``discretisedfield.Field`` objects must be defined on the same
-        mesh and have the same dimensions.
+        It can be applied between two ``discretisedfield.Field`` objects or
+        between a ``discretisedfield.Field`` object and a "constant". For
+        instance if the field is a scalar field, a scalar field or
+        ``numbers.Real`` can be the second operand. Similarly, for a vector
+        field, either vector field or an iterable, such as ``tuple``, ``list``,
+        or ``numpy.ndarray``, can be the second operand. If the second operand
+        is a ``discretisedfield.Field`` object, both must be defined on the
+        same mesh and have the same dimensions.
 
         Parameters
         ----------
-        other : discretisedfield.Field
+        other : discretisedfield.Field, numbers.Real, tuple, list, np.ndarray
 
             Second operand.
 
@@ -890,7 +895,7 @@ class Field:
 
         Example
         -------
-        1. Add two vector fields.
+        1. Add vector fields.
 
         >>> import discretisedfield as df
         ...
@@ -906,7 +911,10 @@ class Field:
         (0.0, 0.0, 0.0)
         >>> f1 + f2 == f2 + f1
         True
-        >>> f1 + 3
+        >>> res = f1 + (1, 2, 3.1)
+        >>> res.average
+        (1.0, 1.0, 0.0)
+        >>> f1 + 5
         Traceback (most recent call last):
         ...
         TypeError: ...
@@ -941,13 +949,18 @@ class Field:
     def __sub__(self, other):
         """Binary ``-`` operator.
 
-        It can be applied only between two ``discretisedfield.Field`` objects.
-        Both ``discretisedfield.Field`` objects must be defined on the same
-        mesh and have the same dimensions.
+        It can be applied between two ``discretisedfield.Field`` objects or
+        between a ``discretisedfield.Field`` object and a "constant". For
+        instance if the field is a scalar field, a scalar field or
+        ``numbers.Real`` can be the second operand. Similarly, for a vector
+        field, either vector field or an iterable, such as ``tuple``, ``list``,
+        or ``numpy.ndarray``, can be the second operand. If the second operand
+        is a ``discretisedfield.Field`` object, both must be defined on the
+        same mesh and have the same dimensions.
 
         Parameters
         ----------
-        other : discretisedfield.Field
+        other : discretisedfield.Field, numbers.Real, tuple, list, np.ndarray
 
             Second operand.
 
@@ -965,7 +978,7 @@ class Field:
 
         Example
         -------
-        1. Subtract two vector fields.
+        1. Subtract vector fields.
 
         >>> import discretisedfield as df
         ...
@@ -981,10 +994,9 @@ class Field:
         (0.0, 0.0, 3.0)
         >>> f1 - f2 == -(f2 - f1)
         True
-        >>> f1 - 3.14
-        Traceback (most recent call last):
-        ...
-        TypeError: ...
+        >>> res = f1 - (0, 1, 0)
+        >>> res.average
+        (0.0, 0.0, 6.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
@@ -1223,17 +1235,16 @@ class Field:
         return self @ other
 
     def __and__(self, other):
-        """Cross product.
+        """Binary ``&`` operator, defined as cross product.
 
-        This function computes the cross product between two fields. Both
-        fields must be three-dimensional (``dim=3``) and defined on the same
-        mesh.
+        This method computes the cross product between two fields. Both fields
+        must be three-dimensional (``dim=3``) and defined on the same mesh.
 
         Parameters
         ----------
-        f1/f2 : discretisedfield.Field
+        other : discretisedfield.Field, tuple, list, numpy.ndarray
 
-            Operands.
+            Second operand.
 
         Returns
         -------
@@ -1262,6 +1273,8 @@ class Field:
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
         >>> (f1 & f2).average
         (0.0, 0.0, 1.0)
+        >>> (f1 & (0, 0, 1)).average
+        (0.0, -1.0, 0.0)
 
         """
         if isinstance(other, self.__class__):

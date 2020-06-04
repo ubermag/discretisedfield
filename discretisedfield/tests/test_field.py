@@ -837,8 +837,10 @@ class TestField:
         f1 = df.Field(mesh, dim=1, value=2)
         f2 = df.Field(mesh, dim=3, value=(-4, 0, 1))
         res = ((+f1/2 + f2.x)**2 - 2*f1*3)/(-f2.z) - 2*f2.y + 1/f2.z**2 + f2@f2
-
         assert np.all(res.array == 21)
+
+        res = 1 + f1 + 0*f2.x - 3*f2.y/3
+        assert res.average = 3
 
     def test_derivative(self):
         p1 = (0, 0, 0)
@@ -861,6 +863,7 @@ class TestField:
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
         # No BC
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
         def value_fun(pos):
             x, y, z = pos
             return x + y + z
@@ -878,6 +881,7 @@ class TestField:
         # grad(f) = (y+y*z, x+2+x*z, x*y)
         # No BC
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
         def value_fun(pos):
             x, y, z = pos
             return x*y + 2*y + x*y*z
