@@ -112,9 +112,10 @@ class Field:
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
     """
-    def __init__(self, mesh, dim, value=0, norm=None):
+    def __init__(self, mesh, dim, value=0, norm=None, bc=None):
         self.mesh = mesh
         self.dim = dim
+        self.bc = bc  # TODO: make this better
         self.value = value
         self.norm = norm
 
@@ -347,7 +348,7 @@ class Field:
             raise ValueError(msg)
 
         computed_norm = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
-        return self.__class__(self.mesh, dim=1, value=computed_norm)
+        return self.__class__(self.mesh, dim=1, value=computed_norm, bc=self.bc)
 
     @norm.setter
     def norm(self, val):
@@ -423,7 +424,8 @@ class Field:
                                       self.norm.array,
                                       out=np.zeros_like(self.array),
                                       where=(self.norm.array != 0))
-        return self.__class__(self.mesh, dim=self.dim, value=orientation_array)
+        return self.__class__(self.mesh, dim=self.dim,
+                              value=orientation_array, bc=self.bc)
 
     @property
     def average(self):
@@ -578,7 +580,8 @@ class Field:
         """
         if attr in list(dfu.axesdict.keys())[:self.dim] and self.dim in (2, 3):
             attr_array = self.array[..., dfu.axesdict[attr]][..., np.newaxis]
-            return Field(mesh=self.mesh, dim=1, value=attr_array)
+            return self.__class__(mesh=self.mesh, dim=1,
+                                  value=attr_array, bc=self.bc)
         else:
             msg = f'Object has no attribute {attr}.'
             raise AttributeError(msg)
@@ -860,7 +863,7 @@ class Field:
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=1,
-                              value=np.power(self.array, other))
+                              value=np.power(self.array, other), bc=self.bc)
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -925,7 +928,7 @@ class Field:
             raise ValueError(msg)
 
         return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array + other.array)
+                              value=self.array + other.array, bc=self.bc)
 
     def __sub__(self, other):
         """Binary ``-`` operator.
@@ -1062,7 +1065,7 @@ class Field:
             res_array = np.multiply(self.array, other)
 
         return self.__class__(self.mesh, dim=res_array.shape[-1],
-                              value=res_array)
+                              value=res_array, bc=self.bc)
 
     def __rmul__(self, other):
         return self * other
@@ -1269,19 +1272,22 @@ class Field:
         if self.mesh.n[direction] == 1:
             # Derivative cannot be computed because there are no neighbouring
             # cells in that direction and zero field is returned.
-            return self.__class__(self.mesh, dim=self.dim, value=0)
+            return self.__class__(self.mesh, dim=self.dim, value=0, bc=self.bc)
 
         # Preparation (padding) for computing the derivative, depending on
         #   - PBC
         #   - BC (Neumann=0)
         #   - no BC defined
         # The field array is padded by appropriate values if necessary.
+        print(self.bc)
         if dfu.raxesdict[direction] in self.mesh.pbc:
             padding_mode = 'wrap'
-        elif hasattr(self, 'bc'):
+        elif self.bc == 'neumann':
             padding_mode = 'edge'
         else:
             padding_mode = None # The array is not padded
+
+        print(padding_mode)
 
         if padding_mode is not None:
             padding_sequence = dfu.assemble_index((0, 0),
@@ -1293,15 +1299,60 @@ class Field:
         else:
             padded_array = self.array
 
-        # Computing the first order derivative using numpy.grad.
-        if self.dim == 1:
-            derivative_array = np.gradient(padded_array[..., 0],
-                                           self.mesh.cell[direction],
-                                           axis=direction)[..., np.newaxis]
+        if n == 1:
+            # Computing the first order derivative using numpy.grad.
+            if self.dim == 1:
+                derivative_array = np.gradient(padded_array[..., 0],
+                                               self.mesh.cell[direction],
+                                               axis=direction)[..., np.newaxis]
+            else:
+                derivative_array = np.gradient(padded_array,
+                                               self.mesh.cell[direction],
+                                               axis=direction)
+        elif n == 2:
+            derivative_array = np.zeros_like(padded_array)
+            for i in range(padded_array.shape[direction]):
+                if i == 0:
+                    index1 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i+2})
+                    index2 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i+1})
+                    index3 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i})
+                elif i == padded_array.shape[direction] - 1:
+                    index1 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i})
+                    index2 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i-1})
+                    index3 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i-2})
+                else:
+                    index1 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i+1})
+                    index2 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i})
+                    index3 = dfu.assemble_index(slice(None),
+                                                len(padded_array.shape),
+                                                {direction: i-1})
+                index = dfu.assemble_index(slice(None),
+                                           len(padded_array.shape),
+                                           {direction: i})
+                derivative_array[index] = (padded_array[index1] -
+                                           2*padded_array[index2] +
+                                           padded_array[index3])
+                derivative_array[index] /= self.mesh.cell[direction]**2
+
         else:
-            derivative_array = np.gradient(padded_array,
-                                           self.mesh.cell[direction],
-                                           axis=direction)
+            msg = f'Derivative of order n={n} is not implemented.'
+            raise NotImplementedError(msg)
 
         # Remove extra values, which come from padding (if any).
         if padding_mode is not None:
@@ -1309,37 +1360,19 @@ class Field:
                                         (0, self.mesh.n[direction]+1),
                                         axis=direction)
 
-        return self.__class__(self.mesh, dim=self.dim, value=derivative_array)
+        return self.__class__(self.mesh, dim=self.dim,
+                              value=derivative_array, bc=self.bc)
 
-
-        # if self.mesh.n[direction] == 1:
-        #     derivative_array = 0  # derivative cannot be computed
-        # else:
-        #     if dfu.raxesdict[direction] in self.mesh.pbc:
-        #         # Extend the numpy array by 2 in the right dimension.
-        #         new_array = dfu.extend_array_pbc(self.array, direction)
-        #     else:
-        #         new_array = self.array
-        #
-        #     if self.dim == 1:
-        #         derivative_array = np.gradient(new_array[..., 0],
-        #                                        self.mesh.cell[direction],
-        #                                        edge_order=1,
-        #                                        axis=direction)[..., np.newaxis]
-        #     else:
-        #         derivative_array = np.gradient(new_array,
-        #                                        self.mesh.cell[direction],
-        #                                        axis=direction)
-        #
-        #     index = dfu.assemble_index(slice(None), 4, {direction: 0})
-        #     derivative_array[index] /= 2
-        #     index = dfu.assemble_index(slice(None), 4, {direction: -1})
-        #     derivative_array[index] /= 2
-        #
-        #     if dfu.raxesdict[direction] in self.mesh.pbc:
-        #         # Remove padded values from the array.
-        #         derivative_array = dfu.extract_array_pbc(derivative_array,
-        #                                                  direction)
+    @property
+    def laplacian(self):
+        if self.dim == 1:
+            return (self.derivative('x', n=2) +
+                    self.derivative('y', n=2) +
+                    self.derivative('z', n=2))
+        else:
+            return df.stack([self.x.laplacian,
+                             self.y.laplacian,
+                             self.z.laplacian])
 
     @property
     def grad(self):
@@ -1957,7 +1990,7 @@ class Field:
 
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
-        return self.__class__(plane_mesh, dim=self.dim, value=self)
+        return self.__class__(plane_mesh, dim=self.dim, value=self, bc=self.bc)
 
     def __getitem__(self, key):
         """Extracts the field on a subregion.
@@ -2009,7 +2042,8 @@ class Field:
         (-1.0, -2.0, -3.0)
 
         """
-        return self.__class__(self.mesh[key], dim=self.dim, value=self)
+        return self.__class__(self.mesh[key], dim=self.dim,
+                              value=self, bc=self.bc)
 
     def project(self, *args):
         """Projects the field along one direction and averages it out along
@@ -2049,7 +2083,8 @@ class Field:
         plane_mesh = self.mesh.plane(*args)
         project_array = self.array.mean(axis=plane_mesh.info['planeaxis'],
                                         keepdims=True)
-        return self.__class__(plane_mesh, dim=self.dim, value=project_array)
+        return self.__class__(plane_mesh, dim=self.dim,
+                              value=project_array, bc=self.bc)
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
