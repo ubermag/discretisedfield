@@ -74,27 +74,6 @@ def assemble_index(value, n, dictionary):
     return tuple(index)
 
 
-def extend_array_pbc(array, direction):
-    n_dims = len(array.shape)
-    extended_array = np.zeros(np.add(array.shape,
-                              assemble_index(0, n_dims, {direction: 2})))
-    index = assemble_index(slice(None), n_dims, {direction: slice(1, -1)})
-    extended_array[index] = array
-    for i, j in [(-1, 0), (0, -1)]:
-        index1 = assemble_index(slice(None), n_dims, {direction: i})
-        index2 = assemble_index(slice(None), n_dims, {direction: j})
-        extended_array[index1] = array[index2]
-
-    return extended_array
-
-
-def extract_array_pbc(array, direction):
-    n_dims = len(array.shape)
-    index = assemble_index(slice(None), n_dims, {direction: slice(1, -1)})
-
-    return array[index]
-
-
 def plot_line(ax, p1, p2, *args, **kwargs):
     ax.plot(*zip(p1, p2), *args, **kwargs)
 

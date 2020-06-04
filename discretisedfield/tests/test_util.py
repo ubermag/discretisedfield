@@ -46,21 +46,6 @@ def test_assemble_index():
     assert dfu.assemble_index(0, 4, index_dict) == (0, 3, 4, 0)
 
 
-def test_extend_extract_array_pbc():
-    array = np.zeros((4, 3, 2, 3))
-    array[0, ...] = 1
-    array[-1, ...] = 2
-    extended_array = dfu.extend_array_pbc(array, direction=0)
-
-    assert extended_array.shape == (6, 3, 2, 3)
-    assert np.all(extended_array[0, ...] == 2)
-    assert np.all(extended_array[1, ...] == 1)
-    assert np.all(extended_array[-1, ...] == 1)
-    assert np.all(extended_array[-2, ...] == 2)
-
-    assert np.all(dfu.extract_array_pbc(extended_array, direction=0) == array)
-
-
 def test_voxels():
     plot_array = np.ones((5, 6, 7))
     pmin = (0, 0, 0)

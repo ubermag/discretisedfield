@@ -1279,15 +1279,12 @@ class Field:
         #   - BC (Neumann=0)
         #   - no BC defined
         # The field array is padded by appropriate values if necessary.
-        print(self.bc)
         if dfu.raxesdict[direction] in self.mesh.pbc:
             padding_mode = 'wrap'
         elif self.bc == 'neumann':
             padding_mode = 'edge'
         else:
             padding_mode = None # The array is not padded
-
-        print(padding_mode)
 
         if padding_mode is not None:
             padding_sequence = dfu.assemble_index((0, 0),
@@ -1313,35 +1310,20 @@ class Field:
             derivative_array = np.zeros_like(padded_array)
             for i in range(padded_array.shape[direction]):
                 if i == 0:
-                    index1 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i+2})
-                    index2 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i+1})
-                    index3 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i})
+                    i1, i2, i3 = i+2, i+1, i
                 elif i == padded_array.shape[direction] - 1:
-                    index1 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i})
-                    index2 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i-1})
-                    index3 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i-2})
+                    i1, i2, i3 = i, i-1, i-2
                 else:
-                    index1 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i+1})
-                    index2 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i})
-                    index3 = dfu.assemble_index(slice(None),
-                                                len(padded_array.shape),
-                                                {direction: i-1})
+                    i1, i2, i3 = i+1, i, i-1
+                index1 = dfu.assemble_index(slice(None),
+                                            len(padded_array.shape),
+                                            {direction: i1})
+                index2 = dfu.assemble_index(slice(None),
+                                            len(padded_array.shape),
+                                            {direction: i2})
+                index3 = dfu.assemble_index(slice(None),
+                                            len(padded_array.shape),
+                                            {direction: i3})
                 index = dfu.assemble_index(slice(None),
                                            len(padded_array.shape),
                                            {direction: i})
@@ -1357,8 +1339,8 @@ class Field:
         # Remove extra values, which come from padding (if any).
         if padding_mode is not None:
             derivative_array = np.delete(derivative_array,
-                                        (0, self.mesh.n[direction]+1),
-                                        axis=direction)
+                                         (0, self.mesh.n[direction]+1),
+                                         axis=direction)
 
         return self.__class__(self.mesh, dim=self.dim,
                               value=derivative_array, bc=self.bc)
