@@ -58,7 +58,7 @@ def cross(f1, f2):
         raise ValueError(msg)
 
     res_array = np.cross(f1.array, f2.array)
-    return df.Field(f1.mesh, dim=3, value=res_array, bc=f1.bc)
+    return df.Field(f1.mesh, dim=3, value=res_array)
 
 
 def stack(fields):
@@ -129,4 +129,4 @@ def stack(fields):
 
     array_list = [f.array[..., 0] for f in fields]
     return df.Field(fields[0].mesh, dim=len(fields),
-                    value=np.stack(array_list, axis=3), bc=fields[0].bc)
+                    value=np.stack(array_list, axis=3))

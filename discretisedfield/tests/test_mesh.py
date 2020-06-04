@@ -22,9 +22,7 @@ def check_mesh(mesh):
     assert all(isinstance(i, int) for i in mesh.n)
     assert all(i > 0 for i in mesh.n)
 
-    assert isinstance(mesh.pbc, set)
-    assert all(isinstance(i, str) for i in mesh.pbc)
-    assert all(i in 'xyz' for i in mesh.pbc)
+    assert isinstance(mesh.bc, str)
 
     assert isinstance(mesh.subregions, dict)
     assert all(isinstance(i, str) for i in mesh.subregions.keys())
@@ -130,16 +128,6 @@ class TestMesh:
 
             with pytest.raises((TypeError, ValueError)):
                 mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-
-    def test_init_pbc(self):
-        for p1, p2, n, cell in self.valid_args:
-            for pbc in ['x', 'z', 'zx', 'xyxzz', 'yz', 'yy']:
-                mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell, pbc=pbc)
-                check_mesh(mesh)
-                assert mesh.pbc == set(pbc)
-            for pbc in ['abc', 'a', '123', 5, -3]:
-                with pytest.raises((ValueError, TypeError)):
-                    mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell, pbc=pbc)
 
     def test_init_subregions(self):
         p1 = (0, 0, 0)
@@ -259,12 +247,12 @@ class TestMesh:
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
 
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc='x')
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc='x')
         check_mesh(mesh)
 
         rstr = ('Mesh(region=Region(p1=(-1.0, -4.0, 11.0), '
                 'p2=(15.0, 10.1, 12.5)), n=(16, 141, 3), '
-                'pbc={\'x\'}, subregions={})')
+                'bc=\'x\', subregions={})')
         assert repr(mesh) == rstr
 
     def test_index2point(self):
@@ -380,7 +368,7 @@ class TestMesh:
         p1 = (0, 0, 0)
         p2 = (5, 5, 5)
         n = (5, 5, 5)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, pbc='xy')
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, bc='xy')
 
         neighbours = mesh.neighbours((0, 0, 0))
         assert isinstance(neighbours, list)

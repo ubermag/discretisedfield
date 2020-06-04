@@ -12,11 +12,13 @@ import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
 
+#TODO: add descriptor for bc
+
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
-               pbc=ts.Subset(sample_set='xyz', unpack=True),
+               bc=ts.Typed(expected_type=str),
                subregions=ts.Dictionary(
                    key_descriptor=ts.Name(),
                    value_descriptor=ts.Typed(expected_type=df.Region),
@@ -36,11 +38,12 @@ class Mesh:
     discretised by passing the number of discretisation cells ``n`` in all
     three dimensions. Either ``cell`` or ``n`` should be passed to discretise
     the region, not both. Periodic boundary conditions can be specified by
-    passing ``pbc`` argument, which is an iterable containing one or more
-    elements from ``{'x', 'y', 'z'}``. If it is necessary to define subregions
-    in the mesh, a dictionary can be passed as ``subregions``. More precisely,
-    dictionary keys are strings (as valid Python variable names), whereas
-    values are ``discretisedfield.Region`` objects.
+    passing ``bc`` argument as an iterable containing one or more elements from
+    ``{'x', 'y', 'z'}``. Neumann or Dirichlet boundary conditions are defined
+    by passing a string. If it is necessary to define subregions in the mesh, a
+    dictionary can be passed as ``subregions``. More precisely, dictionary keys
+    are strings (as valid Python variable names), whereas values are
+    ``discretisedfield.Region`` objects.
 
     In order to properly define a mesh, mesh region must be an aggregate of
     discretisation cells.
@@ -68,11 +71,13 @@ class Mesh:
         The number of discretisation cells :math:`(n_{x}, n_{y}, n_{z})`.
         Either ``cell`` or ``n`` should be defined, not both.
 
-    pbc : iterable, optional
+    bc : optional
 
-        Periodic boundary conditions in x, y, or z directions. Its value is an
-        iterable consisting of one or more characters ``'x'``, ``'y'``, or
-        ``'z'``, denoting the direction(s) along which the mesh is periodic.
+        Periodic boundary conditions in x, y, or z directions is an iterable
+        consisting of one or more characters ``'x'``, ``'y'``, or ``'z'``,
+        denoting the direction(s) along which the mesh is periodic. In the case
+        of Neumann or Dirichlet boundary condition, string ``'neumann'`` or
+        ``'dirichlet'`` is passed.
 
     subregions : dict, optional
 
@@ -113,9 +118,9 @@ class Mesh:
 
     3. Defining a mesh with periodic boundary conditions in x and y directions.
 
-    >>> pbc = 'xy'
+    >>> bc = 'xy'
     >>> region = df.Region(p1=p1, p2=p2)
-    >>> mesh = df.Mesh(region=region, n=n, pbc=pbc)
+    >>> mesh = df.Mesh(region=region, n=n, bc=bc)
     >>> mesh
     Mesh(...)
 
@@ -143,7 +148,7 @@ class Mesh:
 
     """
     def __init__(self, region=None, p1=None, p2=None, n=None, cell=None,
-                 pbc=set(), subregions={}):
+                 bc='', subregions={}):
         if region is not None and p1 is None and p2 is None:
             self.region = region
         elif region is None and p1 is not None and p2 is not None:
@@ -172,7 +177,7 @@ class Mesh:
             msg = 'Mesh region is not an aggregate of the discretisation cell.'
             raise ValueError(msg)
 
-        self.pbc = pbc
+        self.bc = bc
         self.subregions = subregions
 
     def __len__(self):
@@ -278,8 +283,8 @@ class Mesh:
           2. They have the same number of discretisation cells in all three
           directions :math:`n^{1}_{i} = n^{2}_{i}`, for :math:`i = x, y, z`.
 
-        Periodic boundary conditions ``pbc`` and ``subregions`` are not
-        considered to be necessary conditions for determining equality.
+        Boundary conditions ``bc`` and ``subregions`` are not considered to be
+        necessary conditions for determining equality.
 
         Parameters
         ----------
@@ -337,14 +342,14 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
-        >>> pbc = 'x'
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, pbc=pbc)
+        >>> bc = 'x'
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc=bc)
         >>> repr(mesh)
         "Mesh(region=Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), ...)"
 
         """
         return (f'Mesh(region={repr(self.region)}, n={self.n}, '
-                f'pbc={self.pbc}, subregions={self.subregions})')
+                f'bc=\'{self.bc}\', subregions={self.subregions})')
 
     def index2point(self, index):
         """Convert cell's index to the its centre point coordinate.
@@ -473,7 +478,7 @@ class Mesh:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, pbc='xz')
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, bc='xz')
         >>> mesh.neighbours((1, 0, 0))
         [(0, 0, 0), (1, 1, 0)]
         >>> mesh.neighbours((0, 1, 0))
@@ -492,7 +497,7 @@ class Mesh:
                 if 0 <= i <= self.n[axis]-1:
                     # not outside the mesh
                     nghbr_index[axis] = i
-                elif dfu.raxesdict[axis] in self.pbc:
+                elif dfu.raxesdict[axis] in self.bc:
                     if i == -1 and self.n[axis] != 1:
                         nghbr_index[axis] = self.n[0]-1
                     elif i == self.n[axis] and self.n[axis] != 1:

@@ -830,7 +830,7 @@ class TestField:
         cell = (2, 2, 2)
 
         mesh_nopbc = df.Mesh(p1=p1, p2=p2, cell=cell)
-        mesh_pbc = df.Mesh(p1=p1, p2=p2, cell=cell, pbc='xyz')
+        mesh_pbc = df.Mesh(p1=p1, p2=p2, cell=cell, bc='xyz')
 
         # Scalar field
         def value_fun(pos):

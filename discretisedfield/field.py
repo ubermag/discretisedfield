@@ -112,10 +112,9 @@ class Field:
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
     """
-    def __init__(self, mesh, dim, value=0, norm=None, bc=None):
+    def __init__(self, mesh, dim, value=0, norm=None):
         self.mesh = mesh
         self.dim = dim
-        self.bc = bc  # TODO: make this better
         self.value = value
         self.norm = norm
 
@@ -348,7 +347,7 @@ class Field:
             raise ValueError(msg)
 
         computed_norm = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
-        return self.__class__(self.mesh, dim=1, value=computed_norm, bc=self.bc)
+        return self.__class__(self.mesh, dim=1, value=computed_norm)
 
     @norm.setter
     def norm(self, val):
@@ -424,8 +423,7 @@ class Field:
                                       self.norm.array,
                                       out=np.zeros_like(self.array),
                                       where=(self.norm.array != 0))
-        return self.__class__(self.mesh, dim=self.dim,
-                              value=orientation_array, bc=self.bc)
+        return self.__class__(self.mesh, dim=self.dim, value=orientation_array)
 
     @property
     def average(self):
@@ -487,10 +485,10 @@ class Field:
         ...
         >>> field = df.Field(mesh, dim=1, value=1)
         >>> repr(field)
-        'Field(mesh=..., dim=1)'
+        "Field(mesh=..., dim=1)"
 
         """
-        return f'Field(mesh={repr(self.mesh)}, dim={self.dim})'
+        return f"Field(mesh={repr(self.mesh)}, dim={self.dim})"
 
     def __call__(self, point):
         """Sample the field value at ``point``.
@@ -580,8 +578,7 @@ class Field:
         """
         if attr in list(dfu.axesdict.keys())[:self.dim] and self.dim in (2, 3):
             attr_array = self.array[..., dfu.axesdict[attr]][..., np.newaxis]
-            return self.__class__(mesh=self.mesh, dim=1,
-                                  value=attr_array, bc=self.bc)
+            return self.__class__(mesh=self.mesh, dim=1, value=attr_array)
         else:
             msg = f'Object has no attribute {attr}.'
             raise AttributeError(msg)
@@ -863,7 +860,7 @@ class Field:
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=1,
-                              value=np.power(self.array, other), bc=self.bc)
+                              value=np.power(self.array, other))
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -928,7 +925,7 @@ class Field:
             raise ValueError(msg)
 
         return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array + other.array, bc=self.bc)
+                              value=self.array + other.array)
 
     def __sub__(self, other):
         """Binary ``-`` operator.
@@ -1065,7 +1062,7 @@ class Field:
             res_array = np.multiply(self.array, other)
 
         return self.__class__(self.mesh, dim=res_array.shape[-1],
-                              value=res_array, bc=self.bc)
+                              value=res_array)
 
     def __rmul__(self, other):
         return self * other
@@ -1272,16 +1269,16 @@ class Field:
         if self.mesh.n[direction] == 1:
             # Derivative cannot be computed because there are no neighbouring
             # cells in that direction and zero field is returned.
-            return self.__class__(self.mesh, dim=self.dim, value=0, bc=self.bc)
+            return self.__class__(self.mesh, dim=self.dim, value=0)
 
         # Preparation (padding) for computing the derivative, depending on
         #   - PBC
         #   - BC (Neumann=0)
         #   - no BC defined
         # The field array is padded by appropriate values if necessary.
-        if dfu.raxesdict[direction] in self.mesh.pbc:
+        if dfu.raxesdict[direction] in self.mesh.bc:
             padding_mode = 'wrap'
-        elif self.bc == 'neumann':
+        elif self.mesh.bc == 'neumann':
             padding_mode = 'edge'
         else:
             padding_mode = None # The array is not padded
@@ -1343,7 +1340,7 @@ class Field:
                                          axis=direction)
 
         return self.__class__(self.mesh, dim=self.dim,
-                              value=derivative_array, bc=self.bc)
+                              value=derivative_array)
 
     @property
     def laplacian(self):
@@ -1972,7 +1969,7 @@ class Field:
 
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
-        return self.__class__(plane_mesh, dim=self.dim, value=self, bc=self.bc)
+        return self.__class__(plane_mesh, dim=self.dim, value=self)
 
     def __getitem__(self, key):
         """Extracts the field on a subregion.
@@ -2024,8 +2021,7 @@ class Field:
         (-1.0, -2.0, -3.0)
 
         """
-        return self.__class__(self.mesh[key], dim=self.dim,
-                              value=self, bc=self.bc)
+        return self.__class__(self.mesh[key], dim=self.dim, value=self)
 
     def project(self, *args):
         """Projects the field along one direction and averages it out along
@@ -2065,8 +2061,7 @@ class Field:
         plane_mesh = self.mesh.plane(*args)
         project_array = self.array.mean(axis=plane_mesh.info['planeaxis'],
                                         keepdims=True)
-        return self.__class__(plane_mesh, dim=self.dim,
-                              value=project_array, bc=self.bc)
+        return self.__class__(plane_mesh, dim=self.dim, value=project_array)
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
