@@ -561,7 +561,7 @@ class TestField:
         assert f2.average == (1, 0, -7)
 
         # Exceptions
-        with pytest.rasies(ValueError):
+        with pytest.raises(ValueError):
             res = f1 + '2'
 
         # Fields with different dimensions
@@ -1637,7 +1637,7 @@ class TestField:
 
     def test_quiver(self):
         fig = plt.figure()
-        ax = fig._subplot(111)
+        ax = fig.add_subplot(111)
 
         self.pf.plane('z', n=(3, 4)).quiver(ax=ax)
         self.pf.plane('x', n=(3, 4)).quiver(ax=ax, color_field=self.pf.y)
