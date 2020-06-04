@@ -724,6 +724,21 @@ class Mesh:
         """
         return self.__class__(region=self.subregions[key], cell=self.cell)
 
+    def pad(self, pad_width):
+        pmin = np.array(self.region.pmin)
+        pmax = np.array(self.region.pmax)
+        if 0 in pad_width.keys():
+            pmin[0] -= pad_width[0][0] * self.cell[0]
+            pmax[0] += pad_width[0][1] * self.cell[0]
+        if 1 in pad_width.keys():
+            pmin[1] -= pad_width[1][0] * self.cell[1]
+            pmax[1] += pad_width[1][1] * self.cell[1]
+        if 2 in pad_width.keys():
+            pmin[2] -= pad_width[2][0] * self.cell[2]
+            pmax[2] += pad_width[2][1] * self.cell[2]
+
+        return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
+
     def mpl(self, ax=None, figsize=None, multiplier=None,
             color_palette=dfu.color_palette('deep', 10, 'rgb')[:2],
             linewidth=2, filename=None, **kwargs):

@@ -1194,6 +1194,22 @@ class Field:
         res_array = np.einsum('ijkl,ijkl->ijk', self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
 
+    def pad(self, pad_width, mode, **kwargs):
+        padding_sequence = dfu.assemble_index((0, 0),
+                                              len(self.array.shape),
+                                              pad_width)
+
+        padded_array = np.pad(self.array, padding_sequence,
+                              mode=mode, **kwargs)
+
+        padded_mesh = self.mesh.pad(pad_width)
+
+        print(pad_width)
+        print(padded_array.shape)
+        print(padded_mesh.n)
+
+        return self.__class__(padded_mesh, dim=self.dim, value=padded_array)
+
     def derivative(self, direction, n=1):
         """Directional derivative.
 
@@ -1266,16 +1282,14 @@ class Field:
         if isinstance(direction, str):
             direction = dfu.axesdict[direction]
 
+        # If there are no neighbouring cells in the specified direction, zero
+        # field is returned.
         if self.mesh.n[direction] == 1:
-            # Derivative cannot be computed because there are no neighbouring
-            # cells in that direction and zero field is returned.
             return self.__class__(self.mesh, dim=self.dim, value=0)
 
         # Preparation (padding) for computing the derivative, depending on
-        #   - PBC
-        #   - BC (Neumann=0)
-        #   - no BC defined
-        # The field array is padded by appropriate values if necessary.
+        # boundary conditions (PBC, neumann, or no BC). According to BC, the
+        # field array is padded.
         if dfu.raxesdict[direction] in self.mesh.bc:
             padding_mode = 'wrap'
         elif self.mesh.bc == 'neumann':
@@ -1284,12 +1298,8 @@ class Field:
             padding_mode = None # The array is not padded
 
         if padding_mode is not None:
-            padding_sequence = dfu.assemble_index((0, 0),
-                                                  len(self.array.shape),
-                                                  {direction: (1, 1)})
-            padded_array = np.pad(self.array,
-                                  padding_sequence,
-                                  mode=padding_mode)
+            padded_array = self.pad({direction: (1, 1)},
+                                    mode=padding_mode).array
         else:
             padded_array = self.array
 

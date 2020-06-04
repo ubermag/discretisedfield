@@ -560,6 +560,33 @@ class TestMesh:
 
         assert len(submesh1) + len(submesh2) == len(mesh)
 
+    def test_pad(self):
+        p1 = (-1, 2, 7)
+        p2 = (5, 9, 4)
+        cell = (1, 1, 1)
+        region = df.Region(p1=p1, p2=p2)
+        mesh = df.Mesh(region=region, cell=cell)
+
+        padded_mesh = mesh.pad({0: (0, 1)})
+        assert padded_mesh.region.pmin == (-1, 2, 4)
+        assert padded_mesh.region.pmax == (6, 9, 7)
+        assert padded_mesh.n == (7, 7, 3)
+
+        padded_mesh = mesh.pad({1: (1, 1)})
+        assert padded_mesh.region.pmin == (-1, 1, 4)
+        assert padded_mesh.region.pmax == (5, 10, 7)
+        assert padded_mesh.n == (6, 9, 3)
+
+        padded_mesh = mesh.pad({2: (2, 3)})
+        assert padded_mesh.region.pmin == (-1, 2, 2)
+        assert padded_mesh.region.pmax == (5, 9, 10)
+        assert padded_mesh.n == (6, 7, 8)
+
+        padded_mesh = mesh.pad({0: (1, 1), 1: (1, 1), 2: (1, 1)})
+        assert padded_mesh.region.pmin == (-2, 1, 3)
+        assert padded_mesh.region.pmax == (6, 10, 8)
+        assert padded_mesh.n == (8, 9, 5)
+
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
