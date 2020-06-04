@@ -1991,17 +1991,17 @@ class Field:
             return self.x.laplace << self.y.laplace << self.z.laplace
 
     @property
-    def integral(self):
+    def volume_integral(self):
         """Volume integral.
 
         This method integrates the field over volume and returns a single
-        (scalar or vector) value as ``tuple``. This value can be understood as
-        the product of field's average value and the mesh volume, because the
-        volume of all discretisation cells is the same.
+        (scalar or vector) value. This value can be understood as the product
+        of field's average value and the mesh volume, because the volume of all
+        discretisation cells is the same.
 
         Returns
         -------
-        tuple
+        numbers.Real, tuple
 
             Volume integral.
 
@@ -2017,24 +2017,76 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> f.integral
+        >>> f.volume_integral
         5000.0
 
         2. Compute the volume integral of a vector field.
 
         >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
-        >>> f.integral
+        >>> f.volume_integral
         (-1000.0, -2000.0, -3000.0)
 
         .. seealso::
 
-            :py:func:`~discretisedfield.Field.average`
-            :py:func:`~discretisedfield.Mesh.volume`
+            :py:func:`~discretisedfield.Field.surface_integral`
 
         """
         cell_volume = self.mesh.region.volume / len(self.mesh)
         field_sum = np.sum(self.array, axis=(0, 1, 2))
         return dfu.array2tuple(field_sum * cell_volume)
+
+    @property
+    def surface_integral(self):
+        """Surface integral.
+
+        This method integrates the field over the plane and returns a single
+        scalar or vector value. This value can be understood as the product of
+        field's average value and the plane area, because the area of all
+        discretisation cells on the plane is the same.
+
+        The field must be sliced by a plane before surface integral is applied.
+
+        Returns
+        -------
+        numbers.Real, tuple
+
+            Surface integral.
+
+        Raises
+        ------
+        ValueError
+
+            If the field was not sliced before the surface integral ic
+            computed.
+
+        Example
+        -------
+        1. Compute the surface integral of a scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=1, value=5)
+        >>> f.plane('z').surface_integral
+        500.0
+
+        2. Compute the surface integral of a vector field.
+
+        >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
+        >>> f.plane('z').surface_integral
+        (-100.0, -200.0, -300.0)
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.Field.volume_integral`
+
+        """
+        thickness = self.mesh.cell[self.mesh.info['planeaxis']]
+        return dfu.array2tuple(np.divide(self.volume_integral, thickness))
 
     @property
     def topological_charge_density(self):
@@ -2113,8 +2165,7 @@ class Field:
             raise ValueError(msg)
 
         of = self.orientation  # unit (orientation) field
-        thickness = self.mesh.cell[self.mesh.info['planeaxis']]
-        prefactor = 1 / (4 * np.pi * thickness)
+        prefactor = 1 / (4 * np.pi)
         q = of @ (of.derivative(dfu.raxesdict[self.mesh.info['axis1']]) &
                   of.derivative(dfu.raxesdict[self.mesh.info['axis2']]))
 
@@ -2276,7 +2327,7 @@ class Field:
 
         """
         if method == 'continuous':
-            return self.topological_charge_density.integral
+            return self.topological_charge_density.surface_integral
         elif method == 'berg-luescher':
             return self.bergluescher
         else:
