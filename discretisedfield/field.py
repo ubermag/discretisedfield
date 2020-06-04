@@ -375,6 +375,38 @@ class Field:
         return self.norm
 
     @property
+    def zero(self):
+        """Zero field.
+
+        This method returns a zero field defined on the same mesh and with the
+        same value dimension.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Zero field.
+
+        Examples
+        --------
+        1. Getting the zero-field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 10, 13)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(3, -1, 1))
+        >>> zero_field = field.zero
+        >>> zero_field.average
+        (0.0, 0.0, 0.0)
+
+        """
+        return self.__class__(self.mesh, dim=self.dim, value=0)
+
+    @property
     def orientation(self):
         """Orientation field.
 
@@ -702,6 +734,72 @@ class Field:
         elif (self.mesh == other.mesh and self.dim == other.dim and
               np.array_equal(self.array, other.array)):
             return True
+        else:
+            return False
+
+    def allclose(self, other, rtol=1e-5, atol=1e-8):
+        """Allclose method.
+
+        This method determines whether two fields are:
+
+          1. Defined on the same mesh.
+
+          2. Have the same dimension (``dim``).
+
+          3. All values in are within relative (``rtol``) and absolute
+          (``atol``) tolerances.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field
+
+            Field to be compared to.
+
+        rtol : numbers.Real
+
+            Relative tolerance. Defaults to 1e-5.
+
+        atol : numbers.Real
+
+            Absolute tolerance. Defaults to 1e-8.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if two fields are within tolerance, ``False`` otherwise.
+
+        Raises
+        ------
+        TypeError
+
+            If a non field object is passed.
+
+        Examples
+        --------
+        1. Check if two fields are within a tolerance.
+
+        >>> import discretisedfield as df
+        ...
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), cell=(1, 1, 1))
+        ...
+        >>> f1 = df.Field(mesh, dim=1, value=3)
+        >>> f2 = df.Field(mesh, dim=1, value=3+1e-9)
+        >>> f3 = df.Field(mesh, dim=1, value=3.1)
+        >>> f1.allclose(f2)
+        True
+        >>> f1.allclose(f3)
+        False
+        >>> f1.allclose(f3, atol=1e-2)
+        False
+
+        """
+        if not isinstance(other, self.__class__):
+            msg = (f'Cannot apply allclose method between '
+                   f'{type(self)} and {type(other)} objects.')
+
+        if (self.mesh == other.mesh and self.dim == other.dim):
+            return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
         else:
             return False
 
@@ -1546,7 +1644,7 @@ class Field:
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
         if self.mesh.n[direction] == 1:
-            return self.__class__(self.mesh, dim=self.dim, value=0)
+            return self.zero
 
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
@@ -1871,8 +1969,9 @@ class Field:
         0.0
 
         2. Compute Laplacian of a spatially varying field. For a field we
-        choose :math:`f(x, y, z) = 2x^{2} + 3y - 5z`. Accordingly, we expect the
-        Laplacian to be a constant vector field :math:`\\nabla f = (4, 0, 0)`.
+        choose :math:`f(x, y, z) = 2x^{2} + 3y - 5z`. Accordingly, we expect
+        the Laplacian to be a constant vector field :math:`\\nabla f = (4, 0,
+        0)`.
 
         >>> def value_fun(pos):
         ...     x, y, z = pos

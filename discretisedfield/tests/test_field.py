@@ -320,6 +320,26 @@ class TestField:
         with pytest.raises(ValueError):
             f.norm = 1
 
+    def test_zero(self):
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 10e-9)
+        n = (5, 5, 5)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        f = df.Field(mesh, dim=1, value=1e-6)
+        zf = f.zero
+
+        assert f.mesh == zf.mesh
+        assert f.dim == zf.dim
+        assert not np.any(zf.array)
+
+        f = df.Field(mesh, dim=3, value=(5, -7, 1e3))
+        zf = f.zero
+
+        assert f.mesh == zf.mesh
+        assert f.dim == zf.dim
+        assert not np.any(zf.array)
+
     def test_orientation(self):
         p1 = (-5e-9, -5e-9, -5e-9)
         p2 = (5e-9, 5e-9, 5e-9)
@@ -415,6 +435,24 @@ class TestField:
         assert not f4 != f5
         assert not f1 == 0.2
         assert f1 != 0.2
+
+    def test_allclose(self):
+        p1 = (-5e-9, -5e-9, -5e-9)
+        p2 = (15e-9, 5e-9, 5e-9)
+        cell = (5e-9, 1e-9, 2.5e-9)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f1 = df.Field(mesh, dim=1, value=0.2)
+        f2 = df.Field(mesh, dim=1, value=0.2+1e-9)
+        f3 = df.Field(mesh, dim=1, value=0.21)
+        f4 = df.Field(mesh, dim=3, value=(1, -6, 0))
+        f5 = df.Field(mesh, dim=3, value=(1, -6+1e-8, 0))
+        f6 = df.Field(mesh, dim=3, value=(1, -6.01, 0))
+
+        assert f1.allclose(f2)
+        assert not f1.allclose(f3)
+        assert f4.allclose(f5)
+        assert not f4.allclose(f6)
 
     def test_pos_neg(self):
         p1 = (-5e-9, -5e-9, -5e-9)
@@ -840,7 +878,17 @@ class TestField:
         assert np.all(res.array == 21)
 
         res = 1 + f1 + 0*f2.x - 3*f2.y/3
-        assert res.average = 3
+        assert res.average == 3
+
+    def test_pad(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 8, 2)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        field = df.Field(mesh, dim=1, value=1)
+
+        pf = field.pad({'x': (1, 1)}, mode='constant')  # zeros padded
+        assert pf.array.shape == (12, 8, 2, 1)
 
     def test_derivative(self):
         p1 = (0, 0, 0)
