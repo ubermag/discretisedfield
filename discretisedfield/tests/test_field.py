@@ -496,23 +496,33 @@ class TestField:
         assert f1.average == (1, 2, 3)
 
         # Artithmetic checks
-        assert f1 + f2 == f2 + f1
-        assert f1 - f2 == -(f2 - f1)
+        assert f1 + f2 + (1, 1, 1) == (1, 1, 1) + f2 + f1
+        assert f1 - f2 - (0, 0, 0) == (0, 0, 0) - (f2 - f1)
         assert f1 + (f1 + f2) == (f1 + f1) + f2
         assert f1 - (f1 + f2) == f1 - f1 - f2
-        assert f1 + f2 - f1 == f2
+        assert f1 + f2 - f1 == f2 + (0, 0, 0)
 
-        # Exceptions
+        # Constants
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
-        with pytest.raises(TypeError):
-            res = f1 + 2
-        with pytest.raises(TypeError):
-            f1 += 2
-        with pytest.raises(TypeError):
-            f1 -= 5.1
-        with pytest.raises(TypeError):
-            res = 2 + f2
+        res = f1 + 2
+        assert res.average == 3.2
+        res = f1 - 1.2
+        assert res.average == 0
+        f1 += 2.5
+        assert f1.average == 3.7
+        f1 -= 3.7
+        assert f1.average == 0
+        res = f2 + (1, 3, 5)
+        assert res.average == (0, 0, 0)
+        res = f2 - (1, 2, 3)
+        assert res.average == (-2, -5, -8)
+        f2 += (1, 1, 1)
+        assert f2.average == (0, -2, -4)
+        f2 -= (-1, -2, 3)
+        assert f2.average == (1, 0, -7)
+
+        # Fields with different dimensions
         with pytest.raises(ValueError):
             res = f1 + f2
 
@@ -546,22 +556,28 @@ class TestField:
         f1 /= f2
         assert f1.average == 1.2
 
-        # Scalar field with a scalar
+        # Scalar field with a constant
         f = df.Field(mesh, dim=1, value=5)
-        res = f * 2  # __mul__
+        res = f * 2
         assert res.average == 10
-        res = 3 * f  # __rmul__
+        res = 3 * f
         assert res.average == 15
-        res = f / 2  # __mul__
+        res = f * (1, 2, 3)
+        assert res.average == (5, 10, 15)
+        res = (1, 2, 3) * f
+        assert res.average == (5, 10, 15)
+        res = f / 2
         assert res.average == 2.5
-        res = 10 / f  # __rmul__
+        res = 10 / f
         assert res.average == 2
-        f *= 10  # __imul__
+        res = (5, 10, 15) / f
+        assert res.average == (1, 2, 3)
+        f *= 10
         assert f.average == 50
-        f /= 10  # __idiv__
+        f /= 10
         assert f.average == 5
 
-        # Vector field with a scalar field
+        # Scalar field with a vector field
         f1 = df.Field(mesh, dim=1, value=2)
         f2 = df.Field(mesh, dim=3, value=(-1, -3, 5))
         res = f1 * f2  # __mul__
@@ -598,6 +614,7 @@ class TestField:
         assert f1 * f2 == f2 * f1
         assert 1.3 * f2 == f2 * 1.3
         assert -5 * f2 == f2 * (-5)
+        assert (1, 2.2, -1) * f1 == f1 * (1, 2.2, -1)
         assert f1 * (f1 * f2) == (f1 * f1) * f2
         assert f1 * f2 / f1 == f2
 
@@ -637,7 +654,7 @@ class TestField:
         with pytest.raises(ValueError):
             f1 /= f2
 
-    def test_matmul(self):
+    def test_dot(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (2, 2, 2)
@@ -647,7 +664,6 @@ class TestField:
         f1 = df.Field(mesh, dim=3, value=(0, 0, 0))
         res = f1@f1
         assert res.dim == 1
-        assert res.array.shape == (5, 5, 5, 1)
         assert res.average == 0
 
         # Orthogonal vectors
@@ -663,6 +679,14 @@ class TestField:
 
         # Check if commutative
         assert f1 @ f2 == f2 @ f1
+        assert f1 @ (-1, 3, 2.2) == (-1, 3, 2.2) @ f1
+
+        # Vector field with a constant
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        res = (1, 1, 1) @ f
+        assert res.average == 6
+        res = f @ [1, 1, 1]
+        assert res.average == 6
 
         # Spatially varying vectors
         def value_fun1(pos):
@@ -704,6 +728,105 @@ class TestField:
         f2 = df.Field(mesh2, dim=3, value=(3, 2, 1))
         with pytest.raises(ValueError):
             res = f1 @ f2
+
+    def test_cross(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        # Zero vectors
+        f1 = df.Field(mesh, dim=3, value=(0, 0, 0))
+        res = f1 & f1
+        assert res.dim == 3
+        assert res.average == (0, 0, 0)
+
+        # Orthogonal vectors
+        f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
+        f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
+        f3 = df.Field(mesh, dim=3, value=(0, 0, 1))
+        assert (f1 & f2).average == (0, 0, 1)
+        assert (f1 & f3).average == (0, -1, 0)
+        assert (f2 & f3).average == (1, 0, 0)
+        assert (f1 & f1).average == (0, 0, 0)
+        assert (f2 & f2).average == (0, 0, 0)
+        assert (f3 & f3).average == (0, 0, 0)
+
+        # Constants
+        assert (f1 & (0, 1, 0)).average == (0, 0, 1)
+        assert ((0, 1, 0) & f1).average == (0, 0, 1)
+
+        # Check if not comutative
+        assert f1 & f2 == -(f2 & f1)
+        assert f1 & f3 == -(f3 & f1)
+        assert f2 & f3 == -(f3 & f2)
+
+        f1 = df.Field(mesh, dim=3, value=lambda pos: (pos[0], pos[1], pos[2]))
+        f2 = df.Field(mesh, dim=3, value=lambda pos: (pos[2], pos[0], pos[1]))
+
+        # The cross product should be
+        # (y**2-x*z, z**2-x*y, x**2-y*z)
+        assert (f1 & f2)((1, 1, 1)) == (0, 0, 0)
+        assert (f1 & f2)((3, 1, 1)) == (-2, -2, 8)
+        assert (f2 & f1)((3, 1, 1)) == (2, 2, -8)
+        assert (f1 & f2)((5, 7, 1)) == (44, -34, 18)
+
+        # Exceptions
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
+        with pytest.raises(TypeError):
+            res = f1 & 2
+        with pytest.raises(ValueError):
+            res = f1 & f2
+
+        # Fields defined on different meshes
+        mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
+        mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
+        f1 = df.Field(mesh1, dim=3, value=(1, 2, 3))
+        f2 = df.Field(mesh2, dim=3, value=(3, 2, 1))
+        with pytest.raises(ValueError):
+            res = f1 & f2
+
+    def test_stack(self):
+        p1 = (0, 0, 0)
+        p2 = (10e6, 10e6, 10e6)
+        cell = (5e6, 5e6, 5e6)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f1 = df.Field(mesh, dim=1, value=1)
+        f2 = df.Field(mesh, dim=1, value=-3)
+        f3 = df.Field(mesh, dim=1, value=5)
+
+        res = f1 << f2 << f3
+        assert res.dim == 3
+        assert res.average == (1, -3, 5)
+
+        # Different dimensions
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        f2 = df.Field(mesh, dim=2, value=(-1, -3))
+        res = f1 << f2
+        assert res.average == (1.2, -1, -3)
+        res = f2 << f1
+        assert res.average == (-1, -3, 1.2)
+
+        # Constants
+        f1 = df.Field(mesh, dim=1, value=1.2)
+        res = f1 << 2
+        assert res.average == (1.2, 2)
+        res = f1 << (1, -1)
+        assert res.average == (1.2, 1, -1)
+        res = 3 << f1
+        assert res.average == (3, 1.2)
+        res = (1.2, 3) << f1 << 3
+        assert res.average == (1.2, 3, 1.2, 3)
+
+        # Fields defined on different meshes
+        mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
+        mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
+        f1 = df.Field(mesh1, dim=1, value=1.2)
+        f2 = df.Field(mesh2, dim=1, value=1)
+        with pytest.raises(ValueError):
+            res = f1 << f2
 
     def test_all_operators(self):
         p1 = (0, 0, 0)

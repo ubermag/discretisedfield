@@ -5,7 +5,6 @@ from .region import Region
 from .mesh import Mesh
 from .field import Field
 from .line import Line
-from .operators import cross, stack
 from .interact import interact
 
 __version__ = pkg_resources.get_distribution(__name__).version

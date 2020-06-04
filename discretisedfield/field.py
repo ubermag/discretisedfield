@@ -913,19 +913,29 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__sub__`
 
         """
-        if not isinstance(other, self.__class__):
+        if isinstance(other, self.__class__):
+            if self.dim != other.dim:
+                msg = (f'Cannot apply operator + on dim={self.dim} '
+                       f'and dim={other.dim} fields.')
+                raise ValueError(msg)
+            if self.mesh != other.mesh:
+                msg = ('Cannot apply operator + on fields '
+                       'defined on different meshes.')
+                raise ValueError(msg)
+        elif self.dim == 1 and isinstance(other, numbers.Real):
+            other = self.__class__(self.mesh, dim=self.dim, value=other)
+        elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.dim, value=other)
+        else:
             msg = (f'Unsupported operand type(s) for +: '
                    f'{type(self)} and {type(other)}.')
             raise TypeError(msg)
-        if self.dim != other.dim:
-            msg = f'Cannot add dim={self.dim} and dim={other.dim} fields.'
-            raise ValueError(msg)
-        if self.mesh != other.mesh:
-            msg = 'Cannot add fields defined on different meshes.'
-            raise ValueError(msg)
 
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array + other.array)
+
+    def __radd__(self, other):
+        return self + other
 
     def __sub__(self, other):
         """Binary ``-`` operator.
@@ -978,7 +988,14 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
         """
+        # Make sure unary - can be applied to other.
+        if isinstance(other, (list, tuple)):
+            other = np.array(other)
+
         return self + (-other)
+
+    def __rsub__(self, other):
+        return -self + other
 
     def __mul__(self, other):
         """Binary ``*`` operator.
@@ -1045,22 +1062,25 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
 
         """
-        if not isinstance(other, (self.__class__, numbers.Real)):
+        if isinstance(other, self.__class__):
+            if self.dim == 3 and other.dim == 3:
+                msg = (f'Cannot apply operator * on dim={self.dim} '
+                       f'and dim={other.dim} fields.')
+                raise ValueError(msg)
+            if self.mesh != other.mesh:
+                msg = ('Cannot apply operator * on fields '
+                       'defined on different meshes.')
+                raise ValueError(msg)
+        elif isinstance(other, numbers.Real):
+            other = self.__class__(self.mesh, dim=1, value=other)
+        elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=3, value=other)
+        else:
             msg = (f'Unsupported operand type(s) for *: '
                    f'{type(self)} and {type(other)}.')
             raise TypeError(msg)
-        if isinstance(other, self.__class__):
-            if self.mesh != other.mesh:
-                msg = 'Cannot multiply fields defined on different meshes.'
-                raise ValueError(msg)
-            if not (self.dim == 1 or other.dim == 1):
-                msg = (f'Cannot multiply dim={self.dim} and '
-                       f'dim={other.dim} fields.')
-                raise ValueError(msg)
-            res_array = np.multiply(self.array, other.array)
-        if isinstance(other, numbers.Real):
-            res_array = np.multiply(self.array, other)
 
+        res_array = np.multiply(self.array, other.array)
         return self.__class__(self.mesh, dim=res_array.shape[-1],
                               value=res_array)
 
@@ -1178,21 +1198,179 @@ class Field:
         5.0
 
         """
-        if not isinstance(other, df.Field):
+        if isinstance(other, self.__class__):
+            if self.mesh != other.mesh:
+                msg = ('Cannot apply operator @ on fields '
+                       'defined on different meshes.')
+                raise ValueError(msg)
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=3, value=other)
+        else:
             msg = (f'Unsupported operand type(s) for @: '
                    f'{type(self)} and {type(other)}.')
             raise TypeError(msg)
+
         if self.dim != 3 or other.dim != 3:
-            msg = (f'Cannot compute the dot product on '
-                   f'dim={self.dim} and dim={other.dim} fields.')
-            raise ValueError(msg)
-        if self.mesh != other.mesh:
-            msg = ('Cannot compute the dot product of '
-                   'fields defined on different meshes.')
+            msg = (f'Cannot apply operator @ on dim={self.dim} '
+                   f'and dim={other.dim} fields.')
             raise ValueError(msg)
 
         res_array = np.einsum('ijkl,ijkl->ijk', self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
+
+    def __rmatmul__(self, other):
+        return self @ other
+
+    def __and__(self, other):
+        """Cross product.
+
+        This function computes the cross product between two fields. Both fields
+        must be three-dimensional (``dim=3``) and defined on the same mesh.
+
+        Parameters
+        ----------
+        f1/f2 : discretisedfield.Field
+
+            Operands.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Resulting field.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Example
+        -------
+        1. Compute the cross product of two vector fields.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
+        >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
+        >>> (f1 & f2).average
+        (0.0, 0.0, 1.0)
+
+        """
+        if isinstance(other, self.__class__):
+            if self.mesh != other.mesh:
+                msg = ('Cannot apply operator & on fields '
+                       'defined on different meshes.')
+                raise ValueError(msg)
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=3, value=other)
+        else:
+            msg = (f'Unsupported operand type(s) for &: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+
+        if self.dim != 3 or other.dim != 3:
+            msg = (f'Cannot apply operator & on dim={self.dim} '
+                   f'and dim={other.dim} fields.')
+            raise ValueError(msg)
+
+        res_array = np.cross(self.array, other.array)
+        return self.__class__(self.mesh, dim=3, value=res_array)
+
+    def __rand__(self, other):
+        return self & other
+
+    def __lshift__(self, other):
+        """Stacks multiple scalar fields in a single vector field.
+
+        This method takes a list of scalar (``dim=1``) fields and returns a vector
+        field, whose components are defined by the scalar fields passed. If any of
+        the fields passed has ``dim!=1` or they are not defined on the same mesh,
+        an exception is raised. The dimension of the resulting field is equal to
+        the length of the passed list.
+
+        Parameters
+        ----------
+        fields : list
+
+            List of ``discretisedfield.Field`` objects with ``dim=1``.
+
+        Returns
+        -------
+        disrectisedfield.Field
+
+            Resulting field.
+
+        Raises
+        ------
+        ValueError
+
+            If the dimension of any of the fields is not 1, or the fields passed
+            are not defined on the same mesh.
+
+        Example
+        -------
+        1. Stack 3 scalar fields.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f1 = df.Field(mesh, dim=1, value=1)
+        >>> f2 = df.Field(mesh, dim=1, value=5)
+        >>> f3 = df.Field(mesh, dim=1, value=-3)
+        ...
+        >>> f = f1 << f2 << f3
+        >>> f.average
+        (1.0, 5.0, -3.0)
+        >>> f.dim
+        3
+        >>> f.x == f1
+        True
+        >>> f.y == f2
+        True
+        >>> f.z == f3
+        True
+
+        """
+        if isinstance(other, self.__class__):
+            if self.mesh != other.mesh:
+                msg = ('Cannot apply operator << on fields '
+                       'defined on different meshes.')
+                raise ValueError(msg)
+        elif isinstance(other, numbers.Real):
+            other = self.__class__(self.mesh, dim=1, value=other)
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=len(other), value=other)
+        else:
+            msg = (f'Unsupported operand type(s) for &: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+
+        array_list = [self.array[..., i] for i in range(self.dim)]
+        array_list += [other.array[..., i] for i in range(other.dim)]
+        return self.__class__(self.mesh, dim=len(array_list),
+                              value=np.stack(array_list, axis=3))
+
+    def __rlshift__(self, other):
+        if isinstance(other, numbers.Real):
+            other = self.__class__(self.mesh, dim=1, value=other)
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=len(other), value=other)
+        else:
+            msg = (f'Unsupported operand type(s) for &: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+
+        return other << self
 
     def pad(self, pad_width, mode, **kwargs):
         padding_sequence = dfu.assemble_index((0, 0),
@@ -1203,10 +1381,6 @@ class Field:
                               mode=mode, **kwargs)
 
         padded_mesh = self.mesh.pad(pad_width)
-
-        print(pad_width)
-        print(padded_array.shape)
-        print(padded_mesh.n)
 
         return self.__class__(padded_mesh, dim=self.dim, value=padded_array)
 
@@ -1710,8 +1884,9 @@ class Field:
         of = self.orientation  # unit (orientation) field
         thickness = self.mesh.cell[self.mesh.info['planeaxis']]
         prefactor = 1 / (4 * np.pi * thickness)
-        q = of @ df.cross(of.derivative(self.mesh.info['axis1']),
-                          of.derivative(self.mesh.info['axis2']))
+        q = of @ (of.derivative(self.mesh.info['axis1']) &
+                  of.derivative(self.mesh.info['axis2']))
+
         return prefactor * q
 
     @property

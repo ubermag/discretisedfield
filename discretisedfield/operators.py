@@ -3,64 +3,6 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
-def cross(f1, f2):
-    """Cross product.
-
-    This function computes the cross product between two fields. Both fields
-    must be three-dimensional (``dim=3``) and defined on the same mesh.
-
-    Parameters
-    ----------
-    f1/f2 : discretisedfield.Field
-
-        Operands.
-
-    Returns
-    -------
-    discretisedfield.Field
-
-        Resulting field.
-
-    Raises
-    ------
-    ValueError, TypeError
-
-        If the operator cannot be applied.
-
-    Example
-    -------
-    1. Compute the cross product of two vector fields.
-
-    >>> import discretisedfield as df
-    ...
-    >>> p1 = (0, 0, 0)
-    >>> p2 = (10, 10, 10)
-    >>> cell = (2, 2, 2)
-    >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    ...
-    >>> f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
-    >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
-    >>> df.cross(f1, f2).average
-    (0.0, 0.0, 1.0)
-
-    """
-    if not isinstance(f1, df.Field) or not isinstance(f2, df.Field):
-        msg = (f'Unsupported operand type(s) for discretisedfield.cross: '
-               f'{type(f1)} and {type(f2)}.')
-        raise TypeError(msg)
-    if f1.dim != 3 or f2.dim != 3:
-        msg = (f'Cannot compute the cross product on '
-               f'dim={f1.dim} and dim={f2.dim} fields.')
-        raise ValueError(msg)
-    if f1.mesh != f2.mesh:
-        msg = ('Cannot compute the cross product of '
-               'fields defined on different meshes.')
-        raise ValueError(msg)
-
-    res_array = np.cross(f1.array, f2.array)
-    return df.Field(f1.mesh, dim=3, value=res_array)
-
-
 def stack(fields):
     """Stacks multiple scalar fields in a single vector field.
 
