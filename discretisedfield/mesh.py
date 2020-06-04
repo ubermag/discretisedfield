@@ -176,7 +176,7 @@ class Mesh:
             msg = 'Mesh region is not an aggregate of the discretisation cell.'
             raise ValueError(msg)
 
-        self.bc = bc
+        self.bc = bc.lower()
         self.subregions = subregions
 
     def __len__(self):

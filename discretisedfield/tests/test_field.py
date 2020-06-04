@@ -844,43 +844,40 @@ class TestField:
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (2, 2, 2)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, dim=1, value=0)
 
         check_field(f.derivative('x'))
-        assert f.derivative('x').average == 0
-        assert f.derivative('y').average == 0
-        assert f.derivative('z').average == 0
+        assert f.derivative('x', n=1).average == 0
+        assert f.derivative('y', n=1).average == 0
+        assert f.derivative('z', n=1).average == 0
+        assert f.derivative('x', n=2).average == 0
+        assert f.derivative('y', n=2).average == 0
+        assert f.derivative('z', n=2).average == 0
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         def value_fun(pos):
             x, y, z = pos
             return x + y + z
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative('x').average == 1
-        assert f.derivative('y').average == 1
-        assert f.derivative('z').average == 1
-
-        # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
-        def value_fun(pos):
-            x, y, z = pos
-            return x*y + y + z
-
-        f = df.Field(mesh, dim=1, value=value_fun)
-
-        assert f.derivative(0)((3, 1, 3)) == 1
-        assert f.derivative(1)((3, 1, 3)) == 4
-        assert f.derivative(2)((3, 1, 3)) == 1
-        assert f.derivative(0)((5, 3, 5)) == 3
-        assert f.derivative(1)((5, 3, 5)) == 6
-        assert f.derivative(2)((5, 3, 5)) == 1
+        assert f.derivative('x', n=1).average == 1
+        assert f.derivative('y', n=1).average == 1
+        assert f.derivative('z', n=1).average == 1
+        assert f.derivative('x', n=2).average == 0
+        assert f.derivative('y', n=2).average == 0
+        assert f.derivative('z', n=2).average == 0
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         def value_fun(pos):
             x, y, z = pos
             return x*y + 2*y + x*y*z
@@ -890,11 +887,16 @@ class TestField:
         assert f.derivative('x')((7, 5, 1)) == 10
         assert f.derivative('y')((7, 5, 1)) == 16
         assert f.derivative('z')((7, 5, 1)) == 35
+        assert f.derivative('x', n=2)((1, 1, 1)) == 0
+        assert f.derivative('y', n=2)((1, 1, 1)) == 0
+        assert f.derivative('z', n=2)((1, 1, 1)) == 0
 
         # f(x, y, z) = (0, 0, 0)
         # -> dfdx = (0, 0, 0)
         # -> dfdy = (0, 0, 0)
         # -> dfdz = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, dim=3, value=(0, 0, 0))
 
         check_field(f.derivative('y'))
@@ -926,12 +928,12 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.derivative(0)((3, 1, 3)) == (1, 0, 3)
-        assert f.derivative(1)((3, 1, 3)) == (3, 3, 9)
-        assert f.derivative(2)((3, 1, 3)) == (0, 1, 3)
-        assert f.derivative(0)((5, 3, 5)) == (3, 0, 15)
-        assert f.derivative(1)((5, 3, 5)) == (5, 5, 25)
-        assert f.derivative(2)((5, 3, 5)) == (0, 3, 15)
+        assert f.derivative('x')((3, 1, 3)) == (1, 0, 3)
+        assert f.derivative('y')((3, 1, 3)) == (3, 3, 9)
+        assert f.derivative('z')((3, 1, 3)) == (0, 1, 3)
+        assert f.derivative('x')((5, 3, 5)) == (3, 0, 15)
+        assert f.derivative('y')((5, 3, 5)) == (5, 5, 25)
+        assert f.derivative('z')((5, 3, 5)) == (0, 3, 15)
 
         # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
         # -> dfdx = (y, 1, y*z)
@@ -965,7 +967,7 @@ class TestField:
         assert f.derivative('y')((1, 7, 1)) == 1
         assert f.derivative('z')((1, 1, 5)) == 1
 
-        # No PBC
+        # PBC
         f = df.Field(mesh_pbc, dim=1, value=value_fun)
         assert f.derivative('x')((9, 1, 1)) == -1.5
         assert f.derivative('y')((1, 7, 1)) == -1
@@ -981,11 +983,36 @@ class TestField:
         assert f.derivative('y')((1, 7, 1)) == (1, 1, 1)
         assert f.derivative('z')((1, 1, 5)) == (1, 1, 1)
 
-        # No PBC
+        # PBC
         f = df.Field(mesh_pbc, dim=3, value=value_fun)
         assert f.derivative('x')((9, 1, 1)) == (-1.5, -1.5, -1.5)
         assert f.derivative('y')((1, 7, 1)) == (-1, -1, -1)
         assert f.derivative('z')((1, 1, 5)) == (-0.5, -0.5, -0.5)
+
+    def test_derivative_neumann(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 8, 6)
+        cell = (2, 2, 2)
+
+        mesh_noneumann = df.Mesh(p1=p1, p2=p2, cell=cell)
+        mesh_neumann = df.Mesh(p1=p1, p2=p2, cell=cell, bc='neumann')
+
+        # Scalar field
+        def value_fun(pos):
+            return pos[0]*pos[1]*pos[2]
+
+        # No Neumann
+        f1 = df.Field(mesh_noneumann, dim=1, value=value_fun)
+        assert f1.derivative('x')((9, 1, 1)) == 1
+        assert f1.derivative('y')((1, 7, 1)) == 1
+        assert f1.derivative('z')((1, 1, 5)) == 1
+
+        # Neumann
+        f2 = df.Field(mesh_neumann, dim=1, value=value_fun)
+        assert (f1.derivative('x')(f1.mesh.region.centre) ==
+                f2.derivative('x')(f2.mesh.region.centre))
+        assert (f1.derivative('x')((1, 7, 1)) !=
+                f2.derivative('x')((1, 7, 1)))
 
     def test_derivative_single_cell(self):
         p1 = (0, 0, 0)

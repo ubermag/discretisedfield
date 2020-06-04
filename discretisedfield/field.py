@@ -1390,34 +1390,48 @@ class Field:
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
-        a field (with the same dimension). The direction in which the
-        derivative is computed is passed via ``direction`` argument, which can
-        be ``'x'``, ``'y'``, or ``'z'``. Alternatively, ``0``, ``1``, or ``2``
-        can be passed, respectively.
+        a field. The direction in which the derivative is computed is passed
+        via ``direction`` argument, which can be ``'x'``, ``'y'``, or ``'z'``.
+        The order of the computed derivative can be 1 or 2 and it is specified
+        using argument ``n`` and it defaults to 1.
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a specified direction. In that case, a zero field is
         returned. More precisely, it is assumed that the field does not change
-        in that direction.
+        in that direction. Computing of the directional derivative depends
+        strongly on the boundary condition specified in the mesh on which the
+        field is defined on. More precisely, the values of the derivatives at
+        the boundary are different for periodic, Neumann, or no boundary
+        conditions. For details on boundary conditions, please refer to the
+        ``disretisedfield.Mesh`` class.
 
         Parameters
         ----------
-        direction : str, int
+        direction : str
 
             The direction in which the derivative is computed. It can be
-            ``'x'``, ``'y'``, or ``'z'`` (alternatively, 0, 1, or 2,
-            respectively).
+            ``'x'``, ``'y'``, or ``'z'``.
+
+        n : int
+
+            The order of the derivative. It can be 1 or 2 and it defaults to 1.
 
         Returns
         -------
         discretisedfield.Field
 
-            Resulting field.
+            Directional derivative.
+
+        Raises
+        ------
+        NotImplementedError
+
+            If order ``n`` higher than 2 is asked for.
 
         Example
         -------
-        1. Compute the directional derivative of a scalar field in the
-        y-direction of a spatially varying field. For the field we choose
+        1. Compute the first-order directional derivative of a scalar field in
+        the y-direction of a spatially varying field. For the field we choose
         :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the
         derivative in the y-direction to be to be a constant scalar field
         :math:`df/dy = 3`.
@@ -1429,58 +1443,69 @@ class Field:
         >>> cell = (10e-9, 10e-9, 10e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> value_fun = lambda pos: 2*pos[0] + 3*pos[1] - 5*pos[2]
+        >>> def value_fun(point):
+        ...     x, y, z = point
+        ...     return 2*x + 3*y + -5*z
+        ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
-        >>> f.derivative('y').average
+        >>> f.derivative('y').average  # first-order derivative by default
         3.0
 
-        2. Try to compute directional derivatives of the vector field which has
-        only one discretisation cell in the z-direction. For the field we
-        choose :math:`f(x, y, z) = (2x, 3y, -5z)`. Accordingly, we expect the
-        directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
+        2. Try to compute the second-order directional derivative of the vector
+        field which has only one discretisation cell in the z-direction. For
+        the field we choose :math:`f(x, y, z) = (2x, 3y, -5z)`. Accordingly, we
+        expect the directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
         :math:`df/dy=(0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because
         there is only one discretisation cell in the z-direction, the
-        derivative cannot be computed and a zero field is returned.
+        derivative cannot be computed and a zero field is returned. Similarly,
+        second-order derivatives in all directions are expected to be zero.
 
         >>> def value_fun(pos):
         ...     x, y, z = pos
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
-        >>> f.derivative('x').average
+        >>> f.derivative('x', n=1).average
         (2.0, 0.0, 0.0)
-        >>> f.derivative('y').average
+        >>> f.derivative('y', n=1).average
         (0.0, 3.0, 0.0)
-        >>> f.derivative('z').average  # derivative cannot be calculated
+        >>> f.derivative('z', n=1).average  # derivative cannot be calculated
+        (0.0, 0.0, 0.0)
+        >>> # second-order derivatives
+        >>> f.derivative('x', n=2).average
+        (0.0, 0.0, 0.0)
+        >>> f.derivative('y', n=2).average
+        (0.0, 0.0, 0.0)
+        >>> f.derivative('z', n=2).average  # derivative cannot be calculated
         (0.0, 0.0, 0.0)
 
         """
-        if isinstance(direction, str):
-            direction = dfu.axesdict[direction]
+        direction = dfu.axesdict[direction]
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
         if self.mesh.n[direction] == 1:
             return self.__class__(self.mesh, dim=self.dim, value=0)
 
-        # Preparation (padding) for computing the derivative, depending on
-        # boundary conditions (PBC, neumann, or no BC). According to BC, the
-        # field array is padded.
+        # Preparation (padding) for computing the derivative, depending on the
+        # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
+        # the field array is padded.
         if dfu.raxesdict[direction] in self.mesh.bc:
+            # PBC
+            pad_width = {direction: (1, 1)}
             padding_mode = 'wrap'
         elif self.mesh.bc == 'neumann':
+            pad_width = {direction: (1, 1)}
             padding_mode = 'edge'
         else:
-            padding_mode = None  # the array is not padded
+            # No BC - no padding
+            pad_width = {}
+            padding_mode = 'constant'
 
-        if padding_mode is not None:
-            padded_array = self.pad({direction: (1, 1)},
-                                    mode=padding_mode).array
-        else:
-            padded_array = self.array
+        padded_array = self.pad(pad_width, mode=padding_mode).array
 
         if n == 1:
-            # Computing the first order derivative using numpy.grad.
+            # Computing the first-order derivative using numpy.grad.
             if self.dim == 1:
                 derivative_array = np.gradient(padded_array[..., 0],
                                                self.mesh.cell[direction],
@@ -1516,11 +1541,11 @@ class Field:
                 derivative_array[index] /= self.mesh.cell[direction]**2
 
         else:
-            msg = f'Derivative of order n={n} is not implemented.'
+            msg = f'Derivative of the n={n} order is not implemented.'
             raise NotImplementedError(msg)
 
         # Remove extra values, which come from padding (if any).
-        if padding_mode is not None:
+        if derivative_array.shape != self.array.shape:
             derivative_array = np.delete(derivative_array,
                                          (0, self.mesh.n[direction]+1),
                                          axis=direction)
@@ -1884,8 +1909,8 @@ class Field:
         of = self.orientation  # unit (orientation) field
         thickness = self.mesh.cell[self.mesh.info['planeaxis']]
         prefactor = 1 / (4 * np.pi * thickness)
-        q = of @ (of.derivative(self.mesh.info['axis1']) &
-                  of.derivative(self.mesh.info['axis2']))
+        q = of @ (of.derivative(dfu.raxesdict[self.mesh.info['axis1']]) &
+                  of.derivative(dfu.raxesdict[self.mesh.info['axis2']]))
 
         return prefactor * q
 
