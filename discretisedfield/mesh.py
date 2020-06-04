@@ -18,7 +18,6 @@ from mpl_toolkits.mplot3d import Axes3D
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
-               bc=ts.Typed(expected_type=str),
                subregions=ts.Dictionary(
                    key_descriptor=ts.Name(),
                    value_descriptor=ts.Typed(expected_type=df.Region),
@@ -71,13 +70,13 @@ class Mesh:
         The number of discretisation cells :math:`(n_{x}, n_{y}, n_{z})`.
         Either ``cell`` or ``n`` should be defined, not both.
 
-    bc : optional
+    bc : str, optional
 
         Periodic boundary conditions in x, y, or z directions is an iterable
         consisting of one or more characters ``'x'``, ``'y'``, or ``'z'``,
         denoting the direction(s) along which the mesh is periodic. In the case
         of Neumann or Dirichlet boundary condition, string ``'neumann'`` or
-        ``'dirichlet'`` is passed.
+        ``'dirichlet'`` is passed. Defaults to empty string.
 
     subregions : dict, optional
 
