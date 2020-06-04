@@ -64,7 +64,7 @@ def check_field(field):
     assert 1*field == field
     assert -1*field == -field
 
-    integral = field.integral
+    integral = field.volume_integral
     assert isinstance(integral, (tuple, numbers.Real))
 
     if field.dim == 1:
@@ -560,6 +560,10 @@ class TestField:
         f2 -= (-1, -2, 3)
         assert f2.average == (1, 0, -7)
 
+        # Exceptions
+        with pytest.rasies(ValueError):
+            res = f1 + '2'
+
         # Fields with different dimensions
         with pytest.raises(ValueError):
             res = f1 + f2
@@ -857,6 +861,12 @@ class TestField:
         assert res.average == (3, 1.2)
         res = (1.2, 3) << f1 << 3
         assert res.average == (1.2, 3, 1.2, 3)
+
+        # Exceptions
+        with pytest.raises(TypeError):
+            res = 'a' << f1
+        with pytest.raises(TypeError):
+            res = f1 << 'a'
 
         # Fields defined on different meshes
         mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
@@ -1281,20 +1291,20 @@ class TestField:
 
         assert f.laplace.average == (4, 4, 6)
 
-    def test_integral(self):
+    def test_volume_integral(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=0)
-        assert f.integral == 0
+        assert f.volume_integral == 0
 
         f = df.Field(mesh, dim=1, value=2)
-        assert f.integral == 2000
+        assert f.volume_integral == 2000
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert f.integral == (-1000, 0, 3000)
+        assert f.volume_integral == (-1000, 0, 3000)
 
         def value_fun(pos):
             x, y, z = pos
@@ -1304,7 +1314,26 @@ class TestField:
                 return (1, 2, 3)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-        assert f.integral == (0, 0, 0)
+        assert f.volume_integral == (0, 0, 0)
+
+    def test_surface_integral(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 5, 3)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f = df.Field(mesh, dim=1, value=0)
+        assert f.plane('x').surface_integral == 0
+
+        f = df.Field(mesh, dim=1, value=2)
+        assert f.plane('x').surface_integral == 30
+        assert f.plane('y').surface_integral == 60
+        assert f.plane('z').surface_integral == 100
+
+        f = df.Field(mesh, dim=3, value=(-1, 0, 3))
+        assert f.plane('x').surface_integral == (-15, 0, 45)
+        assert f.plane('y').surface_integral == (-30, 0, 90)
+        assert f.plane('z').surface_integral == (-50, 0, 150)
 
     def test_topological_charge(self):
         p1 = (0, 0, 0)
@@ -1608,7 +1637,7 @@ class TestField:
 
     def test_quiver(self):
         fig = plt.figure()
-        ax = fig.add_subplot(111)
+        ax = fig._subplot(111)
 
         self.pf.plane('z', n=(3, 4)).quiver(ax=ax)
         self.pf.plane('x', n=(3, 4)).quiver(ax=ax, color_field=self.pf.y)

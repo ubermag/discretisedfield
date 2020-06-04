@@ -1464,7 +1464,7 @@ class Field:
         elif isinstance(other, (tuple, list, np.ndarray)):
             other = self.__class__(self.mesh, dim=len(other), value=other)
         else:
-            msg = (f'Unsupported operand type(s) for &: '
+            msg = (f'Unsupported operand type(s) for <<: '
                    f'{type(self)} and {type(other)}.')
             raise TypeError(msg)
 
@@ -1479,7 +1479,7 @@ class Field:
         elif isinstance(other, (tuple, list, np.ndarray)):
             other = self.__class__(self.mesh, dim=len(other), value=other)
         else:
-            msg = (f'Unsupported operand type(s) for &: '
+            msg = (f'Unsupported operand type(s) for <<: '
                    f'{type(self)} and {type(other)}.')
             raise TypeError(msg)
 
