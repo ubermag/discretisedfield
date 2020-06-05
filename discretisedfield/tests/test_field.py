@@ -146,15 +146,15 @@ class TestField:
                        p2=(5e-9, 5e-9, 5e-9),
                        n=(5, 5, 5))
 
-        def norm_fun(pos):
-            x, y, z = pos
+        def norm_fun(point):
+            x, y, z = point
             if x**2 + y**2 <= (5e-9)**2:
                 return 1
             else:
                 return 0
 
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             if x <= 0:
                 return (0, 0, 1)
             else:
@@ -351,8 +351,8 @@ class TestField:
         assert f.orientation.average == (1, 0, 0)
 
         # With zero-norm cells
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             if x <= 0:
                 return (0, 0, 0)
             else:
@@ -458,7 +458,7 @@ class TestField:
         with pytest.raises(TypeError):
             f1.allclose(2)
 
-    def test_pos_neg(self):
+    def test_point_neg(self):
         p1 = (-5e-9, -5e-9, -5e-9)
         p2 = (5e-9, 5e-9, 5e-9)
         cell = (1e-9, 1e-9, 1e-9)
@@ -735,12 +735,12 @@ class TestField:
         assert res.average == 6
 
         # Spatially varying vectors
-        def value_fun1(pos):
-            x, y, z = pos
+        def value_fun1(point):
+            x, y, z = point
             return (x, y, z)
 
-        def value_fun2(pos):
-            x, y, z = pos
+        def value_fun2(point):
+            x, y, z = point
             return (z, x, y)
 
         f1 = df.Field(mesh, dim=3, value=value_fun1)
@@ -807,8 +807,12 @@ class TestField:
         assert f1 & f3 == -(f3 & f1)
         assert f2 & f3 == -(f3 & f2)
 
-        f1 = df.Field(mesh, dim=3, value=lambda pos: (pos[0], pos[1], pos[2]))
-        f2 = df.Field(mesh, dim=3, value=lambda pos: (pos[2], pos[0], pos[1]))
+        f1 = df.Field(mesh, dim=3, value=lambda point: (point[0],
+                                                        point[1],
+                                                        point[2]))
+        f2 = df.Field(mesh, dim=3, value=lambda point: (point[2],
+                                                        point[0],
+                                                        point[1]))
 
         # The cross product should be
         # (y**2-x*z, z**2-x*y, x**2-y*z)
@@ -926,8 +930,8 @@ class TestField:
         # No BC
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return x + y + z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -944,8 +948,8 @@ class TestField:
         # No BC
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return x*y + 2*y + x*y*z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -974,8 +978,8 @@ class TestField:
         # -> dfdx = (1, 0, 0)
         # -> dfdy = (0, 1, 0)
         # -> dfdz = (0, 0, 1)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (x, y, z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -988,8 +992,8 @@ class TestField:
         # -> dfdx = (y, 0, y*z)
         # -> dfdy = (x, z, x*z)
         # -> dfdz = (0, y, x*y)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (x*y, y*z, x*y*z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1005,8 +1009,8 @@ class TestField:
         # -> dfdx = (y, 1, y*z)
         # -> dfdy = (x, -2, x*z)
         # -> dfdz = (0, 0, x*y)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (3+x*y, x-2*y, x*y*z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1017,8 +1021,8 @@ class TestField:
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> grad(f) = (4, 4, 6)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return 2*x*x + 2*y*y + 3*z*z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -1028,8 +1032,8 @@ class TestField:
         assert f.derivative('z', n=2).average == 6
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (2*x*x, 2*y*y, 3*z*z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1050,8 +1054,8 @@ class TestField:
         mesh_pbc = df.Mesh(p1=p1, p2=p2, cell=cell, bc='xyz')
 
         # Scalar field
-        def value_fun(pos):
-            return pos[0]*pos[1]*pos[2]
+        def value_fun(point):
+            return point[0]*point[1]*point[2]
 
         # No PBC
         f = df.Field(mesh_nopbc, dim=1, value=value_fun)
@@ -1066,8 +1070,8 @@ class TestField:
         assert f.derivative('z')((1, 1, 5)) == -0.5
 
         # Vector field
-        def value_fun(pos):
-            return (pos[0]*pos[1]*pos[2],) * 3
+        def value_fun(point):
+            return (point[0]*point[1]*point[2],) * 3
 
         # No PBC
         f = df.Field(mesh_nopbc, dim=3, value=value_fun)
@@ -1090,8 +1094,8 @@ class TestField:
         mesh_neumann = df.Mesh(p1=p1, p2=p2, cell=cell, bc='neumann')
 
         # Scalar field
-        def value_fun(pos):
-            return pos[0]*pos[1]*pos[2]
+        def value_fun(point):
+            return point[0]*point[1]*point[2]
 
         # No Neumann
         f1 = df.Field(mesh_noneumann, dim=1, value=value_fun)
@@ -1114,8 +1118,8 @@ class TestField:
 
         # Scalar field: f(x, y, z) = x + y + z
         # -> grad(f) = (1, 1, 1)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return x + y + z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -1127,8 +1131,8 @@ class TestField:
 
         # Vector field: f(x, y, z) = (x, y, z)
         # -> grad(f) = (1, 1, 1)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (x, y, z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1151,8 +1155,8 @@ class TestField:
         assert f.grad.average == (0, 0, 0)
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return x + y + z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -1160,8 +1164,8 @@ class TestField:
         assert f.grad.average == (1, 1, 1)
 
         # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return x*y + y + z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -1171,8 +1175,8 @@ class TestField:
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return x*y + 2*y + x*y*z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -1210,8 +1214,8 @@ class TestField:
         # f(x, y, z) = (x, y, z)
         # -> div(f) = 3
         # -> curl(f) = (0, 0, 0)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (x, y, z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1222,8 +1226,8 @@ class TestField:
         # f(x, y, z) = (x*y, y*z, x*y*z)
         # -> div(f) = y + z + x*y
         # -> curl(f) = (x*z-y, -y*z, -x)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (x*y, y*z, x*y*z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1237,8 +1241,8 @@ class TestField:
         # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
         # -> div(f) = y - 2 + x*y
         # -> curl(f) = (x*z, -y*z, 1-x)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (3+x*y, x-2*y, x*y*z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1270,8 +1274,8 @@ class TestField:
 
         # f(x, y, z) = x + y + z
         # -> laplace(f) = 0
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return x + y + z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -1280,8 +1284,8 @@ class TestField:
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> laplace(f) = 4 + 4 + 6 = 14
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return 2*x*x + 2*y*y + 3*z*z
 
         f = df.Field(mesh, dim=1, value=value_fun)
@@ -1290,8 +1294,8 @@ class TestField:
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
         # -> laplace(f) = (4, 4, 6)
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             return (2*x*x, 2*y*y, 3*z*z)
 
         f = df.Field(mesh, dim=3, value=value_fun)
@@ -1313,8 +1317,8 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
         assert f.volume_integral == (-1000, 0, 3000)
 
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             if x <= 5:
                 return (-1, -2, -3)
             else:
@@ -1421,8 +1425,8 @@ class TestField:
                       'r2': df.Region(p1=(30, 0, 0), p2=(90, 50, 10))}
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             if x <= 60:
                 return (-1, -2, -3)
             else:
@@ -1458,8 +1462,8 @@ class TestField:
         assert f.project('z').array.shape == (10, 10, 1, 3)
 
         # Spatially varying scalar field
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             if z <= 0:
                 return 1
             else:
@@ -1471,8 +1475,8 @@ class TestField:
         assert sf.average == 0
 
         # Spatially varying vector field
-        def value_fun(pos):
-            x, y, z = pos
+        def value_fun(point):
+            x, y, z = point
             if z <= 0:
                 return (3, 2, 1)
             else:
@@ -1495,8 +1499,8 @@ class TestField:
 
         for dim, value in [(1, -1.23),
                            (3, (4, 2, -13e6)),
-                           (3, lambda pos: (pos[0], pos[1], pos[2])),
-                           (1, lambda pos: pos[0] + pos[1] + pos[2])]:
+                           (3, lambda point: (point[0], point[1], point[2])),
+                           (1, lambda point: point[0] + point[1] + point[2])]:
             f = df.Field(mesh, dim=dim, value=value)
             for rep in representations:
                 with tempfile.TemporaryDirectory() as tmpdir:
@@ -1510,7 +1514,8 @@ class TestField:
 
         # Extend scalar
         for rep in representations:
-            f = df.Field(mesh, dim=1, value=lambda pos: pos[0]+pos[1]+pos[2])
+            f = df.Field(mesh, dim=1,
+                         value=lambda point: point[0]+point[1]+point[2])
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmpfilename = os.path.join(tmpdir, filename)
                 f.write(tmpfilename, extend_scalar=True)

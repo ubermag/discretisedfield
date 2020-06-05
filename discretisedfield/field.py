@@ -184,8 +184,8 @@ class Field:
         >>> field.value
         (0, 0, 1)
         >>> # Setting the field value using a Python function (callable).
-        >>> def value_function(pos):
-        ...     x, y, z = pos
+        >>> def value_function(point):
+        ...     x, y, z = point
         ...     if x <= 1:
         ...         return (0, 0, 1)
         ...     else:
@@ -1626,8 +1626,8 @@ class Field:
         derivative cannot be computed and a zero field is returned. Similarly,
         second-order derivatives in all directions are expected to be zero.
 
-        >>> def value_fun(pos):
-        ...     x, y, z = pos
+        >>> def value_fun(point):
+        ...     x, y, z = point
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
@@ -1751,8 +1751,8 @@ class Field:
         :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the gradient
         to be a constant vector field :math:`\\nabla f = (2, 3, -5)`.
 
-        >>> def value_fun(pos):
-        ...     x, y, z = pos
+        >>> def value_fun(point):
+        ...     x, y, z = point
         ...     return 2*x + 3*y - 5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
@@ -1822,8 +1822,8 @@ class Field:
         >>> cell = (10e-9, 10e-9, 10e-9)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> def value_fun(pos):
-        ...     x, y, z = pos
+        >>> def value_fun(point):
+        ...     x, y, z = point
         ...     return (2*x, -2*y, 5*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
@@ -1895,8 +1895,8 @@ class Field:
         >>> cell = (2, 2, 2)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> def value_fun(pos):
-        ...     x, y, z = pos
+        >>> def value_fun(point):
+        ...     x, y, z = point
         ...     return (2*x*y, -2*y, 5*x*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
@@ -1974,8 +1974,8 @@ class Field:
         the Laplacian to be a constant vector field :math:`\\nabla f = (4, 0,
         0)`.
 
-        >>> def value_fun(pos):
-        ...     x, y, z = pos
+        >>> def value_fun(point):
+        ...     x, y, z = point
         ...     return 2*x**2 + 3*y - 5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
@@ -2471,8 +2471,8 @@ class Field:
         >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
         ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-        >>> def value_fun(pos):
-        ...     x, y, z = pos
+        >>> def value_fun(point):
+        ...     x, y, z = point
         ...     if x <= 50:
         ...         return (1, 2, 3)
         ...     else:
@@ -2660,7 +2660,7 @@ class Field:
         >>> p2 = (10e-9, 5e-9, 3e-9)
         >>> n = (10, 5, 3)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> value_fun = lambda pos: (pos[0], pos[1], pos[2])
+        >>> value_fun = lambda point: (point[0], point[1], point[2])
         >>> field = df.Field(mesh, dim=3, value=value_fun)
         ...
         >>> filename = 'mytestfile.ohf'
@@ -2791,7 +2791,7 @@ class Field:
         >>> p2 = (10e-9, 5e-9, 3e-9)
         >>> n = (10, 5, 3)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> value_fun = lambda pos: (pos[0], pos[1], pos[2])
+        >>> value_fun = lambda point: (point[0], point[1], point[2])
         >>> field = df.Field(mesh, dim=3, value=value_fun)
         ...
         >>> filename = 'mytestfile.vtk'
@@ -2838,7 +2838,7 @@ class Field:
         >>> p2 = (10e-9, 5e-9, 3e-9)
         >>> n = (10, 5, 3)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> value_fun = lambda pos: (pos[0], pos[1], pos[2])
+        >>> value_fun = lambda point: (point[0], point[1], point[2])
         >>> field = df.Field(mesh, dim=3, value=value_fun)
         ...
         >>> filename = 'mytestfile.h5'
@@ -3548,8 +3548,8 @@ class Field:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> def normfun(pos):
-        ...     x, y, z = pos
+        >>> def normfun(point):
+        ...     x, y, z = point
         ...     if x**2 + y**2 < 30**2:
         ...         return 1
         ...     else:
