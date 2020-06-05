@@ -3484,10 +3484,11 @@ class Field:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
 
     def mpl(self, ax=None, figsize=None, scalar_field=None, filter_field=None,
-            scalar_cmap='cividis', scalar_clim=None, scalar_colorbar=True,
-            scalar_colorbar_label=None, vector_field=None, color_field=None,
-            vector_cmap='cividis', vector_clim=None, vector_colorbar=False,
-            vector_colorbar_label=None, multiplier=None, filename=None):
+            scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
+            scalar_colorbar_label=None, vector_field=None, vector_color=False,
+            color_field=None, vector_cmap='cividis', vector_clim=None,
+            vector_colorbar=False, vector_colorbar_label=None,
+            multiplier=None, filename=None):
         """Plots the field on a plane using ``matplotlib``.
 
         If ``ax`` is not passed, axes will be created automaticaly. In that
@@ -3610,9 +3611,9 @@ class Field:
                                     colorbar_label=scalar_colorbar_label,
                                     multiplier=multiplier)
         if vector_field is not None:
-            vector_field.mpl_vector(ax=ax, color_field=color_field,
-                                    cmap=vector_cmap, clim=vector_clim,
-                                    colorbar=vector_colorbar,
+            vector_field.mpl_vector(ax=ax, color=vector_color,
+                                    color_field=color_field, cmap=vector_cmap,
+                                    clim=vector_clim, colorbar=vector_colorbar,
                                     colorbar_label=vector_colorbar_label,
                                     multiplier=multiplier)
 
