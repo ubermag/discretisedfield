@@ -4,7 +4,6 @@ import struct
 import numbers
 import itertools
 import numpy as np
-import seaborn as sns
 import mpl_toolkits.axes_grid1
 import discretisedfield as df
 import ubermagutil.units as uu
@@ -635,9 +634,10 @@ class Field:
         if self.dim == 1:
             need_removing = ['div', 'curl', 'topological_charge',
                              'topological_charge_density', 'bergluescher',
-                             'norm', 'orientation', 'quiver', 'k3d_vectors']
+                             'norm', 'orientation', 'mpl_vector',
+                             'k3d_vectors']
         if self.dim == 3:
-            need_removing = ['grad', 'imshow', 'k3d_voxels', 'k3d_nonzero']
+            need_removing = ['grad', 'mpl_scalar', 'k3d_voxels', 'k3d_nonzero']
 
         for attr in need_removing:
             dirlist.remove(attr)
@@ -2530,7 +2530,8 @@ class Field:
                                         keepdims=True)
         return self.__class__(plane_mesh, dim=self.dim, value=project_array)
 
-    def angle(self, units='deg'):
+    @property
+    def angle(self):
         """In-plane axis relative to axis.
 
         """
@@ -2539,11 +2540,11 @@ class Field:
                    'the angle can be computed.')
             raise ValueError(msg)
 
-        res_array = np.arctan2(self.array[..., self.mesh.info['axis1']],
-                               self.array[..., self.mesh.info['axis2']])
+        angle_array = np.arctan2(self.array[..., self.mesh.info['axis2']],
+                                 self.array[..., self.mesh.info['axis1']])
 
         return self.__class__(self.mesh, dim=1,
-                              value=res_array[..., np.newaxis])
+                              value=angle_array[..., np.newaxis])
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
@@ -3217,7 +3218,12 @@ class Field:
             mesh = df.Mesh(region=region, n=n)
             return cls(mesh, dim=dim, value=array[:])
 
-    def mpl(self, ax=None, figsize=None, multiplier=None, filename=None):
+    def mpl(self, ax=None, figsize=None, scalar_field=None, filter_field=None,
+            scalar_cmap='cividis', scalar_clim=None, scalar_colorbar=True,
+            scalar_colorbar_label=None, scalar_colorbar_pad=0.1,
+            vector_field=None, color_field=None, vector_cmap='cividis',
+            vector_clim=None, vector_colorbar=False, vector_colorbar_pad=0.1,
+            multiplier=None, filename=None):
         """Plots the field on a plane using ``matplotlib``.
 
         If ``ax`` is not passed, axes will be created automaticaly. In that
@@ -3289,8 +3295,8 @@ class Field:
 
         .. seealso::
 
-            :py:func:`~discretisedfield.Field.k3d_voxels`
-            :py:func:`~discretisedfield.Field.k3d_vectors`
+            :py:func:`~discretisedfield.Field.k3d_scalar`
+            :py:func:`~discretisedfield.Field.k3d_vector`
 
         """
         if not hasattr(self.mesh, 'info'):
@@ -3303,37 +3309,60 @@ class Field:
 
         planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
 
+        # Set up default values.
+        if self.dim == 1:
+            if scalar_field is None:
+                scalar_field = self
+            else:
+                scalar_field = self.__class__(self.mesh, dim=1,
+                                              value=scalar_field)
+        if self.dim == 3:
+            if vector_field is None:
+                vector_field = self
+            else:
+                vector_field = self.__class__(self.mesh, dim=3,
+                                              value=vector_field)
+            if scalar_field is None:
+                scalar_field = getattr(self, planeaxis)
+                scalar_colorbar_label = f'{planeaxis}-component'
+            else:
+                scalar_field = self.__class__(self.mesh, dim=1,
+                                              value=scalar_field)
+            if filter_field is None:
+                filter_field = self.norm
+            else:
+                filter_field = self.__class__(self.mesh, dim=1,
+                                              value=filter_field)
+
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
         unit = f' ({uu.rsi_prefixes[multiplier]}m)'
 
-        if self.dim > 1:
-            # Vector field has both quiver and imshow plots.
-            self.quiver(ax=ax, headwidth=5, multiplier=multiplier)
-            scalar_field = getattr(self, planeaxis)
-            coloredplot = scalar_field.imshow(ax=ax, filter_field=self.norm,
-                                              cmap='cividis',
-                                              multiplier=multiplier)
-        else:
-            # Scalar field has only imshow.
-            coloredplot = self.imshow(ax=ax, filter_field=None, cmap='cividis',
-                                      multiplier=multiplier)
+        if scalar_field is not None:
+            scalar_field.mpl_scalar(ax=ax, filter_field=filter_field,
+                                    cmap=scalar_cmap, clim=scalar_clim,
+                                    colorbar=scalar_colorbar,
+                                    colorbar_label=scalar_colorbar_label,
+                                    colorbar_pad=scalar_colorbar_pad,
+                                    multiplier=multiplier)
+        if vector_field is not None:
+            vector_field.mpl_vector(ax=ax, color_field=color_field,
+                                    cmap=vector_cmap, clim=vector_clim,
+                                    colorbar=vector_colorbar,
+                                    colorbar_pad=vector_colorbar_pad,
+                                    multiplier=multiplier)
 
-        cbar = self.colorbar(ax, coloredplot)
-
-        # Add labels.
         ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
         ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
-        if self.dim > 1:
-            cbar.ax.set_ylabel(planeaxis + ' component')
-
-        ax.figure.tight_layout()
 
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight')
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
 
-    def imshow(self, ax, filter_field=None, multiplier=1, **kwargs):
+    def mpl_scalar(self, ax=None, figsize=None, filter_field=None,
+                   cmap='cividis', clim=None, colorbar=True,
+                   colorbar_label=None, colorbar_pad=0.1, multiplier=None,
+                   filename=None, **kwargs):
         """Plots the scalar field on a plane using
         ``matplotlib.pyplot.imshow``.
 
@@ -3395,12 +3424,9 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> fig = plt.figure()
-        >>> ax = fig.add_subplot(111)
-        >>> field.plane('y').imshow(ax=ax)
-        <matplotlib.image.AxesImage object at ...>
+        >>> field.plane('y').mpl_scalar()
 
-        .. seealso:: :py:func:`~discretisedfield.Field.quiver`
+        .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
         if not hasattr(self.mesh, 'info'):
@@ -3411,11 +3437,24 @@ class Field:
             msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+
+        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
         points, values = list(zip(*list(self)))
 
         # If filter_field is passed, set values where norm=0 to np.nan,
         # so that they are not plotted.
         if filter_field is not None:
+            if filter_field.dim != 1:
+                msg = f'Cannot use dim={self.dim} filter_field.'
+                raise ValueError(msg)
+
             values = list(values)  # tuple -> list to make values mutable
             for i, point in enumerate(points):
                 if filter_field(point) == 0:
@@ -3431,10 +3470,26 @@ class Field:
         n = (self.mesh.n[self.mesh.info['axis2']],
              self.mesh.n[self.mesh.info['axis1']])
 
-        return ax.imshow(np.array(values).reshape(n), origin='lower',
-                         extent=extent, **kwargs)
+        cp = ax.imshow(np.array(values).reshape(n), origin='lower',
+                       extent=extent, cmap=cmap, clim=clim, **kwargs)
 
-    def quiver(self, ax, color_field=None, multiplier=1, **kwargs):
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+
+        if colorbar:
+            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=colorbar_pad)
+            cbar = plt.colorbar(cp, cax=cax)
+            if colorbar_label is not None:
+                cbar.ax.set_ylabel(colorbar_label)
+
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
+
+    def mpl_vector(self, ax=None, figsize=None, color_field=None,
+                   cmap='cividis', clim=None, colorbar=True,
+                   colorbar_label=None, colorbar_pad=0.1, multiplier=None,
+                   filename=None, **kwargs):
         """Plots the vector field on a plane using
         ``matplotlib.pyplot.quiver``.
 
@@ -3483,7 +3538,7 @@ class Field:
 
         Example
         -------
-        1. Visualising the vector field using ``matplotlib`` and colour
+        1. Visualising the vector field using ``matplotlib`` and colouring it
         according to its z-component.
 
         >>> import discretisedfield as df
@@ -3494,12 +3549,9 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(2, 1, 0))
         ...
-        >>> fig = plt.figure()
-        >>> ax = fig.add_subplot(111)
-        >>> field.plane('y').quiver(ax=ax, color_field=field.z)
-        <matplotlib.quiver.Quiver object at ...>
+        >>> field.plane('y').mpl_vector(color_field=field.z)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.imshow`
+        .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
         if not hasattr(self.mesh, 'info'):
@@ -3510,13 +3562,23 @@ class Field:
             msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+
+        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
         points, values = list(zip(*list(self)))
 
-        # Remove values where norm is 0
+        # Remove points and values where norm is 0.
         points, values = list(points), list(values)  # make them mutable
         points = [p for p, v in zip(points, values)
                   if not np.equal(v, 0).all()]
         values = [v for v in values if not np.equal(v, 0).all()]
+
         if color_field is not None:
             colors = [color_field(p) for p in points]
 
@@ -3534,70 +3596,34 @@ class Field:
         kwargs['pivot'] = 'mid'  # arrow at the centre of the cell
 
         if color_field is None:
-            qvax = ax.quiver(points[self.mesh.info['axis1']],
-                             points[self.mesh.info['axis2']],
-                             values[self.mesh.info['axis1']],
-                             values[self.mesh.info['axis2']],
-                             **kwargs)
+            ax.quiver(points[self.mesh.info['axis1']],
+                      points[self.mesh.info['axis2']],
+                      values[self.mesh.info['axis1']],
+                      values[self.mesh.info['axis2']],
+                      **kwargs)
 
         else:
-            qvax = ax.quiver(points[self.mesh.info['axis1']],
-                             points[self.mesh.info['axis2']],
-                             values[self.mesh.info['axis1']],
-                             values[self.mesh.info['axis2']],
-                             colors,
-                             **kwargs)
+            cp = ax.quiver(points[self.mesh.info['axis1']],
+                           points[self.mesh.info['axis2']],
+                           values[self.mesh.info['axis1']],
+                           values[self.mesh.info['axis2']],
+                           colors,
+                           cmap=cmap,
+                           clim=clim,
+                           **kwargs)
 
-        return qvax
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
 
-    def colorbar(self, ax, coloredplot, cax=None, **kwargs):
-        """Adds a colorbar to the axes using ``matplotlib.pyplot.colorbar``.
-
-        Axes to which the colorbar should be added is passed via ``ax``
-        argument. If the colorbar axes are made before the method is called,
-        they should be passed as ``cax``. The plot to which the colorbar should
-        correspond to is passed via ``coloredplot``. All other keyword
-        arguments accepted by ``matplotlib.pyplot.colorbar`` can be
-        passed.
-
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes
-
-            Axes object to which the colorbar will be added.
-
-        coloredplot : matplotlib.quiver.Quiver, matplotlib.image.AxesImage
-
-            A plot to which the colorbar should correspond.
-
-        cax : matplotlib.axes.Axes, optional
-
-            Colorbar axes.
-
-        Example
-        -------
-        1. Add colorbar to the plot.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        ...
-        >>> fig = plt.figure()
-        >>> ax = fig.add_subplot(111)
-        >>> coloredplot = field.plane(z=50).quiver(ax=ax, color_field=field.z)
-        >>> field.colorbar(ax=ax, coloredplot=coloredplot)
-        <matplotlib.colorbar.Colorbar object at ...>
-
-        """
-        if cax is None:
+        if colorbar and color_field is not None:
             divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
-            cax = divider.append_axes('right', size='5%', pad=0.1)
+            cax = divider.append_axes('right', size='5%', pad=colorbar_pad)
+            cbar = plt.colorbar(cp, cax=cax)
+            if colorbar_label is not None:
+                cbar.ax.set_ylabel(colorbar_label)
 
-        return plt.colorbar(coloredplot, cax=cax, **kwargs)
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
 
     def k3d_nonzero(self, plot=None, multiplier=None,
                     color=dfu.color_palette('deep', 10, 'int')[0], field=None,

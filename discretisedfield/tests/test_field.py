@@ -1633,41 +1633,32 @@ class TestField:
 
         plt.close('all')
 
-    def test_imshow(self):
+    def test_mpl_scalar(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
-        self.pf.x.plane('y', n=(1, 1)).imshow(ax=ax, cmap='viridis')
-        self.pf.x.plane('z').imshow(ax=ax, filter_field=self.pf.norm)
+        self.pf.x.plane('x', n=(3, 4)).mpl_scalar(ax=ax)
+        self.pf.x.plane('y', n=(1, 1)).mpl_scalar(ax=ax, cmap='viridis')
+        self.pf.x.plane('z').mpl_scalar(ax=ax, filter_field=self.pf.norm)
 
         with pytest.raises(ValueError) as excinfo:
-            self.pf.imshow(ax=ax)
+            self.pf.mpl_scalar(ax=ax)
         with pytest.raises(ValueError) as excinfo:
-            self.pf.plane('z').imshow(ax=ax)
+            self.pf.plane('z').mpl_scalar(ax=ax)
 
         plt.close('all')
 
-    def test_quiver(self):
+    def test_mpl_vector(self):
         fig = plt.figure()
         ax = fig.add_subplot(111)
 
-        self.pf.plane('z', n=(3, 4)).quiver(ax=ax)
-        self.pf.plane('x', n=(3, 4)).quiver(ax=ax, color_field=self.pf.y)
+        self.pf.plane('z', n=(3, 4)).mpl_vector(ax=ax)
+        self.pf.plane('x', n=(3, 4)).mpl_vector(ax=ax, color_field=self.pf.y)
 
         with pytest.raises(ValueError) as excinfo:
-            self.pf.quiver(ax=ax)
+            self.pf.mpl_vector(ax=ax)
         with pytest.raises(ValueError) as excinfo:
-            self.pf.x.plane('y').quiver(ax=ax)
-
-        plt.close('all')
-
-    def test_colorbar(self):
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-        coloredplot = self.pf.x.plane('x', n=(3, 4)).imshow(ax=ax)
-        self.pf.colorbar(ax=ax, coloredplot=coloredplot)
+            self.pf.x.plane('y').mpl_vector(ax=ax)
 
         plt.close('all')
 
