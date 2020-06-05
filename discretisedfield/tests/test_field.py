@@ -1537,26 +1537,24 @@ class TestField:
         filename = 'testfile.vtk'
 
         p1 = (0, 0, 0)
-        p2 = (10e-9, 5e-9, 3e-9)
+        p2 = (1e-9, 2e-9, 5e-9)
         cell = (1e-9, 1e-9, 1e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-        f = df.Field(mesh, dim=3, value=(1e6, 2e6, -5e6))
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpfilename = os.path.join(tmpdir, filename)
-            f.write(tmpfilename)
+        for dim, value in [(1, -1.2), (3, (1e-3, -5e6, 5e6))]:
+            f = df.Field(mesh, dim=dim, value=value)
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmpfilename = os.path.join(tmpdir, filename)
+                f.write(tmpfilename)
+                f_read = df.Field.fromfile(tmpfilename)
 
-            with open(tmpfilename, 'r') as f:
-                content = f.read()
-                assert 'STRUCTURED_POINTS' in content
-                assert 'POINT_DATA' in content
-                assert 'SCALARS' in content
+                assert f == f_read
 
     def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']
 
         p1 = (0, 0, 0)
-        p2 = (10e-12, 5e-12, 3e-12)
+        p2 = (10e-12, 5e-12, 5e-12)
         cell = (1e-12, 1e-12, 1e-12)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 

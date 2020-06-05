@@ -2882,9 +2882,11 @@ class Field:
         """Read the field from an OVF or HDF5 file.
 
         The extension of the ``filename`` should be suitable for OVF format
-        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``) or for HDF5 (``.hdf5`` or
-        ``.h5``). This is a ``classmethod`` and should be called as, for
-        instance, ``discretisedfield.Field.fromfile('myfile.omf')``.
+        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``), VTK (``.vtk``) or HDF5
+        (``.hdf5`` or ``.h5``).
+
+        This is a ``classmethod`` and should be called as, for instance,
+        ``discretisedfield.Field.fromfile('myfile.omf')``.
 
         Parameters
         ----------
@@ -2912,7 +2914,14 @@ class Field:
         >>> field
         Field(mesh=...)
 
-        2. Read a field from the HDF5 file.
+        2. Read a field from the VTK file.
+
+        >>> filename = os.path.join(dirname, 'testfile.vtk')
+        >>> field = df.Field.fromfile(filename)
+        >>> field
+        Field(mesh=...)
+
+        3. Read a field from the HDF5 file.
 
         >>> filename = os.path.join(dirname, 'testfile.hdf5')
         >>> field = df.Field.fromfile(filename)
@@ -2925,6 +2934,8 @@ class Field:
         if any([filename.endswith(ext) for ext in ['.omf', '.ovf',
                                                    '.ohf', '.oef']]):
             return cls._fromovf(filename)
+        elif any([filename.endswith(ext) for ext in ['.vtk']]):
+            return cls._fromvtk(filename)
         elif any([filename.endswith(ext) for ext in ['.hdf5', '.h5']]):
             return cls._fromhdf5(filename)
         else:
@@ -2937,8 +2948,9 @@ class Field:
         """Read the field from an OVF file.
 
         The extension of the ``filename`` should be suitable for OVF format
-        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``). This is a ``classmethod`` and
-        should be called as, for instance,
+        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``).
+
+        This is a ``classmethod`` and should be called as, for instance,
         ``discretisedfield.Field._fromovf('myfile.omf')``.
 
         Parameters
@@ -3053,12 +3065,99 @@ class Field:
         return field
 
     @classmethod
+    def _fromvtk(cls, filename):
+        """Read the field from a VTK file.
+
+        The extension of the ``filename`` should be ``.vtk``.
+
+        This is a ``classmethod`` and should be called as, for instance,
+        ``discretisedfield.Field._fromvtk('myfile.vtk')``.
+
+        Parameters
+        ----------
+        filename : str
+
+            Name of the file to be read.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Field read from the file.
+
+        Example
+        -------
+        1. Read a field from the VTK file.
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> dirname = os.path.join(os.path.dirname(__file__),
+        ...                        'tests', 'test_sample')
+        >>> filename = os.path.join(dirname, 'testfile.vtk')
+        >>> field = df.Field._fromvtk(filename)
+        >>> field
+        Field(mesh=...)
+
+        .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
+
+        """
+        with open(filename, 'r') as f:
+            content = f.read()
+        lines = content.split('\n')
+
+        # Determine the dimension of the field.
+        if 'VECTORS' in content:
+            dim = 3
+            data_marker = 'VECTORS'
+            skip = 0  # after how many lines data starts after marker
+        else:
+            dim = 1
+            data_marker = 'SCALARS'
+            skip = 1
+
+        # Extract the metadata
+        mdatalist = ['SPACINGS', 'ORIGIN', 'DIMENSIONS']
+        mdatadict = dict()
+        for line in lines:
+            if not (line[0].isalpha() or line[0] == '#'):
+                break
+            for mdatum in mdatalist:
+                if mdatum in line:
+                    mdatadict[mdatum] = list(map(float, line.split()[1:]))
+
+        # Create objects from metadata info
+        cell = mdatadict['SPACINGS']
+        n = list(map(int, mdatadict['DIMENSIONS']))
+        p1 = np.subtract(mdatadict['ORIGIN'], np.multiply(cell, 0.5))
+        p2 = np.add(p1, np.multiply(n, cell))
+        region = df.Region(p1=p1, p2=p2)
+        mesh = df.Mesh(region, n=n)
+        field = cls(mesh, dim=dim)
+
+        # Find where data starts.
+        for i, line in enumerate(lines):
+            if line.startswith(data_marker):
+                start_index = i
+                break
+
+        # Extract data.
+        for i, line in zip(mesh.indices, lines[start_index+skip+1:]):
+            if not line[0].isalpha():
+                field.array[i] = list(map(float, line.split()))
+            else:
+                break
+
+        return field
+
+    @classmethod
     def _fromhdf5(cls, filename):
         """Read the field from an HDF5 file.
 
         The extension of the ``filename`` should be suitable for the HDF5
-        format (``.hdf5`` or ``.h5``). This is a ``classmethod`` and should be
-        called as, for instance,
+        format (``.hdf5`` or ``.h5``).
+
+        This is a ``classmethod`` and should be called as, for instance,
         ``discretisedfield.Field._fromhdf5('myfile.h5')``.
 
         Parameters

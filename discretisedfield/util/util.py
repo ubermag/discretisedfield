@@ -75,7 +75,7 @@ def assemble_index(value, n, dictionary):
 
 
 def vtk_scalar_data(field, name):
-    header = [f'SCALARS {name} float',
+    header = [f'SCALARS {name} double',
               'LOOKUP_TABLE default']
     data = [str(value) for point, value in field]
 
@@ -83,7 +83,7 @@ def vtk_scalar_data(field, name):
 
 
 def vtk_vector_data(field, name):
-    header = [f'VECTORS {name} float']
+    header = [f'VECTORS {name} double']
     data = ['{} {} {}'.format(*value) for point, value in field]
 
     return header + data
