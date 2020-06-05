@@ -2530,6 +2530,21 @@ class Field:
                                         keepdims=True)
         return self.__class__(plane_mesh, dim=self.dim, value=project_array)
 
+    def angle(self, units='deg'):
+        """In-plane axis relative to axis.
+
+        """
+        if not hasattr(self.mesh, 'info'):
+            msg = ('The field must be sliced before '
+                   'the angle can be computed.')
+            raise ValueError(msg)
+
+        res_array = np.arctan2(self.array[..., self.mesh.info['axis1']],
+                               self.array[..., self.mesh.info['axis2']])
+
+        return self.__class__(self.mesh, dim=1,
+                              value=res_array[..., np.newaxis])
+
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
 
