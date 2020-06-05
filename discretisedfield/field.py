@@ -1,6 +1,5 @@
 import k3d
 import h5py
-import pyvtk
 import struct
 import numbers
 import itertools
@@ -2774,11 +2773,20 @@ class Field:
     def _writevtk(self, filename):
         """Write the field to a VTK file.
 
+        The data is saved as a ``STRUCTURED_POINTS`` dataset. Scalar field
+        (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
+        (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
+        three components to enable easy coloring of vectors.
+
+        The saved VTK file can be opened with `Paraview
+        <https://www.paraview.org/>`_ or `Mayavi
+        <https://docs.enthought.com/mayavi/mayavi/>`_.
+
         Parameters
         ----------
         filename : str
 
-            Name with an extension of the file written.
+            File name with an extension.
 
         Example
         -------
@@ -2801,22 +2809,25 @@ class Field:
         >>> os.remove(filename)  # delete the file
 
         """
-        grid = [pmini + np.linspace(0, li, ni+1) for pmini, li, ni in
-                zip(self.mesh.region.pmin,
-                    self.mesh.region.edges,
-                    self.mesh.n)]
+        header = ['# vtk DataFile Version 3.0',
+                  'Field',
+                  'ASCII',
+                  'DATASET STRUCTURED_POINTS',
+                  'DIMENSIONS {} {} {}'.format(*self.mesh.n),
+                  'SPACINGS {} {} {}'.format(*self.mesh.cell),
+                  'ORIGIN {} {} {}'.format(*self.mesh.origin),
+                  f'POINT_DATA {len(self.mesh)}']
 
-        structure = pyvtk.RectilinearGrid(*grid)
-        vtkdata = pyvtk.VtkData(structure)
+        if self.dim == 1:
+            data = dfu.vtk_scalar_data(self, 'field')
+        elif self.dim == 3:
+            data = dfu.vtk_scalar_data(self.x, 'x-component')
+            data += dfu.vtk_scalar_data(self.y, 'y-component')
+            data += dfu.vtk_scalar_data(self.z, 'z-component')
+            data += dfu.vtk_vector_data(self, 'field')
 
-        vectors = [self.__call__(coord) for coord in self.mesh]
-        vtkdata.cell_data.append(pyvtk.Vectors(vectors, 'field'))
-        for i, component in enumerate(dfu.axesdict.keys()):
-            name = f'field_{component}'
-            vtkdata.cell_data.append(pyvtk.Scalars(list(zip(*vectors))[i],
-                                                   name))
-
-        vtkdata.tofile(filename)
+        with open(filename, 'w') as f:
+            f.write('\n'.join(header+data))
 
     def _writehdf5(self, filename):
         """Write the field to an HDF5 file.

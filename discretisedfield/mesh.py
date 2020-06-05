@@ -213,6 +213,38 @@ class Mesh:
         return int(np.prod(self.n))
 
     @property
+    def origin(self):
+        """The minimum discretisation cell coordinate in the mesh.
+
+        This property returns the coordinate of the discretisation cell
+        associated to ``region.pmin``.
+
+        Returns
+        -------
+        tuple
+
+            Origin of the mesh.
+
+        Examples
+        --------
+        1. Getting the origin of the mesh.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 3, 2)
+        >>> cell = (1, 1, 1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> mesh = df.Mesh(region, cell=cell)
+        ...
+        >>> mesh.origin
+        (0.5, 0.5, 0.5)
+
+        """
+        return dfu.array2tuple(np.add(self.region.pmin,
+                                      np.multiply(self.cell, 0.5)))
+
+    @property
     def indices(self):
         """Generator yielding indices of all mesh cells.
 

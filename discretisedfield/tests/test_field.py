@@ -1547,11 +1547,10 @@ class TestField:
             f.write(tmpfilename)
 
             with open(tmpfilename, 'r') as f:
-                for line in f.readlines():
-                    if 'CELL_DATA' in line:
-                        pattern = line.strip()
-                        break
-            assert pattern == f'CELL_DATA {len(mesh)}'
+                content = f.read()
+                assert 'STRUCTURED_POINTS' in content
+                assert 'POINT_DATA' in content
+                assert 'SCALARS' in content
 
     def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']

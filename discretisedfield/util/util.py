@@ -74,6 +74,21 @@ def assemble_index(value, n, dictionary):
     return tuple(index)
 
 
+def vtk_scalar_data(field, name):
+    header = [f'SCALARS {name} float',
+              'LOOKUP_TABLE default']
+    data = [str(value) for point, value in field]
+
+    return header + data
+
+
+def vtk_vector_data(field, name):
+    header = [f'VECTORS {name} float']
+    data = ['{} {} {}'.format(*value) for point, value in field]
+
+    return header + data
+
+
 def plot_line(ax, p1, p2, *args, **kwargs):
     ax.plot(*zip(p1, p2), *args, **kwargs)
 

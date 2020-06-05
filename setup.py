@@ -24,7 +24,6 @@ setuptools.setup(
                       'jupyterlab',
                       'seaborn',
                       'h5py',
-                      'pyvtk',
                       'k3d'],
     classifiers=['Development Status :: 3 - Alpha',
                  'License :: OSI Approved :: BSD License',

@@ -6,13 +6,11 @@ from discretisedfield.ovf2vtk import convert_files
 
 
 def check_vtk(vtkfile):
-    pattern = ''
     with open(vtkfile, 'r') as f:
-        for line in f.readlines():
-            if 'CELL_DATA' in line:
-                pattern = line.strip()
-                break
-    assert pattern == 'CELL_DATA 8'
+        content = f.read()
+        assert 'STRUCTURED_POINTS' in content
+        assert 'POINT_DATA' in content
+        assert 'SCALARS' in content
 
 
 def test_ovf2vtk():
