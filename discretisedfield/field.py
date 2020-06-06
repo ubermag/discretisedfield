@@ -3229,38 +3229,60 @@ class Field:
     def mpl_scalar(self, ax=None, figsize=None, filter_field=None,
                    colorbar=True, colorbar_label=None, multiplier=None,
                    filename=None, **kwargs):
-        """Plots the scalar field on a plane using
-        ``matplotlib.pyplot.imshow``.
+        """Plots the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be of dimension 1
-        (scalar field). Otherwise, ``ValueError`` is raised. ``imshow`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. By
-        passing ``filter_field`` the points at which the pixels are not
-        coloured can be determined. More precisely, only discretisation cells
-        where ``filter_field != 0`` are plotted. It is often the case that the
+        ``field.plane('z')``). In addition, field must be a scalar field
+        (``dim=1``). Otherwise, ``ValueError`` is raised. ``mpl_scalar`` adds
+        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
+        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        automatically and the size of a figure can be specified using
+        ``figsize``. By passing ``filter_field`` the points at which the pixels
+        are not coloured can be determined. More precisely, only those
+        discretisation cells where ``filter_field != 0`` are plotted. Colorbar
+        is shown by default and it can be removed from the plot by passing
+        ``colorbar=False``. The label for the colorbar can be defined by
+        passing ``colorbar_label`` as a string. It is often the case that the
         region size is small (e.g. on a nanoscale) or very large (e.g. in units
         of kilometers). Accordingly, ``multiplier`` can be passed as
         :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
         6,...). According to that value, the axes will be scaled and
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
         passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels.
+        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
+        is not passed, the best one is calculated internally. The plot can be
+        saved as a PDF when ``filename`` is passed.
 
-        This method plots the mesh using ``matplotlib.pyplot.imshow()``
-        function, so any keyword arguments accepted by it can be passed.
+        This method plots the field using ``matplotlib.pyplot.imshow``
+        function, so any keyword arguments accepted by it can be passed (for
+        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.).
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes
+        ax : matplotlib.axes.Axes, optional
 
-            Axes to which field plot should be added.
+            Axes to which the field plot is added. Defaults to ``None`` - axes
+            are created internally.
+
+        figsize : tuple, optional
+
+            The size of a created figure if ``ax`` is not passed. Defaults to
+            ``None``.
 
         filter_field : discretisedfield.Field, optional
 
-            A (scalar) field used for determining whether certain pixels should
-            be coloured. More precisely, only discretisation cells where
-            ``filter_field != 0`` are plotted.
+            A scalar field used for determining whether certain discretisation
+            cells are coloured. More precisely, only those discretisation cells
+            where ``filter_field != 0`` are plotted. Defaults to ``None``.
+
+        colorbar : bool, optional
+
+            If ``True``, colorbar is shown and it is hidden when ``False``.
+            Defaults to ``True``.
+
+        colorbar_label : str, optional
+
+            Colorbar label. Defaults to ``None``.
 
         multiplier : numbers.Real, optional
 
@@ -3269,14 +3291,18 @@ class Field:
             value, the axes will be scaled and appropriate units shown. For
             instance, if ``multiplier=1e-9`` is passed, the mesh points will be
             divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. Defaults to 1.
+            be used as axis labels. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Raises
         ------
         ValueError
 
-            If the field has not been sliced with a plane or its dimension is
-            not 1.
+            If the field has not been sliced, its dimension is not 1, or the
+            dimension of ``filter_field`` is not 1.
 
         Example
         -------
@@ -3350,35 +3376,61 @@ class Field:
     def mpl_vector(self, ax=None, figsize=None, color=True, color_field=None,
                    colorbar=True, colorbar_label=None, multiplier=None,
                    filename=None, **kwargs):
-        """Plots the vector field on a plane using
-        ``matplotlib.pyplot.quiver``.
+        """Plots the vector field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be of dimension 3
-        (vector field). Otherwise, ``ValueError`` is raised. ``quiver`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument.
-        Vectors can be coloured by passing ``color_field`` which is a scalar
-        field defining the colour at different points. It is often the case
-        that the region size is small (e.g. on a nanoscale) or very large (e.g.
-        in units of kilometers). Accordingly, ``multiplier`` can be passed as
-        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
-        6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels.
+        ``field.plane('z')``). In addition, field must be a vector field
+        (``dim=3``). Otherwise, ``ValueError`` is raised. ``mpl_vector`` adds
+        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
+        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        automatically and the size of a figure can be specified using
+        ``figsize``. By default, plotted vectors are coloured according to the
+        out-of-plane component of the vectors. This can be changed by passing
+        ``color_field`` with ``dim=1``. To disable colouring of the plot,
+        ``color=False`` can be passed. Colorbar is shown by default and it can
+        be removed from the plot by passing ``colorbar=False``. The label for
+        the colorbar can be defined by passing ``colorbar_label`` as a string.
+        It is often the case that the region size is small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all mesh points will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally. The plot can be saved as a PDF when ``filename``
+        is passed.
 
-        This method plots the mesh using ``matplotlib.pyplot.quiver()``
-        function, so any keyword arguments accepted by it can be passed.
+        This method plots the field using ``matplotlib.pyplot.quiver``
+        function, so any keyword arguments accepted by it can be passed (for
+        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.).
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes
+        ax : matplotlib.axes.Axes, optional
 
-            Axes to which field plot should be added.
+            Axes to which the field plot is added. Defaults to ``None`` - axes
+            are created internally.
+
+        figsize : tuple, optional
+
+            The size of a created figure if ``ax`` is not passed. Defaults to
+            ``None``.
 
         color_field : discretisedfield.Field, optional
 
-            A (scalar) field used for colouring vectors. Can be false!!!
+            A scalar field used for colouring the vectors. Defaults to ``None``
+            and vectors are coloured according to their out-of-plane
+            components.
+
+        colorbar : bool, optional
+
+            If ``True``, colorbar is shown and it is hidden when ``False``.
+            Defaults to ``True``.
+
+        colorbar_label : str, optional
+
+            Colorbar label. Defaults to ``None``.
 
         multiplier : numbers.Real, optional
 
@@ -3387,19 +3439,22 @@ class Field:
             value, the axes will be scaled and appropriate units shown. For
             instance, if ``multiplier=1e-9`` is passed, the mesh points will be
             divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. Defaults to 1.
+            be used as axis labels. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Raises
         ------
         ValueError
 
-            If the field has not been sliced with a plane or its dimension is
-            not 3.
+            If the field has not been sliced, its dimension is not 3, or the
+            dimension of ``color_field`` is not 1.
 
         Example
         -------
-        1. Visualising the vector field using ``matplotlib`` and colouring it
-        according to its z-component.
+        1. Visualising the vector field using ``matplotlib``.
 
         >>> import discretisedfield as df
         ...
@@ -3407,11 +3462,11 @@ class Field:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(2, 1, 0))
+        >>> field = df.Field(mesh, dim=3, value=(1.1, 2.1, 3.1))
         ...
-        >>> field.plane('y').mpl_vector(color_field=field.z)
+        >>> field.plane('y').mpl_vector()
 
-        .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
+        .. seealso:: :py:func:`~discretisedfield.Field.mpl_scalar`
 
         """
         if not hasattr(self.mesh, 'info'):
