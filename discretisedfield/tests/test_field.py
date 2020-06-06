@@ -1516,7 +1516,6 @@ class TestField:
             res = f.angle  # the field is not sliced
 
     def test_write_read_ovf(self):
-        # Write/read tests.
         representations = ['txt', 'bin4', 'bin8']
         filename = 'testfile.ovf'
         p1 = (0, 0, 0)
@@ -1524,6 +1523,7 @@ class TestField:
         cell = (1e-9, 1e-9, 1e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
+        # Write/read
         for dim, value in [(1, lambda point: point[0] + point[1] + point[2]),
                            (3, lambda point: (point[0], point[1], point[2]))]:
             f = df.Field(mesh, dim=dim, value=value)
@@ -1567,7 +1567,7 @@ class TestField:
             f_saved = df.Field(f_read.mesh, dim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
-        # Exception (dim=2 field)
+        # Exception (dim=2)
         f = df.Field(mesh, dim=2, value=(1, 2))
         with pytest.raises(TypeError) as excinfo:
             f.write(filename)
@@ -1621,46 +1621,102 @@ class TestField:
         with pytest.raises(ValueError) as excinfo:
             f = df.Field.fromfile(filename)
 
-    def test_mpl(self):
-        self.pf.plane('z', n=(3, 4)).mpl()
-        self.pf.z.plane('x', n=(3, 4)).mpl()
-
-        with pytest.raises(ValueError) as excinfo:
-            self.pf.mpl()
-
-        filename = 'figure.pdf'
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane('z').mpl(filename=tmpfilename)
-
-        plt.close('all')
-
     def test_mpl_scalar(self):
+        # No axes
+        self.pf.x.plane('x', n=(3, 4)).mpl_scalar()
+
+        # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-
         self.pf.x.plane('x', n=(3, 4)).mpl_scalar(ax=ax)
-        self.pf.x.plane('y', n=(1, 1)).mpl_scalar(ax=ax, cmap='viridis')
-        self.pf.x.plane('z').mpl_scalar(ax=ax, filter_field=self.pf.norm)
 
+        # All arguments
+        self.pf.x.plane('x').mpl_scalar(figsize=(10, 10),
+                                        filter_field=self.pf.norm,
+                                        colorbar=True,
+                                        colorbar_label='something',
+                                        multiplier=1e-6, cmap='hsv',
+                                        clim=(-1, 1))
+
+        # Saving plot
+        filename = 'testfigure.pdf'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            self.pf.x.plane('x', n=(3, 4)).mpl_scalar(filename=tmpfilename)
+
+        # Exceptions
         with pytest.raises(ValueError) as excinfo:
-            self.pf.mpl_scalar(ax=ax)
+            self.pf.mpl_scalar()  # not sliced
         with pytest.raises(ValueError) as excinfo:
-            self.pf.plane('z').mpl_scalar(ax=ax)
+            self.pf.plane('z').mpl_scalar()  # vector field
+        with pytest.raises(ValueError) as excinfo:
+            # wrong filter field
+            self.pf.plane('z').mpl_scalar(filter_field=self.pf)
 
         plt.close('all')
 
     def test_mpl_vector(self):
+        # No axes
+        self.pf.plane('x', n=(3, 4)).mpl_vector()
+
+        # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
+        self.pf.plane('x', n=(3, 4)).mpl_vector(ax=ax)
 
-        self.pf.plane('z', n=(3, 4)).mpl_vector(ax=ax)
-        self.pf.plane('x', n=(3, 4)).mpl_vector(ax=ax, color_field=self.pf.y)
+        # All arguments
+        self.pf.plane('x').mpl_vector(figsize=(10, 10),
+                                      color_field=self.pf.y,
+                                      colorbar=True,
+                                      colorbar_label='something',
+                                      multiplier=1e-6, cmap='hsv',
+                                      clim=(-1, 1))
 
+        # Saving plot
+        filename = 'testfigure.pdf'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            self.pf.plane('x', n=(3, 4)).mpl_vector(filename=tmpfilename)
+
+        # Exceptions
         with pytest.raises(ValueError) as excinfo:
-            self.pf.mpl_vector(ax=ax)
+            self.pf.mpl_vector()  # not sliced
         with pytest.raises(ValueError) as excinfo:
-            self.pf.x.plane('y').mpl_vector(ax=ax)
+            self.pf.y.plane('z').mpl_vector()  # scalar field
+        with pytest.raises(ValueError) as excinfo:
+            # wrong color field
+            self.pf.plane('z').mpl_vector(color_field=self.pf)
+
+        plt.close('all')
+
+    def test_mpl(self):
+        # No axes
+        self.pf.plane('x', n=(3, 4)).mpl()
+
+        # Axes
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        self.pf.x.plane('x', n=(3, 4)).mpl(ax=ax)
+
+        # All arguments
+        self.pf.plane('x').mpl(figsize=(12, 6),
+                               scalar_field=self.pf.plane('x').angle,
+                               scalar_colorbar_label='something',
+                               scalar_cmap='twilight', vector_field=self.pf,
+                               vector_color_field=self.pf.y, vector_color=True,
+                               vector_colorbar=True,
+                               vector_colorbar_label='vector',
+                               vector_cmap='hsv', vector_clim=(0, 1e6),
+                               multiplier=1e-12)
+
+        # Saving plot
+        filename = 'testfigure.pdf'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            self.pf.plane('x', n=(3, 4)).mpl(filename=tmpfilename)
+
+        # All exceptions are raised by submethods (mpl_scalaer and mpl_vector)
+        # and there is no need to test them here.
 
         plt.close('all')
 

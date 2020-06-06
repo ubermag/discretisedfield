@@ -3202,8 +3202,6 @@ class Field:
         for i, line in zip(mesh.indices, lines[start_index+skip+1:]):
             if not line[0].isalpha():
                 field.array[i] = list(map(float, line.split()))
-            else:
-                break
 
         return field
 
