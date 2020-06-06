@@ -1488,19 +1488,16 @@ class TestField:
         assert sf.average == (3, 2, 0)
 
     def test_write_read_ovf(self):
+        # Write/read tests.
         representations = ['txt', 'bin4', 'bin8']
-        tolerance = dict(zip(representations, (0, 1e-6, 1e-12)))
         filename = 'testfile.ovf'
-
         p1 = (0, 0, 0)
-        p2 = (10e-9, 5e-9, 3e-9)
+        p2 = (8e-9, 5e-9, 3e-9)
         cell = (1e-9, 1e-9, 1e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        for dim, value in [(1, -1.23),
-                           (3, (4, 2, -13e6)),
-                           (3, lambda point: (point[0], point[1], point[2])),
-                           (1, lambda point: point[0] + point[1] + point[2])]:
+        for dim, value in [(1, lambda point: point[0] + point[1] + point[2]),
+                           (3, lambda point: (point[0], point[1], point[2]))]:
             f = df.Field(mesh, dim=dim, value=value)
             for rep in representations:
                 with tempfile.TemporaryDirectory() as tmpdir:
@@ -1508,9 +1505,7 @@ class TestField:
                     f.write(tmpfilename, representation=rep)
                     f_read = df.Field.fromfile(tmpfilename)
 
-                    assert f.mesh == f_read.mesh
-                    np.testing.assert_allclose(f.array, f_read.array,
-                                               rtol=tolerance[rep])
+                    assert f.allclose(f_read)
 
         # Extend scalar
         for rep in representations:
@@ -1521,14 +1516,30 @@ class TestField:
                 f.write(tmpfilename, extend_scalar=True)
                 f_read = df.Field.fromfile(tmpfilename)
 
-                assert f.mesh == f_read.mesh
-                assert f_read.dim == 3
-                np.testing.assert_allclose(f.array, f_read.x.array,
-                                           rtol=tolerance[rep])
-                assert np.equal(f_read.y.array, 0).all()
-                assert np.equal(f_read.z.array, 0).all()
+                assert f.allclose(f_read.x)
 
-        # Attempt to write dim=2 field.
+        # Read different OOMMF representations
+        filenames = ['oommf-txt.omf', 'oommf-bin4.omf', 'oommf-bin8.omf']
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        for filename in filenames:
+            omffilename = os.path.join(dirname, filename)
+            f_read = df.Field.fromfile(omffilename)
+
+            # We know the magnetisation is in the x-direction.
+            assert f_read.x.average > 0.98
+
+        # Read different mumax3 bin4 files (made on linux and windows)
+        filenames = ['mumax-bin4-linux.ovf', 'mumax-bin4-windows.ovf']
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        for filename in filenames:
+            omffilename = os.path.join(dirname, filename)
+            f_read = df.Field.fromfile(omffilename)
+
+            # We know the saved magentisation.
+            f_saved = df.Field(f_read.mesh, dim=3, value=(1, 0.1, 0), norm=1)
+            assert f_saved.allclose(f_read)
+
+        # Exception (dim=2 field)
         f = df.Field(mesh, dim=2, value=(1, 2))
         with pytest.raises(TypeError) as excinfo:
             f.write(filename)
@@ -1581,43 +1592,6 @@ class TestField:
             f.write(filename)
         with pytest.raises(ValueError) as excinfo:
             f = df.Field.fromfile(filename)
-
-    def test_read_mumax3_ovffile(self):
-        # Output file has been produced with Mumax ~3.1.0
-        # (fd3a50233f0a6625086d390) using this script:
-        #
-        # SetGridsize(128, 32, 1)
-        # SetCellsize(500e-9/128, 125e-9/32, 3e-9)
-        #
-        # Msat  = 800e3
-        # Aex   = 13e-12
-        # alpha = 0.02
-        #
-        # m = uniform(1, .1, 0)
-        # save(m)
-        filenames = ['mumax-output-linux.ovf', 'mumax-output-win.ovf']
-        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
-
-        for f in filenames:
-            path = os.path.join(dirname, f)
-
-            f = df.Field.fromfile(path)
-
-            # Compare with the human readable part of file.
-            assert f.dim == 3
-            assert len(f.mesh) == 4096
-            assert f.mesh.region.pmin == (0., 0., 0.)
-            assert f.mesh.region.pmax == (5e-07, 1.25e-07, 3e-09)
-            assert f.array.shape == (128, 32, 1, 3)
-
-            # Compare with vector field (we know from the script
-            # shown above). m vector in mumax (uses 4 bytes).
-            m = np.array([1, 0.1, 0], dtype=np.float32)
-
-            # magnetisation is normalised before saving
-            v = m / sum(m**2)**0.5
-
-            assert np.equal(f.array[..., :], v).all()
 
     def test_mpl(self):
         self.pf.plane('z', n=(3, 4)).mpl()

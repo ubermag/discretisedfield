@@ -2925,7 +2925,7 @@ class Field:
         ...
         >>> dirname = os.path.join(os.path.dirname(__file__),
         ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'mumax-output-linux.ovf')
+        >>> filename = os.path.join(dirname, 'mumax-bin4-linux.ovf')
         >>> field = df.Field.fromfile(filename)
         >>> field
         Field(mesh=...)
@@ -2964,7 +2964,8 @@ class Field:
         """Read the field from an OVF file.
 
         The extension of the ``filename`` should be suitable for OVF format
-        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``).
+        (``.ovf``, ``.omf``, ``.ohf``, ``.oef``). Data representation (``txt``,
+        ``bin4``, or ``bin8``) is determined from the file itself.
 
         This is a ``classmethod`` and should be called as, for instance,
         ``discretisedfield.Field._fromovf('myfile.omf')``.
@@ -2990,7 +2991,7 @@ class Field:
         ...
         >>> dirname = os.path.join(os.path.dirname(__file__),
         ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'mumax-output-linux.ovf')
+        >>> filename = os.path.join(dirname, 'oommf-bin8.omf')
         >>> field = df.Field._fromovf(filename)
         >>> field
         Field(mesh=...)
@@ -3033,24 +3034,32 @@ class Field:
 
             header = b'# Begin: Data Binary '
             data_start = f.find(header)
-            header = f[data_start:data_start + len(header) + 1]
+            header = f[data_start:(data_start + len(header) + 1)]
 
-            data_start += len(b'# Begin: Data Binary 8')
+            data_start += len(header)
             data_end = f.find(b'# End: Data Binary ')
 
-            # ordered by length
-            newlines = [b'\n\r', b'\r\n', b'\n']
-            for nl in newlines:
-                if f.startswith(nl, data_start):
-                    data_start += len(nl)
-                    break
-
             if b'4' in header:
+                nbytes = 4
                 formatstr = '@f'
                 checkvalue = 1234567.0
             elif b'8' in header:
+                nbytes = 8
                 formatstr = '@d'
                 checkvalue = 123456789012345.0
+
+            newlines = [b'\n\r', b'\r\n', b'\n']  # ordered by length
+            for nl in newlines:
+                if f.startswith(nl, data_start):
+                    data_start += len(nl)
+                    # There is a difference between files written by OOMMF and
+                    # mumax3. OOMMF has a newline character before the "end
+                    # metadata line', whereas mumax3 does not. Therefore if the
+                    # length of data stream is not a multiple of nbytes, we
+                    # subtract the newline character from data_end.
+                    if (data_end - data_start) % nbytes != 0:
+                        data_end -= len(nl)
+                    break
 
             listdata = list(struct.iter_unpack(formatstr,
                                                f[data_start:data_end]))
@@ -3062,7 +3071,7 @@ class Field:
                 msg = 'Binary Data cannot be read.'  # pragma: no cover
                 raise AssertionError(msg)  # pragma: no cover
 
-            datalines = datalines[1:]  # check value removal
+            datalines = datalines[1:]
 
         p1 = (mdatadict[key] for key in ['xmin', 'ymin', 'zmin'])
         p2 = (mdatadict[key] for key in ['xmax', 'ymax', 'zmax'])
@@ -3072,13 +3081,11 @@ class Field:
 
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        field = cls(mesh, dim=dim)
-
-        r_tuple = (*tuple(reversed(field.mesh.n)), int(mdatadict['valuedim']))
+        r_tuple = (*tuple(reversed(mesh.n)), int(mdatadict['valuedim']))
         t_tuple = (*tuple(reversed(range(3))), 3)
-        field.array = datalines.reshape(r_tuple).transpose(t_tuple)
 
-        return field
+        return cls(mesh, dim=dim,
+                   value=datalines.reshape(r_tuple).transpose(t_tuple))
 
     @classmethod
     def _fromvtk(cls, filename):
