@@ -3403,7 +3403,13 @@ class Field:
 
         This method plots the field using ``matplotlib.pyplot.quiver``
         function, so any keyword arguments accepted by it can be passed (for
-        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.).
+        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.). In
+        particular, there are cases when ``matplotlib`` fails to find optimal
+        scale for plotting vectors. More precisely, sometimes vectors appear
+        too large in the plot. This can be resolved by passing ``scale``
+        argument, which scales all vectors in the plot. In other words, larger
+        ``scale``, smaller the vectors and vice versa. Please note that scale
+        can be in a very large range (e.g. 1e20).
 
         Parameters
         ----------
@@ -3537,55 +3543,49 @@ class Field:
             vector_cmap='cividis', vector_clim=None, vector_colorbar=False,
             vector_colorbar_label=None, vector_scale=None, multiplier=None,
             filename=None):
-        """Plots the field on a plane using ``matplotlib``.
+        """Plots the field on a plane.
 
-        If ``ax`` is not passed, axes will be created automaticaly. In that
-        case, the figure size can be changed using ``figsize``. It is often the
-        case that the region size is small (e.g. on a nanoscale) or very large
-        (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
-        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6,
-        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally. If ``filename``
-        is passed, figure is saved.
+        This is a convenience method used for quick plotting, which combines
+        ``discretisedfield.Field.mpl_scalar`` and
+        ``discretisedfield.Field.mpl_vector`` methods. Depending on the
+        dimensionality of the field, it determines what plot is going to be
+        shown. For a scalar field only ``discretisedfield.Field.mpl_scalar`` is
+        used, whereas for a vector field, both
+        ``discretisedfield.Field.mpl_scalar`` and
+        ``discretisedfield.Field.mpl_vector`` plots are shown, where vector
+        plot shows the in-plane components of the vector and scalar plot
+        encodes the out-of-plane component.
 
-        Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). Otherwise, ``ValueError`` is raised. For vector
-        fields, this method plots both ``quiver`` (vector) and ``imshow``
-        (scalar) plots. The ``imshow`` plot represents the value of the
-        out-of-plane vector component and the ``quiver`` plot is not coloured.
-        On the other hand, only ``imshow`` is plotted for scalar fields. Where
-        the norm of the field is zero, no vectors are shown and those
-        ``imshow`` pixels are not coloured.
+        All the default values can be changed by passing arguments, which are
+        then used in subplots. The way parameters of this function are used to
+        create plots can be understood with the following code snippet.
 
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes, optional
+        ```
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
 
-            Axes to which field plot should be added. Defaults to ``None`` -
-            new axes will be created in figure with size defined as
-            ``figsize``.
+        scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
+                                colorbar=scalar_colorbar,
+                                colorbar_label=scalar_colorbar_label,
+                                multiplier=multiplier, cmap=scalar_cmap,
+                                clim=scalar_clim,)
 
-        figsize : (2,) tuple, optional
+        vector_field.mpl_vector(ax=ax, color=vector_color,
+                                color_field=vector_color_field,
+                                colorbar=vector_colorbar,
+                                colorbar_label=vector_colorbar_label,
+                                multiplier=multiplier, scale=vector_scale,
+                                cmap=vector_cmap, clim=vector_clim,)
 
-            Length-2 tuple passed to ``matplotlib.pyplot.figure()`` to create a
-            figure and axes if ``ax=None``. Defaults to ``None``.
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
+        ```
 
-        multiplier : numbers.Real, optional
-
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
-
-        filename: str
-
-            Filename to which the plot is saved.
+        Therefore, to understand the meaning of the arguments which can be
+        passed to this method, please refer to
+        ``discretisedfield.Field.mpl_scalar`` and
+        ``discretisedfield.Field.mpl_vector`` documentation.
 
         Raises
         ------
@@ -3608,8 +3608,8 @@ class Field:
 
         .. seealso::
 
-            :py:func:`~discretisedfield.Field.k3d_scalar`
-            :py:func:`~discretisedfield.Field.k3d_vector`
+            :py:func:`~discretisedfield.Field.mpl_scalar`
+            :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
         if not hasattr(self.mesh, 'info'):
