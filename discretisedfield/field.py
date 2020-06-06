@@ -2532,7 +2532,40 @@ class Field:
 
     @property
     def angle(self):
-        """In-plane axis relative to axis.
+        """In-plane angle of the vector field.
+
+        This method can be applied only on sliced fields, when a plane is
+        defined. This method then returns a scalar field which is an angle
+        between the in-plane compoenent of the vector field and the horizontal
+        axis. The angle is computed in radians.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Angle scalar field.
+
+        Raises
+        ------
+        ValueError
+
+            If the field is not sliced.
+
+        Example
+        -------
+        1. Computing the angle of the field in yz-plane.
+
+        >>> import discretisedfield as df
+        >>> import numpy as np
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
+        ...
+        >>> abs(field.plane('z').angle.average - np.pi/2) < 1e-3
+        True
 
         """
         if not hasattr(self.mesh, 'info'):
