@@ -2792,7 +2792,8 @@ class Field:
         The data is saved as a ``STRUCTURED_POINTS`` dataset. Scalar field
         (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
         (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
-        three components to enable easy coloring of vectors.
+        three components to enable easy coloring of vectors in some
+        visualisation packages.
 
         The saved VTK file can be opened with `Paraview
         <https://www.paraview.org/>`_ or `Mayavi
