@@ -3219,9 +3219,8 @@ class Field:
             return cls(mesh, dim=dim, value=array[:])
 
     def mpl_scalar(self, ax=None, figsize=None, filter_field=None,
-                   cmap='cividis', clim=None, colorbar=True,
-                   colorbar_label=None, multiplier=None, filename=None,
-                   **kwargs):
+                   colorbar=True, colorbar_label=None, multiplier=None,
+                   filename=None, **kwargs):
         """Plots the scalar field on a plane using
         ``matplotlib.pyplot.imshow``.
 
@@ -3305,16 +3304,13 @@ class Field:
 
         unit = f' ({uu.rsi_prefixes[multiplier]}m)'
 
-        points, values = list(zip(*list(self)))
+        points, values = map(list, zip(*list(self)))
 
-        # If filter_field is passed, set values where norm=0 to np.nan,
-        # so that they are not plotted.
         if filter_field is not None:
             if filter_field.dim != 1:
                 msg = f'Cannot use dim={self.dim} filter_field.'
                 raise ValueError(msg)
 
-            values = list(values)  # tuple -> list to make values mutable
             for i, point in enumerate(points):
                 if filter_field(point) == 0:
                     values[i] = np.nan
@@ -3330,23 +3326,22 @@ class Field:
              self.mesh.n[self.mesh.info['axis1']])
 
         cp = ax.imshow(np.array(values).reshape(n), origin='lower',
-                       extent=extent, cmap=cmap, clim=clim, **kwargs)
-
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+                       extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def mpl_vector(self, ax=None, figsize=None, color=True, color_field=None,
-                   cmap='cividis', clim=None, colorbar=True,
-                   colorbar_label=None, multiplier=None, filename=None,
-                   **kwargs):
+                   colorbar=True, colorbar_label=None, multiplier=None,
+                   filename=None, **kwargs):
         """Plots the vector field on a plane using
         ``matplotlib.pyplot.quiver``.
 
@@ -3428,10 +3423,9 @@ class Field:
 
         unit = f' ({uu.rsi_prefixes[multiplier]}m)'
 
-        points, values = list(zip(*list(self)))
+        points, values = map(list, zip(*list(self)))
 
         # Remove points and values where norm is 0.
-        points, values = list(points), list(values)  # make them mutable
         points = [p for p, v in zip(points, values)
                   if not np.equal(v, 0).all()]
         values = [v for v in values if not np.equal(v, 0).all()]
@@ -3449,46 +3443,37 @@ class Field:
 
         points = np.divide(points, multiplier)
 
-        # Are there any vectors pointing out-of-plane? If yes, set the scale.
-        if not any(values[self.mesh.info['axis1']] +
-                   values[self.mesh.info['axis2']]):
-            kwargs['scale'] = 1
-
-        kwargs['pivot'] = 'mid'  # arrow at the centre of the cell
-
         if color:
             cp = ax.quiver(points[self.mesh.info['axis1']],
                            points[self.mesh.info['axis2']],
                            values[self.mesh.info['axis1']],
                            values[self.mesh.info['axis2']],
-                           colors,
-                           cmap=cmap,
-                           clim=clim,
-                           **kwargs)
+                           colors, pivot='mid', **kwargs)
         else:
             ax.quiver(points[self.mesh.info['axis1']],
                       points[self.mesh.info['axis2']],
                       values[self.mesh.info['axis1']],
                       values[self.mesh.info['axis2']],
-                      **kwargs)
-
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+                      pivot='mid', **kwargs)
 
         if colorbar and color:
             cbar = plt.colorbar(cp)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
 
-    def mpl(self, ax=None, figsize=None, scalar_field=None, filter_field=None,
-            scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
-            scalar_colorbar_label=None, vector_field=None, vector_color=False,
-            color_field=None, vector_cmap='cividis', vector_clim=None,
-            vector_colorbar=False, vector_colorbar_label=None,
-            multiplier=None, filename=None):
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+
+    def mpl(self, ax=None, figsize=None, scalar_field=None,
+            scalar_filter_field=None, scalar_cmap='viridis', scalar_clim=None,
+            scalar_colorbar=True, scalar_colorbar_label=None,
+            vector_field=None, vector_color=False, vector_color_field=None,
+            vector_cmap='cividis', vector_clim=None, vector_colorbar=False,
+            vector_colorbar_label=None, vector_scale=None, multiplier=None,
+            filename=None):
         """Plots the field on a plane using ``matplotlib``.
 
         If ``ax`` is not passed, axes will be created automaticaly. In that
@@ -3572,6 +3557,11 @@ class Field:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
 
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+
+        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
         planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
 
         # Set up default values.
@@ -3593,29 +3583,25 @@ class Field:
             else:
                 scalar_field = self.__class__(self.mesh, dim=1,
                                               value=scalar_field)
-            if filter_field is None:
-                filter_field = self.norm
+            if scalar_filter_field is None:
+                scalar_filter_field = self.norm
             else:
-                filter_field = self.__class__(self.mesh, dim=1,
-                                              value=filter_field)
-
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
-
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+                scalar_filter_field = self.__class__(self.mesh, dim=1,
+                                                     value=scalar_filter_field)
 
         if scalar_field is not None:
-            scalar_field.mpl_scalar(ax=ax, filter_field=filter_field,
-                                    cmap=scalar_cmap, clim=scalar_clim,
+            scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
                                     colorbar=scalar_colorbar,
                                     colorbar_label=scalar_colorbar_label,
-                                    multiplier=multiplier)
+                                    multiplier=multiplier, cmap=scalar_cmap,
+                                    clim=scalar_clim,)
         if vector_field is not None:
             vector_field.mpl_vector(ax=ax, color=vector_color,
-                                    color_field=color_field, cmap=vector_cmap,
-                                    clim=vector_clim, colorbar=vector_colorbar,
+                                    color_field=vector_color_field,
+                                    colorbar=vector_colorbar,
                                     colorbar_label=vector_colorbar_label,
-                                    multiplier=multiplier)
+                                    multiplier=multiplier, scale=vector_scale,
+                                    cmap=vector_cmap, clim=vector_clim,)
 
         ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
         ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
