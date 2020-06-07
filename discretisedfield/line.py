@@ -44,9 +44,8 @@ class Line:
     """
     def __init__(self, points, values):
         if len(points) != len(values):
-            msg = (f'Cannot define Line, because the number of points '
-                   f'({len(points)}) is not the same as the number of '
-                   f'values ({values}).')
+            msg = (f'The number of points ({len(points)}) is not the same '
+                   f'as the number of values ({len(values)}).')
             raise ValueError(msg)
 
         self.dictionary = dict(zip(points, values))

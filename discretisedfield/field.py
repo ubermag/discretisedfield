@@ -2337,9 +2337,8 @@ class Field:
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
 
-        Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n`
-        position coordinates are generated and the corresponding field
-        values.
+        Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n` position
+        coordinates are generated and the corresponding field values.
 
         .. math::
 
@@ -2349,20 +2348,24 @@ class Field:
         Parameters
         ----------
         p1, p2 : (3,) array_like
-            Two points between which the line is generated.
-        n : int
-            Number of points on the line.
 
-        Yields
-        ------
-        tuple
-            The first element is the coordinate of the point on the
-            line, whereas the second one is the value of the field.
+            Two points between which the line is generated.
+
+        n : int, optional
+
+            Number of points on the line. Defaults to 100.
+
+        Returns
+        -------
+        discretisedfield.Line
+
+            Line object.
 
         Raises
         ------
         ValueError
-            If `p1` or `p2` is outside the mesh domain.
+
+            If ``p1`` or ``p2`` is outside the mesh domain.
 
         Examples
         --------
@@ -2375,6 +2378,7 @@ class Field:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> field = df.Field(mesh, dim=2, value=(0, 3))
+        ...
         >>> field.line(p1=(0, 0, 0), p2=(2, 0, 0), n=5)
         Line(...)
 
@@ -3033,18 +3037,27 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
 
         """
-        mdatalist = ['xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax',
-                     'xstepsize', 'ystepsize', 'zstepsize', 'valuedim']
+        print(filename)
+        mdatalist = ['ovfversion',
+                     'xmin', 'ymin', 'zmin',
+                     'xmax', 'ymax', 'zmax',
+                     'xstepsize', 'ystepsize', 'zstepsize',
+                     'valuedim']
         mdatadict = dict()
 
         try:
-            with open(filename, 'r', encoding='utf-8') as ovffile:
-                f = ovffile.read()
-                lines = f.split('\n')
+            with open(filename, 'r') as ovffile:
+                lines = ovffile.readlines()
 
-            mdatalines = filter(lambda s: s.startswith('#'), lines)
+            mdatalines = list(filter(lambda s: s.startswith('#'), lines))
             datalines = np.loadtxt(filter(lambda s: not s.startswith('#'),
                                           lines))
+
+            if '2.0' in mdatalines[0]:
+                mdatadict['ovfversion'] = 2
+            elif '1.0' in mdatalines[0]:
+                mdatadict['ovfversion'] = 1
+                mdatadict['valuedim'] = datalines.shape[-1]
 
             for line in mdatalines:
                 for mdatum in mdatalist:
@@ -3057,8 +3070,16 @@ class Field:
                 f = ovffile.read()
                 lines = f.split(b'\n')
 
-            mdatalines = filter(lambda s: s.startswith(bytes('#', 'utf-8')),
-                                lines)
+            mdatalines = list(filter(lambda s: s.startswith(bytes('#',
+                                                                  'utf-8')),
+                                     lines))
+
+            if bytes('2.0', 'utf-8') in mdatalines[0]:
+                mdatadict['ovfversion'] = 2
+                endian = '<'  # little-endian
+            elif bytes('1.0', 'utf-8') in mdatalines[0]:
+                mdatadict['ovfversion'] = 1
+                endian = '>'  # big-endian
 
             for line in mdatalines:
                 for mdatum in mdatalist:
@@ -3075,11 +3096,11 @@ class Field:
 
             if b'4' in header:
                 nbytes = 4
-                formatstr = '@f'
+                formatstr = endian + 'f'
                 checkvalue = 1234567.0
             elif b'8' in header:
                 nbytes = 8
-                formatstr = '@d'
+                formatstr = endian + 'd'
                 checkvalue = 123456789012345.0
 
             newlines = [b'\n\r', b'\r\n', b'\n']  # ordered by length
@@ -3102,7 +3123,7 @@ class Field:
             if datalines[0] != checkvalue:
                 # These two lines cannot be accessed via tests. Therefore, they
                 # are excluded from coverage.
-                msg = 'Binary Data cannot be read.'  # pragma: no cover
+                msg = 'Error in checksum comparison.'  # pragma: no cover
                 raise AssertionError(msg)  # pragma: no cover
 
             datalines = datalines[1:]
@@ -3111,11 +3132,16 @@ class Field:
         p2 = (mdatadict[key] for key in ['xmax', 'ymax', 'zmax'])
         cell = (mdatadict[key] for key in ['xstepsize', 'ystepsize',
                                            'zstepsize'])
-        dim = int(mdatadict['valuedim'])
 
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        region = df.Region(p1=p1, p2=p2)
+        mesh = df.Mesh(region, cell=cell)
 
-        r_tuple = (*tuple(reversed(mesh.n)), int(mdatadict['valuedim']))
+        if mdatadict['ovfversion'] == 1 and 'valuedim' not in mdatadict.keys():
+            dim = int(len(datalines) / len(mesh))
+        else:
+            dim = int(mdatadict['valuedim'])
+
+        r_tuple = (*tuple(reversed(mesh.n)), dim)
         t_tuple = (*tuple(reversed(range(3))), 3)
 
         return cls(mesh, dim=dim,
