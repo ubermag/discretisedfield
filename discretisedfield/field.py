@@ -3036,7 +3036,7 @@ class Field:
         ...
         >>> dirname = os.path.join(os.path.dirname(__file__),
         ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'oommf-bin8.omf')
+        >>> filename = os.path.join(dirname, 'oommf-ovf2-bin8.omf')
         >>> field = df.Field._fromovf(filename)
         >>> field
         Field(mesh=...)
@@ -3182,7 +3182,7 @@ class Field:
         ...
         >>> dirname = os.path.join(os.path.dirname(__file__),
         ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'testfile.vtk')
+        >>> filename = os.path.join(dirname, 'vtk-file.vtk')
         >>> field = df.Field._fromvtk(filename)
         >>> field
         Field(mesh=...)
@@ -3267,7 +3267,7 @@ class Field:
         ...
         >>> dirname = os.path.join(os.path.dirname(__file__),
         ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'testfile.hdf5')
+        >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
         >>> field = df.Field._fromhdf5(filename)
         >>> field
         Field(mesh=...)
