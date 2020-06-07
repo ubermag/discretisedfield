@@ -2,37 +2,36 @@ import argparse
 import discretisedfield as df
 
 
-def convert_files(input_files, output_files):
+def ovf2vtk():
+    parser = argparse.ArgumentParser(
+        prog='ovf2vtk',
+        description='ovf2vtk - OVF to VTK file format conversion.'
+    )
+    parser.add_argument('--input', '-i', type=argparse.FileType('r'),
+                        nargs='+', required=True, help='Input OVF file(s).')
+    parser.add_argument('--output', '-o', type=argparse.FileType('w'),
+                        nargs='+', required=False, help='Output VTK file(s).')
+    args = parser.parse_args()
+
+    input_files = [f.name for f in args.input]
+
+    if args.output:
+        # Output filenames provided.
+        if len(args.input) == len(args.output):
+            output_files = [f.name for f in args.output]
+        else:
+            msg = (f'The number of input files ({len(args.input)}) does not '
+                   f'match the number of output files ({len(args.output)}).')
+            raise ValueError(msg)
+    else:
+        # Output filenames are not provided and they are generated
+        # automatically.
+        output_files = [f'{filename[:-4]}.vtk' for filename in input_files]
+
     for input_file, output_file in zip(input_files, output_files):
         field = df.Field.fromfile(input_file)
         field.write(output_file)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        prog='ovf2vtk',
-        description='ovf2vtk - ovf to VTK format conversion'
-    )
-    parser.add_argument('--infile', type=argparse.FileType('r'),
-                        help='One or more input files', nargs='+',
-                        required=True)
-    parser.add_argument('--outfile', type=argparse.FileType('w'), nargs='+',
-                        help='One or more output files, optional')
-    args = parser.parse_args()
-
-    if args.outfile:
-        if len(args.infile) == len(args.outfile):
-            input_files = [f.name for f in args.infile]
-            output_files = [f.name for f in args.outfile]
-        else:
-            msg = 'The number of input and output files do not match.'
-            raise ValueError(msg)
-    else:
-        input_files = [f.name for f in args.infile]
-        output_files = [f'{f.split(".")[0]}.vtk' for f in input_files]
-
-    convert_files(input_files, output_files)
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    ovf2vtk()

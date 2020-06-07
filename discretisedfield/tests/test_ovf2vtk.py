@@ -1,55 +1,59 @@
 import os
 import sys
+import tempfile
 import subprocess
+import numpy as np
 import discretisedfield as df
-from discretisedfield.ovf2vtk import convert_files
-
-
-def check_vtk(vtkfile):
-    with open(vtkfile, 'r') as f:
-        content = f.read()
-        assert 'STRUCTURED_POINTS' in content
-        assert 'POINT_DATA' in content
-        assert 'SCALARS' in content
 
 
 def test_ovf2vtk():
     p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (5, 5, 5)
+    p2 = (10e-9, 7e-9, 2e-9)
+    cell = (1e-9, 1e-9, 1e-9)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-    f = df.Field(mesh, dim=3, value=(1, 2, -3.14))
+    def value_fun(point):
+        x, y, z = point
+        c = 1e9
+        return c*x, c*y, c*z
 
-    omffilename = 'test_ovf2vtk_file.omf'
-    vtkfilename = 'test_ovf2vtk_file.vtk'
-    f.write(omffilename)
-
-    interpreter = sys.executable.split('/')[-1]
-
-    # No output filename provided.
-    cmd = [interpreter, '-m', 'discretisedfield.ovf2vtk',
-           '--infile', omffilename]
-    proc_return = subprocess.run(cmd)
-    assert proc_return.returncode == 0
-    check_vtk(vtkfilename)
-    os.remove(vtkfilename)
+    f = df.Field(mesh, dim=3, value=value_fun)
 
     # Output filename provided.
-    cmd = [interpreter, '-m', 'discretisedfield.ovf2vtk',
-           '--infile', omffilename, '--outfile', vtkfilename]
-    proc_return = subprocess.run(cmd)
-    assert proc_return.returncode == 0
-    check_vtk(vtkfilename)
-    os.remove(vtkfilename)
+    omffilename = 'test-ovf2vtk1.omf'
+    vtkfilename = 'test-ovf2vtk1.vtk'
+    with tempfile.TemporaryDirectory() as tmpdir:
+        omftmpfilename = os.path.join(tmpdir, omffilename)
+        vtktmpfilename = os.path.join(tmpdir, vtkfilename)
+        f._writeovf(omftmpfilename, representation='bin8')
+
+        cmd = [sys.executable, '-m', 'discretisedfield.ovf2vtk',
+               '--input', omftmpfilename]
+        proc_return = subprocess.run(cmd)
+        assert proc_return.returncode == 0
+
+        f_read = df.Field.fromfile(vtktmpfilename)
+        assert np.allclose(f.array, f_read.array)
+
+    # Output filename not provided.
+    omffilename = 'test-ovf2vtk2.omf'
+    vtkfilename = 'test-ovf2vtk2.vtk'
+    with tempfile.TemporaryDirectory() as tmpdir:
+        omftmpfilename = os.path.join(tmpdir, omffilename)
+        vtktmpfilename = os.path.join(tmpdir, vtkfilename)
+        f._writeovf(omftmpfilename, representation='bin4')
+
+        cmd = [sys.executable, '-m', 'discretisedfield.ovf2vtk',
+               '-i', omftmpfilename]
+        proc_return = subprocess.run(cmd)
+        assert proc_return.returncode == 0
+
+        f_read = df.Field.fromfile(vtktmpfilename)
+        assert np.allclose(f.array, f_read.array)
 
     # Number of input and output files do not match.
-    cmd = [interpreter, '-m', 'discretisedfield.ovf2vtk',
-           '--infile', omffilename, '--outfile',
-           vtkfilename, 'anotherfile.vtk']
+    cmd = [sys.executable, '-m', 'discretisedfield.ovf2vtk',
+           '-i', 'file1.omf' 'file2.omf',
+           '-o', 'file1.vtk']
     proc_return = subprocess.run(cmd)
-    assert proc_return.returncode == 1
-
-    os.remove(omffilename)
-    os.remove(vtkfilename)
-    os.remove('anotherfile.vtk')
+    assert proc_return.returncode != 0
