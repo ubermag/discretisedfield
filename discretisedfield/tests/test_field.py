@@ -1559,8 +1559,12 @@ class TestField:
             omffilename = os.path.join(dirname, filename)
             f_read = df.Field.fromfile(omffilename)
 
-            # We know the magnetisation is in the x-direction.
-            #assert f_read.x.average > 0.98
+            if 'ovf2' in filename:
+                # The magnetisation is in the x-direction in OVF2 files.
+                assert f_read.x.average > 0.98
+            else:
+                # The norm of magnetisation is known.
+                assert abs(f_read.norm.average - 1261566.2610100) < 1e-3
 
         # Read different mumax3 bin4 files (made on linux and windows)
         filenames = ['mumax-bin4-linux.ovf', 'mumax-bin4-windows.ovf']

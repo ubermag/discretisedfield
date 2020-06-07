@@ -3037,7 +3037,6 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
 
         """
-        print(filename)
         mdatalist = ['ovfversion',
                      'xmin', 'ymin', 'zmin',
                      'xmax', 'ymax', 'zmax',
