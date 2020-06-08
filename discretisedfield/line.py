@@ -1,8 +1,9 @@
-import numbers
+import ipywidgets
 import numpy as np
-import seaborn as sns
+import pandas as pd
 import ubermagutil.units as uu
 import matplotlib.pyplot as plt
+import discretisedfield.util as dfu
 
 
 class Line:
@@ -38,8 +39,6 @@ class Line:
     >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
     >>> values = [1, 2, 3]  # scalar values
     >>> line = df.Line(points=points, values=values)
-    >>> line
-    Line(...)
 
     """
     def __init__(self, points, values):
@@ -48,86 +47,19 @@ class Line:
                    f'as the number of values ({len(values)}).')
             raise ValueError(msg)
 
-        self.dictionary = dict(zip(points, values))
+        points = np.array(points)
+        values = np.array(values).reshape((points.shape[0], -1))
 
-    @property
-    def points(self):
-        """Points on the line.
+        # Calculate distance from the first point.
+        r = np.linalg.norm(points - points[0, :], axis=1)
 
-        Returns
-        -------
-        list
+        self.data = pd.DataFrame({'r': r})
 
-            List of point coordinates at which the values were sampled.
+        for i, component in enumerate(dfu.axesdict.keys()):
+            self.data['p' + component] = points[..., i]
 
-        Example
-        -------
-        1. Getting the points from the line.
-
-        >>> import discretisedfield as df
-        ...
-        >>> points = [(0, 0, 0), (1, 1, 1)]
-        >>> values = [1, 2]  # scalar values
-        >>> line = df.Line(points=points, values=values)
-        >>> line.points
-        [(0, 0, 0), (1, 1, 1)]
-
-        """
-        return list(self.dictionary.keys())
-
-    @property
-    def values(self):
-        """Values on the line.
-
-        Returns
-        -------
-        list
-
-            List of values on the line.
-
-        Example
-        -------
-        1. Getting the values from the line.
-
-        >>> import discretisedfield as df
-        ...
-        >>> points = [(0, 0, 0), (1, 1, 1)]
-        >>> values = [(1, 0, 0), (0, 1, 0)]  # vector values
-        >>> line = df.Line(points=points, values=values)
-        >>> line.values
-        [(1, 0, 0), (0, 1, 0)]
-
-        """
-        return list(self.dictionary.values())
-
-    @property
-    def length(self):
-        """Line length.
-
-        Length of the line is defined as the distance between the first and the
-        last point in ``points``.
-
-        Returns
-        -------
-        float
-
-            Line length.
-
-        Example
-        -------
-        1. Getting the length of the line.
-
-        >>> import discretisedfield as df
-        ...
-        >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
-        >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
-        >>> line.length
-        4.0
-
-        """
-        r_vector = np.subtract(self.points[-1], self.points[0])
-        return np.linalg.norm(r_vector)
+        for i, component in zip(range(values.shape[-1]), dfu.axesdict.keys()):
+            self.data['v' + component] = values[..., i]
 
     @property
     def n(self):
@@ -152,7 +84,7 @@ class Line:
         3
 
         """
-        return len(self.points)
+        return self.data.shape[0]
 
     @property
     def dim(self):
@@ -180,62 +112,51 @@ class Line:
         3
 
         """
-        if isinstance(self.values[0], numbers.Real):
-            return 1
-        else:
-            return len(self.values[0])
+        return self.data[[i for i in self.data if i.startswith('v')]].shape[-1]
 
-    def __call__(self, point):
-        """Value at ``point``.
+    @property
+    def points(self):
+        points_columns = [i for i in self.data if i.startswith('p')]
+        return self.data[points_columns].to_numpy().tolist()
 
-        Returns
-        -------
-        tuple, numbers.Real
+    @property
+    def values(self):
+        points_columns = [i for i in self.data if i.startswith('v')]
+        return np.squeeze(self.data[points_columns]).to_numpy().tolist()
 
-           Value at ``point``.
+    @property
+    def length(self):
+        """Line length.
 
-        Example
-        -------
-        1. Sampling the value on the line.
-
-        >>> import discretisedfield as df
-        ...
-        >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
-        >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]
-        >>> line = df.Line(points=points, values=values)
-        >>> p = (2, 0, 0)
-        >>> line(p)
-        (0, 1, 0)
-
-        """
-        return self.dictionary[point]
-
-    def __repr__(self):
-        """Representation string.
+        Length of the line is defined as the distance between the first and the
+        last point in ``points``.
 
         Returns
         -------
-        str
+        float
 
-           Representation string.
+            Line length.
 
         Example
         -------
-        1. Getting representation string.
+        1. Getting the length of the line.
 
         >>> import discretisedfield as df
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
         >>> line = df.Line(points=points, values=values)
-        >>> repr(line)
-        'Line(points=..., values=...)'
+        >>> line.length
+        4.0
 
         """
-        return 'Line(points=..., values=...)'
+        return self.data['r'].iloc[-1]
 
-    def mpl(self, ax=None, figsize=None, multiplier=None,
-            filename=None, **kwargs):
+    def __repr__(self):
+        return repr(self.data)
+
+    def mpl(self, ax=None, figsize=None, y=None, xlim=None,
+            multiplier=None, filename=None, **kwargs):
         """Plots the values on the line.
 
         If ``ax`` is not passed, axes will be created automaticaly. In that
@@ -291,7 +212,6 @@ class Line:
         >>> line.mpl()
 
         """
-        sns.set()
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
@@ -299,21 +219,46 @@ class Line:
         if multiplier is None:
             multiplier = uu.si_multiplier(self.length)
 
-        x_array = np.linspace(0, self.length, self.n)
-        x_array = np.divide(x_array, multiplier)
+        if y is None:
+            y = [i for i in self.data if i.startswith('v')]
 
-        if self.dim == 1:
-            with sns.axes_style('darkgrid'):
-                ax.plot(x_array, self.values, **kwargs)
-        else:
-            vals = list(zip(*self.values))
-            for val, label in zip(vals, 'xyz'):
-                with sns.axes_style('darkgrid'):
-                    ax.plot(x_array, val, label=label, **kwargs)
-            ax.legend()
+        for i in y:
+            ax.plot(np.divide(self.data['r'].to_numpy(), multiplier),
+                    self.data[i],
+                    label=i,
+                    **kwargs)
 
         ax.set_xlabel(f'r ({uu.rsi_prefixes[multiplier]}m)')
-        ax.set_ylabel('value')
+        ax.set_ylabel('v')
+
+        ax.grid(True)  # grid is turned off by default for field plots
+        ax.legend()
+
+        if xlim is not None:
+            plt.xlim(*np.divide(xlim, multiplier))
 
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight')
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+
+    def slider(self, multiplier=None, **kwargs):
+        if multiplier is None:
+            multiplier = uu.si_multiplier(self.length)
+
+        values = self.data['r'].to_numpy()
+        labels = np.around(values/multiplier, decimals=2)
+        options = list(zip(labels, values))
+        slider_description = f'r ({uu.rsi_prefixes[multiplier]}m):'
+
+        return ipywidgets.SelectionRangeSlider(options=options,
+                                               value=(values[0], values[-1]),
+                                               description=slider_description,
+                                               **kwargs)
+
+    def multipleselector(self, **kwargs):
+        options = [i for i in self.data if i.startswith('v')]
+        return ipywidgets.SelectMultiple(options=options,
+                                         value=options,
+                                         rows=3,
+                                         description='y-axis:',
+                                         disabled=False,
+                                         **kwargs)

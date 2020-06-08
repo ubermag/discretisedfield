@@ -4,12 +4,11 @@ import struct
 import numbers
 import itertools
 import numpy as np
-import mpl_toolkits.axes_grid1
 import discretisedfield as df
 import ubermagutil.units as uu
+import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
-import matplotlib.pyplot as plt
 
 # TODO: tutorials (code polishing), remove numbers from tutorials, installation
 # instructions (conda environment, k3d jupyterlab), fft
@@ -2379,12 +2378,12 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> field = df.Field(mesh, dim=2, value=(0, 3))
         ...
-        >>> field.line(p1=(0, 0, 0), p2=(2, 0, 0), n=5)
-        Line(...)
+        >>> line = field.line(p1=(0, 0, 0), p2=(2, 0, 0), n=5)
 
         """
         points = list(self.mesh.line(p1=p1, p2=p2, n=n))
         values = [self(p) for p in points]
+        # return points, values
         return df.Line(points=points, values=values)
 
     def plane(self, *args, n=None, **kwargs):

@@ -17,7 +17,7 @@ grid.color: white
 grid.linestyle: -
 grid.linewidth: 1
 
-legend.fontsize: 10
+legend.fontsize: 12
 legend.frameon: False
 legend.numpoints: 1
 legend.scatterpoints: 1

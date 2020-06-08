@@ -1401,10 +1401,10 @@ class TestField:
 
         assert len(line.points) == 20
         assert len(line.values) == 20
-        assert line.points[0] == (0, 0, 0)
-        assert line.points[-1] == (5, 5, 5)
-        assert line.values[0] == (1, 2, 3)
-        assert line.values[-1] == (1, 2, 3)
+        assert line.points[0] == [0, 0, 0]
+        assert line.points[-1] == [5, 5, 5]
+        assert line.values[0] == [1, 2, 3]
+        assert line.values[-1] == [1, 2, 3]
 
     def test_plane(self):
         for mesh, direction in itertools.product(self.meshes, ['x', 'y', 'z']):
