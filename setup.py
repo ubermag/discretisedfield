@@ -21,6 +21,7 @@ setuptools.setup(
     include_package_data=True,
     install_requires=['ubermagutil',
                       'matplotlib',
+                      'pandas',
                       'jupyterlab',
                       'seaborn',
                       'h5py',
