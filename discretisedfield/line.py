@@ -1,28 +1,54 @@
+import numbers
 import ipywidgets
 import numpy as np
 import pandas as pd
 import ubermagutil.units as uu
 import matplotlib.pyplot as plt
+import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
 
+@ts.typesystem(dim=ts.Scalar(expected_type=int, positive=True, const=True),
+               n=ts.Scalar(expected_type=int, positive=True, const=True))
 class Line:
-    """Field sampled on the line.
+    """Line class.
 
-    Sampling field on the line is getting the coordinates of points on which
-    the field is sampled as well as the values of the field at those points.
-    This class provides some convenience functions for the analysis of data on
-    the line.
+    This class implements the field sampled on the line. It is based on
+    ``pandas.DataFrame``, which is generated from two lists: ``points`` and
+    ``values``. ``points`` is a list of length-3 tuples representing the points
+    on the line on which the field was sampled. On the other hand, ``values``
+    is a list of field values, which can be ``numbers.Real`` for scalar fields
+    or ``array_like`` for vector fields. During the initialisation of the
+    object, ``r`` column is added to the table and it represents the distance
+    of the point from the first point.
+
+    By default the columns where points data is stored are labelled as ``px``,
+    ``py``, and ``pz``, storing the x, y, and z components of the point,
+    respectively. Similarly, for scalar fields, values are stored in column
+    ``v``, whereas for vector fields, data is stored in ``vx``, ``vy``, and
+    ``vz``. The default names of columns can be changed by passing
+    ``point_columns`` and ``value_columns`` lists. Both lists are composed of
+    strings and must have appropriate lengths.
+
+    Data in the form of ``pandas.DataFrame`` can be exposed as ``line.data``.
 
     Parameters
     ----------
     points : list
 
-        Points at which the field is samples. It is a list of length-3 tuples.
+        Points at which the field was sampled. It is a list of length-3 tuples.
 
     values : list
 
         Values sampled at ``points``.
+
+    point_columns : list
+
+        Point column names. Defaults to None.
+
+    value_columns : list
+
+        Value column names. Defaults to None.
 
     Raises
     ------
@@ -41,88 +67,80 @@ class Line:
     >>> line = df.Line(points=points, values=values)
 
     """
-    def __init__(self, points, values):
+    def __init__(self, points, values, point_columns=None, value_columns=None):
         if len(points) != len(values):
             msg = (f'The number of points ({len(points)}) is not the same '
                    f'as the number of values ({len(values)}).')
             raise ValueError(msg)
 
+        # Set the dimension (const descriptor).
+        if isinstance(values[0], numbers.Real):
+            self.dim = 1
+        else:
+            self.dim = len(values[0])
+
+        # Set the number of values (const descriptor).
+        self.n = len(points)
+
         points = np.array(points)
         values = np.array(values).reshape((points.shape[0], -1))
 
-        # Calculate distance from the first point.
-        r = np.linalg.norm(points - points[0, :], axis=1)
+        self.data = pd.DataFrame()
+        self.data['r'] = np.linalg.norm(points - points[0, :], axis=1)
+        for i, column in enumerate(self.point_columns):
+            self.data[column] = points[..., i]
+        for i, column in zip(range(values.shape[-1]), self.value_columns):
+            self.data[column] = values[..., i]
 
-        self.data = pd.DataFrame({'r': r})
+        if point_columns is not None:
+            self.point_columns = point_columns
 
-        for i, component in enumerate(dfu.axesdict.keys()):
-            self.data['p' + component] = points[..., i]
-
-        for i, component in zip(range(values.shape[-1]), dfu.axesdict.keys()):
-            self.data['v' + component] = values[..., i]
-
-    @property
-    def n(self):
-        """The number of points on the line.
-
-        Returns
-        -------
-        int
-
-            Number of points on the line.
-
-        Example
-        -------
-        1. Getting the number of points.
-
-        >>> import discretisedfield as df
-        ...
-        >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
-        >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
-        >>> line.n
-        3
-
-        """
-        return self.data.shape[0]
+        if value_columns is not None:
+            self.value_columns = value_columns
 
     @property
-    def dim(self):
-        """Dimension of the value.
+    def point_columns(self):
+        if not hasattr(self, '_point_columns'):
+            return [f'p{i}' for i in dfu.axesdict.keys()]
+        else:
+            return self._point_columns
 
-        This method extracts the dimension of the value. For instance for
-        scalar values ``dim=1``, whereas for vector fields ``dim=3``.
+    @point_columns.setter
+    def point_columns(self, val):
+        if len(val) != 3:
+            msg = (f'Cannot change column names with a '
+                   f'list of lenght {len(val)}.')
+            raise ValueError(msg)
 
-        Returns
-        -------
-        int
+        self.data = self.data.rename(dict(zip(self.point_columns, val)),
+                                     axis=1)
+        self._point_columns = val
 
-            Value dimension.
+    @property
+    def value_columns(self):
+        if not hasattr(self, '_value_columns'):
+            return [f'v{i}' for i in list(dfu.axesdict.keys())[:self.dim]]
+        else:
+            return self._value_columns
 
-        Example
-        -------
-        1. Getting the dimension of the value.
+    @value_columns.setter
+    def value_columns(self, val):
+        if len(val) != self.dim:
+            msg = (f'Cannot change column names with a '
+                   f'list of lenght {len(val)}.')
+            raise ValueError(msg)
 
-        >>> import discretisedfield as df
-        ...
-        >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
-        >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
-        >>> line.dim
-        3
-
-        """
-        return self.data[[i for i in self.data if i.startswith('v')]].shape[-1]
+        self.data = self.data.rename(dict(zip(self.value_columns, val)),
+                                     axis=1)
+        self._value_columns = val
 
     @property
     def points(self):
-        points_columns = [i for i in self.data if i.startswith('p')]
-        return self.data[points_columns].to_numpy().tolist()
+        return self.data[self.point_columns].to_numpy().tolist()
 
     @property
     def values(self):
-        points_columns = [i for i in self.data if i.startswith('v')]
-        return np.squeeze(self.data[points_columns]).to_numpy().tolist()
+        return self.data[self.value_columns].to_numpy().tolist()
 
     @property
     def length(self):
@@ -155,7 +173,7 @@ class Line:
     def __repr__(self):
         return repr(self.data)
 
-    def mpl(self, ax=None, figsize=None, y=None, xlim=None,
+    def mpl(self, ax=None, figsize=None, yaxis=None, xlim=None,
             multiplier=None, filename=None, **kwargs):
         """Plots the values on the line.
 
@@ -219,17 +237,15 @@ class Line:
         if multiplier is None:
             multiplier = uu.si_multiplier(self.length)
 
-        if y is None:
-            y = [i for i in self.data if i.startswith('v')]
+        if yaxis is None:
+            yaxis = self.value_columns
 
-        for i in y:
+        for i in yaxis:
             ax.plot(np.divide(self.data['r'].to_numpy(), multiplier),
-                    self.data[i],
-                    label=i,
-                    **kwargs)
+                    self.data[i], label=i, **kwargs)
 
         ax.set_xlabel(f'r ({uu.rsi_prefixes[multiplier]}m)')
-        ax.set_ylabel('v')
+        ax.set_ylabel('value')
 
         ax.grid(True)  # grid is turned off by default for field plots
         ax.legend()
@@ -255,9 +271,8 @@ class Line:
                                                **kwargs)
 
     def multipleselector(self, **kwargs):
-        options = [i for i in self.data if i.startswith('v')]
-        return ipywidgets.SelectMultiple(options=options,
-                                         value=options,
+        return ipywidgets.SelectMultiple(options=self.value_columns,
+                                         value=self.value_columns,
                                          rows=3,
                                          description='y-axis:',
                                          disabled=False,

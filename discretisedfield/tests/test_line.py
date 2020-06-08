@@ -25,6 +25,11 @@ def check_line(line):
     assert isinstance(line.values[0], (list, numbers.Real))
     assert len(line.points) == len(line.values)
 
+    assert isinstance(line.point_columns, list)
+    assert len(line.point_columns) == 3
+    assert isinstance(line.value_columns, list)
+    assert len(line.value_columns) == line.dim
+
     assert isinstance(line.length, numbers.Real)
     assert line.length > 0
 
@@ -106,7 +111,7 @@ class TestLine:
         line.mpl(multiplier=1e-6)
 
         # y
-        line.mpl(y=['vx', 'vz'])
+        line.mpl(yaxis=['vx', 'vz'])
 
         # xlim
         line.mpl(xlim=(0, 10e-9))
