@@ -38,8 +38,7 @@ def check_field(field):
                       p2=field.mesh.region.pmax,
                       n=5)
     assert isinstance(line, df.Line)
-    assert len(line.points) == 5
-    assert len(line.values) == 5
+    assert line.n == 5
 
     plane = field.plane('z', n=(2, 2))
     assert isinstance(plane, df.Field)
@@ -1399,12 +1398,8 @@ class TestField:
         line = f.line(p1=(0, 0, 0), p2=(5, 5, 5), n=20)
         assert isinstance(line, df.Line)
 
-        assert len(line.points) == 20
-        assert len(line.values) == 20
-        assert line.points[0] == [0, 0, 0]
-        assert line.points[-1] == [5, 5, 5]
-        assert line.values[0] == [1, 2, 3]
-        assert line.values[-1] == [1, 2, 3]
+        assert line.n == 20
+        assert line.dim == 3
 
     def test_plane(self):
         for mesh, direction in itertools.product(self.meshes, ['x', 'y', 'z']):

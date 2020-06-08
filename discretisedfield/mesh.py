@@ -1211,9 +1211,6 @@ class Mesh:
         value, ``ipywidgets.SelectionSlider`` is returned for navigating
         interactive plots.
 
-        This method plots the points using ``k3d.points()`` function, so any
-        keyword arguments accepted by it can be passed.
-
         This method is based on ``ipywidgets.SelectionSlider``, so any keyword
         argument accepted by it can be passed.
 

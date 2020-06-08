@@ -15,12 +15,13 @@ class Line:
 
     This class implements the field sampled on the line. It is based on
     ``pandas.DataFrame``, which is generated from two lists: ``points`` and
-    ``values``. ``points`` is a list of length-3 tuples representing the points
-    on the line on which the field was sampled. On the other hand, ``values``
-    is a list of field values, which can be ``numbers.Real`` for scalar fields
-    or ``array_like`` for vector fields. During the initialisation of the
-    object, ``r`` column is added to the table and it represents the distance
-    of the point from the first point.
+    ``values`` of the same length. ``points`` is a list of length-3 tuples
+    representing the points on the line on which the field was sampled. On the
+    other hand, ``values`` is a list of field values, which are
+    ``numbers.Real`` for scalar fields or ``array_like`` for vector fields.
+    During the initialisation of the object, ``r`` column is added to
+    ``pandas.DataFrame`` and it represents the distance of the point from the
+    first point in ``points``.
 
     By default the columns where points data is stored are labelled as ``px``,
     ``py``, and ``pz``, storing the x, y, and z components of the point,
@@ -29,6 +30,10 @@ class Line:
     ``vz``. The default names of columns can be changed by passing
     ``point_columns`` and ``value_columns`` lists. Both lists are composed of
     strings and must have appropriate lengths.
+
+    The number of points can be retrieved as ``discretisedfield.Line.n`` and
+    the dimension of the value can be retrieved using
+    ``discretisedfield.Line.dim``.
 
     Data in the form of ``pandas.DataFrame`` can be exposed as ``line.data``.
 
@@ -65,11 +70,25 @@ class Line:
     >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
     >>> values = [1, 2, 3]  # scalar values
     >>> line = df.Line(points=points, values=values)
+    >>> line.n  # the number of points
+    3
+    >>> line.dim
+    1
+
+    2. Defining ``Line`` for vector values.
+
+    >>> points = [(0, 0, 0), (1, 1, 1), (2, 2, 2), (3, 3, 3)]
+    >>> values = [(0, 0, 1), (0, 0, 2), (0, 0, 3), (0, 0, 4)]  # vector values
+    >>> line = df.Line(points=points, values=values)
+    >>> line.n  # the number of points
+    4
+    >>> line.dim
+    3
 
     """
     def __init__(self, points, values, point_columns=None, value_columns=None):
         if len(points) != len(values):
-            msg = (f'The number of points ({len(points)}) is not the same '
+            msg = (f'The number of points ({len(points)}) must be the same '
                    f'as the number of values ({len(values)}).')
             raise ValueError(msg)
 
@@ -100,6 +119,46 @@ class Line:
 
     @property
     def point_columns(self):
+        """The names of point columns.
+
+        This method returns a list of strings denoting the names of columns
+        storing three coordinates of points. Similarly, by assigning a list of
+        strings to this property, the columns can be renamed.
+
+        Parameters
+        ----------
+        val : list
+
+            Point column names used to rename them.
+
+        Returns
+        -------
+        list
+
+            List of point column names.
+
+        Raises
+        ------
+        ValueError
+
+            If a list of inappropriate length is passed.
+
+        Examples
+        --------
+        1. Getting and setting the column names.
+
+        >>> import discretisedfield as df
+        ...
+        >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
+        >>> values = [1, 2, 3]  # scalar values
+        >>> line = df.Line(points=points, values=values)
+        >>> line.point_columns
+        ['px', 'py', 'pz']
+        >>> line.point_columns = ['p0', 'p1', 'p2']
+        >>> line.data.columns
+        Index(['r', 'p0', 'p1', 'p2', 'v'], dtype='object')
+
+        """
         if not hasattr(self, '_point_columns'):
             return [f'p{i}' for i in dfu.axesdict.keys()]
         else:
@@ -118,8 +177,52 @@ class Line:
 
     @property
     def value_columns(self):
+        """The names of value columns.
+
+        This method returns a list of strings denoting the names of columns
+        storing values. The length of the list is the same as the dimension of
+        the value. Similarly, by assigning a list of strings to this property,
+        the columns can be renamed.
+
+        Parameters
+        ----------
+        val : list
+
+            Value column names used to rename them.
+
+        Returns
+        -------
+        list
+
+            List of value column names.
+
+        Raises
+        ------
+        ValueError
+
+            If a list of inappropriate length is passed.
+
+        Examples
+        --------
+        1. Getting and setting the column names.
+
+        >>> import discretisedfield as df
+        ...
+        >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
+        >>> values = [1, 2, 3]  # scalar values
+        >>> line = df.Line(points=points, values=values)
+        >>> line.value_columns
+        ['v']
+        >>> line.value_columns = ['my_interesting_value']
+        >>> line.data.columns
+        Index(['r', 'px', 'py', 'pz', 'my_interesting_value'], dtype='object')
+
+        """
         if not hasattr(self, '_value_columns'):
-            return [f'v{i}' for i in list(dfu.axesdict.keys())[:self.dim]]
+            if self.dim == 1:
+                return ['v']
+            else:
+                return [f'v{i}' for i in list(dfu.axesdict.keys())[:self.dim]]
         else:
             return self._value_columns
 
@@ -133,14 +236,6 @@ class Line:
         self.data = self.data.rename(dict(zip(self.value_columns, val)),
                                      axis=1)
         self._value_columns = val
-
-    @property
-    def points(self):
-        return self.data[self.point_columns].to_numpy().tolist()
-
-    @property
-    def values(self):
-        return self.data[self.value_columns].to_numpy().tolist()
 
     @property
     def length(self):
@@ -171,23 +266,50 @@ class Line:
         return self.data['r'].iloc[-1]
 
     def __repr__(self):
+        """Representation string.
+
+        Returns
+        -------
+        str
+
+            Representation string.
+
+        Example
+        -------
+        1. Getting representation string.
+
+        >>> import discretisedfield as df
+        ...
+        >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
+        >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
+        >>> line = df.Line(points=points, values=values)
+        >>> repr(line)
+        '...
+
+        """
         return repr(self.data)
 
     def mpl(self, ax=None, figsize=None, yaxis=None, xlim=None,
             multiplier=None, filename=None, **kwargs):
-        """Plots the values on the line.
+        """Line values plot.
 
-        If ``ax`` is not passed, axes will be created automaticaly. In that
-        case, the figure size can be changed using ``figsize``. It is often the
-        case that the region size is small (e.g. on a nanoscale) or very large
-        (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
-        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6,
-        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
+        This method plots the values (scalar or individual components) as a
+        function of the distance ``r``. ``mpl`` adds the plot to
+        ``matplotlib.axes.Axes`` passed via ``ax`` argument. If ``ax`` is not
+        passed, ``matplotlib.axes.Axes`` object is created automatically and
+        the size of a figure can be specified using ``figsize``. To choose
+        particular value columns to be plotted ``yaxis`` can be passed as a
+        list of column names. The range of ``r``values on the horizontal axis
+        can be defined by passing a lenth-2 tuple. It is often the case that
+        the line length is small (e.g. on a nanoscale) or very large (e.g. in
+        units of kilometers). Accordingly, ``multiplier`` can be passed as
+        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
+        6,...). According to that value, the horizontal axis will be scaled and
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all points will be divided by :math:`1\\,\\text{nm}` and
+        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally. If ``filename``
-        is passed, figure is saved.
+        is not passed, the best one is calculated internally. The plot can be
+        saved as a PDF when ``filename`` is passed.
 
         This method plots the mesh using ``matplotlib.pyplot.plot()`` function,
         so any keyword arguments accepted by it can be passed.
@@ -196,27 +318,34 @@ class Line:
         ----------
         ax : matplotlib.axes.Axes, optional
 
-            Axes to which line plot should be added. Defaults to ``None`` - new
-            axes will be created in figure with size defined as ``figsize``.
+            Axes to which the field plot is added. Defaults to ``None`` - axes
+            are created internally.
 
-        figsize : (2,) tuple, optional
+        figsize : tuple, optional
 
-            Length-2 tuple passed to ``matplotlib.pyplot.figure()`` to create a
-            figure and axes if ``ax=None``. Defaults to ``None``.
+            The size of a created figure if ``ax`` is not passed. Defaults to
+            ``None``.
+
+        yaxis : list, optional
+
+            A list of value columns to be plotted.
+
+        xlim : tuple
+
+            A length-2 tuple setting the limits of the horizontal axis.
 
         multiplier : numbers.Real, optional
 
             ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
             a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
             value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the line points will be
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
             divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
+            be used as axis labels. Defaults to ``None``.
 
-        filename: str
+        filename : str, optional
 
-            Filename to which the plot is saved.
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Examples
         --------
@@ -257,6 +386,46 @@ class Line:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def slider(self, multiplier=None, **kwargs):
+        """Slider for interactive plotting.
+
+        Based on the values in the ``r`` column,
+        ``ipywidgets.SelectionRangeSlider`` is returned for navigating
+        interactive plots.
+
+        This method is based on ``ipywidgets.SelectionRangeSlider``, so any
+        keyword argument accepted by it can be passed.
+
+        Parameters
+        ----------
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the values will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the slider points will
+            be divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units
+            will be used in the description. If ``multiplier`` is not passed,
+            the optimum one is computed internally. Defaults to ``None``.
+
+        Returns
+        -------
+        ipywidgets.SelectionRangeSlider
+
+            ``r`` range slider.
+
+        Example
+        -------
+        1. Get the slider for the horizontal axis.
+
+        >>> import discretisedfield as df
+        ...
+        >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
+        >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
+        >>> line = df.Line(points=points, values=values)
+        >>> line.slider()
+        SelectionRangeSlider(...)
+
+        """
         if multiplier is None:
             multiplier = uu.si_multiplier(self.length)
 
@@ -270,7 +439,34 @@ class Line:
                                                description=slider_description,
                                                **kwargs)
 
-    def multipleselector(self, **kwargs):
+    def selector(self, **kwargs):
+        """Selection list for interactive plotting.
+
+        Based on the value columns, ``ipywidgets.SelectMultiple`` widget is
+        returned for selecting the value columns to be plotted.
+
+        This method is based on ``ipywidgets.SelectMultiple``, so any
+        keyword argument accepted by it can be passed.
+
+        Returns
+        -------
+        ipywidgets.SelectMultiple
+
+            Selection list.
+
+        Example
+        -------
+        1. Get the widget for selecting value columns.
+
+        >>> import discretisedfield as df
+        ...
+        >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
+        >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
+        >>> line = df.Line(points=points, values=values)
+        >>> line.selector()
+        SelectMultiple(...)
+
+        """
         return ipywidgets.SelectMultiple(options=self.value_columns,
                                          value=self.value_columns,
                                          rows=3,
