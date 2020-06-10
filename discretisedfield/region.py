@@ -377,7 +377,7 @@ class Region:
         else:
             return True
 
-    def mpl(self, ax=None, figsize=None, color='C0', multiplier=None,
+    def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[0], multiplier=None,
             filename=None, **kwargs):
         """Plots the region using ``matplotlib``.
 
@@ -391,14 +391,14 @@ class Region:
         :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
         6,...). According to that value, the axes will be scaled and
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
+        passed, all points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
         is not passed, the best one is calculated internally. The plot can be
         saved as a PDF when ``filename`` is passed.
 
-        This method plots the region using ``matplotlib.pyplot.plot``
-        function, so any keyword arguments accepted by it can be passed (for
-        instance, ``linewidth``, ``linestyle``, etc.).
+        This method is based on ``matplotlib.pyplot.plot`` function, so any
+        keyword arguments accepted by it can be passed (for instance,
+        ``linewidth``, ``linestyle``, etc.).
 
         Parameters
         ----------
@@ -412,18 +412,14 @@ class Region:
             The size of a created figure if ``ax`` is not passed. Defaults to
             ``None``.
 
-        color : int, str, tuple
+        color : int, str, tuple, optional
 
             A valid ``matplotlib`` color for lines depicting the region.
+            Defaults to ``'C0'``.
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. Defaults to ``None``.
+            Axes multiplier. Defaults to ``None``.
 
         filename : str, optional
 
@@ -464,22 +460,23 @@ class Region:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def k3d(self, plot=None, color=5010096, multiplier=None, **kwargs):
+    def k3d(self, plot=None, color=dfu.cp_int[0], multiplier=None, **kwargs):
         """Plots the region using ``k3d``.
 
-        If ``plot`` is not passed, ``k3d.plot`` object is created automaticaly.
-        The colour of the region can be specified using ``color``. It is often
-        the case that the region size is small (e.g. on a nanoscale) or very
-        large (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
-        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6,
-        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the best one is calculated internally.
+        If ``plot`` is not passed, ``k3d.plot`` object is created
+        automatically. The colour of the region can be specified using
+        ``color``. It is often the case that the region size is small (e.g. on
+        a nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all points will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
 
-        This method plots the region using ``k3d.voxels`` function, so any
-        keyword arguments accepted by it can be passed (e.g. ``wireframe``).
+        This method is based on ``k3d.voxels`` function, so any keyword
+        arguments accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
@@ -494,12 +491,7 @@ class Region:
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. Defaults to ``None``.
+            Axes multiplier. Defaults to ``None``.
 
         Examples
         --------

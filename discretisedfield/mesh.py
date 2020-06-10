@@ -3,7 +3,6 @@ import itertools
 import ipywidgets
 import collections
 import numpy as np
-import seaborn as sns
 import discretisedfield as df
 import ubermagutil.units as uu
 import matplotlib.pyplot as plt
@@ -12,63 +11,66 @@ import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
 
 
-# TODO: add descriptor for bc
-
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
+               bc=ts.Typed(expected_type=str),
                subregions=ts.Dictionary(
                    key_descriptor=ts.Name(),
                    value_descriptor=ts.Typed(expected_type=df.Region),
                    allow_empty=True))
 class Mesh:
-    """Finite difference cubic mesh.
+    """Finite difference mesh.
 
     Mesh discretises cubic ``discretisedfield.Region``, passed as ``region``,
     using a regular finite difference mesh. Since cubic region spans between
     two points :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`, these
     points can be passed as ``p1`` and ``p2``, instead of passing
     ``discretisedfield.Region`` object. In this case
-    ``discretisedfield.Region`` is created internally, based on points ``p1``
-    and ``p2``. Either ``region`` or ``p1`` and ``p2`` must be passed, not
-    both. The region is discretised using a finite difference cell, whose
-    dimensions are defined with ``cell``. Alternatively, the domain can be
-    discretised by passing the number of discretisation cells ``n`` in all
-    three dimensions. Either ``cell`` or ``n`` should be passed to discretise
-    the region, not both. Periodic boundary conditions can be specified by
-    passing ``bc`` argument as an iterable containing one or more elements from
-    ``{'x', 'y', 'z'}``. Neumann or Dirichlet boundary conditions are defined
-    by passing a string. If it is necessary to define subregions in the mesh, a
-    dictionary can be passed as ``subregions``. More precisely, dictionary keys
-    are strings (as valid Python variable names), whereas values are
-    ``discretisedfield.Region`` objects.
+    ``discretisedfield.Region`` is created internally. Either ``region`` or
+    ``p1`` and ``p2`` must be passed, not both. The region is discretised using
+    a finite difference cell, whose dimensions are defined with ``cell``.
+    Alternatively, the domain can be discretised by passing the number of
+    discretisation cells ``n`` in all three dimensions. Either ``cell`` or
+    ``n`` should be passed to discretise the region, not both. Periodic
+    boundary conditions can be specified by passing ``bc`` argument as a string
+    containing one or more characters from ``{'x', 'y', 'z'}`` set (e.g.
+    ``'x'``, ``'yz'``, ``'xyz'``). Neumann or Dirichlet boundary conditions are
+    defined by passing ``'neumann'`` or ``dirichlet`` string. Neumann and
+    Dirichlett boundary conditions are still experimental. If it is necessary
+    to define subregions in the mesh, a dictionary can be passed as
+    ``subregions``. More precisely, dictionary keys are strings (as valid
+    Python variable names), whereas values are ``discretisedfield.Region``
+    objects. Subregions are not checked internally, so it is users
+    responsibility to make sure subregions are well defined.
 
     In order to properly define a mesh, mesh region must be an aggregate of
-    discretisation cells.
+    discretisation cells. Otherwise, ``ValueError`` is raised.
 
     Parameters
     ----------
     region : discretisedfield.Region, optional
 
         Cubic region to be discretised on a regular mesh. Either ``region`` or
-        ``p1`` and ``p2`` should be defined, not both.
+        ``p1`` and ``p2`` should be defined, not both. Defaults to ``None``.
 
-    p1/p2 : (3,) array_like, optional
+    p1 / p2 : (3,) array_like, optional
 
         Points between which the mesh region spans :math:`\\mathbf{p} = (p_{x},
         p_{y}, p_{z})`. Either ``region`` or ``p1`` and ``p2`` should be
-        defined, not both.
+        defined, not both. Defaults to ``None``.
 
     cell : (3,) array_like, optional
 
         Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`. Either ``cell``
-        or ``n`` should be defined, not both.
+        or ``n`` should be defined, not both. Defaults to ``None``.
 
     n : (3,) array_like, optional
 
         The number of discretisation cells :math:`(n_{x}, n_{y}, n_{z})`.
-        Either ``cell`` or ``n`` should be defined, not both.
+        Either ``cell`` or ``n`` should be defined, not both. Defaults to
+        ``None``.
 
     bc : str, optional
 
@@ -76,13 +78,14 @@ class Mesh:
         consisting of one or more characters ``'x'``, ``'y'``, or ``'z'``,
         denoting the direction(s) along which the mesh is periodic. In the case
         of Neumann or Dirichlet boundary condition, string ``'neumann'`` or
-        ``'dirichlet'`` is passed. Defaults to empty string.
+        ``'dirichlet'`` is passed. Defaults to an empty string.
 
     subregions : dict, optional
 
         A dictionary defining subregions in the mesh. The keys of the
-        dictionary are the region names (str), whereas the values are
-        ``discretisedfield.Region`` objects.
+        dictionary are the region names (``str``) as valid Python variable
+        names, whereas the values are ``discretisedfield.Region`` objects.
+        Defaults to an empty dictionary.
 
     Raises
     ------
@@ -115,7 +118,8 @@ class Mesh:
     >>> mesh
     Mesh(...)
 
-    3. Defining a mesh with periodic boundary conditions in x and y directions.
+    3. Defining a mesh with periodic boundary conditions in :math:`x` and
+    :math:`y` directions.
 
     >>> bc = 'xy'
     >>> region = df.Region(p1=p1, p2=p2)
@@ -147,13 +151,13 @@ class Mesh:
 
     """
     def __init__(self, region=None, p1=None, p2=None, n=None, cell=None,
-                 bc='', subregions={}):
+                 bc='', subregions=dict()):
         if region is not None and p1 is None and p2 is None:
             self.region = region
         elif region is None and p1 is not None and p2 is not None:
             self.region = df.Region(p1=p1, p2=p2)
         else:
-            msg = ('Either region or p1 and p2 must be passed, not both.')
+            msg = 'Either region or p1 and p2 can be passed, not both.'
             raise ValueError(msg)
 
         if cell is not None and n is None:
@@ -165,7 +169,7 @@ class Mesh:
             cell = np.divide(self.region.edges, self.n).astype(float)
             self.cell = dfu.array2tuple(cell)
         else:
-            msg = ('Either n or cell must be passed, not both.')
+            msg = 'Either n or cell can be passed, not both.'
             raise ValueError(msg)
 
         # Check if the mesh region is an aggregate of the discretisation cell.
@@ -227,7 +231,7 @@ class Mesh:
 
         Examples
         --------
-        1. Getting the origin of the mesh.
+        1. Getting the mesh origin.
 
         >>> import discretisedfield as df
         ...
@@ -236,7 +240,6 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region, cell=cell)
-        ...
         >>> mesh.origin
         (0.5, 0.5, 0.5)
 
@@ -274,7 +277,7 @@ class Mesh:
             yield tuple(reversed(index))
 
     def __iter__(self):
-        """Generator yielding coordinates of all mesh cell centres.
+        """Generator yielding coordinates of discretisation cells.
 
         The discretisation cell's coordinate corresponds to its centre point.
 
@@ -321,7 +324,7 @@ class Mesh:
         ----------
         other : discretisedfield.Mesh
 
-            Mesh compared to ``self``.
+            Second operand.
 
         Returns
         -------
@@ -383,7 +386,7 @@ class Mesh:
                 f'bc=\'{self.bc}\', subregions={self.subregions})')
 
     def index2point(self, index):
-        """Convert cell's index to the its centre point coordinate.
+        """Convert cell's index to its coordinate.
 
         Parameters
         ----------
@@ -395,8 +398,7 @@ class Mesh:
         -------
         (3,) tuple
 
-            The cell's centre point :math:`\\mathbf{p} = (p_{x}, p_{y},
-            p_{z})`.
+            The cell's coordinate :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Raises
         ------
@@ -432,7 +434,7 @@ class Mesh:
         return dfu.array2tuple(point)
 
     def point2index(self, point):
-        """Convert point to the index of a cell which contains it.
+        """Convert point to the index of a cell which contains that point.
 
         Parameters
         ----------
@@ -539,28 +541,27 @@ class Mesh:
         # Remove duplicates and preserve order.
         return list(collections.OrderedDict.fromkeys(nghbrs))
 
-    def line(self, p1, p2, n=100):
+    def line(self, p1, p2, n):
         """Line generator.
 
-        Given two points ``p1`` and ``p2``, ``n`` points are generated:
+        Given two points ``p1`` and ``p2`` line is defined and ``n`` points on
+        that line are generated and yielded in ``n`` iterations:
 
         .. math::
 
            \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} - \\mathbf{p}_{1}}{n-1},
            \\text{for}\\, i = 0, ..., n-1
 
-        and this method yields :math:`\\mathbf{r}_{i}` in :math:`n` iterations.
-
         Parameters
         ----------
-        p1/p2 : (3,) array_like
+        p1 / p2 : (3,) array_like
 
-            Points between which the line is generated :math:`\\mathbf{p} =
+            Points between which the line is defined :math:`\\mathbf{p} =
             (p_{x}, p_{y}, p_{z})`.
 
-        n : int, optional
+        n : int
 
-            Number of points on the line. Defaults to 100.
+            Number of points on the line.
 
         Yields
         ------
@@ -628,7 +629,7 @@ class Mesh:
 
         Examples
         --------
-        1. Extracting the plane mesh at a specific point.
+        1. Extracting the plane mesh at a specific point (``y=1``).
 
         >>> import discretisedfield as df
         ...
@@ -639,11 +640,11 @@ class Mesh:
         ...
         >>> plane_mesh = mesh.plane(y=1)
 
-        2. Extracting the plane mesh at the mesh region centre.
+        2. Extracting the xy-plane mesh at the mesh region centre.
 
         >>> plane_mesh = mesh.plane('z')
 
-        3. Specifying the number of points.
+        3. Specifying the number of points on the plane.
 
         >>> plane_mesh = mesh.plane('z', n=(3, 3))
 
@@ -655,8 +656,8 @@ class Mesh:
                 msg = f'Multiple args ({args}) passed.'
                 raise ValueError(msg)
 
-            # Only planeaxis is provided via args and the point is defined the
-            # centre of the sample.
+            # Only planeaxis is provided via args and the point is defined as
+            # the centre of the sample.
             planeaxis = dfu.axesdict[args[0]]
             point = self.region.centre[planeaxis]
         elif kwargs and not args:
@@ -668,7 +669,7 @@ class Mesh:
             planeaxis = dfu.axesdict[planeaxis]
 
             # Check if point is outside the mesh region.
-            test_point = list(self.region.centre)
+            test_point = list(self.region.centre)  # make it mutable
             test_point[planeaxis] = point
             if test_point not in self.region:
                 msg = f'Point {test_point} is outside the mesh region.'
@@ -718,7 +719,7 @@ class Mesh:
         ----------
         key : str
 
-            The key of a region in ``subregions`` dictionary.
+            The key (name) of a subregion in ``subregions`` dictionary.
 
         Returns
         -------
@@ -759,13 +760,13 @@ class Mesh:
     def pad(self, pad_width):
         """Mesh padding.
 
-        This method extends the mesh by adding more cells in chosen direction.
-        The way in which the mesh is going to padded is defined by passing
-        ``pad_width`` dictionary. The keys of the dictionary are the directions
-        (axes), e.g. ``'x'``, ``'y'``, or ``'z'``, whereas the values are the
-        tuples of length 2. The first integer in the tuple is the number of
-        cells added in the negative direction, and the second integer is the
-        number of cells added in the positive direction.
+        This method extends the mesh by adding (padding) discretisation cells
+        in chosen direction. The way in which the mesh is going to be padded is
+        defined by passing ``pad_width`` dictionary. The keys of the dictionary
+        are the directions (axes), e.g. ``'x'``, ``'y'``, or ``'z'``, whereas
+        the values are the tuples of length 2. The first integer in the tuple
+        is the number of cells added in the negative direction, and the second
+        integer is the number of cells added in the positive direction.
 
         Parameters
         ----------
@@ -796,13 +797,14 @@ class Mesh:
         ...
         >>> mesh.region.edges
         (100, 100, 100)
-        >>> padded_mesh = mesh.pad({'x': (1, 1), 'y': (1, 1)})
+        >>> padded_mesh = mesh.pad({'x': (1, 1), 'y': (1, 1), 'z': (0, 1)})
         >>> padded_mesh.region.edges
-        (120, 120, 100)
+        (120, 120, 110)
         >>> padded_mesh.n
-        (12, 12, 10)
+        (12, 12, 11)
 
         """
+        # Convert to np.ndarray to allow operations on them.
         pmin = np.array(self.region.pmin)
         pmax = np.array(self.region.pmax)
         for direction in pad_width.keys():
@@ -812,67 +814,57 @@ class Mesh:
 
         return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
 
-    def mpl(self, ax=None, figsize=None, multiplier=None,
-            color_palette=dfu.color_palette('deep', 10, 'rgb')[:2],
-            linewidth=2, filename=None, **kwargs):
-        """Plots the mesh region and discretisation cell using ``matplotlib``
-        3D plot.
+    def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[:2], multiplier=None,
+            filename=None, **kwargs):
+        """Plots the mesh region and discretisation cell using ``matplotlib``.
 
-        If ``ax`` is not passed, axes will be created automaticaly. In that
-        case, the figure size can be changed using ``figsize``. It is often the
+        If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        automatically and the size of a figure can be specified using
+        ``figsize``. The color of the lines depicting the region and the
+        discretisation cell can be specified using ``color`` length-2 tuple,
+        where the first element is the colour of the region and the second
+        element is the colour of the discretisation cell. Colours defined in
+        ``color`` tuple must be valid ``matplotlib`` colours. It is often the
         case that the region size is small (e.g. on a nanoscale) or very large
         (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
-        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6,
+        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6,
         -3, 0, 3, 6,...). According to that value, the axes will be scaled and
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
+        passed, all points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally. The colours of
-        lines depicting the region and the discretisation cell can be
-        determined using ``color_palette`` as an RGB-tuple. More precisely, the
-        first element is the colour of the region, whereas the second value is
-        the colour of the discretisation cell. Similarly, linewidth can be set
-        up by passing ``linewidth``. If ``filename`` is passed, figure is
-        saved.
+        is not passed, the best one is calculated internally. The plot can be
+        saved as a PDF when ``filename`` is passed.
 
-        This method plots the mesh using ``matplotlib.pyplot.plot()`` function,
-        so any keyword arguments accepted by it can be passed.
+        This method is based on ``matplotlib.pyplot.plot`` function, so any
+        keyword arguments accepted by it can be passed (for instance,
+        ``linewidth``, ``linestyle``, etc.).
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
 
-            Axes to which mesh plot should be added. Defaults to ``None`` - new
-            axes will be created in figure with size defined as ``figsize``.
+            Axes to which the field plot is added. Defaults to ``None`` - axes
+            are created internally.
 
         figsize : (2,) tuple, optional
 
-            Length-2 tuple passed to ``matplotlib.pyplot.figure()`` to create a
-            figure and axes if ``ax=None``. Defaults to ``None``.
+            The size of a created figure if ``ax`` is not passed. Defaults to
+            ``None``.
+
+        color : (2,) tuple, optional
+
+            The first element is the colour of the region and the second
+            element is the colour of the discretisation cell. Colours defined
+            in ``color`` tuple must be valid ``matplotlib`` colours. Defaults
+            to ``('C0', 'C1')``.
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
+            Axes multiplier. Defaults to ``None``.
 
-        color_palette : (2,) tuple, optional
+        filename : str, optional
 
-            An RGB length-2 list, whose elements are length-3 tuples of RGB
-            colours. Defaults to
-            ``seaborn.color_pallette(palette='deep')[:2]``.
-
-        linewidth : float, optional
-
-            Width of the line. Defaults to 2.
-
-        filename: str
-
-            Filename to which the plot is saved.
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Examples
         --------
@@ -898,68 +890,58 @@ class Mesh:
 
         cell_region = df.Region(p1=self.region.pmin,
                                 p2=np.add(self.region.pmin, self.cell))
-        self.region.mpl(ax=ax, multiplier=multiplier, color=color_palette[0],
-                        linewidth=linewidth, **kwargs)
-        cell_region.mpl(ax=ax, multiplier=multiplier, color=color_palette[1],
-                        linewidth=linewidth, **kwargs)
+        self.region.mpl(ax=ax, color=color[0], multiplier=multiplier, **kwargs)
+        cell_region.mpl(ax=ax, color=color[1], multiplier=multiplier, **kwargs)
 
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight')
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def mpl_subregions(self, ax=None, figsize=None, multiplier=None,
-                       color_palette=dfu.color_palette('deep', 10, 'rgb'),
-                       linewidth=2, **kwargs):
-        """Plots the mesh subregions using ``matplotlib`` 3D plot.
+    def mpl_subregions(self, ax=None, figsize=None, color=dfu.cp_hex,
+                       multiplier=None, filename=None, **kwargs):
+        """Plots mesh subregions using ``matplotlib``.
 
-        If ``ax`` is not passed, axes will be created automaticaly. In that
-        case, the figure size can be changed using ``figsize``. It is often the
-        case that the mesh region size is small (e.g. on a nanoscale) or very
-        large (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
-        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6,
-        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
+        If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        automatically and the size of a figure can be specified using
+        ``figsize``. The colors of the lines depicting the subregions ``color``
+        list, where which is used in a cycle. Colours defined in ``color``
+        tuple must be valid ``matplotlib`` colours. It is often the case that
+        the region size is small (e.g. on a nanoscale) or very large (e.g. in
+        units of kilometers). Accordingly, ``multiplier`` can be passed as
+        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
+        6,...). According to that value, the axes will be scaled and
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
+        passed, all points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally. The colours of
-        lines depicting the region and the discretisation cell can be
-        determined using ``color_palette`` as a list of RGB-tuples. Similarly,
-        linewidth can be set up by passing ``linewidth``.
+        is not passed, the best one is calculated internally. The plot can be
+        saved as a PDF when ``filename`` is passed.
 
-        This method plots the mesh using ``matplotlib.pyplot.plot()`` function,
-        so any keyword arguments accepted by it can be passed.
+        This method is based on ``matplotlib.pyplot.plot`` function, so any
+        keyword arguments accepted by it can be passed (for instance,
+        ``linewidth``, ``linestyle``, etc.).
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
 
-            Axes to which subregions plot should be added. Defaults to ``None``
-            - new axes will be created in figure with size defined as
-            ``figsize``.
+            Axes to which the field plot is added. Defaults to ``None`` - axes
+            are created internally.
 
         figsize : (2,) tuple, optional
 
-            Length-2 tuple passed to ``matplotlib.pyplot.figure()`` to create a
-            figure and axes if ``ax=None``. Defaults to ``None``.
+            The size of a created figure if ``ax`` is not passed. Defaults to
+            ``None``.
+
+        color : array_like, optional
+
+            The list of valid ``matplotlib`` colors which are used in cycle.
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
+            Axis multiplier. Defaults to ``None``.
 
-        color_palette : list, optional
+        filename : str, optional
 
-            A list of RGB tuples, whose elements are length-3 tuples of RGB
-            colours. Defaults to
-            ``seaborn.color_pallette(palette='deep')``.
-
-        linewidth : float, optional
-
-            Width of the line. Defaults to 2.
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Examples
         --------
@@ -985,55 +967,47 @@ class Mesh:
 
         for i, subregion in enumerate(self.subregions.values()):
             subregion.mpl(ax=ax, multiplier=multiplier,
-                          color=color_palette[i % len(color_palette)],
-                          linewidth=linewidth,
-                          **kwargs)
+                          color=color[i % len(color)], **kwargs)
 
-    def k3d(self, plot=None, multiplier=None,
-            color_palette=dfu.color_palette('deep', 2, 'int'), **kwargs):
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+
+    def k3d(self, plot=None, color=dfu.cp_int[:2], multiplier=None,
+            **kwargs):
         """Plots the mesh region and discretisation cell using ``k3d`` voxels.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
-        It is often the case that the mesh region size is small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, the mesh points will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the optimum one is
-        computed internally. The colours of the region and the discretisation
-        cell can be determined using ``color_palette`` as a list of integers,
-        where the first value is the colour of the mesh region and the second
-        value is the colour of the discretisation cell.
+        If ``plot`` is not passed, ``k3d`` plot will be created automatically.
+        The color of the regions depicting the region and the discretisation
+        cell can be specified using ``color`` length-2 tuple, where the first
+        element is the colour of the region and the second element is the
+        colour of the discretisation cell. It is often the case that the mesh
+        region size is small (e.g. on a nanoscale) or very large (e.g. in units
+        of kilometeres). Accordingly, ``multiplier`` can be passed as
+        :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6, -3, 0, 3,
+        6,...). According to that value, the axes will be scaled and
+        appropriate units shown. For instance, if ``multiplier=1e-9`` is
+        passed, the mesh points will be divided by :math:`1\\,\\text{nm}` and
+        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
+        is not passed, the optimum one is computed internally.
 
-        This method plots the region using ``k3d.voxels()`` function, so any
-        keyword arguments accepted by it can be passed.
+        This method is based on ``k3d.voxels`` function, so any keyword
+        arguments accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which mesh plot should be added. Defaults to ``None`` - new
-            plot will be created.
+            Plot to which the mesh plot is added. Defaults to ``None`` -
+            plot is created internally.
+
+        color : (2,) array_like, optional
+
+            Colour of the region and discretisation cell. Defaults to the
+            default discretisedfield palette.
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
-
-        color_palette : list, optional
-
-            A length-2 list, whose elements are integers of colours. Defaults
-            to ``seaborn.color_pallette(palette='deep')[:2]``. The first
-            element is the colour of the mesh region, whereas the second colour
-            is the colour of the discretisation cell.
-
+            Axes multiplier. Defaults to ``None``.
 
         Examples
         --------
@@ -1049,23 +1023,35 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.mpl`
 
         """
-        plot_array = np.ones(tuple(reversed(self.n)))
+        if plot is None:
+            plot = k3d.plot()
+            plot.display()
+
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.region.edges)
+
+        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+
+        plot_array = np.ones(tuple(reversed(self.n))).astype(np.uint8)
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
 
-        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
-                                              self.region.edges)
+        bounds = [i for sublist in
+                  zip(np.divide(self.region.pmin, multiplier),
+                      np.divide(self.region.pmax, multiplier))
+                  for i in sublist]
 
-        plot += dfu.voxels(plot_array, pmin=self.region.pmin,
-                           pmax=self.region.pmax, color_palette=color_palette,
-                           multiplier=multiplier, **kwargs)
+        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
+                           outlines=False, **kwargs)
 
-    def k3d_subregions(self, plot=None, multiplier=None,
-                       color_palette=dfu.color_palette('deep', 10, 'int'),
+        plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]
+
+    def k3d_subregions(self, plot=None, color=dfu.cp_int, multiplier=None,
                        **kwargs):
-        """Plots the mesh subregions using ``k3d`` voxels.
+        """Plots mesh subregions using ``k3d``.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
-        It is often the case that the mesh region size is small (e.g. on a
+        If ``plot`` is not passed, ``k3d`` plot will be created automatically.
+        The color of the subregions can be specified using ``color`` list. It
+        is often the case that the mesh region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
         ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
         multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
@@ -1073,33 +1059,26 @@ class Mesh:
         ``multiplier=1e-9`` is passed, the mesh points will be divided by
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the optimum one is
-        computed internally. The colours of the subregions can be determined
-        using ``color_palette`` as a list of integers.
+        computed internally.
 
-        This method plots the region using ``k3d.voxels()`` function, so any
-        keyword arguments accepted by it can be passed.
+        This method is based on ``k3d.voxels`` function, so any keyword
+        arguments accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which mesh subregions plot should be added. Defaults to
-            ``None`` - new plot will be created.
+            Plot to which the mesh plot is added. Defaults to ``None`` -
+            plot is created internally.
+
+        color : array_like, optional
+
+            Colour of the subregions. Defaults to the default discretisedfield
+            palette.
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
-
-        color_palette : list, optional
-
-            List of integers for the colours of subregions. Defaults to
-            ``seaborn.color_pallette(palette='deep')``.
+            Axes multiplier. Defaults to ``None``.
 
         Examples
         --------
@@ -1117,118 +1096,52 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.mpl_subregions`
 
         """
+        if plot is None:
+            plot = k3d.plot()
+            plot.display()
+
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.region.edges)
+
+        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+
         plot_array = np.zeros(self.n)
         for index in self.indices:
-            for i, region in enumerate(self.subregions.values()):
-                if self.index2point(index) in region:
+            for i, subregion in enumerate(self.subregions.values()):
+                if self.index2point(index) in subregion:
                     # +1 to avoid 0 value - invisible voxel
-                    plot_array[index] = (i % len(color_palette)) + 1
-        plot_array = np.swapaxes(plot_array, 0, 2)  # swap axes for k3d.voxels
+                    plot_array[index] = (i % len(color)) + 1
+        # swap axes for k3d.voxels and astypr to avoid k3d warning
+        plot_array = np.swapaxes(plot_array, 0, 2).astype(np.uint8)
 
-        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
-                                              self.region.edges)
+        bounds = [i for sublist in
+                  zip(np.divide(self.region.pmin, multiplier),
+                      np.divide(self.region.pmax, multiplier))
+                  for i in sublist]
 
-        plot += dfu.voxels(plot_array, pmin=self.region.pmin,
-                           pmax=self.region.pmax, color_palette=color_palette,
-                           multiplier=multiplier, **kwargs)
+        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
+                           outlines=False, **kwargs)
 
-    def k3d_points(self, plot=None, point_size=None, multiplier=None,
-                   color=dfu.color_palette('deep', 1, 'int')[0], **kwargs):
-        """Plots the points at discretisation cell centres using ``k3d``.
-
-        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
-        It is often the case that the mesh region size is small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, the mesh points will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the optimum one is
-        computed internally. The colour of points can be determined using
-        ``color`` as an integer, whereas the size of the points can be passed
-        using ``point_size``. If ``point_size`` is not passed, optimum size is
-        computed intenally.
-
-        This method plots the points using ``k3d.points()`` function, so any
-        keyword arguments accepted by it can be passed.
-
-        Parameters
-        ----------
-        plot : k3d.Plot, optional
-
-            Plot to which mesh points should be added. Defaults to ``None`` -
-            new plot will be created.
-
-        multiplier : numbers.Real, optional
-
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
-
-        point_size : float, optional
-
-            Size of points.
-
-        color : int, optional
-
-            Colour of points. Defaults to
-            ``seaborn.color_pallette(palette='deep')[0]``.
-
-        Examples
-        --------
-        1. Visualising the mesh points using ``k3d``.
-
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> mesh.k3d_points()
-        Plot(...)
-
-        """
-        coordinates = np.array(list(self))
-
-        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
-                                              self.region.edges)
-
-        if point_size is None:
-            # If undefined, the size of the point is 1/4 of the smallest cell
-            # dimension.
-            point_size = np.divide(self.cell, multiplier).min() / 4
-
-        plot += dfu.points(coordinates, color=color, point_size=point_size,
-                           multiplier=multiplier, **kwargs)
+        plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]
 
     def slider(self, axis, multiplier=None, **kwargs):
-        """Slider for interactive plotting.
+        """Axis slider.
 
-        For ``axis``, ``'x'``, ``'y'``, or ``'z'`` can be passed. Based on that
-        value, ``ipywidgets.SelectionSlider`` is returned for navigating
-        interactive plots.
+        For ``axis``, ``'x'``, ``'y'``, or ``'z'`` should be passed. Based on
+        that value, ``ipywidgets.SelectionSlider`` is returned.
 
         This method is based on ``ipywidgets.SelectionSlider``, so any keyword
         argument accepted by it can be passed.
 
         Parameters
         ----------
-        axis : struct
+        axis : str
 
             Axis for which the slider is returned.
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the slider points will
-            be divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units
-            will be used in the description. If ``multiplier`` is not passed,
-            the optimum one is computed internally. Defaults to ``None``.
+            Axis multiplier. Defaults to ``None``.
 
         Returns
         -------
@@ -1272,8 +1185,8 @@ class Mesh:
                                           description=slider_description,
                                           **kwargs)
 
-    def axis_selection(self, widget='dropdown', description='axis'):
-        """Axis selection widget.
+    def axis_selector(self, widget='dropdown', description='axis'):
+        """Axis selector.
 
         For ``widget='dropdown'``, ``ipywidgets.Dropdown`` is returned, whereas
         for ``widget='radiobuttons'``, ``ipywidgets.RadioButtons`` is returned.
@@ -1304,18 +1217,17 @@ class Mesh:
         >>> p2 = (10e-9, 10e-9, 10e-9)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> mesh.axis_selection(widget='radiobuttons')
+        >>> mesh.axis_selector(widget='radiobuttons')
         RadioButtons(...)
 
         """
         if widget.lower() == 'dropdown':
-            return ipywidgets.Dropdown(options=list('xyz'),
-                                       value='z',
-                                       description=description)
+            widget_cls = ipywidgets.Dropdown
         elif widget == 'radiobuttons':
-            return ipywidgets.RadioButtons(options=list('xyz'),
-                                           value='z',
-                                           description=description)
+            widget_cls = ipywidgets.RadioButtons
         else:
             msg = f'Widget {widget} is not supported.'
             raise ValueError(msg)
+
+        return widget_cls(options=list('xyz'), value='z',
+                          description=description)

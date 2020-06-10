@@ -606,12 +606,6 @@ class TestMesh:
             mesh.k3d()
             mesh.plane('x').k3d()
 
-    def test_k3d_points(self):
-        for p1, p2, n, cell in self.valid_args:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-            mesh.k3d_points()
-            mesh.plane('y').k3d_points()
-
     def test_k3d_mpl_subregions(self):
         p1 = (0, 0, 0)
         p2 = (100, 80, 10)
@@ -646,21 +640,21 @@ class TestMesh:
         z_slider = mesh.slider('z', multiplier=1e3)
         assert isinstance(x_slider, ipywidgets.SelectionSlider)
 
-    def test_axis_selection(self):
+    def test_axis_selector(self):
         p1 = (-10e-9, -5e-9, 10e-9)
         p2 = (10e-9, 5e-9, 0)
         cell = (1e-9, 2.5e-9, 1e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         check_mesh(mesh)
 
-        axis_widget = mesh.axis_selection()
+        axis_widget = mesh.axis_selector()
         assert isinstance(axis_widget, ipywidgets.Dropdown)
 
-        axis_widget = mesh.axis_selection(widget='radiobuttons')
+        axis_widget = mesh.axis_selector(widget='radiobuttons')
         assert isinstance(axis_widget, ipywidgets.RadioButtons)
 
-        axis_widget = mesh.axis_selection(description='something')
+        axis_widget = mesh.axis_selector(description='something')
         assert isinstance(axis_widget, ipywidgets.Dropdown)
 
         with pytest.raises(ValueError):
-            axis_widget = mesh.axis_selection(widget='something')
+            axis_widget = mesh.axis_selector(widget='something')

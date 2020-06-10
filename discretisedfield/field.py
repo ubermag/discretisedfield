@@ -3733,13 +3733,12 @@ class Field:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
 
-    def k3d_nonzero(self, plot=None, multiplier=None,
-                    color=dfu.color_palette('deep', 10, 'int')[0], field=None,
-                    interactive=False, **kwargs):
-        """Plots the mesh discretisation cells where the value of the field is
-        not zero using ``k3d`` voxels.
+    def k3d_nonzero(self, plot=None, color=dfu.cp_int[0], multiplier=None,
+                    interactive=False, field=None, **kwargs):
+        """Plots the discretisation cells where the value of the field is not
+        zero using ``k3d``.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
+        If ``plot`` is not passed, ``k3d`` plot will be created automatically.
         It is often the case that the mesh region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
         ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
@@ -4086,7 +4085,8 @@ class Field:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> mesh.k3d_points()
+        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> field.k3d_vectors()
         Plot(...)
 
         """

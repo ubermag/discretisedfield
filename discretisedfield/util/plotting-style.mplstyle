@@ -4,7 +4,7 @@ axes.facecolor: EAEAF2
 axes.labelcolor: .15
 axes.labelsize: 15
 axes.linewidth: 0
-axes.prop_cycle: cycler('color', ['4C72B0', '55A868', 'C44E52', '8172B2', 'CCB974', '64B5CD'])
+axes.prop_cycle: cycler('color', ['4C72B0', 'DD8452', '55A868', 'C44E52', '8172B3', '937860', 'DA8BC3', '8C8C8C', 'CCB974', '64C5CD'])
 axes.titlesize: 20
 
 figure.facecolor: white
