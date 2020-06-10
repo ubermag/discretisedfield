@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
 
+# Color pallete as hex and int.
 cp_hex = ['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#8172b3',
           '#937860', '#da8bc3', '#8c8c8c', '#ccb974', '#64b5cd']
 cp_int = [5010096, 14517330, 5613672, 12865106, 8483507,

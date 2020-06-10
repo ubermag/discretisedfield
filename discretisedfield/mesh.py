@@ -217,37 +217,6 @@ class Mesh:
         return int(np.prod(self.n))
 
     @property
-    def origin(self):
-        """The minimum discretisation cell coordinate in the mesh.
-
-        This property returns the coordinate of the discretisation cell
-        associated to ``region.pmin``.
-
-        Returns
-        -------
-        tuple
-
-            Origin of the mesh.
-
-        Examples
-        --------
-        1. Getting the mesh origin.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 3, 2)
-        >>> cell = (1, 1, 1)
-        >>> region = df.Region(p1=p1, p2=p2)
-        >>> mesh = df.Mesh(region, cell=cell)
-        >>> mesh.origin
-        (0.5, 0.5, 0.5)
-
-        """
-        return dfu.array2tuple(np.add(self.region.pmin,
-                                      np.multiply(self.cell, 0.5)))
-
-    @property
     def indices(self):
         """Generator yielding indices of all mesh cells.
 
@@ -1111,6 +1080,7 @@ class Mesh:
                 if self.index2point(index) in subregion:
                     # +1 to avoid 0 value - invisible voxel
                     plot_array[index] = (i % len(color)) + 1
+                    break
         # swap axes for k3d.voxels and astypr to avoid k3d warning
         plot_array = np.swapaxes(plot_array, 0, 2).astype(np.uint8)
 
@@ -1124,11 +1094,12 @@ class Mesh:
 
         plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]
 
-    def slider(self, axis, multiplier=None, **kwargs):
+    def slider(self, axis, multiplier=None, description=None, **kwargs):
         """Axis slider.
 
-        For ``axis``, ``'x'``, ``'y'``, or ``'z'`` should be passed. Based on
-        that value, ``ipywidgets.SelectionSlider`` is returned.
+        For ``axis``, ``'x'``, ``'y'``, or ``'z'`` is passed. Based on that
+        value, ``ipywidgets.SelectionSlider`` is returned. Axis multiplier can
+        be changed via ``multiplier``.
 
         This method is based on ``ipywidgets.SelectionSlider``, so any keyword
         argument accepted by it can be passed.
@@ -1137,7 +1108,8 @@ class Mesh:
         ----------
         axis : str
 
-            Axis for which the slider is returned.
+            Axis for which the slider is returned (``'x'``, ``'y'``, or
+            ``'z'``).
 
         multiplier : numbers.Real, optional
 
@@ -1157,6 +1129,7 @@ class Mesh:
         >>> p2 = (10e-9, 10e-9, 10e-9)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
         >>> mesh.slider('x')
         SelectionSlider(...)
 
@@ -1167,14 +1140,15 @@ class Mesh:
         if multiplier is None:
             multiplier = uu.si_multiplier(self.region.edges[axis])
 
-        slider_min = self.region.pmin[axis] + self.cell[axis]/2
-        slider_max = self.region.pmax[axis] - self.cell[axis]/2
+        slider_min = self.index2point((0, 0, 0))[axis]
+        slider_max = self.index2point(np.subtract(self.n, 1))[axis]
         slider_step = self.cell[axis]
-        slider_description = (f'{dfu.raxesdict[axis]} '
-                              f'({uu.rsi_prefixes[multiplier]}m)')
+        if description is None:
+            description = (f'{dfu.raxesdict[axis]} '
+                           f'({uu.rsi_prefixes[multiplier]}m)')
 
         values = np.arange(slider_min, slider_max+1e-20, slider_step)
-        labels = np.around(values / multiplier, decimals=3)
+        labels = np.around(values/multiplier, decimals=3)
         options = list(zip(labels, values))
 
         # Select middle element for slider value
@@ -1182,7 +1156,7 @@ class Mesh:
 
         return ipywidgets.SelectionSlider(options=options,
                                           value=slider_value,
-                                          description=slider_description,
+                                          description=description,
                                           **kwargs)
 
     def axis_selector(self, widget='dropdown', description='axis'):
@@ -1190,8 +1164,7 @@ class Mesh:
 
         For ``widget='dropdown'``, ``ipywidgets.Dropdown`` is returned, whereas
         for ``widget='radiobuttons'``, ``ipywidgets.RadioButtons`` is returned.
-        Returned widget can later be used for navigating plots. Description of
-        the widget can be passed using ``description``.
+        Default widget description can be changed using ``description``.
 
         Parameters
         ----------
@@ -1217,6 +1190,7 @@ class Mesh:
         >>> p2 = (10e-9, 10e-9, 10e-9)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
         >>> mesh.axis_selector(widget='radiobuttons')
         RadioButtons(...)
 
@@ -1229,5 +1203,7 @@ class Mesh:
             msg = f'Widget {widget} is not supported.'
             raise ValueError(msg)
 
-        return widget_cls(options=list('xyz'), value='z',
-                          description=description)
+        return widget_cls(options=list(dfu.axesdict.keys()),
+                          value='z',
+                          description=description,
+                          disabled=False)

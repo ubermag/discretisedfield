@@ -55,7 +55,6 @@ class Region:
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
 
-        # Is any edge length of the region equal to zero?
         if np.equal(self.edges, 0).any():
             msg = f'One of the region edges ({self.edges}) is zero.'
             raise ValueError(msg)
@@ -330,7 +329,7 @@ class Region:
             return False
 
     def __contains__(self, point):
-        """Determine whether ``point`` belongs to the region.
+        """Determine if ``point`` is in the region.
 
         Point is considered to be in the region if
 
@@ -379,33 +378,34 @@ class Region:
 
     def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[0], multiplier=None,
             filename=None, **kwargs):
-        """Plots the region using ``matplotlib``.
+        """``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
-        ``figsize``. The color of the lines depicting the region can be
-        specified using ``color`` argument, which must be a valid
-        ``matplotlib`` color. It is often the case that the region size is
-        small (e.g. on a nanoscale) or very large (e.g. in units of
-        kilometers). Accordingly, ``multiplier`` can be passed as
-        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
-        6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the best one is calculated internally. The plot can be
-        saved as a PDF when ``filename`` is passed.
+        ``figsize``. The colour of lines depicting the region can be specified
+        using ``color`` argument, which must be a valid ``matplotlib`` color.
+        The plot is saved in PDF-format if ``filename`` is passed.
 
-        This method is based on ``matplotlib.pyplot.plot`` function, so any
-        keyword arguments accepted by it can be passed (for instance,
-        ``linewidth``, ``linestyle``, etc.).
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all axes will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
+
+        This method is based on ``matplotlib.pyplot.plot``, so any keyword
+        arguments accepted by it can be passed (for instance, ``linewidth``,
+        ``linestyle``, etc.).
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
 
-            Axes to which the field plot is added. Defaults to ``None`` - axes
-            are created internally.
+            Axes to which the plot is added. Defaults to ``None`` - axes are
+            created internally.
 
         figsize : (2,) tuple, optional
 
@@ -415,7 +415,7 @@ class Region:
         color : int, str, tuple, optional
 
             A valid ``matplotlib`` color for lines depicting the region.
-            Defaults to ``'C0'``.
+            Defaults to #4c72b0.
 
         multiplier : numbers.Real, optional
 
@@ -461,29 +461,31 @@ class Region:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def k3d(self, plot=None, color=dfu.cp_int[0], multiplier=None, **kwargs):
-        """Plots the region using ``k3d``.
+        """``k3d`` plot.
 
-        If ``plot`` is not passed, ``k3d.plot`` object is created
+        If ``plot`` is not passed, ``k3d.Plot`` object is created
         automatically. The colour of the region can be specified using
-        ``color``. It is often the case that the region size is small (e.g. on
-        a nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``color`` argument.
+
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
         ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
         axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all points will be divided by
+        ``multiplier=1e-9`` is passed, all axes will be divided by
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the best one is
         calculated internally.
 
-        This method is based on ``k3d.voxels`` function, so any keyword
-        arguments accepted by it can be passed (e.g. ``wireframe``).
+        This method is based on ``k3d.voxels``, so any keyword arguments
+        accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which the region plot is added. Defaults to ``None`` -
-            plot is created internally.
+            Plot to which the plot is added. Defaults to ``None`` - plot is
+            created internally.
 
         color : int, optional
 
