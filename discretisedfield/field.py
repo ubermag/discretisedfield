@@ -3325,7 +3325,7 @@ class Field:
             Axes to which the field plot is added. Defaults to ``None`` - axes
             are created internally.
 
-        figsize : tuple, optional
+        figsize : (2,) tuple, optional
 
             The size of a created figure if ``ax`` is not passed. Defaults to
             ``None``.

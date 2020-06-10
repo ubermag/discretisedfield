@@ -1,7 +1,6 @@
 import k3d
 import random
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
@@ -18,9 +17,9 @@ class Region:
 
     Parameters
     ----------
-    p1/p2 : (3,) array_like
+    p1 / p2 : (3,) array_like
 
-        Points between which the cuboid region spans :math:`\\mathbf{p} =
+        Points between which the cuboid region spans :math:`\\mathbf{p}_{i} =
         (p_{x}, p_{y}, p_{z})`.
 
     Raises
@@ -58,7 +57,7 @@ class Region:
 
         # Is any edge length of the region equal to zero?
         if np.equal(self.edges, 0).any():
-            msg = f'One of the region edges {self.edges} is zero.'
+            msg = f'One of the region edges ({self.edges}) is zero.'
             raise ValueError(msg)
 
     @property
@@ -147,7 +146,7 @@ class Region:
 
         Examples
         --------
-        1. Getting edge lengths.
+        1. Getting edge lengths of the region.
 
         >>> import discretisedfield as df
         ...
@@ -195,7 +194,7 @@ class Region:
 
     @property
     def volume(self):
-        """Volume of the region.
+        """Region volume.
 
         It is computed by multiplying edge lengths of the region:
 
@@ -227,9 +226,9 @@ class Region:
     def random_point(self):
         """Generate a random point in the region.
 
-        The use of this function is mostly limited for writing tests for
-        packages based on ``discretisedfield``. This method is not a property.
-        Therefore, it is called as ``discretisedfield.Region.random_point()``.
+        The use of this function is mostly for writing tests for packages based
+        on ``discretisedfield``. This method is not a property. Therefore, it
+        is called as ``discretisedfield.Region.random_point()``.
 
         Returns
         -------
@@ -295,11 +294,13 @@ class Region:
         Parameters
         ----------
         other : discretisedfield.Region
-            Region compared to ``self``.
+
+            Second operand.
 
         Returns
         -------
         bool
+
             ``True`` if two regions are equal and ``False`` otherwise.
 
         Examples
@@ -309,7 +310,7 @@ class Region:
         >>> import discretisedfield as df
         ...
         >>> region1 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
-        >>> region2 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
+        >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
         >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
         >>> region1 == region2
         True
@@ -376,63 +377,57 @@ class Region:
         else:
             return True
 
-    def mpl(self, ax=None, figsize=None, multiplier=None,
-            color=dfu.color_palette('deep', 10, 'rgb')[0],
-            linewidth=2, filename=None, **kwargs):
-        """Plots the region using ``matplotlib`` 3D plot.
+    def mpl(self, ax=None, figsize=None, color='C0', multiplier=None,
+            filename=None, **kwargs):
+        """Plots the region using ``matplotlib``.
 
-        If ``ax`` is not passed, axes will be created automaticaly. In that
-        case, the figure size can be changed using ``figsize``. It is often the
-        case that the region size is small (e.g. on a nanoscale) or very large
-        (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
-        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6,
-        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
+        If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        automatically and the size of a figure can be specified using
+        ``figsize``. The color of the lines depicting the region can be
+        specified using ``color`` argument, which must be a valid
+        ``matplotlib`` color. It is often the case that the region size is
+        small (e.g. on a nanoscale) or very large (e.g. in units of
+        kilometers). Accordingly, ``multiplier`` can be passed as
+        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
+        6,...). According to that value, the axes will be scaled and
         appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, the region points will be divided by :math:`1\\,\\text{nm}` and
+        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
         :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally. The colour of
-        lines depicting the region can be determined using ``color`` as an
-        RGB-tuple. Similarly, linewidth can be set up by passing ``linewidth``.
-        If ``filename`` is passed, figure is saved.
+        is not passed, the best one is calculated internally. The plot can be
+        saved as a PDF when ``filename`` is passed.
 
-        This method plots the region using ``matplotlib.pyplot.plot()``
-        function, so any keyword arguments accepted by it can be passed.
+        This method plots the region using ``matplotlib.pyplot.plot``
+        function, so any keyword arguments accepted by it can be passed (for
+        instance, ``linewidth``, ``linestyle``, etc.).
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
 
-            Axes to which region plot should be added. Defaults to ``None`` -
-            new axes will be created in figure with size defined as
-            ``figsize``.
+            Axes to which the field plot is added. Defaults to ``None`` - axes
+            are created internally.
 
         figsize : (2,) tuple, optional
 
-            Length-2 tuple passed to ``matplotlib.pyplot.figure()`` to create a
-            figure and axes if ``ax=None``. Defaults to ``None``.
+            The size of a created figure if ``ax`` is not passed. Defaults to
+            ``None``.
+
+        color : int, str, tuple
+
+            A valid ``matplotlib`` color for lines depicting the region.
 
         multiplier : numbers.Real, optional
 
             ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
             a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
             value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the region points will
-            be divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units
-            will be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
+            instance, if ``multiplier=1e-9`` is passed, the points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to ``None``.
 
-        color : (3,) tuple, optional
+        filename : str, optional
 
-            An RGB tuple. Defaults to
-            ``seaborn.color_pallette(palette='deep')[0]``.
-
-        linewidth : float, optional
-
-            Width of the line. Defaults to `2.
-
-        filename: str
-
-            Filename to which the plot is saved.
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Examples
         --------
@@ -453,58 +448,58 @@ class Region:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.edges)
 
+        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+
         pmin = np.divide(self.pmin, multiplier)
         pmax = np.divide(self.pmax, multiplier)
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
 
-        dfu.plot_box(ax=ax, pmin=pmin, pmax=pmax, color=color,
-                     linewidth=linewidth, **kwargs)
-        ax.set(xlabel='x'+unit, ylabel='y'+unit, zlabel='z'+unit)
-        ax.figure.tight_layout()
+        dfu.plot_box(ax=ax, pmin=pmin, pmax=pmax, color=color, **kwargs)
+
+        ax.set(xlabel=f'x {unit}', ylabel=f'y {unit}', zlabel=f'z {unit}')
+
+        # Overwrite default plotting parameters.
+        ax.set_facecolor('#ffffff')  # white face color
+        ax.tick_params(axis='both', which='major', pad=0)  # no pad for ticks
 
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight')
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def k3d(self, plot=None, multiplier=None,
-            color=dfu.color_palette('deep', 1, 'int'), **kwargs):
-        """Plots the region using ``k3d`` voxels.
+    def k3d(self, plot=None, color=5010096, multiplier=None, **kwargs):
+        """Plots the region using ``k3d``.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
-        It is often the case that the region size is small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, the region points will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the optimum one is
-        computed internally. The colour used for depicting the region can be
-        determined using ``color`` as ``int``.
+        If ``plot`` is not passed, ``k3d.plot`` object is created automaticaly.
+        The colour of the region can be specified using ``color``. It is often
+        the case that the region size is small (e.g. on a nanoscale) or very
+        large (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
+        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6,
+        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
+        appropriate units shown. For instance, if ``multiplier=1e-9`` is
+        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
+        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
+        is not passed, the best one is calculated internally.
 
-        This method plots the region using ``k3d.voxels()`` function, so any
-        keyword arguments accepted by it can be passed.
+        This method plots the region using ``k3d.voxels`` function, so any
+        keyword arguments accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which region plot should be added. Defaults to ``None`` -
-            new plot will be created.
+            Plot to which the region plot is added. Defaults to ``None`` -
+            plot is created internally.
+
+        color : int, optional
+
+            Colour of the region. Defaults to ``5010096``.
 
         multiplier : numbers.Real, optional
 
             ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
             a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
             value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the region points will
-            be divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units
-            will be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
-
-        color : int, optional
-
-            Colour of the region. Defaults to
-            ``seaborn.color_pallette(palette='deep')[0]``.
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to ``None``.
 
         Examples
         --------
@@ -519,10 +514,23 @@ class Region:
         Plot(...)
 
         """
-        plot_array = np.ones((1, 1, 1))
+        if plot is None:
+            plot = k3d.plot()
+            plot.display()
 
-        plot, multiplier = dfu.k3d_parameters(plot, multiplier, self.edges)
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.edges)
 
-        plot += dfu.voxels(plot_array, pmin=self.pmin, pmax=self.pmax,
-                           color_palette=color, multiplier=multiplier,
-                           **kwargs)
+        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+
+        plot_array = np.ones((1, 1, 1)).astype(np.uint8)  # avoid k3d warning
+
+        bounds = [i for sublist in
+                  zip(np.divide(self.pmin, multiplier),
+                      np.divide(self.pmax, multiplier))
+                  for i in sublist]
+
+        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
+                           outlines=False, **kwargs)
+
+        plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]

@@ -177,9 +177,8 @@ def voxels(plot_array, pmin, pmax, color_palette, multiplier=1, outlines=False,
            **kwargs):
     plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
 
-    xmin, ymin, zmin = np.divide(pmin, multiplier)
-    xmax, ymax, zmax = np.divide(pmax, multiplier)
-    bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+    bounds = [i for zl in zip(np.divide(pmin, multiplier),
+                              np.divide(pmax, multiplier)) for i in zl]
 
     return k3d.voxels(plot_array, color_map=color_palette, bounds=bounds,
                       outlines=outlines, **kwargs)

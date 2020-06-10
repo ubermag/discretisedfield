@@ -35,7 +35,7 @@ text.color: .15
 xtick.color: .15
 xtick.direction: out
 xtick.labelsize: 13
-xtick.major.pad: 7
+xtick.major.pad: 5
 xtick.major.size: 0
 xtick.major.width: 1
 xtick.minor.size: 0
@@ -44,7 +44,7 @@ xtick.minor.width: .5
 ytick.color: .15
 ytick.direction: out
 ytick.labelsize: 13
-ytick.major.pad: 7
+ytick.major.pad: 5
 ytick.major.size: 0
 ytick.major.width: 1
 ytick.minor.size: 0
