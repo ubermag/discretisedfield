@@ -53,7 +53,7 @@ def test_ovf2vtk():
 
     # Number of input and output files do not match.
     cmd = [sys.executable, '-m', 'discretisedfield.ovf2vtk',
-           '-i', 'file1.omf' 'file2.omf',
+           '-i', 'file1.omf', 'file2.omf',
            '-o', 'file1.vtk']
     proc_return = subprocess.run(cmd)
     assert proc_return.returncode != 0

@@ -3698,6 +3698,9 @@ class Field:
             else:
                 scalar_field = self.__class__(self.mesh, dim=1,
                                               value=scalar_field)
+            if vector_field is not None:
+                vector_field = self.__class__(self.mesh, dim=3,
+                                              value=vector_field)
         if self.dim == 3:
             if vector_field is None:
                 vector_field = self

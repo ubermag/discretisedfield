@@ -1714,9 +1714,9 @@ class TestField:
                                vector_cmap='hsv', vector_clim=(0, 1e6),
                                multiplier=1e-12)
 
-        # All arguments for a vector field
+        # All arguments for a scalar field
         self.pf.z.plane('x').mpl(figsize=(12, 6),
-                                 scalar_field=self.pf.plane('x').angle,
+                                 scalar_field=self.pf.x,
                                  scalar_colorbar_label='something',
                                  scalar_cmap='twilight', vector_field=self.pf,
                                  vector_color_field=self.pf.y,
