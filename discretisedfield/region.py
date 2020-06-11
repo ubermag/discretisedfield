@@ -415,7 +415,7 @@ class Region:
         color : int, str, tuple, optional
 
             A valid ``matplotlib`` color for lines depicting the region.
-            Defaults to #4c72b0.
+            Defaults to the default color palette.
 
         multiplier : numbers.Real, optional
 
@@ -489,7 +489,7 @@ class Region:
 
         color : int, optional
 
-            Colour of the region. Defaults to ``5010096``.
+            Colour of the region. Defaults to the default color palette.
 
         multiplier : numbers.Real, optional
 

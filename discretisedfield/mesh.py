@@ -785,47 +785,46 @@ class Mesh:
 
     def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[:2], multiplier=None,
             filename=None, **kwargs):
-        """Plots the mesh region and discretisation cell using ``matplotlib``.
+        """``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
-        ``figsize``. The color of the lines depicting the region and the
+        ``figsize``. The color of lines depicting the region and the
         discretisation cell can be specified using ``color`` length-2 tuple,
         where the first element is the colour of the region and the second
-        element is the colour of the discretisation cell. Colours defined in
-        ``color`` tuple must be valid ``matplotlib`` colours. It is often the
-        case that the region size is small (e.g. on a nanoscale) or very large
-        (e.g. in units of kilometers). Accordingly, ``multiplier`` can be
-        passed as :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6,
-        -3, 0, 3, 6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the best one is calculated internally. The plot can be
-        saved as a PDF when ``filename`` is passed.
+        element is the colour of the discretisation cell. The plot is saved in
+        PDF-format if ``filename`` is passed.
 
-        This method is based on ``matplotlib.pyplot.plot`` function, so any
-        keyword arguments accepted by it can be passed (for instance,
-        ``linewidth``, ``linestyle``, etc.).
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all axes will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
+
+        This method is based on ``matplotlib.pyplot.plot``, so any keyword
+        arguments accepted by it can be passed (for instance, ``linewidth``,
+        ``linestyle``, etc.).
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
 
-            Axes to which the field plot is added. Defaults to ``None`` - axes
-            are created internally.
+            Axes to which the plot is added. Defaults to ``None`` - axes are
+            created internally.
 
         figsize : (2,) tuple, optional
 
             The size of a created figure if ``ax`` is not passed. Defaults to
             ``None``.
 
-        color : (2,) tuple, optional
+        color : (2,) array_like
 
-            The first element is the colour of the region and the second
-            element is the colour of the discretisation cell. Colours defined
-            in ``color`` tuple must be valid ``matplotlib`` colours. Defaults
-            to ``('C0', 'C1')``.
+            A valid ``matplotlib`` color for lines depicting the region.
+            Defaults to the default color palette.
 
         multiplier : numbers.Real, optional
 
@@ -845,6 +844,7 @@ class Mesh:
         >>> p2 = (50e-9, 50e-9, 10e-9)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region=region, n=(50, 50, 5))
+        ...
         >>> mesh.mpl()
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.k3d`
@@ -867,46 +867,47 @@ class Mesh:
 
     def mpl_subregions(self, ax=None, figsize=None, color=dfu.cp_hex,
                        multiplier=None, filename=None, **kwargs):
-        """Plots mesh subregions using ``matplotlib``.
+        """``matplotlib`` subregions plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
-        ``figsize``. The colors of the lines depicting the subregions ``color``
-        list, where which is used in a cycle. Colours defined in ``color``
-        tuple must be valid ``matplotlib`` colours. It is often the case that
-        the region size is small (e.g. on a nanoscale) or very large (e.g. in
-        units of kilometers). Accordingly, ``multiplier`` can be passed as
-        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
-        6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the best one is calculated internally. The plot can be
-        saved as a PDF when ``filename`` is passed.
+        ``figsize``. The color of lines depicting subregions and can be
+        specified using ``color`` list. The plot is saved in PDF-format if
+        ``filename`` is passed.
 
-        This method is based on ``matplotlib.pyplot.plot`` function, so any
-        keyword arguments accepted by it can be passed (for instance,
-        ``linewidth``, ``linestyle``, etc.).
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all axes will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
+
+        This method is based on ``matplotlib.pyplot.plot``, so any keyword
+        arguments accepted by it can be passed (for instance, ``linewidth``,
+        ``linestyle``, etc.).
 
         Parameters
         ----------
         ax : matplotlib.axes.Axes, optional
 
-            Axes to which the field plot is added. Defaults to ``None`` - axes
-            are created internally.
+            Axes to which the plot is added. Defaults to ``None`` - axes are
+            created internally.
 
         figsize : (2,) tuple, optional
 
             The size of a created figure if ``ax`` is not passed. Defaults to
             ``None``.
 
-        color : array_like, optional
+        color : array_like
 
-            The list of valid ``matplotlib`` colors which are used in cycle.
+            Subregion colours. Defaults to the default color palette.
 
         multiplier : numbers.Real, optional
 
-            Axis multiplier. Defaults to ``None``.
+            Axes multiplier. Defaults to ``None``.
 
         filename : str, optional
 
@@ -922,6 +923,7 @@ class Mesh:
         >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
         ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+        ...
         >>> mesh.mpl_subregions()
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.k3d_subregions`
@@ -943,36 +945,38 @@ class Mesh:
 
     def k3d(self, plot=None, color=dfu.cp_int[:2], multiplier=None,
             **kwargs):
-        """Plots the mesh region and discretisation cell using ``k3d`` voxels.
+        """``k3d`` plot.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automatically.
-        The color of the regions depicting the region and the discretisation
-        cell can be specified using ``color`` length-2 tuple, where the first
-        element is the colour of the region and the second element is the
-        colour of the discretisation cell. It is often the case that the mesh
-        region size is small (e.g. on a nanoscale) or very large (e.g. in units
-        of kilometeres). Accordingly, ``multiplier`` can be passed as
-        :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6, -3, 0, 3,
-        6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, the mesh points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally.
+        If ``plot`` is not passed, ``k3d.Plot`` object is created
+        automatically. The color of the region and the discretisation cell can
+        be specified using ``color`` length-2 tuple, where the first element is
+        the colour of the region and the second element is the colour of the
+        discretisation cell.
 
-        This method is based on ``k3d.voxels`` function, so any keyword
-        arguments accepted by it can be passed (e.g. ``wireframe``).
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all axes will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
+
+        This method is based on ``k3d.voxels``, so any keyword arguments
+        accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which the mesh plot is added. Defaults to ``None`` -
-            plot is created internally.
+            Plot to which the plot is added. Defaults to ``None`` - plot is
+            created internally.
 
-        color : (2,) array_like, optional
+        color : (2,) array_like
 
-            Colour of the region and discretisation cell. Defaults to the
-            default discretisedfield palette.
+            Colour of the region and the discretisation cell. Defaults to the
+            default color palette.
 
         multiplier : numbers.Real, optional
 
@@ -986,6 +990,7 @@ class Mesh:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
         >>> mesh.k3d()
         Plot(...)
 
@@ -1016,34 +1021,35 @@ class Mesh:
 
     def k3d_subregions(self, plot=None, color=dfu.cp_int, multiplier=None,
                        **kwargs):
-        """Plots mesh subregions using ``k3d``.
+        """``k3d`` subregions plot.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automatically.
-        The color of the subregions can be specified using ``color`` list. It
-        is often the case that the mesh region size is small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
+        If ``plot`` is not passed, ``k3d.Plot`` object is created
+        automatically. The color of the subregions can be specified using
+        ``color``.
+
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
         ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
         multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
         axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, the mesh points will be divided by
+        ``multiplier=1e-9`` is passed, all axes will be divided by
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the optimum one is
-        computed internally.
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
 
-        This method is based on ``k3d.voxels`` function, so any keyword
-        arguments accepted by it can be passed (e.g. ``wireframe``).
+        This method is based on ``k3d.voxels``, so any keyword arguments
+        accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which the mesh plot is added. Defaults to ``None`` -
-            plot is created internally.
+            Plot to which the plot is added. Defaults to ``None`` - plot is
+            created internally.
 
-        color : array_like, optional
+        color : array_like
 
-            Colour of the subregions. Defaults to the default discretisedfield
-            palette.
+            Colour of the subregions. Defaults to the default color palette.
 
         multiplier : numbers.Real, optional
 
@@ -1059,6 +1065,7 @@ class Mesh:
         >>> subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 100, 100)),
         ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+        ...
         >>> mesh.k3d_subregions()
         Plot(...)
 
