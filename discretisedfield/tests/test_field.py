@@ -1651,12 +1651,12 @@ class TestField:
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
-            self.pf.mpl_scalar()  # not sliced
+            self.pf.x.mpl_scalar()  # not sliced
         with pytest.raises(ValueError) as excinfo:
             self.pf.plane('z').mpl_scalar()  # vector field
         with pytest.raises(ValueError) as excinfo:
             # wrong filter field
-            self.pf.plane('z').mpl_scalar(filter_field=self.pf)
+            self.pf.x.plane('z').mpl_scalar(filter_field=self.pf)
 
         plt.close('all')
 
@@ -1703,7 +1703,7 @@ class TestField:
         ax = fig.add_subplot(111)
         self.pf.x.plane('x', n=(3, 4)).mpl(ax=ax)
 
-        # All arguments
+        # All arguments for a vector field
         self.pf.plane('x').mpl(figsize=(12, 6),
                                scalar_field=self.pf.plane('x').angle,
                                scalar_colorbar_label='something',
@@ -1714,14 +1714,27 @@ class TestField:
                                vector_cmap='hsv', vector_clim=(0, 1e6),
                                multiplier=1e-12)
 
+        # All arguments for a vector field
+        self.pf.z.plane('x').mpl(figsize=(12, 6),
+                                 scalar_field=self.pf.plane('x').angle,
+                                 scalar_colorbar_label='something',
+                                 scalar_cmap='twilight', vector_field=self.pf,
+                                 vector_color_field=self.pf.y,
+                                 vector_color=True,
+                                 vector_colorbar=True,
+                                 vector_colorbar_label='vector',
+                                 vector_cmap='hsv', vector_clim=(0, 1e6),
+                                 multiplier=1e-12)
+
         # Saving plot
         filename = 'testfigure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
             self.pf.plane('x', n=(3, 4)).mpl(filename=tmpfilename)
 
-        # All exceptions are raised by submethods (mpl_scalaer and mpl_vector)
-        # and there is no need to test them here.
+        # Exception
+        with pytest.raises(ValueError):
+            self.pf.mpl()
 
         plt.close('all')
 
