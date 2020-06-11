@@ -1545,10 +1545,10 @@ class TestField:
         # (OVF1, OVF2) x (txt, bin4, bin8)
         filenames = ['oommf-ovf2-txt.omf',
                      'oommf-ovf2-bin4.omf',
-                     'oommf-ovf2-bin8.omf',]
-                     # 'oommf-ovf1-txt.omf',
-                     # 'oommf-ovf1-bin4.omf',
-                     # 'oommf-ovf1-bin8.omf']
+                     'oommf-ovf2-bin8.omf',
+                     'oommf-ovf1-txt.omf',
+                     'oommf-ovf1-bin4.omf',
+                     'oommf-ovf1-bin8.omf']
         dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
         for filename in filenames:
             omffilename = os.path.join(dirname, filename)
