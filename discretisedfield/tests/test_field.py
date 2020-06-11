@@ -161,9 +161,6 @@ class TestField:
 
         self.pf = df.Field(mesh, dim=3, value=value_fun, norm=norm_fun)
 
-        # Make one vector point out-of-plane
-        # self.pf.array[0, 0, 0, :] = (0, 0, 1)
-
     def test_init_valid_args(self):
         for mesh in self.meshes:
             for value in self.consts + self.sfuncs:
@@ -1762,10 +1759,18 @@ class TestField:
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.x.plane('z').k3d_nonzero(plot=plot,
+        self.pf.x.plane(z=0).k3d_nonzero(plot=plot,
                                          color=0xff00ff,
                                          multiplier=1e-6,
                                          interactive_field=self.pf)
+
+        # Continuation for interactive plot testing.
+        self.pf.x.plane(z=1e-9).k3d_nonzero(plot=plot,
+                                            color=0xff00ff,
+                                            multiplier=1e-6,
+                                            interactive_field=self.pf)
+
+        assert len(plot.objects) == 2
 
         with pytest.raises(ValueError) as excinfo:
             self.pf.k3d_nonzero()
@@ -1803,11 +1808,20 @@ class TestField:
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.y.k3d_scalar(plot=plot,
-                             filter_field=self.pf.norm,
-                             color=0xff00ff,
-                             multiplier=1e-6,
-                             interactive_field=self.pf)
+        self.pf.y.plane(z=0).k3d_scalar(plot=plot,
+                                        filter_field=self.pf.norm,
+                                        color=0xff00ff,
+                                        multiplier=1e-6,
+                                        interactive_field=self.pf)
+
+        # Continuation for interactive plot testing.
+        self.pf.y.plane(z=1e-9).k3d_scalar(plot=plot,
+                                           filter_field=self.pf.norm,
+                                           color=0xff00ff,
+                                           multiplier=1e-6,
+                                           interactive_field=self.pf)
+
+        assert len(plot.objects) == 2
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
@@ -1874,7 +1888,12 @@ class TestField:
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.k3d_vector(plot=plot)
+        self.pf.plane(z=0).k3d_vector(plot=plot, interactive_field=self.pf)
+
+        # Continuation for interactive plot testing.
+        self.pf.plane(z=1e-9).k3d_vector(plot=plot, interactive_field=self.pf)
+
+        assert len(plot.objects) == 3
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
