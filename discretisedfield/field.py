@@ -3116,7 +3116,7 @@ class Field:
                     # have to subtract the length of newline character from
                     # data_end.
                     if (data_end - data_start) % nbytes != 0:
-                        data_end -= len(nl)
+                        data_end -= (data_end - data_start) % nbytes
                     break
 
             listdata = list(struct.iter_unpack(formatstr,
