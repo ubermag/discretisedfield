@@ -124,6 +124,16 @@ class TestLine:
         assert line.data.columns.to_list() == ['r', 'a', 'b', 'c',
                                                'v0', 'v1', 'v2']
 
+        # Exceptions
+        points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
+        values = [(0, 1, 3), (-1, 0, 0), (-2.13, 0, 0)]
+        line = df.Line(points=points, values=values)
+
+        with pytest.raises(ValueError):
+            line.point_columns = ['a', 'b']
+        with pytest.raises(ValueError):
+            line.value_columns = ['a', 'b', 'c', 'd']
+
     def test_mpl(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 15e-9, 2e-9)
