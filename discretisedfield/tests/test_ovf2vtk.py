@@ -28,7 +28,7 @@ def test_ovf2vtk():
         f._writeovf(omftmpfilename, representation='bin8')
 
         cmd = [sys.executable, '-m', 'discretisedfield.ovf2vtk',
-               '--input', omftmpfilename]
+               '--input', omftmpfilename, '--output', vtktmpfilename]
         proc_return = subprocess.run(cmd)
         assert proc_return.returncode == 0
 

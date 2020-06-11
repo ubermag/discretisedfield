@@ -1556,7 +1556,7 @@ class TestField:
 
             if 'ovf2' in filename:
                 # The magnetisation is in the x-direction in OVF2 files.
-                assert f_read.x.average > 0.98
+                assert abs(f_read.orientation.x.average - 1) < 1e-2
             else:
                 # The norm of magnetisation is known.
                 assert abs(f_read.norm.average - 1261566.2610100) < 1e-3

@@ -3052,6 +3052,7 @@ class Field:
         mdatadict = dict()
 
         try:
+            # Encoding in open is important on Windows.
             with open(filename, 'r', encoding='utf-8') as ovffile:
                 lines = ovffile.readlines()
 
