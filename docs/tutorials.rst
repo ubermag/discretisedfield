@@ -3,10 +3,8 @@ Tutorials
 
 .. toctree::
    :maxdepth: 1
-   :numbered:
-   :caption: Contents:
 
-   ipynb/00-tutorial-installation-testing-upgrade
+   ipynb/installation-testing-upgrade
    ipynb/01-tutorial-defining-mesh
    ipynb/02-tutorial-mesh-properties
    ipynb/03-tutorial-defining-regions
@@ -19,5 +17,4 @@ Tutorials
    ipynb/10-tutorial-k3d-visualisation
    ipynb/11-tutorial-read-write
    ipynb/12-tutorial-ovf2vtk
-   ipynb/13-tutorial-other
-
+   ipynb/other
