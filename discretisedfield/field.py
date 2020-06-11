@@ -3045,23 +3045,122 @@ class Field:
         """
         # valuedim is not in OVF1 metadata and has to be extracted
         # from the data itself.
-        mdatalist = ['xmin', 'ymin', 'zmin',
-                     'xmax', 'ymax', 'zmax',
-                     'xstepsize', 'ystepsize', 'zstepsize',
-                     'valuedim']
+        # mdatalist = ['xmin', 'ymin', 'zmin',
+        #              'xmax', 'ymax', 'zmax',
+        #              'xstepsize', 'ystepsize', 'zstepsize',
+        #              'valuedim']
+        # mdatadict = dict()
+        #
+        # try:
+        #     with open(filename, 'r') as ovffile:
+        #         lines = ovffile.readlines()
+        #
+        #     mdatalines = list(filter(lambda s: s.startswith('#'), lines))
+        #     datalines = np.loadtxt(filter(lambda s: not s.startswith('#'),
+        #                                   lines))
+        #
+        #     if '1.0' in mdatalines[0]:
+        #         # valuedim is not in OVF1 file.
+        #         mdatadict['valuedim'] = datalines.shape[-1]
+        #
+        #     for line in mdatalines:
+        #         for mdatum in mdatalist:
+        #             if mdatum in line:
+        #                 mdatadict[mdatum] = float(line.split()[-1])
+        #                 break
+        #
+        # except UnicodeDecodeError:
+        #     with open(filename, 'rb') as ovffile:
+        #         f = ovffile.read()
+        #         lines = f.split(b'\n')
+        #
+        #     mdatalines = list(filter(lambda s: s.startswith(bytes('#',
+        #                                                           'utf-8')),
+        #                              lines))
+        #
+        #     if bytes('2.0', 'utf-8') in mdatalines[0]:
+        #         endian = '<'  # little-endian
+        #     elif bytes('1.0', 'utf-8') in mdatalines[0]:
+        #         endian = '>'  # big-endian
+        #
+        #     for line in mdatalines:
+        #         for mdatum in mdatalist:
+        #             if bytes(mdatum, 'utf-8') in line:
+        #                 mdatadict[mdatum] = float(line.split()[-1])
+        #                 break
+        #
+        #     header = b'# Begin: Data Binary '
+        #     data_start = f.find(header)
+        #     header = f[data_start:(data_start + len(header) + 1)]
+        #
+        #     data_start += len(header)
+        #     data_end = f.find(b'# End: Data Binary ')
+        #
+        #     if b'4' in header:
+        #         nbytes = 4
+        #         formatstr = endian + 'f'
+        #         checkvalue = 1234567.0
+        #     elif b'8' in header:
+        #         nbytes = 8
+        #         formatstr = endian + 'd'
+        #         checkvalue = 123456789012345.0
+        #
+        #     newlines = [b'\n\r', b'\r\n', b'\n']  # ordered by length
+        #     for nl in newlines:
+        #         if f.startswith(nl, data_start):
+        #             data_start += len(nl)
+        #             # There is a difference between files written by OOMMF and
+        #             # mumax3. OOMMF has a newline character before the "end
+        #             # metadata line', whereas mumax3 does not. Therefore if the
+        #             # length of the data stream is not a multiple of nbytes, we
+        #             # have to subtract the length of newline character from
+        #             # data_end.
+        #             if (data_end - data_start) % nbytes != 0:
+        #                 data_end -= len(nl)
+        #             break
+        #
+        #     listdata = list(struct.iter_unpack(formatstr,
+        #                                        f[data_start:data_end]))
+        #     datalines = np.array(listdata)
+        #
+        #     if datalines[0] != checkvalue:
+        #         # These two lines cannot be accessed via tests. Therefore, they
+        #         # are excluded from coverage.
+        #         msg = 'Error in checksum comparison.'  # pragma: no cover
+        #         raise AssertionError(msg)  # pragma: no cover
+        #
+        #     datalines = datalines[1:]
+        #
+        # p1 = (mdatadict[key] for key in ['xmin', 'ymin', 'zmin'])
+        # p2 = (mdatadict[key] for key in ['xmax', 'ymax', 'zmax'])
+        # cell = (mdatadict[key] for key in ['xstepsize', 'ystepsize',
+        #                                    'zstepsize'])
+        #
+        # region = df.Region(p1=p1, p2=p2)
+        # mesh = df.Mesh(region, cell=cell)
+        #
+        # # valuedim is not in OVF1 file and for binary data it has to be
+        # # extracted here.
+        # if 'valuedim' not in mdatadict.keys():
+        #     mdatadict['valuedim'] = len(datalines) / len(mesh)
+        #
+        # r_tuple = (*tuple(reversed(mesh.n)), int(mdatadict['valuedim']))
+        # t_tuple = (*tuple(reversed(range(3))), 3)
+        #
+        # return cls(mesh, dim=int(mdatadict['valuedim']),
+        #            value=datalines.reshape(r_tuple).transpose(t_tuple))
+        mdatalist = ['xmin', 'ymin', 'zmin', 'xmax', 'ymax', 'zmax',
+                     'xstepsize', 'ystepsize', 'zstepsize', 'valuedim']
         mdatadict = dict()
 
         try:
-            with open(filename, 'r') as ovffile:
-                lines = ovffile.readlines()
+            with open(filename, 'r', encoding='utf-8') as ovffile:
+                f = ovffile.read()
+                lines = f.split('\n')
 
-            mdatalines = list(filter(lambda s: s.startswith('#'), lines))
+            mdatalines = filter(lambda s: s.startswith('#'), lines)
             datalines = np.loadtxt(filter(lambda s: not s.startswith('#'),
                                           lines))
-
-            if '1.0' in mdatalines[0]:
-                # valuedim is not in OVF1 file.
-                mdatadict['valuedim'] = datalines.shape[-1]
 
             for line in mdatalines:
                 for mdatum in mdatalist:
@@ -3074,14 +3173,8 @@ class Field:
                 f = ovffile.read()
                 lines = f.split(b'\n')
 
-            mdatalines = list(filter(lambda s: s.startswith(bytes('#',
-                                                                  'utf-8')),
-                                     lines))
-
-            if bytes('2.0', 'utf-8') in mdatalines[0]:
-                endian = '<'  # little-endian
-            elif bytes('1.0', 'utf-8') in mdatalines[0]:
-                endian = '>'  # big-endian
+            mdatalines = filter(lambda s: s.startswith(bytes('#', 'utf-8')),
+                                lines)
 
             for line in mdatalines:
                 for mdatum in mdatalist:
@@ -3098,11 +3191,11 @@ class Field:
 
             if b'4' in header:
                 nbytes = 4
-                formatstr = endian + 'f'
+                formatstr = '@f'
                 checkvalue = 1234567.0
             elif b'8' in header:
                 nbytes = 8
-                formatstr = endian + 'd'
+                formatstr = '@d'
                 checkvalue = 123456789012345.0
 
             newlines = [b'\n\r', b'\r\n', b'\n']  # ordered by length
@@ -3112,11 +3205,10 @@ class Field:
                     # There is a difference between files written by OOMMF and
                     # mumax3. OOMMF has a newline character before the "end
                     # metadata line', whereas mumax3 does not. Therefore if the
-                    # length of the data stream is not a multiple of nbytes, we
-                    # have to subtract the length of newline character from
-                    # data_end.
+                    # length of data stream is not a multiple of nbytes, we
+                    # subtract the newline character from data_end.
                     if (data_end - data_start) % nbytes != 0:
-                        data_end -= (data_end - data_start) % nbytes
+                        data_end -= len(nl)
                     break
 
             listdata = list(struct.iter_unpack(formatstr,
@@ -3126,7 +3218,7 @@ class Field:
             if datalines[0] != checkvalue:
                 # These two lines cannot be accessed via tests. Therefore, they
                 # are excluded from coverage.
-                msg = 'Error in checksum comparison.'  # pragma: no cover
+                msg = 'Binary Data cannot be read.'  # pragma: no cover
                 raise AssertionError(msg)  # pragma: no cover
 
             datalines = datalines[1:]
@@ -3135,19 +3227,14 @@ class Field:
         p2 = (mdatadict[key] for key in ['xmax', 'ymax', 'zmax'])
         cell = (mdatadict[key] for key in ['xstepsize', 'ystepsize',
                                            'zstepsize'])
+        dim = int(mdatadict['valuedim'])
 
-        region = df.Region(p1=p1, p2=p2)
-        mesh = df.Mesh(region, cell=cell)
-
-        # valuedim is not in OVF1 file and for binary data it has to be
-        # extracted here.
-        if 'valuedim' not in mdatadict.keys():
-            mdatadict['valuedim'] = len(datalines) / len(mesh)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         r_tuple = (*tuple(reversed(mesh.n)), int(mdatadict['valuedim']))
         t_tuple = (*tuple(reversed(range(3))), 3)
 
-        return cls(mesh, dim=int(mdatadict['valuedim']),
+        return cls(mesh, dim=dim,
                    value=datalines.reshape(r_tuple).transpose(t_tuple))
 
     @classmethod
