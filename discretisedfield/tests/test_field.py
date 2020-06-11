@@ -148,7 +148,7 @@ class TestField:
         def norm_fun(point):
             x, y, z = point
             if x**2 + y**2 <= (5e-9)**2:
-                return 1
+                return 1e5
             else:
                 return 0
 
