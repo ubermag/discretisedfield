@@ -527,4 +527,5 @@ class Region:
         plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
                            outlines=False, **kwargs)
 
-        plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]
+        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
+                     for i in dfu.axesdict.keys()]

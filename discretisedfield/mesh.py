@@ -1017,7 +1017,8 @@ class Mesh:
         plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
                            outlines=False, **kwargs)
 
-        plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]
+        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
+                     for i in dfu.axesdict.keys()]
 
     def k3d_subregions(self, plot=None, color=dfu.cp_int, multiplier=None,
                        **kwargs):
@@ -1099,7 +1100,8 @@ class Mesh:
         plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
                            outlines=False, **kwargs)
 
-        plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]
+        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
+                     for i in dfu.axesdict.keys()]
 
     def slider(self, axis, multiplier=None, description=None, **kwargs):
         """Axis slider.

@@ -1726,47 +1726,148 @@ class TestField:
         plt.close('all')
 
     def test_k3d_nonzero(self):
+        # Default
         self.pf.norm.k3d_nonzero()
-        self.pf.x.k3d_nonzero()
-        self.pf.z.k3d_nonzero(field=self.pf)
-        self.pf.norm.plane('z').k3d_nonzero(field=self.pf, interactive=True)
+
+        # Color
+        self.pf.x.k3d_nonzero(color=0xff00ff)
+
+        # Multiplier
+        self.pf.x.k3d_nonzero(color=0xff00ff, multiplier=1e-6)
+
+        # Interactive field
+        self.pf.x.plane('z').k3d_nonzero(color=0xff00ff,
+                                         multiplier=1e-6,
+                                         interactive_field=self.pf)
+
+        # kwargs
+        self.pf.x.plane('z').k3d_nonzero(color=0xff00ff,
+                                         multiplier=1e-6,
+                                         interactive_field=self.pf,
+                                         wireframe=True)
+
+        # Plot
+        plot = k3d.plot()
+        plot.display()
+        self.pf.x.plane('z').k3d_nonzero(plot=plot,
+                                         color=0xff00ff,
+                                         multiplier=1e-6,
+                                         interactive_field=self.pf)
 
         with pytest.raises(ValueError) as excinfo:
             self.pf.k3d_nonzero()
 
-    def test_k3d_voxels(self):
-        self.pf.x.k3d_voxels()
-        self.pf.y.k3d_voxels(filter_field=self.pf.norm)
-        self.pf.z.k3d_voxels(field=self.pf)
-        self.pf.norm.plane('z').k3d_voxels(field=self.pf, interactive=True)
+    def test_k3d_scalar(self):
+        # Default
+        self.pf.y.k3d_scalar()
 
-        # Exceptions
-        with pytest.raises(ValueError) as excinfo:
-            self.pf.k3d_voxels()
-        with pytest.raises(ValueError):
-            self.pf.x.k3d_voxels(filter_field=self.pf)  # filter field dim=3
-        with pytest.raises(ValueError):
-            self.pf.x.k3d_voxels(filter_field=self.pf.norm, n=300)  # n > 256
+        # Filter field
+        self.pf.y.k3d_scalar(filter_field=self.pf.norm)
 
-    def test_k3d_vectors(self):
-        self.pf.k3d_vectors()
-        self.pf.k3d_vectors(color_field=self.pf.z)
-        self.pf.k3d_vectors(points=False)
-        self.pf.k3d_vectors(field=self.pf)
-        self.pf.plane('z').k3d_vectors(field=self.pf, interactive=True)
+        # Colormap
+        self.pf.x.k3d_scalar(filter_field=self.pf.norm,
+                             cmap='hsv',
+                             color=0xff00ff)
 
-        # Simulate interactive plotting
+        # Multiplier
+        self.pf.y.k3d_scalar(filter_field=self.pf.norm,
+                             color=0xff00ff,
+                             multiplier=1e-6)
+
+        # Interactive field
+        self.pf.y.k3d_scalar(filter_field=self.pf.norm,
+                             color=0xff00ff,
+                             multiplier=1e-6,
+                             interactive_field=self.pf)
+
+        # kwargs
+        self.pf.y.k3d_scalar(filter_field=self.pf.norm,
+                             color=0xff00ff,
+                             multiplier=1e-6,
+                             interactive_field=self.pf,
+                             wireframe=True)
+
+        # Plot
         plot = k3d.plot()
-        self.pf.plane('z').k3d_vectors(field=self.pf, interactive=True,
-                                       plot=plot)
-        self.pf.plane('y').k3d_vectors(field=self.pf, interactive=True,
-                                       plot=plot)
+        plot.display()
+        self.pf.y.k3d_scalar(plot=plot,
+                             filter_field=self.pf.norm,
+                             color=0xff00ff,
+                             multiplier=1e-6,
+                             interactive_field=self.pf)
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
-            self.pf.x.k3d_vectors()  # dim=1
+            self.pf.k3d_scalar()
         with pytest.raises(ValueError):
-            self.pf.k3d_vectors(color_field=self.pf)  # color field dim=3
+            self.pf.x.k3d_scalar(filter_field=self.pf)  # filter field dim=3
+
+    def test_k3d_vector(self):
+        # Default
+        self.pf.k3d_vector()
+
+        # Color field
+        self.pf.k3d_vector(color_field=self.pf.x)
+
+        # Colormap
+        self.pf.k3d_vector(color_field=self.pf.norm,
+                           cmap='hsv')
+
+        # Head size
+        self.pf.k3d_vector(color_field=self.pf.norm,
+                           cmap='hsv',
+                           head_size=3)
+
+        # Points
+        self.pf.k3d_vector(color_field=self.pf.norm,
+                           cmap='hsv',
+                           head_size=3,
+                           points=False)
+
+        # Point size
+        self.pf.k3d_vector(color_field=self.pf.norm,
+                           cmap='hsv',
+                           head_size=3,
+                           points=False,
+                           point_size=1)
+
+        # Vector multiplier
+        self.pf.k3d_vector(color_field=self.pf.norm,
+                           cmap='hsv',
+                           head_size=3,
+                           points=False,
+                           point_size=1,
+                           vector_multiplier=1)
+
+        # Multiplier
+        self.pf.k3d_vector(color_field=self.pf.norm,
+                           cmap='hsv',
+                           head_size=3,
+                           points=False,
+                           point_size=1,
+                           vector_multiplier=1,
+                           multiplier=1e-6)
+
+        # Interactive field
+        self.pf.plane('z').k3d_vector(color_field=self.pf.norm,
+                                      cmap='hsv',
+                                      head_size=3,
+                                      points=False,
+                                      point_size=1,
+                                      vector_multiplier=1,
+                                      multiplier=1e-6,
+                                      interactive_field=self.pf)
+
+        # Plot
+        plot = k3d.plot()
+        plot.display()
+        self.pf.k3d_vector(plot=plot)
+
+        # Exceptions
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.x.k3d_vector()
+        with pytest.raises(ValueError):
+            self.pf.k3d_vector(color_field=self.pf)  # filter field dim=3
 
     def test_plot_large_sample(self):
         p1 = (0, 0, 0)
@@ -1778,5 +1879,5 @@ class TestField:
 
         field.plane('z').mpl()
         field.norm.k3d_nonzero()
-        field.x.k3d_voxels()
-        field.k3d_vectors()
+        field.x.k3d_scalar()
+        field.k3d_vector()

@@ -3,6 +3,7 @@ import h5py
 import struct
 import numbers
 import itertools
+import matplotlib
 import numpy as np
 import discretisedfield as df
 import ubermagutil.units as uu
@@ -633,10 +634,9 @@ class Field:
         if self.dim == 1:
             need_removing = ['div', 'curl', 'topological_charge',
                              'topological_charge_density', 'bergluescher',
-                             'norm', 'orientation', 'mpl_vector',
-                             'k3d_vectors']
+                             'norm', 'orientation', 'mpl_vector', 'k3d_vector']
         if self.dim == 3:
-            need_removing = ['grad', 'mpl_scalar', 'k3d_voxels', 'k3d_nonzero']
+            need_removing = ['grad', 'mpl_scalar', 'k3d_scalar', 'k3d_nonzero']
 
         for attr in need_removing:
             dirlist.remove(attr)
@@ -3303,16 +3303,18 @@ class Field:
         discretisation cells where ``filter_field != 0`` are plotted. Colorbar
         is shown by default and it can be removed from the plot by passing
         ``colorbar=False``. The label for the colorbar can be defined by
-        passing ``colorbar_label`` as a string. It is often the case that the
-        region size is small (e.g. on a nanoscale) or very large (e.g. in units
-        of kilometers). Accordingly, ``multiplier`` can be passed as
-        :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
-        6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, all mesh points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the best one is calculated internally. The plot can be
-        saved as a PDF when ``filename`` is passed.
+        passing ``colorbar_label`` as a string.
+
+        It is often the case that the region size is small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all mesh points will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally. The plot can be saved as a PDF when ``filename``
+        is passed.
 
         This method plots the field using ``matplotlib.pyplot.imshow``
         function, so any keyword arguments accepted by it can be passed (for
@@ -3738,8 +3740,8 @@ class Field:
         """``k3d`` plot of non-zero discretisation cells.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
-        automatically. The colour of the region can be specified using
-        ``color`` argument.
+        automatically. The colour of the non-zero discretisation cells can be
+        specified using ``color`` argument.
 
         It is often the case that the object size is either small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). Accordingly,
@@ -3751,8 +3753,11 @@ class Field:
         axis labels. If ``multiplier`` is not passed, the best one is
         calculated internally.
 
-        For interactive plots ``interactive=True`` must be passed, together
-        with the ``field``, which is a field object before slicing.
+        For interactive plots the field itself, before being sliced with the
+        field, must be passed as ``interactive_field``. For example, if
+        ``field.x.plane('z')`` is plotted, ``interactive_field=field`` must be
+        passed. In addition, ``k3d.plot`` object cannot be created internally
+        and it must be passed and displayed by the user.
 
         This method is based on ``k3d.voxels``, so any keyword arguments
         accepted by it can be passed (e.g. ``wireframe``).
@@ -3762,25 +3767,22 @@ class Field:
         plot : k3d.Plot, optional
 
             Plot to which the plot is added. Defaults to ``None`` - plot is
-            created internally.
+            created internally. This is not true in the case of an interactive
+            plot, when ``plot`` must be created externally.
 
         color : int, optional
 
-            Colour of the region. Defaults to the default color palette.
+            Colour of the non-zero discretisation cells. Defaults to the
+            default color palette.
 
         multiplier : numbers.Real, optional
 
             Axes multiplier. Defaults to ``None``.
 
-        interactive : bool
+        interactive_field : discretisedfield.Field, optional
 
-            For interactive plotting, ``True`` must be passed. Defaults to
-            ``False``.
-
-        field : discretisedfield.Field
-
-            If ``field`` is passed, then the region of the field is plotted.
-            Defaults to ``None``.
+            The whole field object (before any slices) used for interactive
+            plots. Defaults to ``None``.
 
         Raises
         ------
@@ -3790,7 +3792,7 @@ class Field:
 
         Examples
         --------
-        1. Visualising the "non-zero" region using ``k3d``.
+        1. Visualising non-zero discretisation cells using ``k3d``.
 
         >>> import discretisedfield as df
         ...
@@ -3829,24 +3831,18 @@ class Field:
         if interactive_field is not None:
             plot.camera_auto_fit = False
 
-            for object in plot.objects:
-                if object.name != 'total_region':
-                    plot -= object
+            objects_to_be_removed = []
+            for i in plot.objects:
+                if i.name != 'total_region':
+                    objects_to_be_removed.append(i)
+            for i in objects_to_be_removed:
+                plot -= i
 
-            if not any([i.name == 'total_region' for i in plot.objects]):
-                bounds = [i for sublist in
-                          zip(np.divide(interactive_field.mesh.region.pmin,
-                                        multiplier),
-                              np.divide(interactive_field.mesh.region.pmax,
-                                        multiplier))
-                          for i in sublist]
-
-                plot += k3d.voxels(np.ones((1, 1, 1)).astype(np.uint8),
-                                   color_map=dfu.cp_int[0],
-                                   bounds=bounds,
-                                   outlines=False,
-                                   name='total_region',
-                                   opacity=0.025)
+            if not any([o.name == 'total_region' for o in plot.objects]):
+                interactive_field.mesh.region.k3d(plot=plot,
+                                                  multiplier=multiplier,
+                                                  name='total_region',
+                                                  opacity=0.025)
 
         plot_array = np.ones_like(self.array)  # all voxels have the same color
         plot_array[self.array == 0] = 0  # remove voxels where field is zero
@@ -3862,76 +3858,63 @@ class Field:
         plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
                            outlines=False, **kwargs)
 
-        plot.axes = [f'{i}\,\\text{{{unit}}}' for i in dfu.axesdict.keys()]
+        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
+                     for i in dfu.axesdict.keys()]
 
-    def k3d_voxels(self, plot=None, filter_field=None, multiplier=None,
-                   cmap='cividis', n=256, field=None, interactive=False,
-                   **kwargs):
-        """Plots the scalar field as a coloured ``k3d.voxels()`` plot.
+    def k3d_scalar(self, plot=None, filter_field=None, cmap='cividis',
+                   multiplier=None, interactive_field=None, **kwargs):
+        """``k3d`` plot of a scalar field.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
-        By passing ``filter_field``, the points at which the voxels are plotted
-        can be determined. More precisely, only voxels where ``filter_field !=
-        0`` are plotted. It is often the case that the mesh region size is
-        small (e.g. on a nanoscale) or very large (e.g. in units of
-        kilometeres). Accordingly, ``multiplier`` can be passed as
-        :math:`10^{n}`, where :math:`n` is a multiple of 3 (..., -6, -3, 0, 3,
-        6,...). According to that value, the axes will be scaled and
-        appropriate units shown. For instance, if ``multiplier=1e-9`` is
-        passed, the mesh points will be divided by :math:`1\\,\\text{nm}` and
-        :math:`\\text{nm}` units will be used as axis labels. If ``multiplier``
-        is not passed, the optimum one is computed internally. The colormap and
-        the resolution of the colours can be set by passing ``cmap`` and ``n``.
-        When sliced field is plotted, it is sometimes necessary to plot the
-        region of the original field. This can be achieved by passing the field
-        using ``field``. In interactive plots, ``field`` must be passed.
-        ``interactive=True`` must be defined when the method is used for
-        interactive plotting.
+        If ``plot`` is not passed, ``k3d.Plot`` object is created
+        automatically. The colormap can be specified using ``cmap`` argument.
+        By passing ``filter_field`` the points at which the voxels are not
+        shown can be determined. More precisely, only those discretisation
+        cells where ``filter_field != 0`` are plotted.
 
-        This method plots the region using ``k3d.voxels()`` function, so any
-        keyword arguments accepted by it can be passed.
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all axes will be divided by
+        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
+
+        For interactive plots the field itself, before being sliced with the
+        field, must be passed as ``interactive_field``. For example, if
+        ``field.x.plane('z')`` is plotted, ``interactive_field=field`` must be
+        passed. In addition, ``k3d.plot`` object cannot be created internally
+        and it must be passed and displayed by the user.
+
+        This method is based on ``k3d.voxels``, so any keyword arguments
+        accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which plot should be added. Defaults to ``None`` - new plot
-            will be created.
+            Plot to which the plot is added. Defaults to ``None`` - plot is
+            created internally. This is not true in the case of an interactive
+            plot, when ``plot`` must be created externally.
 
         filter_field : discretisedfield.Field, optional
 
-            A (scalar) field used for determining whether certain voxels should
-            be plotted. More precisely, only discretisation cells where
-            ``filter_field != 0`` are plotted.
+            Scalar field. Only discretisation cells where ``filter_field != 0``
+            are shown. Defaults to ``None``.
+
+        cmap : str, optional
+
+            Colormap.
 
         multiplier : numbers.Real, optional
 
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
+            Axes multiplier. Defaults to ``None``.
 
-        cmap : str
+        interactive_field : discretisedfield.Field, optional
 
-            Colormap. Defaults to ``'cividis'``.
-
-        n : int
-
-            The resolution of the colormap. Defaults to 256, which is also the
-            maximum possible value.
-
-        field : discretisedfield.Field
-
-            If ``field`` is passed, then the region of the field is plotted.
-            Defaults to ``None``.
-
-        interactive : bool
-
-            For interactive plotting, ``True`` must be passed. Defaults to
-            ``False``.
+            The whole field object (before any slices) used for interactive
+            plots. Defaults to ``None``.
 
         Raises
         ------
@@ -3951,24 +3934,45 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
         >>> field = df.Field(mesh, dim=1, value=5)
-        >>> field.k3d_voxels()
+        >>> field.k3d_scalar()
         Plot(...)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.k3d_vectors`
+        .. seealso:: :py:func:`~discretisedfield.Field.k3d_vector`
 
         """
         if self.dim != 1:
             msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
+        if plot is None:
+            plot = k3d.plot()
+            plot.display()
+
         if filter_field is not None:
             if filter_field.dim != 1:
                 msg = f'Cannot use dim={self.dim} filter_field.'
                 raise ValueError(msg)
 
-        if n > 256:
-            msg = f'Cannot use n={n}. Maximum value is 256.'
-            raise ValueError(msg)
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+
+        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+
+        if interactive_field is not None:
+            plot.camera_auto_fit = False
+
+            objects_to_be_removed = []
+            for i in plot.objects:
+                if i.name != 'total_region':
+                    objects_to_be_removed.append(i)
+            for i in objects_to_be_removed:
+                plot -= i
+
+            if not any([o.name == 'total_region' for o in plot.objects]):
+                interactive_field.mesh.region.k3d(plot=plot,
+                                                  multiplier=multiplier,
+                                                  name='total_region',
+                                                  opacity=0.025)
 
         plot_array = np.copy(self.array)  # make a deep copy
         plot_array = plot_array[..., 0]  # remove an empty dimension
@@ -3976,123 +3980,113 @@ class Field:
         # All values must be in (1, 255) -> (1, n-1), for n=256 range, with
         # maximum n=256. This is the limitation of k3d.voxels(). Voxels where
         # values are zero, are invisible.
-        plot_array = dfu.normalise_to_range(plot_array, (1, n-1))
-
+        plot_array = dfu.normalise_to_range(plot_array, (1, 255))
         # Remove voxels where filter_field = 0.
         if filter_field is not None:
-            for index in self.mesh.indices:
-                if filter_field(self.mesh.index2point(index)) == 0:
-                    plot_array[index] = 0
-
+            for i in self.mesh.indices:
+                if filter_field(self.mesh.index2point(i)) == 0:
+                    plot_array[i] = 0
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
+        plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
 
-        color_palette = dfu.color_palette(cmap, n, 'int')
+        cmap = matplotlib.cm.get_cmap(cmap, 256)
+        cmap_int = []
+        for i in range(cmap.N):
+            rgb = cmap(i)[:3]
+            cmap_int.append(int(matplotlib.colors.rgb2hex(rgb)[1:], 16))
 
-        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
-                                              self.mesh.region.edges)
+        bounds = [i for sublist in
+                  zip(np.divide(self.mesh.region.pmin, multiplier),
+                      np.divide(self.mesh.region.pmax, multiplier))
+                  for i in sublist]
 
-        if field is not None:
-            dfu.k3d_plot_region(plot, field.mesh.region, multiplier)
+        plot += k3d.voxels(plot_array, color_map=cmap_int, bounds=bounds,
+                           outlines=False, **kwargs)
 
-        if interactive:
-            dfu.k3d_setup_interactive_plot(plot)
+        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
+                     for i in dfu.axesdict.keys()]
 
-        plot += dfu.voxels(plot_array, pmin=self.mesh.region.pmin,
-                           pmax=self.mesh.region.pmax,
-                           color_palette=color_palette, multiplier=multiplier,
-                           **kwargs)
+    def k3d_vector(self, plot=None, color_field=None, cmap='cividis',
+                   head_size=1, points=True, point_size=None,
+                   vector_multiplier=None, multiplier=None,
+                   interactive_field=None, **kwargs):
+        """``k3d`` plot of a vector field.
 
-    def k3d_vectors(self, plot=None, color_field=None, points=True,
-                    cmap='cividis', n=256,
-                    point_color=dfu.color_palette('deep', 1, 'int')[0],
-                    point_size=None, multiplier=None, vector_multiplier=None,
-                    field=None, interactive=False, **kwargs):
-        """Plots the vector field using ``k3d``.
+        If ``plot`` is not passed, ``k3d.Plot`` object is created
+        automatically. By passing ``color_field`` vectors are coloured
+        according to the values of that field. The colormap can be specified
+        using ``cmap`` argument. The head size of vectors can be changed using
+        ``head_size``. The size of the plotted vectors is computed
+        automatically in order to fit the plot. However, it can be adjusted
+        using ``vector_multiplier``.
 
-        If ``plot`` is not passed, ``k3d`` plot will be created automaticaly.
-        It is often the case that the mesh region size is small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometeres). Accordingly,
+        By default both vectors and points, corresponding to discretisation
+        cell coordinates, are plotted. They can be removed from the plot by
+        passing ``points=False``. The size of the points are calculated
+        automatically, but it can be adjusted with ``point_size``.
+
+        It is often the case that the object size is either small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
         ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
         multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
         axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, the mesh points will be divided by
+        ``multiplier=1e-9`` is passed, all axes will be divided by
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the optimum one is
-        computed internally. Similarly, the vectors can be too large or two
-        small to be plotted. In that case, ``vector_multiplier`` can be passed,
-        so that all vectors are divided by that scalar. If not passed, the
-        optimum value is computed internally. The colour of vectors can be
-        determined by passing ``color_field``, whereas the colormap and the
-        resolution can be determined by passing ``cmap`` and ``n``. In addition
-        to vectors, points at which the vectors are defined can be plotted if
-        ``points=True``. The size of the points can be passed using
-        ``point_size`` and if ``point_size`` is not passed, optimum size is
-        computed intenally. Similarly, ``point_color`` can be passed as an
-        integer. When sliced field is plotted, it is sometimes necessary to
-        plot the region of the original field. This can be achieved by passing
-        the field using ``field``. In interactive plots, ``field`` must be
-        passed. ``interactive=True`` must be defined when the method is used
-        for interactive plotting.
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally.
 
-        This method plots the vectors using ``k3d.vectors()`` function, so any
-        keyword arguments accepted by it can be passed.
+        For interactive plots the field itself, before being sliced with the
+        field, must be passed as ``interactive_field``. For example, if
+        ``field.plane('z')`` is plotted, ``interactive_field=field`` must be
+        passed. In addition, ``k3d.plot`` object cannot be created internally
+        and it must be passed and displayed by the user.
+
+        This method is based on ``k3d.voxels``, so any keyword arguments
+        accepted by it can be passed (e.g. ``wireframe``).
 
         Parameters
         ----------
         plot : k3d.Plot, optional
 
-            Plot to which vector plot should be added. Defaults to ``None`` -
-            new plot will be created.
+            Plot to which the plot is added. Defaults to ``None`` - plot is
+            created internally. This is not true in the case of an interactive
+            plot, when ``plot`` must be created externally.
 
         color_field : discretisedfield.Field, optional
 
-            Field determining the values according to which the vectors are
-            coloured. Defults to ``None``.
+            Scalar field. Vectors are coloured according to the values of
+            ``color_field``. Defaults to ``None``.
+
+        cmap : str, optional
+
+            Colormap.
+
+        head_size : int, optional
+
+            The size of vector heads. Defaults to ``None``.
 
         points : bool, optional
 
-            If ``True``, points are added to the plot.
+            If ``True``, points are shown together with vectors. Defaults to
+            ``True``.
 
-        point_size : float, optional
+        point_size : int, optional
 
-            Size of points.
-
-        point_color : int, optional
-
-            Colour of points. Defaults to
-            ``seaborn.color_pallette(palette='deep')[0]``.
-
-        multiplier : numbers.Real, optional
-
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. If ``multiplier`` is not passed, the
-            optimum one is computed internally. Defaults to ``None``.
+            The size of the points if shown in the plot. Defaults to ``None``.
 
         vector_multiplier : numbers.Real, optional
 
-            Value by which all vectors are divided to fit the plot.
-
-        cmap : str
-
-            Colormap. Defaults to ``'cividis'``.
-
-        n : int
-
-            The resolution of the colormap. Defaults to 256.
-
-        field : discretisedfield.Field
-
-            If ``field`` is passed, then the region of the field is plotted.
+            All vectors are divided by this value before being plotted.
             Defaults to ``None``.
 
-        interactive : bool
+        multiplier : numbers.Real, optional
 
-            For interactive plotting, ``True`` must be passed. Defaults to
-            ``False``.
+            Axes multiplier. Defaults to ``None``.
+
+        interactive_field : discretisedfield.Field, optional
+
+            The whole field object (before any slices) used for interactive
+            plots. Defaults to ``None``.
 
         Raises
         ------
@@ -4109,7 +4103,8 @@ class Field:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
-        >>> field.k3d_vectors()
+        ...
+        >>> field.k3d_vector()
         Plot(...)
 
         """
@@ -4117,50 +4112,77 @@ class Field:
             msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
+        if plot is None:
+            plot = k3d.plot()
+            plot.display()
+
         if color_field is not None:
             if color_field.dim != 1:
                 msg = f'Cannot use dim={self.dim} color_field.'
                 raise ValueError(msg)
 
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+
+        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+
+        if interactive_field is not None:
+            plot.camera_auto_fit = False
+
+            objects_to_be_removed = []
+            for i in plot.objects:
+                if i.name != 'total_region':
+                    objects_to_be_removed.append(i)
+            for i in objects_to_be_removed:
+                plot -= i
+
+            if not any([o.name == 'total_region' for o in plot.objects]):
+                interactive_field.mesh.region.k3d(plot=plot,
+                                                  multiplier=multiplier,
+                                                  name='total_region',
+                                                  opacity=0.025)
+
         coordinates, vectors, color_values = [], [], []
         norm_field = self.norm  # assigned to be computed only once
-        for coord, value in self:
-            if norm_field(coord) > 0:
-                coordinates.append(coord)
+        for point, value in self:
+            if norm_field(point) != 0:
+                coordinates.append(point)
                 vectors.append(value)
                 if color_field is not None:
-                    color_values.append(color_field(coord))
-        coordinates, vectors = np.array(coordinates), np.array(vectors)
+                    color_values.append(color_field(point))
 
-        plot, multiplier = dfu.k3d_parameters(plot, multiplier,
-                                              self.mesh.region.edges)
+        if color_field is not None:
+            color_values = dfu.normalise_to_range(color_values, (0, 255))
 
-        if field is not None:
-            dfu.k3d_plot_region(plot, field.mesh.region, multiplier)
+            # Generate double pairs (body, head) for colouring vectors.
+            cmap = matplotlib.cm.get_cmap(cmap, 256)
+            cmap_int = []
+            for i in range(cmap.N):
+                rgb = cmap(i)[:3]
+                cmap_int.append(int(matplotlib.colors.rgb2hex(rgb)[1:], 16))
 
-        if interactive:
-            dfu.k3d_setup_interactive_plot(plot)
+            colors = []
+            for cval in color_values:
+                colors.append(2*(cmap_int[cval],))
+        else:
+            # Uniform colour.
+            colors = (len(vectors) * ([2*(dfu.cp_int[1],)]))
+
+        coordinates = np.array(coordinates)
+        vectors = np.array(vectors)
 
         if vector_multiplier is None:
             vector_multiplier = (vectors.max() /
                                  np.divide(self.mesh.cell, multiplier).min())
 
-        if color_field is not None:
-            color_values = dfu.normalise_to_range(color_values, (0, n-1))
+        coordinates = np.divide(coordinates, multiplier)
+        vectors = np.divide(vectors, vector_multiplier)
 
-            # Generate double pairs (body, head) for colouring vectors.
-            color_palette = dfu.color_palette(cmap, n, 'int')
-            colors = []
-            for cval in color_values:
-                colors.append(2*(color_palette[cval],))
-        else:
-            # Uniform colour.
-            colors = (len(vectors) *
-                      ([2*(dfu.color_palette('deep', 2, 'int')[1],)]))
+        coordinates = coordinates.astype(np.float32)
+        vectors = vectors.astype(np.float32)
 
-        plot += dfu.vectors(coordinates, vectors, colors=colors,
-                            multiplier=multiplier,
-                            vector_multiplier=vector_multiplier, **kwargs)
+        plot += k3d.vectors(coordinates-0.5*vectors, vectors, colors=colors,
+                            head_size=head_size, **kwargs)
 
         if points:
             if point_size is None:
@@ -4168,5 +4190,8 @@ class Field:
                 # cell dimension.
                 point_size = np.divide(self.mesh.cell, multiplier).min() / 4
 
-            plot += dfu.points(coordinates, color=point_color,
-                               point_size=point_size, multiplier=multiplier)
+            plot += k3d.points(coordinates, color=dfu.cp_int[0],
+                               point_size=point_size)
+
+        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
+                     for i in dfu.axesdict.keys()]

@@ -172,8 +172,7 @@ class TestRegion:
 
         # Check if runs.
         region.mpl()
-        region.mpl(figsize=(10, 10), multiplier=1e-9,
-                   color=dfu.color_palette('deep', 10, 'rgb')[1],
+        region.mpl(figsize=(10, 10), multiplier=1e-9, color=dfu.cp_hex[1],
                    linewidth=3, linestyle='dashed')
 
         filename = 'figure.pdf'
@@ -192,6 +191,4 @@ class TestRegion:
 
         # Check if runs.
         region.k3d()
-        region.k3d(multiplier=1e9,
-                   color=dfu.color_palette('deep', 10, 'int')[3],
-                   wireframe=True)
+        region.k3d(multiplier=1e9, color=dfu.cp_int[3], wireframe=True)

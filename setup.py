@@ -23,7 +23,6 @@ setuptools.setup(
                       'matplotlib',
                       'pandas',
                       'jupyterlab',
-                      'seaborn',
                       'h5py',
                       'k3d'],
     classifiers=['Development Status :: 3 - Alpha',

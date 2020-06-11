@@ -1,11 +1,7 @@
-import k3d
 import cmath
 import numbers
 import collections
 import numpy as np
-import seaborn as sns
-import ubermagutil.units as uu
-import matplotlib.pyplot as plt
 
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
@@ -13,8 +9,7 @@ raxesdict = {value: key for key, value in axesdict.items()}
 # Color pallete as hex and int.
 cp_hex = ['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#8172b3',
           '#937860', '#da8bc3', '#8c8c8c', '#ccb974', '#64b5cd']
-cp_int = [5010096, 14517330, 5613672, 12865106, 8483507,
-          9664608, 14322627, 9211020, 13416820, 6600141]
+cp_int = [int(color[1:], 16) for color in cp_hex]
 
 
 def array2tuple(array):
@@ -119,14 +114,6 @@ def plot_box(ax, pmin, pmax, *args, **kwargs):
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
 
 
-def color_palette(cmap, n, value_type):
-    cp = sns.color_palette(palette=cmap, n_colors=n)
-    if value_type == 'rgb':
-        return cp
-    else:
-        return list(map(lambda c: int(c[1:], 16), cp.as_hex()))
-
-
 def normalise_to_range(values, value_range):
     values = np.array(values)
 
@@ -140,74 +127,3 @@ def normalise_to_range(values, value_range):
     values = values.astype(int)
 
     return values
-
-
-def k3d_parameters(plot, multiplier, value):
-    if plot is None:
-        plot = k3d.plot()
-        plot.display()
-
-    if multiplier is None:
-        multiplier = uu.si_max_multiplier(value)
-
-    unit = f' ({uu.rsi_prefixes[multiplier]}m)'
-    plot.axes = [i + unit for i in 'xyz']
-
-    return plot, multiplier
-
-
-def k3d_plot_region(plot, region, multiplier):
-    if not plot.objects:  # if plot was not displayed (interactive plotting)
-        plot += voxels(np.ones((1, 1, 1)),
-                       pmin=region.pmin,
-                       pmax=region.pmax,
-                       color_palette=color_palette('deep', 1, 'int')[0],
-                       multiplier=multiplier,
-                       opacity=0.025)
-
-
-def k3d_setup_interactive_plot(plot):
-    # Delete all objects except the field region.
-    for object in plot.objects[1:]:
-        plot -= object
-
-    # Make sure the camera and grid do not move in interactive plots. If
-    # the plot is not displayed (plot.outputs==[]), it will be displayed.
-    if not plot.outputs:
-        plot.display()
-        plot.camera_auto_fit = False
-        plot.grid_auto_fit = False
-
-
-def voxels(plot_array, pmin, pmax, color_palette, multiplier=1, outlines=False,
-           **kwargs):
-    plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
-
-    bounds = [i for zl in zip(np.divide(pmin, multiplier),
-                              np.divide(pmax, multiplier)) for i in zl]
-
-    return k3d.voxels(plot_array, color_map=color_palette, bounds=bounds,
-                      outlines=outlines, **kwargs)
-
-
-def points(coordinates, color, point_size, multiplier=1, **kwargs):
-    coordinates = coordinates.astype(np.float32)  # to avoid k3d warning
-
-    coordinates = np.divide(coordinates, multiplier)
-
-    return k3d.points(coordinates, point_size=point_size,
-                      color=color, **kwargs)
-
-
-def vectors(coordinates, vectors, colors=[], multiplier=1, vector_multiplier=1,
-            **kwargs):
-    coordinates = coordinates.astype(np.float32)  # to avoid k3d warning
-    vectors = vectors.astype(np.float32)  # to avoid k3d warning
-
-    coordinates = np.divide(coordinates, multiplier)
-    vectors = np.divide(vectors, vector_multiplier)
-
-    # Plot middle of the arrow is at the cell centre.
-    coordinates = coordinates - 0.5*vectors
-
-    return k3d.vectors(coordinates, vectors, colors=colors, **kwargs)
