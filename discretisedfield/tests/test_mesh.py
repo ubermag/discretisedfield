@@ -173,7 +173,6 @@ class TestMesh:
         for p1, p2, cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-            assert 'not an aggregate' in str(excinfo.value)
 
     def test_cell_greater_than_domain(self):
         p1 = (0, 0, 0)
