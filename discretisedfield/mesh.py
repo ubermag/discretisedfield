@@ -177,7 +177,8 @@ class Mesh:
         rem = np.remainder(self.region.edges, self.cell)
         if np.logical_and(np.greater(rem, tol),
                           np.less(rem, np.subtract(self.cell, tol))).any():
-            msg = 'Mesh region is not an aggregate of the discretisation cell.'
+            msg = (f'Region cannot be divided into '
+                   f'discretisation cells of size {self.cell}.')
             raise ValueError(msg)
 
         self.bc = bc.lower()
