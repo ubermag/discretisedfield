@@ -185,7 +185,6 @@ class TestMesh:
         for cell in args:
             with pytest.raises(ValueError) as excinfo:
                 mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-            assert 'not an aggregate' in str(excinfo.value)
 
     def test_len(self):
         p1 = (0, 0, 0)
