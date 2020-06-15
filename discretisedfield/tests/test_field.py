@@ -1578,7 +1578,7 @@ class TestField:
         filename = 'testfile.vtk'
 
         p1 = (0, 0, 0)
-        p2 = (1e-9, 2e-9, 5e-9)
+        p2 = (1e-9, 2e-9, 1e-9)
         cell = (1e-9, 1e-9, 1e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
@@ -1589,7 +1589,11 @@ class TestField:
                 f.write(tmpfilename)
                 f_read = df.Field.fromfile(tmpfilename)
 
-                assert f == f_read
+                assert np.allclose(f.array, f_read.array)
+                assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
+                assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
+                assert np.allclose(f.mesh.cell, f_read.mesh.cell)
+                assert f.mesh.n == f_read.mesh.n
 
     def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']

@@ -277,6 +277,45 @@ class Mesh:
         for index in self.indices:
             yield self.index2point(index)
 
+    def axis_points(self, axis):
+        """Points (ticks) on ``axis``.
+
+        This method is a generator yielding points on ``axis`` at which
+        discretisation cell coordinates are defined.
+
+        Parameters
+        ----------
+        axis : str
+
+            Axis ``'x'``, ``'y'``, or ``'z'``.
+
+        Yields
+        ------
+        numbers.Real
+
+            Point on ``axis``.
+
+        Examples
+        --------
+        1. Getting points (ticks) on the axis.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 1, 1)
+        >>> cell = (2, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> list(mesh.axis_points('x'))
+        [1.0, 3.0, 5.0, 7.0, 9.0]
+
+        """
+        if isinstance(axis, str):
+            axis = dfu.axesdict[axis]
+
+        for i in range(self.n[axis]):
+            yield self.index2point((0, 0, 0))[axis] + i*self.cell[axis]
+
     def __eq__(self, other):
         """Relational operator ``==``.
 

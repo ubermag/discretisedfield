@@ -2829,7 +2829,7 @@ class Field:
     def _writevtk(self, filename):
         """Write the field to a VTK file.
 
-        The data is saved as a ``STRUCTURED_POINTS`` dataset. Scalar field
+        The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
         (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
         (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
         three components to enable easy colouring of vectors in some
@@ -2869,10 +2869,14 @@ class Field:
         header = ['# vtk DataFile Version 3.0',
                   'Field',
                   'ASCII',
-                  'DATASET STRUCTURED_POINTS',
+                  'DATASET RECTILINEAR_GRID',
                   'DIMENSIONS {} {} {}'.format(*self.mesh.n),
-                  'SPACINGS {} {} {}'.format(*self.mesh.cell),
-                  'ORIGIN {} {} {}'.format(*self.mesh.index2point((0, 0, 0))),
+                  f'X_COORDINATES {self.mesh.n[0]} float',
+                  ' '.join(map(str, self.mesh.axis_points('x'))),
+                  f'Y_COORDINATES {self.mesh.n[1]} float',
+                  ' '.join(map(str, self.mesh.axis_points('y'))),
+                  f'Z_COORDINATES {self.mesh.n[2]} float',
+                  ' '.join(map(str, self.mesh.axis_points('z'))),
                   f'POINT_DATA {len(self.mesh)}']
 
         if self.dim == 1:
@@ -3205,19 +3209,24 @@ class Field:
             skip = 1
 
         # Extract the metadata
-        mdatalist = ['SPACINGS', 'ORIGIN', 'DIMENSIONS']
-        mdatadict = dict()
-        for line in lines:
-            if not (line[0].isalpha() or line[0] == '#'):
-                break
+        mdatalist = ['X_COORDINATES', 'Y_COORDINATES', 'Z_COORDINATES']
+        n = []
+        cell = []
+        origin = []
+        for i, line in enumerate(lines):
             for mdatum in mdatalist:
                 if mdatum in line:
-                    mdatadict[mdatum] = list(map(float, line.split()[1:]))
+                    n.append(int(line.split()[1]))
+                    coordinates = list(map(float, lines[i+1].split()))
+                    origin.append(coordinates[0])
+                    if len(coordinates) > 1:
+                        cell.append(coordinates[1] - coordinates[0])
+                    else:
+                        # If only one cell exists, 1nm cell is used by default.
+                        cell.append(1e-9)
 
         # Create objects from metadata info
-        cell = mdatadict['SPACINGS']
-        n = list(map(int, mdatadict['DIMENSIONS']))
-        p1 = np.subtract(mdatadict['ORIGIN'], np.multiply(cell, 0.5))
+        p1 = np.subtract(origin, np.multiply(cell, 0.5))
         p2 = np.add(p1, np.multiply(n, cell))
         region = df.Region(p1=p1, p2=p2)
         mesh = df.Mesh(region, n=n)

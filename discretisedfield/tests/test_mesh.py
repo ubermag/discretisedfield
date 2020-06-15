@@ -342,6 +342,16 @@ class TestMesh:
         for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]:
             assert mesh.point2index(mesh.index2point(i)) == i
 
+    def test_axis_points(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 6, 8)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert list(mesh.axis_points('x')) == [1.0, 3.0, 5.0, 7.0, 9.0]
+        assert list(mesh.axis_points('y')) == [1.0, 3.0, 5.0]
+        assert list(mesh.axis_points('z')) == [1.0, 3.0, 5.0, 7.0]
+
     def test_neighbours(self):
         p1 = (0, 0, 0)
         p2 = (5, 3, 2)
