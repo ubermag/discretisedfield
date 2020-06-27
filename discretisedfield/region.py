@@ -376,6 +376,66 @@ class Region:
         else:
             return True
 
+    def __or__(self, other):
+        """Facing surface.
+
+        Parameters
+        ----------
+        other : discretisedfield.Region
+
+            Second operand.
+
+        Returns
+        -------
+        tuple : (3,)
+
+            The first element is the axis facing surfaces are perpendicular to.
+            If we start moving along that axis (e.g. from minus infinity) the
+            first region we are going to enter is the region which is the
+            second element of the tuple. When we leave that region, we enter
+            the second region, which is the third element of the tuple.
+
+        Examples
+        --------
+        1. Find facing surfaces.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p11 = (0, 0, 0)
+        >>> p12 = (100e-9, 50e-9, 20e-9)
+        >>> region1 = df.Region(p1=p11, p2=p12)
+        ...
+        >>> p21 = (0, 0, 20e-9)
+        >>> p22 = (100e-9, 50e-9, 30e-9)
+        >>> region2 = df.Region(p1=p21, p2=p22)
+        ...
+        >>> res = region1 | region2
+        >>> res[0]
+        'z'
+        >>> res[1] == region1
+        True
+        >>> res[2] == region2
+        True
+
+        """
+        if not isinstance(other, self.__class__):
+            msg = (f'Unsupported operand type(s) for |: '
+                   f'{type(self)} and {type(other)}.')
+            raise TypeError(msg)
+
+        for i in range(3):
+            if self.pmin[i] >= other.pmax[i]:
+                first, second, direction = other, self, i
+                break
+            if other.pmin[i] >= self.pmax[i]:
+                first, second, direction = self, other, i
+                break
+        else:
+            msg = 'Cannot find facing surfaces'
+            raise ValueError(msg)
+
+        return (dfu.raxesdict[direction], first, second)
+
     def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[0], multiplier=None,
             filename=None, **kwargs):
         """``matplotlib`` plot.
