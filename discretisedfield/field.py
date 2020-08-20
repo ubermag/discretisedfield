@@ -2582,6 +2582,62 @@ class Field:
         return self.__class__(self.mesh, dim=1,
                               value=angle_array[..., np.newaxis])
 
+    def spin_angle(self, direction):
+        """Calculate the angle between neighbouring cells in the given direction.
+
+        This method calculates the angle between the magnetic moments in all
+        neighbouring cells. The calculation is only possible for fields with
+        ``dim=3``. Angles between neighbouring cells in the given direction
+        are calculated. Angles are returned in radians.
+
+        Parameters
+        ----------
+        direction : stream
+
+            The direction in which the angles are calculated. Can be ``x``,
+            ``y`` or ``z``.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            A one-dimensional field with angles.
+
+        Raises
+        ------
+        ValueError
+
+            If the field has not ``dim=3`` or the direction is invalid.
+        """
+        if not self.dim == 3:
+            msg = (f'Calculation of spin angles is not possible for a field'
+                   f' with dim = {self.dim}.')
+            raise ValueError(msg)
+        if direction == 'x':
+            dot_product = np.einsum('...j,...j->...',
+                                    self.orientation.array[:-1, :, :, :],
+                                    self.orientation.array[1:, :, :, :])
+            delta_p = np.array((self.mesh.cell[0], 0, 0)) / 2
+        elif direction == 'y':
+            dot_product = np.einsum('...j,...j->...',
+                                    self.orientation.array[:, :-1, :, :],
+                                    self.orientation.array[:, 1:, :, :])
+            delta_p = np.array((0, self.mesh.cell[1], 0)) / 2
+        elif direction == 'z':
+            dot_product = np.einsum('...j,...j->...',
+                                    self.orientation.array[:, :, :-1, :],
+                                    self.orientation.array[:, :, 1:, :])
+            delta_p = np.array((0, 0, self.mesh.cell[2])) / 2
+        else:
+            msg = f'Direction "{direction}" is not a valid direction.'
+            raise ValueError(msg)
+        angles = np.arccos(np.clip(dot_product, -1.0, 1.0))
+        mesh = df.Mesh(p1=(np.array(self.mesh.region.p1) + delta_p),
+                       p2=(np.array(self.mesh.region.p2) - delta_p),
+                       cell=self.mesh.cell)
+        return self.__class__(mesh, dim=1,
+                              value=angles.reshape(*angles.shape, 1))
+
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
 
