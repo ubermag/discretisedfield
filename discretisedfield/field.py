@@ -2587,7 +2587,7 @@ class Field:
                               value=angle_array[..., np.newaxis])
 
     def spin_angle(self, direction):
-        """Calculate the angle between neighbouring cells in the given direction.
+        """Calculate spin angles between neighbouring cells.
 
         This method calculates the angle between the magnetic moments in all
         neighbouring cells. The calculation is only possible for fields with
