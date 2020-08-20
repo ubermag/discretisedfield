@@ -365,11 +365,15 @@ class Field:
     def __abs__(self):
         """Field norm.
 
-        This method returns ``discretisedfield.Field.norm``.
+        This method returns ``discretisedfield.Field.norm`` for fields with
+        ``dim>1``. For a field with ``dim=1`` it computes the absolute value
+        of each element and returns it as ``discretisedfield.Field``.
 
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
 
         """
+        if self.dim == 1:
+            return self.__class__(self.mesh, dim=1, value=abs(self.value))
         return self.norm
 
     @property
