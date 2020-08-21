@@ -2586,13 +2586,14 @@ class Field:
         return self.__class__(self.mesh, dim=1,
                               value=angle_array[..., np.newaxis])
 
-    def spin_angle(self, direction):
+    def spin_angle(self, direction, degrees=False):
         """Calculate spin angles between neighbouring cells.
 
         This method calculates the angle between the magnetic moments in all
         neighbouring cells. The calculation is only possible for fields with
         ``dim=3``. Angles between neighbouring cells in the given direction
-        are calculated. Angles are returned in radians.
+        are calculated. Angles are can be in radians or degrees depending on
+        ``degrees``.
 
         Parameters
         ----------
@@ -2600,6 +2601,10 @@ class Field:
 
             The direction in which the angles are calculated. Can be ``x``,
             ``y`` or ``z``.
+
+        degrees : bool
+
+            If true angles are given in degrees else in radians.
 
         Returns
         -------
@@ -2639,6 +2644,8 @@ class Field:
         mesh = df.Mesh(p1=(np.array(self.mesh.region.p1) + delta_p),
                        p2=(np.array(self.mesh.region.p2) - delta_p),
                        cell=self.mesh.cell)
+        if degrees:
+            angles = np.degrees(angles)
         return self.__class__(mesh, dim=1,
                               value=angles.reshape(*angles.shape, 1))
 
