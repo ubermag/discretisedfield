@@ -2649,6 +2649,22 @@ class Field:
         return self.__class__(mesh, dim=1,
                               value=angles.reshape(*angles.shape, 1))
 
+    def max_spin_angle(self, degrees=False):
+        x_angles = self.spin_angle('x', degrees).array.squeeze()
+        y_angles = self.spin_angle('y', degrees).array.squeeze()
+        z_angles = self.spin_angle('z', degrees).array.squeeze()
+
+        max_angles = np.zeros((*self.array.shape[:-1], 6), dtype=np.float64)
+        max_angles[1:, :, :, 0] = x_angles
+        max_angles[:-1, :, :, 1] = x_angles
+        max_angles[:, 1:, :, 2] = y_angles
+        max_angles[:, :-1, :, 3] = y_angles
+        max_angles[:, :, 1:, 4] = z_angles
+        max_angles[:, :, :-1, 5] = z_angles
+        max_angles = max_angles.max(axis=-1, keepdims=True)
+
+        return self.__class__(self.mesh, dim=1, value=max_angles)
+
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
 
