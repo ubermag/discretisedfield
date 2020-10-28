@@ -2091,8 +2091,7 @@ class Field:
         thickness = self.mesh.cell[self.mesh.info['planeaxis']]
         return dfu.array2tuple(np.divide(self.volume_integral, thickness))
 
-    @property
-    def topological_charge_density(self):
+    def topological_charge_density(self, method='continuous'):
         """Topological charge density.
 
         This method computes the topological charge density for the vector
@@ -2166,92 +2165,83 @@ class Field:
             msg = ('The field must be sliced before the topological '
                    'charge density can be computed.')
             raise ValueError(msg)
-
-        of = self.orientation  # unit (orientation) field
-        prefactor = 1 / (4 * np.pi)
-        q = of @ (of.derivative(dfu.raxesdict[self.mesh.info['axis1']]) &
-                  of.derivative(dfu.raxesdict[self.mesh.info['axis2']]))
-
-        return prefactor * q
+        if method == 'continuous':
+            of = self.orientation  # unit (orientation) field
+            prefactor = 1 / (4 * np.pi)
+            q = of @ (of.derivative(dfu.raxesdict[self.mesh.info['axis1']]) &
+                      of.derivative(dfu.raxesdict[self.mesh.info['axis2']]))
+            return prefactor * q
+        elif method == 'berg-luescher':
+            return self.bergluescher_density
+        else:
+            msg = 'Method can be either continuous or berg-luescher'
+            raise ValueError(msg)
 
     @property
-    def bergluescher(self):
-        """Topological charge computed using Berg-Luescher method.
+    def bergluescher_density(self):
+        """Topological charge density calculated using Berg-Luescher method.
 
-        The details of this method can be found in Berg and Luescher, Nuclear
-        Physics, Section B, Volume 190, Issue 2, p. 412-424.
-
-        This method computes the topological charge for the vector field
-        (``dim=3``). Topological charge is defined on two-dimensional samples.
-        Therefore, the field must be "sliced" using
-        ``discretisedfield.Field.plane`` method. If the field is not
-        three-dimensional or the field is not sliced, ``ValueError`` is raised.
-
-        Returns
-        -------
-        float
-
-            Topological charge.
-
-        Raises
-        ------
-        ValueError
-
-            If the field does not have ``dim=3`` or the field is not sliced.
-
-        Example
-        -------
-        1. Compute the topological charge of a spatially constant vector field.
-        Zero value is expected.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10, 10, 10)
-        >>> cell = (2, 2, 2)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
-        >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
-        >>> f.plane('z').bergluescher
-        0.0
-        >>> f.plane('z').bergluescher
-        0.0
-
-        .. seealso::
-
-            :py:func:`~discretisedfield.Field.topological_charge`
-            :py:func:`~discretisedfield.Field.tological_charge_density`
+        This method computes the topological charge density using the Berg-Luescher
+        method.
 
         """
         if self.dim != 3:
             msg = (f'Cannot compute Berg-Luescher topological charge '
-                   f'for dim={self.dim} field.')
+                   f'density for dim={self.dim} field.')
             raise ValueError(msg)
         if not hasattr(self.mesh, 'info'):
             msg = ('The field must be sliced before the Berg-Luescher '
-                   'topological charge can be computed.')
+                   'topological charge density can be computed.')
             raise ValueError(msg)
 
         axis1 = self.mesh.info['axis1']
         axis2 = self.mesh.info['axis2']
         of = self.orientation  # unit (orientation) field
 
-        topological_charge = 0
-        for i, j in itertools.product(range(of.mesh.n[axis1]-1),
-                                      range(of.mesh.n[axis2]-1)):
-            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j})]
-            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i+1, axis2: j})]
-            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i+1, axis2: j+1})]
-            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j+1})]
+        density_field = self.__class__(self.mesh, dim=1, value=0)
 
-            triangle1 = dfu.bergluescher_angle(v1, v2, v4)
-            triangle2 = dfu.bergluescher_angle(v2, v3, v4)
+        area = 0.5 * self.mesh.cell[axis1] * self.mesh.cell[axis2]
 
-            topological_charge += triangle1 + triangle2
+        for i, j in itertools.product(range(of.mesh.n[axis1]),
+                                      range(of.mesh.n[axis2])):
+            idx0 = dfu.assemble_index(0, 3, {axis1: i, axis2: j})
+            v0 = of.array[idx0]
 
-        return topological_charge
+            v1 = v2 = v3 = v4 = None
 
-    def topological_charge(self, method='continuous'):
+            if i + 1 < of.mesh.n[axis1]:
+                v1 = of.array[dfu.assemble_index(0, 3, {axis1: i+1, axis2: j})]
+            if j + 1 < of.mesh.n[axis2]:
+                v2 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j+1})]
+            if i - 1 >= 0:
+                v3 = of.array[dfu.assemble_index(0, 3, {axis1: i-1, axis2: j})]
+            if j - 1 >= 0:
+                v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j-1})]
+
+            charge = 0.0
+            triangle_count = 0
+
+            if v1 is not None and v2 is not None:
+                triangle_count += 1
+                charge += dfu.bergluescher_angle(v0, v1, v2)
+
+            if v2 is not None and v3 is not None:
+                triangle_count += 1
+                charge += dfu.bergluescher_angle(v0, v2, v3)
+
+            if v3 is not None and v4 is not None:
+                triangle_count += 1
+                charge += dfu.bergluescher_angle(v0, v3, v4)
+
+            if v4 is not None and v1 is not None:
+                triangle_count += 1
+                charge += dfu.bergluescher_angle(v0, v4, v1)
+
+            density_field.array[idx0] = charge / (area * triangle_count)
+
+        return density_field
+
+    def topological_charge(self, method='continuous', absolute=False):
         """Topological charge.
 
         This method computes the topological charge for the vector field
@@ -2330,12 +2320,95 @@ class Field:
 
         """
         if method == 'continuous':
-            return self.topological_charge_density.surface_integral
+            density = self.topological_charge_density()
+            if absolute:
+                density.array = np.abs(density.array)
+            return density.surface_integral
         elif method == 'berg-luescher':
-            return self.bergluescher
+            return self.bergluescher(absolute=absolute)
         else:
             msg = 'Method can be either continuous or berg-luescher'
             raise ValueError(msg)
+
+    def bergluescher(self, absolute=False):
+        """Topological charge computed using Berg-Luescher method.
+
+        The details of this method can be found in Berg and Luescher, Nuclear
+        Physics, Section B, Volume 190, Issue 2, p. 412-424.
+
+        This method computes the topological charge for the vector field
+        (``dim=3``). Topological charge is defined on two-dimensional samples.
+        Therefore, the field must be "sliced" using
+        ``discretisedfield.Field.plane`` method. If the field is not
+        three-dimensional or the field is not sliced, ``ValueError`` is raised.
+
+        Returns
+        -------
+        float
+
+            Topological charge.
+
+        Raises
+        ------
+        ValueError
+
+            If the field does not have ``dim=3`` or the field is not sliced.
+
+        Example
+        -------
+        1. Compute the topological charge of a spatially constant vector field.
+        Zero value is expected.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+        >>> f.plane('z').bergluescher
+        0.0
+        >>> f.plane('z').bergluescher
+        0.0
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.Field.topological_charge`
+            :py:func:`~discretisedfield.Field.tological_charge_density`
+        """
+        if self.dim != 3:
+            msg = (f'Cannot compute Berg-Luescher topological charge '
+                   f'for dim={self.dim} field.')
+            raise ValueError(msg)
+        if not hasattr(self.mesh, 'info'):
+            msg = ('The field must be sliced before the Berg-Luescher '
+                   'topological charge can be computed.')
+            raise ValueError(msg)
+
+        axis1 = self.mesh.info['axis1']
+        axis2 = self.mesh.info['axis2']
+        of = self.orientation  # unit (orientation) field
+
+        topological_charge = 0
+        for i, j in itertools.product(range(of.mesh.n[axis1] - 1),
+                                      range(of.mesh.n[axis2] - 1)):
+            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j})]
+            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j})]
+            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1,
+                                                    axis2: j + 1})]
+            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j + 1})]
+
+            triangle1 = dfu.bergluescher_angle(v1, v2, v4)
+            triangle2 = dfu.bergluescher_angle(v2, v3, v4)
+
+            if absolute:
+                triangle1 = abs(triangle1)
+                triangle2 = abs(triangle2)
+
+            topological_charge += triangle1 + triangle2
+
+        return topological_charge
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
