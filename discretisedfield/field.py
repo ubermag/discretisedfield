@@ -2095,19 +2095,32 @@ class Field:
         """Topological charge density.
 
         This method computes the topological charge density for the vector
-        (``dim=3``) field:
+        (``dim=3``) field. Two different methods are implemented:
 
-        .. math::
+        1. Continuous method:
+            .. math::
 
-            q = \\frac{1}{4\\pi} \\mathbf{n} \\cdot \\left(\\frac{\\partial
-            \\mathbf{n}}{\\partial x} \\times \\frac{\\partial
-            \\mathbf{n}}{\\partial x} \\right),
+                q = \\frac{1}{4\\pi} \\mathbf{n} \\cdot \\left(\\frac{\\partial
+                \\mathbf{n}}{\\partial x} \\times \\frac{\\partial
+                \\mathbf{n}}{\\partial x} \\right),
 
-        where :math:`\\mathbf{n}` is the orientation field. Topological charge
-        is defined on two-dimensional samples only. Therefore, the field must
-        be "sliced" using the ``discretisedfield.Field.plane`` method. If the
-        field is not three-dimensional or the field is not sliced,
-        ``ValueError`` is raised.
+            where :math:`\\mathbf{n}` is the orientation field.
+
+        2. Berg-Luescher method:
+            for more details see
+            :py:func:`~discretisedfield.Field.topological_charge`
+
+        Topological charge is defined on two-dimensional samples only.
+        Therefore, the field must be "sliced" using the
+        ``discretisedfield.Field.plane`` method. If the field is not
+        three-dimensional or the field is not sliced, ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        method : str, optional
+
+            Method how the topological charge is computed. It can be
+            ``continuous`` or ``berg-luescher``. Defaults to ``continuous``.
 
         Returns
         -------
@@ -2134,7 +2147,10 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
-        >>> f.plane('z').topological_charge_density.average
+        >>> f.plane('z').topological_charge_density().average
+        0.0
+        >>> f.plane('z').topological_charge_density(method='berg-luescher')\
+                .average
         0.0
 
         2. Attempt to compute the topological charge density of a scalar field.
@@ -2154,7 +2170,10 @@ class Field:
         ...
         ValueError: ...
 
-        .. seealso:: :py:func:`~discretisedfield.Field.topological_charge`
+        .. seealso::
+
+            :py:func`~discretisedfield.Field.bergluescher_density`
+            :py:func:`~discretisedfield.Field.topological_charge`
 
         """
         if self.dim != 3:
@@ -2181,8 +2200,64 @@ class Field:
     def bergluescher_density(self):
         """Topological charge density calculated using Berg-Luescher method.
 
-        This method computes the topological charge density using the Berg-Luescher
-        method.
+        This method computes the topological charge density using the
+        Berg-Luescher method. Details are given in Kim and Mulkers,
+        IOP SciNotes 1, 025211 (2020).
+
+        Topological charge is defined on two-dimensional samples only.
+        Therefore, the field must be "sliced" using the
+        ``discretisedfield.Field.plane`` method. If the field is not
+        three-dimensional or the field is not sliced, ``ValueError`` is raised.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Topological charge density as a scalar field.
+
+        Raises
+        ------
+        ValueError
+
+            If the field is not three-dimensional or the field is not sliced.
+
+        Example
+        -------
+        1. Compute the topological charge density of a spatially constant
+        vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (2, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+        >>> f.plane('z').bergluescher_density.average
+        0.0
+
+        2. Attempt to compute the topological charge density of a scalar field.
+
+        >>> f = df.Field(mesh, dim=1, value=12)
+        >>> f.plane('z').bergluescher_density
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        3. Attempt to compute the topological charge density of a vector field,
+        which is not sliced.
+
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> f.bergluescher_density
+        Traceback (most recent call last):
+        ...
+        ValueError: ...
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.Field.topological_charge_density`
+            :py:func:`~discretisedfield.Field.bergluescher`
 
         """
         if self.dim != 3:
@@ -2254,6 +2329,11 @@ class Field:
         lattice, as described in: Berg and Luescher, Nuclear Physics, Section
         B, Volume 190, Issue 2, p. 412-424.
 
+        The method can additionally compute an absolute topological charge
+        given as integral over the absolute values of the topological charge
+        density or a modified version of the Berg-Luescher method,
+        respectively.
+
         Topological charge is defined on two-dimensional samples. Therefore,
         the field must be "sliced" using ``discretisedfield.Field.plane``
         method. If the field is not three-dimensional or the field is not
@@ -2265,6 +2345,11 @@ class Field:
 
             Method how the topological charge is computed. It can be
             ``continuous`` or ``berg-luescher``. Defaults to ``continuous``.
+
+        absolute : bool, optional
+
+            If ``True`` the absolute topological charge is computed.
+            Defaults to ``False``.
 
         Returns
         -------
@@ -2293,7 +2378,12 @@ class Field:
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
         >>> f.plane('z').topological_charge(method='continuous')
         0.0
+        >>> f.plane('z').topological_charge(method='continuous', absolute=True)
+        0.0
         >>> f.plane('z').topological_charge(method='berg-luescher')
+        0.0
+        >>> f.plane('z').topological_charge(method='berg-luescher',
+                                            absolute=True)
         0.0
 
         2. Attempt to compute the topological charge of a scalar field.
@@ -2336,11 +2426,20 @@ class Field:
         The details of this method can be found in Berg and Luescher, Nuclear
         Physics, Section B, Volume 190, Issue 2, p. 412-424.
 
-        This method computes the topological charge for the vector field
-        (``dim=3``). Topological charge is defined on two-dimensional samples.
+        This method computes the topological charge or an absolute topological
+        charge (taking the absolute value of each triangle) for the vector
+        field (``dim=3``).
+        Topological charge is defined on two-dimensional samples.
         Therefore, the field must be "sliced" using
         ``discretisedfield.Field.plane`` method. If the field is not
         three-dimensional or the field is not sliced, ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        absolute : bool, optional
+
+            If ``True`` the absolute topological charge is computed.
+            Default to ``False``.
 
         Returns
         -------
@@ -2367,15 +2466,16 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
-        >>> f.plane('z').bergluescher
+        >>> f.plane('z').bergluescher()
         0.0
-        >>> f.plane('z').bergluescher
+        >>> f.plane('z').bergluescher(absolute=True)
         0.0
 
         .. seealso::
 
             :py:func:`~discretisedfield.Field.topological_charge`
             :py:func:`~discretisedfield.Field.tological_charge_density`
+            :py:func:`~discretisedfield.Field.bergluescher_density`
         """
         if self.dim != 3:
             msg = (f'Cannot compute Berg-Luescher topological charge '
