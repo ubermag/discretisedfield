@@ -277,11 +277,10 @@ class Field:
     def norm(self):
         """Norm of the field.
 
-        Computes the norm of the field and returns it as
-        ``discretisedfield.Field`` with ``dim=1``. Norm of a scalar field
-        cannot be computed/set and ``ValueError`` is raised. Alternatively,
-        ``discretisedfield.Field.__abs__`` can be called for obtaining the norm
-        of the field.
+        Computes the norm of the field and returns ``discretisedfield.Field``
+        with ``dim=1``. Norm of a scalar field is interpreted as an absolute
+        value of the field. Alternatively, ``discretisedfield.Field.__abs__``
+        can be called for obtaining the norm of the field.
 
         The field norm can be set by passing ``numbers.Real``,
         ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
@@ -291,13 +290,13 @@ class Field:
         ----------
         numbers.Real, numpy.ndarray, callable
 
-            Norm value
+            Norm value.
 
         Returns
         -------
         discretisedfield.Field
 
-            ``dim=1`` norm field.
+            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
 
         Raises
         ------
@@ -342,11 +341,11 @@ class Field:
 
         """
         if self.dim == 1:
-            msg = f'Cannot compute norm for field with dim={self.dim}.'
-            raise ValueError(msg)
+            res = abs(self.value)
+        else:
+            res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
 
-        computed_norm = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
-        return self.__class__(self.mesh, dim=1, value=computed_norm)
+        return self.__class__(self.mesh, dim=1, value=res)
 
     @norm.setter
     def norm(self, val):
@@ -365,15 +364,34 @@ class Field:
     def __abs__(self):
         """Field norm.
 
-        This method returns ``discretisedfield.Field.norm`` for fields with
-        ``dim>1``. For a field with ``dim=1`` it computes the absolute value
-        of each element and returns it as ``discretisedfield.Field``.
+        This is a convenience operator and it returns
+        ``discretisedfield.Field.norm``. For details, please refer to
+        ``discretisedfield.Field.norm``.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+
+        Examples
+        --------
+        1. Computing the absolute value of a scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 10, 13)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=1, value=-5)
+        >>> abs(field).average
+        5
 
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
 
         """
-        if self.dim == 1:
-            return self.__class__(self.mesh, dim=1, value=abs(self.value))
         return self.norm
 
     @property
