@@ -2672,19 +2672,35 @@ class Field:
 
         degrees : bool
 
-            If true angles are given in degrees else in radians.
+            If ``True`` angles are given in degrees else in radians.
 
         Returns
         -------
         discretisedfield.Field
 
-            A one-dimensional field with angles.
+            A one-dimensional field with angles. In the given direction the
+            number of cells is reduced by one compared to the given field.
 
         Raises
         ------
         ValueError
 
             If the field has not ``dim=3`` or the direction is invalid.
+
+        Example
+        -------
+        1. Computing the angle between neighbouring cells in ``z``-direction.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
+        ...
+        >>> field.spin_angle(direction='z').average
+        0.0
         """
         if not self.dim == 3:
             msg = (f'Calculation of spin angles is not possible for a field'
@@ -2718,6 +2734,47 @@ class Field:
                               value=angles.reshape(*angles.shape, 1))
 
     def max_spin_angle(self, degrees=False):
+        """Calculate the maximum spin angle for each cell.
+
+        This method for each cell computes the spin angle to the six
+        neighbouring cells and takes the maximum angle. The calculation is
+        only possible for fields with ``dim=3``. Angles are can be in radians
+        or degrees depending on ``degrees``.
+
+        Parameters
+        ----------
+        degrees : bool
+
+            If ``True`` angles are given in degrees else in radians.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            A one-dimensional field with angles with the same number of cells
+            as the given field.
+
+        Raises
+        ------
+        ValueError
+
+            If the field has not ``dim=3`` or the direction is invalid.
+
+        Example
+        -------
+        1. Computing the angle between neighbouring cells in ``z``-direction.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
+        ...
+        >>> field.mas_spin_angle().average
+        0.0
+        """
         x_angles = self.spin_angle('x', degrees).array.squeeze()
         y_angles = self.spin_angle('y', degrees).array.squeeze()
         z_angles = self.spin_angle('z', degrees).array.squeeze()
