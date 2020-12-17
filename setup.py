@@ -1,9 +1,9 @@
-import distutils.core
+import setuptools
 
 with open('README.md', encoding='utf-8') as f:
     long_description = f.read()
 
-distutils.core.setup(
+setuptools.setup(
     name='discretisedfield',
     version='0.8.13',
     description=('Python package for definition, reading, '
@@ -13,7 +13,7 @@ distutils.core.setup(
     url='https://ubermag.github.io',
     author=('Marijan Beg, Martin Lang, Ryan A. Pepper, '
             'Thomas Kluyver, and Hans Fangohr'),
-    packages=distutils.core.find_packages(),
+    packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": [
             "ovf2vtk = discretisedfield.ovf2vtk:main",
