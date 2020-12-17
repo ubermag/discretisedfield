@@ -1,7 +1,7 @@
 PROJECT=discretisedfield
 IPYNBPATH=docs/ipynb/*.ipynb
 CODECOVTOKEN=ec842dd4-be45-4f5d-acfb-66857fa13de0
-PYTHON?=python3
+PYTHON?=python
 
 test:
 	$(PYTHON) -m pytest

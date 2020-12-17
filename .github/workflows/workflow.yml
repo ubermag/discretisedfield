@@ -3,7 +3,7 @@ name: workflow
 on: [push]
 
 jobs:
-  test:
+  tests:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
