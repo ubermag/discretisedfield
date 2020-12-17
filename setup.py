@@ -13,7 +13,7 @@ distutils.core.setup(
     url='https://ubermag.github.io',
     author=('Marijan Beg, Martin Lang, Ryan A. Pepper, '
             'Thomas Kluyver, and Hans Fangohr'),
-    packages=setuptools.find_packages(),
+    packages=distutils.core.find_packages(),
     entry_points={
         "console_scripts": [
             "ovf2vtk = discretisedfield.ovf2vtk:main",
