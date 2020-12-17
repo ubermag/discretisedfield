@@ -10,7 +10,7 @@ test-test:
 	$(PYTHON) -c "import sys; import $(PROJECT); sys.exit($(PROJECT).test())"
 
 test-coverage:
-	$(PYTHON) -m pytest -v --cov=$(PROJECT) --cov-config .coveragerc
+	$(PYTHON) -m pytest -v --cov=$(PROJECT) --cov-report=xml --cov-config .coveragerc
 
 test-docs:
 	$(PYTHON) -m pytest -v --doctest-modules --ignore=$(PROJECT)/tests $(PROJECT)
