@@ -1,12 +1,35 @@
-name: test
+name: ci-tests
 
 on: [push]
 
 jobs:
-  check-bats-version:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-      - run: npm install -g bats
-      - run: bats -v
+    - uses: actions/checkout@v2
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+        architecture: 'x64'
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+# 
+#
+# name: test
+#
+# on: [push]
+#
+# jobs:
+#   linux-test:
+#     runs-on: ubuntu-20.04
+#     strategy:
+#       matrix:
+#         python-version: [3.8]
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/setup-node@v1
+#       - run: npm install -g bats
+#       - run: bats -v
