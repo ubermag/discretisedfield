@@ -1,8 +1,9 @@
 # discretisedfield
-Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, Thomas Kluyver<sup>2</sup>, and Hans Fangohr<sup>1,2</sup>
+Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, Thomas Kluyver<sup>1,2</sup>, and Hans Fangohr<sup>1,2,3</sup>
 
 <sup>1</sup> *Faculty of Engineering and Physical Sciences, University of Southampton, Southampton SO17 1BJ, United Kingdom*  
 <sup>2</sup> *European XFEL GmbH, Holzkoppel 4, 22869 Schenefeld, Germany*  
+<sup>3</sup> *Max Planck Institute for the Structure and Dynamics of Matter, Luruper Chaussee 149, 22761 Hamburg, Germany*  
 
 | Description | Badge |
 | --- | --- |
@@ -57,7 +58,7 @@ If you use this package, please cite it as:
 
 1. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025 (2017)](http://aip.scitation.org/doi/10.1063/1.4977225).
 
-2. M. Beg, R. A. Pepper, T. Kluyver, and H. Fangohr. ubermag/discretisedfield: Python package for the analysis and visualisation of finite difference fields. Zenodo. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2020).
+2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. ubermag/discretisedfield: Python package for the analysis and visualisation of finite difference fields. Zenodo. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2020).
 
 ## Acknowledgements
 

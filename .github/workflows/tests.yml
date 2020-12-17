@@ -33,8 +33,7 @@ jobs:
     - name: Python code style
       run: make test-pycodestyle
 
-    # Coverage is tested and uploaded only on ubuntu-latest
-    - name: Coverage
+    - name: Tests coverage
       run: make test-coverage
       if: matrix.os == 'ubuntu-latest'
 
