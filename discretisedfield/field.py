@@ -655,7 +655,7 @@ class Field:
             dirlist += list(dfu.axesdict.keys())[:self.dim]
         if self.dim == 1:
             need_removing = ['div', 'curl', 'topological_charge',
-                             'topological_charge_density', 'bergluescher',
+                             'topological_charge_density',
                              'norm', 'orientation', 'mpl_vector', 'k3d_vector']
         if self.dim == 3:
             need_removing = ['grad', 'mpl_scalar', 'k3d_scalar', 'k3d_nonzero']
@@ -2202,31 +2202,31 @@ class Field:
             msg = ('The field must be sliced before the topological '
                    'charge density can be computed.')
             raise ValueError(msg)
+        if method not in ['continuous', 'berg-luescher']:
+            msg = 'Method can be either continuous or berg-luescher'
+            raise ValueError(msg)
+
+        axis1 = self.mesh.info['axis1']
+        axis2 = self.mesh.info['axis2']
+        of = self.orientation  # unit field - orientation field
+
         if method == 'continuous':
-            of = self.orientation  # unit (orientation) field
-            prefactor = 1 / (4 * np.pi)
-
-            q = of @ (of.derivative(dfu.raxesdict[self.mesh.info['axis1']]) &
-                      of.derivative(dfu.raxesdict[self.mesh.info['axis2']]))
-
-            return prefactor * q
+            return 1 / (4 * np.pi) * of @ (of.derivative(dfu.raxesdict[axis1]) &
+                                           of.derivative(dfu.raxesdict[axis2]))
 
         elif method == 'berg-luescher':
-            axis1 = self.mesh.info['axis1']
-            axis2 = self.mesh.info['axis2']
-            of = self.orientation
+            q = self.__class__(self.mesh, dim=1, value=0)
 
-            density_field = self.__class__(self.mesh, dim=1, value=0)
-
+            # Area of a single triangle
             area = 0.5 * self.mesh.cell[axis1] * self.mesh.cell[axis2]
 
             for i, j in itertools.product(range(of.mesh.n[axis1]),
                                           range(of.mesh.n[axis2])):
-                idx0 = dfu.assemble_index(0, 3, {axis1: i, axis2: j})
-                v0 = of.array[idx0]
+                index = dfu.assemble_index(0, 3, {axis1: i, axis2: j})
+                v0 = of.array[index]
 
+                # Extract 4 neighbouring vectors (if they exist)
                 v1 = v2 = v3 = v4 = None
-
                 if i + 1 < of.mesh.n[axis1]:
                     v1 = of.array[dfu.assemble_index(0, 3, {axis1: i+1,
                                                             axis2: j})]
@@ -2240,7 +2240,7 @@ class Field:
                     v4 = of.array[dfu.assemble_index(0, 3, {axis1: i,
                                                             axis2: j-1})]
 
-                charge = 0.0
+                charge = 0
                 triangle_count = 0
 
                 if v1 is not None and v2 is not None:
@@ -2259,13 +2259,13 @@ class Field:
                     triangle_count += 1
                     charge += dfu.bergluescher_angle(v0, v4, v1)
 
-                density_field.array[idx0] = charge / (area * triangle_count)
+                if triangle_count > 0:
+                    q.array[index] = charge / (area * triangle_count)
+                else:
+                    # If the cell nas no neighbouring cells
+                    q.array[index] = 0
 
-            return density_field
-
-        else:
-            msg = 'Method can be either continuous or berg-luescher'
-            raise ValueError(msg)
+            return q
 
     def topological_charge(self, method='continuous', absolute=False):
         """Topological charge.
@@ -2360,7 +2360,7 @@ class Field:
         """
         if self.dim != 3:
             msg = (f'Cannot compute topological charge '
-                   f'for dim={self.dim} field.')
+                   'for dim={self.dim} field.')
             raise ValueError(msg)
         if not hasattr(self.mesh, 'info'):
             msg = ('The field must be sliced before the '
@@ -2368,10 +2368,11 @@ class Field:
             raise ValueError(msg)
 
         if method == 'continuous':
-            density = self.topological_charge_density()
+            q = self.topological_charge_density(method=method)
             if absolute:
-                density.array = np.abs(density.array)
-            return density.surface_integral
+                return abs(q).surface_integral
+            else:
+                return q.surface_integral
 
         elif method == 'berg-luescher':
             axis1 = self.mesh.info['axis1']

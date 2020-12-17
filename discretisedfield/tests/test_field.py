@@ -97,9 +97,15 @@ def check_field(field):
         assert curl.dim == 3
 
         field_plane = field.plane('z')
-        assert isinstance(field_plane.topological_charge_density, df.Field)
-        assert isinstance(field_plane.topological_charge(), numbers.Real)
-        assert isinstance(field_plane.bergluescher, numbers.Real)
+
+        for method in ['continuous', 'berg-luescher']:
+            for absolute in [True, False]:
+                q = field_plane.topological_charge_density(method=method)
+                assert isinstance(q, df.Field)
+
+                Q = field_plane.topological_charge(method=method,
+                                                   absolute=absolute)
+                assert isinstance(Q, numbers.Real)
 
         orientation = field.orientation
         assert isinstance(orientation, df.Field)
@@ -285,8 +291,6 @@ class TestField:
         # Exception
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=1, value=-5)
-        with pytest.raises(ValueError):
-            norm = f.norm
         with pytest.raises(ValueError):
             f.norm = 5
 
@@ -1352,22 +1356,30 @@ class TestField:
         # -> Q(f) = 0
         f = df.Field(mesh, dim=3, value=(0, 0, 0))
 
-        q = f.plane('z').topological_charge_density
-        check_field(q)
-        assert q.dim == 1
-        assert q.average == 0
-        assert f.plane('z').topological_charge(method='continuous') == 0
-        assert f.plane('z').topological_charge(method='berg-luescher') == 0
+        for method in ['continuous', 'berg-luescher']:
+            q = f.plane('z').topological_charge_density(method=method)
+            check_field(q)
+            assert q.dim == 1
+            assert q.average == 0
+            for absolute in [True, False]:
+                assert f.plane('z').topological_charge(method=method,
+                                                       absolute=absolute) == 0
 
-        # Skyrmion from a file
+        # Skyrmion (with PBC) from a file
         test_filename = os.path.join(os.path.dirname(__file__),
                                      'test_sample/',
                                      'skyrmion.omf')
         f = df.Field.fromfile(test_filename)
-        Qc = f.plane('z').topological_charge(method='continuous')
-        Qbl = f.plane('z').topological_charge(method='berg-luescher')
-        assert abs(Qc - 1) < 0.15
-        assert abs(Qbl - 1) < 1e-3
+
+        for method in ['continuous', 'berg-luescher']:
+            q = f.plane('z').topological_charge_density(method=method)
+            check_field(q)
+            assert q.dim == 1
+            assert q.average > 0
+            for absolute in [True, False]:
+                Q = f.plane('z').topological_charge(method=method,
+                                                    absolute=absolute)
+                assert abs(Q) < 1 and abs(Q - 1) < 0.15
 
         # Not sliced
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
