@@ -387,7 +387,7 @@ class Field:
         ...
         >>> field = df.Field(mesh=mesh, dim=1, value=-5)
         >>> abs(field).average
-        5
+        5.0
 
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
 
@@ -2172,13 +2172,13 @@ class Field:
         >>> f.plane('z').topological_charge_density().average
         0.0
         >>> f.plane('z').topological_charge_density(
-                method='berg-luescher').average
+        ...     method='berg-luescher').average
         0.0
 
         2. Attempt to compute the topological charge density of a scalar field.
 
         >>> f = df.Field(mesh, dim=1, value=12)
-        >>> f.plane('z').topological_charge_density
+        >>> f.plane('z').topological_charge_density()
         Traceback (most recent call last):
         ...
         ValueError: ...
@@ -2187,7 +2187,7 @@ class Field:
         which is not sliced.
 
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        >>> f.topological_charge_density
+        >>> f.topological_charge_density()
         Traceback (most recent call last):
         ...
         ValueError: ...
@@ -2334,7 +2334,7 @@ class Field:
         >>> f.plane('z').topological_charge(method='berg-luescher')
         0.0
         >>> f.plane('z').topological_charge(method='berg-luescher',
-                                            absolute=True)
+        ...                                 absolute=True)
         0.0
 
         2. Attempt to compute the topological charge of a scalar field.
@@ -2366,6 +2366,9 @@ class Field:
             msg = ('The field must be sliced before the '
                    'topological charge can be computed.')
             raise ValueError(msg)
+        if method not in ['continuous', 'berg-luescher']:
+            msg = 'Method can be either continuous or berg-luescher'
+            raise ValueError(msg)
 
         if method == 'continuous':
             q = self.topological_charge_density(method=method)
@@ -2375,6 +2378,9 @@ class Field:
                 return q.surface_integral
 
         elif method == 'berg-luescher':
+            # Can we base this calculation on density field which is computed in
+            # another method?
+
             axis1 = self.mesh.info['axis1']
             axis2 = self.mesh.info['axis2']
             of = self.orientation
@@ -2401,10 +2407,6 @@ class Field:
                 topological_charge += triangle1 + triangle2
 
             return topological_charge
-
-        else:
-            msg = 'Method can be either continuous or berg-luescher'
-            raise ValueError(msg)
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
@@ -2773,8 +2775,9 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
         ...
-        >>> field.mas_spin_angle().average
+        >>> field.max_spin_angle().average
         0.0
+
         """
         x_angles = self.spin_angle('x', degrees).array.squeeze()
         y_angles = self.spin_angle('y', degrees).array.squeeze()
