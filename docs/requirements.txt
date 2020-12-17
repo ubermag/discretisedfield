@@ -1,2 +1,2 @@
 nbsphinx
-matplotlib>=3.2
+jupyter-server==1.1
