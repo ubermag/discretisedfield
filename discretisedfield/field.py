@@ -277,11 +277,10 @@ class Field:
     def norm(self):
         """Norm of the field.
 
-        Computes the norm of the field and returns it as
-        ``discretisedfield.Field`` with ``dim=1``. Norm of a scalar field
-        cannot be computed/set and ``ValueError`` is raised. Alternatively,
-        ``discretisedfield.Field.__abs__`` can be called for obtaining the norm
-        of the field.
+        Computes the norm of the field and returns ``discretisedfield.Field``
+        with ``dim=1``. Norm of a scalar field is interpreted as an absolute
+        value of the field. Alternatively, ``discretisedfield.Field.__abs__``
+        can be called for obtaining the norm of the field.
 
         The field norm can be set by passing ``numbers.Real``,
         ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
@@ -291,13 +290,13 @@ class Field:
         ----------
         numbers.Real, numpy.ndarray, callable
 
-            Norm value
+            Norm value.
 
         Returns
         -------
         discretisedfield.Field
 
-            ``dim=1`` norm field.
+            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
 
         Raises
         ------
@@ -342,11 +341,11 @@ class Field:
 
         """
         if self.dim == 1:
-            msg = f'Cannot compute norm for field with dim={self.dim}.'
-            raise ValueError(msg)
+            res = abs(self.value)
+        else:
+            res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
 
-        computed_norm = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
-        return self.__class__(self.mesh, dim=1, value=computed_norm)
+        return self.__class__(self.mesh, dim=1, value=res)
 
     @norm.setter
     def norm(self, val):
@@ -365,7 +364,30 @@ class Field:
     def __abs__(self):
         """Field norm.
 
-        This method returns ``discretisedfield.Field.norm``.
+        This is a convenience operator and it returns
+        ``discretisedfield.Field.norm``. For details, please refer to
+        ``discretisedfield.Field.norm``.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+
+        Examples
+        --------
+        1. Computing the absolute value of a scalar field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 10, 13)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=1, value=-5)
+        >>> abs(field).average
+        5.0
 
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
 
@@ -633,8 +655,8 @@ class Field:
             dirlist += list(dfu.axesdict.keys())[:self.dim]
         if self.dim == 1:
             need_removing = ['div', 'curl', 'topological_charge',
-                             'topological_charge_density', 'bergluescher',
-                             'norm', 'orientation', 'mpl_vector', 'k3d_vector']
+                             'topological_charge_density', 'orientation',
+                             'mpl_vector', 'k3d_vector']
         if self.dim == 3:
             need_removing = ['grad', 'mpl_scalar', 'k3d_scalar', 'k3d_nonzero']
 
@@ -2087,24 +2109,40 @@ class Field:
         thickness = self.mesh.cell[self.mesh.info['planeaxis']]
         return dfu.array2tuple(np.divide(self.volume_integral, thickness))
 
-    @property
-    def topological_charge_density(self):
+    def topological_charge_density(self, method='continuous'):
         """Topological charge density.
 
         This method computes the topological charge density for the vector
-        (``dim=3``) field:
+        (``dim=3``) field. Two different methods are implemented:
 
-        .. math::
+        1. Continuous method:
+            .. math::
 
-            q = \\frac{1}{4\\pi} \\mathbf{n} \\cdot \\left(\\frac{\\partial
-            \\mathbf{n}}{\\partial x} \\times \\frac{\\partial
-            \\mathbf{n}}{\\partial x} \\right),
+                q = \\frac{1}{4\\pi} \\mathbf{n} \\cdot \\left(\\frac{\\partial
+                \\mathbf{n}}{\\partial x} \\times \\frac{\\partial
+                \\mathbf{n}}{\\partial x} \\right),
 
-        where :math:`\\mathbf{n}` is the orientation field. Topological charge
-        is defined on two-dimensional samples only. Therefore, the field must
-        be "sliced" using the ``discretisedfield.Field.plane`` method. If the
-        field is not three-dimensional or the field is not sliced,
-        ``ValueError`` is raised.
+            where :math:`\\mathbf{n}` is the orientation field.
+
+        2. Berg-Luescher method:
+
+            This method computes the topological charge density using
+            Berg-Luescher method. Details are given in:
+            - Berg and Luescher, Nuclear Physics, Section B,
+              Volume 190, Issue 2, p. 412-424.
+            - Kim and Mulkers, IOP SciNotes 1, 025211 (2020).
+
+        Topological charge is defined on two-dimensional samples only.
+        Therefore, the field must be "sliced" using the
+        ``discretisedfield.Field.plane`` method. If the field is not
+        three-dimensional or the field is not sliced, ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        method : str, optional
+
+            Method how the topological charge is computed. It can be
+            ``continuous`` or ``berg-luescher``. Defaults to ``continuous``.
 
         Returns
         -------
@@ -2131,13 +2169,16 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
-        >>> f.plane('z').topological_charge_density.average
+        >>> f.plane('z').topological_charge_density().average
+        0.0
+        >>> f.plane('z').topological_charge_density(
+        ...     method='berg-luescher').average
         0.0
 
         2. Attempt to compute the topological charge density of a scalar field.
 
         >>> f = df.Field(mesh, dim=1, value=12)
-        >>> f.plane('z').topological_charge_density
+        >>> f.plane('z').topological_charge_density()
         Traceback (most recent call last):
         ...
         ValueError: ...
@@ -2146,13 +2187,12 @@ class Field:
         which is not sliced.
 
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        >>> f.topological_charge_density
+        >>> f.topological_charge_density()
         Traceback (most recent call last):
         ...
         ValueError: ...
 
         .. seealso:: :py:func:`~discretisedfield.Field.topological_charge`
-
         """
         if self.dim != 3:
             msg = (f'Cannot compute topological charge density '
@@ -2162,92 +2202,72 @@ class Field:
             msg = ('The field must be sliced before the topological '
                    'charge density can be computed.')
             raise ValueError(msg)
-
-        of = self.orientation  # unit (orientation) field
-        prefactor = 1 / (4 * np.pi)
-        q = of @ (of.derivative(dfu.raxesdict[self.mesh.info['axis1']]) &
-                  of.derivative(dfu.raxesdict[self.mesh.info['axis2']]))
-
-        return prefactor * q
-
-    @property
-    def bergluescher(self):
-        """Topological charge computed using Berg-Luescher method.
-
-        The details of this method can be found in Berg and Luescher, Nuclear
-        Physics, Section B, Volume 190, Issue 2, p. 412-424.
-
-        This method computes the topological charge for the vector field
-        (``dim=3``). Topological charge is defined on two-dimensional samples.
-        Therefore, the field must be "sliced" using
-        ``discretisedfield.Field.plane`` method. If the field is not
-        three-dimensional or the field is not sliced, ``ValueError`` is raised.
-
-        Returns
-        -------
-        float
-
-            Topological charge.
-
-        Raises
-        ------
-        ValueError
-
-            If the field does not have ``dim=3`` or the field is not sliced.
-
-        Example
-        -------
-        1. Compute the topological charge of a spatially constant vector field.
-        Zero value is expected.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10, 10, 10)
-        >>> cell = (2, 2, 2)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
-        >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
-        >>> f.plane('z').bergluescher
-        0.0
-        >>> f.plane('z').bergluescher
-        0.0
-
-        .. seealso::
-
-            :py:func:`~discretisedfield.Field.topological_charge`
-            :py:func:`~discretisedfield.Field.tological_charge_density`
-
-        """
-        if self.dim != 3:
-            msg = (f'Cannot compute Berg-Luescher topological charge '
-                   f'for dim={self.dim} field.')
-            raise ValueError(msg)
-        if not hasattr(self.mesh, 'info'):
-            msg = ('The field must be sliced before the Berg-Luescher '
-                   'topological charge can be computed.')
+        if method not in ['continuous', 'berg-luescher']:
+            msg = 'Method can be either continuous or berg-luescher'
             raise ValueError(msg)
 
         axis1 = self.mesh.info['axis1']
         axis2 = self.mesh.info['axis2']
-        of = self.orientation  # unit (orientation) field
+        of = self.orientation  # unit field - orientation field
 
-        topological_charge = 0
-        for i, j in itertools.product(range(of.mesh.n[axis1]-1),
-                                      range(of.mesh.n[axis2]-1)):
-            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j})]
-            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i+1, axis2: j})]
-            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i+1, axis2: j+1})]
-            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j+1})]
+        if method == 'continuous':
+            return 1 / (4 * np.pi) * of @ (of.derivative(dfu.raxesdict[axis1]) &
+                                           of.derivative(dfu.raxesdict[axis2]))
 
-            triangle1 = dfu.bergluescher_angle(v1, v2, v4)
-            triangle2 = dfu.bergluescher_angle(v2, v3, v4)
+        elif method == 'berg-luescher':
+            q = self.__class__(self.mesh, dim=1, value=0)
 
-            topological_charge += triangle1 + triangle2
+            # Area of a single triangle
+            area = 0.5 * self.mesh.cell[axis1] * self.mesh.cell[axis2]
 
-        return topological_charge
+            for i, j in itertools.product(range(of.mesh.n[axis1]),
+                                          range(of.mesh.n[axis2])):
+                index = dfu.assemble_index(0, 3, {axis1: i, axis2: j})
+                v0 = of.array[index]
 
-    def topological_charge(self, method='continuous'):
+                # Extract 4 neighbouring vectors (if they exist)
+                v1 = v2 = v3 = v4 = None
+                if i + 1 < of.mesh.n[axis1]:
+                    v1 = of.array[dfu.assemble_index(0, 3, {axis1: i+1,
+                                                            axis2: j})]
+                if j + 1 < of.mesh.n[axis2]:
+                    v2 = of.array[dfu.assemble_index(0, 3, {axis1: i,
+                                                            axis2: j+1})]
+                if i - 1 >= 0:
+                    v3 = of.array[dfu.assemble_index(0, 3, {axis1: i-1,
+                                                            axis2: j})]
+                if j - 1 >= 0:
+                    v4 = of.array[dfu.assemble_index(0, 3, {axis1: i,
+                                                            axis2: j-1})]
+
+                charge = 0
+                triangle_count = 0
+
+                if v1 is not None and v2 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v1, v2)
+
+                if v2 is not None and v3 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v2, v3)
+
+                if v3 is not None and v4 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v3, v4)
+
+                if v4 is not None and v1 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v4, v1)
+
+                if triangle_count > 0:
+                    q.array[index] = charge / (area * triangle_count)
+                else:
+                    # If the cell nas no neighbouring cells
+                    q.array[index] = 0
+
+            return q
+
+    def topological_charge(self, method='continuous', absolute=False):
         """Topological charge.
 
         This method computes the topological charge for the vector field
@@ -2260,6 +2280,11 @@ class Field:
         lattice, as described in: Berg and Luescher, Nuclear Physics, Section
         B, Volume 190, Issue 2, p. 412-424.
 
+        The method can additionally compute an absolute topological charge
+        given as integral over the absolute values of the topological charge
+        density or a modified version of the Berg-Luescher method,
+        respectively.
+
         Topological charge is defined on two-dimensional samples. Therefore,
         the field must be "sliced" using ``discretisedfield.Field.plane``
         method. If the field is not three-dimensional or the field is not
@@ -2271,6 +2296,11 @@ class Field:
 
             Method how the topological charge is computed. It can be
             ``continuous`` or ``berg-luescher``. Defaults to ``continuous``.
+
+        absolute : bool, optional
+
+            If ``True`` the absolute topological charge is computed.
+            Defaults to ``False``.
 
         Returns
         -------
@@ -2299,7 +2329,12 @@ class Field:
         >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
         >>> f.plane('z').topological_charge(method='continuous')
         0.0
+        >>> f.plane('z').topological_charge(method='continuous', absolute=True)
+        0.0
         >>> f.plane('z').topological_charge(method='berg-luescher')
+        0.0
+        >>> f.plane('z').topological_charge(method='berg-luescher',
+        ...                                 absolute=True)
         0.0
 
         2. Attempt to compute the topological charge of a scalar field.
@@ -2322,16 +2357,56 @@ class Field:
         .. seealso::
 
             :py:func:`~discretisedfield.Field.tological_charge_density`
-            :py:func:`~discretisedfield.Field.bergluescher`
-
         """
-        if method == 'continuous':
-            return self.topological_charge_density.surface_integral
-        elif method == 'berg-luescher':
-            return self.bergluescher
-        else:
+        if self.dim != 3:
+            msg = (f'Cannot compute topological charge '
+                   'for dim={self.dim} field.')
+            raise ValueError(msg)
+        if not hasattr(self.mesh, 'info'):
+            msg = ('The field must be sliced before the '
+                   'topological charge can be computed.')
+            raise ValueError(msg)
+        if method not in ['continuous', 'berg-luescher']:
             msg = 'Method can be either continuous or berg-luescher'
             raise ValueError(msg)
+
+        if method == 'continuous':
+            q = self.topological_charge_density(method=method)
+            if absolute:
+                return abs(q).surface_integral
+            else:
+                return q.surface_integral
+
+        elif method == 'berg-luescher':
+            # Can we base this calculation on density field which is computed in
+            # another method?
+
+            axis1 = self.mesh.info['axis1']
+            axis2 = self.mesh.info['axis2']
+            of = self.orientation
+
+            topological_charge = 0
+            for i, j in itertools.product(range(of.mesh.n[axis1] - 1),
+                                          range(of.mesh.n[axis2] - 1)):
+                v1 = of.array[dfu.assemble_index(0, 3, {axis1: i,
+                                                        axis2: j})]
+                v2 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1,
+                                                        axis2: j})]
+                v3 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1,
+                                                        axis2: j + 1})]
+                v4 = of.array[dfu.assemble_index(0, 3, {axis1: i,
+                                                        axis2: j + 1})]
+
+                triangle1 = dfu.bergluescher_angle(v1, v2, v4)
+                triangle2 = dfu.bergluescher_angle(v2, v3, v4)
+
+                if absolute:
+                    triangle1 = abs(triangle1)
+                    triangle2 = abs(triangle2)
+
+                topological_charge += triangle1 + triangle2
+
+            return topological_charge
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
@@ -2581,6 +2656,143 @@ class Field:
 
         return self.__class__(self.mesh, dim=1,
                               value=angle_array[..., np.newaxis])
+
+    def spin_angle(self, direction, degrees=False):
+        """Calculate spin angles between neighbouring cells.
+
+        This method calculates the angle between the magnetic moments in all
+        neighbouring cells. The calculation is only possible for fields with
+        ``dim=3``. Angles between neighbouring cells in the given direction
+        are calculated. Angles are can be in radians or degrees depending on
+        ``degrees``.
+
+        Parameters
+        ----------
+        direction : stream
+
+            The direction in which the angles are calculated. Can be ``x``,
+            ``y`` or ``z``.
+
+        degrees : bool
+
+            If ``True`` angles are given in degrees else in radians.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            A one-dimensional field with angles. In the given direction the
+            number of cells is reduced by one compared to the given field.
+
+        Raises
+        ------
+        ValueError
+
+            If the field has not ``dim=3`` or the direction is invalid.
+
+        Example
+        -------
+        1. Computing the angle between neighbouring cells in ``z``-direction.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
+        ...
+        >>> field.spin_angle(direction='z').average
+        0.0
+        """
+        if not self.dim == 3:
+            msg = (f'Calculation of spin angles is not possible for a field'
+                   f' with dim = {self.dim}.')
+            raise ValueError(msg)
+        if direction == 'x':
+            dot_product = np.einsum('...j,...j->...',
+                                    self.orientation.array[:-1, :, :, :],
+                                    self.orientation.array[1:, :, :, :])
+            delta_p = np.array((self.mesh.cell[0], 0, 0)) / 2
+        elif direction == 'y':
+            dot_product = np.einsum('...j,...j->...',
+                                    self.orientation.array[:, :-1, :, :],
+                                    self.orientation.array[:, 1:, :, :])
+            delta_p = np.array((0, self.mesh.cell[1], 0)) / 2
+        elif direction == 'z':
+            dot_product = np.einsum('...j,...j->...',
+                                    self.orientation.array[:, :, :-1, :],
+                                    self.orientation.array[:, :, 1:, :])
+            delta_p = np.array((0, 0, self.mesh.cell[2])) / 2
+        else:
+            msg = f'Direction "{direction}" is not a valid direction.'
+            raise ValueError(msg)
+        angles = np.arccos(np.clip(dot_product, -1.0, 1.0))
+        mesh = df.Mesh(p1=(np.array(self.mesh.region.p1) + delta_p),
+                       p2=(np.array(self.mesh.region.p2) - delta_p),
+                       cell=self.mesh.cell)
+        if degrees:
+            angles = np.degrees(angles)
+        return self.__class__(mesh, dim=1,
+                              value=angles.reshape(*angles.shape, 1))
+
+    def max_spin_angle(self, degrees=False):
+        """Calculate the maximum spin angle for each cell.
+
+        This method for each cell computes the spin angle to the six
+        neighbouring cells and takes the maximum angle. The calculation is
+        only possible for fields with ``dim=3``. Angles are can be in radians
+        or degrees depending on ``degrees``.
+
+        Parameters
+        ----------
+        degrees : bool
+
+            If ``True`` angles are given in degrees else in radians.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            A one-dimensional field with angles with the same number of cells
+            as the given field.
+
+        Raises
+        ------
+        ValueError
+
+            If the field has not ``dim=3`` or the direction is invalid.
+
+        Example
+        -------
+        1. Computing the angle between neighbouring cells in ``z``-direction.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
+        ...
+        >>> field.max_spin_angle().average
+        0.0
+
+        """
+        x_angles = self.spin_angle('x', degrees).array.squeeze()
+        y_angles = self.spin_angle('y', degrees).array.squeeze()
+        z_angles = self.spin_angle('z', degrees).array.squeeze()
+
+        max_angles = np.zeros((*self.array.shape[:-1], 6), dtype=np.float64)
+        max_angles[1:, :, :, 0] = x_angles
+        max_angles[:-1, :, :, 1] = x_angles
+        max_angles[:, 1:, :, 2] = y_angles
+        max_angles[:, :-1, :, 3] = y_angles
+        max_angles[:, :, 1:, 4] = z_angles
+        max_angles[:, :, :-1, 5] = z_angles
+        max_angles = max_angles.max(axis=-1, keepdims=True)
+
+        return self.__class__(self.mesh, dim=1, value=max_angles)
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
