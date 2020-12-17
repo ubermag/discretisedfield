@@ -2,7 +2,7 @@ PROJECT=discretisedfield
 IPYNBPATH=docs/ipynb/*.ipynb
 PYTHON?=python
 
-test-test:
+test-unittests:
 	$(PYTHON) -c "import sys; import $(PROJECT); sys.exit($(PROJECT).test())"
 
 test-coverage:
@@ -17,7 +17,7 @@ test-ipynb:
 test-pycodestyle:
 	$(PYTHON) -m pycodestyle --filename=*.py .
 
-test-all: test-test test-coverage test-docs test-ipynb test-pycodestyle
+test-all: test-unittests test-coverage test-docs test-ipynb test-pycodestyle
 
 build-dists:
 	rm -rf dist/
