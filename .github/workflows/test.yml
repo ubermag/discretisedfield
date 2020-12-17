@@ -17,21 +17,4 @@ jobs:
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
     - name: Display Python version
-      run: make test-test
-#
-#
-# name: test
-#
-# on: [push]
-#
-# jobs:
-#   linux-test:
-#     runs-on: ubuntu-20.04
-#     strategy:
-#       matrix:
-#         python-version: [3.8]
-#     steps:
-#       - uses: actions/checkout@v2
-#       - uses: actions/setup-node@v1
-#       - run: npm install -g bats
-#       - run: bats -v
+      run: make test-all
