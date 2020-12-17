@@ -7,9 +7,9 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 
 | Description | Badge |
 | --- | --- |
+| Tests | ![Build status](https://github.com/ubermag/discretisedfield/workflows/tests/badge.svg) |
 | Releases | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |          | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
-| Tests | ![Build status](https://github.com/ubermag/discretisedfield/workflows/tests/badge.svg) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg)](https://codecov.io/gh/ubermag/discretisedfield) |
 | Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](http://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
 | Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/HEAD?urlpath=lab/tree/docs/ipynb/index.ipynb) |
