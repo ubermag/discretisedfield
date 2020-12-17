@@ -2211,8 +2211,8 @@ class Field:
         of = self.orientation  # unit field - orientation field
 
         if method == 'continuous':
-            return 1 / (4 * np.pi) * of @ (of.derivative(dfu.raxesdict[axis1]) &
-                                           of.derivative(dfu.raxesdict[axis2]))
+            return 1/(4*np.pi) * of @ (of.derivative(dfu.raxesdict[axis1]) &
+                                       of.derivative(dfu.raxesdict[axis2]))
 
         elif method == 'berg-luescher':
             q = self.__class__(self.mesh, dim=1, value=0)
@@ -2378,8 +2378,8 @@ class Field:
                 return q.surface_integral
 
         elif method == 'berg-luescher':
-            # Can we base this calculation on density field which is computed in
-            # another method?
+            # Can we base this calculation on density field which is computed
+            # in another method?
 
             axis1 = self.mesh.info['axis1']
             axis2 = self.mesh.info['axis2']
