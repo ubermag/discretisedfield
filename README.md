@@ -20,7 +20,7 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 
 ## About
 
-`discretisedfield` is a Python package integrated with Jupyter providing:
+`discretisedfield` is a Python package, integrated with Jupyter, providing:
 
 - definition of finite-difference regions, meshes, lines, and fields,
 
@@ -42,7 +42,7 @@ We recommend installation using `conda` package manager. Instructions can be fou
 
 ## Binder
 
-This package can be used in the cloud via Binder. To access Binder, use the Binder badge in the table above.
+This package can be used in the cloud via Binder. To access Binder, use the badge in the table above.
 
 ## Support
 
