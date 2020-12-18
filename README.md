@@ -50,9 +50,9 @@ If you require support, have questions, want to report a bug, or want to suggest
 
 ## Contributions
 
-All contributions are welcome, however small they are. If you would like to contribute, but you are not sure how, please contact us by raising an issue in [ubermag/help](https://github.com/ubermag/help) repository, and we will help you to get started.
+All contributions are welcome, however small they are. If you would like to contribute, please fork the repository and create a pull request. However, if you are not sure how to contribute, please contact us by raising an issue in [ubermag/help](https://github.com/ubermag/help) repository, and we are going to help you get started and assist you on the way.
 
-Contributors:
+**Contributors**:
 
 - [@sergii-mamedov](https://github.com/sergii-mamedov)
 - [@gamdow](https://github.com/gamdow)
