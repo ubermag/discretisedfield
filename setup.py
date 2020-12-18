@@ -20,7 +20,7 @@ setuptools.setup(
         ],
     },
     include_package_data=True,
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     install_requires=['ubermagutil==0.2.6',
                       'matplotlib>=3.3',
                       'pandas>=1.1',

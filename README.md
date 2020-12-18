@@ -20,18 +20,21 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 
 ## About
 
-`discretisedfield` is a Python package providing:
+`discretisedfield` is a Python package integrated with Jupyter providing:
 
-- definition of finite difference regions, meshes, and fields,
-- analysis of finite difference fields,
+- definition of finite-difference regions, meshes, lines, and fields,
+
+- analysis of finite-difference fields,
+
 - visualisation using `matplotlib` and `k3d`, and
-- reading and writing of different file types (OVF, VTK, and HDF5).
+
+- manipulation of different file types (OVF, VTK, and HDF5).
 
 It is available on Windows, MacOS, and Linux. It requires Python 3.8+.
 
 ## Documentation
 
-APIs and tutorials are available in documentation. To access them, use the documentation badge in the table above.
+APIs and tutorials are available in the documentation. To access the documentation, use the badge in the table above.
 
 ## Installation, testing, and upgrade
 
@@ -55,7 +58,7 @@ If you use this package, please cite it as:
 
 1. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025 (2017)](http://aip.scitation.org/doi/10.1063/1.4977225).
 
-2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. ubermag/discretisedfield: Python package for the analysis and visualisation of finite difference fields. Zenodo. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2020).
+2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. ubermag/discretisedfield: Python package for the analysis and visualisation of finite-difference fields. Zenodo. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2020).
 
 ## Acknowledgements
 
