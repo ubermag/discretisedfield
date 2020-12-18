@@ -23,12 +23,9 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 `discretisedfield` is a Python package providing:
 
 - definition of finite difference regions, meshes, and fields,
-
 - analysis of finite difference fields,
-
-- reading and writing of different file types (OVF, VTK, and HDF5), and
-
-- visualisation using `matplotlib` and `k3d`.
+- visualisation using `matplotlib` and `k3d`, and
+- reading and writing of different file types (OVF, VTK, and HDF5).
 
 It is available on Windows, MacOS, and Linux. It requires Python 3.8+.
 
