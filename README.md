@@ -53,10 +53,11 @@ If you require support, have questions, want to report a bug, or want to suggest
 All contributions are welcome, however small they are. If you would like to contribute, please fork the repository and create a pull request. However, if you are not sure how to contribute, please contact us by raising an issue in [ubermag/help](https://github.com/ubermag/help) repository, and we are going to help you get started and assist you on the way.
 
 **Contributors**:
-- [@sergii-mamedov](https://github.com/sergii-mamedov)
-- [@gamdow](https://github.com/gamdow)
-- [@minrk](https://github.com/minrk)
-- [@rlc2v07](https://github.com/rlc2v07)
+
+- Sergii Mamedov ([@sergii-mamedov](https://github.com/sergii-mamedov)), European XFEL, Germany
+- Natalie Downing ([@gamdow](https://github.com/gamdow)), University of Southampton, United Kingdom
+- Min RK ([@minrk](https://github.com/minrk)), Simula Research Laboratory, Norway
+- Rebecca Carey ([@rlc2v07](https://github.com/rlc2v07)), University of Southampton, United Kingdom
 
 ## License
 
