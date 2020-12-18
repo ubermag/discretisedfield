@@ -7,7 +7,7 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 
 | Description | Badge |
 | --- | --- |
-| Tests | ![Build status](https://github.com/ubermag/discretisedfield/workflows/tests/badge.svg) |
+| Tests | ![Build status](https://github.com/ubermag/discretisedfield/workflows/workflow/badge.svg) |
 | Releases | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |          | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg?token=hcK4fofmrL)](https://codecov.io/gh/ubermag/discretisedfield) |
@@ -47,7 +47,7 @@ This package can be used in the cloud via Binder. To access Binder, use the badg
 
 ## YouTube
 
-Some video tutorials are available on [Ubermag YouTube channel](https://www.youtube.com/channel/UC7MSqVQSMFV42R1jAYmKGLg).
+YouTube video tutorials are available on the [Ubermag channel](https://www.youtube.com/channel/UC7MSqVQSMFV42R1jAYmKGLg).
 
 ## Support
 
