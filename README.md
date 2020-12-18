@@ -53,7 +53,6 @@ If you require support, have questions, want to report a bug, or want to suggest
 All contributions are welcome, however small they are. If you would like to contribute, please fork the repository and create a pull request. However, if you are not sure how to contribute, please contact us by raising an issue in [ubermag/help](https://github.com/ubermag/help) repository, and we are going to help you get started and assist you on the way.
 
 **Contributors**:
-
 - [@sergii-mamedov](https://github.com/sergii-mamedov)
 - [@gamdow](https://github.com/gamdow)
 - [@minrk](https://github.com/minrk)
