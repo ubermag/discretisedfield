@@ -1,18 +1,18 @@
 import setuptools
 
-with open('README.md', encoding='utf-8') as f:
+with open('README.md', 'r', encoding='utf-8') as f:
     long_description = f.read()
 
 setuptools.setup(
     name='discretisedfield',
     version='0.8.13',
+    author=('Marijan Beg, Martin Lang, Ryan A. Pepper, '
+            'Thomas Kluyver, and Hans Fangohr'),
     description=('Python package for definition, reading, '
                  'and visualisation of finite difference fields.'),
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://ubermag.github.io',
-    author=('Marijan Beg, Martin Lang, Ryan A. Pepper, '
-            'Thomas Kluyver, and Hans Fangohr'),
     packages=setuptools.find_packages(),
     entry_points={
         "console_scripts": [
