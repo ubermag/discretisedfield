@@ -1,2 +1,1 @@
 nbsphinx
-jupyter-server==1.1
