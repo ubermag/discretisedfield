@@ -2262,7 +2262,7 @@ class Field:
                 if triangle_count > 0:
                     q.array[index] = charge / (area * triangle_count)
                 else:
-                    # If the cell nas no neighbouring cells
+                    # If the cell has no neighbouring cells
                     q.array[index] = 0
 
             return q
@@ -2360,7 +2360,7 @@ class Field:
         """
         if self.dim != 3:
             msg = (f'Cannot compute topological charge '
-                   'for dim={self.dim} field.')
+                   f'for dim={self.dim} field.')
             raise ValueError(msg)
         if not hasattr(self.mesh, 'info'):
             msg = ('The field must be sliced before the '
