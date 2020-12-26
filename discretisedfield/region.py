@@ -90,7 +90,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return dfu.array2tuple(np.minimum(self.p1, self.p2))
+        return dfu.pmin(self.p1, self.p2)
 
     @property
     def pmax(self):
@@ -123,7 +123,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        return dfu.array2tuple(np.maximum(self.p1, self.p2))
+        return dfu.pmax(self.p1, self.p2)
 
     @property
     def edges(self):
@@ -323,7 +323,8 @@ class Region:
         """
         if not isinstance(other, self.__class__):
             return False
-        elif self.pmin == other.pmin and self.pmax == other.pmax:
+        elif (np.allclose(self.pmin, other.pmin, atol=1e-15, rtol=1e-5) and
+              np.allclose(self.pmax, other.pmax, atol=1e-15, rtol=1e-5)):
             return True
         else:
             return False

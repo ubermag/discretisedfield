@@ -550,6 +550,66 @@ class Mesh:
         # Remove duplicates and preserve order.
         return list(collections.OrderedDict.fromkeys(nghbrs))
 
+    def sub(self, p1, p2):
+        """Sub mesh.
+
+        This method returns a minimum-sized mesh containing region defined with
+        points ``p1`` and ``p2`` and with the same discretisation cell size. If
+        either ``p1`` or ``p2`` is outside the mesh's region, ``ValueError`` is
+        raised.
+
+        Parameters
+        ----------
+        p1 / p2 : (3,) array_like
+
+            Points between which the cuboid region spans
+            :math:`\\mathbf{p}_{i} = (p_{x}, p_{y}, p_{z})`.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Submesh containing region defined by ``p1`` and ``p2`` and the same
+            discretisation cell size.
+
+        Raises
+        ------
+        ValueError
+
+            If ``p1`` or ``p2`` is outside the mesh region.
+
+        Examples
+        --------
+        1. Extracting a submesh.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50e-9, -25e-9, 0)
+        >>> p2 = (50e-9, 25e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> mesh = df.Mesh(region=region, cell=cell)
+        ...
+        >>> submesh = mesh.sub(p1=(-10e-9, -14e-9, 0), p2=(10e-9, 14e-9, 5e-9))
+        >>> submesh.cell
+        (5e-09, 5e-09, 5e-09)
+        >>> submesh.n
+        (4, 6, 1)
+
+        """
+        if p1 not in self.region or p2 not in self.region:
+            msg = f'Point {p1=} or point {p2=} is outside the mesh region.'
+            raise ValueError(msg)
+
+        # Min and max cell coordinates
+        pmin = self.index2point(self.point2index(dfu.pmin(p1, p2)))
+        pmax = self.index2point(self.point2index(dfu.pmax(p1, p2)))
+
+        subregion = df.Region(p1=np.subtract(pmin, np.divide(self.cell, 2)),
+                              p2=np.add(pmax, np.divide(self.cell, 2)))
+
+        return self.__class__(region=subregion, cell=self.cell)
+
     def line(self, p1, p2, n):
         """Line generator.
 
@@ -603,7 +663,7 @@ class Mesh:
 
         """
         if p1 not in self.region or p2 not in self.region:
-            msg = f'Point {p1} or point {p2} is outside the mesh region.'
+            msg = f'Point {p1=} or point {p2=} is outside the mesh region.'
             raise ValueError(msg)
 
         dl = np.subtract(p2, p1) / (n-1)

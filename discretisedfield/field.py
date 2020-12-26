@@ -18,19 +18,18 @@ import discretisedfield.util as dfu
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
 class Field:
-    """Finite difference field.
+    """Finite-difference field.
 
-    This class defines a finite difference field and enables certain operations
-    for its analysis and visualisation. The field is defined on a finite
-    difference mesh (`discretisedfield.Mesh`) passed by using ``mesh``. Another
-    value that must be passed is the dimension of the value using ``dim``. More
-    precisely, if the field is a scalar field ``dim=1`` must be passed. On the
-    other hand, for a three-dimensional vector field ``dim=3`` is passed. The
-    value of the field can be set by passing ``value``. For details on how the
-    value can be set, please refer to ``discretisedfield.Field.value``.
-    Similarly, if the field has ``dim>1``, the field can be normalised by
-    passing ``norm``. For details on setting the norm, please refer to
-    ``discretisedfield.Field.norm``.
+    This class specifies a finite-difference field and defines operations for
+    its analysis and visualisation. The field is defined on a finite-difference
+    mesh (`discretisedfield.Mesh`) passed using ``mesh``. Another value that
+    must be passed is the dimension of the field's value using ``dim``. For
+    instance, for a scalar field, ``dim=1`` and for a three-dimensional vector
+    field ``dim=3`` must be passed. The value of the field can be set by
+    passing ``value``. For details on how the value can be defined, refer to
+    ``discretisedfield.Field.value``. Similarly, if the field has ``dim>1``,
+    the field can be normalised by passing ``norm``. For details on setting the
+    norm, please refer to ``discretisedfield.Field.norm``.
 
     Parameters
     ----------
@@ -2458,7 +2457,7 @@ class Field:
         """
         points = list(self.mesh.line(p1=p1, p2=p2, n=n))
         values = [self(p) for p in points]
-        # return points, values
+
         return df.Line(points=points, values=values)
 
     def plane(self, *args, n=None, **kwargs):
@@ -2568,6 +2567,55 @@ class Field:
         """
         return self.__class__(self.mesh[key], dim=self.dim, value=self)
 
+    def sub(self, p1, p2):
+        """Extract subfield.
+
+        This method returns a field defined on a minimum-sized mesh containing
+        region defined with points ``p1`` and ``p2`` and with the same
+        discretisation cell size.
+
+        Parameters
+        ----------
+        p1 / p2 : (3,) array_like
+
+            Points between which the cuboid region spans
+            :math:`\\mathbf{p}_{i} = (p_{x}, p_{y}, p_{z})`.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Subfield on a submesh containing region defined by ``p1`` and
+            ``p2`` and the same discretisation cell size.
+
+        Examples
+        --------
+        1. Extracting a subfield.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50e-9, -25e-9, 0)
+        >>> p2 = (50e-9, 25e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> mesh = df.Mesh(region=region, cell=cell)
+        >>> field = df.Field(mesh=mesh, dim=1, value=5)
+        ...
+        >>> subfield = field.sub(p1=(-9e-9, -1e-9, 1e-9),
+        ...                      p2=(9e-9, 14e-9, 4e-9))
+        >>> subfield.array.shape
+        (4, 4, 1, 1)
+
+        """
+        submesh = self.mesh.sub(p1=p1, p2=p2)
+
+        index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
+        index_max = np.add(index_min, submesh.n)
+        slices = [slice(i, j) for i, j in zip(index_min, index_max)]
+
+        return self.__class__(mesh=submesh, dim=self.dim,
+                              value=self.array[tuple(slices)])
+
     def project(self, *args):
         """Projects the field along one direction and averages it out along
         that direction.
@@ -2656,143 +2704,6 @@ class Field:
 
         return self.__class__(self.mesh, dim=1,
                               value=angle_array[..., np.newaxis])
-
-    def spin_angle(self, direction, degrees=False):
-        """Calculate spin angles between neighbouring cells.
-
-        This method calculates the angle between the magnetic moments in all
-        neighbouring cells. The calculation is only possible for fields with
-        ``dim=3``. Angles between neighbouring cells in the given direction
-        are calculated. Angles are can be in radians or degrees depending on
-        ``degrees``.
-
-        Parameters
-        ----------
-        direction : stream
-
-            The direction in which the angles are calculated. Can be ``x``,
-            ``y`` or ``z``.
-
-        degrees : bool
-
-            If ``True`` angles are given in degrees else in radians.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            A one-dimensional field with angles. In the given direction the
-            number of cells is reduced by one compared to the given field.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not ``dim=3`` or the direction is invalid.
-
-        Example
-        -------
-        1. Computing the angle between neighbouring cells in ``z``-direction.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
-        ...
-        >>> field.spin_angle(direction='z').average
-        0.0
-        """
-        if not self.dim == 3:
-            msg = (f'Calculation of spin angles is not possible for a field'
-                   f' with dim = {self.dim}.')
-            raise ValueError(msg)
-        if direction == 'x':
-            dot_product = np.einsum('...j,...j->...',
-                                    self.orientation.array[:-1, :, :, :],
-                                    self.orientation.array[1:, :, :, :])
-            delta_p = np.array((self.mesh.cell[0], 0, 0)) / 2
-        elif direction == 'y':
-            dot_product = np.einsum('...j,...j->...',
-                                    self.orientation.array[:, :-1, :, :],
-                                    self.orientation.array[:, 1:, :, :])
-            delta_p = np.array((0, self.mesh.cell[1], 0)) / 2
-        elif direction == 'z':
-            dot_product = np.einsum('...j,...j->...',
-                                    self.orientation.array[:, :, :-1, :],
-                                    self.orientation.array[:, :, 1:, :])
-            delta_p = np.array((0, 0, self.mesh.cell[2])) / 2
-        else:
-            msg = f'Direction "{direction}" is not a valid direction.'
-            raise ValueError(msg)
-        angles = np.arccos(np.clip(dot_product, -1.0, 1.0))
-        mesh = df.Mesh(p1=(np.array(self.mesh.region.p1) + delta_p),
-                       p2=(np.array(self.mesh.region.p2) - delta_p),
-                       cell=self.mesh.cell)
-        if degrees:
-            angles = np.degrees(angles)
-        return self.__class__(mesh, dim=1,
-                              value=angles.reshape(*angles.shape, 1))
-
-    def max_spin_angle(self, degrees=False):
-        """Calculate the maximum spin angle for each cell.
-
-        This method for each cell computes the spin angle to the six
-        neighbouring cells and takes the maximum angle. The calculation is
-        only possible for fields with ``dim=3``. Angles are can be in radians
-        or degrees depending on ``degrees``.
-
-        Parameters
-        ----------
-        degrees : bool
-
-            If ``True`` angles are given in degrees else in radians.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            A one-dimensional field with angles with the same number of cells
-            as the given field.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not ``dim=3`` or the direction is invalid.
-
-        Example
-        -------
-        1. Computing the angle between neighbouring cells in ``z``-direction.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
-        ...
-        >>> field.max_spin_angle().average
-        0.0
-
-        """
-        x_angles = self.spin_angle('x', degrees).array.squeeze()
-        y_angles = self.spin_angle('y', degrees).array.squeeze()
-        z_angles = self.spin_angle('z', degrees).array.squeeze()
-
-        max_angles = np.zeros((*self.array.shape[:-1], 6), dtype=np.float64)
-        max_angles[1:, :, :, 0] = x_angles
-        max_angles[:-1, :, :, 1] = x_angles
-        max_angles[:, 1:, :, 2] = y_angles
-        max_angles[:, :-1, :, 3] = y_angles
-        max_angles[:, :, 1:, 4] = z_angles
-        max_angles[:, :, :-1, 5] = z_angles
-        max_angles = max_angles.max(axis=-1, keepdims=True)
-
-        return self.__class__(self.mesh, dim=1, value=max_angles)
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.

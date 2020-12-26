@@ -127,3 +127,11 @@ def normalise_to_range(values, value_range):
     values = values.astype(int)
 
     return values
+
+
+def pmin(p1, p2):
+    return array2tuple(np.minimum(p1, p2))
+
+
+def pmax(p1, p2):
+    return array2tuple(np.maximum(p1, p2))
