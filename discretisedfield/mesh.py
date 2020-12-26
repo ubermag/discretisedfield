@@ -550,66 +550,6 @@ class Mesh:
         # Remove duplicates and preserve order.
         return list(collections.OrderedDict.fromkeys(nghbrs))
 
-    def sub(self, p1, p2):
-        """Sub mesh.
-
-        This method returns a minimum-sized mesh containing region defined with
-        points ``p1`` and ``p2`` and with the same discretisation cell size. If
-        either ``p1`` or ``p2`` is outside the mesh's region, ``ValueError`` is
-        raised.
-
-        Parameters
-        ----------
-        p1 / p2 : (3,) array_like
-
-            Points between which the cuboid region spans
-            :math:`\\mathbf{p}_{i} = (p_{x}, p_{y}, p_{z})`.
-
-        Returns
-        -------
-        discretisedfield.Mesh
-
-            Submesh containing region defined by ``p1`` and ``p2`` and the same
-            discretisation cell size.
-
-        Raises
-        ------
-        ValueError
-
-            If ``p1`` or ``p2`` is outside the mesh region.
-
-        Examples
-        --------
-        1. Extracting a submesh.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50e-9, -25e-9, 0)
-        >>> p2 = (50e-9, 25e-9, 5e-9)
-        >>> cell = (5e-9, 5e-9, 5e-9)
-        >>> region = df.Region(p1=p1, p2=p2)
-        >>> mesh = df.Mesh(region=region, cell=cell)
-        ...
-        >>> submesh = mesh.sub(p1=(-10e-9, -14e-9, 0), p2=(10e-9, 14e-9, 5e-9))
-        >>> submesh.cell
-        (5e-09, 5e-09, 5e-09)
-        >>> submesh.n
-        (4, 6, 1)
-
-        """
-        if p1 not in self.region or p2 not in self.region:
-            msg = f'Point {p1=} or point {p2=} is outside the mesh region.'
-            raise ValueError(msg)
-
-        # Min and max cell coordinates
-        pmin = self.index2point(self.point2index(dfu.pmin(p1, p2)))
-        pmax = self.index2point(self.point2index(dfu.pmax(p1, p2)))
-
-        subregion = df.Region(p1=np.subtract(pmin, np.divide(self.cell, 2)),
-                              p2=np.add(pmax, np.divide(self.cell, 2)))
-
-        return self.__class__(region=subregion, cell=self.cell)
-
     def line(self, p1, p2, n):
         """Line generator.
 
@@ -776,19 +716,88 @@ class Mesh:
 
         return plane_mesh
 
-    def __getitem__(self, key):
+    def __or__(self, other):
+        """Check if ``other`` mesh is aligned to ``self``.
+
+        Two meshes are considered to be aligned if and only if:
+
+            1. They have the same discretisation cell.
+            2. Coordinates of cells in ``other`` are in coodinates of ``self``.
+
+        Parameters
+        ----------
+        other : discretisedfield.Mesh
+
+            Second operand.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if meshes are aligned. ``False`` otherwise.
+
+        Examples
+        --------
+        1. Check whether two meshes are aligned.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50e-9, -25e-9, 0)
+        >>> p2 = (50e-9, 25e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region1 = df.Region(p1=p1, p2=p2)
+        >>> mesh1 = df.Mesh(region=region1, cell=cell)
+        ...
+        >>> p1 = (-45e-9, -20e-9, 0)
+        >>> p2 = (10e-9, 20e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region2 = df.Region(p1=p1, p2=p2)
+        >>> mesh2 = df.Mesh(region=region2, cell=cell)
+        ...
+        >>> p1 = (-42e-9, -20e-9, 0)
+        >>> p2 = (13e-9, 20e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region3 = df.Region(p1=p1, p2=p2)
+        >>> mesh3 = df.Mesh(region=region3, cell=cell)
+        ...
+        >>> mesh1 | mesh2
+        True
+        >>> mesh1 | mesh3
+        False
+        >>> mesh1 | mesh1
+        True
+
+        """
+        if self.cell != other.cell:
+            return False
+
+        tol = 1e-12  # picometre tolerance
+        for i in ['pmin', 'pmax']:
+            diff = np.subtract(getattr(self.region, i),
+                               getattr(other.region, i))
+            rem = np.remainder(abs(diff), self.cell)
+            if np.logical_and(np.greater(rem, tol),
+                              np.less(rem, np.subtract(self.cell, tol))).any():
+                return False
+
+        return True
+
+    def __getitem__(self, item):
         """Extracts the mesh of a subregion.
 
         If subregions were defined by passing ``subregions`` dictionary when
         the mesh was created, this method returns a mesh defined on a subregion
-        ``subregions[key]`` with the same discretisation cell as the parent
-        mesh.
+        with key ``item``. Alternatively, a ``discretisedfield.Region``
+        object can be passed and a minimum-sized mesh containing it will be
+        returned. The resulting mesh has the same discretisation cell as the
+        original mesh.
 
         Parameters
         ----------
-        key : str
+        item : str, discretisedfield.Region
 
-            The key (name) of a subregion in ``subregions`` dictionary.
+            The key of a subregion in ``subregions`` dictionary or a region
+            object.
 
         Returns
         -------
@@ -798,7 +807,7 @@ class Mesh:
 
         Example
         -------
-        1. Extract subregion mesh.
+        1. Extract subregion mesh by passing a subregion key.
 
         >>> import discretisedfield as df
         ...
@@ -823,8 +832,38 @@ class Mesh:
         >>> submesh.region.pmax
         (50, 100, 100)
 
+        2. Extracting a submesh on a "newly-defined" region.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50e-9, -25e-9, 0)
+        >>> p2 = (50e-9, 25e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> mesh = df.Mesh(region=region, cell=cell)
+        ...
+        >>> subregion = df.Region(p1=(0, 1e-9, 0), p2=(10e-9, 14e-9, 5e-9))
+        >>> submesh = mesh[subregion]
+        >>> submesh.cell
+        (5e-09, 5e-09, 5e-09)
+        >>> submesh.n
+        (2, 3, 1)
+
         """
-        return self.__class__(region=self.subregions[key], cell=self.cell)
+        if isinstance(item, str):
+            return self.__class__(region=self.subregions[item], cell=self.cell)
+
+        if item not in self.region:
+            msg = 'Subregion is outside the mesh region.'
+            raise ValueError(msg)
+
+        pmin = self.index2point(self.point2index(item.pmin))
+        pmax = self.index2point(self.point2index(item.pmax))
+        half_cell = np.divide(self.cell, 2)
+
+        return self.__class__(region=df.Region(p1=np.subtract(pmin, half_cell),
+                                               p2=np.add(pmax, half_cell)),
+                              cell=self.cell)
 
     def pad(self, pad_width):
         """Mesh padding.
@@ -882,6 +921,35 @@ class Mesh:
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
         return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
+
+    @property
+    def dV(self):
+        """Volume of a discretisation cell.
+
+        This property is used for calculating volume integrals.
+
+        Returns
+        -------
+        float
+
+            Discretisation cell volume.
+
+        Examples
+        --------
+        1. Discretisation cell volume
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> mesh.dV
+        1000
+
+        """
+        return np.product(self.cell)
 
     def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[:2], multiplier=None,
             filename=None, **kwargs):

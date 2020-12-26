@@ -90,7 +90,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return dfu.pmin(self.p1, self.p2)
+        return dfu.array2tuple(np.minimum(self.p1, self.p2))
 
     @property
     def pmax(self):
@@ -123,7 +123,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        return dfu.pmax(self.p1, self.p2)
+        return dfu.array2tuple(np.maximum(self.p1, self.p2))
 
     @property
     def edges(self):
@@ -329,8 +329,8 @@ class Region:
         else:
             return False
 
-    def __contains__(self, point):
-        """Determine if ``point`` is in the region.
+    def __contains__(self, other):
+        """Determine if ``other`` (point or region) is in ``self``.
 
         Point is considered to be in the region if
 
@@ -339,21 +339,26 @@ class Region:
             p^\\text{min}_{i} \\le p_{i} \\le p^\\text{max}_{i}, \\text{for}\\,
             i = x, y, z.
 
+        Similarly, if ``other`` is ``discretisedfield.Region``, it is
+        considered to be in the region if both its ``pmin`` and ``pmax`` belong
+        to the region.
+
         Parameters
         ----------
-        point : (3,) array_like
+        other : (3,) array_like or discretisedfield.Region
 
-            The point coordinate :math:`(p_{x}, p_{y}, p_{z})`.
+            The point coordinate :math:`(p_{x}, p_{y}, p_{z})` or a region
+            object.
 
         Returns
         -------
         bool
 
-            ``True`` if ``point`` is inside the region and ``False`` otherwise.
+            ``True`` if ``other`` is inside the region and ``False`` otherwise.
 
         Example
         -------
-        1. Check whether point is inside the region.
+        1. Check if point is inside the region.
 
         >>> import discretisedfield as df
         ...
@@ -370,12 +375,30 @@ class Region:
         >>> p2 in region
         True
 
+        2. Check if region is inside the region.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> df.Region(p1=(0, 0, 0), p2=(1, 1, 1)) in region
+        True
+        >>> df.Region(p1=(0, 0, 0), p2=(2, 2, 2)) in region
+        False
+
         """
-        if np.logical_or(np.less(point, self.pmin),
-                         np.greater(point, self.pmax)).any():
-            return False
+        if isinstance(other, self.__class__):
+            points = [other.pmin, other.pmax]
         else:
-            return True
+            points = [other]
+
+        for point in points:
+            if np.logical_or(np.less(point, self.pmin),
+                             np.greater(point, self.pmax)).any():
+                return False
+
+        return True
 
     def __or__(self, other):
         """Facing surface.

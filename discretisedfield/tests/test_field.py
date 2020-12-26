@@ -1440,11 +1440,22 @@ class TestField:
         check_field(f)
         check_field(f['r1'])
         check_field(f['r2'])
+        check_field(f[subregions['r1']])
+        check_field(f[subregions['r2']])
 
         assert f['r1'].average == (-1, -2, -3)
         assert f['r2'].average == (0, 0, 0)
+        assert f[subregions['r1']].average == (-1, -2, -3)
+        assert f[subregions['r2']].average == (0, 0, 0)
 
         assert len(f['r1'].mesh) + len(f['r2'].mesh) == len(f.mesh)
+
+        # Meshes are not aligned
+        p1 = (1.1, 0, 0)
+        p2 = (9.9, 15, 5)
+        subregion = df.Region(p1=p1, p2=p2)
+
+        assert f[subregion].array.shape == (2, 3, 1, 3)
 
     def test_project(self):
         p1 = (-5, -5, -5)

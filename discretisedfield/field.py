@@ -2051,7 +2051,7 @@ class Field:
             :py:func:`~discretisedfield.Field.surface_integral`
 
         """
-        cell_volume = self.mesh.region.volume / len(self.mesh)
+        cell_volume = self.mesh.dV
         field_sum = np.sum(self.array, axis=(0, 1, 2))
         return dfu.array2tuple(field_sum * cell_volume)
 
@@ -2515,19 +2515,22 @@ class Field:
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self)
 
-    def __getitem__(self, key):
+    def __getitem__(self, item):
         """Extracts the field on a subregion.
 
         If subregions were defined by passing ``subregions`` dictionary when
         the mesh was created, this method returns a field in a subregion
-        ``subregions[key]`` with the same discretisation cell as the parent
-        mesh.
+        ``subregions[item]``. Alternatively, a ``discretisedfield.Region``
+        object can be passed and a minimum-sized field containing it will be
+        returned. The resulting mesh has the same discretisation cell as the
+        original field's mesh.
 
         Parameters
         ----------
-        key : str
+        item : str, discretisedfield.Region
 
-            The key of a region in ``subregions`` dictionary.
+            The key of a subregion in ``subregions`` dictionary or a region
+            object.
 
         Returns
         -------
@@ -2537,7 +2540,7 @@ class Field:
 
         Example
         -------
-        1. Extract field on the subregion.
+        1. Extract field on the subregion by passing a key.
 
         >>> import discretisedfield as df
         ...
@@ -2564,33 +2567,7 @@ class Field:
         >>> f['r2'].average
         (-1.0, -2.0, -3.0)
 
-        """
-        return self.__class__(self.mesh[key], dim=self.dim, value=self)
-
-    def sub(self, p1, p2):
-        """Extract subfield.
-
-        This method returns a field defined on a minimum-sized mesh containing
-        region defined with points ``p1`` and ``p2`` and with the same
-        discretisation cell size.
-
-        Parameters
-        ----------
-        p1 / p2 : (3,) array_like
-
-            Points between which the cuboid region spans
-            :math:`\\mathbf{p}_{i} = (p_{x}, p_{y}, p_{z})`.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Subfield on a submesh containing region defined by ``p1`` and
-            ``p2`` and the same discretisation cell size.
-
-        Examples
-        --------
-        1. Extracting a subfield.
+        2. Extracting a subfield by passing a region.
 
         >>> import discretisedfield as df
         ...
@@ -2601,20 +2578,24 @@ class Field:
         >>> mesh = df.Mesh(region=region, cell=cell)
         >>> field = df.Field(mesh=mesh, dim=1, value=5)
         ...
-        >>> subfield = field.sub(p1=(-9e-9, -1e-9, 1e-9),
-        ...                      p2=(9e-9, 14e-9, 4e-9))
+        >>> subregion = df.Region(p1=(-9e-9, -1e-9, 1e-9),
+        ...                       p2=(9e-9, 14e-9, 4e-9))
+        >>> subfield = field[subregion]
         >>> subfield.array.shape
         (4, 4, 1, 1)
 
         """
-        submesh = self.mesh.sub(p1=p1, p2=p2)
+        submesh = self.mesh[item]
 
-        index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
-        index_max = np.add(index_min, submesh.n)
-        slices = [slice(i, j) for i, j in zip(index_min, index_max)]
+        if submesh | self.mesh:  # meshes align
+            index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
+            index_max = np.add(index_min, submesh.n)
+            slices = [slice(i, j) for i, j in zip(index_min, index_max)]
+            value = self.array[tuple(slices)]
+        else:  # meshes do not align
+            value = self
 
-        return self.__class__(mesh=submesh, dim=self.dim,
-                              value=self.array[tuple(slices)])
+        return self.__class__(self.mesh[item], dim=self.dim, value=value)
 
     def project(self, *args):
         """Projects the field along one direction and averages it out along
