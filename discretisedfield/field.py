@@ -2,6 +2,7 @@ import k3d
 import h5py
 import struct
 import numbers
+import inspect
 import itertools
 import matplotlib
 import numpy as np
@@ -815,7 +816,7 @@ class Field:
         """
         if not isinstance(other, self.__class__):
             msg = (f'Cannot apply allclose method between '
-                   f'{type(self)} and {type(other)} objects.')
+                   f'{type(self)=} and {type(other)=} objects.')
             raise TypeError(msg)
 
         if (self.mesh == other.mesh and self.dim == other.dim):
@@ -971,11 +972,11 @@ class Field:
 
         """
         if self.dim != 1:
-            msg = f'Cannot apply ** operator on dim={self.dim} field.'
+            msg = f'Cannot apply ** operator on {self.dim=} field.'
             raise ValueError(msg)
         if not isinstance(other, numbers.Real):
             msg = (f'Unsupported operand type(s) for **: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=1,
@@ -1042,20 +1043,20 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.dim != other.dim:
-                msg = (f'Cannot apply operator + on dim={self.dim} '
-                       f'and dim={other.dim} fields.')
+                msg = (f'Cannot apply operator + on {self.dim=} '
+                       f'and {other.dim=} fields.')
                 raise ValueError(msg)
             if self.mesh != other.mesh:
                 msg = ('Cannot apply operator + on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
         elif self.dim == 1 and isinstance(other, numbers.Real):
-            other = self.__class__(self.mesh, dim=self.dim, value=other)
+            return self + self.__class__(self.mesh, dim=self.dim, value=other)
         elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
-            other = self.__class__(self.mesh, dim=self.dim, value=other)
+            return self + self.__class__(self.mesh, dim=self.dim, value=other)
         else:
             msg = (f'Unsupported operand type(s) for +: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=self.dim,
@@ -1119,7 +1120,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
         """
-        # Make sure unary - can be applied to other.
+        # Ensure unary '-' can be applied to other.
         if isinstance(other, (list, tuple)):
             other = np.array(other)
 
@@ -1135,9 +1136,11 @@ class Field:
 
         1. Two scalar (``dim=1``) fields,
 
-        2. A field of any dimension and ``numbers.Real``, or
+        2. A field of any dimension and ``numbers.Real``,
 
-        3. A field of any dimension and a scalar (``dim=1``) field.
+        3. A field of any dimension and a scalar (``dim=1``) field, or
+
+        4. A field and an "abstract" integration variable (e.g. ``df.dV``)
 
         If both operands are ``discretisedfield.Field`` objects, they must be
         defined on the same mesh.
@@ -1195,20 +1198,22 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.dim == 3 and other.dim == 3:
-                msg = (f'Cannot apply operator * on dim={self.dim} '
-                       f'and dim={other.dim} fields.')
+                msg = (f'Cannot apply operator * on {self.dim=} '
+                       f'and {other.dim=} fields.')
                 raise ValueError(msg)
             if self.mesh != other.mesh:
                 msg = ('Cannot apply operator * on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
         elif isinstance(other, numbers.Real):
-            other = self.__class__(self.mesh, dim=1, value=other)
+            return self * self.__class__(self.mesh, dim=1, value=other)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
-            other = self.__class__(self.mesh, dim=3, value=other)
+            return self * self.__class__(self.mesh, dim=3, value=other)
+        elif isinstance(other, df.DValue):
+            return self * other(self)
         else:
             msg = (f'Unsupported operand type(s) for *: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         res_array = np.multiply(self.array, other.array)
@@ -1334,17 +1339,16 @@ class Field:
                 msg = ('Cannot apply operator @ on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
+            if self.dim != 3 or other.dim != 3:
+                msg = (f'Cannot apply operator @ on {self.dim=} '
+                       f'and {other.dim=} fields.')
+                raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            other = self.__class__(self.mesh, dim=3, value=other)
+            return self @ self.__class__(self.mesh, dim=3, value=other)
         else:
             msg = (f'Unsupported operand type(s) for @: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
-
-        if self.dim != 3 or other.dim != 3:
-            msg = (f'Cannot apply operator @ on dim={self.dim} '
-                   f'and dim={other.dim} fields.')
-            raise ValueError(msg)
 
         res_array = np.einsum('ijkl,ijkl->ijk', self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
@@ -1400,17 +1404,16 @@ class Field:
                 msg = ('Cannot apply operator & on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
+            if self.dim != 3 or other.dim != 3:
+                msg = (f'Cannot apply operator & on {self.dim=} '
+                       f'and {other.dim=} fields.')
+                raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            other = self.__class__(self.mesh, dim=3, value=other)
+            return self & self.__class__(self.mesh, dim=3, value=other)
         else:
             msg = (f'Unsupported operand type(s) for &: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
-
-        if self.dim != 3 or other.dim != 3:
-            msg = (f'Cannot apply operator & on dim={self.dim} '
-                   f'and dim={other.dim} fields.')
-            raise ValueError(msg)
 
         res_array = np.cross(self.array, other.array)
         return self.__class__(self.mesh, dim=3, value=res_array)
@@ -1480,12 +1483,13 @@ class Field:
                        'defined on different meshes.')
                 raise ValueError(msg)
         elif isinstance(other, numbers.Real):
-            other = self.__class__(self.mesh, dim=1, value=other)
+            return self << self.__class__(self.mesh, dim=1, value=other)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            other = self.__class__(self.mesh, dim=len(other), value=other)
+            return self << self.__class__(self.mesh, dim=len(other),
+                                          value=other)
         else:
             msg = (f'Unsupported operand type(s) for <<: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         array_list = [self.array[..., i] for i in range(self.dim)]
@@ -1495,12 +1499,13 @@ class Field:
 
     def __rlshift__(self, other):
         if isinstance(other, numbers.Real):
-            other = self.__class__(self.mesh, dim=1, value=other)
+            return self.__class__(self.mesh, dim=1, value=other) << self
         elif isinstance(other, (tuple, list, np.ndarray)):
-            other = self.__class__(self.mesh, dim=len(other), value=other)
+            return self.__class__(self.mesh, dim=len(other),
+                                  value=other) << self
         else:
             msg = (f'Unsupported operand type(s) for <<: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         return other << self
@@ -2011,23 +2016,27 @@ class Field:
             return self.x.laplace << self.y.laplace << self.z.laplace
 
     @property
-    def volume_integral(self):
-        """Volume integral.
+    def integral(self):
+        """Integral.
 
-        This method integrates the field over volume and returns a single
-        (scalar or vector) value. This value can be understood as the product
-        of field's average value and the mesh volume, because the volume of all
-        discretisation cells is the same.
+        This method integrates the field over the entire mesh. In order to
+        compute the volume integral, the field is assumed to be multiplied by
+        ``mesh.dV`` beforehand. Similarly, surface integrals assume the field
+        was multiplied by dS.
 
         Returns
         -------
-        numbers.Real, tuple
+        numbers.Real or (3,) array_like
 
-            Volume integral.
+            Integral.
 
         Example
         -------
-        1. Compute the volume integral of a scalar field.
+        1. Volume integral of a scalar field.
+
+        .. math::
+
+            \\int_\\mathrm{V} f(\\mathbf{r}) \\mathrm{d}V
 
         >>> import discretisedfield as df
         ...
@@ -2037,76 +2046,44 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> f.volume_integral
+        >>> (f * mesh.dV).integral
         5000.0
 
-        2. Compute the volume integral of a vector field.
+        2. Volume integral of a vector field.
+
+        .. math::
+
+            \\int_\\mathrm{V} \\mathbf{f}(\\mathbf{r}) \\mathrm{d}V
 
         >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
-        >>> f.volume_integral
+        >>> (f * mesh.dV).integral
         (-1000.0, -2000.0, -3000.0)
 
-        .. seealso::
+        3. Surface integral of a scalar field.
 
-            :py:func:`~discretisedfield.Field.surface_integral`
+        .. math::
 
-        """
-        cell_volume = self.mesh.dV
-        field_sum = np.sum(self.array, axis=(0, 1, 2))
-        return dfu.array2tuple(field_sum * cell_volume)
+            \\int_\\mathrm{S} f(\\mathbf{r}) |\\mathrm{d}\\mathbf{S}|
 
-    @property
-    def surface_integral(self):
-        """Surface integral.
-
-        This method integrates the field over the plane and returns a single
-        scalar or vector value. This value can be understood as the product of
-        field's average value and the plane area, because the area of all
-        discretisation cells on the plane is the same.
-
-        The field must be sliced by a plane before surface integral is applied.
-
-        Returns
-        -------
-        numbers.Real, tuple
-
-            Surface integral.
-
-        Raises
-        ------
-        ValueError
-
-            If the field was not sliced before the surface integral ic
-            computed.
-
-        Example
-        -------
-        1. Compute the surface integral of a scalar field.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10, 10, 10)
-        >>> cell = (2, 2, 2)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> f.plane('z').surface_integral
+        >>> f_plane = f.plane('z')
+        >>> (f_plane * abs(f_plane.mesh.dS)).integral
         500.0
 
-        2. Compute the surface integral of a vector field.
+        4. Surface integral of a vector field (flux).
 
-        >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
-        >>> f.plane('z').surface_integral
-        (-100.0, -200.0, -300.0)
+        .. math::
 
-        .. seealso::
+            \\int_\\mathrm{S} \\mathbf{f}(\\mathbf{r}) \\cdot
+            \\mathrm{d}\\mathbf{S}
 
-            :py:func:`~discretisedfield.Field.volume_integral`
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> f_plane = f.plane('z')
+        >>> (f_plane @ f_plane.mesh.dS).integral
+        300.0
 
         """
-        thickness = self.mesh.cell[self.mesh.info['planeaxis']]
-        return dfu.array2tuple(np.divide(self.volume_integral, thickness))
+        return dfu.array2tuple(np.sum(self.array, axis=(0, 1, 2)))
 
     def topological_charge_density(self, method='continuous'):
         """Topological charge density.
@@ -2372,9 +2349,9 @@ class Field:
         if method == 'continuous':
             q = self.topological_charge_density(method=method)
             if absolute:
-                return abs(q).surface_integral
+                return (abs(q) * abs(q.mesh.dS)).integral
             else:
-                return q.surface_integral
+                return (q * abs(q.mesh.dS)).integral
 
         elif method == 'berg-luescher':
             # Can we base this calculation on density field which is computed

@@ -63,8 +63,12 @@ def check_field(field):
     assert 1*field == field
     assert -1*field == -field
 
-    integral = field.volume_integral
-    assert isinstance(integral, (tuple, numbers.Real))
+    volume_integral = (field * field.mesh.dV).integral
+    assert isinstance(volume_integral, (tuple, numbers.Real))
+
+    plane_field = field.plane('z')
+    surface_integral = (plane_field * abs(plane_field.mesh.dS)).integral
+    assert isinstance(surface_integral, (tuple, numbers.Real))
 
     if field.dim == 1:
         grad = field.grad
@@ -106,6 +110,10 @@ def check_field(field):
                 Q = field_plane.topological_charge(method=method,
                                                    absolute=absolute)
                 assert isinstance(Q, numbers.Real)
+
+        plane_field = field.plane('z')
+        surface_integral = (plane_field @ plane_field.mesh.dS).integral
+        assert isinstance(surface_integral, numbers.Real)
 
         orientation = field.orientation
         assert isinstance(orientation, df.Field)
@@ -1302,20 +1310,20 @@ class TestField:
 
         assert f.laplace.average == (4, 4, 6)
 
-    def test_volume_integral(self):
+    def test_integral(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=0)
-        assert f.volume_integral == 0
+        assert (f * f.mesh.dV).integral == 0
 
         f = df.Field(mesh, dim=1, value=2)
-        assert f.volume_integral == 2000
+        assert (f * f.mesh.dV).integral == 2000
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert f.volume_integral == (-1000, 0, 3000)
+        assert (f * f.mesh.dV).integral == (-1000, 0, 3000)
 
         def value_fun(point):
             x, y, z = point
@@ -1325,26 +1333,28 @@ class TestField:
                 return (1, 2, 3)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-        assert f.volume_integral == (0, 0, 0)
+        assert (f * f.mesh.dV).integral == (0, 0, 0)
 
-    def test_surface_integral(self):
         p1 = (0, 0, 0)
         p2 = (10, 5, 3)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=0)
-        assert f.plane('x').surface_integral == 0
+        assert (f.plane('x') * abs(f.plane('x').mesh.dS)).integral == 0
 
         f = df.Field(mesh, dim=1, value=2)
-        assert f.plane('x').surface_integral == 30
-        assert f.plane('y').surface_integral == 60
-        assert f.plane('z').surface_integral == 100
+        assert (f.plane('x') * abs(f.plane('x').mesh.dS)).integral == 30
+        assert (f.plane('y') * abs(f.plane('y').mesh.dS)).integral == 60
+        assert (f.plane('z') * abs(f.plane('z').mesh.dS)).integral == 100
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert f.plane('x').surface_integral == (-15, 0, 45)
-        assert f.plane('y').surface_integral == (-30, 0, 90)
-        assert f.plane('z').surface_integral == (-50, 0, 150)
+        assert (f.plane('x') *
+                abs(f.plane('x').mesh.dS)).integral == (-15, 0, 45)
+        assert (f.plane('y') *
+                abs(f.plane('y').mesh.dS)).integral == (-30, 0, 90)
+        assert (f.plane('z') *
+                abs(f.plane('z').mesh.dS)).integral == (-50, 0, 150)
 
     def test_topological_charge(self):
         p1 = (0, 0, 0)
