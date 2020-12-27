@@ -3245,8 +3245,7 @@ class Field:
         cell = (mdatadict[key] for key in ['xstepsize', 'ystepsize',
                                            'zstepsize'])
 
-        region = df.Region(p1=p1, p2=p2)
-        mesh = df.Mesh(region, cell=cell)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         # valuedim is not in OVF1 file and for binary data it has to be
         # extracted here.
@@ -3332,8 +3331,7 @@ class Field:
         # Create objects from metadata info
         p1 = np.subtract(origin, np.multiply(cell, 0.5))
         p2 = np.add(p1, np.multiply(n, cell))
-        region = df.Region(p1=p1, p2=p2)
-        mesh = df.Mesh(region, n=n)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
         field = cls(mesh, dim=dim)
 
         # Find where data starts.
@@ -3397,8 +3395,7 @@ class Field:
             array = f['field/array']
 
             # Create field.
-            region = df.Region(p1=p1, p2=p2)
-            mesh = df.Mesh(region=region, n=n)
+            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
             return cls(mesh, dim=dim, value=array[:])
 
     def mpl_scalar(self, ax=None, figsize=None, filter_field=None,

@@ -61,6 +61,8 @@ def check_mesh(mesh):
     assert mesh == mesh
     assert not mesh != mesh
 
+    assert mesh | mesh
+
 
 class TestMesh:
     def setup(self):
@@ -138,6 +140,27 @@ class TestMesh:
                       'r2': df.Region(p1=(50, 0, 0), p2=(100, 50, 10))}
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
         check_mesh(mesh)
+
+        # Invalid subregions.
+        p1 = (0, 0, 0)
+        p2 = (100e-9, 50e-9, 10e-9)
+        cell = (10e-9, 10e-9, 10e-9)
+
+        # Subregion not an aggregate.
+        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 10e-9))}
+        with pytest.raises(ValueError):
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+
+        # Subregion not aligned.
+        subregions = {'r1': df.Region(p1=(5e-9, 0, 0),
+                                      p2=(45e-9, 50e-9, 10e-9))}
+        with pytest.raises(ValueError):
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+
+        # Subregion not in the mesh region.
+        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 200e-9))}
+        with pytest.raises(ValueError):
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
     def test_init_with_region_and_points(self):
         p1 = (0, -4, 16.5)
@@ -416,7 +439,7 @@ class TestMesh:
             assert len(point) == 3
             assert all([0 <= i <= 10 for i in point])
 
-        line = list(mesh.line((0, 0, 0), (10, 0, 0), n=11))
+        line = list(mesh.line(p1=(0, 0, 0), p2=(10, 0, 0), n=11))
         assert len(line) == 11
         assert line[0] == (0, 0, 0)
         assert line[-1] == (10, 0, 0)
@@ -653,6 +676,27 @@ class TestMesh:
         assert padded_mesh.region.pmin == (-2, 1, 3)
         assert padded_mesh.region.pmax == (6, 10, 8)
         assert padded_mesh.n == (8, 9, 5)
+
+    def test_getattr(self):
+        p1 = (0, 0, 0)
+        p2 = (100e-9, 80e-9, 10e-9)
+        cell = (1e-9, 5e-9, 10e-9)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert mesh.dx == 1e-9
+        assert mesh.dy == 5e-9
+        assert mesh.dz == 10e-9
+
+        with pytest.raises(AttributeError):
+            res = mesh.dk
+
+    def test_dV(self):
+        p1 = (0, 0, 0)
+        p2 = (100, 80, 10)
+        cell = (1, 2, 2.5)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert mesh.dV == 5
 
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:

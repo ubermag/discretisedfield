@@ -44,7 +44,7 @@ def check_region(region):
     assert all(isinstance(i, numbers.Real) for i in region.random_point())
     assert region.random_point() in region
 
-    assert isinstance(region.volume, float)
+    assert isinstance(region.volume, numbers.Real)
 
     assert isinstance(repr(region), str)
     pattern = r'^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$'
@@ -53,6 +53,11 @@ def check_region(region):
     assert region == region
     assert not region != region
     assert region != 2
+    assert region in region
+
+    # There are no facing surfaces in region | region
+    with pytest.raises(ValueError):
+        res = region | region
 
 
 class TestRegion:

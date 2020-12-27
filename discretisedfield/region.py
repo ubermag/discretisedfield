@@ -13,20 +13,22 @@ class Region:
     """A cuboid region.
 
     A cuboid region spans between two corner points :math:`\\mathbf{p}_{1}` and
-    :math:`\\mathbf{p}_{2}`.
+    :math:`\\mathbf{p}_{2}`. Points ``p1`` and ``p2`` can be any two diagonally
+    opposite points. If any of the edge lengths of the cuboid region is zero,
+    ``ValueError`` is raised.
 
     Parameters
     ----------
     p1 / p2 : (3,) array_like
 
-        Points between which the cuboid region spans :math:`\\mathbf{p}_{i} =
-        (p_{x}, p_{y}, p_{z})`.
+        Diagonnaly opposite corner points :math:`\\mathbf{p}_{i} = (p_{x},
+        p_{y}, p_{z})`.
 
     Raises
     ------
     ValueError
 
-        If the length of one or more region edges is zero.
+        If any region's edge length is zero.
 
     Examples
     --------
@@ -56,7 +58,7 @@ class Region:
         self.p2 = tuple(p2)
 
         if np.equal(self.edges, 0).any():
-            msg = f'One of the region edges ({self.edges}) is zero.'
+            msg = f'One of the region edge lengths is zero: {self.edges=}.'
             raise ValueError(msg)
 
     @property
@@ -203,7 +205,7 @@ class Region:
 
         Returns
         -------
-        float
+        numbers.Real
 
             Volume of the region.
 
@@ -225,9 +227,9 @@ class Region:
     def random_point(self):
         """Generate a random point in the region.
 
-        The use of this function is mostly for writing tests for packages based
-        on ``discretisedfield``. This method is not a property. Therefore, it
-        is called as ``discretisedfield.Region.random_point()``.
+        The use of this function is mostly for writing tests. This method is
+        not a property and it is called as
+        ``discretisedfield.Region.random_point()``.
 
         Returns
         -------
@@ -250,7 +252,7 @@ class Region:
 
         .. note::
 
-           In the example, ellipsis is used instead of an exact tuple because
+           In this example, ellipsis is used instead of an exact tuple because
            the result differs each time
            ``discretisedfield.Region.random_point`` method is called.
 
@@ -321,16 +323,18 @@ class Region:
         True
 
         """
+        atol = 1e-15
+        rtol = 1e-5
         if not isinstance(other, self.__class__):
             return False
-        elif (np.allclose(self.pmin, other.pmin, atol=1e-15, rtol=1e-5) and
-              np.allclose(self.pmax, other.pmax, atol=1e-15, rtol=1e-5)):
+        elif (np.allclose(self.pmin, other.pmin, atol=atol, rtol=rtol) and
+              np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)):
             return True
         else:
             return False
 
     def __contains__(self, other):
-        """Determine if ``other`` (point or region) is in ``self``.
+        """Determine if a point or another region belong to the region.
 
         Point is considered to be in the region if
 
@@ -339,9 +343,9 @@ class Region:
             p^\\text{min}_{i} \\le p_{i} \\le p^\\text{max}_{i}, \\text{for}\\,
             i = x, y, z.
 
-        Similarly, if ``other`` is ``discretisedfield.Region``, it is
-        considered to be in the region if both its ``pmin`` and ``pmax`` belong
-        to the region.
+        Similarly, if the second operand is ``discretisedfield.Region`` object,
+        it is considered to be in the region if both its ``pmin`` and ``pmax``
+        belong to the region.
 
         Parameters
         ----------
@@ -369,34 +373,28 @@ class Region:
         True
         >>> (1, 3, 1) in region
         False
-        >>> # corner points are inside the region
+        >>> # corner points are considered to be in the region
         >>> p1 in region
         True
         >>> p2 in region
         True
 
-        2. Check if region is inside the region.
+        2. Check if another region belongs to the region.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 1)
-        >>> region = df.Region(p1=p1, p2=p2)
         >>> df.Region(p1=(0, 0, 0), p2=(1, 1, 1)) in region
         True
         >>> df.Region(p1=(0, 0, 0), p2=(2, 2, 2)) in region
         False
+        >>> # Region is considered to be in itself
+        >>> region in region
+        True
 
         """
         if isinstance(other, self.__class__):
-            points = [other.pmin, other.pmax]
-        else:
-            points = [other]
-
-        for point in points:
-            if np.logical_or(np.less(point, self.pmin),
-                             np.greater(point, self.pmax)).any():
-                return False
+            return other.pmin in self and other.pmax in self
+        elif np.logical_or(np.less(other, self.pmin),
+                           np.greater(other, self.pmax)).any():
+            return False
 
         return True
 
@@ -444,24 +442,20 @@ class Region:
         """
         if not isinstance(other, self.__class__):
             msg = (f'Unsupported operand type(s) for |: '
-                   f'{type(self)} and {type(other)}.')
+                   f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         for i in range(3):
             if self.pmin[i] >= other.pmax[i]:
-                first, second, direction = other, self, i
-                break
+                return (dfu.raxesdict[i], other, self)
             if other.pmin[i] >= self.pmax[i]:
-                first, second, direction = self, other, i
-                break
+                return (dfu.raxesdict[i], self, other)
         else:
             msg = 'Cannot find facing surfaces'
             raise ValueError(msg)
 
-        return (dfu.raxesdict[direction], first, second)
-
-    def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[0], multiplier=None,
-            filename=None, **kwargs):
+    def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[0],
+            multiplier=None, filename=None, **kwargs):
         """``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -544,22 +538,16 @@ class Region:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def k3d(self, plot=None, color=dfu.cp_int[0], multiplier=None, **kwargs):
+    def k3d(self, *, plot=None, color=dfu.cp_int[0], multiplier=None,
+            **kwargs):
         """``k3d`` plot.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
         automatically. The colour of the region can be specified using
         ``color`` argument.
 
-        It is often the case that the object size is either small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all axes will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the best one is
-        calculated internally.
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
 
         This method is based on ``k3d.voxels``, so any keyword arguments
         accepted by it can be passed (e.g. ``wireframe``).

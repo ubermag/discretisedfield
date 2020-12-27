@@ -223,8 +223,8 @@ class TestField:
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
         n = (5, 5, 5)
-        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(5e-9, 10e-9, 10e-9)),
-                      'r2': df.Region(p1=(5e-9, 0, 0),
+        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(4e-9, 10e-9, 10e-9)),
+                      'r2': df.Region(p1=(4e-9, 0, 0),
                                       p2=(10e-9, 10e-9, 10e-9))}
         mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
 

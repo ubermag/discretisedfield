@@ -21,29 +21,32 @@ from mpl_toolkits.mplot3d import Axes3D
                    value_descriptor=ts.Typed(expected_type=df.Region),
                    allow_empty=True))
 class Mesh:
-    """Finite difference mesh.
+    """Finite-difference mesh.
 
     Mesh discretises cubic ``discretisedfield.Region``, passed as ``region``,
-    using a regular finite difference mesh. Since cubic region spans between
+    using a regular finite-difference mesh. Since cubic region spans between
     two points :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`, these
     points can be passed as ``p1`` and ``p2``, instead of passing
     ``discretisedfield.Region`` object. In this case
     ``discretisedfield.Region`` is created internally. Either ``region`` or
-    ``p1`` and ``p2`` must be passed, not both. The region is discretised using
-    a finite difference cell, whose dimensions are defined with ``cell``.
+    ``p1`` and ``p2`` can be passed, not both. The region is discretised using
+    a finite-difference cell, whose dimensions are defined with ``cell``.
     Alternatively, the domain can be discretised by passing the number of
     discretisation cells ``n`` in all three dimensions. Either ``cell`` or
-    ``n`` should be passed to discretise the region, not both. Periodic
-    boundary conditions can be specified by passing ``bc`` argument as a string
-    containing one or more characters from ``{'x', 'y', 'z'}`` set (e.g.
-    ``'x'``, ``'yz'``, ``'xyz'``). Neumann or Dirichlet boundary conditions are
-    defined by passing ``'neumann'`` or ``dirichlet`` string. Neumann and
-    Dirichlett boundary conditions are still experimental. If it is necessary
-    to define subregions in the mesh, a dictionary can be passed as
-    ``subregions``. More precisely, dictionary keys are strings (as valid
-    Python variable names), whereas values are ``discretisedfield.Region``
-    objects. Subregions are not checked internally, so it is users
-    responsibility to make sure subregions are well defined.
+    ``n`` can be passed, not both.
+
+    Periodic boundary conditions can be specified by passing ``bc`` argument as
+    a string containing one or more characters from ``{'x', 'y', 'z'}`` set
+    (e.g. ``'x'``, ``'yz'``, ``'xyz'``). Neumann or Dirichlet boundary
+    conditions are defined by passing ``'neumann'`` or ``'dirichlet'`` string.
+    Neumann and Dirichlett boundary conditions are still experimental.
+
+    If it is necessary to define subregions in the mesh, a dictionary can be
+    passed using ``subregions``. More precisely, dictionary keys are strings
+    (valid Python variable names), whereas values are
+    ``discretisedfield.Region`` objects. It is necessary that subregions belong
+    to the mesh region, are an aggregate of a discretisation cell, and are
+    "aligned" with the mesh. If not, ``ValueError`` is raised.
 
     In order to properly define a mesh, mesh region must be an aggregate of
     discretisation cells. Otherwise, ``ValueError`` is raised.
@@ -57,9 +60,9 @@ class Mesh:
 
     p1 / p2 : (3,) array_like, optional
 
-        Points between which the mesh region spans :math:`\\mathbf{p} = (p_{x},
-        p_{y}, p_{z})`. Either ``region`` or ``p1`` and ``p2`` should be
-        defined, not both. Defaults to ``None``.
+        Diagonally-opposite region points :math:`\\mathbf{p} = (p_{x}, p_{y},
+        p_{z})`. Either ``region`` or ``p1`` and ``p2`` should be defined, not
+        both. Defaults to ``None``.
 
     cell : (3,) array_like, optional
 
@@ -94,6 +97,10 @@ class Mesh:
         If mesh domain is not an aggregate of discretisation cells.
         Alternatively, if both ``region`` as well as ``p1`` and ``p2`` or both
         ``cell`` and ``n`` are passed.
+
+        Alternatively if one of the subregions is: (i) not in the mesh region,
+        (ii) it is not an aggregate of discretisation cell, or (iii) it is not
+        aligned with the mesh.
 
     Examples
     --------
@@ -149,8 +156,19 @@ class Mesh:
         ...
     ValueError: ...
 
+    6. An attempt to define a mesh, whose subregion is not aligned.
+
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (100, 100, 100)
+    >>> cell = (10, 10, 10)
+    >>> subregions = {'r1': df.Region(p1=(2, 0, 0), p2=(52, 100, 100))}
+    >>> mesh = df.Mesh(p1=p1, p2=p2, subregions=subregions)
+    Traceback (most recent call last):
+        ...
+    ValueError: ...
+
     """
-    def __init__(self, region=None, p1=None, p2=None, n=None, cell=None,
+    def __init__(self, *, region=None, p1=None, p2=None, n=None, cell=None,
                  bc='', subregions=dict()):
         if region is not None and p1 is None and p2 is None:
             self.region = region
@@ -178,10 +196,32 @@ class Mesh:
         if np.logical_and(np.greater(rem, tol),
                           np.less(rem, np.subtract(self.cell, tol))).any():
             msg = (f'Region cannot be divided into '
-                   f'discretisation cells of size {self.cell}.')
+                   f'discretisation cells of size {self.cell=}.')
             raise ValueError(msg)
 
         self.bc = bc.lower()
+
+        # Check if subregions are aligned with the mesh
+        for key, value in subregions.items():
+            # Is the subregion in the mesh region?
+            if value not in self.region:
+                msg = f'Subregion {key} is not in the mesh region.'
+                raise ValueError(msg)
+
+            # Is the subregion an aggregate of discretisation cell?
+            try:
+                submesh = self.__class__(region=value, cell=self.cell)
+            except ValueError:
+                msg = (f'Subregion {key} cannot be divided into '
+                       f'discretisation cells of size {self.cell=}.')
+                raise ValueError(msg)
+
+            # Is the subregion aligned with the mesh?
+            if not (self.__class__(region=self.region, cell=self.cell) |
+                    self.__class__(region=value, cell=self.cell)):
+                msg = f'Subregion {key} is not aligned with the mesh.'
+                raise ValueError(msg)
+
         self.subregions = subregions
 
     def __len__(self):
@@ -277,7 +317,7 @@ class Mesh:
         for index in self.indices:
             yield self.index2point(index)
 
-    def axis_points(self, axis):
+    def axis_points(self, axis, /):
         """Points (ticks) on ``axis``.
 
         This method is a generator yielding points on ``axis`` at which
@@ -323,8 +363,7 @@ class Mesh:
 
           1. Regions of both meshes are equal.
 
-          2. They have the same number of discretisation cells in all three
-          directions :math:`n^{1}_{i} = n^{2}_{i}`, for :math:`i = x, y, z`.
+          2. Discretisation cell sizes are the same.
 
         Boundary conditions ``bc`` and ``subregions`` are not considered to be
         necessary conditions for determining equality.
@@ -394,7 +433,7 @@ class Mesh:
         return (f'Mesh(region={repr(self.region)}, n={self.n}, '
                 f'bc=\'{self.bc}\', subregions={self.subregions})')
 
-    def index2point(self, index):
+    def index2point(self, index, /):
         """Convert cell's index to its coordinate.
 
         Parameters
@@ -435,14 +474,14 @@ class Mesh:
         """
         if np.logical_or(np.less(index, 0),
                          np.greater_equal(index, self.n)).any():
-            msg = f'Index {index} out of range.'
+            msg = f'Index {index=} out of range.'
             raise ValueError(msg)
 
         point = np.add(self.region.pmin,
                        np.multiply(np.add(index, 0.5), self.cell))
         return dfu.array2tuple(point)
 
-    def point2index(self, point):
+    def point2index(self, point, /):
         """Convert point to the index of a cell which contains that point.
 
         Parameters
@@ -480,7 +519,7 @@ class Mesh:
 
         """
         if point not in self.region:
-            msg = f'Point {point} is outside the mesh region.'
+            msg = f'Point {point=} is outside the mesh region.'
             raise ValueError(msg)
 
         index = np.subtract(np.divide(np.subtract(point, self.region.pmin),
@@ -490,7 +529,7 @@ class Mesh:
 
         return dfu.array2tuple(index)
 
-    def neighbours(self, index):
+    def neighbours(self, index, /):
         """Indices of discretisation cell neighbours.
 
         Parameters
@@ -529,7 +568,7 @@ class Mesh:
         """
         if np.logical_or(np.less(index, 0),
                          np.greater_equal(index, self.n)).any():
-            msg = f'Index {index} out of range.'
+            msg = f'Index {index=} out of range.'
             raise ValueError(msg)
 
         nghbrs = []
@@ -550,7 +589,7 @@ class Mesh:
         # Remove duplicates and preserve order.
         return list(collections.OrderedDict.fromkeys(nghbrs))
 
-    def line(self, p1, p2, n):
+    def line(self, *, p1, p2, n):
         """Line generator.
 
         Given two points ``p1`` and ``p2`` line is defined and ``n`` points on
@@ -717,12 +756,13 @@ class Mesh:
         return plane_mesh
 
     def __or__(self, other):
-        """Check if ``other`` mesh is aligned to ``self``.
+        """Check if meshes are aligned.
 
         Two meshes are considered to be aligned if and only if:
 
-            1. They have the same discretisation cell.
-            2. Coordinates of cells in ``other`` are in coodinates of ``self``.
+            1. They have same discretisation cells.
+
+            2. They have common cell coordinates.
 
         Parameters
         ----------
@@ -734,11 +774,11 @@ class Mesh:
         -------
         bool
 
-            ``True`` if meshes are aligned. ``False`` otherwise.
+            ``True`` if meshes are aligned, ``False`` otherwise.
 
         Examples
         --------
-        1. Check whether two meshes are aligned.
+        1. Check if two meshes are aligned.
 
         >>> import discretisedfield as df
         ...
@@ -834,8 +874,6 @@ class Mesh:
 
         2. Extracting a submesh on a "newly-defined" region.
 
-        >>> import discretisedfield as df
-        ...
         >>> p1 = (-50e-9, -25e-9, 0)
         >>> p2 = (50e-9, 25e-9, 5e-9)
         >>> cell = (5e-9, 5e-9, 5e-9)
@@ -857,24 +895,23 @@ class Mesh:
             msg = 'Subregion is outside the mesh region.'
             raise ValueError(msg)
 
-        pmin = self.index2point(self.point2index(item.pmin))
-        pmax = self.index2point(self.point2index(item.pmax))
-        half_cell = np.divide(self.cell, 2)
+        hc = np.divide(self.cell, 2)  # half-cell
+        p1 = np.subtract(self.index2point(self.point2index(item.pmin)), hc)
+        p2 = np.add(self.index2point(self.point2index(item.pmax)), hc)
 
-        return self.__class__(region=df.Region(p1=np.subtract(pmin, half_cell),
-                                               p2=np.add(pmax, half_cell)),
-                              cell=self.cell)
+        return self.__class__(region=df.Region(p1=p1, p2=p2), cell=self.cell)
 
     def pad(self, pad_width):
         """Mesh padding.
 
         This method extends the mesh by adding (padding) discretisation cells
-        in chosen direction. The way in which the mesh is going to be padded is
-        defined by passing ``pad_width`` dictionary. The keys of the dictionary
-        are the directions (axes), e.g. ``'x'``, ``'y'``, or ``'z'``, whereas
-        the values are the tuples of length 2. The first integer in the tuple
-        is the number of cells added in the negative direction, and the second
-        integer is the number of cells added in the positive direction.
+        in chosen direction(s). The way in which the mesh is going to be padded
+        is defined by passing ``pad_width`` dictionary. The keys of the
+        dictionary are the directions (axes), e.g. ``'x'``, ``'y'``, or
+        ``'z'``, whereas the values are the tuples of length 2. The first
+        integer in the tuple is the number of cells added in the negative
+        direction, and the second integer is the number of cells added in the
+        positive direction.
 
         Parameters
         ----------
@@ -890,7 +927,7 @@ class Mesh:
         -------
         discretisedfield.Mesh
 
-            Extended mesh.
+            Padded (extended) mesh.
 
         Examples
         --------
@@ -922,11 +959,53 @@ class Mesh:
 
         return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
 
+    def __getattr__(self, attr):
+        """Extracting the discretisation in a particular direction.
+
+        If ``'dx'``, ``'dy'``, or ``'dz'`` is accessed, the discretisation cell
+        size in that direction is returned.
+
+        Parameters
+        ----------
+        attr : str
+
+            Discretisation direction (``'dx'``, ``'dy'``, or ``'dz'``)
+
+        Returns
+        -------
+        numbers.Real
+
+            Discretisation in a particular direction.
+
+        Examples
+        --------
+        1. Discretisation in the different directions.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 25, 50)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> mesh.dx
+        10
+        >>> mesh.dy
+        25
+        >>> mesh.dz
+        50
+
+        """
+        for axis, i in dfu.axesdict.items():
+            if attr == f'd{axis}':
+                return self.cell[i]
+        else:
+            msg = f'Object has no attribute {attr}.'
+            raise AttributeError(msg)
+
     @property
     def dV(self):
-        """Volume of a discretisation cell.
-
-        This property is used for calculating volume integrals.
+        """Discretisation cell volume.
 
         Returns
         -------
@@ -936,20 +1015,41 @@ class Mesh:
 
         Examples
         --------
-        1. Discretisation cell volume
+        1. Discretisation cell volume.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (100, 100, 100)
-        >>> cell = (10, 10, 10)
+        >>> cell = (1, 2, 4)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> mesh.dV
-        1000
+        8
 
         """
         return np.product(self.cell)
+
+    @property
+    def dS(self):
+        """Surface vector.
+
+        If the field is sliced...
+
+        """
+        if hasattr(self, 'info'):
+            S = self.cell[self.info['axis1']] * self.cell[self.info['axis2']]
+            value = dfu.assemble_index(0, 3, {self.info['planeaxis']: S})
+            return df.Field(self, dim=3, value=value)
+        else:
+            res = df.Field(self, dim=3, value=0)
+            for attr in ['pmin', 'pmax']:
+                for axis, coord in zip(dfu.axesdict.keys(),
+                                       getattr(self.region, attr)):
+                    plane_dS = self.plane(**{axis: coord}).dS
+                    for i in plane_dS.mesh.coordinates:
+                        res.array[res.mesh.point2index(i)]
+            return dS
 
     def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[:2], multiplier=None,
             filename=None, **kwargs):
