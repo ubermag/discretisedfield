@@ -15,6 +15,7 @@ def test_instances():
     assert df.dS(field.plane('z')).average == (0, 0, 2)
     assert df.dV(field) == 6
 
+
 def test_integral():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)

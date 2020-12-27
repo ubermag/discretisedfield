@@ -44,12 +44,12 @@ class DValue:
         return self @ other
 
 
+def integral(field):
+    return field.integral
+
+
 dx = DValue(lambda f: f.mesh.dx)
 dy = DValue(lambda f: f.mesh.dy)
 dz = DValue(lambda f: f.mesh.dz)
 dV = DValue(lambda f: f.mesh.dV)
 dS = DValue(lambda f: f.mesh.dS)
-
-
-def integral(field):
-    return field.integral
