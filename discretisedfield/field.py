@@ -1510,8 +1510,6 @@ class Field:
                    f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
-        return other << self
-
     def pad(self, pad_width, mode, **kwargs):
         """Field padding.
 
@@ -2174,7 +2172,7 @@ class Field:
         """
         if self.dim != 3:
             msg = (f'Cannot compute topological charge density '
-                   f'for dim={self.dim} field.')
+                   f'for {self.dim=} field.')
             raise ValueError(msg)
         if not hasattr(self.mesh, 'info'):
             msg = ('The field must be sliced before the topological '
@@ -2566,15 +2564,11 @@ class Field:
         """
         submesh = self.mesh[item]
 
-        if submesh | self.mesh:  # meshes align
-            index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
-            index_max = np.add(index_min, submesh.n)
-            slices = [slice(i, j) for i, j in zip(index_min, index_max)]
-            value = self.array[tuple(slices)]
-        else:  # meshes do not align
-            value = self
-
-        return self.__class__(self.mesh[item], dim=self.dim, value=value)
+        index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
+        index_max = np.add(index_min, submesh.n)
+        slices = [slice(i, j) for i, j in zip(index_min, index_max)]
+        return self.__class__(submesh, dim=self.dim,
+                              value=self.array[tuple(slices)])
 
     def project(self, *args):
         """Projects the field along one direction and averages it out along

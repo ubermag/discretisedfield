@@ -1,4 +1,5 @@
 import numbers
+import numpy as np
 import discretisedfield as df
 
 
@@ -32,12 +33,15 @@ class DValue:
             return self.__class__(lambda f: self(f) @ other(f))
         elif isinstance(other, df.Field):
             return other @ self
-        elif isinstance(other, (list, tuple, numpy.ndarray)):
+        elif isinstance(other, (list, tuple, np.ndarray)):
             return self.__class__(lambda f: self(f) @ other)
         else:
             msg = (f'Unsupported operand type(s) for *: '
                    f'{type(self)} and {type(other)}.')
             raise TypeError(msg)
+
+    def __rmatmul__(self, other):
+        return self @ other
 
 
 dx = DValue(lambda f: f.mesh.dx)

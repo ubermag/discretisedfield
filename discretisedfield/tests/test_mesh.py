@@ -573,23 +573,26 @@ class TestMesh:
         p1 = (-50e-9, -25e-9, 0)
         p2 = (50e-9, 25e-9, 5e-9)
         cell = (5e-9, 5e-9, 5e-9)
-        region1 = df.Region(p1=p1, p2=p2)
-        mesh1 = df.Mesh(region=region1, cell=cell)
+        mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         p1 = (-45e-9, -20e-9, 0)
         p2 = (10e-9, 20e-9, 5e-9)
         cell = (5e-9, 5e-9, 5e-9)
-        region2 = df.Region(p1=p1, p2=p2)
-        mesh2 = df.Mesh(region=region2, cell=cell)
+        mesh2 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         p1 = (-42e-9, -20e-9, 0)
         p2 = (13e-9, 20e-9, 5e-9)
         cell = (5e-9, 5e-9, 5e-9)
-        region3 = df.Region(p1=p1, p2=p2)
-        mesh3 = df.Mesh(region=region3, cell=cell)
+        mesh3 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        p1 = (-50e-9, -25e-9, 0)
+        p2 = (50e-9, 25e-9, 5e-9)
+        cell = (2.5e-9, 2.5e-9, 2.5e-9)
+        mesh4 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         assert mesh1 | mesh2 is True
         assert mesh1 | mesh3 is False
+        assert mesh1 | mesh4 is False
         assert mesh1 | mesh1 is True
 
     def test_getitem(self):
@@ -623,8 +626,7 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         check_mesh(mesh)
 
-        subregion = df.Region(p1=(0.1, 2.2, 4.01), p2=(4.9, 3.8, 5.7))
-        submesh = mesh[subregion]
+        submesh = mesh[df.Region(p1=(0.1, 2.2, 4.01), p2=(4.9, 3.8, 5.7))]
         check_mesh(submesh)
         assert submesh.region.pmin == (0, 2, 4)
         assert submesh.region.pmax == (5, 4, 6)
@@ -638,9 +640,8 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         check_mesh(mesh)
 
-        subregion = df.Region(p1=(11e-9, 22e-9, 1e-9),
-                              p2=(-9e-9, 79e-9, 14e-9))
-        submesh = mesh[subregion]
+        submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9),
+                                 p2=(-9e-9, 79e-9, 14e-9))]
         check_mesh(submesh)
         assert np.allclose(submesh.region.pmin, (-10e-9, 20e-9, 0),
                            atol=1e-15, rtol=1e-5)
@@ -649,6 +650,10 @@ class TestMesh:
         assert submesh.cell == cell
         assert submesh.n == (5, 12, 3)
         assert mesh[mesh.region] == mesh
+
+        with pytest.raises(ValueError):
+            submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9),
+                                     p2=(200e-9, 79e-9, 14e-9))]
 
     def test_pad(self):
         p1 = (-1, 2, 7)
@@ -689,6 +694,14 @@ class TestMesh:
 
         with pytest.raises(AttributeError):
             res = mesh.dk
+
+    def test_dir(self):
+        p1 = (0, 0, 0)
+        p2 = (100e-9, 80e-9, 10e-9)
+        cell = (1e-9, 5e-9, 10e-9)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert all([i in dir(mesh) for i in ['dx', 'dy', 'dz']])
 
     def test_dV(self):
         p1 = (0, 0, 0)

@@ -849,7 +849,7 @@ class TestField:
         with pytest.raises(ValueError):
             res = f1 & f2
 
-    def test_stack(self):
+    def test_lshift(self):
         p1 = (0, 0, 0)
         p2 = (10e6, 10e6, 10e6)
         cell = (5e6, 5e6, 5e6)
@@ -1412,18 +1412,30 @@ class TestField:
         with pytest.raises(ValueError):
             res = f.topological_charge(method='continuous')
         with pytest.raises(ValueError):
+            res = f.topological_charge_density(method='continuous')
+        with pytest.raises(ValueError):
             res = f.topological_charge(method='berg-luescher')
+        with pytest.raises(ValueError):
+            res = f.topological_charge_density(method='berg-luescher')
 
         # Scalar field
         f = df.Field(mesh, dim=1, value=3.14)
         with pytest.raises(ValueError):
             res = f.plane('z').topological_charge(method='continuous')
         with pytest.raises(ValueError):
+            res = f.plane('z').topological_charge_density(method='continuous')
+        with pytest.raises(ValueError):
             res = f.plane('z').topological_charge(method='berg-luescher')
+        with pytest.raises(ValueError):
+            res = f.plane('z').topological_charge_density(
+                method='berg-luescher')
 
         # Method does not exist
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
         with pytest.raises(ValueError):
             res = f.plane('z').topological_charge(method='some-method')
+        with pytest.raises(ValueError):
+            res = f.plane('z').topological_charge_density(method='some-method')
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
@@ -1477,9 +1489,7 @@ class TestField:
         assert len(f['r1'].mesh) + len(f['r2'].mesh) == len(f.mesh)
 
         # Meshes are not aligned
-        p1 = (1.1, 0, 0)
-        p2 = (9.9, 15, 5)
-        subregion = df.Region(p1=p1, p2=p2)
+        subregion = df.Region(p1=(1.1, 0, 0), p2=(9.9, 15, 5))
 
         assert f[subregion].array.shape == (2, 3, 1, 3)
 
