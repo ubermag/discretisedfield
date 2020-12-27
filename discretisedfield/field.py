@@ -1345,6 +1345,8 @@ class Field:
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self @ self.__class__(self.mesh, dim=3, value=other)
+        elif isinstance(other, df.DValue):
+            return self @ other(self)
         else:
             msg = (f'Unsupported operand type(s) for @: '
                    f'{type(self)=} and {type(other)=}.')
@@ -2020,9 +2022,9 @@ class Field:
         """Integral.
 
         This method integrates the field over the entire mesh. In order to
-        compute the volume integral, the field is assumed to be multiplied by
-        ``mesh.dV`` beforehand. Similarly, surface integrals assume the field
-        was multiplied by dS.
+        compute the volume integral, the field must be multiplied by ``df.dV``
+        beforehand. Similarly, surface integral requires the field to be
+        multiplied by ``df.dS``.
 
         Returns
         -------
@@ -2046,7 +2048,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> (f * mesh.dV).integral
+        >>> (f * df.dV).integral
         5000.0
 
         2. Volume integral of a vector field.
@@ -2056,7 +2058,7 @@ class Field:
             \\int_\\mathrm{V} \\mathbf{f}(\\mathbf{r}) \\mathrm{d}V
 
         >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
-        >>> (f * mesh.dV).integral
+        >>> (f * df.dV).integral
         (-1000.0, -2000.0, -3000.0)
 
         3. Surface integral of a scalar field.
@@ -2067,7 +2069,7 @@ class Field:
 
         >>> f = df.Field(mesh, dim=1, value=5)
         >>> f_plane = f.plane('z')
-        >>> (f_plane * abs(f_plane.mesh.dS)).integral
+        >>> (f_plane * abs(df.dS)).integral
         500.0
 
         4. Surface integral of a vector field (flux).
@@ -2079,7 +2081,7 @@ class Field:
 
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane @ f_plane.mesh.dS).integral
+        >>> (f_plane @ df.dS).integral
         300.0
 
         """
@@ -2349,9 +2351,9 @@ class Field:
         if method == 'continuous':
             q = self.topological_charge_density(method=method)
             if absolute:
-                return (abs(q) * abs(q.mesh.dS)).integral
+                return df.integral(abs(q) * abs(df.dS))
             else:
-                return (q * abs(q.mesh.dS)).integral
+                return df.integral(q * abs(df.dS))
 
         elif method == 'berg-luescher':
             # Can we base this calculation on density field which is computed

@@ -5,7 +5,7 @@ from .region import Region
 from .mesh import Mesh
 from .field import Field
 from .line import Line
-from .operations import DValue, dx, dy, dz, dV, dS
+from .operations import DValue, dx, dy, dz, dV, dS, integral
 from .interact import interact
 import matplotlib.pyplot as plt
 
