@@ -8,6 +8,7 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 | Description | Badge |
 | --- | --- |
 | Tests | [![Build status](https://github.com/ubermag/discretisedfield/workflows/workflow/badge.svg)](https://github.com/ubermag/discretisedfield/actions) |
+|       | [![conda](https://github.com/ubermag/discretisedfield/workflows/conda/badge.svg)](https://github.com/ubermag/discretisedfield/actions) |
 | Releases | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |          | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg?token=hcK4fofmrL)](https://codecov.io/gh/ubermag/discretisedfield) |
