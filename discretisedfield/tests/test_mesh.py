@@ -698,6 +698,20 @@ class TestMesh:
 
         assert mesh.dV == 5
 
+    def test_dS(self):
+        p1 = (0, 0, 0)
+        p2 = (100, 80, 10)
+        cell = (1, 2, 2.5)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert mesh.plane('x').dS.average == (5, 0, 0)
+        assert mesh.plane('y').dS.average == (0, 2.5, 0)
+        assert mesh.plane('z').dS.average == (0, 0, 2)
+
+        # Exception
+        with pytest.raises(ValueError):
+            res = mesh.dS
+
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)

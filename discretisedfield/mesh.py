@@ -1003,6 +1003,20 @@ class Mesh:
             msg = f'Object has no attribute {attr}.'
             raise AttributeError(msg)
 
+    def __dir__(self):
+        """Extension of the ``dir(self)`` list.
+
+        Adds ``'dx'``, ``'dy'``, and ``'dz'``.
+
+        Returns
+        -------
+        list
+
+            Avalilable attributes.
+
+        """
+        return dir(self.__class__) + [f'd{i}' for i in dfu.axesdict.keys()]
+
     @property
     def dV(self):
         """Discretisation cell volume.
@@ -1032,27 +1046,44 @@ class Mesh:
 
     @property
     def dS(self):
-        """Surface vector.
+        """Surface vector field.
 
-        If the field is sliced...
+        If the mesh is sliced, ``dS`` is a vector field with vectors
+        perpendicular to the surface and with magnitude equal to the
+        discretisation cell surface.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Surface vector field.
+
+        Examples
+        --------
+        1. Surface vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (1, 2, 4)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> dS = mesh.plane('z').dS
+        >>> dS.average
+        (0.0, 0.0, 2.0)
 
         """
-        if hasattr(self, 'info'):
-            S = self.cell[self.info['axis1']] * self.cell[self.info['axis2']]
-            value = dfu.assemble_index(0, 3, {self.info['planeaxis']: S})
-            return df.Field(self, dim=3, value=value)
-        else:
-            res = df.Field(self, dim=3, value=0)
-            for attr in ['pmin', 'pmax']:
-                for axis, coord in zip(dfu.axesdict.keys(),
-                                       getattr(self.region, attr)):
-                    plane_dS = self.plane(**{axis: coord}).dS
-                    for i in plane_dS.mesh.coordinates:
-                        res.array[res.mesh.point2index(i)]
-            return dS
+        if not hasattr(self, 'info'):
+            msg = 'The mesh must be sliced before dS can be computed.'
+            raise ValueError(msg)
 
-    def mpl(self, ax=None, figsize=None, color=dfu.cp_hex[:2], multiplier=None,
-            filename=None, **kwargs):
+        norm = self.cell[self.info['axis1']] * self.cell[self.info['axis2']]
+        dn = dfu.assemble_index(0, 3, {self.info['planeaxis']: 1})
+        return df.Field(self, dim=3, value=dn, norm=norm)
+
+    def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[:2],
+            multiplier=None, filename=None, **kwargs):
         """``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -1133,7 +1164,7 @@ class Mesh:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def mpl_subregions(self, ax=None, figsize=None, color=dfu.cp_hex,
+    def mpl_subregions(self, *, ax=None, figsize=None, color=dfu.cp_hex,
                        multiplier=None, filename=None, **kwargs):
         """``matplotlib`` subregions plot.
 
@@ -1211,7 +1242,7 @@ class Mesh:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def k3d(self, plot=None, color=dfu.cp_int[:2], multiplier=None,
+    def k3d(self, *, plot=None, color=dfu.cp_int[:2], multiplier=None,
             **kwargs):
         """``k3d`` plot.
 
@@ -1288,7 +1319,7 @@ class Mesh:
         plot.axes = [i + r'\,\text{{{}}}'.format(unit)
                      for i in dfu.axesdict.keys()]
 
-    def k3d_subregions(self, plot=None, color=dfu.cp_int, multiplier=None,
+    def k3d_subregions(self, *, plot=None, color=dfu.cp_int, multiplier=None,
                        **kwargs):
         """``k3d`` subregions plot.
 
@@ -1371,7 +1402,7 @@ class Mesh:
         plot.axes = [i + r'\,\text{{{}}}'.format(unit)
                      for i in dfu.axesdict.keys()]
 
-    def slider(self, axis, multiplier=None, description=None, **kwargs):
+    def slider(self, axis, /, *, multiplier=None, description=None, **kwargs):
         """Axis slider.
 
         For ``axis``, ``'x'``, ``'y'``, or ``'z'`` is passed. Based on that
@@ -1436,7 +1467,7 @@ class Mesh:
                                           description=description,
                                           **kwargs)
 
-    def axis_selector(self, widget='dropdown', description='axis'):
+    def axis_selector(self, *, widget='dropdown', description='axis'):
         """Axis selector.
 
         For ``widget='dropdown'``, ``ipywidgets.Dropdown`` is returned, whereas
