@@ -78,4 +78,4 @@ autodoc_default_options = {
     'exclude-members': '__init__, __weakref__'
 }
 
-master_doc = 'index'
+# master_doc = 'index'
