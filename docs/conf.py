@@ -77,4 +77,3 @@ autodoc_default_options = {
     'member-order': 'groupwise',
     'exclude-members': '__init__, __weakref__'
 }
-# autodoc_default_flags = ['members']
