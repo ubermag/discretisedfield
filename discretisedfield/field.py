@@ -2169,6 +2169,7 @@ class Field:
         ValueError: ...
 
         .. seealso:: :py:func:`~discretisedfield.Field.topological_charge`
+
         """
         if self.dim != 3:
             msg = (f'Cannot compute topological charge density '

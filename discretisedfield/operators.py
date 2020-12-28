@@ -237,6 +237,15 @@ class DValue:
 
 
 def integral(field):
+    """Integral.
+
+    This function calls ``integral`` method of the ``discrteisedfield.Field``
+    object.
+
+    For details, please refer to
+    :py:func:`~discretisedfield.Field.topological_charge`
+
+    """
     return field.integral
 
 
