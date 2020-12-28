@@ -14,8 +14,8 @@ class DValue:
     ----------
     function : Python function
 
-        A function which has ``discretisedfield.Field`` object as an input
-        argument and returns the necessary differential.
+        A function which takes ``discretisedfield.Field`` object as an input
+        and extracts the required differential.
 
     Examples
     --------
@@ -31,6 +31,7 @@ class DValue:
     >>> region = df.Region(p1=p1, p2=p2)
     >>> mesh = df.Mesh(region=region, cell=cell)
     >>> field = df.Field(mesh, dim=1, value=3.14)
+    ...
     >>> dV(field)
     125
 
@@ -39,7 +40,7 @@ class DValue:
         self.function = function
 
     def __call__(self, field):
-        """Call ``self.function`` by passing ``field``.
+        """Call ``self.function`` on ``field``.
 
         Parameters
         ----------
@@ -67,6 +68,7 @@ class DValue:
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region=region, cell=cell)
         >>> field = df.Field(mesh, dim=1, value=3.14)
+        ...
         >>> dx(field)
         5
 
@@ -74,9 +76,9 @@ class DValue:
         return self.function(field)
 
     def __abs__(self):
-        """Absolute value operator.
+        """Absolute value (norm) operator.
 
-        This method would compute norm if field is a vector field.
+        This method computes norm if differential is a vector field (``dS``).
 
         Returns
         -------
@@ -98,6 +100,7 @@ class DValue:
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region=region, cell=cell)
         >>> field = df.Field(mesh, dim=3, value=(1, -9, 2))
+        ...
         >>> abs(dS)(field.plane('z')).average
         25.0
 
@@ -133,9 +136,8 @@ class DValue:
 
             If the operator cannot be applied.
 
-        Example
-        -------
-
+        Examples
+        --------
         1. Multiplication examples.
 
         >>> import discretisedfield as df
@@ -152,9 +154,12 @@ class DValue:
         >>> mesh = df.Mesh(region=region, cell=cell)
         >>> field = df.Field(mesh, dim=3, value=(1, -9, 2))
         ...
+        >>> # DValue multiplication
         >>> dxdydz = dx * dy * dz
+        >>> # DValue and field multiplication
         >>> field * dV == field * dxdydz
         True
+        >>> # Dvalue and int multiplication
         >>> field * dV * 2 == field * dxdydz * 2
         True
 
@@ -174,7 +179,7 @@ class DValue:
         return self * other
 
     def __matmul__(self, other):
-        """Binary ``@`` operator, defined as dot product.
+        """Binary ``@`` operator, defined as a dot product.
 
         It can be applied between:
 
@@ -182,7 +187,7 @@ class DValue:
 
         2. A vector field and ``DValue`` object,
 
-        3. ``DValue`` object and ``array_like`` object.
+        3. ``DValue`` object and ``array_like`` length-3 object.
 
         Parameters
         ----------
@@ -217,7 +222,13 @@ class DValue:
         >>> mesh = df.Mesh(region=region, cell=cell)
         >>> field = df.Field(mesh, dim=3, value=(1, -9, 2))
         ...
+        >>> # DValue dot product
+        >>> dS2 = dS * dS
+        >>> # DValue and field dot product.
         >>> field.plane('z') @ dS
+        Field(...)
+        >>> # DValue and array_like object
+        >>> field.plane('z') * (dS @ (1, 1, 1))
         Field(...)
 
         """
@@ -243,7 +254,7 @@ def integral(field):
     object.
 
     For details, please refer to
-    :py:func:`~discretisedfield.Field.topological_charge`
+    :py:func:`~discretisedfield.Field.integral`
 
     """
     return field.integral
