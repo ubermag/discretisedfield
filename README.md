@@ -55,7 +55,7 @@ If you require support, have questions, want to report a bug, or want to suggest
 
 ## Contributions
 
-All contributions are welcome, however small they are. If you would like to contribute, please fork the repository and create a pull request. However, if you are not sure how to contribute, please contact us by raising an issue in [ubermag/help](https://github.com/ubermag/help) repository, and we are going to help you get started and assist you on the way.
+All contributions are welcome, however small they are. If you would like to contribute, please fork the repository and create a pull request. If you are not sure how to contribute, please contact us by raising an issue in [ubermag/help](https://github.com/ubermag/help) repository, and we are going to help you get started and assist you on the way.
 
 **Contributors**:
 
@@ -72,10 +72,10 @@ Licensed under the BSD 3-Clause "New" or "Revised" License. For details, please 
 
 1. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
 
-2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. ubermag/discretisedfield: Python package for the analysis and visualisation of finite-difference fields. Zenodo. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2020).
+2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. Zenodo. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2020).
 
 ## Acknowledgements
 
 - [OpenDreamKit](http://opendreamkit.org/) – Horizon 2020 European Research Infrastructure project (676541)
 
-- EPSRC Programme Grant on [Skyrmionics](http://www.skyrmions.ac.uk) (EP/N032128/1).
+- EPSRC Programme Grant on [Skyrmionics](http://www.skyrmions.ac.uk) (EP/N032128/1)
