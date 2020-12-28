@@ -1,3 +1,4 @@
+import pytest
 import discretisedfield as df
 
 
@@ -40,4 +41,11 @@ def test_integral():
     assert (field.plane('z') * (df.dS @ (0, 0, 1))).average == (1, -2, 3)
     assert (field.plane('z') * ((0, 0, 1) @ df.dS)).average == (1, -2, 3)
 
-    assert df.integral(field * df.dx*df.dy*df.dz) == df.integral(field * df.dV)
+    dV = df.dx*df.dy*df.dz
+    assert df.integral(field * dV) == df.integral(field * df.dV)
+
+    with pytest.raises(TypeError):
+        res = df.dx * 'dy'
+
+    with pytest.raises(TypeError):
+        res = df.dS @ 'dy'

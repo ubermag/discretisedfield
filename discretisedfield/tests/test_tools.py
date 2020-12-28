@@ -75,6 +75,9 @@ def test_emergent_magnetic_field():
     assert dft.emergent_magnetic_field(f).dim == 3
     assert dft.emergent_magnetic_field(f).average == (0, 0, 0)
 
+    with pytest.raises(ValueError):
+        res = dft.emergent_magnetic_field(f.x)
+
 
 def test_neigbouring_cell_angle():
     p1 = (0, 0, 0)
