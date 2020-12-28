@@ -68,7 +68,7 @@ autosummary_context = {
                          '__init__', '__init_subclass__', '__le__', '__lt__',
                          '__ne__', '__new__', '__reduce__', '__reduce_ex__',
                          '__setattr__', '__sizeof__', '__str__',
-                         '__subclasshook__', '__hash__' ]
+                         '__subclasshook__', '__hash__']
 }
 
 autoclass_content = 'class'

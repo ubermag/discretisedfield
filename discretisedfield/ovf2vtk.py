@@ -8,7 +8,7 @@ def ovf2vtk():
     """OVF to VTK conversion function.
 
     This method is used for command-line conversion of OVF files to VTK.
-    
+
     """
     parser = argparse.ArgumentParser(
         prog='ovf2vtk',
