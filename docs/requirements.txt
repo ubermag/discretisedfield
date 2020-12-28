@@ -1,0 +1,2 @@
+nbsphinx
+m2r2

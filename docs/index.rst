@@ -1,8 +1,3 @@
-.. discretisedfield documentation master file, created by
-   sphinx-quickstart on Mon Dec 28 15:50:19 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 .. mdinclude:: ../README.md
     :start-line: 0
     :end-line: 6
@@ -10,10 +5,6 @@
 .. mdinclude:: ../README.md
     :start-line: 21
     :end-line: 34
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
 .. toctree::
     :maxdepth: 1
@@ -50,4 +41,4 @@ API Reference
 Index
 -----
 
-* :ref:`genindex`
+- :ref:`genindex`
