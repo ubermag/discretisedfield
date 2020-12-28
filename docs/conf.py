@@ -77,5 +77,3 @@ autodoc_default_options = {
     'member-order': 'groupwise',
     'exclude-members': '__init__, __weakref__'
 }
-
-# master_doc = 'index'

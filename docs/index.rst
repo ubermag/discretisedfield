@@ -10,7 +10,17 @@
     :maxdepth: 1
     :caption: Tutorials
 
-    ipynb/installation-testing-upgrade
+    ipynb/installation-testing-update
+    ipynb/region-basics
+    ipynb/region-visualisation
+    ipynb/region-facing-surfaces
+    ipynb/mesh-basics
+    ipynb/mesh-visualisation
+    ipynb/mesh-line-plane
+    ipynb/mesh-subregions
+    ipynb/mesh-widgets
+    ipynb/mesh-pad
+    ipynb/mesh-bc
     ipynb/01-tutorial-defining-mesh
     ipynb/02-tutorial-mesh-properties
     ipynb/03-tutorial-defining-regions
@@ -29,7 +39,7 @@ API Reference
 -------------
 .. autosummary::
     :nosignatures:
-    :toctree: _autosummary
+    :toctree: _build
     :caption: API Reference
     :template: module-template.rst
     :recursive:
