@@ -1427,7 +1427,7 @@ class Field:
 
         This method takes a list of scalar (``dim=1``) fields and returns a
         vector field, whose components are defined by the scalar fields passed.
-        If any of the fields passed has ``dim!=1` or they are not defined on
+        If any of the fields passed has ``dim!=1`` or they are not defined on
         the same mesh, an exception is raised. The dimension of the resulting
         field is equal to the length of the passed list.
 
@@ -3466,32 +3466,33 @@ class Field:
         then used in subplots. The way parameters of this function are used to
         create plots can be understood with the following code snippet.
 
-        ```
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        .. code-block::
 
-        scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
-                                colorbar=scalar_colorbar,
-                                colorbar_label=scalar_colorbar_label,
-                                multiplier=multiplier, cmap=scalar_cmap,
-                                clim=scalar_clim,)
+            if ax is None:
+                fig = plt.figure(figsize=figsize)
+                ax = fig.add_subplot(111)
 
-        vector_field.mpl_vector(ax=ax, color=vector_color,
-                                color_field=vector_color_field,
-                                colorbar=vector_colorbar,
-                                colorbar_label=vector_colorbar_label,
-                                multiplier=multiplier, scale=vector_scale,
-                                cmap=vector_cmap, clim=vector_clim,)
+            scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
+                                    colorbar=scalar_colorbar,
+                                    colorbar_label=scalar_colorbar_label,
+                                    multiplier=multiplier, cmap=scalar_cmap,
+                                    clim=scalar_clim,)
 
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-        ```
+            vector_field.mpl_vector(ax=ax, color=vector_color,
+                                    color_field=vector_color_field,
+                                    colorbar=vector_colorbar,
+                                    colorbar_label=vector_colorbar_label,
+                                    multiplier=multiplier, scale=vector_scale,
+                                    cmap=vector_cmap, clim=vector_clim,)
 
-        Therefore, to understand the meaning of the arguments which can be
-        passed to this method, please refer to
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` documentation.
+            if filename is not None:
+                plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
+            ```
+
+            Therefore, to understand the meaning of the arguments which can be
+            passed to this method, please refer to
+            ``discretisedfield.Field.mpl_scalar`` and
+            ``discretisedfield.Field.mpl_vector`` documentation.
 
         Raises
         ------

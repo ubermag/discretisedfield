@@ -39,7 +39,7 @@ API Reference
 -------------
 .. autosummary::
     :nosignatures:
-    :toctree: _build
+    :toctree: _autosummary
     :caption: API Reference
     :template: module-template.rst
     :recursive:
