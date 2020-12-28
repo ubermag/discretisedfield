@@ -25,7 +25,7 @@ setuptools.setup(
                       'matplotlib>=3.3',
                       'pandas>=1.2',
                       'jupyterlab>=2.2',
-                      #'jupyterlab>=3.0',
+                      # 'jupyterlab>=3.0',
                       'h5py>=3.1',
                       'k3d>=2.9'],
     classifiers=['Development Status :: 5 - Production/Stable',
