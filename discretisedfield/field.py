@@ -2014,20 +2014,31 @@ class Field:
         else:
             return self.x.laplace << self.y.laplace << self.z.laplace
 
-    @property
-    def integral(self):
+    def integral(self, direction='xyz', improper=False):
         """Integral.
 
-        This method integrates the field over the entire mesh. In order to
-        compute the volume integral, the field must be multiplied by ``df.dV``
-        beforehand. Similarly, surface integral requires the field to be
-        multiplied by ``df.dS``.
+        This method integrates the field over the mesh along the specified
+        direction(s). In order to compute the volume integral, the field must
+        be multiplied by ``df.dV`` beforehand. Similarly, surface integral
+        requires the field to be multiplied by ``df.dS``.
+
+        Parameters
+        ----------
+        direction : str, optional
+
+            Direction(s) along which the field is integrated. Defaults to
+            ``'xyz'``.
+
+        improper : bool, optional
+
+            If ``True``, an improper (cumulative) integral is computed.
+            Defaults to ``False``.
 
         Returns
         -------
-        numbers.Real or (3,) array_like
+        discretisedfield.Field, numbers.Real, or (3,) array_like
 
-            Integral.
+            Integration result.
 
         Example
         -------
@@ -2045,7 +2056,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> (f * df.dV).integral
+        >>> (f * df.dV).integral()
         5000.0
 
         2. Volume integral of a vector field.
@@ -2055,7 +2066,7 @@ class Field:
             \\int_\\mathrm{V} \\mathbf{f}(\\mathbf{r}) \\mathrm{d}V
 
         >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
-        >>> (f * df.dV).integral
+        >>> (f * df.dV).integral()
         (-1000.0, -2000.0, -3000.0)
 
         3. Surface integral of a scalar field.
@@ -2066,7 +2077,7 @@ class Field:
 
         >>> f = df.Field(mesh, dim=1, value=5)
         >>> f_plane = f.plane('z')
-        >>> (f_plane * abs(df.dS)).integral
+        >>> (f_plane * abs(df.dS)).integral()
         500.0
 
         4. Surface integral of a vector field (flux).
@@ -2078,11 +2089,54 @@ class Field:
 
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane @ df.dS).integral
+        >>> (f_plane @ df.dS).integral()
         300.0
 
+        5. Integral along x-direction.
+
+        .. math::
+
+            \\int_{x_\\mathrm{min}}^{x_\\mathrm{max}} \\mathbf{f}(\\mathbf{r})
+            \\mathrm{d}x
+
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> f_plane = f.plane('z')
+        >>> (f_plane * df.dx).integral(direction='x').average
+        (10.0, 20.0, 30.0)
+
+        6. Improper integral along x-direction.
+
+        .. math::
+
+            \\int_{x_\\mathrm{min}}^{x} \\mathbf{f}(\\mathbf{r})
+            \\mathrm{d}x'
+
+        >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> f_plane = f.plane('z')
+        >>> (f_plane * df.dx).integral(direction='x', improper=True)
+        Field(...)
+
         """
-        return dfu.array2tuple(np.sum(self.array, axis=(0, 1, 2)))
+        if improper and len(direction) > 1:
+            msg = 'Improper integral is possible only along one direction'
+            raise ValueError(msg)
+
+        mesh = self.mesh
+
+        if not improper:
+            for i in direction:
+                mesh = mesh.plane(i)
+            axes = [dfu.axesdict[i] for i in direction]
+            res_array = np.sum(self.array, axis=tuple(axes), keepdims=True)
+        else:
+            res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
+
+        res = self.__class__(mesh, dim=self.dim, value=res_array)
+
+        if len(direction) == 3:
+            return dfu.array2tuple(res.array.squeeze())
+        else:
+            return res
 
     def line(self, p1, p2, n=100):
         """Sampling the field along the line.
@@ -2270,7 +2324,7 @@ class Field:
         return self.__class__(submesh, dim=self.dim,
                               value=self.array[tuple(slices)])
 
-    def project(self, *args):
+    def project(self, direction):
         """Projects the field along one direction and averages it out along
         that direction.
 
@@ -2279,11 +2333,18 @@ class Field:
         ``project('z')`` would average the field in the z-direction and return
         the field which has only one discretisation cell in the z-direction.
 
+        Parameters
+        ----------
+        direction : str
+
+            Direction along which the field is projected (``'x'``, ``'y'``, or
+            ``'z'``).
+
         Returns
         ------
         discretisedfield.Field
 
-            An extracted field.
+            A projected field.
 
         Example
         -------
@@ -2305,10 +2366,8 @@ class Field:
         (2, 2, 1, 3)
 
         """
-        plane_mesh = self.mesh.plane(*args)
-        project_array = self.array.mean(axis=plane_mesh.info['planeaxis'],
-                                        keepdims=True)
-        return self.__class__(plane_mesh, dim=self.dim, value=project_array)
+        n_cells = self.mesh.n[dfu.axesdict[direction]]
+        return self.integral(direction=direction) / n_cells
 
     @property
     def angle(self):

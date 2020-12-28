@@ -247,7 +247,7 @@ class DValue:
         return self @ other
 
 
-def integral(field):
+def integral(field, direction='xyz', improper=False):
     """Integral.
 
     This function calls ``integral`` method of the ``discrteisedfield.Field``
@@ -257,11 +257,10 @@ def integral(field):
     :py:func:`~discretisedfield.Field.integral`
 
     """
-    return field.integral
+    return field.integral(direction=direction, improper=improper)
 
 
 dx = DValue(lambda f: f.mesh.dx)
-"""dx value"""
 dy = DValue(lambda f: f.mesh.dy)
 dz = DValue(lambda f: f.mesh.dz)
 dV = DValue(lambda f: f.mesh.dV)

@@ -70,12 +70,12 @@ def check_field(field):
 
         assert all(i not in dir(field) for i in 'xyz')
 
-        assert isinstance((field * df.dx).integral, numbers.Real)
-        assert isinstance((field * df.dy).integral, numbers.Real)
-        assert isinstance((field * df.dz).integral, numbers.Real)
-        assert isinstance((field * df.dV).integral, numbers.Real)
-        assert isinstance((field.plane('z') * df.dS).integral, tuple)
-        assert isinstance((field.plane('z') * abs(df.dS)).integral,
+        assert isinstance((field * df.dx).integral(), numbers.Real)
+        assert isinstance((field * df.dy).integral(), numbers.Real)
+        assert isinstance((field * df.dz).integral(), numbers.Real)
+        assert isinstance((field * df.dV).integral(), numbers.Real)
+        assert isinstance((field.plane('z') * df.dS).integral(), tuple)
+        assert isinstance((field.plane('z') * abs(df.dS)).integral(),
                           numbers.Real)
 
     if field.dim == 3:
@@ -103,12 +103,12 @@ def check_field(field):
 
         field_plane = field.plane('z')
 
-        assert isinstance((field * df.dx).integral, tuple)
-        assert isinstance((field * df.dy).integral, tuple)
-        assert isinstance((field * df.dz).integral, tuple)
-        assert isinstance((field * df.dV).integral, tuple)
-        assert isinstance((field.plane('z') @ df.dS).integral, numbers.Real)
-        assert isinstance((field.plane('z') * abs(df.dS)).integral, tuple)
+        assert isinstance((field * df.dx).integral(), tuple)
+        assert isinstance((field * df.dy).integral(), tuple)
+        assert isinstance((field * df.dz).integral(), tuple)
+        assert isinstance((field * df.dV).integral(), tuple)
+        assert isinstance((field.plane('z') @ df.dS).integral(), numbers.Real)
+        assert isinstance((field.plane('z') * abs(df.dS)).integral(), tuple)
 
         orientation = field.orientation
         assert isinstance(orientation, df.Field)
@@ -1313,16 +1313,16 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=0)
-        assert (f * df.dV).integral == 0
-        assert (f * df.dx*df.dy*df.dz).integral == 0
+        assert (f * df.dV).integral() == 0
+        assert (f * df.dx*df.dy*df.dz).integral() == 0
 
         f = df.Field(mesh, dim=1, value=2)
-        assert (f * df.dV).integral == 2000
-        assert (f * df.dx*df.dy*df.dz).integral == 2000
+        assert (f * df.dV).integral() == 2000
+        assert (f * df.dx*df.dy*df.dz).integral() == 2000
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert (f * df.dV).integral == (-1000, 0, 3000)
-        assert (f * df.dx*df.dy*df.dz).integral == (-1000, 0, 3000)
+        assert (f * df.dV).integral() == (-1000, 0, 3000)
+        assert (f * df.dx*df.dy*df.dz).integral() == (-1000, 0, 3000)
 
         def value_fun(point):
             x, y, z = point
@@ -1332,8 +1332,8 @@ class TestField:
                 return (1, 2, 3)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-        assert (f * df.dV).integral == (0, 0, 0)
-        assert (f * df.dx*df.dy*df.dz).integral == (0, 0, 0)
+        assert (f * df.dV).integral() == (0, 0, 0)
+        assert (f * df.dx*df.dy*df.dz).integral() == (0, 0, 0)
 
         # Surface integral.
         p1 = (0, 0, 0)
@@ -1342,26 +1342,72 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=0)
-        assert (f.plane('x') * abs(df.dS)).integral == 0
-        assert (f.plane('x') * df.dy*df.dz).integral == 0
+        assert (f.plane('x') * abs(df.dS)).integral() == 0
+        assert (f.plane('x') * df.dy*df.dz).integral() == 0
 
         f = df.Field(mesh, dim=1, value=2)
-        assert (f.plane('x') * abs(df.dS)).integral == 30
-        assert (f.plane('x') * df.dy*df.dz).integral == 30
-        assert (f.plane('y') * abs(df.dS)).integral == 60
-        assert (f.plane('y') * df.dx*df.dz).integral == 60
-        assert (f.plane('z') * abs(df.dS)).integral == 100
-        assert (f.plane('z') * df.dx*df.dy).integral == 100
+        assert (f.plane('x') * abs(df.dS)).integral() == 30
+        assert (f.plane('x') * df.dy*df.dz).integral() == 30
+        assert (f.plane('y') * abs(df.dS)).integral() == 60
+        assert (f.plane('y') * df.dx*df.dz).integral() == 60
+        assert (f.plane('z') * abs(df.dS)).integral() == 100
+        assert (f.plane('z') * df.dx*df.dy).integral() == 100
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert (f.plane('x') * abs(df.dS)).integral == (-15, 0, 45)
-        assert (f.plane('y') * abs(df.dS)).integral == (-30, 0, 90)
-        assert (f.plane('z') * abs(df.dS)).integral == (-50, 0, 150)
+        assert (f.plane('x') * abs(df.dS)).integral() == (-15, 0, 45)
+        assert (f.plane('y') * abs(df.dS)).integral() == (-30, 0, 90)
+        assert (f.plane('z') * abs(df.dS)).integral() == (-50, 0, 150)
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
         assert df.integral(f.plane('x') @ df.dS) == -15
         assert df.integral(f.plane('y') @ df.dS) == 0
         assert df.integral(f.plane('z') @ df.dS) == 150
+
+        # Directional integral
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+
+        f = f.integral(direction='x')
+        assert isinstance(f, df.Field)
+        assert f.dim == 3
+        assert f.mesh.n == (1, 10, 10)
+        assert f.average == (10, 10, 10)
+
+        f = f.integral(direction='x').integral(direction='y')
+        assert isinstance(f, df.Field)
+        assert f.dim == 3
+        assert f.mesh.n == (1, 1, 10)
+        assert f.average == (100, 100, 100)
+
+        f = f.integral('x').integral('y').integral('z')
+        assert f.dim == 3
+        assert f.mesh.n == (1, 1, 1)
+        assert f.average == (1000, 1000, 1000)
+
+        assert (f.integral('x').integral('y').integral('z').average ==
+                f.integral())
+
+        # Improper integral
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+
+        f = f.integral(direction='x', improper=True)
+        assert isinstance(f, df.Field)
+        assert f.dim == 3
+        assert f.mesh.n == (10, 10, 10)
+        assert f.average == (5.5, 5.5, 5.5)
+        assert f((0, 0, 0)) == (1, 1, 1)
+        assert f((10, 10, 10)) == (10, 10, 10)
+
+        # Exceptions
+        with pytest.raises(ValueError):
+            res = f.integral(direction='xy', improper=True)
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
