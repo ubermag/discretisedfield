@@ -1,3 +1,5 @@
+"""main package"""
+
 import os
 import pytest
 import pkg_resources
@@ -19,5 +21,16 @@ __dependencies__ = pkg_resources.require(__name__)
 
 
 def test():
+    """Run all package tests.
+
+    Examples
+    --------
+    1. Run all tests.
+
+    >>> import discretisedfield as df
+    ...
+    >>> # df.test()
+
+    """
     return pytest.main(['-v', '--pyargs',
                         'discretisedfield', '-l'])  # pragma: no cover

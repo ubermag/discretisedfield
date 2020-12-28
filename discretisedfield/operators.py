@@ -261,6 +261,7 @@ def integral(field):
 
 
 dx = DValue(lambda f: f.mesh.dx)
+"""dx value"""
 dy = DValue(lambda f: f.mesh.dy)
 dz = DValue(lambda f: f.mesh.dz)
 dV = DValue(lambda f: f.mesh.dV)

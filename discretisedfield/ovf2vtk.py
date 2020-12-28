@@ -1,8 +1,15 @@
+"""OVF to VTK file conversion"""
+
 import argparse
 import discretisedfield as df
 
 
 def ovf2vtk():
+    """OVF to VTK conversion function.
+
+    This method is used for command-line conversion of OVF files to VTK.
+    
+    """
     parser = argparse.ArgumentParser(
         prog='ovf2vtk',
         description='ovf2vtk - OVF to VTK file format conversion.'
