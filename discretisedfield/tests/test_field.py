@@ -103,15 +103,6 @@ def check_field(field):
 
         field_plane = field.plane('z')
 
-        for method in ['continuous', 'berg-luescher']:
-            for absolute in [True, False]:
-                q = field_plane.topological_charge_density(method=method)
-                assert isinstance(q, df.Field)
-
-                Q = field_plane.topological_charge(method=method,
-                                                   absolute=absolute)
-                assert isinstance(Q, numbers.Real)
-
         assert isinstance((field * df.dx).integral, tuple)
         assert isinstance((field * df.dy).integral, tuple)
         assert isinstance((field * df.dz).integral, tuple)
@@ -1371,71 +1362,6 @@ class TestField:
         assert df.integral(f.plane('x') @ df.dS) == -15
         assert df.integral(f.plane('y') @ df.dS) == 0
         assert df.integral(f.plane('z') @ df.dS) == 150
-
-    def test_topological_charge(self):
-        p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
-        cell = (2, 2, 2)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        # f(x, y, z) = (0, 0, 0)
-        # -> Q(f) = 0
-        f = df.Field(mesh, dim=3, value=(0, 0, 0))
-
-        for method in ['continuous', 'berg-luescher']:
-            q = f.plane('z').topological_charge_density(method=method)
-            check_field(q)
-            assert q.dim == 1
-            assert q.average == 0
-            for absolute in [True, False]:
-                assert f.plane('z').topological_charge(method=method,
-                                                       absolute=absolute) == 0
-
-        # Skyrmion (with PBC) from a file
-        test_filename = os.path.join(os.path.dirname(__file__),
-                                     'test_sample/',
-                                     'skyrmion.omf')
-        f = df.Field.fromfile(test_filename)
-
-        for method in ['continuous', 'berg-luescher']:
-            q = f.plane('z').topological_charge_density(method=method)
-            check_field(q)
-            assert q.dim == 1
-            assert q.average > 0
-            for absolute in [True, False]:
-                Q = f.plane('z').topological_charge(method=method,
-                                                    absolute=absolute)
-                assert abs(Q) < 1 and abs(Q - 1) < 0.15
-
-        # Not sliced
-        f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        with pytest.raises(ValueError):
-            res = f.topological_charge(method='continuous')
-        with pytest.raises(ValueError):
-            res = f.topological_charge_density(method='continuous')
-        with pytest.raises(ValueError):
-            res = f.topological_charge(method='berg-luescher')
-        with pytest.raises(ValueError):
-            res = f.topological_charge_density(method='berg-luescher')
-
-        # Scalar field
-        f = df.Field(mesh, dim=1, value=3.14)
-        with pytest.raises(ValueError):
-            res = f.plane('z').topological_charge(method='continuous')
-        with pytest.raises(ValueError):
-            res = f.plane('z').topological_charge_density(method='continuous')
-        with pytest.raises(ValueError):
-            res = f.plane('z').topological_charge(method='berg-luescher')
-        with pytest.raises(ValueError):
-            res = f.plane('z').topological_charge_density(
-                method='berg-luescher')
-
-        # Method does not exist
-        f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        with pytest.raises(ValueError):
-            res = f.plane('z').topological_charge(method='some-method')
-        with pytest.raises(ValueError):
-            res = f.plane('z').topological_charge_density(method='some-method')
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
