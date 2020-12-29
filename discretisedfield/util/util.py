@@ -130,6 +130,7 @@ def normalise_to_range(values, value_range, int_round=True):
 
     return values
 
+
 def hls2rgb(hue, lightness=None, saturation=None):
     hue = normalise_to_range(hue, (0, 1), int_round=False)
     if lightness is not None:
