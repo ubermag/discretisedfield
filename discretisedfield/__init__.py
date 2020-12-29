@@ -1,4 +1,4 @@
-"""main package"""
+"""Main package."""
 
 import os
 import pytest
