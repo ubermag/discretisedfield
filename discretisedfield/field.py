@@ -12,8 +12,7 @@ import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
-# TODO: tutorials (code polishing), remove numbers from tutorials, installation
-# instructions (conda environment, k3d jupyterlab), fft
+# TODO: tutorials, fft, line operations
 
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
