@@ -1530,8 +1530,8 @@ class TestField:
         f = df.Field(mesh, dim=3, value=value_fun)
 
         assert abs(f.plane('z').angle((1e-9, 2e-9, 2e-9)) - np.pi/4) < 1e-3
-        assert abs(f.plane('z').angle((3e-9, 2e-9, 2e-9)) + np.pi/4) < 1e-3
-        assert abs(f.plane('z').angle((5e-9, 2e-9, 2e-9)) + 3*np.pi/4) < 1e-3
+        assert abs(f.plane('z').angle((3e-9, 2e-9, 2e-9)) - 7*np.pi/4) < 1e-3
+        assert abs(f.plane('z').angle((5e-9, 2e-9, 2e-9)) - 5*np.pi/4) < 1e-3
         assert abs(f.plane('z').angle((7e-9, 2e-9, 2e-9)) - 3*np.pi/4) < 1e-3
 
         # Exception
@@ -1675,6 +1675,9 @@ class TestField:
                                         multiplier=1e-6, cmap='hsv',
                                         clim=(-1, 1))
 
+        # Lightness field
+        self.pf.x.plane('x').mpl_scalar(lightness_field=self.pf.y)
+
         # Saving plot
         filename = 'testfigure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -1682,13 +1685,16 @@ class TestField:
             self.pf.x.plane('x', n=(3, 4)).mpl_scalar(filename=tmpfilename)
 
         # Exceptions
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.x.mpl_scalar()  # not sliced
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.plane('z').mpl_scalar()  # vector field
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             # wrong filter field
             self.pf.x.plane('z').mpl_scalar(filter_field=self.pf)
+        with pytest.raises(ValueError):
+            # wrong filter field
+            self.pf.x.plane('z').mpl_scalar(lightness_field=self.pf)
 
         plt.close('all')
 

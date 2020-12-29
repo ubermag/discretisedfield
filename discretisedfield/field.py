@@ -2018,9 +2018,10 @@ class Field:
         """Integral.
 
         This method integrates the field over the mesh along the specified
-        direction(s). In order to compute the volume integral, the field must
-        be multiplied by ``df.dV`` beforehand. Similarly, surface integral
-        requires the field to be multiplied by ``df.dS``.
+        direction(s), which can ce specified using ``direction``. Field must be
+        explicitly multiplied by an infinitesimal value (``DValue``) before
+        integration. Improper integral can be computed by passing
+        ``improper=True`` and by specifying a single direction.
 
         Parameters
         ----------
@@ -2038,7 +2039,16 @@ class Field:
         -------
         discretisedfield.Field, numbers.Real, or (3,) array_like
 
-            Integration result.
+            Integration result. If the field is integrated in all directions,
+            ``numbers.Real`` or ``array_like`` value is returned depending on
+            the dimension of the field.
+
+        Raises
+        ------
+        ValueError
+
+            If ``improper=True`` and more than one integration direction is
+            specified.
 
         Example
         -------
@@ -2118,7 +2128,7 @@ class Field:
 
         """
         if improper and len(direction) > 1:
-            msg = 'Improper integral is possible only along one direction'
+            msg = 'Cannot compute improper integral along multiple directions.'
             raise ValueError(msg)
 
         mesh = self.mesh
@@ -2376,7 +2386,8 @@ class Field:
         This method can be applied only on sliced fields, when a plane is
         defined. This method then returns a scalar field which is an angle
         between the in-plane compoenent of the vector field and the horizontal
-        axis. The angle is computed in radians.
+        axis. The angle is computed in radians and all values are in :math:`(0,
+        2\\pi)` range.
 
         Returns
         -------
@@ -2408,12 +2419,14 @@ class Field:
 
         """
         if not hasattr(self.mesh, 'info'):
-            msg = ('The field must be sliced before '
-                   'the angle can be computed.')
+            msg = 'The field must be sliced before angle can be computed.'
             raise ValueError(msg)
 
         angle_array = np.arctan2(self.array[..., self.mesh.info['axis2']],
                                  self.array[..., self.mesh.info['axis1']])
+
+        # Place all values in [0, 2pi] range
+        angle_array[angle_array < 0] += 2 * np.pi
 
         return self.__class__(self.mesh, dim=1,
                               value=angle_array[..., np.newaxis])
@@ -3130,9 +3143,9 @@ class Field:
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
             return cls(mesh, dim=dim, value=array[:])
 
-    def mpl_scalar(self, ax=None, figsize=None, filter_field=None,
-                   colorbar=True, colorbar_label=None, multiplier=None,
-                   filename=None, **kwargs):
+    def mpl_scalar(self, *, ax=None, figsize=None, filter_field=None,
+                   lightness_field=None, colorbar=True, colorbar_label=None,
+                   multiplier=None, filename=None, **kwargs):
         """Plots the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
@@ -3143,10 +3156,12 @@ class Field:
         automatically and the size of a figure can be specified using
         ``figsize``. By passing ``filter_field`` the points at which the pixels
         are not coloured can be determined. More precisely, only those
-        discretisation cells where ``filter_field != 0`` are plotted. Colorbar
-        is shown by default and it can be removed from the plot by passing
-        ``colorbar=False``. The label for the colorbar can be defined by
-        passing ``colorbar_label`` as a string.
+        discretisation cells where ``filter_field != 0`` are plotted. By
+        passing a scalar field as ``lightness_field``, ligtness component is
+        added to HSL colormap. In this case, colormap cannot be passed using
+        ``kwargs``. Colorbar is shown by default and it can be removed from the
+        plot by passing ``colorbar=False``. The label for the colorbar can be
+        defined by passing ``colorbar_label`` as a string.
 
         It is often the case that the region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). Accordingly,
@@ -3180,6 +3195,11 @@ class Field:
             A scalar field used for determining whether certain discretisation
             cells are coloured. More precisely, only those discretisation cells
             where ``filter_field != 0`` are plotted. Defaults to ``None``.
+
+        lightness_field : discretisedfield.Field, optional
+
+            A scalar field used for adding lightness to the color. Field values
+            are hue. Defaults to ``None``.
 
         colorbar : bool, optional
 
@@ -3248,7 +3268,7 @@ class Field:
 
         if filter_field is not None:
             if filter_field.dim != 1:
-                msg = f'Cannot use dim={self.dim} filter_field.'
+                msg = f'Cannot use {filter_field.dim=} filter_field.'
                 raise ValueError(msg)
 
             for i, point in enumerate(points):
@@ -3265,8 +3285,24 @@ class Field:
         n = (self.mesh.n[self.mesh.info['axis2']],
              self.mesh.n[self.mesh.info['axis1']])
 
-        cp = ax.imshow(np.array(values).reshape(n), origin='lower',
-                       extent=extent, **kwargs)
+        if lightness_field is not None:
+            if lightness_field.dim != 1:
+                msg = f'Cannot use {lightness_field.dim=} lightness_field.'
+                raise ValueError(msg)
+
+            _, lightness = map(list,
+                               zip(*list(lightness_field[self.mesh.region])))
+
+            rgb = dfu.hls2rgb(hue=values,
+                              lightness=lightness,
+                              saturation=None).reshape((*n, 3))
+
+            kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
+            cp = ax.imshow(rgb, origin='lower', extent=extent, **kwargs)
+
+        else:
+            cp = ax.imshow(np.array(values).reshape(n),
+                           origin='lower', extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp)
@@ -3443,12 +3479,12 @@ class Field:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def mpl(self, ax=None, figsize=None, scalar_field=None,
-            scalar_filter_field=None, scalar_cmap='viridis', scalar_clim=None,
-            scalar_colorbar=True, scalar_colorbar_label=None,
-            vector_field=None, vector_color=False, vector_color_field=None,
-            vector_cmap='cividis', vector_clim=None, vector_colorbar=False,
-            vector_colorbar_label=None, vector_scale=None, multiplier=None,
-            filename=None):
+            scalar_filter_field=None, scalar_lightness_field=None,
+            scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
+            scalar_colorbar_label=None, vector_field=None, vector_color=False,
+            vector_color_field=None, vector_cmap='cividis', vector_clim=None,
+            vector_colorbar=False, vector_colorbar_label=None,
+            vector_scale=None, multiplier=None, filename=None):
         """Plots the field on a plane.
 
         This is a convenience method used for quick plotting, which combines
@@ -3473,6 +3509,7 @@ class Field:
                 ax = fig.add_subplot(111)
 
             scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
+                                    lightness_field=scalar_lightness_field,
                                     colorbar=scalar_colorbar,
                                     colorbar_label=scalar_colorbar_label,
                                     multiplier=multiplier, cmap=scalar_cmap,
@@ -3564,6 +3601,7 @@ class Field:
 
         if scalar_field is not None:
             scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
+                                    lightness_field=scalar_lightness_field,
                                     colorbar=scalar_colorbar,
                                     colorbar_label=scalar_colorbar_label,
                                     multiplier=multiplier, cmap=scalar_cmap,

@@ -1,5 +1,6 @@
 import cmath
 import numbers
+import colorsys
 import collections
 import numpy as np
 
@@ -114,7 +115,7 @@ def plot_box(ax, pmin, pmax, *args, **kwargs):
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
 
 
-def normalise_to_range(values, value_range):
+def normalise_to_range(values, value_range, int_round=True):
     values = np.array(values)
 
     values -= values.min()  # min value is 0
@@ -123,7 +124,23 @@ def normalise_to_range(values, value_range):
         values /= values.max()  # all values in (0, 1)
     values *= (value_range[1] - value_range[0])  # all values in (0, r[1]-r[0])
     values += value_range[0]  # all values is range (r[0], r[1])
-    values = values.round()
-    values = values.astype(int)
+    if int_round:
+        values = values.round()
+        values = values.astype(int)
 
     return values
+
+def hls2rgb(hue, lightness=None, saturation=None):
+    hue = normalise_to_range(hue, (0, 1), int_round=False)
+    if lightness is not None:
+        lightness = normalise_to_range(lightness, (0, 1), int_round=False)
+    else:
+        lightness = np.ones_like(hue)
+    if saturation is not None:
+        saturation = normalise_to_range(saturation, (0, 1), int_round=False)
+    else:
+        saturation = np.ones_like(hue)
+
+    return np.apply_along_axis(lambda x: colorsys.hls_to_rgb(*x),
+                               -1,
+                               np.dstack((hue, lightness, saturation)))
