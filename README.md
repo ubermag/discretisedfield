@@ -73,7 +73,7 @@ Licensed under the BSD 3-Clause "New" or "Revised" License. For details, please 
 
 1. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
 
-2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2020).
+2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2021).
 
 ## Acknowledgements
 
