@@ -35,7 +35,7 @@ class Field:
     ----------
     mesh : discretisedfield.Mesh
 
-        Finite difference rectangular mesh.
+        Finite-difference rectangular mesh.
 
     dim : int
 
