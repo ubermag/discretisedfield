@@ -3,8 +3,8 @@
     :end-line: 6
 
 .. mdinclude:: ../README.md
-    :start-line: 21
-    :end-line: 34
+    :start-line: 22
+    :end-line: 35
 
 .. toctree::
     :maxdepth: 1
