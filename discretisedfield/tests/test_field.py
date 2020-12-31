@@ -1682,9 +1682,9 @@ class TestField:
                                     'test_sample', i)
 
             field = df.Field.fromfile(filename)
-            field.plane('z').mpl_scalar(lightness_field=field.z)
-            field.plane('z').mpl_scalar(lightness_field=-field.z,
-                                        filter_field=field.norm)
+            field.plane('z').angle.mpl_scalar(lightness_field=field.z)
+            field.plane('z').angle.mpl_scalar(lightness_field=-field.z,
+                                              filter_field=field.norm)
             field.plane('z').mpl(scalar_lightness_field=-field.z)
 
         # Saving plot
