@@ -3265,14 +3265,18 @@ class Field:
 
         points, values = map(list, zip(*list(self)))
 
+        # Create a mask.
         if filter_field is not None:
             if filter_field.dim != 1:
                 msg = f'Cannot use {filter_field.dim=} filter_field.'
                 raise ValueError(msg)
 
+            mask = []
             for i, point in enumerate(points):
                 if filter_field(point) == 0:
-                    values[i] = np.nan
+                    mask.append(1)
+                else:
+                    mask.append(0)
 
         pmin = np.divide(self.mesh.region.pmin, multiplier)
         pmax = np.divide(self.mesh.region.pmax, multiplier)
@@ -3289,17 +3293,27 @@ class Field:
                 msg = f'Cannot use {lightness_field.dim=} lightness_field.'
                 raise ValueError(msg)
 
-            _, lightness = map(list,
-                               zip(*list(lightness_field[self.mesh.region])))
+            lightness = [lightness_field(i) for i in self.mesh]
 
             rgb = dfu.hls2rgb(hue=values,
                               lightness=lightness,
-                              saturation=None).reshape((*n, 3))
+                              saturation=None).squeeze()
+
+            if filter_field is not None:
+                for i, mask_value in enumerate(mask):
+                    if mask_value == 1:
+                        rgb[i, :] = np.nan
 
             kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-            cp = ax.imshow(rgb, origin='lower', extent=extent, **kwargs)
+            cp = ax.imshow(rgb.reshape((*n, 3)), origin='lower',
+                           extent=extent, **kwargs)
 
         else:
+            if filter_field is not None:
+                for i, mask_value in enumerate(mask):
+                    if mask_value == 1:
+                        values[i] = np.nan
+
             cp = ax.imshow(np.array(values).reshape(n),
                            origin='lower', extent=extent, **kwargs)
 

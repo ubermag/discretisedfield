@@ -1676,7 +1676,16 @@ class TestField:
                                         clim=(-1, 1))
 
         # Lightness field
-        self.pf.x.plane('x').mpl_scalar(lightness_field=self.pf.y)
+        filenames = ['skyrmion.omf', 'skyrmion-disk.omf']
+        for i in filenames:
+            filename = os.path.join(os.path.dirname(__file__),
+                                    'test_sample', i)
+
+            field = df.Field.fromfile(filename)
+            field.plane('z').mpl_scalar(lightness_field=field.z)
+            field.plane('z').mpl_scalar(lightness_field=-field.z,
+                                        filter_field=field.norm)
+            field.plane('z').mpl(scalar_lightness_field=-field.z)
 
         # Saving plot
         filename = 'testfigure.pdf'

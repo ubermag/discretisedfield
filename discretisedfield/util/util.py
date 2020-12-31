@@ -142,6 +142,8 @@ def hls2rgb(hue, lightness=None, saturation=None):
     else:
         saturation = np.ones_like(hue)
 
-    return np.apply_along_axis(lambda x: colorsys.hls_to_rgb(*x),
-                               -1,
-                               np.dstack((hue, lightness, saturation)))
+    rgb = np.apply_along_axis(lambda x: colorsys.hls_to_rgb(*x),
+                              -1,
+                              np.dstack((hue, lightness, saturation)))
+
+    return rgb.squeeze()
