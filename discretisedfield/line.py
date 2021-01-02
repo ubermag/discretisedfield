@@ -13,7 +13,7 @@ import discretisedfield.util as dfu
 class Line:
     """Line class.
 
-    This class implements the field sampled on the line. It is based on
+    This class represents field sampled on the line. It is based on
     ``pandas.DataFrame``, which is generated from two lists: ``points`` and
     ``values`` of the same length. ``points`` is a list of length-3 tuples
     representing the points on the line on which the field was sampled. On the
