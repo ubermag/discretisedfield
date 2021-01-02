@@ -16,7 +16,6 @@ path = os.path.join(dirname, './util/plotting-style.mplstyle')
 plt.style.use(path)
 
 __version__ = pkg_resources.get_distribution(__name__).version
-__dependencies__ = pkg_resources.require(__name__)
 
 
 def test():

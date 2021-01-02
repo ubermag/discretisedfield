@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setuptools.setup(
     name='discretisedfield',
-    version='0.9',
+    version='0.10',
     description=('Python package for definition, reading, '
                  'and visualisation of finite-difference fields.'),
     author=('Marijan Beg, Martin Lang, Ryan A. Pepper, '
@@ -17,7 +17,7 @@ setuptools.setup(
     include_package_data=True,
     python_requires='>=3.8',
     install_requires=['ubermagutil==0.3',
-                      'pandas>=1.2',
+                      'pandas>=1.1',
                       'matplotlib>=3.3',
                       'jupyterlab==2.2',
                       'h5py>=3.1',
