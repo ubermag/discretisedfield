@@ -358,8 +358,8 @@ def emergent_magnetic_field(field):
         raise ValueError(msg)
 
     Fx = field @ (field.derivative('y') & field.derivative('z'))
-    Fy = field @ (field.derivative('x') & field.derivative('y'))
-    Fz = field @ (field.derivative('z') & field.derivative('x'))
+    Fy = field @ (field.derivative('z') & field.derivative('x'))
+    Fz = field @ (field.derivative('x') & field.derivative('y'))
 
     return Fx << Fy << Fz
 
