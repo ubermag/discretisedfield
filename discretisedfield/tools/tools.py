@@ -2,6 +2,7 @@ import itertools
 import numpy as np
 import discretisedfield as df
 import discretisedfield.util as dfu
+from scipy import ndimage
 
 
 def topological_charge_density(field, /, method='continuous'):
@@ -526,3 +527,88 @@ def max_neigbouring_cell_angle(field, /, units='rad'):
     max_angles = max_angles.max(axis=-1, keepdims=True)
 
     return df.Field(field.mesh, dim=1, value=max_angles)
+
+
+def count_large_cell_angle_regions(field, /, min_angle,
+                                   direction=None, units='rad'):
+    """Count regions with large angles between neighbouring cells.
+
+    This method counts regions, where the angle between neighbouring
+    cells is above the given threshold. If ``direction`` is not specified
+    the maximum of all neighbouring cells is used, otherwise only neighbouring
+    cells in the given direction are taken into account. The minimum angle can
+    be specified both in radians and degrees, depending on ``units``.
+
+    Parameters
+    ----------
+    field : discretisedfield.Field
+
+        Vector field.
+
+    min_angle : numbers.Real
+
+        Minimum angle to count. Can be either radians or degrees depending
+        on ``units``.
+
+    direction : str, optional
+
+        Direction of neighbouring cells. Can be ``None`` or one of ``x``,
+        ``y``, or ``z``. If ``None``, all directions are taken into account.
+        Defaults to ``None``.
+
+    units : str, optional
+
+        Unit of ``min_angle``. Can be ``rad`` for radians or ``deg`` for
+        degrees. Defaults to ``rad``.
+
+    Returns
+    -------
+    int
+
+        Number of regions.
+
+    Examples
+    --------
+    1. Counting regions depending on all directions.
+
+    >>> import discretisedfield as df
+    >>> import discretisedfield.tools as dft
+    ...
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (100, 100, 100)
+    >>> n = (10, 10, 10)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    >>> field = df.Field(mesh, dim=3,
+                         value=lambda p: (0, 0, 1) if p[0] < 50
+                                                   else (0, 0, -1))
+    ...
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg')
+    1
+
+    2. Counting regions depending on a single direction.
+
+    >>> import discretisedfield as df
+    >>> import discretisedfield.tools as dft
+    ...
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (100, 100, 100)
+    >>> n = (10, 10, 10)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    >>> field = df.Field(mesh, dim=3,
+                         value=lambda p: (0, 0, 1) if p[0] < 50
+                                                   else (0, 0, -1))
+    ...
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg',
+                                           direction='x')
+    1
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg',
+                                           direction='y')
+    0
+    """
+    if direction is None:
+        cell_angles = max_neigbouring_cell_angle(field, units=units).array
+    else:
+        cell_angles = neigbouring_cell_angle(field, direction=direction,
+                                             units=units).array
+    _, num_features = ndimage.label(cell_angles > min_angle)
+    return num_features
