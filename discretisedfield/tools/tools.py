@@ -578,9 +578,9 @@ def count_large_cell_angle_regions(field, /, min_angle,
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    >>> field = df.Field(mesh, dim=3,
-                         value=lambda p: (0, 0, 1) if p[0] < 50
-                                                   else (0, 0, -1))
+    >>> field = df.Field(mesh, dim=3, \
+                         value=lambda p: (0, 0, 1) if p[0] < 50 \
+                         else (0, 0, -1))
     ...
     >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg')
     1
@@ -594,14 +594,14 @@ def count_large_cell_angle_regions(field, /, min_angle,
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    >>> field = df.Field(mesh, dim=3,
-                         value=lambda p: (0, 0, 1) if p[0] < 50
+    >>> field = df.Field(mesh, dim=3, \
+                         value=lambda p: (0, 0, 1) if p[0] < 50 \
                                                    else (0, 0, -1))
     ...
-    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg',
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg', \
                                            direction='x')
     1
-    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg',
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg', \
                                            direction='y')
     0
     """
