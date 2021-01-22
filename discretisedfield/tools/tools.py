@@ -612,3 +612,71 @@ def count_large_cell_angle_regions(field, /, min_angle,
                                              units=units).array
     _, num_features = ndimage.label(cell_angles > min_angle)
     return num_features
+
+
+def count_bps(field, /, direction='x'):
+    """Bloch point count and arrangement.
+
+    Function to obtain information about Bloch point number and arrangement.
+    The calculations are based on emergent magnetic field. The normalised
+    volume integral over subvolumes, increasing cell by cell in the given
+    ``direction`` is computed to obtain the local number of Bloch points at
+    each point in the given ``direction``. Bloch point count and arangement
+    are obtained by summing jumps in the local number of Bloch points.
+
+    The results are:
+
+    - Total number of Bloch points.
+    - Number of head-to-head Bloch points.
+    - Number of tail-to-tail Bloch points.
+    - Arrangement of Bloch points in the given ``direction``. Starting from the
+      lower end the local Bloch point count and the number of cells over which
+      it stays constant are reported.
+
+    Parameters
+    ----------
+    field : discretisedfield.Field
+
+        Vector field.
+
+    direction : str, optional
+
+        Direction in which to compute arrangement. Can be one of ``x``, ``y``,
+        or ``z``. Defaults to ``x``.
+
+    Returns
+    -------
+    dict
+
+        Dictionary containing information about BPs.
+
+    Examples
+    --------
+    """
+    F_div = emergent_magnetic_field(field.orientation).div
+
+    d_vals = {'x': df.dx, 'y': df.dy, 'z': df.dz}
+    averaged = str.replace('xyz', direction, '')
+    dF = d_vals[averaged[0]] * d_vals[averaged[1]]
+    dl = d_vals[direction]
+
+    F_red = df.integral(F_div * dF, direction=averaged)
+    F_int = df.integral(F_red * dl, direction=direction, improper=True)
+    bp_number = (F_int / (4 * np.pi)).array.squeeze().round()
+    bp_count = bp_number[1:] - bp_number[:-1]
+
+    results = {}
+    results['bp_number'] = abs(bp_count).sum()
+    results['bp_number_hh'] = abs(bp_count[bp_count < 0].sum())
+    results['bp_number_tt'] = bp_count[bp_count > 0].sum()
+
+    # pattern = list([<local BP_count>, <repetitions>])
+    pattern = [[bp_number[0], 1]]
+    for q_val in bp_number[1:]:
+        if q_val == pattern[-1][0]:
+            pattern[-1][1] += 1
+        else:
+            pattern.append([q_val, 1])
+    results[f'bp_pattern_{direction}'] = str(pattern)
+
+    return results
