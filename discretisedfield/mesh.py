@@ -1179,14 +1179,16 @@ class Mesh:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def mpl_subregions(self, *, ax=None, figsize=None, color=dfu.cp_hex,
-                       multiplier=None, filename=None, **kwargs):
+                       multiplier=None, filename=None, show_region=False,
+                       **kwargs):
         """``matplotlib`` subregions plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
         ``figsize``. The color of lines depicting subregions and can be
         specified using ``color`` list. The plot is saved in PDF-format if
-        ``filename`` is passed.
+        ``filename`` is passed. The whole region is only shown if
+        ``show_region=True``.
 
         It is often the case that the object size is either small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). Accordingly,
@@ -1226,6 +1228,10 @@ class Mesh:
 
             If filename is passed, the plot is saved. Defaults to ``None``.
 
+        show_region : bool, optional
+
+            If ``True`` also plot the whole region. Defaults to ``False``.
+
         Examples
         --------
         1. Visualising subregions using ``matplotlib``.
@@ -1248,6 +1254,9 @@ class Mesh:
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.region.edges)
+
+        if show_region:
+            self.region.mpl(ax=ax, multiplier=multiplier, color='grey')
 
         for i, subregion in enumerate(self.subregions.values()):
             subregion.mpl(ax=ax, multiplier=multiplier,
