@@ -15,11 +15,7 @@ from mpl_toolkits.mplot3d import Axes3D
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
-               bc=ts.Typed(expected_type=str),
-               subregions=ts.Dictionary(
-                   key_descriptor=ts.Name(),
-                   value_descriptor=ts.Typed(expected_type=df.Region),
-                   allow_empty=True))
+               bc=ts.Typed(expected_type=str))
 class Mesh:
     """Finite-difference mesh.
 
@@ -201,6 +197,25 @@ class Mesh:
 
         self.bc = bc.lower()
 
+        self.subregions = subregions
+
+    @property
+    def subregions(self):
+        """"Subregions of the mesh.
+
+        Returns
+        -------
+        dict
+
+            A dictionary defining subregions in the mesh. The keys of the
+            dictionary are the region names (``str``) as valid Python variable
+            names, whereas the values are ``discretisedfield.Region`` objects.
+            Defaults to an empty dictionary.
+        """
+        return self._subregions
+
+    @subregions.setter
+    def subregions(self, subregions):
         # Check if subregions are aligned with the mesh
         for key, value in subregions.items():
             # Is the subregion in the mesh region?
@@ -210,7 +225,7 @@ class Mesh:
 
             # Is the subregion an aggregate of discretisation cell?
             try:
-                submesh = self.__class__(region=value, cell=self.cell)
+                self.__class__(region=value, cell=self.cell)
             except ValueError:
                 msg = (f'Subregion {key} cannot be divided into '
                        f'discretisation cells of size {self.cell=}.')
@@ -221,8 +236,7 @@ class Mesh:
                     self.__class__(region=value, cell=self.cell)):
                 msg = f'Subregion {key} is not aligned with the mesh.'
                 raise ValueError(msg)
-
-        self.subregions = subregions
+        self._subregions = subregions
 
     def __len__(self):
         """Number of discretisation cells in the mesh.
