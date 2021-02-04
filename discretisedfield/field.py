@@ -215,8 +215,8 @@ class Field:
         >>> cell = (1,1,1)
         >>> sub1 = df.Region(p1=(0,0,0), p2=(2,2,1))
         >>> sub2 = df.Region(p1=(0,0,1), p2=(2,2,2))
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, \
-        ...                subregions={'s1': sub1, 's2': sub2})
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell,\
+                           subregions={'s1': sub1, 's2': sub2})
         >>> field = df.Field(mesh, dim=1, value={'s1': 1, 's2': 1})
         >>> (field.array == 1).all()
         True
@@ -224,13 +224,13 @@ class Field:
         Traceback (most recent call last):
         ...
         KeyError: ...
-        >>> field = df.Field(mesh, dim=1, value={'s1': 2, default': 1})
+        >>> field = df.Field(mesh, dim=1, value={'s1': 2, 'default': 1})
         >>> (field.array == 1).all()
         False
         >>> (field.array == 0).any()
         False
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions={'s': sub1})
-        >>> field = df.Field(mesh, dim=1, value={'s1': 1})
+        >>> field = df.Field(mesh, dim=1, value={'s': 1})
         >>> (field.array == 1).all()
         False
         >>> field = df.Field(mesh, dim=1, value={'default': 1})
