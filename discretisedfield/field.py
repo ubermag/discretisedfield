@@ -43,7 +43,7 @@ class Field:
         three-dimensional vector field and for `dim=1` the field is a scalar
         field.
 
-    value : array_like, callable, optional
+    value : array_like, callable, dict, optional
 
         Please refer to ``discretisedfield.Field.value`` property. Defaults to
         0, meaning that if the value is not provided in the initialisation,
@@ -136,7 +136,7 @@ class Field:
 
         Parameters
         ----------
-        value : numbers.Real, array_like, callable
+        value : numbers.Real, array_like, callable, dict
 
             For scalar fields (``dim=1``) ``numbers.Real`` values are allowed.
             In the case of vector fields, ``array_like`` (list, tuple,
@@ -145,6 +145,14 @@ class Field:
             another field), which for every coordinate in the mesh returns a
             valid value. If ``value=0``, all values in the field will be set to
             zero independent of the field dimension.
+
+            If subregions are defined value can be initialised with a dict.
+            Allowed keys are names of all subregions and ``default``. Items
+            must be either ``numbers.Real`` for ``dim=1`` or ``array_like``
+            for ``dim=3``. If subregion names are missing, the value of
+            ``default`` is used if given. If parts of the region are not
+            contained within one subregion ``default`` is used if specified,
+            else these values are set to 0.
 
         Returns
         -------
@@ -198,6 +206,36 @@ class Field:
         array(...)
         >>> field.value.shape
         (2, 2, 1, 3)
+
+        2. Field with subregions in mesh
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0,0,0)
+        >>> p2 = (2,2,2)
+        >>> cell = (1,1,1)
+        >>> sub1 = df.Region(p1=(0,0,0), p2=(2,2,1))
+        >>> sub2 = df.Region(p1=(0,0,1), p2=(2,2,2))
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, \
+        ...                subregions={'s1': sub1, 's2': sub2})
+        >>> field = df.Field(mesh, dim=1, value={'s1': 1, 's2': 1})
+        >>> (field.array == 1).all()
+        True
+        >>> field = df.Field(mesh, dim=1, value={'s1': 1})
+        Traceback (most recent call last):
+        ...
+        KeyError: ...
+        >>> field = df.Field(mesh, dim=1, value={'s1': 2, default': 1})
+        >>> (field.array == 1).all()
+        False
+        >>> (field.array == 0).any()
+        False
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions={'s': sub1})
+        >>> field = df.Field(mesh, dim=1, value={'s1': 1})
+        >>> (field.array == 1).all()
+        False
+        >>> field = df.Field(mesh, dim=1, value={'default': 1})
+        >>> (field.array == 1).all()
+        True
 
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 

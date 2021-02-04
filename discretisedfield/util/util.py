@@ -37,8 +37,16 @@ def as_array(mesh, dim, val):
         for index, point in zip(mesh.indices, mesh):
             for region in mesh.subregions.keys():
                 if point in mesh.subregions[region]:
-                    array[index] = val[region]
+                    try:
+                        array[index] = val[region]
+                    except KeyError:
+                        array[index] = val['default']
                     break
+            else:
+                try:
+                    array[index] = val['default']
+                except KeyError:
+                    array[index] = 0
     else:
         msg = f'Unsupported {type(val)} or invalid value dimensions.'
         raise ValueError(msg)
