@@ -3,6 +3,7 @@ import itertools
 import ipywidgets
 import collections
 import numpy as np
+import warnings
 import discretisedfield as df
 import ubermagutil.units as uu
 import matplotlib.pyplot as plt
@@ -236,6 +237,10 @@ class Mesh:
                     self.__class__(region=value, cell=self.cell)):
                 msg = f'Subregion {key} is not aligned with the mesh.'
                 raise ValueError(msg)
+        if 'default' in subregions.keys():
+            msg = ('Subregion name ``default`` has a special meaning when '
+                   'initialising field values')
+            warnings.warn(msg)
         self._subregions = subregions
 
     def __len__(self):
