@@ -28,6 +28,7 @@
     ipynb/field-matplotlib-visualisation
     ipynb/field-k3d-visualisation
     ipynb/field-read-write
+    ipynb/field-tools
     ipynb/ovf2vtk
     ipynb/other
 
