@@ -119,7 +119,7 @@ def test_max_neigbouring_cell_angle():
 def test_count_lange_cell_angle_regions():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
-    n = (1, 1, 1)
+    n = (10, 10, 10)
     ps1 = (3, 3, 0)
     ps2 = (6, 6, 10)
     subregions = {'sub': df.Region(p1=ps1, p2=ps2)}
