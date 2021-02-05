@@ -127,11 +127,11 @@ def test_count_lange_cell_angle_regions():
     field = df.Field(mesh, dim=3, value={'sub': (0, 0, 1),
                                          'default': (0, 0, -1)})
 
-    for direction, res in [['x', 2], ['y', 1], ['1', 0]]:
+    for direction, res in [['x', 2], ['y', 1], ['z', 0]]:
         assert dft.count_large_cell_angle_regions(
-            field, min_angle=1, direction='x') == 1
+            field, min_angle=1, direction=direction) == res
 
-    assert dft.count_large_cell_angle_regions(field, min_angle=1) == 2
+    assert dft.count_large_cell_angle_regions(field, min_angle=1) == 1
 
 
 def test_count_bps():
