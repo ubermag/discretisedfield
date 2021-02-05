@@ -237,6 +237,21 @@ class TestField:
         assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
         assert np.all(field((8e-9, 2e-9, 9e-9)) == (0, 0, 2))
 
+        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(4e-9, 10e-9, 10e-9))}
+        mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+
+        field = df.Field(mesh, dim=3, value={'r1': {0, 0, 1}})
+        assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
+        assert np.all(field((8e-9, 2e-9, 9e-9)) == (0, 0, 0))
+
+        field = df.Field(mesh, dim=3, value={'r1': {0, 0, 1},
+                                             'default': (1, 1, 1)})
+        assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
+        assert np.all(field((8e-9, 2e-9, 9e-9)) == (1, 1, 1))
+
+        field = df.Field(mesh, dim=3, value={'default': (1, 1, 1)})
+        assert np.all(field.array == (1, 1, 1))
+
     def test_set_exception(self):
         for mesh in self.meshes:
             with pytest.raises(ValueError):
