@@ -114,3 +114,36 @@ def test_max_neigbouring_cell_angle():
 
     for units in ['rad', 'deg']:
         assert dft.max_neigbouring_cell_angle(field, units=units).average == 0
+
+
+def test_count_lange_cell_angle_regions():
+    p1 = (0, 0, 0)
+    p2 = (10, 10, 10)
+    n = (1, 1, 1)
+    ps1 = (3, 3, 0)
+    ps2 = (6, 6, 10)
+    subregions = {'sub': df.Region(p1=ps1, p2=ps2)}
+    mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+    field = df.Field(mesh, dim=3, value={'sub': (0, 0, 1),
+                                         'default': (0, 0, -1)})
+
+    for direction, res in [['x', 1], ['y', 1], ['1', 0]]:
+        assert dft.count_large_cell_angle_regions(
+            field, min_angle=1, direction='x') == 1
+
+    assert dft.count_large_cell_angle_regions(field, min_angle=1) == 1
+
+
+def test_count_bps():
+    # TODO use BP field from file
+    p1 = (0, 0, 0)
+    p2 = (10, 10, 10)
+    n = (10, 10, 10)
+    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    field = df.Field(mesh, dim=3, value=(0, 0, 1))
+
+    result = dft.count_bps(field)
+    assert result['bp_number'] == 0
+    assert result['bp_number_hh'] == 0
+    assert result['bp_number_tt'] == 0
+    assert result['bp_pattern_x'] == '[[0.0, 10]]'
