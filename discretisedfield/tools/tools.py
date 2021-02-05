@@ -316,7 +316,17 @@ def topological_charge(field, /, method='continuous', absolute=False):
 def emergent_magnetic_field(field):
     """Emergent magnetic field.
 
-    PUT EQUATION HERE and a reference.
+    Emergent magnetic field for a (magnetic) unit vector field
+    :math:`\boldsymbol{m}`is defined as:
+
+    .. math::
+
+        F_{kl} = \\boldsymbol{m} \\cdot (\\partial_k \\boldsymbol{m}
+        \\times \\partial_l \\boldsymbol{m})
+
+    Details are given in Volovik, G. E., Rysti, J., Mäkinen, J. T. & Eltsov,
+    V. B. Spin, Orbital, Weyl and Other Glasses in Topological Superfluids. J
+    Low Temp Phys 196, 82–101 (2019).
 
     Parameters
     ----------
