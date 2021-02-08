@@ -231,8 +231,9 @@ class Field:
         False
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions={'s': sub1})
         >>> field = df.Field(mesh, dim=1, value={'s': 1})
-        >>> (field.array == 1).all()
-        False
+        Traceback (most recent call last):
+        ...
+        KeyError: ...
         >>> field = df.Field(mesh, dim=1, value={'default': 1})
         >>> (field.array == 1).all()
         True
