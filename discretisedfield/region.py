@@ -60,8 +60,6 @@ class Region:
         if np.equal(self.edges, 0).any():
             msg = f'One of the region edge lengths is zero: {self.edges=}.'
             raise ValueError(msg)
-        self._pmin = dfu.array2tuple(np.minimum(self.p1, self.p2))
-        self._pmax = dfu.array2tuple(np.maximum(self.p1, self.p2))
 
     @property
     def pmin(self):
@@ -94,7 +92,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return self._pmin
+        return dfu.array2tuple(np.minimum(self.p1, self.p2))
 
     @property
     def pmax(self):
@@ -127,7 +125,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        return self._pmax
+        return dfu.array2tuple(np.maximum(self.p1, self.p2))
 
     @property
     def edges(self):
