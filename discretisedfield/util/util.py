@@ -37,8 +37,34 @@ def as_array(mesh, dim, val):
         for index, point in zip(mesh.indices, mesh):
             for region in mesh.subregions.keys():
                 if point in mesh.subregions[region]:
-                    array[index] = val[region]
+                    try:
+                        if callable(val[region]):
+                            array[index] = val[region](point)
+                        else:
+                            array[index] = val[region]
+                    except KeyError:
+                        try:
+                            if callable(val['default']):
+                                array[index] = val['default'](point)
+                            else:
+                                array[index] = val['default']
+                        except KeyError:
+                            msg = f"'{region}' or 'default' in value. " \
+                                  + "Either specify all subregions or " \
+                                  + "use key 'default'."
+                            raise KeyError(msg)
                     break
+            else:
+                try:
+                    if callable(val['default']):
+                        array[index] = val['default'](point)
+                    else:
+                        array[index] = val['default']
+                except KeyError:
+                    msg = "'default'. If parts of the mesh are not " \
+                          + "contained within one of the subregions, " \
+                          + "key 'default' must be specified for value."
+                    raise KeyError(msg)
     else:
         msg = f'Unsupported {type(val)} or invalid value dimensions.'
         raise ValueError(msg)

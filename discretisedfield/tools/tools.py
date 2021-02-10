@@ -2,6 +2,7 @@ import itertools
 import numpy as np
 import discretisedfield as df
 import discretisedfield.util as dfu
+from scipy import ndimage
 
 
 def topological_charge_density(field, /, method='continuous'):
@@ -315,7 +316,17 @@ def topological_charge(field, /, method='continuous', absolute=False):
 def emergent_magnetic_field(field):
     """Emergent magnetic field.
 
-    PUT EQUATION HERE and a reference.
+    Emergent magnetic field for a (magnetic) unit vector field
+    :math:`\boldsymbol{m}`is defined as:
+
+    .. math::
+
+        F_{kl} = \\boldsymbol{m} \\cdot (\\partial_k \\boldsymbol{m}
+        \\times \\partial_l \\boldsymbol{m})
+
+    Details are given in Volovik, G. E., Rysti, J., Mäkinen, J. T. & Eltsov,
+    V. B. Spin, Orbital, Weyl and Other Glasses in Topological Superfluids. J
+    Low Temp Phys 196, 82–101 (2019).
 
     Parameters
     ----------
@@ -526,3 +537,156 @@ def max_neigbouring_cell_angle(field, /, units='rad'):
     max_angles = max_angles.max(axis=-1, keepdims=True)
 
     return df.Field(field.mesh, dim=1, value=max_angles)
+
+
+def count_large_cell_angle_regions(field, /, min_angle,
+                                   direction=None, units='rad'):
+    """Count regions with large angles between neighbouring cells.
+
+    This method counts regions, where the angle between neighbouring
+    cells is above the given threshold. If ``direction`` is not specified
+    the maximum of all neighbouring cells is used, otherwise only neighbouring
+    cells in the given direction are taken into account. The minimum angle can
+    be specified both in radians and degrees, depending on ``units``.
+
+    Parameters
+    ----------
+    field : discretisedfield.Field
+
+        Vector field.
+
+    min_angle : numbers.Real
+
+        Minimum angle to count. Can be either radians or degrees depending
+        on ``units``.
+
+    direction : str, optional
+
+        Direction of neighbouring cells. Can be ``None`` or one of ``x``,
+        ``y``, or ``z``. If ``None``, all directions are taken into account.
+        Defaults to ``None``.
+
+    units : str, optional
+
+        Unit of ``min_angle``. Can be ``rad`` for radians or ``deg`` for
+        degrees. Defaults to ``rad``.
+
+    Returns
+    -------
+    int
+
+        Number of regions.
+
+    Examples
+    --------
+    1. Counting regions depending on all directions.
+
+    >>> import discretisedfield as df
+    >>> import discretisedfield.tools as dft
+    ...
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (100, 100, 100)
+    >>> n = (10, 10, 10)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    >>> field = df.Field(mesh, dim=3, \
+                         value=lambda p: (0, 0, 1) if p[0] < 50 \
+                         else (0, 0, -1))
+    ...
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg')
+    1
+
+    2. Counting regions depending on a single direction.
+
+    >>> import discretisedfield as df
+    >>> import discretisedfield.tools as dft
+    ...
+    >>> p1 = (0, 0, 0)
+    >>> p2 = (100, 100, 100)
+    >>> n = (10, 10, 10)
+    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    >>> field = df.Field(mesh, dim=3, \
+                         value=lambda p: (0, 0, 1) if p[0] < 50 \
+                                                   else (0, 0, -1))
+    ...
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg', \
+                                           direction='x')
+    1
+    >>> dft.count_large_cell_angle_regions(field, min_angle=90, units='deg', \
+                                           direction='y')
+    0
+    """
+    if direction is None:
+        cell_angles = max_neigbouring_cell_angle(field, units=units).array
+    else:
+        cell_angles = neigbouring_cell_angle(field, direction=direction,
+                                             units=units).array
+    _, num_features = ndimage.label(cell_angles > min_angle)
+    return num_features
+
+
+def count_bps(field, /, direction='x'):
+    """Bloch point count and arrangement.
+
+    Function to obtain information about Bloch point number and arrangement.
+    The calculations are based on emergent magnetic field. The normalised
+    volume integral over subvolumes, increasing cell by cell in the given
+    ``direction`` is computed to obtain the local number of Bloch points at
+    each point in the given ``direction``. Bloch point count and arangement
+    are obtained by summing jumps in the local number of Bloch points.
+
+    The results are:
+
+    - Total number of Bloch points.
+    - Number of head-to-head Bloch points.
+    - Number of tail-to-tail Bloch points.
+    - Arrangement of Bloch points in the given ``direction``. Starting from the
+      lower end the local Bloch point count and the number of cells over which
+      it stays constant are reported.
+
+    Parameters
+    ----------
+    field : discretisedfield.Field
+
+        Vector field.
+
+    direction : str, optional
+
+        Direction in which to compute arrangement. Can be one of ``x``, ``y``,
+        or ``z``. Defaults to ``x``.
+
+    Returns
+    -------
+    dict
+
+        Dictionary containing information about BPs.
+
+    Examples
+    --------
+    """
+    F_div = emergent_magnetic_field(field.orientation).div
+
+    d_vals = {'x': df.dx, 'y': df.dy, 'z': df.dz}
+    averaged = str.replace('xyz', direction, '')
+    dF = d_vals[averaged[0]] * d_vals[averaged[1]]
+    dl = d_vals[direction]
+
+    F_red = df.integral(F_div * dF, direction=averaged)
+    F_int = df.integral(F_red * dl, direction=direction, improper=True)
+    bp_number = (F_int / (4 * np.pi)).array.squeeze().round()
+    bp_count = bp_number[1:] - bp_number[:-1]
+
+    results = {}
+    results['bp_number'] = abs(bp_count).sum()
+    results['bp_number_hh'] = abs(bp_count[bp_count < 0].sum())
+    results['bp_number_tt'] = bp_count[bp_count > 0].sum()
+
+    # pattern = list([<local BP_count>, <repetitions>])
+    pattern = [[bp_number[0], 1]]
+    for q_val in bp_number[1:]:
+        if q_val == pattern[-1][0]:
+            pattern[-1][1] += 1
+        else:
+            pattern.append([q_val, 1])
+    results[f'bp_pattern_{direction}'] = str(pattern)
+
+    return results
