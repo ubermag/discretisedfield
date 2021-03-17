@@ -3641,7 +3641,8 @@ class Field:
                                               value=vector_field)
             if scalar_field is None:
                 scalar_field = getattr(self, planeaxis)
-                scalar_colorbar_label = f'{planeaxis}-component'
+                if scalar_colorbar_label is None:
+                    scalar_colorbar_label = f'{planeaxis}-component'
             else:
                 scalar_field = self.__class__(self.mesh, dim=1,
                                               value=scalar_field)
