@@ -3195,7 +3195,7 @@ class Field:
         ``figsize``. By passing ``filter_field`` the points at which the pixels
         are not coloured can be determined. More precisely, only those
         discretisation cells where ``filter_field != 0`` are plotted. By
-        passing a scalar field as ``lightness_field``, ligtness component is
+        passing a scalar field as ``lightness_field``, lightness component is
         added to HSL colormap. In this case, colormap cannot be passed using
         ``kwargs``. Colorbar is shown by default and it can be removed from the
         plot by passing ``colorbar=False``. The label for the colorbar can be
