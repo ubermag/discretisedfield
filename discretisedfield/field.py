@@ -4133,3 +4133,39 @@ class Field:
 
         plot.axes = [i + r'\,\text{{{}}}'.format(unit)
                      for i in dfu.axesdict.keys()]
+
+    def fft2(self):
+        """Fourier transform.
+
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        raise NotImplementedError
+
+    def ifft2(self):
+        """Inverse Fourier transform.
+
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        raise NotImplementedError
+
+    @property
+    def real(self):
+        """Real part of complex field.
+        """
+        raise NotImplementedError
+
+    @property
+    def imag(self):
+        """Imaginary part of complex field.
+        """
+        raise NotImplementedError
+
+    @property
+    def phase(self):
+        """Phase of complex field.
+        """
+        raise NotImplementedError
