@@ -188,7 +188,7 @@ class Mesh:
             raise ValueError(msg)
 
         # Check if the mesh region is an aggregate of the discretisation cell.
-        tol = 1e-12  # picometre tolerance
+        tol = np.min(self.cell) * 1e-3  # tolerance
         rem = np.remainder(self.region.edges, self.cell)
         if np.logical_and(np.greater(rem, tol),
                           np.less(rem, np.subtract(self.cell, tol))).any():
