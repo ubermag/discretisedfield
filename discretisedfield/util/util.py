@@ -26,6 +26,9 @@ def as_array(mesh, dim, val):
         # The array for a scalar field with numbers.Real value or any
         # field with zero value.
         array.fill(val)
+    elif isinstance(val, numbers.Complex) and (dim == 1 or val == 0):
+        array = np.empty((*mesh.n, dim), dtype='complex128')
+        array.fill(val)
     elif isinstance(val, (tuple, list, np.ndarray)) and len(val) == dim:
         array[..., :] = val
     elif isinstance(val, np.ndarray) and val.shape == array.shape:

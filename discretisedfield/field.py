@@ -1242,7 +1242,7 @@ class Field:
                 msg = ('Cannot apply operator * on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
-        elif isinstance(other, numbers.Real):
+        elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
             return self * self.__class__(self.mesh, dim=3, value=other)
@@ -4145,11 +4145,8 @@ class Field:
             msg = ('The field must be sliced before the Fourier transform can'
                    'be computed in two dimensions.')
             raise ValueError(msg)
-        # self.array[mesh.nx, mesh.ny, mesh.nz, vectorcomponent]
         idx1 = self.mesh.info['axis1']
         idx2 = self.mesh.info['axis2']
-        ft_axis1 = np.fft.fftshift(np.fft.fft2(self.array[..., idx1].squeeze()))
-        ft_axis2 = np.fft.fftshift(np.fft.fft2(self.array[..., idx2].squeeze()))
         freq_axis1 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[idx1],
                                                     self.mesh.cell[idx1]))
         freq_axis2 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[idx2],
@@ -4160,9 +4157,14 @@ class Field:
         dfreq_2 = (freq_axis2[1] - freq_axis2[0]) / 2
         mesh = df.Mesh(p1=(min(freq_axis1) - dfreq_1, min(freq_axis2) - dfreq_2, 0),
                        p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2, 1),
-                       n=(freq_axis1.shape[0], freq_axis2.shape[0], 1))
-        return (self.__class__(mesh, dim=1, value=ft_axis1[..., np.newaxis, np.newaxis])
-                << self.__class__(mesh, dim=1, value=ft_axis2[..., np.newaxis, np.newaxis]))
+                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis'] + ord('x')))
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.fftshift(np.fft.fft2(self.array[..., idx].squeeze()))
+            values.append(ft[..., np.newaxis])
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
+
 
     def ifft2(self):
         """Inverse Fourier transform.
@@ -4178,8 +4180,6 @@ class Field:
         # self.array[mesh.nx, mesh.ny, mesh.nz, vectorcomponent]
         idx1 = self.mesh.info['axis1']
         idx2 = self.mesh.info['axis2']
-        ift_axis1 = np.fft.ifft2(np.fft.ifftshift(self.array[..., idx1].squeeze()))
-        ift_axis2 = np.fft.ifft2(np.fft.ifftshift(self.array[..., idx2].squeeze()))
         freq_axis1 = np.fft.ifftshift(np.fft.fftfreq(self.mesh.n[idx1],
                                                       self.mesh.cell[idx1]))
         freq_axis2 = np.fft.ifftshift(np.fft.fftfreq(self.mesh.n[idx2],
@@ -4190,9 +4190,13 @@ class Field:
         dfreq_2 = (freq_axis2[1] - freq_axis2[0]) / 2
         mesh = df.Mesh(p1=(min(freq_axis1) - dfreq_1, min(freq_axis2) - dfreq_2, 0),
                        p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2, 1),
-                       n=(freq_axis1.shape[0], freq_axis2.shape[0], 1))
-        return (self.__class__(mesh, dim=1, value=ift_axis1[..., np.newaxis, np.newaxis])
-                << self.__class__(mesh, dim=1, value=ift_axis2[..., np.newaxis, np.newaxis]))
+                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis'] + ord('x')))
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.ifft2(np.fft.ifftshift(self.array[..., idx].squeeze()))
+            values.append(ft[..., np.newaxis])
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
 
     @property
     def real(self):
