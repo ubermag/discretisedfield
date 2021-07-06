@@ -4215,3 +4215,7 @@ class Field:
         """Phase of complex field.
         """
         raise NotImplementedError
+
+    @property
+    def conjugate(self):
+        return self.__class__(self.mesh, dim=self.dim, value=self.array.conjugate())
