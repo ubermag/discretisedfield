@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
+import functools
 
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
@@ -61,7 +62,7 @@ class Region:
             msg = f'One of the region edge lengths is zero: {self.edges=}.'
             raise ValueError(msg)
 
-    @property
+    @functools.cached_property
     def pmin(self):
         """Point with minimum coordinates in the region.
 
@@ -94,7 +95,7 @@ class Region:
         """
         return dfu.array2tuple(np.minimum(self.p1, self.p2))
 
-    @property
+    @functools.cached_property
     def pmax(self):
         """Point with maximum coordinates in the region.
 

@@ -3367,7 +3367,7 @@ class Field:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def mpl_vector(self, ax=None, figsize=None, color=True, color_field=None,
+    def mpl_vector(self, ax=None, figsize=None, use_color=True, color_field=None,
                    colorbar=True, colorbar_label=None, multiplier=None,
                    filename=None, **kwargs):
         """Plots the vector field on a plane.
@@ -3381,7 +3381,9 @@ class Field:
         ``figsize``. By default, plotted vectors are coloured according to the
         out-of-plane component of the vectors. This can be changed by passing
         ``color_field`` with ``dim=1``. To disable colouring of the plot,
-        ``color=False`` can be passed. Colorbar is shown by default and it can
+        ``use_color=False`` can be passed. A uniform vector colour can be
+        obtained by specifying ``color=COLOR`` which is passed to matplotlib
+        and ``use_color=False``. Colorbar is shown by default and it can
         be removed from the plot by passing ``colorbar=False``. The label for
         the colorbar can be defined by passing ``colorbar_label`` as a string.
         It is often the case that the region size is small (e.g. on a
@@ -3493,7 +3495,7 @@ class Field:
                   if not np.equal(v, 0).all()]
         values = [v for v in values if not np.equal(v, 0).all()]
 
-        if color:
+        if use_color:
             if color_field is None:
                 planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
                 color_field = getattr(self, planeaxis)
@@ -3506,7 +3508,7 @@ class Field:
 
         points = np.divide(points, multiplier)
 
-        if color:
+        if use_color:
             cp = ax.quiver(points[self.mesh.info['axis1']],
                            points[self.mesh.info['axis2']],
                            values[self.mesh.info['axis1']],
@@ -3519,7 +3521,7 @@ class Field:
                       values[self.mesh.info['axis2']],
                       pivot='mid', **kwargs)
 
-        if colorbar and color:
+        if colorbar and use_color:
             cbar = plt.colorbar(cp)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
@@ -3533,7 +3535,7 @@ class Field:
     def mpl(self, ax=None, figsize=None, scalar_field=None,
             scalar_filter_field=None, scalar_lightness_field=None,
             scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
-            scalar_colorbar_label=None, vector_field=None, vector_color=False,
+            scalar_colorbar_label=None, vector_field=None, use_vector_color=False,
             vector_color_field=None, vector_cmap='cividis', vector_clim=None,
             vector_colorbar=False, vector_colorbar_label=None,
             vector_scale=None, multiplier=None, filename=None):
@@ -3567,7 +3569,7 @@ class Field:
                                     multiplier=multiplier, cmap=scalar_cmap,
                                     clim=scalar_clim,)
 
-            vector_field.mpl_vector(ax=ax, color=vector_color,
+            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
                                     color_field=vector_color_field,
                                     colorbar=vector_colorbar,
                                     colorbar_label=vector_colorbar_label,
@@ -3660,7 +3662,7 @@ class Field:
                                     multiplier=multiplier, cmap=scalar_cmap,
                                     clim=scalar_clim,)
         if vector_field is not None:
-            vector_field.mpl_vector(ax=ax, color=vector_color,
+            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
                                     color_field=vector_color_field,
                                     colorbar=vector_colorbar,
                                     colorbar_label=vector_colorbar_label,
