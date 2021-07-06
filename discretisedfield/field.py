@@ -1245,7 +1245,7 @@ class Field:
         elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(self.mesh, dim=3, value=other)
+            return self * self.__class__(self.mesh, dim=len(other[0][0][0]), value=other)
         elif isinstance(other, df.DValue):
             return self * other(self)
         else:
