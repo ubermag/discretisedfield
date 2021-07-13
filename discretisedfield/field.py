@@ -3183,7 +3183,7 @@ class Field:
 
     def mpl_scalar(self, *, ax=None, figsize=None, filter_field=None,
                    lightness_field=None, colorbar=True, colorbar_label=None,
-                   multiplier=None, filename=None, **kwargs):
+                   multiplier=None, filename=None, lightness_clim=None, **kwargs):
         """Plots the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
@@ -3289,9 +3289,21 @@ class Field:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
-        if self.dim != 1:
+        if self.dim not in [1, 2]:
             msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
+
+        if self.dim == 2:
+            field = df.Field(self.mesh, dim=1, value=np.arctan2(
+                self.array[...,self.mesh.info['axis2']],
+                self.array[..., self.mesh.info['axis1']])[..., np.newaxis])
+            if lightness_field is None:
+                lightness_field = self.norm
+            return field.mpl_scalar(
+                ax=ax, figsize=figsize,
+                filter_field=filter_field, lightness_field=lightness_field,
+                colorbar=colorbar, colorbar_label=colorbar_label,
+                multiplier=multiplier, filename=filename, lightness_clim=lightness_clim, **kwargs)
 
         if ax is None:
             fig = plt.figure(figsize=figsize)
@@ -3336,7 +3348,7 @@ class Field:
 
             rgb = dfu.hls2rgb(hue=values,
                               lightness=lightness,
-                              saturation=None).squeeze()
+                              saturation=None, lightness_clim=lightness_clim).squeeze()
 
             if filter_field is not None:
                 for i, mask_value in enumerate(mask):
@@ -3475,7 +3487,7 @@ class Field:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
-        if self.dim != 3:
+        if self.dim not in [2, 3]:
             msg = f'Cannot plot dim={self.dim} field.'
             raise ValueError(msg)
 
@@ -3497,6 +3509,12 @@ class Field:
 
         if use_color:
             if color_field is None:
+                # TODO raises an exception by default; options:
+                # - warning + automatically specify use_color=False
+                # - use_color=False as default
+                if self.dim == 2:
+                    msg = 'Automatic coloring is only supported for 3d fields.'
+                    raise ValueError(msg)
                 planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
                 color_field = getattr(self, planeaxis)
 
@@ -3535,7 +3553,8 @@ class Field:
     def mpl(self, ax=None, figsize=None, scalar_field=None,
             scalar_filter_field=None, scalar_lightness_field=None,
             scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
-            scalar_colorbar_label=None, vector_field=None, use_vector_color=False,
+            scalar_colorbar_label=None, scalar_lightness_clim=None,
+            vector_field=None, use_vector_color=False,
             vector_color_field=None, vector_cmap='cividis', vector_clim=None,
             vector_colorbar=False, vector_colorbar_label=None,
             vector_scale=None, multiplier=None, filename=None):
@@ -3635,7 +3654,23 @@ class Field:
             if vector_field is not None:
                 vector_field = self.__class__(self.mesh, dim=3,
                                               value=vector_field)
-        if self.dim == 3:
+        elif self.dim == 2:
+            if vector_field is None:
+                vector_field = self
+            else:
+                vector_field = self.__class__(self.mesh, dim=3,
+                                              value=vector_field)
+            if scalar_field is None:
+                scalar_field = self
+            else:
+                scalar_field = self.__class__(self.mesh, dim=1,
+                                              value=scalar_field)
+            if scalar_filter_field is None:
+                scalar_filter_field = self.norm
+            else:
+                scalar_filter_field = self.__class__(self.mesh, dim=1,
+                                                     value=scalar_filter_field)
+        elif self.dim == 3:
             if vector_field is None:
                 vector_field = self
             else:
@@ -3660,7 +3695,8 @@ class Field:
                                     colorbar=scalar_colorbar,
                                     colorbar_label=scalar_colorbar_label,
                                     multiplier=multiplier, cmap=scalar_cmap,
-                                    clim=scalar_clim,)
+                                    clim=scalar_clim,
+                                    lightness_clim=scalar_lightness_clim,)
         if vector_field is not None:
             vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
                                     color_field=vector_color_field,

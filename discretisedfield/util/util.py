@@ -165,10 +165,13 @@ def normalise_to_range(values, value_range, int_round=True):
     return values
 
 
-def hls2rgb(hue, lightness=None, saturation=None):
+def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
     hue = normalise_to_range(hue, (0, 1), int_round=False)
     if lightness is not None:
-        lightness = normalise_to_range(lightness, (0, 1), int_round=False)
+        if lightness_clim is None:
+            lightness_clim = (0, 1)
+        lightness = normalise_to_range(lightness, lightness_clim,
+                                       int_round=False)
     else:
         lightness = np.ones_like(hue)
     if saturation is not None:
