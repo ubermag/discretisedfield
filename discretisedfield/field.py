@@ -3270,17 +3270,20 @@ class Field:
 
         Example
         -------
-        1. Visualising the scalar field using ``matplotlib``.
+        .. plot::
+            :context: close-figs
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=1, value=2)
-        ...
-        >>> field.plane('y').mpl_scalar()
+            1. Visualising the scalar field using ``matplotlib``.
+
+            >>> import discretisedfield as df
+            ...
+            >>> p1 = (0, 0, 0)
+            >>> p2 = (100, 100, 100)
+            >>> n = (10, 10, 10)
+            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+            >>> field = df.Field(mesh, dim=1, value=2)
+            ...
+            >>> field.plane('y').mpl_scalar()
 
         .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
 
@@ -3468,17 +3471,20 @@ class Field:
 
         Example
         -------
-        1. Visualising the vector field using ``matplotlib``.
+        .. plot::
+            :context: close-figs
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1.1, 2.1, 3.1))
-        ...
-        >>> field.plane('y').mpl_vector()
+            1. Visualising the vector field using ``matplotlib``.
+
+            >>> import discretisedfield as df
+            ...
+            >>> p1 = (0, 0, 0)
+            >>> p2 = (100, 100, 100)
+            >>> n = (10, 10, 10)
+            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+            >>> field = df.Field(mesh, dim=3, value=(1.1, 2.1, 3.1))
+            ...
+            >>> field.plane('y').mpl_vector()
 
         .. seealso:: :py:func:`~discretisedfield.Field.mpl_scalar`
 
@@ -3556,6 +3562,13 @@ class Field:
         Parameters
         ----------
         ...
+
+        Example
+        -------
+
+        .. plot::
+            :context: close-figs
+
         """
         if not hasattr(self.mesh, 'info'):
             msg = 'The field must be sliced before it can be plotted.'
@@ -3622,7 +3635,7 @@ class Field:
             scalar_filter_field=None, scalar_lightness_field=None,
             scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
             scalar_colorbar_label=None, scalar_lightness_clim=None,
-            vector_field=None, use_vector_color=False,
+            vector_field=None, vector_use_color=False,
             vector_color_field=None, vector_cmap='cividis', vector_clim=None,
             vector_colorbar=False, vector_colorbar_label=None,
             vector_scale=None, multiplier=None, filename=None):
@@ -3680,16 +3693,19 @@ class Field:
 
         Example
         -------
-        1. Visualising the field using ``matplotlib``.
+        .. plot::
+            :context: close-figs
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> field.plane(z=50, n=(5, 5)).mpl()
+            1. Visualising the field using ``matplotlib``.
+
+            >>> import discretisedfield as df
+            ...
+            >>> p1 = (0, 0, 0)
+            >>> p2 = (100, 100, 100)
+            >>> n = (10, 10, 10)
+            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+            >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+            >>> field.plane(z=50, n=(5, 5)).mpl()
 
         .. seealso::
 
@@ -3766,7 +3782,7 @@ class Field:
                                     clim=scalar_clim,
                                     lightness_clim=scalar_lightness_clim,)
         if vector_field is not None:
-            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
+            vector_field.mpl_vector(ax=ax, use_color=vector_use_color,
                                     color_field=vector_color_field,
                                     colorbar=vector_colorbar,
                                     colorbar_label=vector_colorbar_label,
