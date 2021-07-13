@@ -3550,6 +3550,74 @@ class Field:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
+    def mpl_contour(self, ax=None, figsize=None, multiplier=None, filter_field=None, filename=None, colorbar=True, colorbar_label=None, **kwargs):
+        """Contour line plot.
+
+        Parameters
+        ----------
+        ...
+        """
+        if not hasattr(self.mesh, 'info'):
+            msg = 'The field must be sliced before it can be plotted.'
+            raise ValueError(msg)
+
+        if self.dim != 1:
+            msg = f'Cannot plot dim={self.dim} field.'
+            raise ValueError(msg)
+
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+
+        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+
+        points, values = map(list, zip(*list(self)))
+
+        # Create a mask.
+        if filter_field is not None:
+            if filter_field.dim != 1:
+                msg = f'Cannot use {filter_field.dim=} filter_field.'
+                raise ValueError(msg)
+
+            mask = []
+            for i, point in enumerate(points):
+                if filter_field(point) == 0:
+                    mask.append(1)
+                else:
+                    mask.append(0)
+
+        if filter_field is not None:
+            for i, mask_value in enumerate(mask):
+                if mask_value == 1:
+                    values[i] = np.nan
+
+        n = (self.mesh.n[self.mesh.info['axis2']],
+             self.mesh.n[self.mesh.info['axis1']])
+
+        points = np.array(list(zip(*points)))
+        points = np.divide(points, multiplier)
+
+        values = np.array(values).reshape(n)
+
+        cp = ax.contour(points[self.mesh.info['axis1']].reshape(n),
+                        points[self.mesh.info['axis2']].reshape(n),
+                        values, **kwargs)
+        ax.set_aspect('equal')
+
+        if colorbar:
+            cbar = plt.colorbar(cp)
+            if colorbar_label is not None:
+                cbar.ax.set_ylabel(colorbar_label)
+
+        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+
     def mpl(self, ax=None, figsize=None, scalar_field=None,
             scalar_filter_field=None, scalar_lightness_field=None,
             scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
