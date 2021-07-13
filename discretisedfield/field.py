@@ -4194,7 +4194,8 @@ class Field:
         dfreq_1 = (freq_axis1[1] - freq_axis1[0]) / 2
         dfreq_2 = (freq_axis2[1] - freq_axis2[0]) / 2
         mesh = df.Mesh(p1=(min(freq_axis1) - dfreq_1, min(freq_axis2) - dfreq_2, 0),
-                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2, 1),
+                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2,
+                           1 / self.mesh.cell[self.mesh.info['planeaxis']]),
                        n=self.mesh.n).plane(chr(self.mesh.info['planeaxis'] + ord('x')))
         values = []
         for idx in range(self.dim):
@@ -4224,10 +4225,11 @@ class Field:
                                                       self.mesh.cell[idx2]))
         # requires shifting of the region boundaries to get the correct
         # positions of the mesh
-        dfreq_1 = (freq_axis1[1] - freq_axis1[0]) / 2
-        dfreq_2 = (freq_axis2[1] - freq_axis2[0]) / 2
-        mesh = df.Mesh(p1=(min(freq_axis1) - dfreq_1, min(freq_axis2) - dfreq_2, 0),
-                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2, 1),
+        dfreq_1 = (freq_axis1[1] - freq_axis1[0])
+        dfreq_2 = (freq_axis2[1] - freq_axis2[0])
+        mesh = df.Mesh(p1=(min(freq_axis1), min(freq_axis2), 0),
+                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2,
+                           1 / self.mesh.cell[self.mesh.info['planeaxis']]),
                        n=self.mesh.n).plane(chr(self.mesh.info['planeaxis'] + ord('x')))
         values = []
         for idx in range(self.dim):
