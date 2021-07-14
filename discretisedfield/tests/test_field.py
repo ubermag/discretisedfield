@@ -49,7 +49,8 @@ def check_field(field):
     assert isinstance(project, df.Field)
     assert project.mesh.n[2] == 1
 
-    assert isinstance(field(field.mesh.region.centre), (tuple, numbers.Complex))
+    assert isinstance(field(field.mesh.region.centre),
+                      (tuple, numbers.Complex))
     assert isinstance(field(field.mesh.region.random_point()),
                       (tuple, numbers.Complex))
 

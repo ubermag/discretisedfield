@@ -3185,7 +3185,8 @@ class Field:
 
     def mpl_scalar(self, *, ax=None, figsize=None, filter_field=None,
                    lightness_field=None, colorbar=True, colorbar_label=None,
-                   multiplier=None, filename=None, lightness_clim=None, **kwargs):
+                   multiplier=None, filename=None, lightness_clim=None,
+                   **kwargs):
         """Plots the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
@@ -3308,7 +3309,8 @@ class Field:
                 ax=ax, figsize=figsize,
                 filter_field=filter_field, lightness_field=lightness_field,
                 colorbar=colorbar, colorbar_label=colorbar_label,
-                multiplier=multiplier, filename=filename, lightness_clim=lightness_clim, **kwargs)
+                multiplier=multiplier, filename=filename,
+                lightness_clim=lightness_clim, **kwargs)
 
         if ax is None:
             fig = plt.figure(figsize=figsize)
@@ -3353,7 +3355,8 @@ class Field:
 
             rgb = dfu.hls2rgb(hue=values,
                               lightness=lightness,
-                              saturation=None, lightness_clim=lightness_clim).squeeze()
+                              saturation=None,
+                              lightness_clim=lightness_clim).squeeze()
 
             if filter_field is not None:
                 for i, mask_value in enumerate(mask):
@@ -3384,7 +3387,8 @@ class Field:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def mpl_vector(self, ax=None, figsize=None, use_color=True, color_field=None,
+    def mpl_vector(self, ax=None, figsize=None, use_color=True,
+                   color_field=None,
                    colorbar=True, colorbar_label=None, multiplier=None,
                    filename=None, **kwargs):
         """Plots the vector field on a plane.
@@ -3558,7 +3562,9 @@ class Field:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def mpl_contour(self, ax=None, figsize=None, multiplier=None, filter_field=None, filename=None, colorbar=True, colorbar_label=None, **kwargs):
+    def mpl_contour(self, ax=None, figsize=None, multiplier=None,
+                    filter_field=None, filename=None, colorbar=True,
+                    colorbar_label=None, **kwargs):
         """Contour line plot.
 
         Parameters
@@ -4277,19 +4283,22 @@ class Field:
                                                     self.mesh.cell[idx2]))
         # requires shifting of the region boundaries to get the correct
         # positions of the mesh
-        dfreq_1 = (freq_axis1[1] - freq_axis1[0]) / 2
-        dfreq_2 = (freq_axis2[1] - freq_axis2[0]) / 2
-        mesh = df.Mesh(p1=(min(freq_axis1) - dfreq_1, min(freq_axis2) - dfreq_2, 0),
-                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2,
+        dfreq1 = (freq_axis1[1] - freq_axis1[0]) / 2
+        dfreq2 = (freq_axis2[1] - freq_axis2[0]) / 2
+        mesh = df.Mesh(p1=(min(freq_axis1) - dfreq1,
+                           min(freq_axis2) - dfreq2,
+                           0),
+                       p2=(max(freq_axis1) + dfreq1,
+                           max(freq_axis2) + dfreq2,
                            1 / self.mesh.cell[self.mesh.info['planeaxis']]),
-                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis'] + ord('x')))
+                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis']
+                                                + ord('x')))
         values = []
         for idx in range(self.dim):
             ft = np.fft.fftshift(np.fft.fft2(self.array[..., idx].squeeze()))
             values.append(ft[..., np.newaxis])
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
-
 
     def ifft2(self):
         """Inverse Fourier transform.
@@ -4306,17 +4315,18 @@ class Field:
         idx1 = self.mesh.info['axis1']
         idx2 = self.mesh.info['axis2']
         freq_axis1 = np.fft.ifftshift(np.fft.fftfreq(self.mesh.n[idx1],
-                                                      self.mesh.cell[idx1]))
+                                                     self.mesh.cell[idx1]))
         freq_axis2 = np.fft.ifftshift(np.fft.fftfreq(self.mesh.n[idx2],
-                                                      self.mesh.cell[idx2]))
+                                                     self.mesh.cell[idx2]))
         # requires shifting of the region boundaries to get the correct
         # positions of the mesh
-        dfreq_1 = (freq_axis1[1] - freq_axis1[0])
-        dfreq_2 = (freq_axis2[1] - freq_axis2[0])
+        dfreq1 = (freq_axis1[1] - freq_axis1[0])
+        dfreq2 = (freq_axis2[1] - freq_axis2[0])
         mesh = df.Mesh(p1=(min(freq_axis1), min(freq_axis2), 0),
-                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq_2,
+                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq2,
                            1 / self.mesh.cell[self.mesh.info['planeaxis']]),
-                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis'] + ord('x')))
+                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis']
+                                                + ord('x')))
         values = []
         for idx in range(self.dim):
             ft = np.fft.ifft2(np.fft.ifftshift(self.array[..., idx].squeeze()))
@@ -4344,4 +4354,5 @@ class Field:
 
     @property
     def conjugate(self):
-        return self.__class__(self.mesh, dim=self.dim, value=self.array.conjugate())
+        return self.__class__(self.mesh, dim=self.dim,
+                              value=self.array.conjugate())
