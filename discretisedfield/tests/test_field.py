@@ -1686,6 +1686,16 @@ class TestField:
         with pytest.raises(ValueError) as excinfo:
             f = df.Field.fromfile(filename)
 
+    def test_fft2_ifft2(self):
+        p1 = (-10, -10, -5)
+        p2 = (10, 10, 5)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        plane = f.plane('z')
+        assert plane == plane.fft2().ifft2()
+
     def test_mpl_scalar(self):
         # No axes
         self.pf.x.plane('x', n=(3, 4)).mpl_scalar()

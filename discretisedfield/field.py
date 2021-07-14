@@ -4323,7 +4323,7 @@ class Field:
         dfreq1 = (freq_axis1[1] - freq_axis1[0])
         dfreq2 = (freq_axis2[1] - freq_axis2[0])
         mesh = df.Mesh(p1=(min(freq_axis1), min(freq_axis2), 0),
-                       p2=(max(freq_axis1) + dfreq_1, max(freq_axis2) + dfreq2,
+                       p2=(max(freq_axis1) + dfreq1, max(freq_axis2) + dfreq2,
                            1 / self.mesh.cell[self.mesh.info['planeaxis']]),
                        n=self.mesh.n).plane(chr(self.mesh.info['planeaxis']
                                                 + ord('x')))
