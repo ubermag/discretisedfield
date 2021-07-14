@@ -1245,7 +1245,9 @@ class Field:
         elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(self.mesh, dim=len(other[0][0][0]), value=other)
+            return self * self.__class__(self.mesh,
+                                         dim=np.array(other).shape[-1],
+                                         value=other)
         elif isinstance(other, df.DValue):
             return self * other(self)
         else:
@@ -3298,7 +3300,7 @@ class Field:
 
         if self.dim == 2:
             field = df.Field(self.mesh, dim=1, value=np.arctan2(
-                self.array[...,self.mesh.info['axis2']],
+                self.array[..., self.mesh.info['axis2']],
                 self.array[..., self.mesh.info['axis1']])[..., np.newaxis])
             if lightness_field is None:
                 lightness_field = self.norm

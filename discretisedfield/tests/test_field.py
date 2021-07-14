@@ -23,7 +23,7 @@ def check_field(field):
     assert field.array.shape == (*field.mesh.n, field.dim)
 
     average = field.average
-    assert isinstance(average, (tuple, numbers.Real))
+    assert isinstance(average, (tuple, numbers.Complex))
 
     rstr = repr(field)
     assert isinstance(rstr, str)
@@ -49,9 +49,9 @@ def check_field(field):
     assert isinstance(project, df.Field)
     assert project.mesh.n[2] == 1
 
-    assert isinstance(field(field.mesh.region.centre), (tuple, numbers.Real))
+    assert isinstance(field(field.mesh.region.centre), (tuple, numbers.Complex))
     assert isinstance(field(field.mesh.region.random_point()),
-                      (tuple, numbers.Real))
+                      (tuple, numbers.Complex))
 
     assert field == field
     assert not field != field
@@ -70,13 +70,13 @@ def check_field(field):
 
         assert all(i not in dir(field) for i in 'xyz')
 
-        assert isinstance((field * df.dx).integral(), numbers.Real)
-        assert isinstance((field * df.dy).integral(), numbers.Real)
-        assert isinstance((field * df.dz).integral(), numbers.Real)
-        assert isinstance((field * df.dV).integral(), numbers.Real)
+        assert isinstance((field * df.dx).integral(), numbers.Complex)
+        assert isinstance((field * df.dy).integral(), numbers.Complex)
+        assert isinstance((field * df.dz).integral(), numbers.Complex)
+        assert isinstance((field * df.dV).integral(), numbers.Complex)
         assert isinstance((field.plane('z') * df.dS).integral(), tuple)
         assert isinstance((field.plane('z') * abs(df.dS)).integral(),
-                          numbers.Real)
+                          numbers.Complex)
 
     if field.dim == 3:
         norm = field.norm
@@ -107,7 +107,8 @@ def check_field(field):
         assert isinstance((field * df.dy).integral(), tuple)
         assert isinstance((field * df.dz).integral(), tuple)
         assert isinstance((field * df.dV).integral(), tuple)
-        assert isinstance((field.plane('z') @ df.dS).integral(), numbers.Real)
+        assert isinstance((field.plane('z') @ df.dS).integral(),
+                          numbers.Complex)
         assert isinstance((field.plane('z') * abs(df.dS)).integral(), tuple)
 
         orientation = field.orientation
@@ -129,21 +130,27 @@ class TestField:
             self.meshes.append(mesh)
 
         # Create lists of field values.
-        self.consts = [0, -5., np.pi, 1e-15, 1.2e12, random.random()]
+        self.consts = [0, -5., np.pi, 1e-15, 1.2e12, random.random(), 1+1j]
         self.iters = [(0, 0, 1),
                       (0, -5.1, np.pi),
                       [70, 1e15, 2*np.pi],
                       [5, random.random(), np.pi],
                       np.array([4, -1, 3.7]),
-                      np.array([2.1, 0.0, -5*random.random()])]
+                      np.array([2.1, 0.0, -5*random.random()]),
+                      (1+1j, 1+1j, 1+1j),
+                      (0, 0, 1j),
+                      np.random.random(3) + np.random.random(3) * 1j]
         self.sfuncs = [lambda c: 1,
                        lambda c: -2.4,
                        lambda c: -6.4e-15,
+                       lambda c: 1 + 2j,
                        lambda c: c[0] + c[1] + c[2] + 1,
                        lambda c: (c[0]-1)**2 - c[1]+7 + c[2]*0.1,
                        lambda c: np.sin(c[0]) + np.cos(c[1]) - np.sin(2*c[2])]
         self.vfuncs = [lambda c: (1, 2, 0),
                        lambda c: (-2.4, 1e-3, 9),
+                       lambda c: (1+1j, 2+2j, 3+3j),
+                       lambda c: (0, 1j, 1),
                        lambda c: (c[0], c[1], c[2] + 100),
                        lambda c: (c[0]+c[2]+10, c[1], c[2]+1),
                        lambda c: (c[0]-1, c[1]+70, c[2]*0.1),
@@ -251,6 +258,11 @@ class TestField:
         field = df.Field(mesh, dim=3, value={'default': (1, 1, 1)})
         assert np.all(field.array == (1, 1, 1))
 
+        field = df.Field(mesh, dim=3, value={'r1': (0, 0, 1+2j),
+                                             'default': (1, 1, 1)})
+        assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1+2j))
+        assert np.all(field((8e-9, 2e-9, 9e-9)) == (1, 1, 1))
+
     def test_set_exception(self):
         for mesh in self.meshes:
             with pytest.raises(ValueError):
@@ -295,6 +307,7 @@ class TestField:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
                     f = df.Field(mesh, dim=3, value=value, norm=norm_value)
 
+                    # TODO: Why is this included?
                     # Compute norm.
                     norm = f.array[..., 0]**2
                     norm += f.array[..., 1]**2
@@ -303,7 +316,7 @@ class TestField:
 
                     assert norm.shape == f.mesh.n
                     assert f.norm.array.shape == (*f.mesh.n, 1)
-                    assert np.all(abs(norm - norm_value) < 1e-12)
+                    assert np.all(abs(f.norm.array - norm_value) < 1e-12)
 
         # Exception
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
