@@ -4314,14 +4314,17 @@ class Field:
         # self.array[mesh.nx, mesh.ny, mesh.nz, vectorcomponent]
         idx1 = self.mesh.info['axis1']
         idx2 = self.mesh.info['axis2']
-        freq_axis1 = np.fft.ifftshift(np.fft.fftfreq(self.mesh.n[idx1],
-                                                     self.mesh.cell[idx1]))
-        freq_axis2 = np.fft.ifftshift(np.fft.fftfreq(self.mesh.n[idx2],
-                                                     self.mesh.cell[idx2]))
+        freq_axis1 = np.fft.fftfreq(self.mesh.n[idx1], self.mesh.cell[idx1])
+        freq_axis2 = np.fft.fftfreq(self.mesh.n[idx2], self.mesh.cell[idx2])
+
         # requires shifting of the region boundaries to get the correct
         # positions of the mesh
         dfreq1 = (freq_axis1[1] - freq_axis1[0])
         dfreq2 = (freq_axis2[1] - freq_axis2[0])
+
+        freq_axis1 = np.fft.ifftshift(freq_axis1)
+        freq_axis2 = np.fft.ifftshift(freq_axis2)
+
         mesh = df.Mesh(p1=(min(freq_axis1), min(freq_axis2), 0),
                        p2=(max(freq_axis1) + dfreq1, max(freq_axis2) + dfreq2,
                            1 / self.mesh.cell[self.mesh.info['planeaxis']]),
@@ -4331,6 +4334,83 @@ class Field:
         for idx in range(self.dim):
             ft = np.fft.ifft2(np.fft.ifftshift(self.array[..., idx].squeeze()))
             values.append(ft[..., np.newaxis])
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
+
+    def fft3(self):
+        """Fourier transform.
+
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        if hasattr(self.mesh, 'info') or any(n == 1 for n in self.mesh.n):
+            msg = ('The field must be truely three dimensional to compute '
+                   'the Fourier transform in 3 dimensions. Use `fft2` '
+                   'instead.')
+            raise ValueError(msg)
+        freq_axis0 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[0],
+                                                    self.mesh.cell[0]))
+        freq_axis1 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[1],
+                                                    self.mesh.cell[1]))
+        freq_axis2 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[2],
+                                                    self.mesh.cell[2]))
+        # requires shifting of the region boundaries to get the correct
+        # positions of the mesh
+        dfreq0 = (freq_axis0[1] - freq_axis0[0]) / 2
+        dfreq1 = (freq_axis1[1] - freq_axis1[0]) / 2
+        dfreq2 = (freq_axis2[1] - freq_axis2[0]) / 2
+        mesh = df.Mesh(p1=(min(freq_axis0) - dfreq0,
+                           min(freq_axis1) - dfreq1,
+                           min(freq_axis2) - dfreq2),
+                       p2=(max(freq_axis0) + dfreq0,
+                           max(freq_axis1) + dfreq1,
+                           max(freq_axis2) + dfreq2),
+                       n=self.mesh.n)
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
+            values.append(ft)
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
+
+    def ifft3(self):
+        """Inverse Fourier transform.
+
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        if hasattr(self.mesh, 'info') or any(n == 1 for n in self.mesh.n):
+            msg = ('The field must be truely three dimensional to compute '
+                   'the Fourier transform in 3 dimensions. Use `fft2` '
+                   'instead.')
+            raise ValueError(msg)
+        freq_axis0 = np.fft.fftfreq(self.mesh.n[0], self.mesh.cell[0])
+        freq_axis1 = np.fft.fftfreq(self.mesh.n[1], self.mesh.cell[1])
+        freq_axis2 = np.fft.fftfreq(self.mesh.n[2], self.mesh.cell[2])
+
+        # requires shifting of the region boundaries to get the correct
+        # positions of the mesh
+        dfreq0 = abs(freq_axis0[1] - freq_axis0[0])
+        dfreq1 = abs(freq_axis1[1] - freq_axis1[0])
+        dfreq2 = abs(freq_axis2[1] - freq_axis2[0])
+
+        freq_axis0 = np.fft.ifftshift(freq_axis0)
+        freq_axis1 = np.fft.ifftshift(freq_axis1)
+        freq_axis2 = np.fft.ifftshift(freq_axis2)
+
+        mesh = df.Mesh(p1=(min(freq_axis0),
+                           min(freq_axis1),
+                           min(freq_axis2)),
+                       p2=(max(freq_axis0) + dfreq0,
+                           max(freq_axis1) + dfreq1,
+                           max(freq_axis2) + dfreq2),
+                       n=self.mesh.n)
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
+            values.append(ft)
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
 
