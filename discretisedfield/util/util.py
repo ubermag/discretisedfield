@@ -29,13 +29,17 @@ def as_array(mesh, dim, val):
     elif isinstance(val, complex) and (dim == 1 or val == 0):
         array = np.empty((*mesh.n, dim), dtype='complex128')
         array.fill(val)
-    elif isinstance(val, (tuple, list, np.ndarray)) and len(val) == dim:
+    elif isinstance(val, np.ndarray) and val.shape == array.shape:
+        array = val
+    elif isinstance(val, (tuple, list, np.ndarray)):
+        if len(val) != dim:
+            msg = (f'Wrong dimension {len(val)} provided for value;'
+                   f' expected dimension is {dim}')
+            raise ValueError(msg)
         if (isinstance(val, np.ndarray) and val.dtype == 'complex128'
                 or np.iscomplex(val).any()):
             array = np.empty((*mesh.n, dim), dtype='complex128')
         array[..., :] = val
-    elif isinstance(val, np.ndarray) and val.shape == array.shape:
-        array = val
     elif callable(val):
         test_res = val(mesh.region.centre)
         if np.iscomplex(test_res).any():
