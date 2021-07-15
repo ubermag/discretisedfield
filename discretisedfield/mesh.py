@@ -1,4 +1,5 @@
 import k3d
+import copy
 import itertools
 import ipywidgets
 import collections
@@ -166,7 +167,7 @@ class Mesh:
 
     """
     def __init__(self, *, region=None, p1=None, p2=None, n=None, cell=None,
-                 bc='', subregions=dict()):
+                 bc='', subregions=dict(), attributes={'unit': 'm'}):
         if region is not None and p1 is None and p2 is None:
             self.region = region
         elif region is None and p1 is not None and p2 is not None:
@@ -199,6 +200,12 @@ class Mesh:
         self.bc = bc.lower()
 
         self.subregions = subregions
+
+        self.attributes = attributes
+        if 'fourierspace' not in attributes.keys():
+            self.attributes['fourierspace'] = False
+        if 'isplane' not in attributes.keys():
+            self.attributes['isplane'] = False
 
     @property
     def subregions(self):
@@ -242,6 +249,14 @@ class Mesh:
                    'initialising field values')
             warnings.warn(msg)
         self._subregions = subregions
+
+    @property
+    def attributes(self):
+        return self._attributes
+
+    @attributes.setter
+    def attributes(self, attributes):
+        self._attributes = copy.deepcopy(attributes)
 
     def __len__(self):
         """Number of discretisation cells in the mesh.
@@ -450,7 +465,8 @@ class Mesh:
 
         """
         return (f'Mesh(region={repr(self.region)}, n={self.n}, '
-                f'bc=\'{self.bc}\', subregions={self.subregions})')
+                f'bc=\'{self.bc}\', subregions={self.subregions}),'
+                f' attributes={self.attributes}')
 
     def index2point(self, index, /):
         """Convert cell's index to its coordinate.
@@ -763,14 +779,15 @@ class Mesh:
                        point + self.cell[planeaxis]/2)
         npm[ilist] = (*n, 1)
 
-        plane_mesh = self.__class__(p1=p1pm, p2=p2pm, n=dfu.array2tuple(npm))
+        attributes = self.attributes
 
-        # Add info dictionary, so that the mesh can be interpreted easier.
-        info = dict()
-        info['planeaxis'] = planeaxis
-        info['point'] = point
-        info['axis1'], info['axis2'] = axis1, axis2
-        plane_mesh.info = info
+        plane_mesh = self.__class__(p1=p1pm, p2=p2pm, n=dfu.array2tuple(npm),
+                                    attributes=attributes)
+        plane_mesh.attributes['isplane'] = True
+        plane_mesh.attributes['planeaxis'] = planeaxis
+        plane_mesh.attributes['point'] = point
+        plane_mesh.attributes['axis1'] = axis1
+        plane_mesh.attributes['axis2'] = axis2
 
         return plane_mesh
 
@@ -908,7 +925,8 @@ class Mesh:
 
         """
         if isinstance(item, str):
-            return self.__class__(region=self.subregions[item], cell=self.cell)
+            return self.__class__(region=self.subregions[item], cell=self.cell,
+                                  attributes=self.attributes)
 
         if item not in self.region:
             msg = 'Subregion is outside the mesh region.'
@@ -918,7 +936,8 @@ class Mesh:
         p1 = np.subtract(self.index2point(self.point2index(item.pmin)), hc)
         p2 = np.add(self.index2point(self.point2index(item.pmax)), hc)
 
-        return self.__class__(region=df.Region(p1=p1, p2=p2), cell=self.cell)
+        return self.__class__(region=df.Region(p1=p1, p2=p2), cell=self.cell,
+                              attributes=self.attributes)
 
     def pad(self, pad_width):
         """Mesh padding.
@@ -976,7 +995,8 @@ class Mesh:
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
-        return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
+        return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc,
+                              attributes=self.attributes)
 
     def __getattr__(self, attr):
         """Extracting the discretisation in a particular direction.
@@ -1093,12 +1113,12 @@ class Mesh:
         (0.0, 0.0, 2.0)
 
         """
-        if not hasattr(self, 'info'):
+        if not self.attributes['isplane']:
             msg = 'The mesh must be sliced before dS can be computed.'
             raise ValueError(msg)
 
-        norm = self.cell[self.info['axis1']] * self.cell[self.info['axis2']]
-        dn = dfu.assemble_index(0, 3, {self.info['planeaxis']: 1})
+        norm = self.cell[self.attributes['axis1']] * self.cell[self.attributes['axis2']]
+        dn = dfu.assemble_index(0, 3, {self.attributes['planeaxis']: 1})
         return df.Field(self, dim=3, value=dn, norm=norm)
 
     def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[:2],

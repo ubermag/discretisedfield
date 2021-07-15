@@ -41,7 +41,8 @@ def as_array(mesh, dim, val):
             array = np.empty((*mesh.n, dim), dtype='complex128')
         array[..., :] = val
     elif callable(val):
-        test_res = val(mesh.region.centre)
+        test_res = [val(mesh.region.centre),
+                    val(mesh.region.p1), val(mesh.region.p2)]
         if np.iscomplex(test_res).any():
             array = np.empty((*mesh.n, dim), dtype='complex128')
         for index, point in zip(mesh.indices, mesh):

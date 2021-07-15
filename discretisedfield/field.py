@@ -694,6 +694,8 @@ class Field:
         if self.dim == 1:
             need_removing = ['div', 'curl', 'orientation', 'mpl_vector',
                              'k3d_vector']
+        if self.dim == 2:
+            need_removing = ['grad', 'k3d_scalar', 'k3d_nonzero']
         if self.dim == 3:
             need_removing = ['grad', 'mpl_scalar', 'k3d_scalar', 'k3d_nonzero']
 
@@ -2458,7 +2460,7 @@ class Field:
         True
 
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = 'The field must be sliced before angle can be computed.'
             raise ValueError(msg)
 
@@ -3291,7 +3293,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
@@ -3300,12 +3302,9 @@ class Field:
             raise ValueError(msg)
 
         if self.dim == 2:
-            field = df.Field(self.mesh, dim=1, value=np.arctan2(
-                self.array[..., self.mesh.info['axis2']],
-                self.array[..., self.mesh.info['axis1']])[..., np.newaxis])
             if lightness_field is None:
                 lightness_field = self.norm
-            return field.mpl_scalar(
+            return self.angle.mpl_scalar(
                 ax=ax, figsize=figsize,
                 filter_field=filter_field, lightness_field=lightness_field,
                 colorbar=colorbar, colorbar_label=colorbar_label,
@@ -3319,7 +3318,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+        unit = (f' ({uu.rsi_prefixes[multiplier]}'
+                f'{self.mesh.attributes["unit"]})')
 
         points, values = map(list, zip(*list(self)))
 
@@ -3339,12 +3339,12 @@ class Field:
         pmin = np.divide(self.mesh.region.pmin, multiplier)
         pmax = np.divide(self.mesh.region.pmax, multiplier)
 
-        extent = [pmin[self.mesh.info['axis1']],
-                  pmax[self.mesh.info['axis1']],
-                  pmin[self.mesh.info['axis2']],
-                  pmax[self.mesh.info['axis2']]]
-        n = (self.mesh.n[self.mesh.info['axis2']],
-             self.mesh.n[self.mesh.info['axis1']])
+        extent = [pmin[self.mesh.attributes['axis1']],
+                  pmax[self.mesh.attributes['axis1']],
+                  pmin[self.mesh.attributes['axis2']],
+                  pmax[self.mesh.attributes['axis2']]]
+        n = (self.mesh.n[self.mesh.attributes['axis2']],
+             self.mesh.n[self.mesh.attributes['axis1']])
 
         if lightness_field is not None:
             if lightness_field.dim != 1:
@@ -3381,8 +3381,8 @@ class Field:
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+        ax.set_xlabel(dfu.raxesdict[self.mesh.attributes['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.attributes['axis2']] + unit)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
@@ -3495,7 +3495,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.mpl_scalar`
 
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
@@ -3510,7 +3510,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+        unit = (f' ({uu.rsi_prefixes[multiplier]}'
+                f'{self.mesh.attributes["unit"]})')
 
         points, values = map(list, zip(*list(self)))
 
@@ -3527,7 +3528,7 @@ class Field:
                 if self.dim == 2:
                     msg = 'Automatic coloring is only supported for 3d fields.'
                     raise ValueError(msg)
-                planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
+                planeaxis = dfu.raxesdict[self.mesh.attributes['planeaxis']]
                 color_field = getattr(self, planeaxis)
 
             colors = [color_field(p) for p in points]
@@ -3539,16 +3540,16 @@ class Field:
         points = np.divide(points, multiplier)
 
         if use_color:
-            cp = ax.quiver(points[self.mesh.info['axis1']],
-                           points[self.mesh.info['axis2']],
-                           values[self.mesh.info['axis1']],
-                           values[self.mesh.info['axis2']],
+            cp = ax.quiver(points[self.mesh.attributes['axis1']],
+                           points[self.mesh.attributes['axis2']],
+                           values[self.mesh.attributes['axis1']],
+                           values[self.mesh.attributes['axis2']],
                            colors, pivot='mid', **kwargs)
         else:
-            ax.quiver(points[self.mesh.info['axis1']],
-                      points[self.mesh.info['axis2']],
-                      values[self.mesh.info['axis1']],
-                      values[self.mesh.info['axis2']],
+            ax.quiver(points[self.mesh.attributes['axis1']],
+                      points[self.mesh.attributes['axis2']],
+                      values[self.mesh.attributes['axis1']],
+                      values[self.mesh.attributes['axis2']],
                       pivot='mid', **kwargs)
 
         if colorbar and use_color:
@@ -3556,8 +3557,8 @@ class Field:
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+        ax.set_xlabel(dfu.raxesdict[self.mesh.attributes['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.attributes['axis2']] + unit)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
@@ -3578,7 +3579,7 @@ class Field:
             :context: close-figs
 
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
@@ -3593,7 +3594,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+        unit = (f' ({uu.rsi_prefixes[multiplier]}'
+                f'{self.mesh.attributes["unit"]})')
 
         points, values = map(list, zip(*list(self)))
 
@@ -3615,16 +3617,16 @@ class Field:
                 if mask_value == 1:
                     values[i] = np.nan
 
-        n = (self.mesh.n[self.mesh.info['axis2']],
-             self.mesh.n[self.mesh.info['axis1']])
+        n = (self.mesh.n[self.mesh.attributes['axis2']],
+             self.mesh.n[self.mesh.attributes['axis1']])
 
         points = np.array(list(zip(*points)))
         points = np.divide(points, multiplier)
 
         values = np.array(values).reshape(n)
 
-        cp = ax.contour(points[self.mesh.info['axis1']].reshape(n),
-                        points[self.mesh.info['axis2']].reshape(n),
+        cp = ax.contour(points[self.mesh.attributes['axis1']].reshape(n),
+                        points[self.mesh.attributes['axis2']].reshape(n),
                         values, **kwargs)
         ax.set_aspect('equal')
 
@@ -3633,8 +3635,8 @@ class Field:
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+        ax.set_xlabel(dfu.raxesdict[self.mesh.attributes['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.attributes['axis2']] + unit)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
@@ -3721,7 +3723,7 @@ class Field:
             :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
@@ -3732,9 +3734,10 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+        unit = (f' ({uu.rsi_prefixes[multiplier]}'
+                f'{self.mesh.attributes["unit"]})')
 
-        planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
+        planeaxis = dfu.raxesdict[self.mesh.attributes['planeaxis']]
 
         # Set up default values.
         if self.dim == 1:
@@ -3797,8 +3800,8 @@ class Field:
                                     multiplier=multiplier, scale=vector_scale,
                                     cmap=vector_cmap, clim=vector_clim,)
 
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
+        ax.set_xlabel(dfu.raxesdict[self.mesh.attributes['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.mesh.attributes['axis2']] + unit)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
@@ -3894,7 +3897,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+        unit = (f' ({uu.rsi_prefixes[multiplier]}'
+                f'{self.mesh.attributes["unit"]})')
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
@@ -4024,7 +4028,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+        unit = (f' ({uu.rsi_prefixes[multiplier]}'
+                f'{self.mesh.attributes["unit"]})')
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
@@ -4192,7 +4197,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+        unit = (f' ({uu.rsi_prefixes[multiplier]}'
+                f'{self.mesh.attributes["unit"]})')
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
@@ -4271,12 +4277,12 @@ class Field:
         -------
         discretisedfield.Field
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = ('The field must be sliced before the Fourier transform can'
                    'be computed in two dimensions.')
             raise ValueError(msg)
-        idx1 = self.mesh.info['axis1']
-        idx2 = self.mesh.info['axis2']
+        idx1 = self.mesh.attributes['axis1']
+        idx2 = self.mesh.attributes['axis2']
         freq_axis1 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[idx1],
                                                     self.mesh.cell[idx1]))
         freq_axis2 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[idx2],
@@ -4290,9 +4296,12 @@ class Field:
                            0),
                        p2=(max(freq_axis1) + dfreq1,
                            max(freq_axis2) + dfreq2,
-                           1 / self.mesh.cell[self.mesh.info['planeaxis']]),
-                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis']
-                                                + ord('x')))
+                           1 / self.mesh.cell[self.mesh.attributes['planeaxis']]),
+                       n=self.mesh.n).plane(
+                           dfu.raxesdict[self.mesh.attributes['planeaxis']])
+        mesh.attributes['realspace_mesh'] = self.mesh
+        mesh.attributes['fourierspace'] = True
+        mesh.attributes['unit'] = f"({mesh.attributes['unit']})^-1"
         values = []
         for idx in range(self.dim):
             ft = np.fft.fftshift(np.fft.fft2(self.array[..., idx].squeeze()))
@@ -4307,29 +4316,13 @@ class Field:
         -------
         discretisedfield.Field
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = ('The field must be sliced before the Fourier transform can'
                    'be computed in two dimensions.')
             raise ValueError(msg)
-        # self.array[mesh.nx, mesh.ny, mesh.nz, vectorcomponent]
-        idx1 = self.mesh.info['axis1']
-        idx2 = self.mesh.info['axis2']
-        freq_axis1 = np.fft.fftfreq(self.mesh.n[idx1], self.mesh.cell[idx1])
-        freq_axis2 = np.fft.fftfreq(self.mesh.n[idx2], self.mesh.cell[idx2])
-
-        # requires shifting of the region boundaries to get the correct
-        # positions of the mesh
-        dfreq1 = (freq_axis1[1] - freq_axis1[0])
-        dfreq2 = (freq_axis2[1] - freq_axis2[0])
-
-        freq_axis1 = np.fft.ifftshift(freq_axis1)
-        freq_axis2 = np.fft.ifftshift(freq_axis2)
-
-        mesh = df.Mesh(p1=(min(freq_axis1), min(freq_axis2), 0),
-                       p2=(max(freq_axis1) + dfreq1, max(freq_axis2) + dfreq2,
-                           1 / self.mesh.cell[self.mesh.info['planeaxis']]),
-                       n=self.mesh.n).plane(chr(self.mesh.info['planeaxis']
-                                                + ord('x')))
+        mesh = self.mesh.attributes['realspace_mesh']
+        if not mesh.attributes['isplane']:
+            raise NotImplementedError
         values = []
         for idx in range(self.dim):
             ft = np.fft.ifft2(np.fft.ifftshift(self.array[..., idx].squeeze()))
@@ -4344,7 +4337,7 @@ class Field:
         -------
         discretisedfield.Field
         """
-        if hasattr(self.mesh, 'info') or any(n == 1 for n in self.mesh.n):
+        if self.mesh.attributes['isplane'] or any(n == 1 for n in self.mesh.n):
             msg = ('The field must be truely three dimensional to compute '
                    'the Fourier transform in 3 dimensions. Use `fft2` '
                    'instead.')
@@ -4367,6 +4360,9 @@ class Field:
                            max(freq_axis1) + dfreq1,
                            max(freq_axis2) + dfreq2),
                        n=self.mesh.n)
+        mesh.attributes['realspace_mesh'] = self.mesh
+        mesh.attributes['fourierspace'] = True
+        mesh.attributes['unit'] = f"({mesh.attributes['unit']})^-1"
         values = []
         for idx in range(self.dim):
             ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
@@ -4381,32 +4377,12 @@ class Field:
         -------
         discretisedfield.Field
         """
-        if hasattr(self.mesh, 'info') or any(n == 1 for n in self.mesh.n):
+        if self.mesh.attributes['isplane'] or any(n == 1 for n in self.mesh.n):
             msg = ('The field must be truely three dimensional to compute '
                    'the Fourier transform in 3 dimensions. Use `fft2` '
                    'instead.')
             raise ValueError(msg)
-        freq_axis0 = np.fft.fftfreq(self.mesh.n[0], self.mesh.cell[0])
-        freq_axis1 = np.fft.fftfreq(self.mesh.n[1], self.mesh.cell[1])
-        freq_axis2 = np.fft.fftfreq(self.mesh.n[2], self.mesh.cell[2])
-
-        # requires shifting of the region boundaries to get the correct
-        # positions of the mesh
-        dfreq0 = abs(freq_axis0[1] - freq_axis0[0])
-        dfreq1 = abs(freq_axis1[1] - freq_axis1[0])
-        dfreq2 = abs(freq_axis2[1] - freq_axis2[0])
-
-        freq_axis0 = np.fft.ifftshift(freq_axis0)
-        freq_axis1 = np.fft.ifftshift(freq_axis1)
-        freq_axis2 = np.fft.ifftshift(freq_axis2)
-
-        mesh = df.Mesh(p1=(min(freq_axis0),
-                           min(freq_axis1),
-                           min(freq_axis2)),
-                       p2=(max(freq_axis0) + dfreq0,
-                           max(freq_axis1) + dfreq1,
-                           max(freq_axis2) + dfreq2),
-                       n=self.mesh.n)
+        mesh = self.mesh.attributes['realspace_mesh']
         values = []
         for idx in range(self.dim):
             ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))

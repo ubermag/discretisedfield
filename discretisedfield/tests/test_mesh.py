@@ -47,10 +47,11 @@ def check_mesh(mesh):
     assert all(isinstance(i, tuple) for i in line)
     assert all(i in mesh.region for i in line)
 
+    assert isinstance(mesh.attributes, dict)
+
     plane_mesh = mesh.plane('z', n=(2, 2))
     assert isinstance(plane_mesh, df.Mesh)
-    assert isinstance(plane_mesh.info, dict)
-    assert plane_mesh.info
+    assert plane_mesh.attributes['isplane']
     assert 1 in plane_mesh.n
     assert len(plane_mesh) == 4
     assert all(isinstance(i, tuple) for i in plane_mesh)
@@ -512,43 +513,50 @@ class TestMesh:
         with pytest.raises(ValueError):
             plane = list(mesh.plane(x=2, z=1))
 
-        info = mesh.plane('x').info
+        info = mesh.plane('x').attributes
+        assert info['isplane']
         assert info['planeaxis'] == 0
         assert info['axis1'] == 1
         assert info['axis2'] == 2
         assert info['point'] == 5
 
-        info = mesh.plane('y').info
+        info = mesh.plane('y').attributes
+        assert info['isplane']
         assert info['planeaxis'] == 1
         assert info['axis1'] == 0
         assert info['axis2'] == 2
         assert info['point'] == 2.5
 
-        info = mesh.plane('z').info
+        info = mesh.plane('z').attributes
+        assert info['isplane']
         assert info['planeaxis'] == 2
         assert info['axis1'] == 0
         assert info['axis2'] == 1
         assert info['point'] == 1.5
 
-        info = mesh.plane(x=0).info
+        info = mesh.plane(x=0).attributes
+        assert info['isplane']
         assert info['planeaxis'] == 0
         assert info['axis1'] == 1
         assert info['axis2'] == 2
         assert info['point'] == 0
 
-        info = mesh.plane(y=0).info
+        info = mesh.plane(y=0).attributes
+        assert info['isplane']
         assert info['planeaxis'] == 1
         assert info['axis1'] == 0
         assert info['axis2'] == 2
         assert info['point'] == 0
 
-        info = mesh.plane(z=0).info
+        info = mesh.plane(z=0).attributes
+        assert info['isplane']
         assert info['planeaxis'] == 2
         assert info['axis1'] == 0
         assert info['axis2'] == 1
         assert info['point'] == 0
 
-        info = mesh.plane(x=5).info
+        info = mesh.plane(x=5).attributes
+        assert info['isplane']
         assert info['planeaxis'] == 0
         assert info['axis1'] == 1
         assert info['axis2'] == 2
