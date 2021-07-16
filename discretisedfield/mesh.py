@@ -465,8 +465,8 @@ class Mesh:
 
         """
         return (f'Mesh(region={repr(self.region)}, n={self.n}, '
-                f'bc=\'{self.bc}\', subregions={self.subregions}),'
-                f' attributes={self.attributes}')
+                f'bc=\'{self.bc}\', subregions={self.subregions},'
+                f' attributes={self.attributes})')
 
     def index2point(self, index, /):
         """Convert cell's index to its coordinate.
