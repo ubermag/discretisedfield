@@ -103,7 +103,7 @@ def topological_charge_density(field, /, method='continuous'):
                f'for {field.dim=} field.')
         raise ValueError(msg)
 
-    if not hasattr(field.mesh, 'info'):
+    if not field.mesh.attributes['isplane']:
         msg = ('The field must be sliced before the topological '
                'charge density can be computed.')
         raise ValueError(msg)
@@ -112,8 +112,8 @@ def topological_charge_density(field, /, method='continuous'):
         msg = 'Method can be either continuous or berg-luescher'
         raise ValueError(msg)
 
-    axis1 = field.mesh.info['axis1']
-    axis2 = field.mesh.info['axis2']
+    axis1 = field.mesh.attributes['axis1']
+    axis2 = field.mesh.attributes['axis2']
     of = field.orientation  # unit field - orientation field
 
     if method == 'continuous':
@@ -268,7 +268,7 @@ def topological_charge(field, /, method='continuous', absolute=False):
         msg = f'Cannot compute topological charge for {field.dim=} field.'
         raise ValueError(msg)
 
-    if not hasattr(field.mesh, 'info'):
+    if not field.mesh.attributes['isplane']:
         msg = ('The field must be sliced before the '
                'topological charge can be computed.')
         raise ValueError(msg)
@@ -285,8 +285,8 @@ def topological_charge(field, /, method='continuous', absolute=False):
             return df.integral(q * abs(df.dS))
 
     elif method == 'berg-luescher':
-        axis1 = field.mesh.info['axis1']
-        axis2 = field.mesh.info['axis2']
+        axis1 = field.mesh.attributes['axis1']
+        axis2 = field.mesh.attribtues['axis2']
         of = field.orientation
 
         topological_charge = 0
