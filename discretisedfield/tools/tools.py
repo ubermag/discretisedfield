@@ -286,7 +286,7 @@ def topological_charge(field, /, method='continuous', absolute=False):
 
     elif method == 'berg-luescher':
         axis1 = field.mesh.attributes['axis1']
-        axis2 = field.mesh.attribtues['axis2']
+        axis2 = field.mesh.attributes['axis2']
         of = field.orientation
 
         topological_charge = 0
