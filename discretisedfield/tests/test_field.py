@@ -1693,8 +1693,36 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        plane = f.plane('z')
-        assert plane == plane.fft2().ifft2()
+        for i in ['x', 'y', 'z']:
+            plane = f.plane(i)
+            assert plane.allclose(plane.fft2().ifft2().real)
+            assert df.Field(mesh, dim=3).plane(i).allclose(
+            plane.fft2().ifft2().imag)
+
+    def test_fft3_ifft3(self):
+        p1 = (-10, -10, -5)
+        p2 = (10, 10, 5)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        assert f.allclose(f.fft3().ifft3().real)
+        assert df.Field(mesh, dim=3).allclose(
+            f.fft3().ifft3().imag)
+
+    def test_fft3_ifft2(self):
+        p1 = (-10, -10, -5)
+        p2 = (10, 10, 5)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+
+        for i, di in [['x', df.dx], ['y', df.dy], ['z', df.dz]]:
+            plane = (f * di).integral(i)
+            assert plane.allclose(f.fft3().plane(**{i: 0}).ifft2().real)
+            assert (df.Field(mesh, dim=3) * df.dz).integral(i).allclose(
+                f.fft3().plane(**{i: 0}).ifft2().imag)
 
     def test_mpl_scalar(self):
         # No axes
