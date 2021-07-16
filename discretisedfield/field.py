@@ -4278,31 +4278,33 @@ class Field:
             msg = ('The field must be sliced before the Fourier transform can'
                    'be computed in two dimensions.')
             raise ValueError(msg)
-        idx1 = self.mesh.attributes['axis1']
-        idx2 = self.mesh.attributes['axis2']
-        freq_axis1 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[idx1],
-                                                    self.mesh.cell[idx1]))
-        freq_axis2 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[idx2],
-                                                    self.mesh.cell[idx2]))
-        # requires shifting of the region boundaries to get the correct
-        # positions of the mesh
-        dfreq1 = (freq_axis1[1] - freq_axis1[0]) / 2
-        dfreq2 = (freq_axis2[1] - freq_axis2[0]) / 2
-        mesh = df.Mesh(p1=(min(freq_axis1) - dfreq1,
-                           min(freq_axis2) - dfreq2,
-                           0),
-                       p2=(max(freq_axis1) + dfreq1,
-                           max(freq_axis2) + dfreq2,
-                           1 / self.mesh.cell[self.mesh.attributes['planeaxis']]),
-                       n=self.mesh.n).plane(
-                           dfu.raxesdict[self.mesh.attributes['planeaxis']])
+        if self.mesh.n.count(1) > 1:
+            msg = ('FFT2 only supports truely two-dimensional fields;'
+                   f' spacial field dimensions are {self.mesh.n}.')
+            raise ValueError(msg)
+        p1 = []
+        p2 = []
+        for i in range(3):
+            if (i == self.mesh.attributes['planeaxis']):
+                p1.append(0)
+                p2.append(1 / self.mesh.cell[i])
+            else:
+                freqs = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[i],
+                                                       self.mesh.cell[i]))
+                # shifting of the region boundaries required to get the correct
+                # positions of the mesh
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+        mesh = df.Mesh(p1=p1, p2=p2, n=self.mesh.n).plane(
+            dfu.raxesdict[self.mesh.attributes['planeaxis']])
         mesh.attributes['realspace_mesh'] = self.mesh
         mesh.attributes['fourierspace'] = True
         mesh.attributes['unit'] = f"({mesh.attributes['unit']})^-1"
         values = []
         for idx in range(self.dim):
             ft = np.fft.fftshift(np.fft.fft2(self.array[..., idx].squeeze()))
-            values.append(ft[..., np.newaxis])
+            values.append(ft.reshape(mesh.n))
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
 
