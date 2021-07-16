@@ -695,7 +695,7 @@ class Field:
             need_removing = ['div', 'curl', 'orientation', 'mpl_vector',
                              'k3d_vector']
         if self.dim == 2:
-            need_removing = ['grad', 'k3d_scalar', 'k3d_nonzero']
+            need_removing = ['grad', 'curl', 'k3d_scalar', 'k3d_nonzero']
         if self.dim == 3:
             need_removing = ['grad', 'mpl_scalar', 'k3d_scalar', 'k3d_nonzero']
 
@@ -1847,14 +1847,12 @@ class Field:
     def div(self):
         """Divergence.
 
-        This method computes the divergence of a vector (``dim=3``) field and
-        returns a scalar (``dim=1``) field as a result.
+        This method computes the divergence of a vector (``dim=2`` or ``dim=3``)
+        field and returns a scalar (``dim=1``) field as a result.
 
         .. math::
 
-            \\nabla\\cdot\\mathbf{v} = \\frac{\\partial v_{x}}{\\partial x} +
-                                       \\frac{\\partial v_{y}}{\\partial y} +
-                                       \\frac{\\partial v_{z}}{\\partial z}
+            \\nabla\\cdot\\mathbf{v} = \\sum_i\\frac{\\partial v_{i}}{\\partial i}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -1871,7 +1869,7 @@ class Field:
         ------
         ValueError
 
-            If the dimension of the field is not 3.
+            If the dimension of the field is 1.
 
         Example
         -------
@@ -1906,13 +1904,12 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim != 3:
+        if self.dim == 1:
             msg = f'Cannot compute divergence for dim={self.dim} field.'
             raise ValueError(msg)
 
-        return (self.x.derivative('x') +
-                self.y.derivative('y') +
-                self.z.derivative('z'))
+        return sum([getattr(self, i).derivative(i) for i in
+                    [dfu.raxesdict[j] for j in range(self.dim)]])
 
     @property
     def curl(self):
