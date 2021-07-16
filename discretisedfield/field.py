@@ -2461,8 +2461,8 @@ class Field:
             msg = 'The field must be sliced before angle can be computed.'
             raise ValueError(msg)
 
-        angle_array = np.arctan2(self.array[..., self.mesh.info['axis2']],
-                                 self.array[..., self.mesh.info['axis1']])
+        angle_array = np.arctan2(self.array[..., self.mesh.attributes['axis2']],
+                                 self.array[..., self.mesh.attributes['axis1']])
 
         # Place all values in [0, 2pi] range
         angle_array[angle_array < 0] += 2 * np.pi
