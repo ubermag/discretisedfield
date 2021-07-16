@@ -4319,11 +4319,11 @@ class Field:
             raise ValueError(msg)
         mesh = self.mesh.attributes['realspace_mesh']
         if not mesh.attributes['isplane']:
-            raise NotImplementedError
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
         values = []
         for idx in range(self.dim):
             ft = np.fft.ifft2(np.fft.ifftshift(self.array[..., idx].squeeze()))
-            values.append(ft[..., np.newaxis])
+            values.append(ft.reshape(mesh.n))
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
 
