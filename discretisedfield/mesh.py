@@ -1117,7 +1117,8 @@ class Mesh:
             msg = 'The mesh must be sliced before dS can be computed.'
             raise ValueError(msg)
 
-        norm = self.cell[self.attributes['axis1']] * self.cell[self.attributes['axis2']]
+        norm = (self.cell[self.attributes['axis1']]
+                * self.cell[self.attributes['axis2']])
         dn = dfu.assemble_index(0, 3, {self.attributes['planeaxis']: 1})
         return df.Field(self, dim=3, value=dn, norm=norm)
 

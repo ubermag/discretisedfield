@@ -1847,12 +1847,13 @@ class Field:
     def div(self):
         """Divergence.
 
-        This method computes the divergence of a vector (``dim=2`` or ``dim=3``)
-        field and returns a scalar (``dim=1``) field as a result.
+        This method computes the divergence of a vector (``dim=2`` or
+        ``dim=3``) field and returns a scalar (``dim=1``) field as a result.
 
         .. math::
 
-            \\nabla\\cdot\\mathbf{v} = \\sum_i\\frac{\\partial v_{i}}{\\partial i}
+            \\nabla\\cdot\\mathbf{v} = \\sum_i\\frac{\\partial v_{i}}
+            {\\partial i}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2461,8 +2462,9 @@ class Field:
             msg = 'The field must be sliced before angle can be computed.'
             raise ValueError(msg)
 
-        angle_array = np.arctan2(self.array[..., self.mesh.attributes['axis2']],
-                                 self.array[..., self.mesh.attributes['axis1']])
+        angle_array = np.arctan2(
+            self.array[..., self.mesh.attributes['axis2']],
+            self.array[..., self.mesh.attributes['axis1']])
 
         # Place all values in [0, 2pi] range
         angle_array[angle_array < 0] += 2 * np.pi

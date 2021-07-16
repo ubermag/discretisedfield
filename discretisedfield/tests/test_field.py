@@ -1697,7 +1697,7 @@ class TestField:
             plane = f.plane(i)
             assert plane.allclose(plane.fft2().ifft2().real)
             assert df.Field(mesh, dim=3).plane(i).allclose(
-            plane.fft2().ifft2().imag)
+                plane.fft2().ifft2().imag)
 
     def test_fft3_ifft3(self):
         p1 = (-10, -10, -5)
