@@ -42,10 +42,12 @@ def as_array(mesh, dim, val):
         array[..., :] = val
     elif callable(val):
         for index, point in zip(mesh.indices, mesh):
+            res = val(point)
             try:
-                array[index] = val(point)
+                array[index] = res
             except TypeError:
                 array = np.array(array, dtype='complex128')
+                array[index] = res
     elif isinstance(val, dict) and mesh.subregions:
         if np.iscomplex(list(val.values())).any():
             array = np.empty((*mesh.n, dim), dtype='complex128')
