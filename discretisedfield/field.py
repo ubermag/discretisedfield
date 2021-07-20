@@ -3551,6 +3551,7 @@ class Field:
                       values[self.mesh.attributes['axis2']],
                       pivot='mid', **kwargs)
 
+        ax.set_aspect('equal')
         if colorbar and use_color:
             cbar = plt.colorbar(cp)
             if colorbar_label is not None:
