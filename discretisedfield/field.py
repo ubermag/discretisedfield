@@ -3317,8 +3317,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = (f' ({uu.rsi_prefixes[multiplier]}'
-                f'{self.mesh.attributes["unit"]})')
+        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.mesh.attributes["unit"]})')
 
         points, values = map(list, zip(*list(self)))
 
@@ -3509,8 +3509,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = (f' ({uu.rsi_prefixes[multiplier]}'
-                f'{self.mesh.attributes["unit"]})')
+        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.mesh.attributes["unit"]})')
 
         points, values = map(list, zip(*list(self)))
 
@@ -3593,8 +3593,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = (f' ({uu.rsi_prefixes[multiplier]}'
-                f'{self.mesh.attributes["unit"]})')
+        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.mesh.attributes["unit"]})')
 
         points, values = map(list, zip(*list(self)))
 
@@ -3733,8 +3733,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = (f' ({uu.rsi_prefixes[multiplier]}'
-                f'{self.mesh.attributes["unit"]})')
+        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.mesh.attributes["unit"]})')
 
         planeaxis = dfu.raxesdict[self.mesh.attributes['planeaxis']]
 
@@ -3896,8 +3896,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = (f' ({uu.rsi_prefixes[multiplier]}'
-                f'{self.mesh.attributes["unit"]})')
+        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.mesh.attributes["unit"]})')
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
@@ -4027,8 +4027,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = (f' ({uu.rsi_prefixes[multiplier]}'
-                f'{self.mesh.attributes["unit"]})')
+        unit = (fr' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.mesh.attributes["unit"]})')
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
@@ -4196,8 +4196,8 @@ class Field:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = (f' ({uu.rsi_prefixes[multiplier]}'
-                f'{self.mesh.attributes["unit"]})')
+        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.mesh.attributes["unit"]})')
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
@@ -4302,7 +4302,7 @@ class Field:
             dfu.raxesdict[self.mesh.attributes['planeaxis']])
         mesh.attributes['realspace_mesh'] = self.mesh
         mesh.attributes['fourierspace'] = True
-        mesh.attributes['unit'] = f"({mesh.attributes['unit']})^-1"
+        mesh.attributes['unit'] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
         values = []
         for idx in range(self.dim):
             ft = np.fft.fftshift(np.fft.fft2(self.array[..., idx].squeeze()))
@@ -4363,7 +4363,7 @@ class Field:
                        n=self.mesh.n)
         mesh.attributes['realspace_mesh'] = self.mesh
         mesh.attributes['fourierspace'] = True
-        mesh.attributes['unit'] = f"({mesh.attributes['unit']})^-1"
+        mesh.attributes['unit'] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
         values = []
         for idx in range(self.dim):
             ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
