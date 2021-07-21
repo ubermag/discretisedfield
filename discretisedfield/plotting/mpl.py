@@ -834,7 +834,6 @@ class Mpl:
         return ax
 
     def _filter_values(self, filter_field, points, values):
-        print(filter_field)
         if filter_field is None:
             return values
 
