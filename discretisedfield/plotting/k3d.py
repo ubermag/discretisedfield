@@ -462,7 +462,8 @@ class K3d:
 
         if vector_multiplier is None:
             vector_multiplier = (vectors.max() /
-                                 np.divide(self.data.mesh.cell, multiplier).min())
+                                 np.divide(self.data.mesh.cell,
+                                           multiplier).min())
 
         coordinates = np.divide(coordinates, multiplier)
         vectors = np.divide(vectors, vector_multiplier)
@@ -477,7 +478,8 @@ class K3d:
             if point_size is None:
                 # If undefined, the size of the point is 1/4 of the smallest
                 # cell dimension.
-                point_size = np.divide(self.data.mesh.cell, multiplier).min() / 4
+                point_size = np.divide(self.data.mesh.cell,
+                                       multiplier).min() / 4
 
             plot += k3d.points(coordinates, color=dfu.cp_int[0],
                                point_size=point_size)

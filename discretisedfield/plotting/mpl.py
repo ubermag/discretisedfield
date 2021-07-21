@@ -132,7 +132,8 @@ class Mpl:
 
         scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_args)
         if vector_field is not None:
-            vector_field.mpl.vector(ax=ax, multiplier=multiplier, **vector_args)
+            vector_field.mpl.vector(ax=ax, multiplier=multiplier,
+                                    **vector_args)
 
         self._axis_labels(ax, multiplier)
 
@@ -250,8 +251,8 @@ class Mpl:
             if scalar_filter_field is None:
                 scalar_filter_field = self.data.norm
             else:
-                scalar_filter_field = self.data.__class__(self.data.mesh, dim=1,
-                                                          value=scalar_filter_field)
+                scalar_filter_field = self.data.__class__(
+                    self.data.mesh, dim=1, value=scalar_filter_field)
         elif self.data.dim == 2:
             if vector_field is None:
                 vector_field = self.data
@@ -266,8 +267,8 @@ class Mpl:
             if scalar_filter_field is None:
                 scalar_filter_field = self.data.norm
             else:
-                scalar_filter_field = self.data.__class__(self.data.mesh, dim=1,
-                                                          value=scalar_filter_field)
+                scalar_filter_field = self.data.__class__(
+                    self.data.mesh, dim=1, value=scalar_filter_field)
         elif self.data.dim == 3:
             if vector_field is None:
                 vector_field = self.data
@@ -284,8 +285,8 @@ class Mpl:
             if scalar_filter_field is None:
                 scalar_filter_field = self.data.norm
             else:
-                scalar_filter_field = self.data.__class__(self.data.mesh, dim=1,
-                                                          value=scalar_filter_field)
+                scalar_filter_field = self.data.__class__(
+                    self.data.mesh, dim=1, value=scalar_filter_field)
 
         if scalar_field is not None:
             scalar_field.mpl.scalar(
@@ -452,7 +453,7 @@ class Mpl:
         values = self._filter_values(filter_field, points, values)
 
         cp = ax.imshow(np.array(values).reshape(n),
-                        origin='lower', extent=extent, **kwargs)
+                       origin='lower', extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp)
@@ -492,7 +493,7 @@ class Mpl:
                 colorwheel=colorwheel,
                 colorwheel_xlabel=colorwheel_xlabel,
                 colorwheel_ylabel=colorwheel_ylabel,
-               colorwheel_args=colorwheel_args,
+                colorwheel_args=colorwheel_args,
                 filename=filename,
                 **kwargs)
         elif self.data.dim == 3:
@@ -508,7 +509,7 @@ class Mpl:
                 colorwheel=colorwheel,
                 colorwheel_xlabel=colorwheel_xlabel,
                 colorwheel_ylabel=colorwheel_ylabel,
-               colorwheel_args=colorwheel_args,
+                colorwheel_args=colorwheel_args,
                 filename=filename,
                 **kwargs)
 
@@ -552,7 +553,7 @@ class Mpl:
 
         kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
         cp = ax.imshow(rgba.reshape((*n, 4)), origin='lower',
-                        extent=extent, **kwargs)
+                       extent=extent, **kwargs)
         if colorwheel:
             cw_ax = self.add_colorwheel(ax, **colorwheel_args)
             if colorwheel_xlabel is not None:
@@ -798,19 +799,20 @@ class Mpl:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def add_colorwheel(self, ax, width=1, height=1, loc='lower right', **kwargs):
+    def add_colorwheel(self, ax, width=1, height=1, loc='lower right',
+                       **kwargs):
         n = 200
         x = np.linspace(-1, 1, n)
         y = np.linspace(-1, 1, n)
-        X,Y = np.meshgrid(x, y)
+        X, Y = np.meshgrid(x, y)
 
         theta = np.arctan2(Y, X)
         r = np.sqrt(X**2 + Y**2)
 
         rgb = dfu.hls2rgb(hue=theta, lightness=r,
-                          lightness_clim=[0,1/(np.sqrt(2))])
+                          lightness_clim=[0, 1 / np.sqrt(2)])
 
-        theta = theta.reshape((n,n,1))
+        theta = theta.reshape((n, n, 1))
 
         rgba = np.zeros((n, n, 4))
         for i, xi in enumerate(x):
