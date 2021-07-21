@@ -9,7 +9,11 @@ import ubermagutil.units as uu
 
 class Mpl:
     def __init__(self, data):
+        if not data.mesh.attributes['isplane']:
+            msg = 'The field must be sliced before it can be plotted.'
+            raise ValueError(msg)
         self.data = data
+        self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
 
     def plot_simplified(self,
                         ax=None,
@@ -92,21 +96,10 @@ class Mpl:
             :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        if not self.data.mesh.attributes['isplane']:
-            msg = 'The field must be sliced before it can be plotted.'
-            raise ValueError(msg)
-
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        ax = self._setup_axis(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
-
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
-
-        planeaxis = dfu.raxesdict[self.data.mesh.attributes['planeaxis']]
 
         default_scalar_args = {}
         default_vector_args = {'use_color': False, 'colorbar': False}
@@ -131,9 +124,9 @@ class Mpl:
                 scalar_args['filter_field'] = self.data.norm
         elif self.data.dim == 3:
             vector_field = self.data
-            scalar_field = getattr(self.data, planeaxis)
+            scalar_field = getattr(self.data, self.planeaxis)
             if 'colorbar_label' not in scalar_args.keys():
-                scalar_args['colorbar_label'] = f'{planeaxis}-component'
+                scalar_args['colorbar_label'] = f'{self.planeaxis}-component'
             if 'filter_field' not in scalar_args.keys():
                 scalar_args['filter_field'] = self.data.norm
 
@@ -141,8 +134,7 @@ class Mpl:
         if vector_field is not None:
             vector_field.mpl.vector(ax=ax, multiplier=multiplier, **vector_args)
 
-        ax.set_xlabel(dfu.raxesdict[self.data.mesh.attributes['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.data.mesh.attributes['axis2']] + unit)
+        self._axis_labels(ax, multiplier)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
@@ -153,12 +145,10 @@ class Mpl:
              multiplier=None,
              scalar_field=None,
              scalar_filter_field=None,
-             scalar_lightness_field=None,
              scalar_cmap='viridis',
              scalar_clim=None,
              scalar_colorbar=True,
              scalar_colorbar_label=None,
-             scalar_lightness_clim=None,
              vector_field=None,
              vector_use_color=False,
              vector_color_field=None,
@@ -242,21 +232,10 @@ class Mpl:
             :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        if not self.data.mesh.attributes['isplane']:
-            msg = 'The field must be sliced before it can be plotted.'
-            raise ValueError(msg)
-
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        ax = self._setup_axis(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
-
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
-
-        planeaxis = dfu.raxesdict[self.data.mesh.attributes['planeaxis']]
 
         # Set up default values.
         if self.data.dim == 1:
@@ -296,9 +275,9 @@ class Mpl:
                 vector_field = self.data.__class__(self.data.mesh, dim=3,
                                                    value=vector_field)
             if scalar_field is None:
-                scalar_field = getattr(self.data, planeaxis)
+                scalar_field = getattr(self.data, self.planeaxis)
                 if scalar_colorbar_label is None:
-                    scalar_colorbar_label = f'{planeaxis}-component'
+                    scalar_colorbar_label = f'{self.planeaxis}-component'
             else:
                 scalar_field = self.data.__class__(self.data.mesh, dim=1,
                                                    value=scalar_field)
@@ -312,13 +291,11 @@ class Mpl:
             scalar_field.mpl.scalar(
                 ax=ax,
                 filter_field=scalar_filter_field,
-                lightness_field=scalar_lightness_field,
                 colorbar=scalar_colorbar,
                 colorbar_label=scalar_colorbar_label,
                 multiplier=multiplier,
                 cmap=scalar_cmap,
                 clim=scalar_clim,
-                lightness_clim=scalar_lightness_clim,
             )
         if vector_field is not None:
             vector_field.mpl.vector(
@@ -333,8 +310,7 @@ class Mpl:
                 clim=vector_clim,
             )
 
-        ax.set_xlabel(dfu.raxesdict[self.data.mesh.attributes['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.data.mesh.attributes['axis2']] + unit)
+        self._axis_labels(ax, multiplier)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
@@ -346,9 +322,6 @@ class Mpl:
                filter_field=None,
                colorbar=True,
                colorbar_label=None,
-               colorwheel=False,
-               lightness_field=None,
-               lightness_clim=None,
                filename=None,
                **kwargs):
         """Plots the scalar field on a plane.
@@ -455,52 +428,16 @@ class Mpl:
         .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        if not self.data.mesh.attributes['isplane']:
-            msg = 'The field must be sliced before it can be plotted.'
-            raise ValueError(msg)
-
-        if self.data.dim not in [1, 2]:
+        if self.data.dim > 1:
             msg = f'Cannot plot dim={self.data.dim} field.'
             raise ValueError(msg)
 
-        if self.data.dim == 2:
-            if lightness_field is None:
-                lightness_field = self.data.norm
-            return self.data.angle.mpl.scalar(ax=ax,
-                                              figsize=figsize,
-                                              filter_field=filter_field,
-                                              lightness_field=lightness_field,
-                                              colorbar=colorbar,
-                                              colorwheel=colorwheel,
-                                              multiplier=multiplier,
-                                              filename=filename,
-                                              lightness_clim=lightness_clim,
-                                              **kwargs)
-
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        ax = self._setup_axis(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
-
         points, values = map(list, zip(*list(self.data)))
-
-        # Create a mask.
-        if filter_field is not None:
-            if filter_field.dim != 1:
-                msg = f'Cannot use {filter_field.dim=} filter_field.'
-                raise ValueError(msg)
-
-            mask = []
-            for i, point in enumerate(points):
-                if filter_field(point) == 0:
-                    mask.append(1)
-                else:
-                    mask.append(0)
 
         pmin = np.divide(self.data.mesh.region.pmin, multiplier)
         pmax = np.divide(self.data.mesh.region.pmax, multiplier)
@@ -512,48 +449,124 @@ class Mpl:
         n = (self.data.mesh.n[self.data.mesh.attributes['axis2']],
              self.data.mesh.n[self.data.mesh.attributes['axis1']])
 
-        if lightness_field is not None:
-            if lightness_field.dim != 1:
-                msg = f'Cannot use {lightness_field.dim=} lightness_field.'
-                raise ValueError(msg)
+        values = self._filter_values(filter_field, points, values)
 
-            lightness = [lightness_field(i) for i in self.data.mesh]
-
-            rgb = dfu.hls2rgb(hue=values,
-                              lightness=lightness,
-                              saturation=None,
-                              lightness_clim=lightness_clim).squeeze()
-
-            if filter_field is not None:
-                for i, mask_value in enumerate(mask):
-                    if mask_value == 1:
-                        rgb[i, :] = np.nan
-
-            kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-            cp = ax.imshow(rgb.reshape((*n, 3)), origin='lower',
-                           extent=extent, **kwargs)
-
-        else:
-            if filter_field is not None:
-                for i, mask_value in enumerate(mask):
-                    if mask_value == 1:
-                        values[i] = np.nan
-
-            cp = ax.imshow(np.array(values).reshape(n),
-                           origin='lower', extent=extent, **kwargs)
+        cp = ax.imshow(np.array(values).reshape(n),
+                        origin='lower', extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
-        if colorwheel:
-            self.add_colorwheel(ax)
 
-        ax.set_xlabel(dfu.raxesdict[self.data.mesh.attributes['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.data.mesh.attributes['axis2']] + unit)
+        self._axis_labels(ax, multiplier)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+
+    def lightness(self,
+                  ax=None,
+                  figsize=None,
+                  multiplier=None,
+                  filter_field=None,
+                  lightness_field=None,
+                  clim=None,
+                  colorwheel=True,
+                  colorwheel_xlabel=None,
+                  colorwheel_ylabel=None,
+                  colorwheel_args={},
+                  filename=None,
+                  **kwargs):
+        """Lightness plots.
+        """
+        if self.data.dim == 2:
+            if lightness_field is None:
+                lightness_field = self.data.norm
+            return self.data.angle.mpl.lightness(
+                ax=ax,
+                figsize=figsize,
+                multiplier=multiplier,
+                filter_field=filter_field,
+                lightness_field=lightness_field,
+                clim=clim,
+                colorwheel=colorwheel,
+                colorwheel_xlabel=colorwheel_xlabel,
+                colorwheel_ylabel=colorwheel_ylabel,
+               colorwheel_args=colorwheel_args,
+                filename=filename,
+                **kwargs)
+        elif self.data.dim == 3:
+            if lightness_field is None:
+                lightness_field = getattr(self.data, self.planeaxis)
+            return self.data.angle.mpl.lightness(
+                ax=ax,
+                figsize=figsize,
+                multiplier=multiplier,
+                filter_field=filter_field,
+                lightness_field=lightness_field,
+                clim=clim,
+                colorwheel=colorwheel,
+                colorwheel_xlabel=colorwheel_xlabel,
+                colorwheel_ylabel=colorwheel_ylabel,
+               colorwheel_args=colorwheel_args,
+                filename=filename,
+                **kwargs)
+
+        ax = self._setup_axis(ax, figsize)
+
+        if multiplier is None:
+            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+
+        points, values = map(list, zip(*list(self.data)))
+
+        pmin = np.divide(self.data.mesh.region.pmin, multiplier)
+        pmax = np.divide(self.data.mesh.region.pmax, multiplier)
+
+        extent = [pmin[self.data.mesh.attributes['axis1']],
+                  pmax[self.data.mesh.attributes['axis1']],
+                  pmin[self.data.mesh.attributes['axis2']],
+                  pmax[self.data.mesh.attributes['axis2']]]
+        n = (self.data.mesh.n[self.data.mesh.attributes['axis2']],
+             self.data.mesh.n[self.data.mesh.attributes['axis1']])
+
+        if lightness_field is None:
+            lightness_field = self.data.norm
+        else:
+            if lightness_field.dim != 1:
+                msg = f'Cannot use {lightness_field.dim=} lightness_field.'
+                raise ValueError(msg)
+
+        lightness = [lightness_field(i) for i in self.data.mesh]
+
+        # values = self._filter_values(filter_field, points, values)
+        rgb = dfu.hls2rgb(hue=values,
+                          lightness=lightness,
+                          saturation=None,
+                          lightness_clim=clim).squeeze()
+
+        # TODO: filter field affects color range
+        rgb = self._filter_values(filter_field, points, rgb)
+        rgba = np.ones((len(rgb), 4))
+        rgba[..., :3] = rgb
+        rgba[..., 3][np.isnan(rgb[:, 0])] = 0
+
+        kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
+        cp = ax.imshow(rgba.reshape((*n, 4)), origin='lower',
+                        extent=extent, **kwargs)
+        if colorwheel:
+            cw_ax = self.add_colorwheel(ax, **colorwheel_args)
+            if colorwheel_xlabel is not None:
+                cw_ax.arrow(100, 100, 60, 0, width=5, fc='w', ec='w')
+                cw_ax.annotate(colorwheel_xlabel, (115, 140), c='w')
+            if colorwheel_ylabel is not None:
+                cw_ax.arrow(100, 100, 0, -60, width=5, fc='w', ec='w')
+                cw_ax.annotate(colorwheel_ylabel, (40, 80), c='w')
+
+        self._axis_labels(ax, multiplier)
+
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        return rgb
 
     def vector(self,
                ax=None,
@@ -669,23 +682,14 @@ class Mpl:
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
         """
-        if not self.data.mesh.attributes['isplane']:
-            msg = 'the field must be sliced before it can be plotted.'
-            raise ValueError(msg)
-
         if self.data.dim not in [2, 3]:
             msg = f'cannot plot dim={self.data.dim} field.'
             raise ValueError(msg)
 
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        ax = self._setup_axis(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
-
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -702,8 +706,7 @@ class Mpl:
                 if self.data.dim == 2:
                     msg = 'automatic coloring is only supported for 3d fields.'
                     raise ValueError(msg)
-                planeaxis = dfu.raxesdict[self.data.mesh.attributes['planeaxis']]
-                color_field = getattr(self.data, planeaxis)
+                color_field = getattr(self.data, self.planeaxis)
 
             colors = [color_field(p) for p in points]
 
@@ -732,8 +735,7 @@ class Mpl:
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
-        ax.set_xlabel(dfu.raxesdict[self.data.mesh.attributes['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.data.mesh.attributes['axis2']] + unit)
+        self._axis_labels(ax, multiplier)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
@@ -760,40 +762,19 @@ class Mpl:
             :context: close-figs
 
         """
-        if not self.data.mesh.attributes['isplane']:
-            msg = 'The field must be sliced before it can be plotted.'
-            raise ValueError(msg)
-
         if self.data.dim != 1:
             msg = f'Cannot plot dim={self.data.dim} field.'
             raise ValueError(msg)
 
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        ax = self._setup_axis(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
-
         points, values = map(list, zip(*list(self.data)))
 
-        # Create a mask.
         if filter_field is not None:
-            if filter_field.dim != 1:
-                msg = f'Cannot use {filter_field.dim=} filter_field.'
-                raise ValueError(msg)
-
-            mask = []
-            for i, point in enumerate(points):
-                if filter_field(point) == 0:
-                    mask.append(1)
-                else:
-                    mask.append(0)
-
-        if filter_field is not None:
+            mask = self._filter_field_mask(filter_field, points)
             for i, mask_value in enumerate(mask):
                 if mask_value == 1:
                     values[i] = np.nan
@@ -816,8 +797,7 @@ class Mpl:
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
-        ax.set_xlabel(dfu.raxesdict[self.data.mesh.attributes['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.data.mesh.attributes['axis2']] + unit)
+        self._axis_labels(ax, multiplier)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
@@ -848,3 +828,48 @@ class Mpl:
         ax_ins.imshow(rgba[:, ::-1, :])
         ax_ins.axis('off')
         return ax_ins
+
+    def _setup_axis(self, ax, figsize):
+        if ax is None:
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+        return ax
+
+    def _filter_values(self, filter_field, points, values):
+        print(filter_field)
+        if filter_field is None:
+            return values
+
+        if filter_field.dim != 1:
+            msg = f'Cannot use {filter_field.dim=} filter_field.'
+            raise ValueError(msg)
+
+        mask = []
+        for i, point in enumerate(points):
+            if filter_field(point) == 0:
+                mask.append(1)
+            else:
+                mask.append(0)
+
+        for i, mask_value in enumerate(mask):
+            if mask_value == 1:
+                values[i] = np.nan
+        return values
+
+    def _axis_labels(self, ax, multiplier):
+        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
+                rf'{self.data.mesh.attributes["unit"]})')
+        ax.set_xlabel(dfu.raxesdict[self.data.mesh.attributes['axis1']] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.data.mesh.attributes['axis2']] + unit)
+
+    def __dir__(self):
+        dirlist = dir(self.__class__)
+        if self.data.dim == 1:
+            need_removing = ['mpl_vector']
+        else:
+            need_removing = ['mpl_scalar']
+
+        for attr in need_removing:
+            dirlist.remove(attr)
+
+        return dirlist
