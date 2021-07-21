@@ -773,11 +773,7 @@ class Mpl:
 
         points, values = map(list, zip(*list(self.data)))
 
-        if filter_field is not None:
-            mask = self._filter_field_mask(filter_field, points)
-            for i, mask_value in enumerate(mask):
-                if mask_value == 1:
-                    values[i] = np.nan
+        values = self._filter_values(filter_field, points, values)
 
         n = (self.data.mesh.n[self.data.mesh.attributes['axis2']],
              self.data.mesh.n[self.data.mesh.attributes['axis1']])
