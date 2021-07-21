@@ -122,6 +122,8 @@ class Mpl:
         if self.data.dim == 1:
             scalar_field = self.data
             vector_field = None
+            if 'filter_field' not in scalar_args.keys():
+                scalar_args['filter_field'] = self.data.norm
         if self.data.dim == 2:
             scalar_field = self.data
             vector_field = self.data
@@ -266,6 +268,11 @@ class Mpl:
             if vector_field is not None:
                 vector_field = self.data.__class__(self.data.mesh, dim=3,
                                                    value=vector_field)
+            if scalar_filter_field is None:
+                scalar_filter_field = self.data.norm
+            else:
+                scalar_filter_field = self.data.__class__(self.data.mesh, dim=1,
+                                                          value=scalar_filter_field)
         elif self.data.dim == 2:
             if vector_field is None:
                 vector_field = self.data
