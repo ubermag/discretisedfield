@@ -484,3 +484,15 @@ class K3d:
 
         plot.axes = [i + r'\,\text{{{}}}'.format(unit)
                      for i in dfu.axesdict.keys()]
+
+    def __dir__(self):
+        dirlist = dir(self.__class__)
+        if self.data.dim == 1:
+            need_removing = ['k3d_vector']
+        else:
+            need_removing = ['k3d_scalar', 'k3d_nonzero']
+
+        for attr in need_removing:
+            dirlist.remove(attr)
+
+        return dirlist

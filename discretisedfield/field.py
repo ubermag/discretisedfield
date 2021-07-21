@@ -692,12 +692,11 @@ class Field:
         if self.dim in (2, 3):
             dirlist += list(dfu.axesdict.keys())[:self.dim]
         if self.dim == 1:
-            need_removing = ['div', 'curl', 'orientation', 'mpl_vector',
-                             'k3d_vector']
+            need_removing = ['div', 'curl', 'orientation']
         if self.dim == 2:
-            need_removing = ['grad', 'curl', 'k3d_scalar', 'k3d_nonzero']
+            need_removing = ['grad', 'curl', 'k3d']
         if self.dim == 3:
-            need_removing = ['grad', 'mpl_scalar', 'k3d_scalar', 'k3d_nonzero']
+            need_removing = ['grad']
 
         for attr in need_removing:
             dirlist.remove(attr)
