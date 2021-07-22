@@ -16,13 +16,6 @@ class Mpl:
     """
 
     def __init__(self, data):
-        """
-
-        Parameters
-        ----------
-        data : df.Field
-            Field cut with a plane.
-        """
         if not data.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
@@ -130,7 +123,6 @@ class Mpl:
             if key not in vector_args.keys():
                 vector_args[key] = val
 
-        print(scalar_args)
         # Set up default values.
         if self.data.dim == 1:
             scalar_field = self.data
@@ -855,7 +847,6 @@ class Mpl:
         return ax
 
     def _filter_values(self, filter_field, points, values):
-        print(filter_field)
         if filter_field is None:
             return values
 
