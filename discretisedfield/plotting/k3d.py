@@ -11,12 +11,13 @@ class K3d:
     """K3d plotting.
 
     """
+
     def __init__(self, data):
         self.data = data
 
     def nonzero(self, plot=None, color=dfu.cp_int[0], multiplier=None,
-                    interactive_field=None, **kwargs):
-        """``k3d`` plot of non-zero discretisation cells.
+                interactive_field=None, **kwargs):
+        r"""``k3d`` plot of non-zero discretisation cells.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
         automatically. The colour of the non-zero discretisation cells can be
