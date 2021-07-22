@@ -1,5 +1,3 @@
-import inspect
-import itertools
 import numbers
 import struct
 
@@ -10,7 +8,6 @@ import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 import ubermagutil.typesystem as ts
-import ubermagutil.units as uu
 
 # TODO: tutorials, line operations
 
