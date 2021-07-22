@@ -2,13 +2,27 @@ import mpl_toolkits.axes_grid1.inset_locator
 import matplotlib.pyplot as plt
 import numpy as np
 
-import discretisedfield as df
 import discretisedfield.util as dfu
 import ubermagutil.units as uu
 
 
 class Mpl:
+    """Matplotlib based plotting.
+
+    Parameters
+    ----------
+    data : df.Field
+        Field cut with a plane.
+    """
+
     def __init__(self, data):
+        """
+
+        Parameters
+        ----------
+        data : df.Field
+            Field cut with a plane.
+        """
         if not data.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
@@ -19,10 +33,10 @@ class Mpl:
                         ax=None,
                         figsize=None,
                         multiplier=None,
-                        scalar_args={},
-                        vector_args={},
+                        scalar_args=None,
+                        vector_args=None,
                         filename=None):
-        """Plots the field on a plane.
+        """Plot the field on a plane.
 
         This is a convenience method used for quick plotting, which combines
         ``discretisedfield.Field.mpl_scalar`` and
@@ -101,6 +115,11 @@ class Mpl:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
+        if scalar_args is None:
+            scalar_args = {}
+        if vector_args is None:
+            vector_args = {}
+
         default_scalar_args = {}
         default_vector_args = {'use_color': False, 'colorbar': False}
 
@@ -111,18 +130,19 @@ class Mpl:
             if key not in vector_args.keys():
                 vector_args[key] = val
 
+        print(scalar_args)
         # Set up default values.
         if self.data.dim == 1:
             scalar_field = self.data
             vector_field = None
             if 'filter_field' not in scalar_args.keys():
                 scalar_args['filter_field'] = self.data.norm
-        if self.data.dim == 2:
+        elif self.data.dim == 2:
             scalar_field = self.data
             vector_field = self.data
             if 'filter_field' not in scalar_args.keys():
                 scalar_args['filter_field'] = self.data.norm
-        elif self.data.dim == 3:
+        else:
             vector_field = self.data
             scalar_field = getattr(self.data, self.planeaxis)
             if 'colorbar_label' not in scalar_args.keys():
@@ -159,7 +179,7 @@ class Mpl:
              vector_colorbar_label=None,
              vector_scale=None,
              filename=None):
-        """Plots the field on a plane.
+        """Plot the field on a plane.
 
         This is a convenience method used for quick plotting, which combines
         ``discretisedfield.Field.mpl_scalar`` and
@@ -325,7 +345,7 @@ class Mpl:
                colorbar_label=None,
                filename=None,
                **kwargs):
-        """Plots the scalar field on a plane.
+        r"""Plot the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a scalar field
@@ -475,7 +495,7 @@ class Mpl:
                   colorwheel=True,
                   colorwheel_xlabel=None,
                   colorwheel_ylabel=None,
-                  colorwheel_args={},
+                  colorwheel_args=None,
                   filename=None,
                   **kwargs):
         """Lightness plots.
@@ -552,9 +572,11 @@ class Mpl:
         rgba[..., 3][np.isnan(rgb[:, 0])] = 0
 
         kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-        cp = ax.imshow(rgba.reshape((*n, 4)), origin='lower',
-                       extent=extent, **kwargs)
+        ax.imshow(rgba.reshape((*n, 4)), origin='lower',
+                  extent=extent, **kwargs)
         if colorwheel:
+            if colorwheel_args is None:
+                colorwheel_args = {}
             cw_ax = self.add_colorwheel(ax, **colorwheel_args)
             if colorwheel_xlabel is not None:
                 cw_ax.arrow(100, 100, 60, 0, width=5, fc='w', ec='w')
@@ -567,7 +589,6 @@ class Mpl:
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-        return rgb
 
     def vector(self,
                ax=None,
@@ -579,7 +600,7 @@ class Mpl:
                colorbar_label=None,
                filename=None,
                **kwargs):
-        """plots the vector field on a plane.
+        r"""Plot the vector field on a plane.
 
         before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). in addition, field must be a vector field
@@ -834,6 +855,7 @@ class Mpl:
         return ax
 
     def _filter_values(self, filter_field, points, values):
+        print(filter_field)
         if filter_field is None:
             return values
 
