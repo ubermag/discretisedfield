@@ -106,34 +106,33 @@ class Mpl:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        default_scalar_args = {}
-        default_vector_args = {'use_color': False, 'colorbar': False}
+        # Define defaults and update with user-passed dicts.
+        scalar_kwargs = {}
+        vector_kwargs = {'use_color': False, 'colorbar': False}
+        scalar_kwargs.update(scalar_args)
+        vector_kwargs.update(vector_args)
 
-        for key, val in default_scalar_args.items():
-            if key not in scalar_args.keys():
-                scalar_args[key] = val
-        for key, val in default_vector_args.items():
-            if key not in vector_args.keys():
-                vector_args[key] = val
-
-        # Set up default values.
+        # Set up defaults.
         if self.data.dim == 1:
             scalar_field = self.data
             vector_field = None
-            if 'filter_field' not in scalar_args.keys():
-                scalar_args['filter_field'] = self.data.norm
+            # What is the norm here if dim = 1?
+            scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
+                                                              self.data.norm)
+
         elif self.data.dim == 2:
             scalar_field = self.data
             vector_field = self.data
-            if 'filter_field' not in scalar_args.keys():
-                scalar_args['filter_field'] = self.data.norm
+            scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
+                                                              self.data.norm)
+
         else:
             vector_field = self.data
             scalar_field = getattr(self.data, self.planeaxis)
-            if 'colorbar_label' not in scalar_args.keys():
-                scalar_args['colorbar_label'] = f'{self.planeaxis}-component'
-            if 'filter_field' not in scalar_args.keys():
-                scalar_args['filter_field'] = self.data.norm
+            scalar_kwargs['colorbar_label'] = scalar_kwargs.get('colorbar_label',
+                                                                f'{self.planeaxis}-component')
+            scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
+                                                              self.data.norm)
 
         scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_args)
         if vector_field is not None:
