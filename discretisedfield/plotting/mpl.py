@@ -22,7 +22,7 @@ class Mpl:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
-        self.data = data
+        self.data = data  # TODO: Consider renaming data to field.
         self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
 
     def plot_simplified(self,
@@ -842,6 +842,7 @@ class Mpl:
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
+
         return ax
 
     def _filter_values(self, filter_field, points, values):
