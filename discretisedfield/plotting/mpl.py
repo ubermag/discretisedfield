@@ -104,7 +104,7 @@ class Mpl:
             :py:func:`~discretisedfield.plotting.Mpl.vector`
 
         """
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
                       if multiplier is None else None)
@@ -239,7 +239,7 @@ class Mpl:
             :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -439,10 +439,10 @@ class Mpl:
             msg = f'Cannot plot {self.data.dim=} field.'
             raise ValueError(msg)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else None)
+                      if multiplier is None else multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -520,7 +520,7 @@ class Mpl:
                 filename=filename,
                 **kwargs)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -695,7 +695,7 @@ class Mpl:
             msg = f'cannot plot dim={self.data.dim} field.'
             raise ValueError(msg)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -775,7 +775,7 @@ class Mpl:
             msg = f'Cannot plot dim={self.data.dim} field.'
             raise ValueError(msg)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -835,7 +835,7 @@ class Mpl:
         ax_ins.axis('off')
         return ax_ins
 
-    def _setup_axis(self, ax, figsize):
+    def _setup_axes(self, ax, figsize):
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
@@ -847,11 +847,11 @@ class Mpl:
             return values
 
         if filter_field.dim != 1:
-            msg = f'Cannot use {filter_field.dim=} filter_field.'
+            msg = f'Cannot use {filter_field.dim=}.'
             raise ValueError(msg)
   
         return [values[i] if filter_field(point) != 0 else np.nan
-                for i, point in enumerate(points))]
+                for i, point in enumerate(points)]
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
