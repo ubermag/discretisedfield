@@ -29,8 +29,8 @@ class Mpl:
                         ax=None,
                         figsize=None,
                         multiplier=None,
-                        scalar_args=None,
-                        vector_args=None,
+                        scalar_args={},
+                        vector_args={},
                         filename=None):
         """Plot the field on a plane.
 
@@ -105,11 +105,6 @@ class Mpl:
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
-
-        if scalar_args is None:
-            scalar_args = {}
-        if vector_args is None:
-            vector_args = {}
 
         default_scalar_args = {}
         default_vector_args = {'use_color': False, 'colorbar': False}
