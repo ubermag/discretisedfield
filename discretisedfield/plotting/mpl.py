@@ -116,23 +116,22 @@ class Mpl:
         if self.data.dim == 1:
             scalar_field = self.data
             vector_field = None
-            # What is the norm here if dim = 1?
-            scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
-                                                              self.data.norm)
 
         elif self.data.dim == 2:
             scalar_field = self.data
             vector_field = self.data
-            scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
-                                                              self.data.norm)
 
         else:
             vector_field = self.data
             scalar_field = getattr(self.data, self.planeaxis)
             scalar_kwargs['colorbar_label'] = scalar_kwargs.get('colorbar_label',
                                                                 f'{self.planeaxis}-component')
-            scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
-                                                              self.data.norm)
+        
+        # Since this is done in all three branches of if statement, I expose it here.
+        # TODO: Doule check if I miss something.
+        # TODO: What is the norm here if dim == 1?
+        scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
+                                                            self.data.norm)
 
         scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_args)
         if vector_field is not None:
