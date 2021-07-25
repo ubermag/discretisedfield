@@ -26,6 +26,8 @@ class Mpl:
         self.data = data  # TODO: Consider renaming data to field.
         self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
 
+
+    # TODO: I assume the functionality from plot is being moved to plot_simplified?
     def plot_simplified(self,
                         ax=None,
                         figsize=None,
@@ -107,13 +109,14 @@ class Mpl:
         multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
                       if multiplier is None else None)
 
-        # Define defaults and update with user-passed dicts.
+        # Define defaults and update with user-passed dictionaries.
         scalar_kwargs = {}
         vector_kwargs = {'use_color': False, 'colorbar': False}
         scalar_kwargs.update(scalar_args)
         vector_kwargs.update(vector_args)
 
-        # Set up defaults.
+        # Set up default scalar and vector fields.
+        # TODO: Do we allow user to specify what scalar and vector fields are? Did we have that before?
         if self.data.dim == 1:
             scalar_field = self.data
             vector_field = None
@@ -325,7 +328,7 @@ class Mpl:
                multiplier=None,
                filter_field=None,
                colorbar=True,
-               colorbar_label=None,
+               colorbar_label=None,  # TODO: Can we maybe use an empty string here?
                filename=None,
                **kwargs):
         r"""Plot the scalar field on a plane.
@@ -433,19 +436,20 @@ class Mpl:
 
         """
         if self.data.dim > 1:
-            msg = f'Cannot plot dim={self.data.dim} field.'
+            msg = f'Cannot plot {self.data.dim=} field.'
             raise ValueError(msg)
 
         ax = self._setup_axis(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else None)
 
         points, values = map(list, zip(*list(self.data)))
 
         pmin = np.divide(self.data.mesh.region.pmin, multiplier)
         pmax = np.divide(self.data.mesh.region.pmax, multiplier)
 
+        # TODO: After refactoring code, maybe extent and n can become part of PlaneMesh.
         extent = [pmin[self.data.mesh.attributes['axis1']],
                   pmax[self.data.mesh.attributes['axis1']],
                   pmin[self.data.mesh.attributes['axis2']],
@@ -845,18 +849,9 @@ class Mpl:
         if filter_field.dim != 1:
             msg = f'Cannot use {filter_field.dim=} filter_field.'
             raise ValueError(msg)
-
-        mask = []
-        for i, point in enumerate(points):
-            if filter_field(point) == 0:
-                mask.append(1)
-            else:
-                mask.append(0)
-
-        for i, mask_value in enumerate(mask):
-            if mask_value == 1:
-                values[i] = np.nan
-        return values
+  
+        return [values[i] if filter_field(point) != 0 else np.nan
+                for i, point in enumerate(points))]
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
@@ -867,7 +862,7 @@ class Mpl:
     def __dir__(self):
         dirlist = dir(self.__class__)
         if self.data.dim == 1:
-            need_removing = ['mpl_vector']
+            need_removing = ['mpl_vector']  # Needs updating.
         else:
             need_removing = ['mpl_scalar']
 
