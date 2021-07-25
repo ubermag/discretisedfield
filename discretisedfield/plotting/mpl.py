@@ -12,10 +12,11 @@ class Mpl:
     Parameters
     ----------
     data : df.Field
-    
+
         Field sliced with a plane, e.g. field.plane('x').
 
     """
+
     def __init__(self, data):
         # We never allow plotting fields that are not sliced.
         if not data.mesh.attributes['isplane']:
@@ -103,8 +104,8 @@ class Mpl:
         """
         ax = self._setup_axis(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else None)
 
         # Define defaults and update with user-passed dicts.
         scalar_kwargs = {}
@@ -126,17 +127,16 @@ class Mpl:
             scalar_field = getattr(self.data, self.planeaxis)
             scalar_kwargs['colorbar_label'] = scalar_kwargs.get('colorbar_label',
                                                                 f'{self.planeaxis}-component')
-        
+
         # Since this is done in all three branches of if statement, I expose it here.
         # TODO: Doule check if I miss something.
         # TODO: What is the norm here if dim == 1?
         scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
-                                                            self.data.norm)
+                                                          self.data.norm)
 
-        scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_args)
+        scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_kwargs)
         if vector_field is not None:
-            vector_field.mpl.vector(ax=ax, multiplier=multiplier,
-                                    **vector_args)
+            vector_field.mpl.vector(ax=ax, multiplier=multiplier, **vector_args)
 
         self._axis_labels(ax, multiplier)
 
