@@ -470,6 +470,7 @@ class Mpl:
         self._axis_labels(ax, multiplier)
 
         if filename is not None:
+            # TODO: We use pad inches 0 and 0.02. We should figure out which one is the best.
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def lightness(self,
