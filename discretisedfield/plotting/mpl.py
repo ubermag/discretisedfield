@@ -7,18 +7,21 @@ import ubermagutil.units as uu
 
 
 class Mpl:
-    """Matplotlib based plotting.
+    """Matplotlib-based plotting convenience methods.
 
     Parameters
     ----------
     data : df.Field
-        Field cut with a plane.
-    """
+    
+        Field sliced with a plane, e.g. field.plane('x').
 
+    """
     def __init__(self, data):
+        # We never allow plotting fields that are not sliced.
         if not data.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
+
         self.data = data
         self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
 
@@ -31,20 +34,22 @@ class Mpl:
                         filename=None):
         """Plot the field on a plane.
 
-        This is a convenience method used for quick plotting, which combines
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` methods. Depending on the
-        dimensionality of the field, it determines what plot is going to be
-        shown. For a scalar field only ``discretisedfield.Field.mpl_scalar`` is
-        used, whereas for a vector field, both
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` plots are shown, where vector
-        plot shows the in-plane components of the vector and scalar plot
+        This is a convenience method used for quick plotting, and it combines
+        ``discretisedfield.plotting.Mpl.scalar`` and
+        ``discretisedfield.plotting.Mpl.vector`` methods. Depending on the
+        dimensionality of the field's value, it automatically determines what
+        plot is going to be shown. For a scalar field, only
+        ``discretisedfield.plotting.Mpl.scalar`` is used, whereas for a vector
+        field, both ``discretisedfield.plotting.Mpl.scalar`` and
+        ``discretisedfield.plotting.Mpl.vector`` plots are shown so that vector
+        plot visualises the in-plane components of the vector and scalar plot
         encodes the out-of-plane component.
 
         All the default values can be changed by passing arguments, which are
         then used in subplots. The way parameters of this function are used to
         create plots can be understood with the following code snippet.
+
+        # TODO: Review example after API stabilises.
 
         .. code-block::
 
@@ -72,19 +77,12 @@ class Mpl:
 
             Therefore, to understand the meaning of the arguments which can be
             passed to this method, please refer to
-            ``discretisedfield.Field.mpl_scalar`` and
-            ``discretisedfield.Field.mpl_vector`` documentation.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not been sliced with a plane.
+            ``discretisedfield.plotting.Mpl.scalar`` and
+            ``discretisedfield.plotting.Mpl.vector`` documentation.
 
         Example
         -------
-        .. plot::
-            :context: close-figs
+        .. plot:: :context: close-figs
 
             1. Visualising the field using ``matplotlib``.
 
@@ -95,12 +93,12 @@ class Mpl:
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl()
+            >>> field.plane(z=50, n=(5, 5)).mpl.plot_simplified()
 
         .. seealso::
 
-            :py:func:`~discretisedfield.Field.mpl_scalar`
-            :py:func:`~discretisedfield.Field.mpl_vector`
+            :py:func:`~discretisedfield.plotting.Mpl.scalar`
+            :py:func:`~discretisedfield.plotting.Mpl.vector`
 
         """
         ax = self._setup_axis(ax, figsize)
