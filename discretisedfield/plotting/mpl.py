@@ -32,8 +32,8 @@ class Mpl:
                         ax=None,
                         figsize=None,
                         multiplier=None,
-                        scalar_args={},
-                        vector_args={},
+                        scalar_kwargs=None,
+                        vector_kwargs=None,
                         filename=None):
         """Plot the field on a plane.
 
@@ -110,10 +110,10 @@ class Mpl:
                       if multiplier is None else None)
 
         # Define defaults and update with user-passed dictionaries.
-        scalar_kwargs = {}
-        vector_kwargs = {'use_color': False, 'colorbar': False}
-        scalar_kwargs.update(scalar_args)
-        vector_kwargs.update(vector_args)
+        scalar_kwargs = {} if scalar_kwargs is None else scalar_kwargs
+        vector_kwargs = {} if vector_kwargs is None else vector_kwargs
+        vector_kwargs.setdefault('use_color', False)
+        vector_kwargs.setdefault('colorbar', False)
 
         # Set up default scalar and vector fields.
         # TODO: Do we allow user to specify what scalar and vector fields are? Did we have that before?
@@ -128,8 +128,8 @@ class Mpl:
         else:
             vector_field = self.data
             scalar_field = getattr(self.data, self.planeaxis)
-            scalar_kwargs['colorbar_label'] = scalar_kwargs.get('colorbar_label',
-                                                                f'{self.planeaxis}-component')
+            scalar_kwargs['colorbar_label'] = scalar_kwargs.get(
+                'colorbar_label', f'{self.planeaxis}-component')
 
         # Since this is done in all three branches of if statement, I expose it here.
         # TODO: Doule check if I miss something.
@@ -141,7 +141,8 @@ class Mpl:
             scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
                                     **scalar_kwargs)
         if vector_field is not None:
-            vector_field.mpl.vector(ax=ax, multiplier=multiplier, **vector_args)
+            vector_field.mpl.vector(ax=ax, multiplier=multiplier,
+                                    **vector_kwargs)
 
         self._axis_labels(ax, multiplier)
 
