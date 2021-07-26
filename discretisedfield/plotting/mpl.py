@@ -106,8 +106,7 @@ class Mpl:
         """
         ax = self._setup_axes(ax, figsize)
 
-        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else multiplier)
+        multiplier = self._setup_multiplier(multiplier)
 
         # Define defaults and update with user-passed dictionaries.
         scalar_kwargs = {} if scalar_kwargs is None else scalar_kwargs
@@ -244,8 +243,7 @@ class Mpl:
         """
         ax = self._setup_axes(ax, figsize)
 
-        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else multiplier)
+        multiplier = self._setup_multiplier(multiplier)
 
         # Set up default values.
         if self.data.dim == 1:
@@ -444,8 +442,7 @@ class Mpl:
 
         ax = self._setup_axes(ax, figsize)
 
-        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else multiplier)
+        multiplier = self._setup_multiplier(multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -526,8 +523,7 @@ class Mpl:
 
         ax = self._setup_axes(ax, figsize)
 
-        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else multiplier)
+        multiplier = self._setup_multiplier(multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -701,8 +697,7 @@ class Mpl:
 
         ax = self._setup_axes(ax, figsize)
 
-        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else multiplier)
+        multiplier = self._setup_multiplier(multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -781,8 +776,7 @@ class Mpl:
 
         ax = self._setup_axes(ax, figsize)
 
-        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else multiplier)
+        multiplier = self._setup_multiplier(multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -846,6 +840,10 @@ class Mpl:
 
         return ax
 
+    def _setup_multiplier(self, multiplier):
+        return (uu.si_max_multiplier(self.data.mesh.region.edges)
+                if multiplier is None else multiplier)
+
     def _filter_values(self, filter_field, points, values):
         if filter_field is None:
             return values
@@ -853,7 +851,7 @@ class Mpl:
         if filter_field.dim != 1:
             msg = f'Cannot use {filter_field.dim=}.'
             raise ValueError(msg)
-  
+
         return [values[i] if filter_field(point) != 0 else np.nan
                 for i, point in enumerate(points)]
 
