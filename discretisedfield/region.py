@@ -1,34 +1,34 @@
 import k3d
+import functools
 import numpy as np
 import matplotlib.pyplot as plt
 import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
-import functools
 
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True))
 class Region:
-    """A cuboid region.
+    r"""Region.
 
-    A cuboid region spans between two corner points :math:`\\mathbf{p}_{1}` and
-    :math:`\\mathbf{p}_{2}`. Points ``p1`` and ``p2`` can be any two diagonally
-    opposite points. If any of the edge lengths of the cuboid region is zero,
-    ``ValueError`` is raised.
+    A cuboid region spans between two corner points :math:`\mathbf{p}_1` and
+    :math:`\mathbf{p}_2`. Points ``p1`` and ``p2`` can be any two
+    diagonally-opposite points. If any of the edge lengths of the cuboid region
+    is zero, ``ValueError`` is raised.
 
     Parameters
     ----------
     p1 / p2 : (3,) array_like
 
-        Diagonnaly opposite corner points :math:`\\mathbf{p}_{i} = (p_{x},
-        p_{y}, p_{z})`.
+        Diagonally-opposite corner points of the region :math:`\mathbf{p}_i = (p_x,
+        p_y, p_z)`.
 
     Raises
     ------
     ValueError
 
-        If any region's edge length is zero.
+        If any of the region's edge lengths is zero.
 
     Examples
     --------
@@ -39,10 +39,11 @@ class Region:
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> region = df.Region(p1=p1, p2=p2)
+    ...
     >>> region
     Region(...)
 
-    2. An attempt to define a region, where one of the edge lengths is zero.
+    2. An attempt to define a region whose one of the edge lengths is zero.
 
     >>> # The edge length in the z-direction is zero.
     >>> p1 = (-25, 3, 1)
@@ -53,6 +54,7 @@ class Region:
     ValueError: ...
 
     """
+
     def __init__(self, p1, p2):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
