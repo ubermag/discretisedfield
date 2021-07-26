@@ -1,5 +1,4 @@
 import k3d
-import random
 import numpy as np
 import matplotlib.pyplot as plt
 import ubermagutil.units as uu
