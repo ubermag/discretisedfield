@@ -7,44 +7,52 @@ import ubermagutil.units as uu
 
 
 class Mpl:
-    """Matplotlib based plotting.
+    """Matplotlib-based plotting convenience methods.
 
     Parameters
     ----------
     data : df.Field
-        Field cut with a plane.
+
+        Field sliced with a plane, e.g. field.plane('x').
+
     """
 
     def __init__(self, data):
+        # We never allow plotting fields that are not sliced.
         if not data.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
-        self.data = data
+
+        self.data = data  # TODO: Consider renaming data to field.
         self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
 
+
+    # TODO: I assume the functionality from plot is being moved to plot_simplified?
     def plot_simplified(self,
                         ax=None,
                         figsize=None,
                         multiplier=None,
-                        scalar_args=None,
-                        vector_args=None,
+                        scalar_args={},
+                        vector_args={},
                         filename=None):
         """Plot the field on a plane.
 
-        This is a convenience method used for quick plotting, which combines
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` methods. Depending on the
-        dimensionality of the field, it determines what plot is going to be
-        shown. For a scalar field only ``discretisedfield.Field.mpl_scalar`` is
-        used, whereas for a vector field, both
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` plots are shown, where vector
-        plot shows the in-plane components of the vector and scalar plot
+        This is a convenience method used for quick plotting, and it combines
+        ``discretisedfield.plotting.Mpl.scalar`` and
+        ``discretisedfield.plotting.Mpl.vector`` methods. Depending on the
+        dimensionality of the field's value, it automatically determines what
+        plot is going to be shown. For a scalar field, only
+        ``discretisedfield.plotting.Mpl.scalar`` is used, whereas for a vector
+        field, both ``discretisedfield.plotting.Mpl.scalar`` and
+        ``discretisedfield.plotting.Mpl.vector`` plots are shown so that vector
+        plot visualises the in-plane components of the vector and scalar plot
         encodes the out-of-plane component.
 
         All the default values can be changed by passing arguments, which are
         then used in subplots. The way parameters of this function are used to
         create plots can be understood with the following code snippet.
+
+        # TODO: Review example after API stabilises.
 
         .. code-block::
 
@@ -72,19 +80,12 @@ class Mpl:
 
             Therefore, to understand the meaning of the arguments which can be
             passed to this method, please refer to
-            ``discretisedfield.Field.mpl_scalar`` and
-            ``discretisedfield.Field.mpl_vector`` documentation.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not been sliced with a plane.
+            ``discretisedfield.plotting.Mpl.scalar`` and
+            ``discretisedfield.plotting.Mpl.vector`` documentation.
 
         Example
         -------
-        .. plot::
-            :context: close-figs
+        .. plot:: :context: close-figs
 
             1. Visualising the field using ``matplotlib``.
 
@@ -95,59 +96,52 @@ class Mpl:
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl()
+            >>> field.plane(z=50, n=(5, 5)).mpl.plot_simplified()
 
         .. seealso::
 
-            :py:func:`~discretisedfield.Field.mpl_scalar`
-            :py:func:`~discretisedfield.Field.mpl_vector`
+            :py:func:`~discretisedfield.plotting.Mpl.scalar`
+            :py:func:`~discretisedfield.plotting.Mpl.vector`
 
         """
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else None)
 
-        if scalar_args is None:
-            scalar_args = {}
-        if vector_args is None:
-            vector_args = {}
+        # Define defaults and update with user-passed dictionaries.
+        scalar_kwargs = {}
+        vector_kwargs = {'use_color': False, 'colorbar': False}
+        scalar_kwargs.update(scalar_args)
+        vector_kwargs.update(vector_args)
 
-        default_scalar_args = {}
-        default_vector_args = {'use_color': False, 'colorbar': False}
-
-        for key, val in default_scalar_args.items():
-            if key not in scalar_args.keys():
-                scalar_args[key] = val
-        for key, val in default_vector_args.items():
-            if key not in vector_args.keys():
-                vector_args[key] = val
-
-        # Set up default values.
+        # Set up default scalar and vector fields.
+        # TODO: Do we allow user to specify what scalar and vector fields are? Did we have that before?
         if self.data.dim == 1:
             scalar_field = self.data
             vector_field = None
-            if 'filter_field' not in scalar_args.keys():
-                scalar_args['filter_field'] = self.data.norm
+
         elif self.data.dim == 2:
             scalar_field = None
             vector_field = self.data
-            if 'filter_field' not in scalar_args.keys():
-                scalar_args['filter_field'] = self.data.norm
+
         else:
             vector_field = self.data
             scalar_field = getattr(self.data, self.planeaxis)
-            if 'colorbar_label' not in scalar_args.keys():
-                scalar_args['colorbar_label'] = f'{self.planeaxis}-component'
-            if 'filter_field' not in scalar_args.keys():
-                scalar_args['filter_field'] = self.data.norm
+            scalar_kwargs['colorbar_label'] = scalar_kwargs.get('colorbar_label',
+                                                                f'{self.planeaxis}-component')
+
+        # Since this is done in all three branches of if statement, I expose it here.
+        # TODO: Doule check if I miss something.
+        # TODO: What is the norm here if dim == 1?
+        scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
+                                                          self.data.norm)
 
         if scalar_field is not None:
             scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
-                                    **scalar_args)
+                                    **scalar_kwargs)
         if vector_field is not None:
-            vector_field.mpl.vector(ax=ax, multiplier=multiplier,
-                                    **vector_args)
+            vector_field.mpl.vector(ax=ax, multiplier=multiplier, **vector_args)
 
         self._axis_labels(ax, multiplier)
 
@@ -247,7 +241,7 @@ class Mpl:
             :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -336,7 +330,7 @@ class Mpl:
                multiplier=None,
                filter_field=None,
                colorbar=True,
-               colorbar_label=None,
+               colorbar_label=None,  # TODO: Can we maybe use an empty string here?
                filename=None,
                **kwargs):
         r"""Plot the scalar field on a plane.
@@ -444,19 +438,20 @@ class Mpl:
 
         """
         if self.data.dim > 1:
-            msg = f'Cannot plot dim={self.data.dim} field.'
+            msg = f'Cannot plot {self.data.dim=} field.'
             raise ValueError(msg)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
         pmin = np.divide(self.data.mesh.region.pmin, multiplier)
         pmax = np.divide(self.data.mesh.region.pmax, multiplier)
 
+        # TODO: After refactoring code, maybe extent and n can become part of PlaneMesh.
         extent = [pmin[self.data.mesh.attributes['axis1']],
                   pmax[self.data.mesh.attributes['axis1']],
                   pmin[self.data.mesh.attributes['axis2']],
@@ -477,6 +472,7 @@ class Mpl:
         self._axis_labels(ax, multiplier)
 
         if filename is not None:
+            # TODO: We use pad inches 0 and 0.02. We should figure out which one is the best.
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def lightness(self,
@@ -527,7 +523,7 @@ class Mpl:
                 filename=filename,
                 **kwargs)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -702,7 +698,7 @@ class Mpl:
             msg = f'cannot plot dim={self.data.dim} field.'
             raise ValueError(msg)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -782,7 +778,7 @@ class Mpl:
             msg = f'Cannot plot dim={self.data.dim} field.'
             raise ValueError(msg)
 
-        ax = self._setup_axis(ax, figsize)
+        ax = self._setup_axes(ax, figsize)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -842,10 +838,11 @@ class Mpl:
         ax_ins.axis('off')
         return ax_ins
 
-    def _setup_axis(self, ax, figsize):
+    def _setup_axes(self, ax, figsize):
         if ax is None:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111)
+
         return ax
 
     def _filter_values(self, filter_field, points, values):
@@ -853,20 +850,11 @@ class Mpl:
             return values
 
         if filter_field.dim != 1:
-            msg = f'Cannot use {filter_field.dim=} filter_field.'
+            msg = f'Cannot use {filter_field.dim=}.'
             raise ValueError(msg)
-
-        mask = []
-        for i, point in enumerate(points):
-            if filter_field(point) == 0:
-                mask.append(1)
-            else:
-                mask.append(0)
-
-        for i, mask_value in enumerate(mask):
-            if mask_value == 1:
-                values[i] = np.nan
-        return values
+  
+        return [values[i] if filter_field(point) != 0 else np.nan
+                for i, point in enumerate(points)]
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
@@ -877,7 +865,7 @@ class Mpl:
     def __dir__(self):
         dirlist = dir(self.__class__)
         if self.data.dim == 1:
-            need_removing = ['mpl_vector']
+            need_removing = ['mpl_vector']  # Needs updating.
         else:
             need_removing = ['mpl_scalar']
 
