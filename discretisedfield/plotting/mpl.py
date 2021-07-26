@@ -130,7 +130,7 @@ class Mpl:
             if 'filter_field' not in scalar_args.keys():
                 scalar_args['filter_field'] = self.data.norm
         elif self.data.dim == 2:
-            scalar_field = self.data
+            scalar_field = None
             vector_field = self.data
             if 'filter_field' not in scalar_args.keys():
                 scalar_args['filter_field'] = self.data.norm
@@ -142,7 +142,9 @@ class Mpl:
             if 'filter_field' not in scalar_args.keys():
                 scalar_args['filter_field'] = self.data.norm
 
-        scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_args)
+        if scalar_field is not None:
+            scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
+                                    **scalar_args)
         if vector_field is not None:
             vector_field.mpl.vector(ax=ax, multiplier=multiplier,
                                     **vector_args)
