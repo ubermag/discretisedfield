@@ -239,18 +239,19 @@ class Region:
         -------
         tuple (3,)
 
-            Random point coordinates :math:`\\mathbf{p}_\\text{r} =
-            (p_{x}^\\text{r}, p_{y}^\\text{r}, p_{z}^\\text{r})`.
+            Random point coordinates :math:`\mathbf{p}_\text{r} =
+            (p_x^\text{r}, p_y^\text{r}, p_z^\text{r})`.
 
         Examples
         --------
-        1. Generating a random point.
+        1. Generating a random point in the region.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (200e-9, 200e-9, 1e-9)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.random_point()
         (...)
 
@@ -258,14 +259,14 @@ class Region:
 
            In this example, ellipsis is used instead of an exact tuple because
            the result differs each time
-           ``discretisedfield.Region.random_point`` method is called.
+           ``discretisedfield.Region.random_point()`` method is called.
 
         """
         res = np.add(self.pmin, np.multiply(np.random.random(3), self.edges))
         return dfu.array2tuple(res)
 
     def __repr__(self):
-        """Representation string.
+        r"""Representation string.
 
         Returns
         -------
@@ -282,6 +283,7 @@ class Region:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> repr(region)
         'Region(p1=(0, 0, 0), p2=(2, 2, 1))'
 
@@ -289,12 +291,12 @@ class Region:
         return f'Region(p1={self.pmin}, p2={self.pmax})'
 
     def __eq__(self, other):
-        """Relational operator ``==``.
+        r"""Relational operator ``==``.
 
         Two regions are considered to be equal if they have the same minimum
-        and maximum coordinate points: :math:`\\mathbf{p}^\\text{max}_{1} =
-        \\mathbf{p}^\\text{max}_{2}` and :math:`\\mathbf{p}^\\text{min}_{1} =
-        \\mathbf{p}^\\text{min}_{2}`.
+        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
+        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
+        \mathbf{p}^\text{min}_2`.
 
         Parameters
         ----------
@@ -310,13 +312,14 @@ class Region:
 
         Examples
         --------
-        1. Check if regions are equal.
+        1. Usage of relational operator ``==``.
 
         >>> import discretisedfield as df
         ...
         >>> region1 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
         >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
         >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
+        ...
         >>> region1 == region2
         True
         >>> region1 != region2
@@ -327,15 +330,11 @@ class Region:
         True
 
         """
-        atol = 1e-15
-        rtol = 1e-5
-        if not isinstance(other, self.__class__):
-            return False
-        elif (np.allclose(self.pmin, other.pmin, atol=atol, rtol=rtol) and
-              np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)):
-            return True
-        else:
-            return False
+        if isinstance(other, self.__class__):
+            return (np.allclose(self.pmin, other.pmin) and
+                    np.allclose(self.pmax, other.pmax))
+
+        return False
 
     def __contains__(self, other):
         """Determine if a point or another region belong to the region.
