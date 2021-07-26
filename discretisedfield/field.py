@@ -3358,21 +3358,24 @@ class Field:
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         # See reference implementation at:
         # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
-        out = kwargs.get('out', ())
-        for x in inputs + out:
+        for x in inputs:
             if not isinstance(x, (Field, np.ndarray, numbers.Number)):
                 return NotImplemented
+        out = kwargs.get('out', ())
+        if out:
+            for x in out:
+                if not isinstance(x, Field):
+                    return NotImplemented
+
         mesh = [x.mesh for x in inputs if isinstance(x, Field)]
         inputs = tuple(x.array if isinstance(x, Field) else x
                        for x in inputs)
         if out:
-            kwargs['out'] = tuple(
-                x.array if isinstance(x, Field) else x
-                for x in out
-            )
+            kwargs['out'] = tuple(x.array for x in out)
+
         result = getattr(ufunc, method)(*inputs, **kwargs)
-        if type(result) is tuple:
-            if len(result) != len(meshes):
+        if isinstance(result, tuple):
+            if len(result) != len(mesh):
                 raise ValueError('wrong number of Field objects')
             return tuple(self.__class__(m, dim=x.shape[-1], value=x)
                          for x, m in zip(result, mesh))
