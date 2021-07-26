@@ -131,15 +131,14 @@ class Region:
 
     @functools.cached_property
     def edges(self):
-        """Edge lengths of the region.
+        r"""Region's edge lengths.
 
         Edge length is computed from the points between which the region spans
-        :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`:
+        :math:`\mathbf{p}_1` and :math:`\mathbf{p}_2`:
 
         .. math::
 
-            \\mathbf{l} = (|p_{2}^{x} - p_{1}^{x}|, |p_{2}^{y} - p_{1}^{y}|,
-            |p_{2}^{z} - p_{1}^{z}|).
+            \mathbf{l} = (|p_2^x - p_1^x|, |p_2^y - p_1^y|, |p_2^z - p_1^z|).
 
         Returns
         -------
@@ -156,29 +155,30 @@ class Region:
         >>> p1 = (0, 0, -5)
         >>> p2 = (5, 15, 15)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.edges
         (5, 15, 20)
 
         """
         return dfu.array2tuple(np.abs(np.subtract(self.p1, self.p2)))
 
-    @property
+    @functools.cached_property
     def centre(self):
-        """Centre point.
+        r"""Centre point.
 
-        It is computed as the middle point between minimum and maximum point
-        coordinates:
+        Centre point is computed as the middle point between region's points
+        with minimum and maximum coordinates:
 
         .. math::
 
-            \\mathbf{p}_\\text{centre} = \\frac{1}{2} (\\mathbf{p}_\\text{min}
-            + \\mathbf{p}_\\text{max}).
+            \mathbf{p}_\text{centre} = \frac{1}{2} (\mathbf{p}_\text{min}
+            + \mathbf{p}_\text{max}).
 
         Returns
         -------
         tuple (3,)
 
-            Centre point :math:`(p_{c}^{x}, p_{c}^{y}, p_{c}^{z})`.
+            Centre point :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
@@ -189,21 +189,22 @@ class Region:
         >>> p1 = (0, 0, 0)
         >>> p2 = (5, 15, 20)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.centre
         (2.5, 7.5, 10.0)
 
         """
-        return dfu.array2tuple(np.multiply(np.add(self.pmin, self.pmax), 0.5))
+        return dfu.array2tuple(0.5 * np.add(self.pmin, self.pmax))
 
-    @property
+    @functools.cached_property
     def volume(self):
-        """Region volume.
+        r"""Region's volume.
 
         It is computed by multiplying edge lengths of the region:
 
         .. math::
 
-            V = l_{x} l_{y} l_{z}.
+            V = l_x l_y l_z.
 
         Returns
         -------
@@ -220,6 +221,7 @@ class Region:
         >>> p1 = (0, 0, 0)
         >>> p2 = (5, 10, 2)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.volume
         100.0
 
@@ -227,7 +229,7 @@ class Region:
         return float(np.prod(self.edges))
 
     def random_point(self):
-        """Generate a random point in the region.
+        r"""Regions random point.
 
         The use of this function is mostly for writing tests. This method is
         not a property and it is called as
