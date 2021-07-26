@@ -107,7 +107,7 @@ class Mpl:
         ax = self._setup_axes(ax, figsize)
 
         multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
-                      if multiplier is None else None)
+                      if multiplier is None else multiplier)
 
         # Define defaults and update with user-passed dictionaries.
         scalar_kwargs = {} if scalar_kwargs is None else scalar_kwargs
@@ -244,8 +244,8 @@ class Mpl:
         """
         ax = self._setup_axes(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else multiplier)
 
         # Set up default values.
         if self.data.dim == 1:
@@ -526,8 +526,8 @@ class Mpl:
 
         ax = self._setup_axes(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -701,8 +701,8 @@ class Mpl:
 
         ax = self._setup_axes(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
@@ -781,8 +781,8 @@ class Mpl:
 
         ax = self._setup_axes(ax, figsize)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
+        multiplier = (uu.si_max_multiplier(self.data.mesh.region.edges)
+                      if multiplier is None else multiplier)
 
         points, values = map(list, zip(*list(self.data)))
 
