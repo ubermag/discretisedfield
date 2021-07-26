@@ -59,35 +59,35 @@ class Region:
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
 
-        if np.equal(self.edges, 0).any():
-            msg = f'One of the region edge lengths is zero: {self.edges=}.'
+        if not np.all(self.edges):
+            msg = f'One of the region\'s edge lengths is zero: {self.edges=}.'
             raise ValueError(msg)
 
     @functools.cached_property
     def pmin(self):
-        """Point with minimum coordinates in the region.
+        r"""Point with minimum coordinates in the region.
 
-        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{min}` is
-        computed from points :math:`p_{1}` and :math:`p_{2}` between which the
-        cuboid region spans: :math:`p_\\text{min}^{i} = \\text{min}(p_{1}^{i},
-        p_{2}^{i})`.
+        The :math:`i`-th component of :math:`\mathbf{p}_\text{min}` is computed
+        from points :math:`p_1` and :math:`p_2`, between which the region spans:
+        :math:`p_\text{min}^i = \text{min}(p_1^i, p_2^i)`.
 
         Returns
         -------
         tuple (3,)
 
-            Point with minimum coordinates :math:`(p_{x}^\\text{min},
-            p_{y}^\\text{min}, p_{z}^\\text{min})`.
+            Point with minimum coordinates :math:`(p_x^\text{min},
+            p_y^\text{min}, p_z^\text{min})`.
 
         Examples
         --------
-        1. Getting the minimum coordinate point.
+        1. Getting region's point with minimum coordinates.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (-1.1, 2.9, 0)
         >>> p2 = (5, 0, -0.1)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.pmin
         (-1.1, 0.0, -0.1)
 
@@ -98,30 +98,30 @@ class Region:
 
     @functools.cached_property
     def pmax(self):
-        """Point with maximum coordinates in the region.
+        r"""Point with maximum coordinates in the region.
 
-        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{max}` is
-        computed from points :math:`p_{1}` and :math:`p_{2}` between which the
-        cuboid region spans: :math:`p_\\text{max}^{i} = \\text{max}(p_{1}^{i},
-        p_{2}^{i})`.
+        The :math:`i`-th component of :math:`\mathbf{p}_\text{max}` is computed
+        from points :math:`p_1` and :math:`p_2`, between which the region spans:
+        :math:`p_\text{max}^i = \text{max}(p_1^i, p_2^i)`.
 
         Returns
         -------
         tuple (3,)
 
-            Point with maximum coordinates :math:`(p_{x}^\\text{max},
-            p_{y}^\\text{max}, p_{z}^\\text{max})`.
+            Point with maximum coordinates :math:`(p_x^\text{max},
+            p_y^\text{max}, p_z^\text{max})`.
 
         Examples
         --------
-        1. Getting the maximum coordinate point.
+        1. Getting region's point with maximum coordinates.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (-1.1, 2.9, 0)
         >>> p2 = (5, 0, -0.1)
         >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.pmax
+        ...
+        >>> region.pmin
         (5.0, 2.9, 0.0)
 
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
@@ -129,7 +129,7 @@ class Region:
         """
         return dfu.array2tuple(np.maximum(self.p1, self.p2))
 
-    @property
+    @functools.cached_property
     def edges(self):
         """Edge lengths of the region.
 

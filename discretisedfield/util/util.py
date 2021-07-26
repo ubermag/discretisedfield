@@ -14,10 +14,7 @@ cp_int = [int(color[1:], 16) for color in cp_hex]
 
 
 def array2tuple(array):
-    if array.size == 1:
-        return array.item()
-    else:
-        return tuple(array.tolist())
+    return array.item() if array.size == 1 else tuple(array.tolist())
 
 
 def as_array(mesh, dim, val):
