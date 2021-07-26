@@ -3188,7 +3188,7 @@ class Field:
     def k3d(self):
         return dfp.K3d(self)
 
-    # TODO: Should we make this a property?
+    @property
     def fft2(self):
         """2D FFT.
 
@@ -3201,7 +3201,7 @@ class Field:
             msg = ('The field must be sliced before the Fourier transform can'
                    'be computed in two dimensions.')
             raise ValueError(msg)
-        
+
         # TODO: Is it ever possible to have n.count(1) > 1 if filed is not sliced?
         if self.mesh.n.count(1) > 1:
             msg = ('FFT2 only supports truely two-dimensional fields;'
@@ -3224,11 +3224,11 @@ class Field:
                 dfreq = (freqs[1] - freqs[0]) / 2
                 p1.append(min(freqs) - dfreq)
                 p2.append(max(freqs) + dfreq)
-        
+
         # TODO: Using PlaneMesh will simplify the code a lot here.
         mesh = df.Mesh(p1=p1, p2=p2, n=self.mesh.n).plane(
             dfu.raxesdict[self.mesh.attributes['planeaxis']])
-        
+
         # We have to save realspace_mesh because we lose information about p1/p2
         mesh.attributes['realspace_mesh'] = self.mesh
         mesh.attributes['fourierspace'] = True
@@ -3240,6 +3240,7 @@ class Field:
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
 
+    @property
     def ifft2(self):
         """Inverse Fourier transform.
 
@@ -3251,7 +3252,7 @@ class Field:
             msg = ('The field must be sliced before the inverse Fourier transform '
                    'can be computed in two dimensions.')
             raise ValueError(msg)
-        
+
         mesh = self.mesh.attributes['realspace_mesh']
         if not mesh.attributes['isplane']:
             mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
@@ -3262,6 +3263,7 @@ class Field:
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
 
+    @property
     def fft3(self):
         """Fourier transform.
 
@@ -3274,14 +3276,14 @@ class Field:
                    'the Fourier transform in 3 dimensions. Use `fft2` '
                    'instead.')
             raise ValueError(msg)
-        
+
         freq_axis0 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[0],
                                                     self.mesh.cell[0]))
         freq_axis1 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[1],
                                                     self.mesh.cell[1]))
         freq_axis2 = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[2],
                                                     self.mesh.cell[2]))
-        
+
         # Shift the region boundaries to get the correct coordinates of
         # mesh cells. 
         dfreq0 = (freq_axis0[1] - freq_axis0[0]) / 2
@@ -3297,7 +3299,7 @@ class Field:
         mesh.attributes['realspace_mesh'] = self.mesh
         mesh.attributes['fourierspace'] = True
         mesh.attributes['unit'] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
-        
+
         values = []
         for idx in range(self.dim):
             ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
@@ -3305,6 +3307,7 @@ class Field:
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
 
+    @property
     def ifft3(self):
         """Inverse Fourier transform.
 
@@ -3317,14 +3320,14 @@ class Field:
                    'the Fourier transform in 3 dimensions. Use `fft2` '
                    'instead.')
             raise ValueError(msg)
-        
+
         mesh = self.mesh.attributes['realspace_mesh']
-        
+
         values = []
         for idx in range(self.dim):
             ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
             values.append(ft)
-        
+
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3))
 
