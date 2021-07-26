@@ -3353,3 +3353,30 @@ class Field:
     def conjugate(self):
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array.conjugate())
+
+    # TODO check and write tests
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        # See reference implementation at:
+        # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
+        out = kwargs.get('out', ())
+        for x in inputs + out:
+            if not isinstance(x, (Field, np.ndarray, numbers.Number)):
+                return NotImplemented
+        mesh = [x.mesh for x in inputs if isinstance(x, Field)]
+        inputs = tuple(x.array if isinstance(x, Field) else x
+                       for x in inputs)
+        if out:
+            kwargs['out'] = tuple(
+                x.array if isinstance(x, Field) else x
+                for x in out
+            )
+        result = getattr(ufunc, method)(*inputs, **kwargs)
+        if type(result) is tuple:
+            if len(result) != len(meshes):
+                raise ValueError('wrong number of Field objects')
+            return tuple(self.__class__(m, dim=x.shape[-1], value=x)
+                         for x, m in zip(result, mesh))
+        elif method == 'at':
+            return None
+        else:
+            return self.__class__(mesh[0], dim=result.shape[-1], value=result)
