@@ -107,6 +107,7 @@ class Field:
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
     """
+
     def __init__(self, mesh, dim, value=0, norm=None):
         self.mesh = mesh
         self.dim = dim
@@ -3333,29 +3334,29 @@ class Field:
 
     @property
     def real(self):
-        """Real part of complex field.
-        """
+        """Real part of complex field."""
         return self.__class__(self.mesh, dim=self.dim, value=self.array.real)
 
     @property
     def imag(self):
-        """Imaginary part of complex field.
-        """
+        """Imaginary part of complex field."""
         return self.__class__(self.mesh, dim=self.dim, value=self.array.imag)
 
     @property
     def phase(self):
-        """Phase of complex field.
-        """
-        raise NotImplementedError
+        """Phase of complex field."""
+        return self.__class__(self.mesh, dim=self.dim,
+                              value=np.angle(self.array))
 
     @property
     def conjugate(self):
+        """Complex conjugate of complex field."""
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array.conjugate())
 
     # TODO check and write tests
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        """Field class support for numpy ``ufuncs``."""
         # See reference implementation at:
         # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
         for x in inputs:
