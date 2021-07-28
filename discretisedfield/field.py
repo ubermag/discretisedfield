@@ -580,7 +580,7 @@ class Field:
         return f"Field(mesh={repr(self.mesh)}, dim={self.dim})"
 
     def __call__(self, point):
-        """Sample the field value at ``point``.
+        r"""Sample the field value at ``point``.
 
         It returns the value of the field in the discretisation cell to which
         ``point`` belongs to. It returns a tuple, whose length is the same as
@@ -619,7 +619,7 @@ class Field:
         return dfu.array2tuple(self.array[self.mesh.point2index(point)])
 
     def __getattr__(self, attr):
-        """Extracting the component of the vector field.
+        """Extract the component of the vector field.
 
         If ``'x'``, ``'y'``, or ``'z'`` is accessed, a scalar field of that
         component will be returned. This method is effective for vector fields
@@ -702,7 +702,7 @@ class Field:
         return dirlist
 
     def __iter__(self):
-        """Generator yielding coordinates and values of all mesh discretisation
+        r"""Generator yielding coordinates and values of all mesh discretisation
         cells.
 
         Yields
@@ -900,7 +900,7 @@ class Field:
         return self
 
     def __neg__(self):
-        """Unary ``-`` operator.
+        r"""Unary ``-`` operator.
 
         This method negates the value of each discretisation cell. It is
         equivalent to multiplication with -1:
@@ -1766,7 +1766,7 @@ class Field:
 
     @property
     def grad(self):
-        """Gradient.
+        r"""Gradient.
 
         This method computes the gradient of a scalar (``dim=1``) field and
         returns a vector field:
@@ -1842,7 +1842,7 @@ class Field:
 
     @property
     def div(self):
-        """Divergence.
+        r"""Divergence.
 
         This method computes the divergence of a vector (``dim=2`` or
         ``dim=3``) field and returns a scalar (``dim=1``) field as a result.
@@ -1911,7 +1911,7 @@ class Field:
 
     @property
     def curl(self):
-        """Curl.
+        r"""Curl.
 
         This method computes the curl of a vector (``dim=3``) field and returns
         a vector (``dim=3``) as a result:
@@ -1986,7 +1986,7 @@ class Field:
 
     @property
     def laplace(self):
-        """Laplace operator.
+        r"""Laplace operator.
 
         This method computes the laplacian of a scalar (``dim=1``) or a vector
         (``dim=3``) field and returns a resulting field:
@@ -2052,7 +2052,7 @@ class Field:
             return self.x.laplace << self.y.laplace << self.z.laplace
 
     def integral(self, direction='xyz', improper=False):
-        """Integral.
+        r"""Integral.
 
         This method integrates the field over the mesh along the specified
         direction(s), which can ce specified using ``direction``. Field must be
@@ -2186,7 +2186,7 @@ class Field:
             return res
 
     def line(self, p1, p2, n=100):
-        """Sampling the field along the line.
+        r"""Sample the field along the line.
 
         Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n` position
         coordinates are generated and the corresponding field values.
@@ -2418,7 +2418,7 @@ class Field:
 
     @property
     def angle(self):
-        """In-plane angle of the vector field.
+        r"""In-plane angle of the vector field.
 
         This method can be applied only on sliced fields, when a plane is
         defined. This method then returns a scalar field which is an angle
@@ -2647,7 +2647,7 @@ class Field:
                   f'ymax: {self.mesh.region.pmax[1]}',
                   f'zmax: {self.mesh.region.pmax[2]}',
                   f'valuedim: {write_dim}',
-                  f'valuelabels: field_x field_y field_z',
+                  'valuelabels: field_x field_y field_z',
                   'valueunits: None None None',
                   '',
                   'End: Header',
@@ -3221,7 +3221,7 @@ class Field:
                 freqs = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[i],
                                                        self.mesh.cell[i]))
                 # Shift the region boundaries to get the correct coordinates of
-                # mesh cells. 
+                # mesh cells.
                 dfreq = (freqs[1] - freqs[0]) / 2
                 p1.append(min(freqs) - dfreq)
                 p2.append(max(freqs) + dfreq)
@@ -3250,8 +3250,8 @@ class Field:
         discretisedfield.Field
         """
         if not self.mesh.attributes['isplane']:
-            msg = ('The field must be sliced before the inverse Fourier transform '
-                   'can be computed in two dimensions.')
+            msg = ('The field must be sliced before the inverse Fourier '
+                   'transform can be computed in two dimensions.')
             raise ValueError(msg)
 
         mesh = self.mesh.attributes['realspace_mesh']
@@ -3286,7 +3286,7 @@ class Field:
                                                     self.mesh.cell[2]))
 
         # Shift the region boundaries to get the correct coordinates of
-        # mesh cells. 
+        # mesh cells.
         dfreq0 = (freq_axis0[1] - freq_axis0[0]) / 2
         dfreq1 = (freq_axis1[1] - freq_axis1[0]) / 2
         dfreq2 = (freq_axis2[1] - freq_axis2[0]) / 2
