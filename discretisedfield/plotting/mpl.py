@@ -130,11 +130,8 @@ class Mpl:
             scalar_kwargs['colorbar_label'] = scalar_kwargs.get(
                 'colorbar_label', f'{self.planeaxis}-component')
 
-        # Since this is done in all three branches of if statement, I expose it here.
-        # TODO: Doule check if I miss something.
-        # TODO: What is the norm here if dim == 1?
-        scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
-                                                          self.data.norm)
+        # TODO user should specify filter_field=None to avoid filtering
+        scalar_kwargs.setdefault('filter_field', self.data.norm)
 
         if scalar_field is not None:
             scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
