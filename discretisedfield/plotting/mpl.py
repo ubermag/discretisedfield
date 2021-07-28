@@ -1,3 +1,4 @@
+"""Matplotlib-based plotting."""
 import mpl_toolkits.axes_grid1.inset_locator
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,24 +18,22 @@ class Mpl:
 
     """
 
-    def __init__(self, data):
+    def __init__(self, field):
         # We never allow plotting fields that are not sliced.
-        if not data.mesh.attributes['isplane']:
+        if not field.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
-        self.data = data  # TODO: Consider renaming data to field.
-        self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
+        self.field = field  # TODO: Consider renaming data to field.
+        self.planeaxis = dfu.raxesdict[field.mesh.attributes['planeaxis']]
 
-
-    # TODO: I assume the functionality from plot is being moved to plot_simplified?
-    def plot_simplified(self,
-                        ax=None,
-                        figsize=None,
-                        multiplier=None,
-                        scalar_kwargs=None,
-                        vector_kwargs=None,
-                        filename=None):
+    def plot(self,
+             ax=None,
+             figsize=None,
+             multiplier=None,
+             scalar_kwargs=None,
+             vector_kwargs=None,
+             filename=None):
         """Plot the field on a plane.
 
         This is a convenience method used for quick plotting, and it combines
@@ -116,25 +115,23 @@ class Mpl:
 
         # Set up default scalar and vector fields.
         # TODO: Do we allow user to specify what scalar and vector fields are? Did we have that before?
-        if self.data.dim == 1:
-            scalar_field = self.data
+        if self.field.dim == 1:
+            scalar_field = self.field
             vector_field = None
 
-        elif self.data.dim == 2:
+        elif self.field.dim == 2:
             scalar_field = None
-            vector_field = self.data
+            vector_field = self.field
 
         else:
-            vector_field = self.data
-            scalar_field = getattr(self.data, self.planeaxis)
+            vector_field = self.field
+            scalar_field = getattr(self.field, self.planeaxis)
             scalar_kwargs['colorbar_label'] = scalar_kwargs.get(
                 'colorbar_label', f'{self.planeaxis}-component')
 
-        # Since this is done in all three branches of if statement, I expose it here.
-        # TODO: Doule check if I miss something.
-        # TODO: What is the norm here if dim == 1?
-        scalar_kwargs['filter_field'] = scalar_kwargs.get('filter_field',
-                                                          self.data.norm)
+        # TODO user should specify filter_field=None to avoid filtering
+        # TODO what is the norm if dim=1
+        scalar_kwargs.setdefault('filter_field', self.field.norm)
 
         if scalar_field is not None:
             scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
@@ -142,181 +139,6 @@ class Mpl:
         if vector_field is not None:
             vector_field.mpl.vector(ax=ax, multiplier=multiplier,
                                     **vector_kwargs)
-
-        self._axis_labels(ax, multiplier)
-
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-
-    def plot(self,
-             ax=None,
-             figsize=None,
-             multiplier=None,
-             scalar_field=None,
-             scalar_filter_field=None,
-             scalar_cmap='viridis',
-             scalar_clim=None,
-             scalar_colorbar=True,
-             scalar_colorbar_label=None,
-             vector_field=None,
-             vector_use_color=False,
-             vector_color_field=None,
-             vector_cmap='cividis',
-             vector_clim=None,
-             vector_colorbar=False,
-             vector_colorbar_label=None,
-             vector_scale=None,
-             filename=None):
-        """Plot the field on a plane.
-
-        This is a convenience method used for quick plotting, which combines
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` methods. Depending on the
-        dimensionality of the field, it determines what plot is going to be
-        shown. For a scalar field only ``discretisedfield.Field.mpl_scalar`` is
-        used, whereas for a vector field, both
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` plots are shown, where vector
-        plot shows the in-plane components of the vector and scalar plot
-        encodes the out-of-plane component.
-
-        All the default values can be changed by passing arguments, which are
-        then used in subplots. The way parameters of this function are used to
-        create plots can be understood with the following code snippet.
-
-        .. code-block::
-
-            if ax is None:
-                fig = plt.figure(figsize=figsize)
-                ax = fig.add_subplot(111)
-
-            scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
-                                    lightness_field=scalar_lightness_field,
-                                    colorbar=scalar_colorbar,
-                                    colorbar_label=scalar_colorbar_label,
-                                    multiplier=multiplier, cmap=scalar_cmap,
-                                    clim=scalar_clim,)
-
-            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
-                                    color_field=vector_color_field,
-                                    colorbar=vector_colorbar,
-                                    colorbar_label=vector_colorbar_label,
-                                    multiplier=multiplier, scale=vector_scale,
-                                    cmap=vector_cmap, clim=vector_clim,)
-
-            if filename is not None:
-                plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-            ```
-
-            Therefore, to understand the meaning of the arguments which can be
-            passed to this method, please refer to
-            ``discretisedfield.Field.mpl_scalar`` and
-            ``discretisedfield.Field.mpl_vector`` documentation.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not been sliced with a plane.
-
-        Example
-        -------
-        .. plot::
-            :context: close-figs
-
-            1. Visualising the field using ``matplotlib``.
-
-            >>> import discretisedfield as df
-            ...
-            >>> p1 = (0, 0, 0)
-            >>> p2 = (100, 100, 100)
-            >>> n = (10, 10, 10)
-            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl()
-
-        .. seealso::
-
-            :py:func:`~discretisedfield.Field.mpl_scalar`
-            :py:func:`~discretisedfield.Field.mpl_vector`
-
-        """
-        ax = self._setup_axes(ax, figsize)
-
-        multiplier = self._setup_multiplier(multiplier)
-
-        # Set up default values.
-        if self.data.dim == 1:
-            if scalar_field is None:
-                scalar_field = self.data
-            else:
-                scalar_field = self.data.__class__(self.data.mesh, dim=1,
-                                                   value=scalar_field)
-            if vector_field is not None:
-                vector_field = self.data.__class__(self.data.mesh, dim=3,
-                                                   value=vector_field)
-            if scalar_filter_field is None:
-                scalar_filter_field = self.data.norm
-            else:
-                scalar_filter_field = self.data.__class__(
-                    self.data.mesh, dim=1, value=scalar_filter_field)
-        elif self.data.dim == 2:
-            if vector_field is None:
-                vector_field = self.data
-            else:
-                vector_field = self.data.__class__(self.data.mesh, dim=3,
-                                                   value=vector_field)
-            if scalar_field is None:
-                scalar_field = self.data
-            else:
-                scalar_field = self.data.__class__(self.data.mesh, dim=1,
-                                                   value=scalar_field)
-            if scalar_filter_field is None:
-                scalar_filter_field = self.data.norm
-            else:
-                scalar_filter_field = self.data.__class__(
-                    self.data.mesh, dim=1, value=scalar_filter_field)
-        elif self.data.dim == 3:
-            if vector_field is None:
-                vector_field = self.data
-            else:
-                vector_field = self.data.__class__(self.data.mesh, dim=3,
-                                                   value=vector_field)
-            if scalar_field is None:
-                scalar_field = getattr(self.data, self.planeaxis)
-                if scalar_colorbar_label is None:
-                    scalar_colorbar_label = f'{self.planeaxis}-component'
-            else:
-                scalar_field = self.data.__class__(self.data.mesh, dim=1,
-                                                   value=scalar_field)
-            if scalar_filter_field is None:
-                scalar_filter_field = self.data.norm
-            else:
-                scalar_filter_field = self.data.__class__(
-                    self.data.mesh, dim=1, value=scalar_filter_field)
-
-        if scalar_field is not None:
-            scalar_field.mpl.scalar(
-                ax=ax,
-                filter_field=scalar_filter_field,
-                colorbar=scalar_colorbar,
-                colorbar_label=scalar_colorbar_label,
-                multiplier=multiplier,
-                cmap=scalar_cmap,
-                clim=scalar_clim,
-            )
-        if vector_field is not None:
-            vector_field.mpl.vector(
-                ax=ax,
-                use_color=vector_use_color,
-                color_field=vector_color_field,
-                colorbar=vector_colorbar,
-                colorbar_label=vector_colorbar_label,
-                multiplier=multiplier,
-                scale=vector_scale,
-                cmap=vector_cmap,
-                clim=vector_clim,
-            )
 
         self._axis_labels(ax, multiplier)
 
@@ -436,26 +258,26 @@ class Mpl:
         .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
 
         """
-        if self.data.dim > 1:
-            msg = f'Cannot plot {self.data.dim=} field.'
+        if self.field.dim > 1:
+            msg = f'Cannot plot {self.field.dim=} field.'
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points, values = map(list, zip(*list(self.data)))
+        points, values = map(list, zip(*list(self.field)))
 
-        pmin = np.divide(self.data.mesh.region.pmin, multiplier)
-        pmax = np.divide(self.data.mesh.region.pmax, multiplier)
+        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
+        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
         # TODO: After refactoring code, maybe extent and n can become part of PlaneMesh.
-        extent = [pmin[self.data.mesh.attributes['axis1']],
-                  pmax[self.data.mesh.attributes['axis1']],
-                  pmin[self.data.mesh.attributes['axis2']],
-                  pmax[self.data.mesh.attributes['axis2']]]
-        n = (self.data.mesh.n[self.data.mesh.attributes['axis2']],
-             self.data.mesh.n[self.data.mesh.attributes['axis1']])
+        extent = [pmin[self.field.mesh.attributes['axis1']],
+                  pmax[self.field.mesh.attributes['axis1']],
+                  pmin[self.field.mesh.attributes['axis2']],
+                  pmax[self.field.mesh.attributes['axis2']]]
+        n = (self.field.mesh.n[self.field.mesh.attributes['axis2']],
+             self.field.mesh.n[self.field.mesh.attributes['axis1']])
 
         values = self._filter_values(filter_field, points, values)
 
@@ -487,11 +309,14 @@ class Mpl:
                   filename=None,
                   **kwargs):
         """Lightness plots.
+
+        Uses HSV to show inplane angle and lightness for out-of-plane (3d) or
+        norm (1d/2d) of the field.
         """
-        if self.data.dim == 2:
+        if self.field.dim == 2:
             if lightness_field is None:
-                lightness_field = self.data.norm
-            return self.data.angle.mpl.lightness(
+                lightness_field = self.field.norm
+            return self.field.angle.mpl.lightness(
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
@@ -504,10 +329,10 @@ class Mpl:
                 colorwheel_args=colorwheel_args,
                 filename=filename,
                 **kwargs)
-        elif self.data.dim == 3:
+        elif self.field.dim == 3:
             if lightness_field is None:
-                lightness_field = getattr(self.data, self.planeaxis)
-            return self.data.angle.mpl.lightness(
+                lightness_field = getattr(self.field, self.planeaxis)
+            return self.field.angle.mpl.lightness(
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
@@ -525,26 +350,26 @@ class Mpl:
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points, values = map(list, zip(*list(self.data)))
+        points, values = map(list, zip(*list(self.field)))
 
-        pmin = np.divide(self.data.mesh.region.pmin, multiplier)
-        pmax = np.divide(self.data.mesh.region.pmax, multiplier)
+        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
+        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
-        extent = [pmin[self.data.mesh.attributes['axis1']],
-                  pmax[self.data.mesh.attributes['axis1']],
-                  pmin[self.data.mesh.attributes['axis2']],
-                  pmax[self.data.mesh.attributes['axis2']]]
-        n = (self.data.mesh.n[self.data.mesh.attributes['axis2']],
-             self.data.mesh.n[self.data.mesh.attributes['axis1']])
+        extent = [pmin[self.field.mesh.attributes['axis1']],
+                  pmax[self.field.mesh.attributes['axis1']],
+                  pmin[self.field.mesh.attributes['axis2']],
+                  pmax[self.field.mesh.attributes['axis2']]]
+        n = (self.field.mesh.n[self.field.mesh.attributes['axis2']],
+             self.field.mesh.n[self.field.mesh.attributes['axis1']])
 
         if lightness_field is None:
-            lightness_field = self.data.norm
+            lightness_field = self.field.norm
         else:
             if lightness_field.dim != 1:
                 msg = f'Cannot use {lightness_field.dim=} lightness_field.'
                 raise ValueError(msg)
 
-        lightness = [lightness_field(i) for i in self.data.mesh]
+        lightness = [lightness_field(i) for i in self.field.mesh]
 
         # values = self._filter_values(filter_field, points, values)
         rgb = dfu.hls2rgb(hue=values,
@@ -691,15 +516,15 @@ class Mpl:
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
         """
-        if self.data.dim not in [2, 3]:
-            msg = f'cannot plot dim={self.data.dim} field.'
+        if self.field.dim not in [2, 3]:
+            msg = f'cannot plot dim={self.field.dim} field.'
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points, values = map(list, zip(*list(self.data)))
+        points, values = map(list, zip(*list(self.field)))
 
         # remove points and values where norm is 0.
         points = [p for p, v in zip(points, values)
@@ -711,10 +536,10 @@ class Mpl:
                 # todo raises an exception by default; options:
                 # - warning + automatically specify use_color=false
                 # - use_color=false as default
-                if self.data.dim == 2:
+                if self.field.dim == 2:
                     msg = 'automatic coloring is only supported for 3d fields.'
                     raise ValueError(msg)
-                color_field = getattr(self.data, self.planeaxis)
+                color_field = getattr(self.field, self.planeaxis)
 
             colors = [color_field(p) for p in points]
 
@@ -725,16 +550,16 @@ class Mpl:
         points = np.divide(points, multiplier)
 
         if use_color:
-            cp = ax.quiver(points[self.data.mesh.attributes['axis1']],
-                           points[self.data.mesh.attributes['axis2']],
-                           values[self.data.mesh.attributes['axis1']],
-                           values[self.data.mesh.attributes['axis2']],
+            cp = ax.quiver(points[self.field.mesh.attributes['axis1']],
+                           points[self.field.mesh.attributes['axis2']],
+                           values[self.field.mesh.attributes['axis1']],
+                           values[self.field.mesh.attributes['axis2']],
                            colors, pivot='mid', **kwargs)
         else:
-            ax.quiver(points[self.data.mesh.attributes['axis1']],
-                      points[self.data.mesh.attributes['axis2']],
-                      values[self.data.mesh.attributes['axis1']],
-                      values[self.data.mesh.attributes['axis2']],
+            ax.quiver(points[self.field.mesh.attributes['axis1']],
+                      points[self.field.mesh.attributes['axis2']],
+                      values[self.field.mesh.attributes['axis1']],
+                      values[self.field.mesh.attributes['axis2']],
                       pivot='mid', **kwargs)
 
         ax.set_aspect('equal')
@@ -770,28 +595,28 @@ class Mpl:
             :context: close-figs
 
         """
-        if self.data.dim != 1:
-            msg = f'Cannot plot dim={self.data.dim} field.'
+        if self.field.dim != 1:
+            msg = f'Cannot plot dim={self.field.dim} field.'
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points, values = map(list, zip(*list(self.data)))
+        points, values = map(list, zip(*list(self.field)))
 
         values = self._filter_values(filter_field, points, values)
 
-        n = (self.data.mesh.n[self.data.mesh.attributes['axis2']],
-             self.data.mesh.n[self.data.mesh.attributes['axis1']])
+        n = (self.field.mesh.n[self.field.mesh.attributes['axis2']],
+             self.field.mesh.n[self.field.mesh.attributes['axis1']])
 
         points = np.array(list(zip(*points)))
         points = np.divide(points, multiplier)
 
         values = np.array(values).reshape(n)
 
-        cp = ax.contour(points[self.data.mesh.attributes['axis1']].reshape(n),
-                        points[self.data.mesh.attributes['axis2']].reshape(n),
+        cp = ax.contour(points[self.field.mesh.attributes['axis1']].reshape(n),
+                        points[self.field.mesh.attributes['axis2']].reshape(n),
                         values, **kwargs)
         ax.set_aspect('equal')
 
@@ -807,6 +632,7 @@ class Mpl:
 
     def add_colorwheel(self, ax, width=1, height=1, loc='lower right',
                        **kwargs):
+        """Colorwheel for hsv plots."""
         n = 200
         x = np.linspace(-1, 1, n)
         y = np.linspace(-1, 1, n)
@@ -841,7 +667,7 @@ class Mpl:
         return ax
 
     def _setup_multiplier(self, multiplier):
-        return (uu.si_max_multiplier(self.data.mesh.region.edges)
+        return (uu.si_max_multiplier(self.field.mesh.region.edges)
                 if multiplier is None else multiplier)
 
     def _filter_values(self, filter_field, points, values):
@@ -857,16 +683,18 @@ class Mpl:
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
-        ax.set_xlabel(dfu.raxesdict[self.data.mesh.attributes['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.data.mesh.attributes['axis2']] + unit)
+                rf'{self.field.mesh.attributes["unit"]})')
+        ax.set_xlabel(dfu.raxesdict[self.field.mesh.attributes['axis1']]
+                      + unit)
+        ax.set_ylabel(dfu.raxesdict[self.field.mesh.attributes['axis2']]
+                      + unit)
 
     def __dir__(self):
         dirlist = dir(self.__class__)
-        if self.data.dim == 1:
-            need_removing = ['mpl_vector']  # Needs updating.
+        if self.field.dim == 1:
+            need_removing = ['vector']
         else:
-            need_removing = ['mpl_scalar']
+            need_removing = ['scalar']
 
         for attr in need_removing:
             dirlist.remove(attr)
