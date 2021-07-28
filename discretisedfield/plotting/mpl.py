@@ -1,3 +1,4 @@
+"""Matplotlib-based plotting."""
 import mpl_toolkits.axes_grid1.inset_locator
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,7 +26,6 @@ class Mpl:
 
         self.data = data  # TODO: Consider renaming data to field.
         self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
-
 
     # TODO: I assume the functionality from plot is being moved to plot_simplified?
     def plot_simplified(self,
@@ -864,9 +864,9 @@ class Mpl:
     def __dir__(self):
         dirlist = dir(self.__class__)
         if self.data.dim == 1:
-            need_removing = ['mpl_vector']  # Needs updating.
+            need_removing = ['vector']
         else:
-            need_removing = ['mpl_scalar']
+            need_removing = ['scalar']
 
         for attr in need_removing:
             dirlist.remove(attr)
