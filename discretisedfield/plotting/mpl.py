@@ -27,14 +27,13 @@ class Mpl:
         self.data = data  # TODO: Consider renaming data to field.
         self.planeaxis = dfu.raxesdict[data.mesh.attributes['planeaxis']]
 
-    # TODO: I assume the functionality from plot is being moved to plot_simplified?
-    def plot_simplified(self,
-                        ax=None,
-                        figsize=None,
-                        multiplier=None,
-                        scalar_kwargs=None,
-                        vector_kwargs=None,
-                        filename=None):
+    def plot(self,
+             ax=None,
+             figsize=None,
+             multiplier=None,
+             scalar_kwargs=None,
+             vector_kwargs=None,
+             filename=None):
         """Plot the field on a plane.
 
         This is a convenience method used for quick plotting, and it combines
@@ -140,181 +139,6 @@ class Mpl:
         if vector_field is not None:
             vector_field.mpl.vector(ax=ax, multiplier=multiplier,
                                     **vector_kwargs)
-
-        self._axis_labels(ax, multiplier)
-
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-
-    def plot(self,
-             ax=None,
-             figsize=None,
-             multiplier=None,
-             scalar_field=None,
-             scalar_filter_field=None,
-             scalar_cmap='viridis',
-             scalar_clim=None,
-             scalar_colorbar=True,
-             scalar_colorbar_label=None,
-             vector_field=None,
-             vector_use_color=False,
-             vector_color_field=None,
-             vector_cmap='cividis',
-             vector_clim=None,
-             vector_colorbar=False,
-             vector_colorbar_label=None,
-             vector_scale=None,
-             filename=None):
-        """Plot the field on a plane.
-
-        This is a convenience method used for quick plotting, which combines
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` methods. Depending on the
-        dimensionality of the field, it determines what plot is going to be
-        shown. For a scalar field only ``discretisedfield.Field.mpl_scalar`` is
-        used, whereas for a vector field, both
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` plots are shown, where vector
-        plot shows the in-plane components of the vector and scalar plot
-        encodes the out-of-plane component.
-
-        All the default values can be changed by passing arguments, which are
-        then used in subplots. The way parameters of this function are used to
-        create plots can be understood with the following code snippet.
-
-        .. code-block::
-
-            if ax is None:
-                fig = plt.figure(figsize=figsize)
-                ax = fig.add_subplot(111)
-
-            scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
-                                    lightness_field=scalar_lightness_field,
-                                    colorbar=scalar_colorbar,
-                                    colorbar_label=scalar_colorbar_label,
-                                    multiplier=multiplier, cmap=scalar_cmap,
-                                    clim=scalar_clim,)
-
-            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
-                                    color_field=vector_color_field,
-                                    colorbar=vector_colorbar,
-                                    colorbar_label=vector_colorbar_label,
-                                    multiplier=multiplier, scale=vector_scale,
-                                    cmap=vector_cmap, clim=vector_clim,)
-
-            if filename is not None:
-                plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-            ```
-
-            Therefore, to understand the meaning of the arguments which can be
-            passed to this method, please refer to
-            ``discretisedfield.Field.mpl_scalar`` and
-            ``discretisedfield.Field.mpl_vector`` documentation.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not been sliced with a plane.
-
-        Example
-        -------
-        .. plot::
-            :context: close-figs
-
-            1. Visualising the field using ``matplotlib``.
-
-            >>> import discretisedfield as df
-            ...
-            >>> p1 = (0, 0, 0)
-            >>> p2 = (100, 100, 100)
-            >>> n = (10, 10, 10)
-            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl()
-
-        .. seealso::
-
-            :py:func:`~discretisedfield.Field.mpl_scalar`
-            :py:func:`~discretisedfield.Field.mpl_vector`
-
-        """
-        ax = self._setup_axes(ax, figsize)
-
-        multiplier = self._setup_multiplier(multiplier)
-
-        # Set up default values.
-        if self.data.dim == 1:
-            if scalar_field is None:
-                scalar_field = self.data
-            else:
-                scalar_field = self.data.__class__(self.data.mesh, dim=1,
-                                                   value=scalar_field)
-            if vector_field is not None:
-                vector_field = self.data.__class__(self.data.mesh, dim=3,
-                                                   value=vector_field)
-            if scalar_filter_field is None:
-                scalar_filter_field = self.data.norm
-            else:
-                scalar_filter_field = self.data.__class__(
-                    self.data.mesh, dim=1, value=scalar_filter_field)
-        elif self.data.dim == 2:
-            if vector_field is None:
-                vector_field = self.data
-            else:
-                vector_field = self.data.__class__(self.data.mesh, dim=3,
-                                                   value=vector_field)
-            if scalar_field is None:
-                scalar_field = self.data
-            else:
-                scalar_field = self.data.__class__(self.data.mesh, dim=1,
-                                                   value=scalar_field)
-            if scalar_filter_field is None:
-                scalar_filter_field = self.data.norm
-            else:
-                scalar_filter_field = self.data.__class__(
-                    self.data.mesh, dim=1, value=scalar_filter_field)
-        elif self.data.dim == 3:
-            if vector_field is None:
-                vector_field = self.data
-            else:
-                vector_field = self.data.__class__(self.data.mesh, dim=3,
-                                                   value=vector_field)
-            if scalar_field is None:
-                scalar_field = getattr(self.data, self.planeaxis)
-                if scalar_colorbar_label is None:
-                    scalar_colorbar_label = f'{self.planeaxis}-component'
-            else:
-                scalar_field = self.data.__class__(self.data.mesh, dim=1,
-                                                   value=scalar_field)
-            if scalar_filter_field is None:
-                scalar_filter_field = self.data.norm
-            else:
-                scalar_filter_field = self.data.__class__(
-                    self.data.mesh, dim=1, value=scalar_filter_field)
-
-        if scalar_field is not None:
-            scalar_field.mpl.scalar(
-                ax=ax,
-                filter_field=scalar_filter_field,
-                colorbar=scalar_colorbar,
-                colorbar_label=scalar_colorbar_label,
-                multiplier=multiplier,
-                cmap=scalar_cmap,
-                clim=scalar_clim,
-            )
-        if vector_field is not None:
-            vector_field.mpl.vector(
-                ax=ax,
-                use_color=vector_use_color,
-                color_field=vector_color_field,
-                colorbar=vector_colorbar,
-                colorbar_label=vector_colorbar_label,
-                multiplier=multiplier,
-                scale=vector_scale,
-                cmap=vector_cmap,
-                clim=vector_clim,
-            )
 
         self._axis_labels(ax, multiplier)
 
