@@ -131,6 +131,7 @@ class Mpl:
                 'colorbar_label', f'{self.planeaxis}-component')
 
         # TODO user should specify filter_field=None to avoid filtering
+        # TODO what is the norm if dim=1
         scalar_kwargs.setdefault('filter_field', self.data.norm)
 
         if scalar_field is not None:
