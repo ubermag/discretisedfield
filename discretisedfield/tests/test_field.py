@@ -1697,7 +1697,7 @@ class TestField:
             plane = f.plane(i)
             assert plane.allclose(plane.fft2.ifft2.real)
             assert df.Field(mesh, dim=3).plane(i).allclose(
-                plane.fft2().ifft2().imag)
+                plane.fft2.ifft2.imag)
 
     def test_fft3_ifft3(self):
         p1 = (-10, -10, -5)
@@ -1775,15 +1775,15 @@ class TestField:
 
     def test_mpl_vector(self):
         # No axes
-        self.pf.plane('x', n=(3, 4)).mpl_vector()
+        self.pf.plane('x', n=(3, 4)).mpl.vector()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        self.pf.plane('x', n=(3, 4)).mpl_vector(ax=ax)
+        self.pf.plane('x', n=(3, 4)).mpl.vector(ax=ax)
 
         # All arguments
-        self.pf.plane('x').mpl_vector(figsize=(10, 10),
+        self.pf.plane('x').mpl.vector(figsize=(10, 10),
                                       color_field=self.pf.y,
                                       colorbar=True,
                                       colorbar_label='something',
@@ -1794,85 +1794,85 @@ class TestField:
         filename = 'testfigure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane('x', n=(3, 4)).mpl_vector(filename=tmpfilename)
+            self.pf.plane('x', n=(3, 4)).mpl.vector(filename=tmpfilename)
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
-            self.pf.mpl_vector()  # not sliced
+            self.pf.mpl.vector()  # not sliced
         with pytest.raises(ValueError) as excinfo:
-            self.pf.y.plane('z').mpl_vector()  # scalar field
+            self.pf.y.plane('z').mpl.vector()  # scalar field
         with pytest.raises(ValueError) as excinfo:
             # wrong color field
-            self.pf.plane('z').mpl_vector(color_field=self.pf)
+            self.pf.plane('z').mpl.vector(color_field=self.pf)
 
         plt.close('all')
 
     def test_mpl(self):
         # No axes
-        self.pf.plane('x', n=(3, 4)).mpl()
+        self.pf.plane('x', n=(3, 4)).mpl.plot()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        self.pf.x.plane('x', n=(3, 4)).mpl(ax=ax)
+        self.pf.x.plane('x', n=(3, 4)).mpl.plot(ax=ax)
 
         # All arguments for a vector field
-        self.pf.plane('x').mpl(figsize=(12, 6),
-                               scalar_field=self.pf.plane('x').angle,
-                               scalar_filter_field=self.pf.norm,
-                               scalar_colorbar_label='something',
-                               scalar_cmap='twilight',
-                               vector_field=self.pf,
-                               vector_color_field=self.pf.y,
-                               vector_use_color=True,
-                               vector_colorbar=True,
-                               vector_colorbar_label='vector',
-                               vector_cmap='hsv', vector_clim=(0, 1e6),
-                               multiplier=1e-12)
+        self.pf.plane('x').mpl.plot(figsize=(12, 6),
+                                    scalar_field=self.pf.plane('x').angle,
+                                    scalar_filter_field=self.pf.norm,
+                                    scalar_colorbar_label='something',
+                                    scalar_cmap='twilight',
+                                    vector_field=self.pf,
+                                    vector_color_field=self.pf.y,
+                                    vector_use_color=True,
+                                    vector_colorbar=True,
+                                    vector_colorbar_label='vector',
+                                    vector_cmap='hsv', vector_clim=(0, 1e6),
+                                    multiplier=1e-12)
 
         # All arguments for a scalar field
-        self.pf.z.plane('x').mpl(figsize=(12, 6),
-                                 scalar_field=self.pf.x,
-                                 scalar_filter_field=self.pf.norm,
-                                 scalar_colorbar_label='something',
-                                 scalar_cmap='twilight',
-                                 vector_field=self.pf,
-                                 vector_color_field=self.pf.y,
-                                 vector_use_color=True,
-                                 vector_colorbar=True,
-                                 vector_colorbar_label='vector',
-                                 vector_cmap='hsv', vector_clim=(0, 1e6),
-                                 multiplier=1e-12)
+        self.pf.z.plane('x').mpl.plot(figsize=(12, 6),
+                                      scalar_field=self.pf.x,
+                                      scalar_filter_field=self.pf.norm,
+                                      scalar_colorbar_label='something',
+                                      scalar_cmap='twilight',
+                                      vector_field=self.pf,
+                                      vector_color_field=self.pf.y,
+                                      vector_use_color=True,
+                                      vector_colorbar=True,
+                                      vector_colorbar_label='vector',
+                                      vector_cmap='hsv', vector_clim=(0, 1e6),
+                                      multiplier=1e-12)
 
         # Saving plot
         filename = 'testfigure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane('x', n=(3, 4)).mpl(filename=tmpfilename)
+            self.pf.plane('x', n=(3, 4)).mpl.plot(filename=tmpfilename)
 
         # Exception
         with pytest.raises(ValueError):
-            self.pf.mpl()
+            self.pf.mpl.plot()
 
         plt.close('all')
 
     def test_k3d_nonzero(self):
         # Default
-        self.pf.norm.k3d_nonzero()
+        self.pf.norm.k3d.nonzero()
 
         # Color
-        self.pf.x.k3d_nonzero(color=0xff00ff)
+        self.pf.x.k3d.nonzero(color=0xff00ff)
 
         # Multiplier
-        self.pf.x.k3d_nonzero(color=0xff00ff, multiplier=1e-6)
+        self.pf.x.k3d.nonzero(color=0xff00ff, multiplier=1e-6)
 
         # Interactive field
-        self.pf.x.plane('z').k3d_nonzero(color=0xff00ff,
+        self.pf.x.plane('z').k3d.nonzero(color=0xff00ff,
                                          multiplier=1e-6,
                                          interactive_field=self.pf)
 
         # kwargs
-        self.pf.x.plane('z').k3d_nonzero(color=0xff00ff,
+        self.pf.x.plane('z').k3d.nonzero(color=0xff00ff,
                                          multiplier=1e-6,
                                          interactive_field=self.pf,
                                          wireframe=True)
@@ -1880,13 +1880,13 @@ class TestField:
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.x.plane(z=0).k3d_nonzero(plot=plot,
+        self.pf.x.plane(z=0).k3d.nonzero(plot=plot,
                                          color=0xff00ff,
                                          multiplier=1e-6,
                                          interactive_field=self.pf)
 
         # Continuation for interactive plot testing.
-        self.pf.x.plane(z=1e-9).k3d_nonzero(plot=plot,
+        self.pf.x.plane(z=1e-9).k3d.nonzero(plot=plot,
                                             color=0xff00ff,
                                             multiplier=1e-6,
                                             interactive_field=self.pf)
@@ -1894,33 +1894,33 @@ class TestField:
         assert len(plot.objects) == 2
 
         with pytest.raises(ValueError) as excinfo:
-            self.pf.k3d_nonzero()
+            self.pf.k3d.nonzero()
 
     def test_k3d_scalar(self):
         # Default
-        self.pf.y.k3d_scalar()
+        self.pf.y.k3d.scalar()
 
         # Filter field
-        self.pf.y.k3d_scalar(filter_field=self.pf.norm)
+        self.pf.y.k3d.scalar(filter_field=self.pf.norm)
 
         # Colormap
-        self.pf.x.k3d_scalar(filter_field=self.pf.norm,
+        self.pf.x.k3d.scalar(filter_field=self.pf.norm,
                              cmap='hsv',
                              color=0xff00ff)
 
         # Multiplier
-        self.pf.y.k3d_scalar(filter_field=self.pf.norm,
+        self.pf.y.k3d.scalar(filter_field=self.pf.norm,
                              color=0xff00ff,
                              multiplier=1e-6)
 
         # Interactive field
-        self.pf.y.k3d_scalar(filter_field=self.pf.norm,
+        self.pf.y.k3d.scalar(filter_field=self.pf.norm,
                              color=0xff00ff,
                              multiplier=1e-6,
                              interactive_field=self.pf)
 
         # kwargs
-        self.pf.y.k3d_scalar(filter_field=self.pf.norm,
+        self.pf.y.k3d.scalar(filter_field=self.pf.norm,
                              color=0xff00ff,
                              multiplier=1e-6,
                              interactive_field=self.pf,
@@ -1929,14 +1929,14 @@ class TestField:
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.y.plane(z=0).k3d_scalar(plot=plot,
+        self.pf.y.plane(z=0).k3d.scalar(plot=plot,
                                         filter_field=self.pf.norm,
                                         color=0xff00ff,
                                         multiplier=1e-6,
                                         interactive_field=self.pf)
 
         # Continuation for interactive plot testing.
-        self.pf.y.plane(z=1e-9).k3d_scalar(plot=plot,
+        self.pf.y.plane(z=1e-9).k3d.scalar(plot=plot,
                                            filter_field=self.pf.norm,
                                            color=0xff00ff,
                                            multiplier=1e-6,
@@ -1946,41 +1946,41 @@ class TestField:
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
-            self.pf.k3d_scalar()
+            self.pf.k3d.scalar()
         with pytest.raises(ValueError):
-            self.pf.x.k3d_scalar(filter_field=self.pf)  # filter field dim=3
+            self.pf.x.k3d.scalar(filter_field=self.pf)  # filter field dim=3
 
     def test_k3d_vector(self):
         # Default
-        self.pf.k3d_vector()
+        self.pf.k3d.vector()
 
         # Color field
-        self.pf.k3d_vector(color_field=self.pf.x)
+        self.pf.k3d.vector(color_field=self.pf.x)
 
         # Colormap
-        self.pf.k3d_vector(color_field=self.pf.norm,
+        self.pf.k3d.vector(color_field=self.pf.norm,
                            cmap='hsv')
 
         # Head size
-        self.pf.k3d_vector(color_field=self.pf.norm,
+        self.pf.k3d.vector(color_field=self.pf.norm,
                            cmap='hsv',
                            head_size=3)
 
         # Points
-        self.pf.k3d_vector(color_field=self.pf.norm,
+        self.pf.k3d.vector(color_field=self.pf.norm,
                            cmap='hsv',
                            head_size=3,
                            points=False)
 
         # Point size
-        self.pf.k3d_vector(color_field=self.pf.norm,
+        self.pf.k3d.vector(color_field=self.pf.norm,
                            cmap='hsv',
                            head_size=3,
                            points=False,
                            point_size=1)
 
         # Vector multiplier
-        self.pf.k3d_vector(color_field=self.pf.norm,
+        self.pf.k3d.vector(color_field=self.pf.norm,
                            cmap='hsv',
                            head_size=3,
                            points=False,
@@ -1988,7 +1988,7 @@ class TestField:
                            vector_multiplier=1)
 
         # Multiplier
-        self.pf.k3d_vector(color_field=self.pf.norm,
+        self.pf.k3d.vector(color_field=self.pf.norm,
                            cmap='hsv',
                            head_size=3,
                            points=False,
@@ -1997,7 +1997,7 @@ class TestField:
                            multiplier=1e-6)
 
         # Interactive field
-        self.pf.plane('z').k3d_vector(color_field=self.pf.norm,
+        self.pf.plane('z').k3d.vector(color_field=self.pf.norm,
                                       cmap='hsv',
                                       head_size=3,
                                       points=False,
@@ -2009,18 +2009,18 @@ class TestField:
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.plane(z=0).k3d_vector(plot=plot, interactive_field=self.pf)
+        self.pf.plane(z=0).k3d.vector(plot=plot, interactive_field=self.pf)
 
         # Continuation for interactive plot testing.
-        self.pf.plane(z=1e-9).k3d_vector(plot=plot, interactive_field=self.pf)
+        self.pf.plane(z=1e-9).k3d.vector(plot=plot, interactive_field=self.pf)
 
         assert len(plot.objects) == 3
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
-            self.pf.x.k3d_vector()
+            self.pf.x.k3d.vector()
         with pytest.raises(ValueError):
-            self.pf.k3d_vector(color_field=self.pf)  # filter field dim=3
+            self.pf.k3d.vector(color_field=self.pf)  # filter field dim=3
 
     def test_plot_large_sample(self):
         p1 = (0, 0, 0)
@@ -2030,7 +2030,7 @@ class TestField:
         value = (1e6, 1e6, 1e6)
         field = df.Field(mesh, dim=3, value=value)
 
-        field.plane('z').mpl()
-        field.norm.k3d_nonzero()
-        field.x.k3d_scalar()
-        field.k3d_vector()
+        field.plane('z').mpl.plot()
+        field.norm.k3d.nonzero()
+        field.x.k3d.scalar()
+        field.k3d.vector()
