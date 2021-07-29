@@ -1,4 +1,6 @@
 """Matplotlib-based plotting."""
+import warnings
+
 import mpl_toolkits.axes_grid1.inset_locator
 import matplotlib.pyplot as plt
 import numpy as np
@@ -153,6 +155,7 @@ class Mpl:
                colorbar=True,
                colorbar_label=None,  # TODO: Can we maybe use an empty string here?
                filename=None,
+               symmetric_clim=False,
                **kwargs):
         r"""Plot the scalar field on a plane.
 
@@ -281,6 +284,15 @@ class Mpl:
 
         values = self._filter_values(filter_field, points, values)
 
+        if symmetric_clim and 'clim' not in kwargs.keys():
+            vmin = np.min(values)
+            vmax = np.max(values)
+            if np.sign(vmin) != np.sign(vmax):
+                vmax_abs = max(abs(vmin), vmax)
+                kwargs['clim'] = (-vmax_abs, vmax_abs)
+            else:
+                warnings.warn('Symmetric clim only possible if the field has '
+                              'positive and negative values.')
         cp = ax.imshow(np.array(values).reshape(n),
                        origin='lower', extent=extent, **kwargs)
 

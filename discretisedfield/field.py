@@ -3309,6 +3309,52 @@ class Field:
                               value=np.stack(values, axis=3))
 
     @property
+    def rfft3(self):
+        """Real Fourier transform.
+
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        if self.mesh.attributes['isplane'] or any(n == 1 for n in self.mesh.n):
+            msg = ('The field must be truely three dimensional to compute '
+                   'the Fourier transform in 3 dimensions. Use `fft2` '
+                   'instead.')
+            raise ValueError(msg)
+
+        freq_axis0 = np.fft.fftshift(np.fft.rfftfreq(self.mesh.n[0],
+                                                     self.mesh.cell[0]))
+        freq_axis1 = np.fft.fftshift(np.fft.rfftfreq(self.mesh.n[1],
+                                                     self.mesh.cell[1]))
+        freq_axis2 = np.fft.fftshift(np.fft.rfftfreq(self.mesh.n[2],
+                                                     self.mesh.cell[2]))
+
+        # Shift the region boundaries to get the correct coordinates of
+        # mesh cells.
+        dfreq0 = (freq_axis0[1] - freq_axis0[0]) / 2
+        dfreq1 = (freq_axis1[1] - freq_axis1[0]) / 2
+        dfreq2 = (freq_axis2[1] - freq_axis2[0]) / 2
+        mesh = df.Mesh(p1=(min(freq_axis0) - dfreq0,
+                           min(freq_axis1) - dfreq1,
+                           min(freq_axis2) - dfreq2),
+                       p2=(max(freq_axis0) + dfreq0,
+                           max(freq_axis1) + dfreq1,
+                           max(freq_axis2) + dfreq2),
+                       n=(self.mesh.n[0],
+                          self.mesh.n[1],
+                          int(self.mesh.n[2]/2+1)))
+        mesh.attributes['realspace_mesh'] = self.mesh
+        mesh.attributes['fourierspace'] = True
+        mesh.attributes['unit'] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
+
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.fftshift(np.fft.rfftn(self.array[..., idx].squeeze()))
+            values.append(ft)
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
+
+    @property
     def ifft3(self):
         """Inverse Fourier transform.
 
@@ -3327,6 +3373,30 @@ class Field:
         values = []
         for idx in range(self.dim):
             ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
+            values.append(ft)
+
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
+
+    @property
+    def irfft3(self):
+        """Real Inverse Fourier transform.
+
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        if self.mesh.attributes['isplane'] or any(n == 1 for n in self.mesh.n):
+            msg = ('The field must be truely three dimensional to compute '
+                   'the Fourier transform in 3 dimensions. Use `fft2` '
+                   'instead.')
+            raise ValueError(msg)
+
+        mesh = self.mesh.attributes['realspace_mesh']
+
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.irfftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
             values.append(ft)
 
         return self.__class__(mesh, dim=len(values),
