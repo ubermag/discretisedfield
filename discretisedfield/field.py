@@ -3342,7 +3342,7 @@ class Field:
                            max(freq_axis2) + dfreq2),
                        n=(self.mesh.n[0],
                           self.mesh.n[1],
-                          int(self.mesh.n[2]/2+1)))
+                          int(self.mesh.n[2]//2 + 1)))
         mesh.attributes['realspace_mesh'] = self.mesh
         mesh.attributes['fourierspace'] = True
         mesh.attributes['unit'] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
