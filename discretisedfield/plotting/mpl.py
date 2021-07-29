@@ -364,8 +364,9 @@ class Mpl:
 
         points, values = map(list, zip(*list(self.field)))
 
-        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
-        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
+        rescaled_region = self.field.mesh.region.rescale(multiplier)
+        pmin = rescaled_region.pmin
+        pmax = rescaled_region.pmax
 
         extent = [pmin[self.field.mesh.attributes['axis1']],
                   pmax[self.field.mesh.attributes['axis1']],

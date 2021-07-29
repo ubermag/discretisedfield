@@ -465,6 +465,7 @@ class Region:
         return uu.si_max_multiplier(self.edges)
     
     def rescale(self, multiplier=None):
+        """Rescale region."""
         multiplier = self.multiplier if multiplier is None else multiplier
         
         return self.__class__(p1=np.divide(self.pmin, multiplier),
