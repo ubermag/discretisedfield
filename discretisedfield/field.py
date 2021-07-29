@@ -3310,7 +3310,7 @@ class Field:
 
     @property
     def rfft3(self):
-        """Fourier transform.
+        """Real Fourier transform.
 
         Returns
         -------
@@ -3380,7 +3380,7 @@ class Field:
 
     @property
     def irfft3(self):
-        """Inverse Fourier transform.
+        """Real Inverse Fourier transform.
 
         Returns
         -------
