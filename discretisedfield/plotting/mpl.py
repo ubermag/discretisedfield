@@ -679,7 +679,7 @@ class Mpl:
         return ax
 
     def _setup_multiplier(self, multiplier):
-        return (uu.si_max_multiplier(self.field.mesh.region.edges)
+        return (self.field.mesh.region.multiplier
                 if multiplier is None else multiplier)
 
     def _filter_values(self, filter_field, points, values):

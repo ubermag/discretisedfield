@@ -1,5 +1,6 @@
 import k3d
 import functools
+import collections
 import numpy as np
 import matplotlib.pyplot as plt
 import ubermagutil.units as uu
@@ -9,7 +10,7 @@ import discretisedfield.util as dfu
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True),
-               unit=ts.Subset(sample_set={'m', '1/m'}, unpack=False, const=True))
+               unit=ts.Name(const=True))
 class Region:
     r"""Region.
 
@@ -228,7 +229,7 @@ class Region:
         100.0
 
         """
-        return float(np.prod(self.edges))
+        return dfu.array2tuple(np.prod(self.edges))
 
     def random_point(self):
         r"""Regions random point.
@@ -264,8 +265,7 @@ class Region:
            ``discretisedfield.Region.random_point()`` method is called.
 
         """
-        res = np.add(self.pmin, np.multiply(np.random.random(3), self.edges))
-        return dfu.array2tuple(res)
+        return dfu.array2tuple(np.random.random(3) * self.edges + self.pmin)
 
     def __repr__(self):
         r"""Representation string.
@@ -333,8 +333,8 @@ class Region:
 
         """
         if isinstance(other, self.__class__):
-            return (np.allclose(self.pmin, other.pmin) and
-                    np.allclose(self.pmax, other.pmax))
+            return (np.allclose(self.pmin, other.pmin, atol=0) and
+                    np.allclose(self.pmax, other.pmax, atol=0))
 
         return False
 
@@ -395,13 +395,13 @@ class Region:
         True
 
         """
+        if isinstance(other, collections.abc.Iterable):
+            return not np.any(np.less(other, self.pmin) |
+                              np.greater(other, self.pmax))
         if isinstance(other, self.__class__):
             return other.pmin in self and other.pmax in self
-        elif np.logical_or(np.less(other, self.pmin),
-                           np.greater(other, self.pmax)).any():
-            return False
 
-        return True
+        return False
 
     def __or__(self, other):
         """Facing surface.
@@ -456,8 +456,21 @@ class Region:
             if other.pmin[i] >= self.pmax[i]:
                 return (dfu.raxesdict[i], self, other)
         else:
-            msg = 'Cannot find facing surfaces'
+            msg = 'Cannot find facing surface.'
             raise ValueError(msg)
+
+    @functools.cached_property
+    def multiplier(self):
+        """Compute multiplier for the region."""
+        return uu.si_max_multiplier(self.edges)
+    
+    def rescale(self, multiplier=None):
+        multiplier = self.multiplier if multiplier is None else multiplier
+        
+        return self.__class__(p1=np.divide(self.pmin, multiplier),
+                              p2=np.divide(self.pmax, multiplier),
+                              unit=self.unit)
+
 
     def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[0],
             multiplier=None, filename=None, **kwargs):

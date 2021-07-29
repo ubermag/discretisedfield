@@ -231,6 +231,34 @@ class TestRegion:
 
         with pytest.raises(TypeError):
             res = region1 | 5
+            
+    def test_multiplier(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        region = df.Region(p1=p1, p2=p2)
+        
+        assert region.multiplier == 1e-9
+        
+        p1 = (0, 0, 0)
+        p2 = (1e-5, 1e-4, 1e-5)
+        region = df.Region(p1=p1, p2=p2)
+        
+        assert region.multiplier == 1e-6
+        
+    def test_rescale(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        region = df.Region(p1=p1, p2=p2)
+        
+        res = region.rescale()
+        assert np.allclose(res.pmin, (-50, -50, 0))
+        assert np.allclose(res.pmax, (50, 50, 20))
+        assert np.allclose(res.edges, (100, 100, 20))
+        
+        res = region.rescale(multiplier=1e-6)
+        assert np.allclose(res.pmin, (-50e-3, -50e-3, 0))
+        assert np.allclose(res.pmax, (50e-3, 50e-3, 20e-3))
+        assert np.allclose(res.edges, (100e-3, 100e-3, 20e-3))
 
     def test_mpl(self):
         p1 = (-50e-9, -50e-9, 0)
