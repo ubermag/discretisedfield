@@ -1695,7 +1695,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
         for i in ['x', 'y', 'z']:
             plane = f.plane(i)
-            assert plane.allclose(plane.fft2().ifft2().real)
+            assert plane.allclose(plane.fft2.ifft2.real)
             assert df.Field(mesh, dim=3).plane(i).allclose(
                 plane.fft2().ifft2().imag)
 
@@ -1706,9 +1706,9 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        assert f.allclose(f.fft3().ifft3().real)
+        assert f.allclose(f.fft3.ifft3.real)
         assert df.Field(mesh, dim=3).allclose(
-            f.fft3().ifft3().imag)
+            f.fft3.ifft3.imag)
 
     def test_fft3_ifft2(self):
         p1 = (-10, -10, -5)
@@ -1720,21 +1720,21 @@ class TestField:
 
         for i, di in [['x', df.dx], ['y', df.dy], ['z', df.dz]]:
             plane = (f * di).integral(i)
-            assert plane.allclose(f.fft3().plane(**{i: 0}).ifft2().real)
+            assert plane.allclose(f.fft3.plane(**{i: 0}).ifft2.real)
             assert (df.Field(mesh, dim=3) * df.dz).integral(i).allclose(
-                f.fft3().plane(**{i: 0}).ifft2().imag)
+                f.fft3.plane(**{i: 0}).ifft2.imag)
 
     def test_mpl_scalar(self):
         # No axes
-        self.pf.x.plane('x', n=(3, 4)).mpl_scalar()
+        self.pf.x.plane('x', n=(3, 4)).mpl.scalar()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        self.pf.x.plane('x', n=(3, 4)).mpl_scalar(ax=ax)
+        self.pf.x.plane('x', n=(3, 4)).mpl.scalar(ax=ax)
 
         # All arguments
-        self.pf.x.plane('x').mpl_scalar(figsize=(10, 10),
+        self.pf.x.plane('x').mpl.scalar(figsize=(10, 10),
                                         filter_field=self.pf.norm,
                                         colorbar=True,
                                         colorbar_label='something',
@@ -1748,8 +1748,8 @@ class TestField:
                                     'test_sample', i)
 
             field = df.Field.fromfile(filename)
-            field.plane('z').angle.mpl_scalar(lightness_field=field.z)
-            field.plane('z').angle.mpl_scalar(lightness_field=-field.z,
+            field.plane('z').angle.mpl.scalar(lightness_field=field.z)
+            field.plane('z').angle.mpl.scalar(lightness_field=-field.z,
                                               filter_field=field.norm)
             field.plane('z').mpl(scalar_lightness_field=-field.z)
 
@@ -1757,19 +1757,19 @@ class TestField:
         filename = 'testfigure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.x.plane('x', n=(3, 4)).mpl_scalar(filename=tmpfilename)
+            self.pf.x.plane('x', n=(3, 4)).mpl.scalar(filename=tmpfilename)
 
         # Exceptions
         with pytest.raises(ValueError):
-            self.pf.x.mpl_scalar()  # not sliced
+            self.pf.x.mpl.scalar()  # not sliced
         with pytest.raises(ValueError):
-            self.pf.plane('z').mpl_scalar()  # vector field
-        with pytest.raises(ValueError):
-            # wrong filter field
-            self.pf.x.plane('z').mpl_scalar(filter_field=self.pf)
+            self.pf.plane('z').mpl.scalar()  # vector field
         with pytest.raises(ValueError):
             # wrong filter field
-            self.pf.x.plane('z').mpl_scalar(lightness_field=self.pf)
+            self.pf.x.plane('z').mpl.scalar(filter_field=self.pf)
+        with pytest.raises(ValueError):
+            # wrong filter field
+            self.pf.x.plane('z').mpl.scalar(lightness_field=self.pf)
 
         plt.close('all')
 
