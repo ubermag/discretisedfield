@@ -8,7 +8,8 @@ import discretisedfield.util as dfu
 
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
-               p2=ts.Vector(size=3, const=True))
+               p2=ts.Vector(size=3, const=True),
+               unit=ts.Subset(sample_set={'m', '1/m'}, unpack=False, const=True))
 class Region:
     r"""Region.
 
@@ -55,9 +56,10 @@ class Region:
 
     """
 
-    def __init__(self, p1, p2):
+    def __init__(self, p1, p2, unit='m'):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
+        self.unit = unit
 
         if not np.all(self.edges):
             msg = f'One of the region\'s edge lengths is zero: {self.edges=}.'
