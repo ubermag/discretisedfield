@@ -1,14 +1,51 @@
-NEW WEBSITE: https://ubermag.github.io
-======================================
+.. mdinclude:: ../README.md
+    :start-line: 0
+    :end-line: 6
 
-``Discretisedfield`` is part of the ``ubermag`` metapackage. Recently, the
-websites for the different subpackages have been centralised. Please use the new
-`documentation <https://ubermag.github.io/documentation/discretisedfield.html>`_
-and `API reference <https://ubermag.github.io/api/discretisedfield.html>`_ in
-the future. 
+.. mdinclude:: ../README.md
+    :start-line: 22
+    :end-line: 35
 
-You should be redirected in 5 seconds automatically.
+.. toctree::
+    :maxdepth: 1
+    :caption: Tutorials
 
-.. raw:: html
+    ipynb/installation-testing-update
+    ipynb/region-basics
+    ipynb/region-visualisation
+    ipynb/region-facing-surfaces
+    ipynb/mesh-basics
+    ipynb/mesh-visualisation
+    ipynb/mesh-line-plane
+    ipynb/mesh-subregions
+    ipynb/mesh-widgets
+    ipynb/mesh-pad
+    ipynb/mesh-bc
+    ipynb/field-definition
+    ipynb/field-spatially-varying
+    ipynb/field-normalisation
+    ipynb/field-operations
+    ipynb/field-matplotlib-visualisation
+    ipynb/field-k3d-visualisation
+    ipynb/field-read-write
+    ipynb/field-tools
+    ipynb/ovf2vtk
+    ipynb/other
 
-     <meta http-equiv="Refresh" content="5; url=https://ubermag.github.io/documentation/discretisedfield.html" />
+API Reference
+-------------
+.. autosummary::
+    :nosignatures:
+    :toctree: _autosummary
+    :caption: API Reference
+    :template: module-template.rst
+    :recursive:
+
+    discretisedfield
+    discretisedfield.tools
+    discretisedfield.ovf2vtk
+
+Index
+-----
+
+- :ref:`genindex`
