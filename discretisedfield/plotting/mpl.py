@@ -672,10 +672,10 @@ class Mpl:
         ax_ins.axis('off')
         return ax_ins
 
-    def _setup_axes(self, ax, figsize):
+    def _setup_axes(self, ax, figsize, **kwargs):
         if ax is None:
             fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+            ax = fig.add_subplot(111, **kwargs)
 
         return ax
 
@@ -696,12 +696,8 @@ class Mpl:
 
     def __dir__(self):
         dirlist = dir(self.__class__)
-        if self.field.dim == 1:
-            need_removing = ['vector']
-        else:
-            need_removing = ['scalar']
 
-        for attr in need_removing:
+        for attr in ['vector'] if self.field.dim == 1 else ['scalar']:
             dirlist.remove(attr)
 
         return dirlist
