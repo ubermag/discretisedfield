@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import discretisedfield.util as dfu
-import ubermagutil.units as uu
 
 
 class Mpl:
@@ -705,7 +704,8 @@ class Mpl:
     def __dir__(self):
         dirlist = dir(self.__class__)
 
-        for attr in ['vector'] if self.field.dim == 1 else ['scalar']:
+        for attr in ['vector'] if self.field.dim == 1 else ['scalar',
+                                                            'contour']:
             dirlist.remove(attr)
 
         return dirlist
