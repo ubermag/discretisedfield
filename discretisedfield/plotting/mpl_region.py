@@ -78,7 +78,7 @@ class MplRegion:
 
         plot_kwargs = {} if plot_kwargs is None else plot_kwargs
         plot_kwargs.setdefault('color', dfu.cp_hex[0])
-        
+
         rescaled_region = self.region / multiplier
 
         dfu.plot_box(ax=ax,
@@ -93,7 +93,7 @@ class MplRegion:
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-            
+
     def _setup_axes(self, ax, figsize, **kwargs):
         if ax is None:
             fig = plt.figure(figsize=figsize)
@@ -103,7 +103,7 @@ class MplRegion:
 
     def _setup_multiplier(self, multiplier):
         return self.region.multiplier if multiplier is None else multiplier
-        
+
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}{self.region.unit})')
         ax.set(xlabel=f'x {unit}', ylabel=f'y {unit}', zlabel=f'z {unit}')
