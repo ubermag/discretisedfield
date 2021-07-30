@@ -368,6 +368,7 @@ class Mpl:
         pmin = rescaled_region.pmin
         pmax = rescaled_region.pmax
 
+        # This depends on plane mesh orientation and should be in PlaneMesh.
         extent = [pmin[self.field.mesh.attributes['axis1']],
                   pmax[self.field.mesh.attributes['axis1']],
                   pmin[self.field.mesh.attributes['axis2']],
