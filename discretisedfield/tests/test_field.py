@@ -1741,7 +1741,7 @@ class TestField:
                                         multiplier=1e-6, cmap='hsv',
                                         clim=(-1, 1))
 
-        # Lightness field
+        # TODO Lightness field -> is now a separate method
         filenames = ['skyrmion.omf', 'skyrmion-disk.omf']
         for i in filenames:
             filename = os.path.join(os.path.dirname(__file__),
@@ -1809,50 +1809,52 @@ class TestField:
 
     def test_mpl(self):
         # No axes
-        self.pf.plane('x', n=(3, 4)).mpl.plot()
+        self.pf.plane('x', n=(3, 4)).mpl()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        self.pf.x.plane('x', n=(3, 4)).mpl.plot(ax=ax)
+        self.pf.x.plane('x', n=(3, 4)).mpl(ax=ax)
 
         # All arguments for a vector field
-        self.pf.plane('x').mpl.plot(figsize=(12, 6),
-                                    scalar_field=self.pf.plane('x').angle,
-                                    scalar_filter_field=self.pf.norm,
-                                    scalar_colorbar_label='something',
-                                    scalar_cmap='twilight',
-                                    vector_field=self.pf,
-                                    vector_color_field=self.pf.y,
-                                    vector_use_color=True,
-                                    vector_colorbar=True,
-                                    vector_colorbar_label='vector',
-                                    vector_cmap='hsv', vector_clim=(0, 1e6),
-                                    multiplier=1e-12)
+        # TODO outdated
+        self.pf.plane('x').mpl(figsize=(12, 6),
+                               scalar_field=self.pf.plane('x').angle,
+                               scalar_filter_field=self.pf.norm,
+                               scalar_colorbar_label='something',
+                               scalar_cmap='twilight',
+                               vector_field=self.pf,
+                               vector_color_field=self.pf.y,
+                               vector_use_color=True,
+                               vector_colorbar=True,
+                               vector_colorbar_label='vector',
+                               vector_cmap='hsv', vector_clim=(0, 1e6),
+                               multiplier=1e-12)
 
         # All arguments for a scalar field
-        self.pf.z.plane('x').mpl.plot(figsize=(12, 6),
-                                      scalar_field=self.pf.x,
-                                      scalar_filter_field=self.pf.norm,
-                                      scalar_colorbar_label='something',
-                                      scalar_cmap='twilight',
-                                      vector_field=self.pf,
-                                      vector_color_field=self.pf.y,
-                                      vector_use_color=True,
-                                      vector_colorbar=True,
-                                      vector_colorbar_label='vector',
-                                      vector_cmap='hsv', vector_clim=(0, 1e6),
-                                      multiplier=1e-12)
+        # TODO outdated
+        self.pf.z.plane('x').mpl(figsize=(12, 6),
+                                 scalar_field=self.pf.x,
+                                 scalar_filter_field=self.pf.norm,
+                                 scalar_colorbar_label='something',
+                                 scalar_cmap='twilight',
+                                 vector_field=self.pf,
+                                 vector_color_field=self.pf.y,
+                                 vector_use_color=True,
+                                 vector_colorbar=True,
+                                 vector_colorbar_label='vector',
+                                 vector_cmap='hsv', vector_clim=(0, 1e6),
+                                 multiplier=1e-12)
 
         # Saving plot
         filename = 'testfigure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane('x', n=(3, 4)).mpl.plot(filename=tmpfilename)
+            self.pf.plane('x', n=(3, 4)).mpl(filename=tmpfilename)
 
         # Exception
         with pytest.raises(ValueError):
-            self.pf.mpl.plot()
+            self.pf.mpl()
 
         plt.close('all')
 
@@ -2030,7 +2032,7 @@ class TestField:
         value = (1e6, 1e6, 1e6)
         field = df.Field(mesh, dim=3, value=value)
 
-        field.plane('z').mpl.plot()
+        field.plane('z').mpl()
         field.norm.k3d.nonzero()
         field.x.k3d.scalar()
         field.k3d.vector()

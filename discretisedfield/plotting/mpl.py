@@ -29,13 +29,13 @@ class Mpl:
         self.field = field  # TODO: Consider renaming data to field.
         self.planeaxis = dfu.raxesdict[field.mesh.attributes['planeaxis']]
 
-    def plot(self,
-             ax=None,
-             figsize=None,
-             multiplier=None,
-             scalar_kwargs=None,
-             vector_kwargs=None,
-             filename=None):
+    def __call__(self,
+                 ax=None,
+                 figsize=None,
+                 multiplier=None,
+                 scalar_kwargs=None,
+                 vector_kwargs=None,
+                 filename=None):
         """Plot the field on a plane.
 
         This is a convenience method used for quick plotting, and it combines
