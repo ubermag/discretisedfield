@@ -11,6 +11,7 @@ class MplRegion:
                  ax=None,
                  figsize=None,
                  multiplier=None,
+                 color=dfu.cp_hex[0],
                  plot_kwargs=None,
                  filename=None):
         r"""``matplotlib`` plot.
@@ -77,7 +78,7 @@ class MplRegion:
         multiplier = self._setup_multiplier(multiplier)
 
         plot_kwargs = {} if plot_kwargs is None else plot_kwargs
-        plot_kwargs.setdefault('color', dfu.cp_hex[0])
+        plot_kwargs.setdefault('color', color)
 
         rescaled_region = self.region / multiplier
 

@@ -61,9 +61,8 @@ class K3dRegion:
 
         plot_array = np.ones((1, 1, 1)).astype(np.uint8)  # avoid k3d warning
 
-        bounds = [i for sublist in
-                  zip(np.divide(self.region.pmin, multiplier),
-                      np.divide(self.region.pmax, multiplier))
+        rescaled_region = self.region / multiplier
+        bounds = [i for sublist in zip(rescaled_region.pmin, rescaled_region.pmax)
                   for i in sublist]
 
         plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
