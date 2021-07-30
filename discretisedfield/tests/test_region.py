@@ -251,11 +251,13 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         res = region * 2
+        check_region(res)
         assert np.allclose(res.pmin, (-100e-9, -100e-9, 0))
         assert np.allclose(res.pmax, (100e-9, 100e-9, 40e-9))
         assert np.allclose(res.edges, (200e-9, 200e-9, 40e-9))
 
         res = region / 2
+        check_region(res)
         assert np.allclose(res.pmin, (-25e-9, -25e-9, 0))
         assert np.allclose(res.pmax, (25e-9, 25e-9, 10e-9))
         assert np.allclose(res.edges, (50e-9, 50e-9, 10e-9))
@@ -275,10 +277,12 @@ class TestRegion:
 
         check_region(region)
 
-        # Check if runs.
+        # Check if it runs.
         region.mpl()
-        region.mpl(figsize=(10, 10), multiplier=1e-9, color=dfu.cp_hex[1],
-                   linewidth=3, linestyle='dashed')
+        region.mpl(figsize=(10, 10), multiplier=1e-9,
+                   plot_kwargs={'color': dfu.cp_hex[1],
+                                'linewidth': 3,
+                                'linestyle': 'dashed'})
 
         filename = 'figure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:

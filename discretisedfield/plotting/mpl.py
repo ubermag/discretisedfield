@@ -109,7 +109,6 @@ class Mpl:
 
         multiplier = self._setup_multiplier(multiplier)
 
-        # Define defaults and update with user-passed dictionaries.
         scalar_kwargs = {} if scalar_kwargs is None else scalar_kwargs
         vector_kwargs = {} if vector_kwargs is None else vector_kwargs
         vector_kwargs.setdefault('use_color', False)
@@ -694,14 +693,6 @@ class Mpl:
 
         return [values[i] if filter_field(point) != 0 else np.nan
                 for i, point in enumerate(points)]
-
-    def _axis_labels(self, ax, multiplier):
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.field.mesh.attributes["unit"]})')
-        ax.set_xlabel(dfu.raxesdict[self.field.mesh.attributes['axis1']]
-                      + unit)
-        ax.set_ylabel(dfu.raxesdict[self.field.mesh.attributes['axis2']]
-                      + unit)
 
     def __dir__(self):
         dirlist = dir(self.__class__)
