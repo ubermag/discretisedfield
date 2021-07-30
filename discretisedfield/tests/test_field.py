@@ -1686,43 +1686,40 @@ class TestField:
         with pytest.raises(ValueError) as excinfo:
             f = df.Field.fromfile(filename)
 
-    def test_fft2_ifft2(self):
+    def test_fft(self):
         p1 = (-10, -10, -5)
         p2 = (10, 10, 5)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        f = df.Field(mesh, dim=3, value=(1, 2, 3))
+        def _init_random(p):
+            return np.random.rand(3) * 2 - 1
+        f = df.Field(mesh, dim=3, value=_init_random, norm=1)
+
+        # 3d fft
+        assert f.allclose(f.fftn.ifftn.real)
+        assert df.Field(mesh, dim=3).allclose(
+            f.fftn.ifftn.imag)
+
+        assert f.allclose(f.rfftn.irfftn)
+
+        # 2d fft
         for i in ['x', 'y', 'z']:
             plane = f.plane(i)
-            assert plane.allclose(plane.fft2.ifft2.real)
+            assert plane.allclose(plane.fftn.ifftn.real)
             assert df.Field(mesh, dim=3).plane(i).allclose(
-                plane.fft2.ifft2.imag)
+                plane.fftn.ifftn.imag)
 
-    def test_fft3_ifft3(self):
-        p1 = (-10, -10, -5)
-        p2 = (10, 10, 5)
-        cell = (1, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+            assert plane.allclose(plane.rfftn.irfftn)
 
-        f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        assert f.allclose(f.fft3.ifft3.real)
-        assert df.Field(mesh, dim=3).allclose(
-            f.fft3.ifft3.imag)
-
-    def test_fft3_ifft2(self):
-        p1 = (-10, -10, -5)
-        p2 = (10, 10, 5)
-        cell = (1, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        f = df.Field(mesh, dim=3, value=(1, 2, 3))
-
+        # Fourier slice theoreme
         for i, di in [['x', df.dx], ['y', df.dy], ['z', df.dz]]:
             plane = (f * di).integral(i)
-            assert plane.allclose(f.fft3.plane(**{i: 0}).ifft2.real)
+            assert plane.allclose(f.fftn.plane(**{i: 0}).ifftn.real)
             assert (df.Field(mesh, dim=3) * df.dz).integral(i).allclose(
-                f.fft3.plane(**{i: 0}).ifft2.imag)
+                f.fftn.plane(**{i: 0}).ifftn.imag)
+
+            assert plane.allclose(f.rfftn.plane(**{i: 0}).irfftn)
 
     def test_mpl_scalar(self):
         # No axes
