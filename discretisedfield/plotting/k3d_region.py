@@ -7,7 +7,7 @@ import discretisedfield.util as dfu
 class K3dRegion:
     def __init__(self, region):
         self.region = region
-        
+
     def __call__(self, *,
                  plot=None,
                  color=dfu.cp_int[0],
@@ -69,10 +69,10 @@ class K3dRegion:
                            outlines=False, **kwargs)
 
         self._axis_labels(plot, multiplier)
-        
+
     def _setup_multiplier(self, multiplier):
         return self.region.multiplier if multiplier is None else multiplier
-    
+
     def _axis_labels(self, plot, multiplier):
         unit = f'({uu.rsi_prefixes[multiplier]}{self.region.unit})'
         plot.axes = [i + r'\,\text{{{}}}'.format(unit)
