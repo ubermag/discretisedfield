@@ -1719,8 +1719,7 @@ class TestField:
             assert (df.Field(mesh, dim=3) * df.dz).integral(i).allclose(
                 f.fftn.plane(**{i: 0}).ifftn.imag)
 
-            # TODO fails for z-component
-            # assert plane.allclose(f.rfftn.plane(**{i: 0}).irfftn)
+            assert plane.allclose(f.rfftn.plane(**{i: 0}).irfftn)
 
     def test_mpl_scalar(self):
         # No axes
