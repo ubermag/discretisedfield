@@ -692,7 +692,7 @@ class Mpl:
 
         return [values[i] if filter_field(point) != 0 else np.nan
                 for i, point in enumerate(points)]
-        
+
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
                 rf'{self.field.mesh.attributes["unit"]})')
