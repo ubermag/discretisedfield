@@ -3,6 +3,7 @@ import numbers
 import functools
 import collections
 import numpy as np
+import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import discretisedfield.plotting as dfp
@@ -572,66 +573,6 @@ class Region:
     def mpl(self):
         return dfp.MplRegion(self)
 
-    def k3d(self, *, plot=None, color=dfu.cp_int[0], multiplier=None,
-            **kwargs):
-        """``k3d`` plot.
-
-        If ``plot`` is not passed, ``k3d.Plot`` object is created
-        automatically. The colour of the region can be specified using
-        ``color`` argument.
-
-        For details about ``multiplier``, please refer to
-        ``discretisedfield.Region.mpl``.
-
-        This method is based on ``k3d.voxels``, so any keyword arguments
-        accepted by it can be passed (e.g. ``wireframe``).
-
-        Parameters
-        ----------
-        plot : k3d.Plot, optional
-
-            Plot to which the plot is added. Defaults to ``None`` - plot is
-            created internally.
-
-        color : int, optional
-
-            Colour of the region. Defaults to the default color palette.
-
-        multiplier : numbers.Real, optional
-
-            Axes multiplier. Defaults to ``None``.
-
-        Examples
-        --------
-        1. Visualising the region using ``k3d``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50e-9, -50e-9, 0)
-        >>> p2 = (50e-9, 50e-9, 10e-9)
-        >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.k3d()
-        Plot(...)
-
-        """
-        if plot is None:
-            plot = k3d.plot()
-            plot.display()
-
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.edges)
-
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
-
-        plot_array = np.ones((1, 1, 1)).astype(np.uint8)  # avoid k3d warning
-
-        bounds = [i for sublist in
-                  zip(np.divide(self.pmin, multiplier),
-                      np.divide(self.pmax, multiplier))
-                  for i in sublist]
-
-        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
-                           outlines=False, **kwargs)
-
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+    @property
+    def k3d(self):
+        return dfp.K3dRegion(self)
