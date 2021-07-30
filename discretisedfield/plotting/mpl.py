@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import discretisedfield.util as dfu
+import ubermagutil.units as uu
 
 
 class Mpl:
