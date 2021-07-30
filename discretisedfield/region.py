@@ -1,4 +1,5 @@
 import k3d
+import numbers
 import functools
 import collections
 import numpy as np
@@ -463,15 +464,110 @@ class Region:
     def multiplier(self):
         """Compute multiplier for the region."""
         return uu.si_max_multiplier(self.edges)
-    
-    def rescale(self, multiplier=None):
-        """Rescale region."""
-        multiplier = self.multiplier if multiplier is None else multiplier
-        
-        return self.__class__(p1=np.divide(self.pmin, multiplier),
-                              p2=np.divide(self.pmax, multiplier),
+
+    def __mul__(self, other):
+        """Binary ``*`` operator.
+
+        It can be applied only between ``discretisedfield.Region`` and
+        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin`` are
+        multiplied by ``other``.
+
+        Parameters
+        ----------
+        other : numbers.Real
+
+            Second operand.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            Resulting region.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Example
+        -------
+        1. Multiply region with a scalar.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> res = region * 5
+        ...
+        >>> res.pmin
+        (0, 0, 0)
+        >>> res.pmax
+        (50, 50, 50)
+
+        .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
+
+        """
+        if not isinstance(other, numbers.Real):
+            msg = (f'Unsupported operand type(s) for *: '
+                   f'{type(self)=} and {type(other)=}.')
+            raise TypeError(msg)
+
+        return self.__class__(p1=np.multiply(self.pmin, other),
+                              p2=np.multiply(self.pmax, other),
                               unit=self.unit)
 
+    def __rmul__(self, other):
+        return self * other
+
+    def __truediv__(self, other):
+        """Binary ``/`` operator.
+
+        It can be applied only between ``discretisedfield.Region`` and
+        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin`` are
+        divided by ``other``.
+
+        Parameters
+        ----------
+        other : numbers.Real
+
+            Second operand.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            Resulting region.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Example
+        -------
+        1. Divide region with a scalar.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> res = region / 2
+        ...
+        >>> res.pmin
+        (0, 0, 0)
+        >>> res.pmax
+        (5, 5, 5)
+
+        .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
+
+        """
+        return self * other**(-1)
 
     def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[0],
             multiplier=None, filename=None, **kwargs):

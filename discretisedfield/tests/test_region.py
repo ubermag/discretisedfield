@@ -245,20 +245,28 @@ class TestRegion:
         
         assert region.multiplier == 1e-6
         
-    def test_rescale(self):
+    def test_mul_truediv(self):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2)
         
-        res = region.rescale()
-        assert np.allclose(res.pmin, (-50, -50, 0))
-        assert np.allclose(res.pmax, (50, 50, 20))
-        assert np.allclose(res.edges, (100, 100, 20))
+        res = region * 2
+        assert np.allclose(res.pmin, (-100e-9, -100e-9, 0))
+        assert np.allclose(res.pmax, (100e-9, 100e-9, 40e-9))
+        assert np.allclose(res.edges, (200e-9, 200e-9, 40e-9))
         
-        res = region.rescale(multiplier=1e-6)
-        assert np.allclose(res.pmin, (-50e-3, -50e-3, 0))
-        assert np.allclose(res.pmax, (50e-3, 50e-3, 20e-3))
-        assert np.allclose(res.edges, (100e-3, 100e-3, 20e-3))
+        res = region / 2
+        assert np.allclose(res.pmin, (-25e-9, -25e-9, 0))
+        assert np.allclose(res.pmax, (25e-9, 25e-9, 10e-9))
+        assert np.allclose(res.edges, (50e-9, 50e-9, 10e-9))
+        
+        assert region * 2 == 2 * region == region / 0.5
+        
+        with pytest.raises(TypeError):
+            res = region * region
+            
+        with pytest.raises(TypeError):
+            res = 5 / region
 
     def test_mpl(self):
         p1 = (-50e-9, -50e-9, 0)
