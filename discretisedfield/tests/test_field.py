@@ -1719,7 +1719,11 @@ class TestField:
             assert (df.Field(mesh, dim=3) * df.dz).integral(i).allclose(
                 f.fftn.plane(**{i: 0}).ifftn.imag)
 
-            assert plane.allclose(f.rfftn.plane(**{i: 0}).irfftn)
+        assert (f * df.dx).integral('x').allclose(f.rfftn.plane(x=0).irfftn)
+        assert (f * df.dy).integral('y').allclose(f.rfftn.plane(y=0).irfftn)
+        # plane along z removes rfftn-freq axis => needs ifftn
+        assert (f * df.dz).integral('z').allclose(
+            f.rfftn.plane(z=0).ifftn.real)
 
     def test_mpl_scalar(self):
         # No axes

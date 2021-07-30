@@ -3266,9 +3266,10 @@ class Field:
 
         values = []
         for idx in range(self.dim):
-            ft = np.fft.irfftn(np.fft.ifftshift(
-                self.array[..., idx].squeeze()),
-                               s=[i for i in mesh.n if i > 1])
+            array = self.array[..., idx].squeeze()
+            ft = np.fft.irfftn(
+                np.fft.ifftshift(array, axes=range(len(array.shape) - 1)),
+                s=[i for i in mesh.n if i > 1])
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
