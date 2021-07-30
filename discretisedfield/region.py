@@ -3,7 +3,6 @@ import numbers
 import functools
 import collections
 import numpy as np
-import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import discretisedfield.plotting as dfp
@@ -568,7 +567,7 @@ class Region:
 
         """
         return self * other**(-1)
-    
+
     @property
     def mpl(self):
         return dfp.MplRegion(self)
