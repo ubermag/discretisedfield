@@ -702,8 +702,8 @@ class Field:
         return dirlist
 
     def __iter__(self):
-        r"""Generator yielding coordinates and values of all mesh discretisation
-        cells.
+        r"""Generator yielding coordinates and values of all mesh
+        discretisation cells.
 
         Yields
         ------

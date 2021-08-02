@@ -125,8 +125,10 @@ class K3d:
                                                   name='total_region',
                                                   opacity=0.025)
 
-        plot_array = np.ones_like(self.data.array)  # all voxels have the same color
-        plot_array[self.data.array == 0] = 0  # remove voxels where field is zero
+        # all voxels have the same color
+        plot_array = np.ones_like(self.data.array)
+        # remove voxels where field is zero
+        plot_array[self.data.array == 0] = 0
         plot_array = plot_array[..., 0]  # remove an empty dimension
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
         plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning

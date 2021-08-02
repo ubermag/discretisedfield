@@ -115,7 +115,8 @@ class Mpl:
         vector_kwargs.setdefault('colorbar', False)
 
         # Set up default scalar and vector fields.
-        # TODO: Do we allow user to specify what scalar and vector fields are? Did we have that before?
+        # TODO: Do we allow user to specify what scalar and vector fields are?
+        # Did we have that before?
         if self.field.dim == 1:
             scalar_field = self.field
             vector_field = None
@@ -152,7 +153,7 @@ class Mpl:
                multiplier=None,
                filter_field=None,
                colorbar=True,
-               colorbar_label=None,  # TODO: Can we maybe use an empty string here?
+               colorbar_label=None,  # TODO: Can we maybe use an empty string?
                filename=None,
                symmetric_clim=False,
                **kwargs):
@@ -273,7 +274,8 @@ class Mpl:
         pmin = np.divide(self.field.mesh.region.pmin, multiplier)
         pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
-        # TODO: After refactoring code, maybe extent and n can become part of PlaneMesh.
+        # TODO: After refactoring code, maybe extent and n can become
+        # part of PlaneMesh.
         extent = [pmin[self.field.mesh.attributes['axis1']],
                   pmax[self.field.mesh.attributes['axis1']],
                   pmin[self.field.mesh.attributes['axis2']],
@@ -303,7 +305,8 @@ class Mpl:
         self._axis_labels(ax, multiplier)
 
         if filename is not None:
-            # TODO: We use pad inches 0 and 0.02. We should figure out which one is the best.
+            # TODO: We use pad inches 0 and 0.02.
+            # We should figure out which one is the best.
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def lightness(self,
@@ -683,7 +686,6 @@ class Mpl:
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-
 
     def _setup_axes(self, ax, figsize, **kwargs):
         if ax is None:

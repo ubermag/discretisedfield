@@ -24,8 +24,8 @@ class Region:
     ----------
     p1 / p2 : (3,) array_like
 
-        Diagonally-opposite corner points of the region :math:`\mathbf{p}_i = (p_x,
-        p_y, p_z)`.
+        Diagonally-opposite corner points of the region :math:`\mathbf{p}_i =
+        (p_x, p_y, p_z)`.
 
     Raises
     ------
@@ -72,8 +72,8 @@ class Region:
         r"""Point with minimum coordinates in the region.
 
         The :math:`i`-th component of :math:`\mathbf{p}_\text{min}` is computed
-        from points :math:`p_1` and :math:`p_2`, between which the region spans:
-        :math:`p_\text{min}^i = \text{min}(p_1^i, p_2^i)`.
+        from points :math:`p_1` and :math:`p_2`, between which the region
+        spans: :math:`p_\text{min}^i = \text{min}(p_1^i, p_2^i)`.
 
         Returns
         -------
@@ -105,8 +105,8 @@ class Region:
         r"""Point with maximum coordinates in the region.
 
         The :math:`i`-th component of :math:`\mathbf{p}_\text{max}` is computed
-        from points :math:`p_1` and :math:`p_2`, between which the region spans:
-        :math:`p_\text{max}^i = \text{max}(p_1^i, p_2^i)`.
+        from points :math:`p_1` and :math:`p_2`, between which the region
+        spans: :math:`p_\text{max}^i = \text{max}(p_1^i, p_2^i)`.
 
         Returns
         -------
@@ -469,8 +469,8 @@ class Region:
         """Binary ``*`` operator.
 
         It can be applied only between ``discretisedfield.Region`` and
-        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin`` are
-        multiplied by ``other``.
+        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
+        are multiplied by ``other``.
 
         Parameters
         ----------
@@ -526,8 +526,8 @@ class Region:
         """Binary ``/`` operator.
 
         It can be applied only between ``discretisedfield.Region`` and
-        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin`` are
-        divided by ``other``.
+        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
+        are divided by ``other``.
 
         Parameters
         ----------
@@ -560,9 +560,9 @@ class Region:
         >>> res = region / 2
         ...
         >>> res.pmin
-        (0, 0, 0)
+        (0.0, 0.0, 0.0)
         >>> res.pmax
-        (5, 5, 5)
+        (5.0, 5.0, 5.0)
 
         .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
 
