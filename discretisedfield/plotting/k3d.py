@@ -89,10 +89,10 @@ class K3d:
         ...         return 0
         >>> field.norm = normfun
         ...
-        >>> field.norm.k3d_nonzero()
+        >>> field.norm.k3d.nonzero()
         Plot(...)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
+        .. seealso:: :py:func:`~discretisedfield.plotting.K3d.voxels`
 
         """
         if self.data.dim != 1:
@@ -142,8 +142,13 @@ class K3d:
         plot.axes = [i + r'\,\text{{{}}}'.format(unit)
                      for i in dfu.axesdict.keys()]
 
-    def scalar(self, plot=None, filter_field=None, cmap='cividis',
-               multiplier=None, interactive_field=None, **kwargs):
+    def scalar(self,
+               plot=None,
+               filter_field=None,
+               cmap='cividis',
+               multiplier=None,
+               interactive_field=None,
+               **kwargs):
         """``k3d`` plot of a scalar field.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
@@ -215,10 +220,10 @@ class K3d:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
         >>> field = df.Field(mesh, dim=1, value=5)
-        >>> field.k3d_scalar()
+        >>> field.k3d.scalar()
         Plot(...)
 
-        .. seealso:: :py:func:`~discretisedfield.Field.k3d_vector`
+        .. seealso:: :py:func:`~discretisedfield.plotting.K3d.vector`
 
         """
         if self.data.dim != 1:
@@ -387,13 +392,15 @@ class K3d:
         --------
         1. Visualising the vector field using ``k3d``.
 
+        >>> import discretisedfield as df
+        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
         ...
-        >>> field.k3d_vector()
+        >>> field.k3d.vector()
         Plot(...)
 
         """

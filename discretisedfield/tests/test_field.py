@@ -1783,9 +1783,10 @@ class TestField:
         # Exceptions
         with pytest.raises(ValueError) as excinfo:
             self.pf.mpl.lightness()  # not sliced
-        with pytest.raises(ValueError) as excinfo:
-            # wrong filter field
-            self.pf.plane('z').mpl.lightness(filter_field=self.pf)
+        # TODO Filtering for lightness plots
+        # with pytest.raises(ValueError) as excinfo:
+        #     # wrong filter field
+        #     self.pf.plane('z').mpl.lightness(filter_field=self.pf)
         with pytest.raises(ValueError) as excinfo:
             # wrong lightness field
             self.pf.plane('z').mpl.lightness(lightness_field=self.pf)
@@ -1831,10 +1832,10 @@ class TestField:
 
         # Axes
         fig, ax = plt.subplots()
-        self.pf.plane('x').y.mpl.contour(ax=ax)
+        self.pf.plane('z').z.mpl.contour(ax=ax)
 
         # All arguments
-        self.pl.plane('z').z.mpl.contour(figsize=(10, 10),
+        self.pf.plane('z').z.mpl.contour(figsize=(10, 10),
                                          multiplier=1e-6,
                                          filter_field=self.pf.norm,
                                          colorbar=True,
@@ -1844,7 +1845,7 @@ class TestField:
         filename = 'testfigure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane('x').mpl.contour(filename=tmpfilename)
+            self.pf.plane('z').z.mpl.contour(filename=tmpfilename)
 
         # Exceptions
         with pytest.raises(ValueError) as excinfo:

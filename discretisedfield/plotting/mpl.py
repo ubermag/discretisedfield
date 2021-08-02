@@ -97,7 +97,7 @@ class Mpl:
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl.plot_simplified()
+            >>> field.plane(z=50, n=(5, 5)).mpl()
 
         .. seealso::
 
@@ -255,9 +255,9 @@ class Mpl:
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, dim=1, value=2)
             ...
-            >>> field.plane('y').mpl_scalar()
+            >>> field.plane('y').mpl.scalar()
 
-        .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
+        .. seealso:: :py:func:`~discretisedfield.plotting.Mpl.vector`
 
         """
         if self.field.dim > 1:
@@ -323,6 +323,24 @@ class Mpl:
 
         Uses HSV to show inplane angle and lightness for out-of-plane (3d) or
         norm (1d/2d) of the field.
+
+        Example
+        -------
+        .. plot::
+            :context: close-figs
+
+            1. Visualising the scalar field using ``matplotlib``.
+
+            >>> import discretisedfield as df
+            ...
+            >>> p1 = (0, 0, 0)
+            >>> p2 = (100, 100, 100)
+            >>> n = (10, 10, 10)
+            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+            >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+            ...
+            >>> field.plane('z').mpl.lightness()
+
         """
         if self.field.dim == 2:
             if lightness_field is None:
@@ -409,7 +427,7 @@ class Mpl:
         if colorwheel:
             if colorwheel_args is None:
                 colorwheel_args = {}
-            cw_ax = self.add_colorwheel(ax, **colorwheel_args)
+            cw_ax = add_colorwheel(ax, **colorwheel_args)
             if colorwheel_xlabel is not None:
                 cw_ax.arrow(100, 100, 60, 0, width=5, fc='w', ec='w')
                 cw_ax.annotate(colorwheel_xlabel, (115, 140), c='w')
@@ -528,10 +546,10 @@ class Mpl:
             >>> p1 = (0, 0, 0)
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
-            >>> mesh = df.mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.field(mesh, dim=3, value=(1.1, 2.1, 3.1))
+            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+            >>> field = df.Field(mesh, dim=3, value=(1.1, 2.1, 3.1))
             ...
-            >>> field.plane('y').mpl_vector()
+            >>> field.plane('y').mpl.vector()
 
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
@@ -614,6 +632,22 @@ class Mpl:
         .. plot::
             :context: close-figs
 
+            1. Visualising the scalar field using ``matplotlib``.
+
+            >>> import discretisedfield as df
+            >>> import math
+            ...
+            >>> p1 = (0, 0, 0)
+            >>> p2 = (100, 100, 100)
+            >>> n = (10, 10, 10)
+            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+            >>> def init_value(point):
+            ...     x, y, z = point
+            ...     return math.sin(x) + math.sin(y)
+            >>> field = df.Field(mesh, dim=1, value=init_value)
+            ...
+            >>> field.plane('z').mpl.contour()
+
         """
         if self.field.dim != 1:
             msg = f'Cannot plot dim={self.field.dim} field.'
@@ -650,34 +684,6 @@ class Mpl:
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
-    def add_colorwheel(self, ax, width=1, height=1, loc='lower right',
-                       **kwargs):
-        """Colorwheel for hsv plots."""
-        n = 200
-        x = np.linspace(-1, 1, n)
-        y = np.linspace(-1, 1, n)
-        X, Y = np.meshgrid(x, y)
-
-        theta = np.arctan2(Y, X)
-        r = np.sqrt(X**2 + Y**2)
-
-        rgb = dfu.hls2rgb(hue=theta, lightness=r,
-                          lightness_clim=[0, 1 / np.sqrt(2)])
-
-        theta = theta.reshape((n, n, 1))
-
-        rgba = np.zeros((n, n, 4))
-        for i, xi in enumerate(x):
-            for j, yi in enumerate(y):
-                if xi**2 + yi**2 <= 1:
-                    rgba[i, j, :3] = rgb[i, j, :]
-                    rgba[i, j, 3] = 1
-
-        ax_ins = mpl_toolkits.axes_grid1.inset_locator.inset_axes(
-            ax, width=width, height=height, loc=loc, **kwargs)
-        ax_ins.imshow(rgba[:, ::-1, :])
-        ax_ins.axis('off')
-        return ax_ins
 
     def _setup_axes(self, ax, figsize, **kwargs):
         if ax is None:
@@ -717,3 +723,49 @@ class Mpl:
             dirlist.remove(attr)
 
         return dirlist
+
+
+def add_colorwheel(ax, width=1, height=1, loc='lower right', **kwargs):
+    """Colorwheel for hsv plots.
+
+    Creates colorwheel on new inset axis.
+
+    Example
+    -------
+
+    .. plot::
+        :context: close-figs
+
+        1. Adding a colorwheel to an empty axis
+        >>> import discretisedfield.plotting as dfp
+        >>> import matplotlib.pyplot as plt
+        ...
+        >>> fig, ax = plt.subplots()
+        >>> ins_ax = dfp.add_colorwheel(ax)
+
+    """
+    n = 200
+    x = np.linspace(-1, 1, n)
+    y = np.linspace(-1, 1, n)
+    X, Y = np.meshgrid(x, y)
+
+    theta = np.arctan2(Y, X)
+    r = np.sqrt(X**2 + Y**2)
+
+    rgb = dfu.hls2rgb(hue=theta, lightness=r,
+                      lightness_clim=[0, 1 / np.sqrt(2)])
+
+    theta = theta.reshape((n, n, 1))
+
+    rgba = np.zeros((n, n, 4))
+    for i, xi in enumerate(x):
+        for j, yi in enumerate(y):
+            if xi**2 + yi**2 <= 1:
+                rgba[i, j, :3] = rgb[i, j, :]
+                rgba[i, j, 3] = 1
+
+    ax_ins = mpl_toolkits.axes_grid1.inset_locator.inset_axes(
+        ax, width=width, height=height, loc=loc, **kwargs)
+    ax_ins.imshow(rgba[:, ::-1, :])
+    ax_ins.axis('off')
+    return ax_ins
