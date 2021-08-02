@@ -2073,3 +2073,39 @@ class TestField:
         field.norm.k3d.nonzero()
         field.x.k3d.scalar()
         field.k3d.vector()
+
+    def test_complex(self):
+        mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9),
+                       p2=(5e-9, 5e-9, 5e-9),
+                       n=(5, 5, 5))
+
+        # real field
+        real_field = self.pf.real
+        check_field(real_field)
+        assert real_field((-2e-9, 0, 0)) == (0, 0, 1e5)
+        assert real_field((2e-9, 0, 0)) == (0, 0, -1e5)
+
+        imag_field = self.pf.imag
+        check_field(imag_field)
+        assert df.Field(mesh, dim=3).allclose(imag_field)
+        assert df.Field(mesh, dim=3).allclose(np.mod(self.pf.phase, np.pi))
+
+        # complex field
+        field = df.Field(mesh, dim=1, value=1 + 1j)
+        real_field = field.real
+        check_field(real_field)
+        assert df.Field(mesh, dim=1, value=1).allclose(real_field)
+
+        imag_field = field.imag
+        check_field(imag_field)
+        assert df.Field(mesh, dim=1, value=1).allclose(imag_field)
+        assert df.Field(mesh, dim=1, value=np.pi/4).allclose(field.phase)
+
+    def test_numpy_ufunc(self):
+        assert np.allclose(np.sin(self.pf).array, np.sin(self.pf.array))
+        assert np.allclose(np.exp(self.pf.orientation).array,
+                           np.exp(self.pf.orientation.array))
+        assert np.sum([self.pf, self.pf]).allclose(self.pf + self.pf)
+        assert np.multiply(self.pf.x, self.pf.y).allclose(self.pf.x
+                                                          * self.pf.y)
+        assert np.power(self.pf.z, 2).allclose(self.pf.z**2)
