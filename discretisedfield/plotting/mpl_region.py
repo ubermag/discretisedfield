@@ -12,8 +12,8 @@ class MplRegion:
                  figsize=None,
                  multiplier=None,
                  color=dfu.cp_hex[0],
-                 plot_kwargs=None,
-                 filename=None):
+                 filename=None,
+                 **kwargs):
         r"""``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -77,14 +77,13 @@ class MplRegion:
 
         multiplier = self._setup_multiplier(multiplier)
 
-        plot_kwargs = {} if plot_kwargs is None else plot_kwargs
-        plot_kwargs.setdefault('color', color)
+        kwargs.setdefault('color', color)
 
         rescaled_region = self.region / multiplier
 
         dfu.plot_box(ax=ax,
                      pmin=rescaled_region.pmin,
-                     pmax=rescaled_region.pmax, **plot_kwargs)
+                     pmax=rescaled_region.pmax, **kwargs)
 
         self._axis_labels(ax, multiplier)
 
