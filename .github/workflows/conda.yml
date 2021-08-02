@@ -1,7 +1,6 @@
 name: conda
 
 on:
-  push:
   schedule:
     - cron: '0 0 * * 1'  # run every Monday
 
