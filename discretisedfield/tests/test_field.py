@@ -1739,20 +1739,9 @@ class TestField:
                                         filter_field=self.pf.norm,
                                         colorbar=True,
                                         colorbar_label='something',
-                                        multiplier=1e-6, cmap='hsv',
+                                        multiplier=1e-6,
+                                        cmap='hsv',
                                         clim=(-1, 1))
-
-        # TODO Lightness field -> is now a separate method
-        filenames = ['skyrmion.omf', 'skyrmion-disk.omf']
-        for i in filenames:
-            filename = os.path.join(os.path.dirname(__file__),
-                                    'test_sample', i)
-
-            field = df.Field.fromfile(filename)
-            field.plane('z').angle.mpl.scalar(lightness_field=field.z)
-            field.plane('z').angle.mpl.scalar(lightness_field=-field.z,
-                                              filter_field=field.norm)
-            field.plane('z').mpl(scalar_lightness_field=-field.z)
 
         # Saving plot
         filename = 'testfigure.pdf'
@@ -1768,10 +1757,38 @@ class TestField:
         with pytest.raises(ValueError):
             # wrong filter field
             self.pf.x.plane('z').mpl.scalar(filter_field=self.pf)
-        with pytest.raises(ValueError):
-            # wrong filter field
-            self.pf.x.plane('z').mpl.scalar(lightness_field=self.pf)
+        plt.close('all')
 
+    def test_mpl_lightess(self):
+        filenames = ['skyrmion.omf', 'skyrmion-disk.omf']
+        for i in filenames:
+            filename = os.path.join(os.path.dirname(__file__),
+                                    'test_sample', i)
+
+            field = df.Field.fromfile(filename)
+            field.plane('z').mpl.lightness()
+            field.plane('z').mpl.lightness(lightness_field=-field.z,
+                                           filter_field=field.norm)
+            fig, ax = plt.subplots()
+            field.plane('z').mpl.lightness(ax=ax,
+                                           clim=[0, 0.5],
+                                           colorwheel_xlabel='mx',
+                                           colorwheel_ylabel='my')
+            # Saving plot
+            filename = 'testfigure.pdf'
+            with tempfile.TemporaryDirectory() as tmpdir:
+                tmpfilename = os.path.join(tmpdir, filename)
+                field.plane('z').mpl.lightness(filename=tmpfilename)
+
+        # Exceptions
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.mpl.lightness()  # not sliced
+        with pytest.raises(ValueError) as excinfo:
+            # wrong filter field
+            self.pf.plane('z').mpl.lightness(filter_field=self.pf)
+        with pytest.raises(ValueError) as excinfo:
+            # wrong lightness field
+            self.pf.plane('z').mpl.lightness(lightness_field=self.pf)
         plt.close('all')
 
     def test_mpl_vector(self):
@@ -1808,6 +1825,38 @@ class TestField:
 
         plt.close('all')
 
+    def test_mpl_contour(self):
+        # No axes
+        self.pf.plane('z').z.mpl.contour()
+
+        # Axes
+        fig, ax = plt.subplots()
+        self.pf.plane('x').y.mpl.contour(ax=ax)
+
+        # All arguments
+        self.pl.plane('z').z.mpl.contour(figsize=(10, 10),
+                                         multiplier=1e-6,
+                                         filter_field=self.pf.norm,
+                                         colorbar=True,
+                                         colorbar_label='something')
+
+        # Saving plot
+        filename = 'testfigure.pdf'
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            self.pf.plane('x').mpl.contour(filename=tmpfilename)
+
+        # Exceptions
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.mpl.contour()  # not sliced
+        with pytest.raises(ValueError) as excinfo:
+            self.pf.plane('z').mpl.contour()  # vector field
+        with pytest.raises(ValueError) as excinfo:
+            # wrong filter field
+            self.pf.plane('z').mpl.contour(filter_field=self.pf)
+
+        plt.close('all')
+
     def test_mpl(self):
         # No axes
         self.pf.plane('x', n=(3, 4)).mpl()
@@ -1817,34 +1866,20 @@ class TestField:
         ax = fig.add_subplot(111)
         self.pf.x.plane('x', n=(3, 4)).mpl(ax=ax)
 
-        # All arguments for a vector field
-        # TODO outdated
-        self.pf.plane('x').mpl(figsize=(12, 6),
-                               scalar_field=self.pf.plane('x').angle,
-                               scalar_filter_field=self.pf.norm,
-                               scalar_colorbar_label='something',
-                               scalar_cmap='twilight',
-                               vector_field=self.pf,
-                               vector_color_field=self.pf.y,
-                               vector_use_color=True,
-                               vector_colorbar=True,
-                               vector_colorbar_label='vector',
-                               vector_cmap='hsv', vector_clim=(0, 1e6),
-                               multiplier=1e-12)
-
-        # All arguments for a scalar field
-        # TODO outdated
         self.pf.z.plane('x').mpl(figsize=(12, 6),
-                                 scalar_field=self.pf.x,
-                                 scalar_filter_field=self.pf.norm,
-                                 scalar_colorbar_label='something',
-                                 scalar_cmap='twilight',
-                                 vector_field=self.pf,
-                                 vector_color_field=self.pf.y,
-                                 vector_use_color=True,
-                                 vector_colorbar=True,
-                                 vector_colorbar_label='vector',
-                                 vector_cmap='hsv', vector_clim=(0, 1e6),
+                                 scalar_kwargs={
+                                     'filter_field': self.pf.norm,
+                                     'colorbar_label': 'scalar',
+                                     'cmap': 'twilight',
+                                 },
+                                 vector_kwargs={
+                                     'color_field': self.pf.y,
+                                     'use_color': True,
+                                     'colorbar': True,
+                                     'colorbar_label': 'vector',
+                                     'cmap': 'hsv',
+                                     'clim': (0, 1e6),
+                                 },
                                  multiplier=1e-12)
 
         # Saving plot

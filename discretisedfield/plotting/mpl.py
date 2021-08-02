@@ -363,9 +363,13 @@ class Mpl:
 
         points, values = map(list, zip(*list(self.field)))
 
-        rescaled_region = self.field.mesh.region.rescale(multiplier)
-        pmin = rescaled_region.pmin
-        pmax = rescaled_region.pmax
+        # TODO Requires refactoring of df.Mesh
+        # rescaled_region = self.field.mesh.region.rescale(multiplier)
+        # pmin = rescaled_region.pmin
+        # pmax = rescaled_region.pmax
+
+        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
+        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
         # This depends on plane mesh orientation and should be in PlaneMesh.
         extent = [pmin[self.field.mesh.attributes['axis1']],
@@ -391,13 +395,16 @@ class Mpl:
                           lightness_clim=clim).squeeze()
 
         # TODO: filter field affects color range
-        rgb = self._filter_values(filter_field, points, rgb)
-        rgba = np.ones((len(rgb), 4))
-        rgba[..., :3] = rgb
-        rgba[..., 3][np.isnan(rgb[:, 0])] = 0
+        # rgb = self._filter_values(filter_field, points, rgb)
+        # rgba = np.ones((len(rgb), 4))
+        # rgba[..., :3] = rgb
+        # rgba[..., 3][np.isnan(rgb[:, 0])] = 0
 
         kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-        ax.imshow(rgba.reshape((*n, 4)), origin='lower',
+        # TODO filtering
+        # ax.imshow(rgba.reshape((*n, 4)), origin='lower',
+        #           extent=extent, **kwargs)
+        ax.imshow(rgb.reshape((*n, 3)), origin='lower',
                   extent=extent, **kwargs)
         if colorwheel:
             if colorwheel_args is None:
