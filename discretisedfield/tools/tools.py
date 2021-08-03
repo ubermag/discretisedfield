@@ -716,6 +716,26 @@ def demag_tensor(mesh):
     return df.Field(mesh_new, dim=6, value=_N(mesh_new)).fftn
 
 
+def demag_tensor_numpy(mesh):
+    """Demag tensor computed using numpy."""
+    x = np.linspace((-mesh.n[0] + 1) * mesh.cell[0],
+                    (mesh.n[0] - 1) * mesh.cell[0], mesh.n[0] * 2 - 1)
+    y = np.linspace((-mesh.n[1] + 1) * mesh.cell[1],
+                    (mesh.n[1] - 1) * mesh.cell[1], mesh.n[1] * 2 - 1)
+    z = np.linspace((-mesh.n[2] + 1) * mesh.cell[2],
+                    (mesh.n[2] - 1) * mesh.cell[2], mesh.n[2] * 2 - 1)
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+
+    values = np.stack(_N(mesh)((xx, yy, zz)), axis=3)
+
+    p1 = [(-i + 1) * j - j/2 for i, j in zip(mesh.n, mesh.cell)]
+    p2 = [(i - 1) * j + j/2 for i, j in zip(mesh.n, mesh.cell)]
+    n = [2*i - 1 for i in mesh.n]
+    mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
+
+    return df.Field(mesh_new, dim=6, value=values).fftn
+
+
 def demag_field(m, tensor):
     """Demagnetisation field computed using ...
 
