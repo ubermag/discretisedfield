@@ -298,7 +298,7 @@ class Mpl:
                        origin='lower', extent=extent, **kwargs)
 
         if colorbar:
-            cbar = plt.colorbar(cp)
+            cbar = plt.colorbar(cp, ax=ax)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
@@ -605,7 +605,7 @@ class Mpl:
 
         ax.set_aspect('equal')
         if colorbar and use_color:
-            cbar = plt.colorbar(cp)
+            cbar = plt.colorbar(cp, ax=ax)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
@@ -678,7 +678,7 @@ class Mpl:
         ax.set_aspect('equal')
 
         if colorbar:
-            cbar = plt.colorbar(cp)
+            cbar = plt.colorbar(cp, ax=ax)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
