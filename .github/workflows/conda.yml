@@ -17,6 +17,8 @@ jobs:
     steps:
     - name: Initialisation
       uses: actions/checkout@v2
+      with:
+        ref: stable
 
     - name: Set up conda
       uses: conda-incubator/setup-miniconda@v2

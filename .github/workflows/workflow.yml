@@ -2,6 +2,8 @@ name: workflow
 
 on:
   push:
+    branches-ignore:
+      - 'stable'
   schedule:
     - cron: '0 0 * * 1'  # run every Monday
 
@@ -24,6 +26,9 @@ jobs:
 
     - name: Install testing packages
       run: python -m pip install --upgrade pip pytest-cov nbval pycodestyle
+
+    - name: Install ubermag dependencies
+      run: python -m pip install git+https://github.com/ubermag/ubermagutil.git
 
     - name: Install package
       run: python -m pip install .
