@@ -93,7 +93,7 @@ class Line:
             raise ValueError(msg)
 
         # Set the dimension (const descriptor).
-        if isinstance(values[0], numbers.Real):
+        if isinstance(values[0], numbers.Complex):
             self.dim = 1
         else:
             self.dim = len(values[0])

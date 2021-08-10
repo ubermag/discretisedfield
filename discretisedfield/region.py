@@ -1,35 +1,37 @@
 import k3d
-import random
+import numbers
+import functools
+import collections
 import numpy as np
-import matplotlib.pyplot as plt
 import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
-import functools
+import discretisedfield.plotting as dfp
 
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
-               p2=ts.Vector(size=3, const=True))
+               p2=ts.Vector(size=3, const=True),
+               unit=ts.Name(const=True))
 class Region:
-    """A cuboid region.
+    r"""Region.
 
-    A cuboid region spans between two corner points :math:`\\mathbf{p}_{1}` and
-    :math:`\\mathbf{p}_{2}`. Points ``p1`` and ``p2`` can be any two diagonally
-    opposite points. If any of the edge lengths of the cuboid region is zero,
-    ``ValueError`` is raised.
+    A cuboid region spans between two corner points :math:`\mathbf{p}_1` and
+    :math:`\mathbf{p}_2`. Points ``p1`` and ``p2`` can be any two
+    diagonally-opposite points. If any of the edge lengths of the cuboid region
+    is zero, ``ValueError`` is raised.
 
     Parameters
     ----------
     p1 / p2 : (3,) array_like
 
-        Diagonnaly opposite corner points :math:`\\mathbf{p}_{i} = (p_{x},
-        p_{y}, p_{z})`.
+        Diagonally-opposite corner points of the region :math:`\mathbf{p}_i =
+        (p_x, p_y, p_z)`.
 
     Raises
     ------
     ValueError
 
-        If any region's edge length is zero.
+        If any of the region's edge lengths is zero.
 
     Examples
     --------
@@ -40,10 +42,11 @@ class Region:
     >>> p1 = (-50e-9, -25e-9, 0)
     >>> p2 = (50e-9, 25e-9, 5e-9)
     >>> region = df.Region(p1=p1, p2=p2)
+    ...
     >>> region
     Region(...)
 
-    2. An attempt to define a region, where one of the edge lengths is zero.
+    2. An attempt to define a region whose one of the edge lengths is zero.
 
     >>> # The edge length in the z-direction is zero.
     >>> p1 = (-25, 3, 1)
@@ -54,39 +57,41 @@ class Region:
     ValueError: ...
 
     """
-    def __init__(self, p1, p2):
+
+    def __init__(self, p1, p2, unit='m'):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
+        self.unit = unit
 
-        if np.equal(self.edges, 0).any():
-            msg = f'One of the region edge lengths is zero: {self.edges=}.'
+        if not np.all(self.edges):
+            msg = f'One of the region\'s edge lengths is zero: {self.edges=}.'
             raise ValueError(msg)
 
     @functools.cached_property
     def pmin(self):
-        """Point with minimum coordinates in the region.
+        r"""Point with minimum coordinates in the region.
 
-        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{min}` is
-        computed from points :math:`p_{1}` and :math:`p_{2}` between which the
-        cuboid region spans: :math:`p_\\text{min}^{i} = \\text{min}(p_{1}^{i},
-        p_{2}^{i})`.
+        The :math:`i`-th component of :math:`\mathbf{p}_\text{min}` is computed
+        from points :math:`p_1` and :math:`p_2`, between which the region
+        spans: :math:`p_\text{min}^i = \text{min}(p_1^i, p_2^i)`.
 
         Returns
         -------
         tuple (3,)
 
-            Point with minimum coordinates :math:`(p_{x}^\\text{min},
-            p_{y}^\\text{min}, p_{z}^\\text{min})`.
+            Point with minimum coordinates :math:`(p_x^\text{min},
+            p_y^\text{min}, p_z^\text{min})`.
 
         Examples
         --------
-        1. Getting the minimum coordinate point.
+        1. Getting region's point with minimum coordinates.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (-1.1, 2.9, 0)
         >>> p2 = (5, 0, -0.1)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.pmin
         (-1.1, 0.0, -0.1)
 
@@ -97,30 +102,30 @@ class Region:
 
     @functools.cached_property
     def pmax(self):
-        """Point with maximum coordinates in the region.
+        r"""Point with maximum coordinates in the region.
 
-        The :math:`i`-th component of :math:`\\mathbf{p}_\\text{max}` is
-        computed from points :math:`p_{1}` and :math:`p_{2}` between which the
-        cuboid region spans: :math:`p_\\text{max}^{i} = \\text{max}(p_{1}^{i},
-        p_{2}^{i})`.
+        The :math:`i`-th component of :math:`\mathbf{p}_\text{max}` is computed
+        from points :math:`p_1` and :math:`p_2`, between which the region
+        spans: :math:`p_\text{max}^i = \text{max}(p_1^i, p_2^i)`.
 
         Returns
         -------
         tuple (3,)
 
-            Point with maximum coordinates :math:`(p_{x}^\\text{max},
-            p_{y}^\\text{max}, p_{z}^\\text{max})`.
+            Point with maximum coordinates :math:`(p_x^\text{max},
+            p_y^\text{max}, p_z^\text{max})`.
 
         Examples
         --------
-        1. Getting the maximum coordinate point.
+        1. Getting region's point with maximum coordinates.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (-1.1, 2.9, 0)
         >>> p2 = (5, 0, -0.1)
         >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.pmax
+        ...
+        >>> region.pmin
         (5.0, 2.9, 0.0)
 
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
@@ -128,17 +133,16 @@ class Region:
         """
         return dfu.array2tuple(np.maximum(self.p1, self.p2))
 
-    @property
+    @functools.cached_property
     def edges(self):
-        """Edge lengths of the region.
+        r"""Region's edge lengths.
 
         Edge length is computed from the points between which the region spans
-        :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`:
+        :math:`\mathbf{p}_1` and :math:`\mathbf{p}_2`:
 
         .. math::
 
-            \\mathbf{l} = (|p_{2}^{x} - p_{1}^{x}|, |p_{2}^{y} - p_{1}^{y}|,
-            |p_{2}^{z} - p_{1}^{z}|).
+            \mathbf{l} = (|p_2^x - p_1^x|, |p_2^y - p_1^y|, |p_2^z - p_1^z|).
 
         Returns
         -------
@@ -155,29 +159,30 @@ class Region:
         >>> p1 = (0, 0, -5)
         >>> p2 = (5, 15, 15)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.edges
         (5, 15, 20)
 
         """
         return dfu.array2tuple(np.abs(np.subtract(self.p1, self.p2)))
 
-    @property
+    @functools.cached_property
     def centre(self):
-        """Centre point.
+        r"""Centre point.
 
-        It is computed as the middle point between minimum and maximum point
-        coordinates:
+        Centre point is computed as the middle point between region's points
+        with minimum and maximum coordinates:
 
         .. math::
 
-            \\mathbf{p}_\\text{centre} = \\frac{1}{2} (\\mathbf{p}_\\text{min}
-            + \\mathbf{p}_\\text{max}).
+            \mathbf{p}_\text{centre} = \frac{1}{2} (\mathbf{p}_\text{min}
+            + \mathbf{p}_\text{max}).
 
         Returns
         -------
         tuple (3,)
 
-            Centre point :math:`(p_{c}^{x}, p_{c}^{y}, p_{c}^{z})`.
+            Centre point :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
@@ -188,21 +193,22 @@ class Region:
         >>> p1 = (0, 0, 0)
         >>> p2 = (5, 15, 20)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.centre
         (2.5, 7.5, 10.0)
 
         """
-        return dfu.array2tuple(np.multiply(np.add(self.pmin, self.pmax), 0.5))
+        return dfu.array2tuple(0.5 * np.add(self.pmin, self.pmax))
 
-    @property
+    @functools.cached_property
     def volume(self):
-        """Region volume.
+        r"""Region's volume.
 
         It is computed by multiplying edge lengths of the region:
 
         .. math::
 
-            V = l_{x} l_{y} l_{z}.
+            V = l_x l_y l_z.
 
         Returns
         -------
@@ -219,14 +225,15 @@ class Region:
         >>> p1 = (0, 0, 0)
         >>> p2 = (5, 10, 2)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.volume
         100.0
 
         """
-        return float(np.prod(self.edges))
+        return dfu.array2tuple(np.prod(self.edges))
 
     def random_point(self):
-        """Generate a random point in the region.
+        r"""Regions random point.
 
         The use of this function is mostly for writing tests. This method is
         not a property and it is called as
@@ -236,18 +243,19 @@ class Region:
         -------
         tuple (3,)
 
-            Random point coordinates :math:`\\mathbf{p}_\\text{r} =
-            (p_{x}^\\text{r}, p_{y}^\\text{r}, p_{z}^\\text{r})`.
+            Random point coordinates :math:`\mathbf{p}_\text{r} =
+            (p_x^\text{r}, p_y^\text{r}, p_z^\text{r})`.
 
         Examples
         --------
-        1. Generating a random point.
+        1. Generating a random point in the region.
 
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (200e-9, 200e-9, 1e-9)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> region.random_point()
         (...)
 
@@ -255,14 +263,13 @@ class Region:
 
            In this example, ellipsis is used instead of an exact tuple because
            the result differs each time
-           ``discretisedfield.Region.random_point`` method is called.
+           ``discretisedfield.Region.random_point()`` method is called.
 
         """
-        res = np.add(self.pmin, np.multiply(np.random.random(3), self.edges))
-        return dfu.array2tuple(res)
+        return dfu.array2tuple(np.random.random(3) * self.edges + self.pmin)
 
     def __repr__(self):
-        """Representation string.
+        r"""Representation string.
 
         Returns
         -------
@@ -279,6 +286,7 @@ class Region:
         >>> p1 = (0, 0, 0)
         >>> p2 = (2, 2, 1)
         >>> region = df.Region(p1=p1, p2=p2)
+        ...
         >>> repr(region)
         'Region(p1=(0, 0, 0), p2=(2, 2, 1))'
 
@@ -286,12 +294,12 @@ class Region:
         return f'Region(p1={self.pmin}, p2={self.pmax})'
 
     def __eq__(self, other):
-        """Relational operator ``==``.
+        r"""Relational operator ``==``.
 
         Two regions are considered to be equal if they have the same minimum
-        and maximum coordinate points: :math:`\\mathbf{p}^\\text{max}_{1} =
-        \\mathbf{p}^\\text{max}_{2}` and :math:`\\mathbf{p}^\\text{min}_{1} =
-        \\mathbf{p}^\\text{min}_{2}`.
+        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
+        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
+        \mathbf{p}^\text{min}_2`.
 
         Parameters
         ----------
@@ -307,13 +315,14 @@ class Region:
 
         Examples
         --------
-        1. Check if regions are equal.
+        1. Usage of relational operator ``==``.
 
         >>> import discretisedfield as df
         ...
         >>> region1 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
         >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
         >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
+        ...
         >>> region1 == region2
         True
         >>> region1 != region2
@@ -324,15 +333,11 @@ class Region:
         True
 
         """
-        atol = 1e-15
-        rtol = 1e-5
-        if not isinstance(other, self.__class__):
-            return False
-        elif (np.allclose(self.pmin, other.pmin, atol=atol, rtol=rtol) and
-              np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)):
-            return True
-        else:
-            return False
+        if isinstance(other, self.__class__):
+            return (np.allclose(self.pmin, other.pmin, atol=0) and
+                    np.allclose(self.pmax, other.pmax, atol=0))
+
+        return False
 
     def __contains__(self, other):
         """Determine if a point or another region belong to the region.
@@ -391,13 +396,13 @@ class Region:
         True
 
         """
+        if isinstance(other, collections.abc.Iterable):
+            return not np.any(np.less(other, self.pmin) |
+                              np.greater(other, self.pmax))
         if isinstance(other, self.__class__):
             return other.pmin in self and other.pmax in self
-        elif np.logical_or(np.less(other, self.pmin),
-                           np.greater(other, self.pmax)).any():
-            return False
 
-        return True
+        return False
 
     def __or__(self, other):
         """Facing surface.
@@ -452,153 +457,122 @@ class Region:
             if other.pmin[i] >= self.pmax[i]:
                 return (dfu.raxesdict[i], self, other)
         else:
-            msg = 'Cannot find facing surfaces'
+            msg = 'Cannot find facing surface.'
             raise ValueError(msg)
 
-    def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[0],
-            multiplier=None, filename=None, **kwargs):
-        """``matplotlib`` plot.
+    @functools.cached_property
+    def multiplier(self):
+        """Compute multiplier for the region."""
+        return uu.si_max_multiplier(self.edges)
 
-        If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
-        automatically and the size of a figure can be specified using
-        ``figsize``. The colour of lines depicting the region can be specified
-        using ``color`` argument, which must be a valid ``matplotlib`` color.
-        The plot is saved in PDF-format if ``filename`` is passed.
+    def __mul__(self, other):
+        """Binary ``*`` operator.
 
-        It is often the case that the object size is either small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all axes will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the best one is
-        calculated internally.
-
-        This method is based on ``matplotlib.pyplot.plot``, so any keyword
-        arguments accepted by it can be passed (for instance, ``linewidth``,
-        ``linestyle``, etc.).
+        It can be applied only between ``discretisedfield.Region`` and
+        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
+        are multiplied by ``other``.
 
         Parameters
         ----------
-        ax : matplotlib.axes.Axes, optional
+        other : numbers.Real
 
-            Axes to which the plot is added. Defaults to ``None`` - axes are
-            created internally.
+            Second operand.
 
-        figsize : (2,) tuple, optional
+        Returns
+        -------
+        discretisedfield.Region
 
-            The size of a created figure if ``ax`` is not passed. Defaults to
-            ``None``.
+            Resulting region.
 
-        color : int, str, tuple, optional
+        Raises
+        ------
+        ValueError, TypeError
 
-            A valid ``matplotlib`` color for lines depicting the region.
-            Defaults to the default color palette.
+            If the operator cannot be applied.
 
-        multiplier : numbers.Real, optional
-
-            Axes multiplier. Defaults to ``None``.
-
-        filename : str, optional
-
-            If filename is passed, the plot is saved. Defaults to ``None``.
-
-        Examples
-        --------
-        1. Visualising the region using ``matplotlib``.
+        Example
+        -------
+        1. Multiply region with a scalar.
 
         >>> import discretisedfield as df
         ...
-        >>> p1 = (-50e-9, -50e-9, 0)
-        >>> p2 = (50e-9, 50e-9, 10e-9)
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.mpl()
+        ...
+        >>> res = region * 5
+        ...
+        >>> res.pmin
+        (0, 0, 0)
+        >>> res.pmax
+        (50, 50, 50)
+
+        .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
 
         """
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111, projection='3d')
+        if not isinstance(other, numbers.Real):
+            msg = (f'Unsupported operand type(s) for *: '
+                   f'{type(self)=} and {type(other)=}.')
+            raise TypeError(msg)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.edges)
+        return self.__class__(p1=np.multiply(self.pmin, other),
+                              p2=np.multiply(self.pmax, other),
+                              unit=self.unit)
 
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+    def __rmul__(self, other):
+        return self * other
 
-        pmin = np.divide(self.pmin, multiplier)
-        pmax = np.divide(self.pmax, multiplier)
+    def __truediv__(self, other):
+        """Binary ``/`` operator.
 
-        dfu.plot_box(ax=ax, pmin=pmin, pmax=pmax, color=color, **kwargs)
-
-        ax.set(xlabel=f'x {unit}', ylabel=f'y {unit}', zlabel=f'z {unit}')
-
-        # Overwrite default plotting parameters.
-        ax.set_facecolor('#ffffff')  # white face color
-        ax.tick_params(axis='both', which='major', pad=0)  # no pad for ticks
-
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-
-    def k3d(self, *, plot=None, color=dfu.cp_int[0], multiplier=None,
-            **kwargs):
-        """``k3d`` plot.
-
-        If ``plot`` is not passed, ``k3d.Plot`` object is created
-        automatically. The colour of the region can be specified using
-        ``color`` argument.
-
-        For details about ``multiplier``, please refer to
-        ``discretisedfield.Region.mpl``.
-
-        This method is based on ``k3d.voxels``, so any keyword arguments
-        accepted by it can be passed (e.g. ``wireframe``).
+        It can be applied only between ``discretisedfield.Region`` and
+        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
+        are divided by ``other``.
 
         Parameters
         ----------
-        plot : k3d.Plot, optional
+        other : numbers.Real
 
-            Plot to which the plot is added. Defaults to ``None`` - plot is
-            created internally.
+            Second operand.
 
-        color : int, optional
+        Returns
+        -------
+        discretisedfield.Region
 
-            Colour of the region. Defaults to the default color palette.
+            Resulting region.
 
-        multiplier : numbers.Real, optional
+        Raises
+        ------
+        ValueError, TypeError
 
-            Axes multiplier. Defaults to ``None``.
+            If the operator cannot be applied.
 
-        Examples
-        --------
-        1. Visualising the region using ``k3d``.
+        Example
+        -------
+        1. Divide region with a scalar.
 
         >>> import discretisedfield as df
         ...
-        >>> p1 = (-50e-9, -50e-9, 0)
-        >>> p2 = (50e-9, 50e-9, 10e-9)
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.k3d()
-        Plot(...)
+        ...
+        >>> res = region / 2
+        ...
+        >>> res.pmin
+        (0.0, 0.0, 0.0)
+        >>> res.pmax
+        (5.0, 5.0, 5.0)
+
+        .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
 
         """
-        if plot is None:
-            plot = k3d.plot()
-            plot.display()
+        return self * other**(-1)
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.edges)
+    @property
+    def mpl(self):
+        return dfp.MplRegion(self)
 
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
-
-        plot_array = np.ones((1, 1, 1)).astype(np.uint8)  # avoid k3d warning
-
-        bounds = [i for sublist in
-                  zip(np.divide(self.pmin, multiplier),
-                      np.divide(self.pmax, multiplier))
-                  for i in sublist]
-
-        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
-                           outlines=False, **kwargs)
-
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+    @property
+    def k3d(self):
+        return dfp.K3dRegion(self)

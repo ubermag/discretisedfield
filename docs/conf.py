@@ -34,8 +34,16 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
     'nbsphinx',
-    'm2r2'
+    'm2r2',
+    'matplotlib.sphinxext.plot_directive'
 ]
+
+# matplotlib plot directive
+plot_include_source = True
+plot_formats = [("png", 90)]
+plot_html_show_formats = False
+plot_html_show_source_link = False
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

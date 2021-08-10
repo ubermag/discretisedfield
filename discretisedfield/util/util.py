@@ -14,10 +14,7 @@ cp_int = [int(color[1:], 16) for color in cp_hex]
 
 
 def array2tuple(array):
-    if array.size == 1:
-        return array.item()
-    else:
-        return tuple(array.tolist())
+    return array.item() if array.size == 1 else tuple(array.tolist())
 
 
 def as_array(mesh, dim, val):
@@ -26,14 +23,31 @@ def as_array(mesh, dim, val):
         # The array for a scalar field with numbers.Real value or any
         # field with zero value.
         array.fill(val)
-    elif isinstance(val, (tuple, list, np.ndarray)) and len(val) == dim:
-        array[..., :] = val
+    elif isinstance(val, complex) and (dim == 1 or val == 0):
+        array = np.empty((*mesh.n, dim), dtype='complex128')
+        array.fill(val)
     elif isinstance(val, np.ndarray) and val.shape == array.shape:
         array = val
+    elif isinstance(val, (tuple, list, np.ndarray)):
+        if len(val) != dim:
+            msg = (f'Wrong dimension {len(val)} provided for value;'
+                   f' expected dimension is {dim}')
+            raise ValueError(msg)
+        if (isinstance(val, np.ndarray) and val.dtype == 'complex128'
+                or np.iscomplex(val).any()):
+            array = np.empty((*mesh.n, dim), dtype='complex128')
+        array[..., :] = val
     elif callable(val):
         for index, point in zip(mesh.indices, mesh):
-            array[index] = val(point)
+            res = val(point)
+            try:
+                array[index] = res
+            except TypeError:
+                array = np.array(array, dtype='complex128')
+                array[index] = res
     elif isinstance(val, dict) and mesh.subregions:
+        if np.iscomplex(list(val.values())).any():
+            array = np.empty((*mesh.n, dim), dtype='complex128')
         for index, point in zip(mesh.indices, mesh):
             for region in mesh.subregions.keys():
                 if point in mesh.subregions[region]:
@@ -157,10 +171,13 @@ def normalise_to_range(values, value_range, int_round=True):
     return values
 
 
-def hls2rgb(hue, lightness=None, saturation=None):
+def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
     hue = normalise_to_range(hue, (0, 1), int_round=False)
     if lightness is not None:
-        lightness = normalise_to_range(lightness, (0, 1), int_round=False)
+        if lightness_clim is None:
+            lightness_clim = (0, 1)
+        lightness = normalise_to_range(lightness, lightness_clim,
+                                       int_round=False)
     else:
         lightness = np.ones_like(hue)
     if saturation is not None:

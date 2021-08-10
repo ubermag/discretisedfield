@@ -1,18 +1,15 @@
-import k3d
-import h5py
-import struct
 import numbers
-import inspect
-import itertools
-import matplotlib
-import numpy as np
-import discretisedfield as df
-import ubermagutil.units as uu
-import matplotlib.pyplot as plt
-import ubermagutil.typesystem as ts
-import discretisedfield.util as dfu
+import struct
 
-# TODO: tutorials, fft, line operations
+import h5py
+import numpy as np
+
+import discretisedfield as df
+import discretisedfield.plotting as dfp
+import discretisedfield.util as dfu
+import ubermagutil.typesystem as ts
+
+# TODO: tutorials, line operations
 
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
@@ -110,6 +107,7 @@ class Field:
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
     """
+
     def __init__(self, mesh, dim, value=0, norm=None):
         self.mesh = mesh
         self.dim = dim
@@ -582,7 +580,7 @@ class Field:
         return f"Field(mesh={repr(self.mesh)}, dim={self.dim})"
 
     def __call__(self, point):
-        """Sample the field value at ``point``.
+        r"""Sample the field value at ``point``.
 
         It returns the value of the field in the discretisation cell to which
         ``point`` belongs to. It returns a tuple, whose length is the same as
@@ -621,7 +619,7 @@ class Field:
         return dfu.array2tuple(self.array[self.mesh.point2index(point)])
 
     def __getattr__(self, attr):
-        """Extracting the component of the vector field.
+        """Extract the component of the vector field.
 
         If ``'x'``, ``'y'``, or ``'z'`` is accessed, a scalar field of that
         component will be returned. This method is effective for vector fields
@@ -692,10 +690,11 @@ class Field:
         if self.dim in (2, 3):
             dirlist += list(dfu.axesdict.keys())[:self.dim]
         if self.dim == 1:
-            need_removing = ['div', 'curl', 'orientation', 'mpl_vector',
-                             'k3d_vector']
+            need_removing = ['div', 'curl', 'orientation']
+        if self.dim == 2:
+            need_removing = ['grad', 'curl', 'k3d']
         if self.dim == 3:
-            need_removing = ['grad', 'mpl_scalar', 'k3d_scalar', 'k3d_nonzero']
+            need_removing = ['grad']
 
         for attr in need_removing:
             dirlist.remove(attr)
@@ -703,8 +702,8 @@ class Field:
         return dirlist
 
     def __iter__(self):
-        """Generator yielding coordinates and values of all mesh discretisation
-        cells.
+        r"""Generator yielding coordinates and values of all mesh
+        discretisation cells.
 
         Yields
         ------
@@ -901,7 +900,7 @@ class Field:
         return self
 
     def __neg__(self):
-        """Unary ``-`` operator.
+        r"""Unary ``-`` operator.
 
         This method negates the value of each discretisation cell. It is
         equivalent to multiplication with -1:
@@ -1242,10 +1241,12 @@ class Field:
                 msg = ('Cannot apply operator * on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
-        elif isinstance(other, numbers.Real):
+        elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(self.mesh, dim=3, value=other)
+            return self * self.__class__(self.mesh,
+                                         dim=np.array(other).shape[-1],
+                                         value=other)
         elif isinstance(other, df.DValue):
             return self * other(self)
         else:
@@ -1765,7 +1766,7 @@ class Field:
 
     @property
     def grad(self):
-        """Gradient.
+        r"""Gradient.
 
         This method computes the gradient of a scalar (``dim=1``) field and
         returns a vector field:
@@ -1841,16 +1842,15 @@ class Field:
 
     @property
     def div(self):
-        """Divergence.
+        r"""Divergence.
 
-        This method computes the divergence of a vector (``dim=3``) field and
-        returns a scalar (``dim=1``) field as a result.
+        This method computes the divergence of a vector (``dim=2`` or
+        ``dim=3``) field and returns a scalar (``dim=1``) field as a result.
 
         .. math::
 
-            \\nabla\\cdot\\mathbf{v} = \\frac{\\partial v_{x}}{\\partial x} +
-                                       \\frac{\\partial v_{y}}{\\partial y} +
-                                       \\frac{\\partial v_{z}}{\\partial z}
+            \\nabla\\cdot\\mathbf{v} = \\sum_i\\frac{\\partial v_{i}}
+            {\\partial i}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -1867,7 +1867,7 @@ class Field:
         ------
         ValueError
 
-            If the dimension of the field is not 3.
+            If the dimension of the field is 1.
 
         Example
         -------
@@ -1902,17 +1902,16 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim != 3:
+        if self.dim == 1:
             msg = f'Cannot compute divergence for dim={self.dim} field.'
             raise ValueError(msg)
 
-        return (self.x.derivative('x') +
-                self.y.derivative('y') +
-                self.z.derivative('z'))
+        return sum([getattr(self, i).derivative(i) for i in
+                    [dfu.raxesdict[j] for j in range(self.dim)]])
 
     @property
     def curl(self):
-        """Curl.
+        r"""Curl.
 
         This method computes the curl of a vector (``dim=3``) field and returns
         a vector (``dim=3``) as a result:
@@ -1987,7 +1986,7 @@ class Field:
 
     @property
     def laplace(self):
-        """Laplace operator.
+        r"""Laplace operator.
 
         This method computes the laplacian of a scalar (``dim=1``) or a vector
         (``dim=3``) field and returns a resulting field:
@@ -2053,7 +2052,7 @@ class Field:
             return self.x.laplace << self.y.laplace << self.z.laplace
 
     def integral(self, direction='xyz', improper=False):
-        """Integral.
+        r"""Integral.
 
         This method integrates the field over the mesh along the specified
         direction(s), which can ce specified using ``direction``. Field must be
@@ -2187,7 +2186,7 @@ class Field:
             return res
 
     def line(self, p1, p2, n=100):
-        """Sampling the field along the line.
+        r"""Sample the field along the line.
 
         Given two points :math:`p_{1}` and :math:`p_{2}`, :math:`n` position
         coordinates are generated and the corresponding field values.
@@ -2419,7 +2418,7 @@ class Field:
 
     @property
     def angle(self):
-        """In-plane angle of the vector field.
+        r"""In-plane angle of the vector field.
 
         This method can be applied only on sliced fields, when a plane is
         defined. This method then returns a scalar field which is an angle
@@ -2456,12 +2455,13 @@ class Field:
         True
 
         """
-        if not hasattr(self.mesh, 'info'):
+        if not self.mesh.attributes['isplane']:
             msg = 'The field must be sliced before angle can be computed.'
             raise ValueError(msg)
 
-        angle_array = np.arctan2(self.array[..., self.mesh.info['axis2']],
-                                 self.array[..., self.mesh.info['axis1']])
+        angle_array = np.arctan2(
+            self.array[..., self.mesh.attributes['axis2']],
+            self.array[..., self.mesh.attributes['axis1']])
 
         # Place all values in [0, 2pi] range
         angle_array[angle_array < 0] += 2 * np.pi
@@ -2647,7 +2647,7 @@ class Field:
                   f'ymax: {self.mesh.region.pmax[1]}',
                   f'zmax: {self.mesh.region.pmax[2]}',
                   f'valuedim: {write_dim}',
-                  f'valuelabels: field_x field_y field_z',
+                  'valuelabels: field_x field_y field_z',
                   'valueunits: None None None',
                   '',
                   'End: Header',
@@ -3181,957 +3181,190 @@ class Field:
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
             return cls(mesh, dim=dim, value=array[:])
 
-    def mpl_scalar(self, *, ax=None, figsize=None, filter_field=None,
-                   lightness_field=None, colorbar=True, colorbar_label=None,
-                   multiplier=None, filename=None, **kwargs):
-        """Plots the scalar field on a plane.
+    @property
+    def mpl(self):
+        """Plot interface, matplotlib based."""
+        return dfp.Mpl(self)
 
-        Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be a scalar field
-        (``dim=1``). Otherwise, ``ValueError`` is raised. ``mpl_scalar`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
-        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
-        automatically and the size of a figure can be specified using
-        ``figsize``. By passing ``filter_field`` the points at which the pixels
-        are not coloured can be determined. More precisely, only those
-        discretisation cells where ``filter_field != 0`` are plotted. By
-        passing a scalar field as ``lightness_field``, lightness component is
-        added to HSL colormap. In this case, colormap cannot be passed using
-        ``kwargs``. Colorbar is shown by default and it can be removed from the
-        plot by passing ``colorbar=False``. The label for the colorbar can be
-        defined by passing ``colorbar_label`` as a string.
+    @property
+    def k3d(self):
+        """Plot interface, k3d based."""
+        return dfp.K3d(self)
 
-        It is often the case that the region size is small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all mesh points will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the best one is
-        calculated internally. The plot can be saved as a PDF when ``filename``
-        is passed.
+    @property
+    def fftn(self):
+        """Fourier transform.
 
-        This method plots the field using ``matplotlib.pyplot.imshow``
-        function, so any keyword arguments accepted by it can be passed (for
-        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.).
+        Computes 3D FFT for "normal" fields, 2D FFT if the field is sliced.
 
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes, optional
-
-            Axes to which the field plot is added. Defaults to ``None`` - axes
-            are created internally.
-
-        figsize : (2,) tuple, optional
-
-            The size of a created figure if ``ax`` is not passed. Defaults to
-            ``None``.
-
-        filter_field : discretisedfield.Field, optional
-
-            A scalar field used for determining whether certain discretisation
-            cells are coloured. More precisely, only those discretisation cells
-            where ``filter_field != 0`` are plotted. Defaults to ``None``.
-
-        lightness_field : discretisedfield.Field, optional
-
-            A scalar field used for adding lightness to the color. Field values
-            are hue. Defaults to ``None``.
-
-        colorbar : bool, optional
-
-            If ``True``, colorbar is shown and it is hidden when ``False``.
-            Defaults to ``True``.
-
-        colorbar_label : str, optional
-
-            Colorbar label. Defaults to ``None``.
-
-        multiplier : numbers.Real, optional
-
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. Defaults to ``None``.
-
-        filename : str, optional
-
-            If filename is passed, the plot is saved. Defaults to ``None``.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not been sliced, its dimension is not 1, or the
-            dimension of ``filter_field`` is not 1.
-
-        Example
+        Returns
         -------
-        1. Visualising the scalar field using ``matplotlib``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=1, value=2)
-        ...
-        >>> field.plane('y').mpl_scalar()
-
-        .. seealso:: :py:func:`~discretisedfield.Field.mpl_vector`
-
+        discretisedfield.Field
         """
-        if not hasattr(self.mesh, 'info'):
-            msg = 'The field must be sliced before it can be plotted.'
-            raise ValueError(msg)
+        mesh = self._fft_mesh()
 
-        if self.dim != 1:
-            msg = f'Cannot plot dim={self.dim} field.'
-            raise ValueError(msg)
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
+            values.append(ft.reshape(mesh.n))
 
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
 
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
+    @property
+    def ifftn(self):
+        """Inverse Fourier transform.
 
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        mesh = self.mesh.attributes['realspace_mesh']
+        if self.mesh.attributes['isplane'] and not mesh.attributes['isplane']:
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
 
-        points, values = map(list, zip(*list(self)))
+        values = []
+        for idx in range(self.dim):
+            ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
+            values.append(ft.reshape(mesh.n))
 
-        # Create a mask.
-        if filter_field is not None:
-            if filter_field.dim != 1:
-                msg = f'Cannot use {filter_field.dim=} filter_field.'
-                raise ValueError(msg)
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
 
-            mask = []
-            for i, point in enumerate(points):
-                if filter_field(point) == 0:
-                    mask.append(1)
-                else:
-                    mask.append(0)
+    @property
+    def rfftn(self):
+        """Real Fourier transform.
 
-        pmin = np.divide(self.mesh.region.pmin, multiplier)
-        pmax = np.divide(self.mesh.region.pmax, multiplier)
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        mesh = self._fft_mesh(rfft=True)
 
-        extent = [pmin[self.mesh.info['axis1']],
-                  pmax[self.mesh.info['axis1']],
-                  pmin[self.mesh.info['axis2']],
-                  pmax[self.mesh.info['axis2']]]
-        n = (self.mesh.n[self.mesh.info['axis2']],
-             self.mesh.n[self.mesh.info['axis1']])
+        values = []
+        for idx in range(self.dim):
+            array = self.array[..., idx].squeeze()
+            # no shifting for the last axis
+            ft = np.fft.fftshift(np.fft.rfftn(array),
+                                 axes=range(len(array.shape) - 1))
+            values.append(ft.reshape(mesh.n))
 
-        if lightness_field is not None:
-            if lightness_field.dim != 1:
-                msg = f'Cannot use {lightness_field.dim=} lightness_field.'
-                raise ValueError(msg)
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
 
-            lightness = [lightness_field(i) for i in self.mesh]
+    @property
+    def irfftn(self):
+        """Inverse real Fourier transform.
 
-            rgb = dfu.hls2rgb(hue=values,
-                              lightness=lightness,
-                              saturation=None).squeeze()
+        Returns
+        -------
+        discretisedfield.Field
+        """
+        mesh = self.mesh.attributes['realspace_mesh']
+        if self.mesh.attributes['isplane'] and not mesh.attributes['isplane']:
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
 
-            if filter_field is not None:
-                for i, mask_value in enumerate(mask):
-                    if mask_value == 1:
-                        rgb[i, :] = np.nan
+        values = []
+        for idx in range(self.dim):
+            array = self.array[..., idx].squeeze()
+            ft = np.fft.irfftn(
+                np.fft.ifftshift(array, axes=range(len(array.shape) - 1)),
+                s=[i for i in mesh.n if i > 1])
+            values.append(ft.reshape(mesh.n))
 
-            kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-            cp = ax.imshow(rgb.reshape((*n, 3)), origin='lower',
-                           extent=extent, **kwargs)
+        return self.__class__(mesh, dim=len(values),
+                              value=np.stack(values, axis=3))
 
+    def _fft_mesh(self, rfft=False):
+        """FFT can be one of fftfreq, rfftfreq."""
+        p1 = []
+        p2 = []
+        n = []
+        for i in range(3):
+            if self.mesh.n[i] == 1:
+                p1.append(0)
+                p2.append(1 / self.mesh.cell[i])
+                n.append(1)
+            else:
+                freqs = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[i],
+                                                       self.mesh.cell[i]))
+                # Shift the region boundaries to get the correct coordinates of
+                # mesh cells.
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+                n.append(len(freqs))
+
+        if rfft:
+            # last frequency is different for rfft
+            for i in [2, 1, 0]:
+                if self.mesh.n[i] > 1:
+                    freqs = np.fft.rfftfreq(self.mesh.n[i], self.mesh.cell[i])
+                    dfreq = (freqs[1] - freqs[0]) / 2
+                    p1[i] = (min(freqs) - dfreq)
+                    p2[i] = (max(freqs) + dfreq)
+                    n[i] = len(freqs)
+                    break
+
+        # TODO: Using PlaneMesh will simplify the code a lot here.
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        if self.mesh.attributes['isplane']:
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
+
+        mesh.attributes['realspace_mesh'] = self.mesh
+        mesh.attributes['fourierspace'] = True
+        mesh.attributes['unit'] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
+        return mesh
+
+    @property
+    def real(self):
+        """Real part of complex field."""
+        return self.__class__(self.mesh, dim=self.dim, value=self.array.real)
+
+    @property
+    def imag(self):
+        """Imaginary part of complex field."""
+        return self.__class__(self.mesh, dim=self.dim, value=self.array.imag)
+
+    @property
+    def phase(self):
+        """Phase of complex field."""
+        return self.__class__(self.mesh, dim=self.dim,
+                              value=np.angle(self.array))
+
+    @property
+    def conjugate(self):
+        """Complex conjugate of complex field."""
+        return self.__class__(self.mesh, dim=self.dim,
+                              value=self.array.conjugate())
+
+    # TODO check and write tests
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        """Field class support for numpy ``ufuncs``."""
+        # See reference implementation at:
+        # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
+        for x in inputs:
+            if not isinstance(x, (Field, np.ndarray, numbers.Number)):
+                return NotImplemented
+        out = kwargs.get('out', ())
+        if out:
+            for x in out:
+                if not isinstance(x, Field):
+                    return NotImplemented
+
+        mesh = [x.mesh for x in inputs if isinstance(x, Field)]
+        inputs = tuple(x.array if isinstance(x, Field) else x
+                       for x in inputs)
+        if out:
+            kwargs['out'] = tuple(x.array for x in out)
+
+        result = getattr(ufunc, method)(*inputs, **kwargs)
+        if isinstance(result, tuple):
+            if len(result) != len(mesh):
+                raise ValueError('wrong number of Field objects')
+            return tuple(self.__class__(m, dim=x.shape[-1], value=x)
+                         for x, m in zip(result, mesh))
+        elif method == 'at':
+            return None
         else:
-            if filter_field is not None:
-                for i, mask_value in enumerate(mask):
-                    if mask_value == 1:
-                        values[i] = np.nan
-
-            cp = ax.imshow(np.array(values).reshape(n),
-                           origin='lower', extent=extent, **kwargs)
-
-        if colorbar:
-            cbar = plt.colorbar(cp)
-            if colorbar_label is not None:
-                cbar.ax.set_ylabel(colorbar_label)
-
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
-
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-
-    def mpl_vector(self, ax=None, figsize=None, use_color=True, color_field=None,
-                   colorbar=True, colorbar_label=None, multiplier=None,
-                   filename=None, **kwargs):
-        """Plots the vector field on a plane.
-
-        Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be a vector field
-        (``dim=3``). Otherwise, ``ValueError`` is raised. ``mpl_vector`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
-        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
-        automatically and the size of a figure can be specified using
-        ``figsize``. By default, plotted vectors are coloured according to the
-        out-of-plane component of the vectors. This can be changed by passing
-        ``color_field`` with ``dim=1``. To disable colouring of the plot,
-        ``use_color=False`` can be passed. A uniform vector colour can be
-        obtained by specifying ``color=COLOR`` which is passed to matplotlib
-        and ``use_color=False``. Colorbar is shown by default and it can
-        be removed from the plot by passing ``colorbar=False``. The label for
-        the colorbar can be defined by passing ``colorbar_label`` as a string.
-        It is often the case that the region size is small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all mesh points will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the best one is
-        calculated internally. The plot can be saved as a PDF when ``filename``
-        is passed.
-
-        This method plots the field using ``matplotlib.pyplot.quiver``
-        function, so any keyword arguments accepted by it can be passed (for
-        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.). In
-        particular, there are cases when ``matplotlib`` fails to find optimal
-        scale for plotting vectors. More precisely, sometimes vectors appear
-        too large in the plot. This can be resolved by passing ``scale``
-        argument, which scales all vectors in the plot. In other words, larger
-        ``scale``, smaller the vectors and vice versa. Please note that scale
-        can be in a very large range (e.g. 1e20).
-
-        Parameters
-        ----------
-        ax : matplotlib.axes.Axes, optional
-
-            Axes to which the field plot is added. Defaults to ``None`` - axes
-            are created internally.
-
-        figsize : tuple, optional
-
-            The size of a created figure if ``ax`` is not passed. Defaults to
-            ``None``.
-
-        color_field : discretisedfield.Field, optional
-
-            A scalar field used for colouring the vectors. Defaults to ``None``
-            and vectors are coloured according to their out-of-plane
-            components.
-
-        colorbar : bool, optional
-
-            If ``True``, colorbar is shown and it is hidden when ``False``.
-            Defaults to ``True``.
-
-        colorbar_label : str, optional
-
-            Colorbar label. Defaults to ``None``.
-
-        multiplier : numbers.Real, optional
-
-            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
-            value, the axes will be scaled and appropriate units shown. For
-            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
-            be used as axis labels. Defaults to ``None``.
-
-        filename : str, optional
-
-            If filename is passed, the plot is saved. Defaults to ``None``.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not been sliced, its dimension is not 3, or the
-            dimension of ``color_field`` is not 1.
-
-        Example
-        -------
-        1. Visualising the vector field using ``matplotlib``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1.1, 2.1, 3.1))
-        ...
-        >>> field.plane('y').mpl_vector()
-
-        .. seealso:: :py:func:`~discretisedfield.Field.mpl_scalar`
-
-        """
-        if not hasattr(self.mesh, 'info'):
-            msg = 'The field must be sliced before it can be plotted.'
-            raise ValueError(msg)
-
-        if self.dim != 3:
-            msg = f'Cannot plot dim={self.dim} field.'
-            raise ValueError(msg)
-
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
-
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
-
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
-
-        points, values = map(list, zip(*list(self)))
-
-        # Remove points and values where norm is 0.
-        points = [p for p, v in zip(points, values)
-                  if not np.equal(v, 0).all()]
-        values = [v for v in values if not np.equal(v, 0).all()]
-
-        if use_color:
-            if color_field is None:
-                planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
-                color_field = getattr(self, planeaxis)
-
-            colors = [color_field(p) for p in points]
-
-        # "Unpack" values inside arrays and convert to np.ndarray.
-        points = np.array(list(zip(*points)))
-        values = np.array(list(zip(*values)))
-
-        points = np.divide(points, multiplier)
-
-        if use_color:
-            cp = ax.quiver(points[self.mesh.info['axis1']],
-                           points[self.mesh.info['axis2']],
-                           values[self.mesh.info['axis1']],
-                           values[self.mesh.info['axis2']],
-                           colors, pivot='mid', **kwargs)
-        else:
-            ax.quiver(points[self.mesh.info['axis1']],
-                      points[self.mesh.info['axis2']],
-                      values[self.mesh.info['axis1']],
-                      values[self.mesh.info['axis2']],
-                      pivot='mid', **kwargs)
-
-        if colorbar and use_color:
-            cbar = plt.colorbar(cp)
-            if colorbar_label is not None:
-                cbar.ax.set_ylabel(colorbar_label)
-
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
-
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-
-    def mpl(self, ax=None, figsize=None, scalar_field=None,
-            scalar_filter_field=None, scalar_lightness_field=None,
-            scalar_cmap='viridis', scalar_clim=None, scalar_colorbar=True,
-            scalar_colorbar_label=None, vector_field=None, use_vector_color=False,
-            vector_color_field=None, vector_cmap='cividis', vector_clim=None,
-            vector_colorbar=False, vector_colorbar_label=None,
-            vector_scale=None, multiplier=None, filename=None):
-        """Plots the field on a plane.
-
-        This is a convenience method used for quick plotting, which combines
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` methods. Depending on the
-        dimensionality of the field, it determines what plot is going to be
-        shown. For a scalar field only ``discretisedfield.Field.mpl_scalar`` is
-        used, whereas for a vector field, both
-        ``discretisedfield.Field.mpl_scalar`` and
-        ``discretisedfield.Field.mpl_vector`` plots are shown, where vector
-        plot shows the in-plane components of the vector and scalar plot
-        encodes the out-of-plane component.
-
-        All the default values can be changed by passing arguments, which are
-        then used in subplots. The way parameters of this function are used to
-        create plots can be understood with the following code snippet.
-
-        .. code-block::
-
-            if ax is None:
-                fig = plt.figure(figsize=figsize)
-                ax = fig.add_subplot(111)
-
-            scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
-                                    lightness_field=scalar_lightness_field,
-                                    colorbar=scalar_colorbar,
-                                    colorbar_label=scalar_colorbar_label,
-                                    multiplier=multiplier, cmap=scalar_cmap,
-                                    clim=scalar_clim,)
-
-            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
-                                    color_field=vector_color_field,
-                                    colorbar=vector_colorbar,
-                                    colorbar_label=vector_colorbar_label,
-                                    multiplier=multiplier, scale=vector_scale,
-                                    cmap=vector_cmap, clim=vector_clim,)
-
-            if filename is not None:
-                plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-            ```
-
-            Therefore, to understand the meaning of the arguments which can be
-            passed to this method, please refer to
-            ``discretisedfield.Field.mpl_scalar`` and
-            ``discretisedfield.Field.mpl_vector`` documentation.
-
-        Raises
-        ------
-        ValueError
-
-            If the field has not been sliced with a plane.
-
-        Example
-        -------
-        1. Visualising the field using ``matplotlib``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> field.plane(z=50, n=(5, 5)).mpl()
-
-        .. seealso::
-
-            :py:func:`~discretisedfield.Field.mpl_scalar`
-            :py:func:`~discretisedfield.Field.mpl_vector`
-
-        """
-        if not hasattr(self.mesh, 'info'):
-            msg = 'The field must be sliced before it can be plotted.'
-            raise ValueError(msg)
-
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111)
-
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
-
-        unit = f' ({uu.rsi_prefixes[multiplier]}m)'
-
-        planeaxis = dfu.raxesdict[self.mesh.info['planeaxis']]
-
-        # Set up default values.
-        if self.dim == 1:
-            if scalar_field is None:
-                scalar_field = self
-            else:
-                scalar_field = self.__class__(self.mesh, dim=1,
-                                              value=scalar_field)
-            if vector_field is not None:
-                vector_field = self.__class__(self.mesh, dim=3,
-                                              value=vector_field)
-        if self.dim == 3:
-            if vector_field is None:
-                vector_field = self
-            else:
-                vector_field = self.__class__(self.mesh, dim=3,
-                                              value=vector_field)
-            if scalar_field is None:
-                scalar_field = getattr(self, planeaxis)
-                if scalar_colorbar_label is None:
-                    scalar_colorbar_label = f'{planeaxis}-component'
-            else:
-                scalar_field = self.__class__(self.mesh, dim=1,
-                                              value=scalar_field)
-            if scalar_filter_field is None:
-                scalar_filter_field = self.norm
-            else:
-                scalar_filter_field = self.__class__(self.mesh, dim=1,
-                                                     value=scalar_filter_field)
-
-        if scalar_field is not None:
-            scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
-                                    lightness_field=scalar_lightness_field,
-                                    colorbar=scalar_colorbar,
-                                    colorbar_label=scalar_colorbar_label,
-                                    multiplier=multiplier, cmap=scalar_cmap,
-                                    clim=scalar_clim,)
-        if vector_field is not None:
-            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
-                                    color_field=vector_color_field,
-                                    colorbar=vector_colorbar,
-                                    colorbar_label=vector_colorbar_label,
-                                    multiplier=multiplier, scale=vector_scale,
-                                    cmap=vector_cmap, clim=vector_clim,)
-
-        ax.set_xlabel(dfu.raxesdict[self.mesh.info['axis1']] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.mesh.info['axis2']] + unit)
-
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-
-    def k3d_nonzero(self, plot=None, color=dfu.cp_int[0], multiplier=None,
-                    interactive_field=None, **kwargs):
-        """``k3d`` plot of non-zero discretisation cells.
-
-        If ``plot`` is not passed, ``k3d.Plot`` object is created
-        automatically. The colour of the non-zero discretisation cells can be
-        specified using ``color`` argument.
-
-        It is often the case that the object size is either small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all axes will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the best one is
-        calculated internally.
-
-        For interactive plots the field itself, before being sliced with the
-        field, must be passed as ``interactive_field``. For example, if
-        ``field.x.plane('z')`` is plotted, ``interactive_field=field`` must be
-        passed. In addition, ``k3d.plot`` object cannot be created internally
-        and it must be passed and displayed by the user.
-
-        This method is based on ``k3d.voxels``, so any keyword arguments
-        accepted by it can be passed (e.g. ``wireframe``).
-
-        Parameters
-        ----------
-        plot : k3d.Plot, optional
-
-            Plot to which the plot is added. Defaults to ``None`` - plot is
-            created internally. This is not true in the case of an interactive
-            plot, when ``plot`` must be created externally.
-
-        color : int, optional
-
-            Colour of the non-zero discretisation cells. Defaults to the
-            default color palette.
-
-        multiplier : numbers.Real, optional
-
-            Axes multiplier. Defaults to ``None``.
-
-        interactive_field : discretisedfield.Field, optional
-
-            The whole field object (before any slices) used for interactive
-            plots. Defaults to ``None``.
-
-        Raises
-        ------
-        ValueError
-
-            If the dimension of the field is not 1.
-
-        Examples
-        --------
-        1. Visualising non-zero discretisation cells using ``k3d``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50e-9, -50e-9, -50e-9)
-        >>> p2 = (50e-9, 50e-9, 50e-9)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> def normfun(point):
-        ...     x, y, z = point
-        ...     if x**2 + y**2 < 30**2:
-        ...         return 1
-        ...     else:
-        ...         return 0
-        >>> field.norm = normfun
-        ...
-        >>> field.norm.k3d_nonzero()
-        Plot(...)
-
-        .. seealso:: :py:func:`~discretisedfield.Field.k3d_voxels`
-
-        """
-        if self.dim != 1:
-            msg = f'Cannot plot dim={self.dim} field.'
-            raise ValueError(msg)
-
-        if plot is None:
-            plot = k3d.plot()
-            plot.display()
-
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
-
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
-
-        if interactive_field is not None:
-            plot.camera_auto_fit = False
-
-            objects_to_be_removed = []
-            for i in plot.objects:
-                if i.name != 'total_region':
-                    objects_to_be_removed.append(i)
-            for i in objects_to_be_removed:
-                plot -= i
-
-            if not any([o.name == 'total_region' for o in plot.objects]):
-                interactive_field.mesh.region.k3d(plot=plot,
-                                                  multiplier=multiplier,
-                                                  name='total_region',
-                                                  opacity=0.025)
-
-        plot_array = np.ones_like(self.array)  # all voxels have the same color
-        plot_array[self.array == 0] = 0  # remove voxels where field is zero
-        plot_array = plot_array[..., 0]  # remove an empty dimension
-        plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
-        plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
-
-        bounds = [i for sublist in
-                  zip(np.divide(self.mesh.region.pmin, multiplier),
-                      np.divide(self.mesh.region.pmax, multiplier))
-                  for i in sublist]
-
-        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
-                           outlines=False, **kwargs)
-
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
-
-    def k3d_scalar(self, plot=None, filter_field=None, cmap='cividis',
-                   multiplier=None, interactive_field=None, **kwargs):
-        """``k3d`` plot of a scalar field.
-
-        If ``plot`` is not passed, ``k3d.Plot`` object is created
-        automatically. The colormap can be specified using ``cmap`` argument.
-        By passing ``filter_field`` the points at which the voxels are not
-        shown can be determined. More precisely, only those discretisation
-        cells where ``filter_field != 0`` are plotted.
-
-        It is often the case that the object size is either small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all axes will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the best one is
-        calculated internally.
-
-        For interactive plots the field itself, before being sliced with the
-        field, must be passed as ``interactive_field``. For example, if
-        ``field.x.plane('z')`` is plotted, ``interactive_field=field`` must be
-        passed. In addition, ``k3d.plot`` object cannot be created internally
-        and it must be passed and displayed by the user.
-
-        This method is based on ``k3d.voxels``, so any keyword arguments
-        accepted by it can be passed (e.g. ``wireframe``).
-
-        Parameters
-        ----------
-        plot : k3d.Plot, optional
-
-            Plot to which the plot is added. Defaults to ``None`` - plot is
-            created internally. This is not true in the case of an interactive
-            plot, when ``plot`` must be created externally.
-
-        filter_field : discretisedfield.Field, optional
-
-            Scalar field. Only discretisation cells where ``filter_field != 0``
-            are shown. Defaults to ``None``.
-
-        cmap : str, optional
-
-            Colormap.
-
-        multiplier : numbers.Real, optional
-
-            Axes multiplier. Defaults to ``None``.
-
-        interactive_field : discretisedfield.Field, optional
-
-            The whole field object (before any slices) used for interactive
-            plots. Defaults to ``None``.
-
-        Raises
-        ------
-        ValueError
-
-            If the dimension of the field is not 1.
-
-        Example
-        -------
-        1. Plot the scalar field using ``k3d``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50, -50, -50)
-        >>> p2 = (50, 50, 50)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        ...
-        >>> field = df.Field(mesh, dim=1, value=5)
-        >>> field.k3d_scalar()
-        Plot(...)
-
-        .. seealso:: :py:func:`~discretisedfield.Field.k3d_vector`
-
-        """
-        if self.dim != 1:
-            msg = f'Cannot plot dim={self.dim} field.'
-            raise ValueError(msg)
-
-        if plot is None:
-            plot = k3d.plot()
-            plot.display()
-
-        if filter_field is not None:
-            if filter_field.dim != 1:
-                msg = f'Cannot use dim={self.dim} filter_field.'
-                raise ValueError(msg)
-
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
-
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
-
-        if interactive_field is not None:
-            plot.camera_auto_fit = False
-
-            objects_to_be_removed = []
-            for i in plot.objects:
-                if i.name != 'total_region':
-                    objects_to_be_removed.append(i)
-            for i in objects_to_be_removed:
-                plot -= i
-
-            if not any([o.name == 'total_region' for o in plot.objects]):
-                interactive_field.mesh.region.k3d(plot=plot,
-                                                  multiplier=multiplier,
-                                                  name='total_region',
-                                                  opacity=0.025)
-
-        plot_array = np.copy(self.array)  # make a deep copy
-        plot_array = plot_array[..., 0]  # remove an empty dimension
-
-        # All values must be in (1, 255) -> (1, n-1), for n=256 range, with
-        # maximum n=256. This is the limitation of k3d.voxels(). Voxels where
-        # values are zero, are invisible.
-        plot_array = dfu.normalise_to_range(plot_array, (1, 255))
-        # Remove voxels where filter_field = 0.
-        if filter_field is not None:
-            for i in self.mesh.indices:
-                if filter_field(self.mesh.index2point(i)) == 0:
-                    plot_array[i] = 0
-        plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
-        plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
-
-        cmap = matplotlib.cm.get_cmap(cmap, 256)
-        cmap_int = []
-        for i in range(cmap.N):
-            rgb = cmap(i)[:3]
-            cmap_int.append(int(matplotlib.colors.rgb2hex(rgb)[1:], 16))
-
-        bounds = [i for sublist in
-                  zip(np.divide(self.mesh.region.pmin, multiplier),
-                      np.divide(self.mesh.region.pmax, multiplier))
-                  for i in sublist]
-
-        plot += k3d.voxels(plot_array, color_map=cmap_int, bounds=bounds,
-                           outlines=False, **kwargs)
-
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
-
-    def k3d_vector(self, plot=None, color_field=None, cmap='cividis',
-                   head_size=1, points=True, point_size=None,
-                   vector_multiplier=None, multiplier=None,
-                   interactive_field=None, **kwargs):
-        """``k3d`` plot of a vector field.
-
-        If ``plot`` is not passed, ``k3d.Plot`` object is created
-        automatically. By passing ``color_field`` vectors are coloured
-        according to the values of that field. The colormap can be specified
-        using ``cmap`` argument. The head size of vectors can be changed using
-        ``head_size``. The size of the plotted vectors is computed
-        automatically in order to fit the plot. However, it can be adjusted
-        using ``vector_multiplier``.
-
-        By default both vectors and points, corresponding to discretisation
-        cell coordinates, are plotted. They can be removed from the plot by
-        passing ``points=False``. The size of the points are calculated
-        automatically, but it can be adjusted with ``point_size``.
-
-        It is often the case that the object size is either small (e.g. on a
-        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
-        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
-        multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
-        axes will be scaled and appropriate units shown. For instance, if
-        ``multiplier=1e-9`` is passed, all axes will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. If ``multiplier`` is not passed, the best one is
-        calculated internally.
-
-        For interactive plots the field itself, before being sliced with the
-        field, must be passed as ``interactive_field``. For example, if
-        ``field.plane('z')`` is plotted, ``interactive_field=field`` must be
-        passed. In addition, ``k3d.plot`` object cannot be created internally
-        and it must be passed and displayed by the user.
-
-        This method is based on ``k3d.voxels``, so any keyword arguments
-        accepted by it can be passed (e.g. ``wireframe``).
-
-        Parameters
-        ----------
-        plot : k3d.Plot, optional
-
-            Plot to which the plot is added. Defaults to ``None`` - plot is
-            created internally. This is not true in the case of an interactive
-            plot, when ``plot`` must be created externally.
-
-        color_field : discretisedfield.Field, optional
-
-            Scalar field. Vectors are coloured according to the values of
-            ``color_field``. Defaults to ``None``.
-
-        cmap : str, optional
-
-            Colormap.
-
-        head_size : int, optional
-
-            The size of vector heads. Defaults to ``None``.
-
-        points : bool, optional
-
-            If ``True``, points are shown together with vectors. Defaults to
-            ``True``.
-
-        point_size : int, optional
-
-            The size of the points if shown in the plot. Defaults to ``None``.
-
-        vector_multiplier : numbers.Real, optional
-
-            All vectors are divided by this value before being plotted.
-            Defaults to ``None``.
-
-        multiplier : numbers.Real, optional
-
-            Axes multiplier. Defaults to ``None``.
-
-        interactive_field : discretisedfield.Field, optional
-
-            The whole field object (before any slices) used for interactive
-            plots. Defaults to ``None``.
-
-        Raises
-        ------
-        ValueError
-
-            If the dimension of the field is not 3.
-
-        Examples
-        --------
-        1. Visualising the vector field using ``k3d``.
-
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100, 100, 100)
-        >>> n = (10, 10, 10)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
-        ...
-        >>> field.k3d_vector()
-        Plot(...)
-
-        """
-        if self.dim != 3:
-            msg = f'Cannot plot dim={self.dim} field.'
-            raise ValueError(msg)
-
-        if plot is None:
-            plot = k3d.plot()
-            plot.display()
-
-        if color_field is not None:
-            if color_field.dim != 1:
-                msg = f'Cannot use dim={self.dim} color_field.'
-                raise ValueError(msg)
-
-        if multiplier is None:
-            multiplier = uu.si_max_multiplier(self.mesh.region.edges)
-
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
-
-        if interactive_field is not None:
-            plot.camera_auto_fit = False
-
-            objects_to_be_removed = []
-            for i in plot.objects:
-                if i.name != 'total_region':
-                    objects_to_be_removed.append(i)
-            for i in objects_to_be_removed:
-                plot -= i
-
-            if not any([o.name == 'total_region' for o in plot.objects]):
-                interactive_field.mesh.region.k3d(plot=plot,
-                                                  multiplier=multiplier,
-                                                  name='total_region',
-                                                  opacity=0.025)
-
-        coordinates, vectors, color_values = [], [], []
-        norm_field = self.norm  # assigned to be computed only once
-        for point, value in self:
-            if norm_field(point) != 0:
-                coordinates.append(point)
-                vectors.append(value)
-                if color_field is not None:
-                    color_values.append(color_field(point))
-
-        if color_field is not None:
-            color_values = dfu.normalise_to_range(color_values, (0, 255))
-
-            # Generate double pairs (body, head) for colouring vectors.
-            cmap = matplotlib.cm.get_cmap(cmap, 256)
-            cmap_int = []
-            for i in range(cmap.N):
-                rgb = cmap(i)[:3]
-                cmap_int.append(int(matplotlib.colors.rgb2hex(rgb)[1:], 16))
-
-            colors = []
-            for cval in color_values:
-                colors.append(2*(cmap_int[cval],))
-        else:
-            # Uniform colour.
-            colors = (len(vectors) * ([2*(dfu.cp_int[1],)]))
-
-        coordinates = np.array(coordinates)
-        vectors = np.array(vectors)
-
-        if vector_multiplier is None:
-            vector_multiplier = (vectors.max() /
-                                 np.divide(self.mesh.cell, multiplier).min())
-
-        coordinates = np.divide(coordinates, multiplier)
-        vectors = np.divide(vectors, vector_multiplier)
-
-        coordinates = coordinates.astype(np.float32)
-        vectors = vectors.astype(np.float32)
-
-        plot += k3d.vectors(coordinates-0.5*vectors, vectors, colors=colors,
-                            head_size=head_size, **kwargs)
-
-        if points:
-            if point_size is None:
-                # If undefined, the size of the point is 1/4 of the smallest
-                # cell dimension.
-                point_size = np.divide(self.mesh.cell, multiplier).min() / 4
-
-            plot += k3d.points(coordinates, color=dfu.cp_int[0],
-                               point_size=point_size)
-
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+            return self.__class__(mesh[0], dim=result.shape[-1], value=result)

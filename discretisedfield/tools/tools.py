@@ -103,7 +103,7 @@ def topological_charge_density(field, /, method='continuous'):
                f'for {field.dim=} field.')
         raise ValueError(msg)
 
-    if not hasattr(field.mesh, 'info'):
+    if not field.mesh.attributes['isplane']:
         msg = ('The field must be sliced before the topological '
                'charge density can be computed.')
         raise ValueError(msg)
@@ -112,8 +112,8 @@ def topological_charge_density(field, /, method='continuous'):
         msg = 'Method can be either continuous or berg-luescher'
         raise ValueError(msg)
 
-    axis1 = field.mesh.info['axis1']
-    axis2 = field.mesh.info['axis2']
+    axis1 = field.mesh.attributes['axis1']
+    axis2 = field.mesh.attributes['axis2']
     of = field.orientation  # unit field - orientation field
 
     if method == 'continuous':
@@ -268,7 +268,7 @@ def topological_charge(field, /, method='continuous', absolute=False):
         msg = f'Cannot compute topological charge for {field.dim=} field.'
         raise ValueError(msg)
 
-    if not hasattr(field.mesh, 'info'):
+    if not field.mesh.attributes['isplane']:
         msg = ('The field must be sliced before the '
                'topological charge can be computed.')
         raise ValueError(msg)
@@ -285,8 +285,8 @@ def topological_charge(field, /, method='continuous', absolute=False):
             return df.integral(q * abs(df.dS))
 
     elif method == 'berg-luescher':
-        axis1 = field.mesh.info['axis1']
-        axis2 = field.mesh.info['axis2']
+        axis1 = field.mesh.attributes['axis1']
+        axis2 = field.mesh.attributes['axis2']
         of = field.orientation
 
         topological_charge = 0
@@ -690,3 +690,135 @@ def count_bps(field, /, direction='x'):
     results[f'bp_pattern_{direction}'] = str(pattern)
 
     return results
+
+
+def demag_tensor(mesh):
+    """Fourier transform of the demag tensor.
+
+    Computes the demag tensor in Fourier space. Only the six different
+    components Nxx, Nyy, Nzz, Nxy, Nxz, Nyz are returned.
+
+    Parameters
+    ----------
+    mesh : discretisedfield.Mesh
+        Mesh to compute the demag tensor on.
+
+    Returns
+    -------
+    discretisedfield.Field
+        Demag tensor in Fourier space.
+    """
+    p1 = [(-i + 1) * j - j/2 for i, j in zip(mesh.n, mesh.cell)]
+    p2 = [(i - 1) * j + j/2 for i, j in zip(mesh.n, mesh.cell)]
+    n = [2*i - 1 for i in mesh.n]
+    mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
+
+    return df.Field(mesh_new, dim=6, value=_N(mesh_new)).fftn
+
+
+def demag_tensor_numpy(mesh):
+    """Demag tensor computed using numpy."""
+    x = np.linspace((-mesh.n[0] + 1) * mesh.cell[0],
+                    (mesh.n[0] - 1) * mesh.cell[0], mesh.n[0] * 2 - 1)
+    y = np.linspace((-mesh.n[1] + 1) * mesh.cell[1],
+                    (mesh.n[1] - 1) * mesh.cell[1], mesh.n[1] * 2 - 1)
+    z = np.linspace((-mesh.n[2] + 1) * mesh.cell[2],
+                    (mesh.n[2] - 1) * mesh.cell[2], mesh.n[2] * 2 - 1)
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+
+    values = np.stack(_N(mesh)((xx, yy, zz)), axis=3)
+
+    p1 = [(-i + 1) * j - j/2 for i, j in zip(mesh.n, mesh.cell)]
+    p2 = [(i - 1) * j + j/2 for i, j in zip(mesh.n, mesh.cell)]
+    n = [2*i - 1 for i in mesh.n]
+    mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
+
+    return df.Field(mesh_new, dim=6, value=values).fftn
+
+
+def demag_field(m, tensor):
+    """Demagnetisation field computed using ...
+
+    Parameters
+    ----------
+    m : discretisedfield.Field
+        Magnetisation field
+
+    tensor : discretisedfield.field
+        Demagnetisation tensor obatained with ``dft.demag_tensor``
+
+    Returns
+    -------
+    discretisedfield.Field
+        Demagnetisation field
+    """
+    m_pad = m.pad({d: (0, m.mesh.n[i] - 1)
+                   for d, i in zip(['x', 'y', 'z'], range(3))},
+                  mode='constant')
+    m_pad_fft = m_pad.fftn
+
+    hx = (tensor.array[..., 0] * m_pad_fft.x.array.squeeze()
+          + tensor.array[..., 3] * m_pad_fft.y.array.squeeze()
+          + tensor.array[..., 4] * m_pad_fft.z.array.squeeze())
+    hy = (tensor.array[..., 3] * m_pad_fft.x.array.squeeze()
+          + tensor.array[..., 1] * m_pad_fft.y.array.squeeze()
+          + tensor.array[..., 5] * m_pad_fft.z.array.squeeze())
+    hz = (tensor.array[..., 4] * m_pad_fft.x.array.squeeze()
+          + tensor.array[..., 5] * m_pad_fft.y.array.squeeze()
+          + tensor.array[..., 2] * m_pad_fft.z.array.squeeze())
+
+    H = df.Field(m_pad_fft.mesh, dim=3,
+                 value=np.stack((hx, hy, hz), axis=3)).ifftn
+    return df.Field(m.mesh, dim=3,
+                    value=H.array[m.mesh.n[0] - 1:, m.mesh.n[1] - 1:,
+                                  m.mesh.n[2] - 1:, :]).real
+
+
+def _f(x, y, z):
+    eps = 1e-18  # to avoid zero division; similar to Albert et al. 2015
+    return (abs(y) / 2 * (z**2 - x**2)
+            * np.arcsinh(abs(y) / (np.sqrt(x**2 + z**2) + eps))
+            + abs(z) / 2 * (y**2 - x**2)
+            * np.arcsinh(abs(z) / (np.sqrt(x**2 + y**2) + eps))
+            - abs(x * y * z)
+            * np.arctan(abs(y * z) /
+                        (abs(x) * np.sqrt(x**2 + y**2 + z**2) + eps))
+            + 1/6 * (2 * x**2 - y**2 - z**2) * np.sqrt(x**2 + y**2 + z**2))
+
+
+def _g(x, y, z):
+    eps = 1e-18  # to avoid zero division; similar to Albert et al. 2015
+    return (x * y * z * np.arcsinh(z / (np.sqrt(x**2 + y**2) + eps))
+            + y / 6 * (3 * z**2 - y**2)
+            * np.arcsinh(x / (np.sqrt(y**2 + z**2) + eps))
+            + x / 6 * (3 * z**2 - x**2)
+            * np.arcsinh(y / (np.sqrt(x**2 + z**2) + eps))
+            - z**3 / 6
+            * np.arctan(x * y / (z * np.sqrt(x**2 + y**2 + z**2) + eps))
+            - z * y**2 / 2
+            * np.arctan(x * z / (y * np.sqrt(x**2 + y**2 + z**2) + eps))
+            - z * x**2 / 2
+            * np.arctan(y * z / (x * np.sqrt(x**2 + y**2 + z**2) + eps))
+            - x * y * np.sqrt(x**2 + y**2 + z**2) / 3)
+
+
+def _N_element(x, y, z, mesh, function):
+    dx, dy, dz = mesh.cell
+    value = 0.
+    for i in np.rollaxis(np.indices((2,) * 6), 0, 7).reshape(64, 6):
+        value += (-1)**np.sum(i) * function(x + (i[0] - i[3]) * dx,
+                                            y + (i[1] - i[4]) * dy,
+                                            z + (i[2] - i[5]) * dz)
+    return - value / (4 * np.pi * np.prod(mesh.cell))
+
+
+def _N(mesh):
+    def _inner(p):
+        x, y, z = p
+        return (_N_element(x, y, z, mesh, _f),  # Nxx
+                _N_element(y, z, x, mesh, _f),  # Nyy
+                _N_element(z, x, y, mesh, _f),  # Nzz
+                _N_element(x, y, z, mesh, _g),  # Nxy
+                _N_element(x, z, y, mesh, _g),  # Nxz
+                _N_element(y, z, x, mesh, _g))  # Nyz
+    return _inner
