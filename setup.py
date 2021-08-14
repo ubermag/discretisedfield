@@ -9,7 +9,7 @@ with open('requirements.txt', 'r') as f:
 	install_requires = f.readlines()
  
 with open('metadata.json', 'r') as f:
-    data = json.load(f.read())
+    data = json.load(f)
 
 setuptools.setup(
     name=data['package'],
