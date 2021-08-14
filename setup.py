@@ -1,28 +1,27 @@
 import setuptools
 
-with open('README.md', 'r', encoding='utf-8') as f:
+# Extract metadata
+with open('README.md', 'r') as f:
     long_description = f.read()
+    
+with open('requirements.txt', 'r') as f:
+	install_requires = f.readlines()
+ 
+with open('metadata.json', 'r') as f:
+    data = json.load(f.read())
 
 setuptools.setup(
-    name='discretisedfield',
-    version='0.11.1',
-    description=('Python package for definition, reading, '
-                 'and visualisation of finite-difference fields.'),
-    author=('Marijan Beg, Martin Lang, Ryan A. Pepper, '
-            'Thomas Kluyver, and Hans Fangohr'),
+    name=data['package'],
+    version=data['version'],
+    description=data['description'],
+    author=', '.join(authors),
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://ubermag.github.io',
     packages=setuptools.find_packages(),
     include_package_data=True,
     python_requires='>=3.8',
-    install_requires=['ubermagutil==0.4.1',
-                      'pandas>=1.1',
-                      'matplotlib>=3.3',
-                      'jupyterlab==2.2',
-                      'h5py>=3.1',
-                      'k3d>=2.9',
-                      'scipy>=1.5'],
+    install_requires=install_requires,
     entry_points={
         "console_scripts": [
             "ovf2vtk = discretisedfield.ovf2vtk:main",

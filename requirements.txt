@@ -1,0 +1,7 @@
+ubermagutil==0.4.1
+pandas>=1.1
+matplotlib>=3.3
+jupyterlab==2.2
+h5py>=3.1
+k3d>=2.9
+scipy>=1.5

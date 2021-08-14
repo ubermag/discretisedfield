@@ -1,4 +1,5 @@
 {
+    "version": "0.11.1",
     "copyright_holder": "Marijan Beg and Hans Fangohr",
     "authors": ["Marijan Beg", "Martin Lang", "Samuel Holt", "Ryan A. Pepper", "Hans Fangohr"],
     "description": "Python package for the analysis and visualisation of finite-difference fields.",
