@@ -15,7 +15,7 @@ setuptools.setup(
     name=data['package'],
     version=data['version'],
     description=data['description'],
-    author=', '.join(authors),
+    author=', '.join(data['authors']),
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://ubermag.github.io',
