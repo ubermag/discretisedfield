@@ -4,13 +4,6 @@
     "authors": ["Marijan Beg", "Martin Lang", "Samuel Holt", "Ryan A. Pepper", "Hans Fangohr"],
     "description": "Python package for the analysis and visualisation of finite-difference fields.",
     "doi": "10.5281/zenodo.3539461",
-    "about": 
-"""- definition of finite-difference regions, meshes, lines, and fields,
-
-- analysis of finite-difference fields,
-
-- visualisation using `matplotlib` and `k3d`, and
-
-- manipulation of different file types (OVF, VTK, and HDF5).""",
+    "about": "- definition of finite-difference regions, meshes, lines, and fields\n- analysis of finite-difference fields,\n- visualisation using `matplotlib` and `k3d`, and\n- manipulation of different file types (OVF, VTK, and HDF5).",
     "contributors": ["Thomas Kluyver", "Sergii Mamedov", "Natalie Downing", "Min RK", "Rebecca Carey"]
 }
