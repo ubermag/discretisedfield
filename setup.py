@@ -4,10 +4,10 @@ import setuptools
 # Extract metadata
 with open('README.md', 'r') as f:
     long_description = f.read()
-    
+
 with open('requirements.txt', 'r') as f:
-	install_requires = f.readlines()
- 
+    install_requires = f.readlines()
+
 with open('metadata.json', 'r') as f:
     data = json.load(f)
 
