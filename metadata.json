@@ -1,6 +1,6 @@
 {
     "copyright_holder": "Marijan Beg and Hans Fangohr",
-    "authors": ["Marijan Beg", "Martin Lang", "Sam Holt", "Ryan A. Pepper", "Hans Fangohr"],
+    "authors": ["Marijan Beg", "Martin Lang", "Samuel Holt", "Ryan A. Pepper", "Hans Fangohr"],
     "description": "Python package for the analysis and visualisation of finite-difference fields.",
     "doi": "10.5281/zenodo.3539461",
     "about": 
