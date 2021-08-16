@@ -8,7 +8,7 @@ from .field import Field
 from .line import Line
 from .operators import DValue, dx, dy, dz, dV, dS, integral
 from .interact import interact
-from .rotation import RotatedField
+from .rotated_field import RotatedField
 import matplotlib.pyplot as plt
 
 # Enable default plotting style.
