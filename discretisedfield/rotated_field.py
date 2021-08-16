@@ -72,7 +72,7 @@ class RotatedField:
         # Map new mesh onto the old mesh
         new_pos_old_mesh = []
         for mp in new_mesh_pos:
-            new_pos_old_mesh.append(self._rotate_vector(mp))
+            new_pos_old_mesh.append(self._inv_rotate_vector(mp))
         new_pos_old_mesh = np.array(new_pos_old_mesh)
 
         # Get values of field at new mesh locations
@@ -92,7 +92,8 @@ class RotatedField:
         rot_field = []
         for v in pre_field:
             rot_field.append(self._inv_rotate_vector(v))
-        return np.array(rot_field).reshape(self._field.mesh.n + (self._field.dim,))
+        return np.array(rot_field).reshape(self._field.mesh.n +
+                                           (self._field.dim,))
 
     def _create_interpolation_funcs(self, rot_field):
         mesh_field = df.Field(mesh=self._field.mesh, dim=3, value=lambda x: x)
