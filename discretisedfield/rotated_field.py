@@ -210,3 +210,47 @@ class RotatedField(df.Field):
         p1_new = self.mesh.region.centre - tot_edge_len/2
         p2_new = self.mesh.region.centre + tot_edge_len/2
         return df.Region(p1=p1_new, p2=p2_new)
+
+    def _rot_mat_to_axis(self, to_vector, from_vector):
+        r""" Full rotation matrix for roation from one vector to another method.
+        """
+        from_vector = from_vector/np.linalg.norm(from_vector)
+        to_vector = to_vector/np.linalg.norm(to_vector)
+
+        if np.allclose(to_vector, -from_vector):
+            msg = ('Method ill defined for rotations from a vector to an ' +
+                   'antiparallel vector.')
+            raise ValueError(msg)
+
+        cross = np.cross(from_vector, to_vector)
+        c = np.dot(from_vector, to_vector)
+        v_x = np.array([[0, -cross[2], cross[1]],
+                        [cross[2], 0, -cross[0]],
+                        [-cross[1], cross[0], 0]])
+        v_x2 = np.matmul(v_x, v_x)
+        r_mat = np.identity(3)
+        r_mat += v_x
+        r_mat += v_x2 / (1+c)
+        return r_mat
+
+    def _rot_mat_about_axis(self, theta, axis):
+        r""" Full rotation matrix for roation about an axis method.
+        """
+        L = np.linalg.norm(axis)
+        u = axis[0]/L
+        v = axis[1]/L
+        w = axis[2]/L
+
+        line_1 = [u*u + (v*v + w*w) * np.cos(theta),
+                  u*v*(1-np.cos(theta)) - w*np.sin(theta),
+                  u*w*(1-np.cos(theta)) + v*np.sin(theta)]
+
+        line_2 = [u*v*(1-np.cos(theta)) + w*np.sin(theta),
+                  v*v + (u*u + w*w) * np.cos(theta),
+                  v*w*(1-np.cos(theta)) - u*np.sin(theta)]
+
+        line_3 = [u*w*(1-np.cos(theta)) - v*np.sin(theta),
+                  v*w*(1-np.cos(theta)) + u*np.sin(theta),
+                  w*w + (u*u + v*v) * np.cos(theta)]
+
+        return np.array([line_1, line_2, line_3])
