@@ -3368,3 +3368,7 @@ class Field:
             return None
         else:
             return self.__class__(mesh[0], dim=result.shape[-1], value=result)
+
+    def rotate(self, method, n=None, **kwargs):
+        rf = df.RotatedField(self.mesh, self.dim, self.value, self.norm)
+        return rf.rotate(method, n, **kwargs)
