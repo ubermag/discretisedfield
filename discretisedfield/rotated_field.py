@@ -1,6 +1,7 @@
 import numpy as np
 import discretisedfield as df
 from scipy.interpolate import RegularGridInterpolator
+from scipy.spatial.transform import Rotation
 import functools
 
 
@@ -10,20 +11,36 @@ class RotatedField(df.Field):
     r"""Rotated field class.
     """
     def __init__(self, mesh, dim, value=0, norm=None):
+        if mesh.bc != '':
+            raise RuntimeError('Rotations are not supported for fields with'
+                               'periodic boundary conditions')
         super().__init__(mesh=mesh, dim=dim, value=value, norm=norm)
         # TODO can this cause overriding of a previous rotation matrix?
-        self._rotation_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        self._rotation = None
 
+    # TODO rotate affects the current field and creates a new one
+    # which behaviour do we want?
     def rotate(self, method, n=None, **kwargs):
         self.n = n
-        rotation_matrix = self._compute_rotation_matrix(method, **kwargs)
-        if isinstance(self, RotatedField):
-            self._rotation_matrix = np.matmul(rotation_matrix,
-                                              self._rotation_matrix)
-        else:
-            self._rotation_matrix = rotation_matrix
 
-        self._inv_rotation_matrix = np.linalg.inv(self._rotation_matrix)
+        if method in ['from_quat', 'from_matrix', 'from_rotvec', 'from_mpr',
+                      'from_euler']:
+            rotation = getattr(Rotation, method)(**kwargs)
+        elif method == 'align_vector':
+            from_ = kwargs['from']
+            to = kwargs['to']
+            fixed = np.cross(from_, to)
+            rotation = Rotation.align_vectors([to, fixed], [from_, fixed])[0]
+        else:
+            msg = f'Method {method} is unknown.'
+            raise ValueError(msg)
+
+        if self._rotation is not None:
+            self._rotation = rotation * self._rotation
+        else:
+            self._rotation = rotation
+        if hasattr(self, '_rotated_field'):
+            del self._rotated_field
         return self
 
     # TODO
@@ -56,201 +73,71 @@ class RotatedField(df.Field):
             new_n = self._calculate_new_n(new_region)
         else:
             new_n = self.n
+
         # Create new mesh
         new_mesh = df.Mesh(region=new_region, n=new_n)
 
         # Rotate Field vectors
-        rot_field = self._rotate_field_components()
-
-        # Create interpolation
-        interp_funcs = self._create_interpolation_funcs(rot_field)
+        rot_field = self._rotation.apply(
+            self.array.reshape((-1, self.dim))).reshape((*self.mesh.n,
+                                                        self.dim))
 
         # Calculate field at new mesh positions
-        new_m = self._map_and_interpolate(new_mesh, interp_funcs)
+        new_m = self._map_and_interpolate(new_mesh, rot_field)
 
         # Construct new field
         return df.Field(mesh=new_mesh, dim=self.dim, value=new_m)
 
-    def _map_and_interpolate(self, new_mesh, interp_funcs):
+    def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
-        nmf0 = (new_mesh_field.array[..., 0].flatten()[..., None]
-                - self.mesh.region.centre[0])
-        nmf1 = (new_mesh_field.array[..., 1].flatten()[..., None]
-                - self.mesh.region.centre[1])
-        nmf2 = (new_mesh_field.array[..., 2].flatten()[..., None]
-                - self.mesh.region.centre[2])
-        new_mesh_pos = np.concatenate([nmf0, nmf1, nmf2], axis=1)
+        new_mesh_pos = (new_mesh_field.array.reshape((-1, 3))
+                        - self.mesh.region.centre)
 
-        # Map new mesh onto the old mesh
-        new_pos_old_mesh = []
-        for mp in new_mesh_pos:
-            new_pos_old_mesh.append(self._inv_rotate_vector(mp))
-        new_pos_old_mesh = np.array(new_pos_old_mesh)
+        new_pos_old_mesh = self._rotation.inv().apply(new_mesh_pos)
 
         # Get values of field at new mesh locations
-        interp_func_mx = interp_funcs[0]
-        interp_func_my = interp_funcs[1]
-        interp_func_mz = interp_funcs[2]
-        new_mx = interp_func_mx(new_pos_old_mesh).reshape(new_mesh.n)
-        new_my = interp_func_my(new_pos_old_mesh).reshape(new_mesh.n)
-        new_mz = interp_func_mz(new_pos_old_mesh).reshape(new_mesh.n)
-        return np.stack([new_mx, new_my, new_mz], axis=3)
+        result = np.ndarray(shape=new_mesh_field.array.shape)
+        for i in range(self.dim):
+            result[..., i] = self._create_interpolation_funcs(rot_field[..., i])(
+                new_pos_old_mesh).reshape(new_mesh.n)
+        return result
 
-    def _rotate_field_components(self):
-        pre_field = np.concatenate([self.x.array.reshape((-1, 1)),
-                                    self.y.array.reshape((-1, 1)),
-                                    self.z.array.reshape((-1, 1))],
-                                   axis=1)
-        rot_field = []
-        for v in pre_field:
-            rot_field.append(self._inv_rotate_vector(v))
-        return np.array(rot_field).reshape(self.mesh.n +
-                                           (self.dim,))
+    def _create_interpolation_funcs(self, rot_field_component):
+        pmin = np.array(self.mesh.region.pmin)
+        pmax = np.array(self.mesh.region.pmax)
+        cell = np.array(self.mesh.cell)
 
-    def _create_interpolation_funcs(self, rot_field):
-        mesh_field = df.Field(mesh=self.mesh, dim=3, value=lambda x: x)
-        x = mesh_field.array[:, 0, 0, 0] - self.mesh.region.centre[0]
-        y = mesh_field.array[0, :, 0, 1] - self.mesh.region.centre[1]
-        z = mesh_field.array[0, 0, :, 2] - self.mesh.region.centre[2]
-        mx = np.pad(rot_field[..., 0],
-                    pad_width=((1, 1), (1, 1), (1, 1)), mode='edge')
-        my = np.pad(rot_field[..., 1],
-                    pad_width=((1, 1), (1, 1), (1, 1)), mode='edge')
-        mz = np.pad(rot_field[..., 2],
-                    pad_width=((1, 1), (1, 1), (1, 1)), mode='edge')
+        coords = []
+        tol = 1e-9  # to avoid numerical errors at the sample boundaries
+        for i in range(3):
+            coords.append(np.array([pmin[i] - cell[i] * tol,
+                                    *np.linspace(pmin[i] + cell[i] / 2,
+                                                 pmax[i] - cell[i] / 2,
+                                                 self.mesh.n[i]),
+                                    # *rot_field.mesh.coordinates,
+                                    pmax[i] + cell[i] * tol])
+                          - self.mesh.region.centre[i])
 
-        tol = 1e-5
-        x = np.array([x[0] - self.mesh.dx/2*(1+tol), *x,
-                      x[-1] + self.mesh.dx/2*(1+tol)])
-        y = np.array([y[0] - self.mesh.dy/2*(1+tol), *y,
-                      y[-1] + self.mesh.dy/2*(1+tol)])
-        z = np.array([z[0] - self.mesh.dz/2*(1+tol), *z,
-                      z[-1] + self.mesh.dz/2*(1+tol)])
-        interp_func_mx = RegularGridInterpolator((x, y, z), mx,
-                                                 fill_value=0.0,
-                                                 bounds_error=False)
-        interp_func_my = RegularGridInterpolator((x, y, z), my,
-                                                 fill_value=0.0,
-                                                 bounds_error=False)
-        interp_func_mz = RegularGridInterpolator((x, y, z), mz,
-                                                 fill_value=0.0,
-                                                 bounds_error=False)
-        return (interp_func_mx, interp_func_my, interp_func_mz)
+        m = np.pad(rot_field_component,
+                   pad_width=[(1, 1), (1, 1), (1, 1)], mode='edge')
 
-    def _rotate_vector(self, v):
-        r""" Rotate vector based on matrix.
-        """
-        return np.matmul(self._rotation_matrix, v)
-
-    def _inv_rotate_vector(self, v):
-        r""" Rotate vector based on matrix.
-        """
-        return np.matmul(self._inv_rotation_matrix, v)
-
-    def _rot_x(self, theta_x):
-        r""" Rotation about the $x$ axis.
-        """
-        return [[1, 0, 0],
-                [0, np.cos(theta_x), -np.sin(theta_x)],
-                [0, np.sin(theta_x), np.cos(theta_x)]]
-
-    def _rot_y(self, theta_y):
-        r""" Rotation about the $y$ axis.
-        """
-        return [[np.cos(theta_y), 0, np.sin(theta_y)],
-                [0, 1, 0],
-                [-np.sin(theta_y), 0, np.cos(theta_y)]]
-
-    def _rot_z(self, theta_z):
-        r""" Rotation about the $z$ axis.
-        """
-        return [[np.cos(theta_z), -np.sin(theta_z), 0],
-                [np.sin(theta_z), np.cos(theta_z), 0],
-                [0, 0, 1]]
-
-    def _rot_tot(self, theta_x=0, theta_y=0, theta_z=0):
-        r""" Full rotation matrix for basic rotation method.
-        """
-        return np.matmul(self._rot_z(theta_z),
-                         np.matmul(self._rot_y(theta_y),
-                                   self._rot_x(theta_x)))
-
-    def _compute_rotation_matrix(self, method, **kwargs):
-        r""" Calculate rotation matrix for differnt methods.
-        """
-
-        if method == 'basic':
-            return self._rot_tot(**kwargs)
-        elif method == 'about_axis':
-            return self._rot_mat_about_axis(**kwargs)
-        elif method == 'to_vector':
-            return self._rot_mat_to_axis(**kwargs)
-        else:
-            msg = f'Method {method} is unknown.'
-            raise ValueError(msg)
+        return RegularGridInterpolator(coords, m, fill_value=0,
+                                       bounds_error=False)
 
     def _calculate_new_n(self, new_region):
-        d_arr_rot_x = abs(self._rotate_vector([self.mesh.dx, 0, 0]))
-        d_arr_rot_y = abs(self._rotate_vector([0, self.mesh.dy, 0]))
-        d_arr_rot_z = abs(self._rotate_vector([0, 0, self.mesh.dz]))
-        d_arr_rot = d_arr_rot_x + d_arr_rot_y + d_arr_rot_z
-        vol_new = np.prod(d_arr_rot)
-        vol_old = self.mesh.dV
-        adjust = (vol_old/vol_new)**(1/3)
-        new_n = np.round(np.divide(new_region.edges,
-                                   d_arr_rot*adjust)).astype(int).tolist()
-        return new_n
+        cell_edges = np.eye(3) * self.mesh.cell
+        rotated_cell_edges = abs(self._rotation.apply(cell_edges))
+        rotated_edge_lenths = np.sum(rotated_cell_edges, axis=0)
+
+        new_vol = np.prod(rotated_edge_lenths)
+        adjust = (self.mesh.dV / new_vol)**(1/3)
+        return np.round(np.divide(new_region.edges,
+                                  rotated_edge_lenths
+                                  * adjust)).astype(int).tolist()
 
     def _calculate_new_region(self):
-        edges = np.array(self.mesh.region.edges)
-        rot_edge_x = abs(self._rotate_vector([edges[0], 0, 0]))
-        rot_edge_y = abs(self._rotate_vector([0, edges[1], 0]))
-        rot_edge_z = abs(self._rotate_vector([0, 0, edges[2]]))
-        tot_edge_len = rot_edge_x + rot_edge_y + rot_edge_z
-        p1_new = self.mesh.region.centre - tot_edge_len/2
-        p2_new = self.mesh.region.centre + tot_edge_len/2
-        return df.Region(p1=p1_new, p2=p2_new)
-
-    def _rot_mat_to_axis(self, to_vector, from_vector):
-        r""" Full rotation matrix for roation from one vector to another method.
-        """
-        from_vector = from_vector/np.linalg.norm(from_vector)
-        to_vector = to_vector/np.linalg.norm(to_vector)
-
-        if np.allclose(to_vector, -from_vector):
-            msg = ('Method ill defined for rotations from a vector to an ' +
-                   'antiparallel vector.')
-            raise ValueError(msg)
-
-        cross = np.cross(from_vector, to_vector)
-        c = np.dot(from_vector, to_vector)
-        v_x = np.array([[0, -cross[2], cross[1]],
-                        [cross[2], 0, -cross[0]],
-                        [-cross[1], cross[0], 0]])
-        v_x2 = np.matmul(v_x, v_x)
-        r_mat = np.identity(3)
-        r_mat += v_x
-        r_mat += v_x2 / (1+c)
-        return r_mat
-
-    def _rot_mat_about_axis(self, theta, axis):
-        r""" Full rotation matrix for roation about an axis method.
-        """
-        L = np.linalg.norm(axis)
-        u = axis[0]/L
-        v = axis[1]/L
-        w = axis[2]/L
-
-        line_1 = [u*u + (v*v + w*w) * np.cos(theta),
-                  u*v*(1-np.cos(theta)) - w*np.sin(theta),
-                  u*w*(1-np.cos(theta)) + v*np.sin(theta)]
-
-        line_2 = [u*v*(1-np.cos(theta)) + w*np.sin(theta),
-                  v*v + (u*u + w*w) * np.cos(theta),
-                  v*w*(1-np.cos(theta)) - u*np.sin(theta)]
-
-        line_3 = [u*w*(1-np.cos(theta)) - v*np.sin(theta),
-                  v*w*(1-np.cos(theta)) + u*np.sin(theta),
-                  w*w + (u*u + v*v) * np.cos(theta)]
-
-        return np.array([line_1, line_2, line_3])
+        edges = np.eye(3) * self.mesh.region.edges
+        rotated_edges = abs(self._rotation.apply(edges))
+        edge_centre_length = np.sum(rotated_edges, axis=0) / 2
+        return df.Region(p1=self.mesh.region.centre - edge_centre_length,
+                         p2=self.mesh.region.centre + edge_centre_length)
