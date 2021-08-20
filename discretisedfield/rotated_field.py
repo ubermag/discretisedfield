@@ -3,23 +3,28 @@ import discretisedfield as df
 from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial.transform import Rotation
 import functools
-
+import ubermagutil as uu
 
 # TODO
-# - implement special methods that bypass __getattr__ (and __getattribute__)
+# implement special methods that bypass __getattr__ (and __getattribute__)/
+# add a decorator to handle these (all) methods
+
+# TODO does this decorator allow for a combination of documentation in the base
+# class and in the derived class? (e.g. only specify additional parameters
+# in the init method)
+@uu.inherit_docs
 class RotatedField(df.Field):
     r"""Rotated field class.
     """
-    def __init__(self, mesh, dim, value=0, norm=None):
+
+    def __init__(self, mesh, dim, value=0, norm=None, rotation=None):
         if mesh.bc != '':
             raise RuntimeError('Rotations are not supported for fields with'
                                'periodic boundary conditions')
         super().__init__(mesh=mesh, dim=dim, value=value, norm=norm)
-        # TODO can this cause overriding of a previous rotation matrix?
-        self._rotation = None
+        # default: rotation not set
+        self._rotation = rotation
 
-    # TODO rotate affects the current field and creates a new one
-    # which behaviour do we want?
     def rotate(self, method, n=None, **kwargs):
         self.n = n
 
@@ -36,12 +41,10 @@ class RotatedField(df.Field):
             raise ValueError(msg)
 
         if self._rotation is not None:
-            self._rotation = rotation * self._rotation
-        else:
-            self._rotation = rotation
-        if hasattr(self, '_rotated_field'):
-            del self._rotated_field
-        return self
+            rotation = rotation * self._rotation
+
+        return self.__class__(self.mesh, self.dim, self.value, self.norm,
+                              rotation=rotation)
 
     # TODO
     # - add all df.Field methods/properties
