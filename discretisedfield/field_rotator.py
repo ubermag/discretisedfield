@@ -4,6 +4,7 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial.transform import Rotation
 
 
+# TODO support for scalar fields
 class FieldRotator:
     r"""Rotate a field.
 
@@ -21,13 +22,13 @@ class FieldRotator:
 
     >>> region = df.Region(p1=(0, 0, 0), p2=(20, 10, 2))
     >>> mesh = df.Mesh(region=region, cell=(1, 1, 1))
-    >>> field = df.Field(mesh, dim=1, value=1)
+    >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
     >>> field.mesh.n
     (20, 10, 2)
 
-    Create a ``Rotator`` object for the ``field``.
+    Create a ``FieldRotator`` object for the ``field``.
 
-    >>> field_rotator = df.Rotator(field)
+    >>> field_rotator = df.FieldRotator(field)
 
     Rotate the ``field``.
 
