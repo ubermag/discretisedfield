@@ -93,11 +93,6 @@ class FieldRotator:
         kwargs : dict
             Additional keyword arguments for the rotation method.
 
-        Returns
-        -------
-        discretisedfield.RotatedField
-            Rotated field.
-
         Examples
         --------
         TODO
