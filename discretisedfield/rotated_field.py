@@ -62,10 +62,14 @@ class RotatedField(df.Field):
     # - what can be summed, e.g. Field + RotatedField with the later
     #   rotated to have a matching mesh?
     def __add__(self, other):
-        if isinstance(other, RotatedField):
-            return self._rotated_field + other._rotated_field
+        if (isinstance(other, RotatedField) and
+            np.allclose(self._rotation.as_matrix(),
+                        other._rotation.as_matrix())):
+            res = super().__add__(other)
+            return self.__class__(res.mesh, res.dim, res.value,
+                                  rotation=self._rotation)
         else:
-            return self._rotated_field + other
+            return self._rotated_field + other._rotated_field
 
     @functools.cached_property
     def _rotated_field(self):
