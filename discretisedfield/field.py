@@ -2948,8 +2948,8 @@ class Field:
                 lines = ovffile.readlines()
 
             mdatalines = list(filter(lambda s: s.startswith('#'), lines))
-            datalines = np.loadtxt(filter(lambda s: not s.startswith('#'),
-                                          lines))
+            datalines = np.genfromtxt(filter(lambda s: not s.startswith('#'),
+                                             lines), dtype=None)
 
             if '1.0' in mdatalines[0]:
                 # valuedim is not in OVF1 file.
