@@ -61,7 +61,48 @@ class FieldRotator:
         return self._rotated_field
 
     def rotate(self, method, n=None, **kwargs):
-        """Rotates the field."""
+        """Rotate the field.
+
+        TODO explain the rotation process and remeshing/interpolation to make
+        ``n`` understandable.
+
+        Rotates the field using the given ``method``. The definition of the
+        rotation is based on ``scipy.spatial.transform.Rotation``. Additional
+        parameters required for the different possible rotation methods must be
+        given as keyword arguments. These are passed directly to the relevant
+        ``scipy`` function. For a detailed explanation and required argements
+        of the different methods please refer direcly to the ``scipy``
+        documentation.
+
+        The only method that differs from ``scipy`` is ``align_vector``. This
+        method expects two keyword arguments ``from`` and ``to`` (array-like,
+        3). This method rotates the vector ``from`` to the vector ``to``, the
+        cross product is kept fixed, i.e. the rotation axis is the normal
+        vector of the plane defined by the two vectors ``from`` and ``to``.
+
+        Parameters
+        ----------
+        method : str
+            Rotation method. One of ``'from_quat'``, ``'from_matrix'``,
+            ``'from_rotvec'``, ``'from_mpr'``, ``'from_euler'``, or
+            ``'align_vector'``.
+
+        n : array-like, 3, optional
+            Number of cells in the new mesh.
+
+        kwargs : dict
+            Additional keyword arguments for the rotation method.
+
+        Returns
+        -------
+        discretisedfield.RotatedField
+            Rotated field.
+
+        Examples
+        --------
+        TODO
+
+        """
         # create rotation object
         if method in ['from_quat', 'from_matrix', 'from_rotvec', 'from_mpr',
                       'from_euler']:
@@ -88,8 +129,9 @@ class FieldRotator:
 
         # Rotate Field vectors
         rot_field = self._rotation.apply(
-            self._orig_field.array.reshape((-1, self._orig_field.dim))).reshape(
-                (*self._orig_field.mesh.n, self._orig_field.dim))
+            self._orig_field.array.reshape(
+                (-1, self._orig_field.dim))).reshape(
+                    (*self._orig_field.mesh.n, self._orig_field.dim))
 
         # Calculate field at new mesh positions
         new_m = self._map_and_interpolate(new_mesh, rot_field)

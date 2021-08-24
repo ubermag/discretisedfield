@@ -3369,6 +3369,7 @@ class Field:
         else:
             return self.__class__(mesh[0], dim=result.shape[-1], value=result)
 
+    # TODO Remove if FieldRotator is used.
     def rotate(self, method, n=None, **kwargs):
         """Rotate the field.
 
