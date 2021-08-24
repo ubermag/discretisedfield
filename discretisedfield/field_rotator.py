@@ -54,7 +54,8 @@ class FieldRotator:
             raise RuntimeError('Rotations are not supported for fields with'
                                'periodic boundary conditions')
         self._orig_field = field
-        self._rotation = Rotation.from_matrix(np.eye(3))
+        # set up state without rotations
+        self.clear_rotation()
 
     @property
     def field(self):
@@ -136,6 +137,11 @@ class FieldRotator:
         self._rotated_field = df.Field(mesh=new_mesh,
                                        dim=self._orig_field.dim,
                                        value=new_m)
+
+    def clear_rotation(self):
+        """Remove all rotations."""
+        self._rotation = Rotation.from_matrix(np.eye(3))
+        self._rotated_field = self._orig_field
 
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
