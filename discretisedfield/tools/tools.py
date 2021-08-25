@@ -6,7 +6,7 @@ from scipy import ndimage
 
 
 def topological_charge_density(field, /, method='continuous'):
-    """Topological charge density.
+    r"""Topological charge density.
 
     This method computes the topological charge density for a vector field
     (``dim=3``). Two different methods are available and can be selected using
@@ -16,11 +16,11 @@ def topological_charge_density(field, /, method='continuous'):
 
         .. math::
 
-            q = \\frac{1}{4\\pi} \\mathbf{n} \\cdot \\left(\\frac{\\partial
-            \\mathbf{n}}{\\partial x} \\times \\frac{\\partial
-            \\mathbf{n}}{\\partial x} \\right),
+            q = \frac{1}{4\pi} \mathbf{n} \cdot \left(\frac{\partial
+            \mathbf{n}}{\partial x} \times \frac{\partial
+            \mathbf{n}}{\partial x} \right),
 
-        where :math:`\\mathbf{n}` is the orientation field.
+        where :math:`\mathbf{n}` is the orientation field.
 
     2. Berg-Luescher method. Details can be found in:
 
@@ -314,15 +314,15 @@ def topological_charge(field, /, method='continuous', absolute=False):
 
 
 def emergent_magnetic_field(field):
-    """Emergent magnetic field.
+    r"""Emergent magnetic field.
 
     Emergent magnetic field for a (magnetic) unit vector field
     :math:`\boldsymbol{m}`is defined as:
 
     .. math::
 
-        F_{kl} = \\boldsymbol{m} \\cdot (\\partial_k \\boldsymbol{m}
-        \\times \\partial_l \\boldsymbol{m})
+        F_{kl} = \boldsymbol{m} \cdot (\partial_k \boldsymbol{m}
+        \times \partial_l \boldsymbol{m})
 
     Details are given in Volovik, G. E., Rysti, J., Mäkinen, J. T. & Eltsov,
     V. B. Spin, Orbital, Weyl and Other Glasses in Topological Superfluids. J
