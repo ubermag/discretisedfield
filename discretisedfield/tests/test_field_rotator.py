@@ -163,7 +163,7 @@ def test_invalid_field():
 
 def test_invalid_method():
     mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
-    field = df.Field(mesh, dim=2, value=(1, 1, 1))
+    field = df.Field(mesh, dim=3, value=(1, 1, 1))
     fr = df.FieldRotator(field)
     with pytest.raises(ValueError):
         fr.rotate('unknown method')
