@@ -22,7 +22,7 @@ class TestFieldRotator:
         for field in self.fields:
             fr = df.FieldRotator(field)
             # no rotation => field should be the same
-            assert fr.field == self.vector_field
+            assert fr.field == field
 
             fr.rotate('from_quat', [0, 0, 1, 1])
             check_field(fr.field)
@@ -76,6 +76,7 @@ class TestFieldRotator:
             assert np.allclose(field.array, fr.field.array)
 
     def test_scalar_cube(self):
+        # multiples of 90 degree rotations should return the same array
         mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
         field = df.Field(mesh, dim=1, value=1)
         fr = df.FieldRotator(field)
