@@ -50,9 +50,9 @@ class FieldRotator:
     """
 
     def __init__(self, field):
-        if field.mesh.bc != '':
-            raise ValueError('Rotations are not supported for fields with'
-                             'periodic boundary conditions')
+        # if field.mesh.bc != '':
+        #     raise ValueError('Rotations are not supported for fields with'
+        #                      'periodic boundary conditions')
         if field.dim not in [1, 3]:
             raise ValueError('Rotations are not supported for fields with'
                              f'{field.dim=}.')
