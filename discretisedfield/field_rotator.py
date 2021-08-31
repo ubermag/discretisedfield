@@ -65,7 +65,7 @@ class FieldRotator:
         """Rotated field."""
         return self._rotated_field
 
-    def rotate(self, method, n=None, *args, **kwargs):
+    def rotate(self, method, *args, n=None, **kwargs):
         """Rotate the field.
 
         TODO explain the rotation process and remeshing/interpolation to make
@@ -108,7 +108,7 @@ class FieldRotator:
 
         """
         # create rotation object
-        if method in ['from_quat', 'from_matrix', 'from_rotvec', 'from_mpr',
+        if method in ['from_quat', 'from_matrix', 'from_rotvec', 'from_mrp',
                       'from_euler']:
             rotation = getattr(Rotation, method)(*args, **kwargs)
         elif method == 'align_vector':
