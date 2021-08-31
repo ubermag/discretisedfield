@@ -65,7 +65,7 @@ def test_from_quat_rotation():
     # no rotation => field should be the same
     assert fr.field == field
 
-    fr.rotate('from_quat', quat=[0, 0, 1, 1])
+    fr.rotate('from_quat', [0, 0, 1, 1])
     check_field(fr.field)
 
 
@@ -80,9 +80,10 @@ def test_from_matrix_rotation():
     # no rotation => field should be the same
     assert fr.field == field
 
-    fr.rotate('from_matrix', [[0, -1, 0],
-                              [1, 0, 0],
-                              [0, 0, 1]])
+    matrix = [[0, -1, 0],
+              [1, 0, 0],
+              [0, 0, 1]]
+    fr.rotate('from_matrix', matrix)
     check_field(fr.field)
 
 
@@ -97,7 +98,7 @@ def test_from_rotvec_rotation():
     # no rotation => field should be the same
     assert fr.field == field
 
-    fr.rotate('from_rotvec', np.pi/2 * np.array([0, 0, 1]))
+    fr.rotate('from_rotvec', rotvec=np.pi/2 * np.array([0, 0, 1]))
     check_field(fr.field)
 
 
