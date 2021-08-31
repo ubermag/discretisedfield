@@ -793,6 +793,7 @@ class Field:
         else:
             return False
 
+    # TODO The mesh comparison has no tolerance.
     def allclose(self, other, rtol=1e-5, atol=1e-8):
         """Allclose method.
 

@@ -52,7 +52,7 @@ class FieldRotator:
     def __init__(self, field):
         if field.mesh.bc != '':
             raise ValueError('Rotations are not supported for fields with'
-                               'periodic boundary conditions')
+                             'periodic boundary conditions')
         if field.dim not in [1, 3]:
             raise ValueError('Rotations are not supported for fields with'
                              f'{field.dim=}.')
@@ -80,10 +80,11 @@ class FieldRotator:
         documentation.
 
         The only method that differs from ``scipy`` is ``align_vector``. This
-        method expects two keyword arguments ``from`` and ``to`` (array-like,
-        3). This method rotates the vector ``from`` to the vector ``to``, the
-        cross product is kept fixed, i.e. the rotation axis is the normal
-        vector of the plane defined by the two vectors ``from`` and ``to``.
+        method expects two keyword arguments ``initial`` and ``final``
+        (array-like, 3). This method rotates the vector ``initial`` to the
+        vector ``final``, the cross product is kept fixed, i.e. the rotation
+        axis is the normal vector of the plane defined by the two vectors
+        ``initial`` and ``final``.
 
         Parameters
         ----------
@@ -108,10 +109,11 @@ class FieldRotator:
                       'from_euler']:
             rotation = getattr(Rotation, method)(**kwargs)
         elif method == 'align_vector':
-            from_ = kwargs['from_vector']
-            to = kwargs['to_vector']
-            fixed = np.cross(from_, to)
-            rotation = Rotation.align_vectors([to, fixed], [from_, fixed])[0]
+            initial = kwargs['initial']
+            final = kwargs['final']
+            fixed = np.cross(initial, final)
+            rotation = Rotation.align_vectors([final, fixed],
+                                              [initial, fixed])[0]
         else:
             msg = f'Method {method} is unknown.'
             raise ValueError(msg)
