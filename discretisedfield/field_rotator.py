@@ -139,8 +139,6 @@ class FieldRotator:
         # Calculate field at new mesh positions
         new_m = self._map_and_interpolate(new_mesh, rot_field)
 
-        print(new_mesh)
-        print(new_m.shape)
         # Construct new field
         self._rotated_field = df.Field(mesh=new_mesh,
                                        dim=self._orig_field.dim,
