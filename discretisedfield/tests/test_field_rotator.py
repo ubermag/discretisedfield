@@ -65,7 +65,7 @@ def test_from_quat_rotation():
     # no rotation => field should be the same
     assert fr.field == field
 
-    fr.rotate('from_quat', quat=[0, 0, 1, 1])
+    fr.rotate('from_quat', [0, 0, 1, 1])
     check_field(fr.field)
 
 
