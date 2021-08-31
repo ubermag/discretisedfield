@@ -1,5 +1,6 @@
-import discretisedfield as df
 import numpy as np
+import pytest
+import discretisedfield as df
 from .test_field import check_field
 
 
@@ -151,3 +152,18 @@ def test_n():
     fr.rotate('from_euler', seq='x', angles=np.pi/6, n=n)
     check_field(fr.field)
     assert fr.field.mesh.n == n
+
+
+def test_invalid_field():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+    field = df.Field(mesh, dim=2, value=(1, 1))
+    with pytest.raises(ValueError):
+        df.FieldRotator(field)
+
+
+def test_invalid_method():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+    field = df.Field(mesh, dim=2, value=(1, 1, 1))
+    fr = df.FieldRotator(field)
+    with pytest.raises(ValueError):
+        fr.rotate('unknown method')
