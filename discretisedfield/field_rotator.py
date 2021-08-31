@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import discretisedfield as df
 from scipy.interpolate import RegularGridInterpolator
@@ -50,9 +51,9 @@ class FieldRotator:
     """
 
     def __init__(self, field):
-        # if field.mesh.bc != '':
-        #     raise ValueError('Rotations are not supported for fields with'
-        #                      'periodic boundary conditions')
+        if field.mesh.bc != '':
+            warnings.warn('Boundary conditions are lost when rotating '
+                          'the field.')
         if field.dim not in [1, 3]:
             raise ValueError('Rotations are not supported for fields with'
                              f'{field.dim=}.')
