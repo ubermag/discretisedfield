@@ -22,7 +22,7 @@ setuptools.setup(
                       'jupyterlab==2.2',
                       'h5py>=3.1',
                       'k3d>=2.9',
-                      'scipy>=1.5'],
+                      'scipy>=1.6'],
     entry_points={
         "console_scripts": [
             "ovf2vtk = discretisedfield.ovf2vtk:main",
