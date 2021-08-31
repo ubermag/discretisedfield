@@ -26,7 +26,7 @@ def test_scalar_rotation():
     def init_m(p):
         return np.random.random(1) * 2 - 1
 
-    field = df.Field(mesh, dim=1, value=init_m, norm=1)
+    field = df.Field(mesh, dim=1, value=init_m)
     fr = df.FieldRotator(field)
     assert fr.field == field
 
