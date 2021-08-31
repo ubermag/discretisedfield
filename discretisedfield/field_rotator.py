@@ -108,8 +108,8 @@ class FieldRotator:
                       'from_euler']:
             rotation = getattr(Rotation, method)(**kwargs)
         elif method == 'align_vector':
-            from_ = kwargs['from']
-            to = kwargs['to']
+            from_ = kwargs['from_vector']
+            to = kwargs['to_vector']
             fixed = np.cross(from_, to)
             rotation = Rotation.align_vectors([to, fixed], [from_, fixed])[0]
         else:
