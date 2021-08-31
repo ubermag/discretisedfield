@@ -45,7 +45,7 @@ def test_scalar_cube():
         for pref in range(1, 5):
             fr.rotate('from_euler', seq=s, angles=pref * np.pi/2)
             check_field(fr.field)
-            assert field == fr.field
+            assert np.allclose(field.array, fr.field.array)
             fr.clear_rotation()
     check_field(fr.field)
     assert field == fr.field
