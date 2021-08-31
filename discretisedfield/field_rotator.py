@@ -93,11 +93,11 @@ class FieldRotator:
             ``'from_rotvec'``, ``'from_mpr'``, ``'from_euler'``, or
             ``'align_vector'``.
 
-        n : array-like, 3, optional
-            Number of cells in the new mesh.
-
         args
             Additional positional arguments for the rotation method.
+
+        n : array-like, 3, optional
+            Number of cells in the new mesh.
 
         kwargs
             Additional keyword arguments for the rotation method.
