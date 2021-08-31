@@ -11,13 +11,14 @@ def test_vector_rotation():
 
     field = df.Field(mesh, dim=3, value=init_m, norm=1)
     fr = df.FieldRotator(field)
+    # no rotation => field should be the same
     assert fr.field == field
 
     fr.rotate('align_vector', initial=(0, 0, 1), final=(1, 1, 1))
     check_field(fr.field)
     fr.rotate('align_vector', initial=(1, 1, 1), final=(0, 0, 1))
     check_field(fr.field)
-    assert field == fr.field
+    assert field.allclose(fr.field)
 
 
 def test_scalar_rotation():
@@ -34,7 +35,7 @@ def test_scalar_rotation():
     check_field(fr.field)
     fr.rotate('align_vector', initial=(1, 1, 1), final=(0, 0, 1))
     check_field(fr.field)
-    assert field == fr.field
+    assert field.allclose(fr.field)
 
 
 def test_scalar_cube():
@@ -48,4 +49,5 @@ def test_scalar_cube():
             assert np.allclose(field.array, fr.field.array)
             fr.clear_rotation()
     check_field(fr.field)
+    # no rotation => field should be the same
     assert field == fr.field
