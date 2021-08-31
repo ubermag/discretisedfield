@@ -18,7 +18,8 @@ def test_vector_rotation():
     check_field(fr.field)
     fr.rotate('align_vector', initial=(1, 1, 1), final=(0, 0, 1))
     check_field(fr.field)
-    assert field.allclose(fr.field)
+    # field.allclose needs '==' for the mesh
+    assert np.allclose(field.array, fr.field.array)
 
 
 def test_scalar_rotation():
@@ -35,7 +36,7 @@ def test_scalar_rotation():
     check_field(fr.field)
     fr.rotate('align_vector', initial=(1, 1, 1), final=(0, 0, 1))
     check_field(fr.field)
-    assert field.allclose(fr.field)
+    assert np.allclose(field.array, fr.field.array)
 
 
 def test_scalar_cube():
