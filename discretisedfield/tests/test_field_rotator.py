@@ -52,3 +52,101 @@ def test_scalar_cube():
     check_field(fr.field)
     # no rotation => field should be the same
     assert field == fr.field
+
+
+def test_from_quat_rotation():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+
+    def init_m(p):
+        return np.random.random(3) * 2 - 1
+
+    field = df.Field(mesh, dim=3, value=init_m, norm=1)
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
+
+    fr.rotate('from_quat', quat=[0, 0, 1, 1])
+    check_field(fr.field)
+
+
+def test_from_matrix_rotation():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+
+    def init_m(p):
+        return np.random.random(3) * 2 - 1
+
+    field = df.Field(mesh, dim=3, value=init_m, norm=1)
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
+
+    fr.rotate('from_matrix', matrix=[[0, -1, 0],
+                                     [1, 0, 0],
+                                     [0, 0, 1]])
+    check_field(fr.field)
+
+
+def test_from_rotvec_rotation():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+
+    def init_m(p):
+        return np.random.random(3) * 2 - 1
+
+    field = df.Field(mesh, dim=3, value=init_m, norm=1)
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
+
+    fr.rotate('from_rotvec', rotvec=np.pi/2 * np.array([0, 0, 1]))
+    check_field(fr.field)
+
+
+def test_from_mrp_rotation():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+
+    def init_m(p):
+        return np.random.random(3) * 2 - 1
+
+    field = df.Field(mesh, dim=3, value=init_m, norm=1)
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
+
+    fr.rotate('from_rotvec', mrp=[0, 0, np.pi/2])
+    check_field(fr.field)
+
+
+def test_from_euler_rotation():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+
+    def init_m(p):
+        return np.random.random(3) * 2 - 1
+
+    field = df.Field(mesh, dim=3, value=init_m, norm=1)
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
+
+    fr.rotate('from_euler', seq='x', angles=np.pi/2)
+    check_field(fr.field)
+    fr.rotate('from_euler', seq='xyz', angles=(np.pi/2, np.pi/4, np.pi/6))
+    check_field(fr.field)
+    fr.rotate('from_euler', seq='XYZ', angles=(np.pi/2, np.pi/4, np.pi/6))
+    check_field(fr.field)
+
+
+def test_n():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+
+    def init_m(p):
+        return np.random.random(3) * 2 - 1
+
+    field = df.Field(mesh, dim=3, value=init_m, norm=1)
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
+
+    n = (10, 10, 10)
+    fr.rotate('from_euler', seq='x', angles=np.pi/6, n=n)
+    check_field(fr.field)
+    assert fr.field.mesh.n == n
