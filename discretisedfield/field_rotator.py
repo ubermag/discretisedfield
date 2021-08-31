@@ -51,8 +51,11 @@ class FieldRotator:
 
     def __init__(self, field):
         if field.mesh.bc != '':
-            raise RuntimeError('Rotations are not supported for fields with'
+            raise ValueError('Rotations are not supported for fields with'
                                'periodic boundary conditions')
+        if field.dim not in [1, 3]:
+            raise ValueError('Rotations are not supported for fields with'
+                             f'{field.dim=}.')
         self._orig_field = field
         # set up state without rotations
         self.clear_rotation()
@@ -125,14 +128,19 @@ class FieldRotator:
         new_mesh = df.Mesh(region=new_region, n=n)
 
         # Rotate Field vectors
-        rot_field = self._rotation.apply(
-            self._orig_field.array.reshape(
-                (-1, self._orig_field.dim))).reshape(
-                    (*self._orig_field.mesh.n, self._orig_field.dim))
+        if self._orig_field.dim == 1:
+            rot_field = self._orig_field.array
+        elif self._orig_field.dim == 3:
+            rot_field = self._rotation.apply(
+                self._orig_field.array.reshape(
+                    (-1, self._orig_field.dim))).reshape(
+                        (*self._orig_field.mesh.n, self._orig_field.dim))
 
         # Calculate field at new mesh positions
         new_m = self._map_and_interpolate(new_mesh, rot_field)
 
+        print(new_mesh)
+        print(new_m.shape)
         # Construct new field
         self._rotated_field = df.Field(mesh=new_mesh,
                                        dim=self._orig_field.dim,
@@ -151,7 +159,8 @@ class FieldRotator:
         new_pos_old_mesh = self._rotation.inv().apply(new_mesh_pos)
 
         # Get values of field at new mesh locations
-        result = np.ndarray(shape=new_mesh_field.array.shape)
+        result = np.ndarray(shape=[*new_mesh_field.mesh.n,
+                                   self._orig_field.dim])
         for i in range(self._orig_field.dim):
             result[..., i] = self._create_interpolation_funcs(
                 rot_field[..., i])(new_pos_old_mesh).reshape(new_mesh.n)
