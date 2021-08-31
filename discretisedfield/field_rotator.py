@@ -155,6 +155,10 @@ class FieldRotator:
         self._rotation = Rotation.from_matrix(np.eye(3))
         self._rotated_field = self._orig_field
 
+    def __repr__(self):
+        return (f'FieldRotator(\n* original field:\n{self.field}\n'
+                f'* internal rotation matrix:\n{self._rotation.as_matrix()}\n)')
+
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
         new_mesh_pos = (new_mesh_field.array.reshape((-1, 3))
