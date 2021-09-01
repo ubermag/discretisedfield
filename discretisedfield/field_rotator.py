@@ -66,7 +66,7 @@ class FieldRotator:
         """Rotated field."""
         return self._rotated_field
 
-    def rotate(self, method, *args, n=None, **kwargs):
+    def rotate(self, method, /, *args, n=None, **kwargs):
         """Rotate the field.
 
         TODO explain the rotation process and remeshing/interpolation to make
