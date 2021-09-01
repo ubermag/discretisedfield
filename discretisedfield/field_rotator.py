@@ -157,7 +157,8 @@ class FieldRotator:
 
     def __repr__(self):
         return (f'FieldRotator(\n* original field:\n{self.field}\n'
-                f'* internal rotation matrix:\n{self._rotation.as_matrix()}\n)')
+                f'* internal rotation matrix:\n{self._rotation.as_matrix()}\n)'
+                )
 
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
