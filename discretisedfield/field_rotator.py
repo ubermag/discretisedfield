@@ -44,7 +44,7 @@ class FieldRotator:
 
     Apply a second rotation.
 
-    >>> field_rotator.rotate(method='from_euler', seq='z', angles=pi/2)
+    >>> field_rotator.rotate('from_euler', seq='z', angles=pi/2)
     >>> field_rotator.field.mesh.n
     (2, 20, 10)
 
