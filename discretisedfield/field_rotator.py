@@ -69,16 +69,13 @@ class FieldRotator:
     def rotate(self, method, /, *args, n=None, **kwargs):
         """Rotate the field.
 
-        TODO explain the rotation process and remeshing/interpolation to make
-        ``n`` understandable.
-
-        Rotates the field using the given ``method``. The definition of the
+        Rotate the field using the given ``method``. The definition of the
         rotation is based on ``scipy.spatial.transform.Rotation``. Additional
         parameters required for the different possible rotation methods must be
-        given as keyword arguments. These are passed directly to the relevant
-        ``scipy`` function. For a detailed explanation and required argements
-        of the different methods please refer direcly to the ``scipy``
-        documentation.
+        specified following to the ``scipy`` documentation. These are passed
+        directly to the relevant ``scipy`` function. For a detailed explanation
+        and required argements of the different methods please refer direcly to
+        the ``scipy`` documentation.
 
         The only method that differs from ``scipy`` is ``align_vector``. This
         method expects two keyword arguments ``initial`` and ``final``
@@ -86,6 +83,15 @@ class FieldRotator:
         vector ``final``, the cross product is kept fixed, i.e. the rotation
         axis is the normal vector of the plane defined by the two vectors
         ``initial`` and ``final``.
+
+        The rotation of the field consists of three steps, rotation of the
+        region, remeshing, and rotation + interpolation of the field values.
+        Rotation of the region produces as new, larger region for the new
+        field. If ``n`` is not specified remeshing is done automatically and
+        the cell volume is kept mostly constant. Interpolation of the field
+        values uses linear interpolation. For more details please refer to the
+        detailed documentation notebook.
+
 
         Parameters
         ----------
@@ -98,7 +104,9 @@ class FieldRotator:
             Additional positional arguments for the rotation method.
 
         n : array-like, 3, optional
-            Number of cells in the new mesh.
+            Number of cells in the new mesh. If not specified ``n`` is chosen
+            automatically to keep the cell volume mostly constant. Defaults to
+            ``None``.
 
         kwargs
             Additional keyword arguments for the rotation method.
