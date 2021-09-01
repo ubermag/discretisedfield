@@ -90,6 +90,30 @@ class TestFieldRotator:
         # no rotation => field should be the same
         assert field == fr.field
 
+    def test_macrospin_rotation(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), n=(1, 1, 1))
+        field = df.Field(mesh, dim=3, value=(0, 0, 1))
+
+        fr = df.FieldRotator(field)
+
+        fr.rotate('from_euler', seq='z', angles=np.pi)
+        assert np.allclose(fr.field.array.squeeze(), [0, 0, 1])
+
+        fr.rotate('from_euler', seq='x', angles=np.pi/2)
+        assert np.allclose(fr.field.array.squeeze(), [0, -1, 0])
+
+        fr.clear_rotation()
+        fr.rotate('from_euler', seq='y', angles=np.pi/2)
+        assert np.allclose(fr.field.array.squeeze(), [1, 0, 0])
+        fr.rotate('from_euler', seq='z', angles=np.pi)
+        assert np.allclose(fr.field.array.squeeze(), [-1, 0, 0])
+
+        fr.clear_rotation()
+        fr.rotate('align_vector', initial=(0, 0, 1), final=(1, 1, 1),
+                  n=(1, 1, 1))
+        assert np.allclose(fr.field.array.squeeze(),
+                           [1/np.sqrt(3), 1/np.sqrt(3), 1/np.sqrt(3)])
+
     def test_invalid_field(self):
         field = df.Field(self.mesh, dim=2, value=(1, 1))
         with pytest.raises(ValueError):
