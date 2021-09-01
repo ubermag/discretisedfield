@@ -33,7 +33,7 @@ class FieldRotator:
 
     Rotate the ``field``.
 
-    >>> field_rotator.rotate(method='from_euler', seq='x', angles=pi/2)
+    >>> field_rotator.rotate('from_euler', seq='x', angles=pi/2)
 
     Access the rotated field.
 
