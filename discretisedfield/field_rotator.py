@@ -5,9 +5,16 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial.transform import Rotation
 
 
-# TODO support for scalar fields
 class FieldRotator:
     r"""Rotate a field.
+
+    This class can be used to rotate a ``field`` object. During rotation a new
+    region and mesh are constructed and ``field`` values are interpolated onto
+    the new mesh. Multiple consecutive rotations are possible without
+    additional numerical errors. Rotation always starts from the initial
+    unrotated field.
+
+    Periodic boundary conditions have no effect.
 
     Parameters
     ----------
@@ -113,7 +120,13 @@ class FieldRotator:
 
         Examples
         --------
-        TODO
+        >>> import discretisedfield as df
+        >>> from math import pi
+        >>> region = df.Region(p1=(0, 0, 0), p2=(20, 10, 2))
+        >>> mesh = df.Mesh(region=region, cell=(1, 1, 1))
+        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> field_rotator = df.FieldRotator(field)
+        >>> field_rotator.rotate('from_euler', seq='x', angles=pi/2)
 
         """
         # create rotation object
