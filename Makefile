@@ -17,7 +17,7 @@ test-ipynb:
 test-pycodestyle:
 	$(PYTHON) -m pycodestyle --filename=*.py .
 
-test-all: test-unittests test-coverage test-docs test-ipynb test-pycodestyle
+test-all: test-unittests test-docs test-ipynb test-pycodestyle
 
 build-dists:
 	rm -rf dist/
