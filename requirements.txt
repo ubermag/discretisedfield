@@ -4,4 +4,4 @@ matplotlib>=3.3
 jupyterlab==2.2.10
 h5py>=3.1
 k3d>=2.9
-scipy>=1.5
+scipy>=1.6
