@@ -58,12 +58,12 @@ class FieldRotator:
     """
 
     def __init__(self, field):
-        if field.mesh.bc != '':
-            warnings.warn('Boundary conditions are lost when rotating '
-                          'the field.')
         if field.dim not in [1, 3]:
             raise ValueError('Rotations are not supported for fields with'
                              f'{field.dim=}.')
+        if field.mesh.bc != '':
+            warnings.warn('Boundary conditions are lost when rotating '
+                          'the field.')
         self._orig_field = field
         # set up state without rotations
         self.clear_rotation()
@@ -81,23 +81,23 @@ class FieldRotator:
         parameters required for the different possible rotation methods must be
         specified following to the ``scipy`` documentation. These are passed
         directly to the relevant ``scipy`` function. For a detailed explanation
-        and required argements of the different methods please refer direcly to
-        the ``scipy`` documentation.
+        and required arguments of the different methods please refer directly
+        to the ``scipy`` documentation.
 
         The only method that differs from ``scipy`` is ``align_vector``. This
         method expects two keyword arguments ``initial`` and ``final``
         (array-like, 3). This method rotates the vector ``initial`` to the
-        vector ``final``, the cross product is kept fixed, i.e. the rotation
-        axis is the normal vector of the plane defined by the two vectors
-        ``initial`` and ``final``.
+        vector ``final``, the cross product is kept fixed, i.e. it defines the
+        rotation vector.
+
 
         The rotation of the field consists of three steps, rotation of the
         region, remeshing, and rotation + interpolation of the field values.
         Rotation of the region produces as new, larger region for the new
         field. If ``n`` is not specified remeshing is done automatically and
         the cell volume is kept mostly constant. Interpolation of the field
-        values uses linear interpolation. For more details please refer to the
-        detailed documentation notebook.
+        values is done using linear interpolation. For more details on the
+        rotation process please refer to the detailed documentation notebook.
 
 
         Parameters
@@ -143,15 +143,14 @@ class FieldRotator:
             msg = f'Method {method} is unknown.'
             raise ValueError(msg)
 
+        # Multiplication from left is important
         self._rotation = rotation * self._rotation
 
-        # Calculate new region
         new_region = self._calculate_new_region()
 
         if n is None:
             n = self._calculate_new_n(new_region)
 
-        # Create new mesh
         new_mesh = df.Mesh(region=new_region, n=n)
 
         # Rotate Field vectors
@@ -166,7 +165,6 @@ class FieldRotator:
         # Calculate field at new mesh positions
         new_m = self._map_and_interpolate(new_mesh, rot_field)
 
-        # Construct new field
         self._rotated_field = df.Field(mesh=new_mesh,
                                        dim=self._orig_field.dim,
                                        value=new_m)
@@ -177,9 +175,11 @@ class FieldRotator:
         self._rotated_field = self._orig_field
 
     def __repr__(self):
-        return (f'FieldRotator(\n* original field:\n{self.field}\n'
-                f'* internal rotation matrix:\n{self._rotation.as_matrix()}\n)'
-                )
+        return (f'FieldRotator(\n'
+                '* original field:\n'
+                f'{self.field}\n'
+                '* internal rotation matrix:\n'
+                f'{self._rotation.as_matrix()}\n)')
 
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
@@ -208,7 +208,7 @@ class FieldRotator:
                                     *np.linspace(pmin[i] + cell[i] / 2,
                                                  pmax[i] - cell[i] / 2,
                                                  self._orig_field.mesh.n[i]),
-                                    # *rot_field.mesh.coordinates,
+                                    # *rot_field.mesh.coordinates[i],
                                     pmax[i] + cell[i] * tol])
                           - self._orig_field.mesh.region.centre[i])
 
@@ -225,15 +225,14 @@ class FieldRotator:
 
         new_vol = np.prod(rotated_edge_lenths)
         adjust = (self._orig_field.mesh.dV / new_vol)**(1/3)
-        return np.round(np.divide(new_region.edges,
-                                  rotated_edge_lenths
-                                  * adjust)).astype(int).tolist()
+        return np.round(
+            np.divide(new_region.edges,
+                      rotated_edge_lenths * adjust)).astype(int).tolist()
 
     def _calculate_new_region(self):
         edges = np.eye(3) * self._orig_field.mesh.region.edges
         rotated_edges = abs(self._rotation.apply(edges))
         edge_centre_length = np.sum(rotated_edges, axis=0) / 2
-        return df.Region(p1=(self._orig_field.mesh.region.centre
-                             - edge_centre_length),
-                         p2=(self._orig_field.mesh.region.centre
-                             + edge_centre_length))
+        return df.Region(
+            p1=(self._orig_field.mesh.region.centre - edge_centre_length),
+            p2=(self._orig_field.mesh.region.centre + edge_centre_length))
