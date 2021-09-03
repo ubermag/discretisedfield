@@ -1,5 +1,6 @@
 import numbers
 import struct
+import warnings
 
 import h5py
 import numpy as np
@@ -108,11 +109,25 @@ class Field:
 
     """
 
-    def __init__(self, mesh, dim, value=0, norm=None):
+    def __init__(self, mesh, dim, value=0, norm=None, components=None):
         self.mesh = mesh
         self.dim = dim
         self.value = value
         self.norm = norm
+
+        self._components = None  # required for correct initialisation
+
+        # defaults for 2 and 3 dimensions
+        # TODO Same access method for 1d fields?
+        if components is None:
+            if 2 <= dim <= 3:
+                components = ['x', 'y', 'z'][:dim]
+            else:
+                warnings.warn(f'Component labels must be specified for {dim=}'
+                              ' fields to get access to individual vector'
+                              ' components.')
+        if dim > 1:
+            self.components = components
 
     @property
     def value(self):
@@ -249,6 +264,28 @@ class Field:
     def value(self, val):
         self._value = val
         self.array = dfu.as_array(self.mesh, self.dim, val)
+
+    @property
+    def components(self):
+        """Vector components of the field."""
+        return self._components
+
+    @components.setter
+    def components(self, components):
+        if components is not None:
+            if len(components) != self.dim:
+                raise ValueError('Number of components does not match'
+                                 f' {self.dim=}.')
+            if len(components) != len(set(components)):
+                raise ValueError('Components must be unique.')
+            for comp in components:
+                if hasattr(self, comp):
+                    # redefining component labels is okay.
+                    if self._components is None or comp not in self._components:
+                        raise ValueError(f'Component name {comp} is already '
+                                         'used by a different method/property.'
+                                         )
+        self._components = components
 
     @property
     def array(self):
@@ -460,7 +497,8 @@ class Field:
         (0.0, 0.0, 0.0)
 
         """
-        return self.__class__(self.mesh, dim=self.dim, value=0)
+        return self.__class__(self.mesh, dim=self.dim, value=0,
+                              components=self.components)
 
     @property
     def orientation(self):
@@ -512,7 +550,8 @@ class Field:
                                       self.norm.array,
                                       out=np.zeros_like(self.array),
                                       where=(self.norm.array != 0))
-        return self.__class__(self.mesh, dim=self.dim, value=orientation_array)
+        return self.__class__(self.mesh, dim=self.dim, value=orientation_array,
+                              components=self.components)
 
     @property
     def average(self):
@@ -665,8 +704,9 @@ class Field:
         1
 
         """
-        if attr in list(dfu.axesdict.keys())[:self.dim] and self.dim in (2, 3):
-            attr_array = self.array[..., dfu.axesdict[attr]][..., np.newaxis]
+        if self.components is not None and attr in self.components:
+            attr_array = self.array[..., self.components.index(attr),
+                                    np.newaxis]
             return self.__class__(mesh=self.mesh, dim=1, value=attr_array)
         else:
             msg = f'Object has no attribute {attr}.'
@@ -1017,7 +1057,8 @@ class Field:
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=1,
-                              value=np.power(self.array, other))
+                              value=np.power(self.array, other),
+                              components=self.components)
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -1097,7 +1138,8 @@ class Field:
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array + other.array)
+                              value=self.array + other.array,
+                              components=self.components)
 
     def __radd__(self, other):
         return self + other
@@ -1256,8 +1298,10 @@ class Field:
             raise TypeError(msg)
 
         res_array = np.multiply(self.array, other.array)
+        components = self.components if self.dim == res_array.shape[-1] else None
         return self.__class__(self.mesh, dim=res_array.shape[-1],
-                              value=res_array)
+                              value=res_array,
+                              components=components)
 
     def __rmul__(self, other):
         return self * other
@@ -1383,7 +1427,8 @@ class Field:
                        f'and {other.dim=} fields.')
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self @ self.__class__(self.mesh, dim=3, value=other)
+            return self @ self.__class__(self.mesh, dim=3, value=other,
+                                         components=self.components)
         elif isinstance(other, df.DValue):
             return self @ other(self)
         else:
@@ -1450,14 +1495,16 @@ class Field:
                        f'and {other.dim=} fields.')
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self & self.__class__(self.mesh, dim=3, value=other)
+            return self & self.__class__(self.mesh, dim=3, value=other,
+                                         components=self.components)
         else:
             msg = (f'Unsupported operand type(s) for &: '
                    f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         res_array = np.cross(self.array, other.array)
-        return self.__class__(self.mesh, dim=3, value=res_array)
+        return self.__class__(self.mesh, dim=3, value=res_array,
+                              components=self.components)
 
     def __rand__(self, other):
         return self & other
@@ -1535,8 +1582,19 @@ class Field:
 
         array_list = [self.array[..., i] for i in range(self.dim)]
         array_list += [other.array[..., i] for i in range(other.dim)]
+
+        if self.components is None or other.components is None:
+            components = None
+        else:
+            components = self.components + other.components
+            if len(components) != len(set(components)):
+                # Component name duplicated; could happen e.g. for lshift with
+                # a number -> choose labels automatically
+                components = None
+
         return self.__class__(self.mesh, dim=len(array_list),
-                              value=np.stack(array_list, axis=3))
+                              value=np.stack(array_list, axis=3),
+                              components=components)
 
     def __rlshift__(self, other):
         if isinstance(other, numbers.Real):
@@ -1611,7 +1669,8 @@ class Field:
                               mode=mode, **kwargs)
         padded_mesh = self.mesh.pad(pad_width)
 
-        return self.__class__(padded_mesh, dim=self.dim, value=padded_array)
+        return self.__class__(padded_mesh, dim=self.dim, value=padded_array,
+                              components=self.components)
 
     def derivative(self, direction, n=1):
         """Directional derivative.
@@ -1763,7 +1822,8 @@ class Field:
                                          (0, self.mesh.n[direction]+1),
                                          axis=direction)
 
-        return self.__class__(self.mesh, dim=self.dim, value=derivative_array)
+        return self.__class__(self.mesh, dim=self.dim, value=derivative_array,
+                              components=self.components)
 
     @property
     def grad(self):
@@ -2179,7 +2239,8 @@ class Field:
         else:
             res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
 
-        res = self.__class__(mesh, dim=self.dim, value=res_array)
+        res = self.__class__(mesh, dim=self.dim, value=res_array,
+                             components=self.components)
 
         if len(direction) == 3:
             return dfu.array2tuple(res.array.squeeze())
@@ -2292,7 +2353,8 @@ class Field:
 
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
-        return self.__class__(plane_mesh, dim=self.dim, value=self)
+        return self.__class__(plane_mesh, dim=self.dim, value=self,
+                              components=self.components)
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
@@ -2370,7 +2432,8 @@ class Field:
         index_max = np.add(index_min, submesh.n)
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
         return self.__class__(submesh, dim=self.dim,
-                              value=self.array[tuple(slices)])
+                              value=self.array[tuple(slices)],
+                              components=self.components)
 
     def project(self, direction):
         """Projects the field along one direction and averages it out along
@@ -3210,7 +3273,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     @property
     def ifftn(self):
@@ -3230,7 +3294,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     @property
     def rfftn(self):
@@ -3251,7 +3316,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     @property
     def irfftn(self):
@@ -3274,7 +3340,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     def _fft_mesh(self, rfft=False):
         """FFT can be one of fftfreq, rfftfreq."""
@@ -3320,24 +3387,28 @@ class Field:
     @property
     def real(self):
         """Real part of complex field."""
-        return self.__class__(self.mesh, dim=self.dim, value=self.array.real)
+        return self.__class__(self.mesh, dim=self.dim, value=self.array.real,
+                              components=self.components)
 
     @property
     def imag(self):
         """Imaginary part of complex field."""
-        return self.__class__(self.mesh, dim=self.dim, value=self.array.imag)
+        return self.__class__(self.mesh, dim=self.dim, value=self.array.imag,
+                              components=self.components)
 
     @property
     def phase(self):
         """Phase of complex field."""
         return self.__class__(self.mesh, dim=self.dim,
-                              value=np.angle(self.array))
+                              value=np.angle(self.array),
+                              components=self.components)
 
     @property
     def conjugate(self):
         """Complex conjugate of complex field."""
         return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array.conjugate())
+                              value=self.array.conjugate(),
+                              components=self.components)
 
     # TODO check and write tests
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -3363,9 +3434,11 @@ class Field:
         if isinstance(result, tuple):
             if len(result) != len(mesh):
                 raise ValueError('wrong number of Field objects')
-            return tuple(self.__class__(m, dim=x.shape[-1], value=x)
+            return tuple(self.__class__(m, dim=x.shape[-1], value=x,
+                                        components=self.components)
                          for x, m in zip(result, mesh))
         elif method == 'at':
             return None
         else:
-            return self.__class__(mesh[0], dim=result.shape[-1], value=result)
+            return self.__class__(mesh[0], dim=result.shape[-1], value=result,
+                                  components=self.components)
