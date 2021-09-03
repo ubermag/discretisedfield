@@ -126,7 +126,7 @@ class Field:
                 warnings.warn(f'Component labels must be specified for {dim=}'
                               ' fields to get access to individual vector'
                               ' components.')
-        if dim > 1:
+        if components is not None:
             self.components = components
 
     @property
