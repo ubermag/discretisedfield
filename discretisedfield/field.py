@@ -117,12 +117,10 @@ class Field:
 
         self._components = None  # required for correct initialisation
 
-        # defaults for 2 and 3 dimensions
-        # TODO Same access method for 1d fields?
         if components is None:
             if 2 <= dim <= 3:
                 components = ['x', 'y', 'z'][:dim]
-            else:
+            elif dim > 3:
                 warnings.warn(f'Component labels must be specified for {dim=}'
                               ' fields to get access to individual vector'
                               ' components.')
