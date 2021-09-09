@@ -271,13 +271,13 @@ class TestField:
             valid_components = ['a', 'b', 'c', 'd', 'e', 'f']
             invalid_components = ['a', 'grad', 'b', 'div', 'array', 'c']
             for dim in range(2, 7):
-                f = df.Field(mesh, dim=dim, value=range(dim),
+                f = df.Field(mesh, dim=dim, value=list(range(dim)),
                              components=valid_components[:dim])
                 check_field(f)
                 assert f.components == valid_components[:dim]
 
                 with pytest.raises(ValueError):
-                    df.Field(mesh, dim=dim, value=range(dim),
+                    df.Field(mesh, dim=dim, value=list(range(dim)),
                              components=invalid_components[:dim])
 
             # wrong number of components
