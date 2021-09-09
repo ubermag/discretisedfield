@@ -29,6 +29,8 @@ def check_field(field):
     assert isinstance(rstr, str)
     pattern = (r'^Field\(mesh=Mesh\(region=Region\(p1=\(.+\), '
                r'p2=\(.+\)\), .+\), dim=\d+\)$')
+    if field.components:
+        pattern = pattern[:-3] + r", components=\[.+\]\)$"
     assert re.search(pattern, rstr)
 
     assert isinstance(field.__iter__(), types.GeneratorType)
