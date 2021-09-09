@@ -325,7 +325,6 @@ class TestField:
             check_field(fab)
             assert fab.components == ['a', 'b']
 
-
     def test_value(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
