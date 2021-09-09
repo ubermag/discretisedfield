@@ -273,8 +273,8 @@ class TestField:
             for dim in range(2, 7):
                 f = df.Field(mesh, dim=dim, value=list(range(dim)),
                              components=valid_components[:dim])
-                check_field(f)
                 assert f.components == valid_components[:dim]
+                check_field(f)
 
                 with pytest.raises(ValueError):
                     df.Field(mesh, dim=dim, value=list(range(dim)),

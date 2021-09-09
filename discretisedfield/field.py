@@ -614,12 +614,12 @@ class Field:
         "Field(mesh=..., dim=1)"
 
         """
-        repr = f"Field(mesh={repr(self.mesh)}, dim={self.dim}"
+        frepr = f"Field(mesh={repr(self.mesh)}, dim={self.dim}"
         if self.components:
-            repr += f", components={self.components})"
+            frepr += f", components={self.components})"
         else:
-            repr += ")"
-        return repr
+            frepr += ")"
+        return frepr
 
     def __call__(self, point):
         r"""Sample the field value at ``point``.
