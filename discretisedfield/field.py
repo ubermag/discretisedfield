@@ -118,7 +118,6 @@ class Field:
         self._components = None  # required in here for correct initialisation
         self.components = components
 
-
     @property
     def value(self):
         """Field value representation.
