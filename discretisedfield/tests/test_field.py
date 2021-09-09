@@ -85,15 +85,6 @@ def check_field(field):
         assert norm == abs(field)
         assert norm.dim == 1
 
-        assert isinstance(field.x, df.Field)
-        assert field.x.dim == 1
-
-        assert isinstance(field.y, df.Field)
-        assert field.y.dim == 1
-
-        assert isinstance(field.z, df.Field)
-        assert field.z.dim == 1
-
         div = field.div
         assert isinstance(div, df.Field)
         assert div.dim == 1
@@ -116,7 +107,10 @@ def check_field(field):
         assert isinstance(orientation, df.Field)
         assert orientation.dim == 3
 
-        assert all(i in dir(field) for i in 'xyz')
+    if field.dim > 1 and field.components is not None:
+        for comp in field.components:
+            assert isinstance(getattr(field, comp), df.Field)
+            assert getattr(field, comp).dim == 1
 
 
 class TestField:
@@ -271,6 +265,33 @@ class TestField:
 
             with pytest.raises(ValueError):
                 f = df.Field(mesh, dim=3, value=5+5j)
+
+    def test_components(self):
+        for mesh in self.meshes:
+            valid_components = ['a', 'b', 'c', 'd', 'e', 'f']
+            invalid_components = ['a', 'grad', 'b', 'div', 'array', 'c']
+            for dim in range(2, 7):
+                f = df.Field(mesh, dim=dim, value=range(dim),
+                             components=valid_components[:dim])
+                check_field(f)
+                assert f.components == valid_components[:dim]
+
+                with pytest.raises(ValueError):
+                    df.Field(mesh, dim=dim, value=range(dim),
+                             components=invalid_components[:dim])
+
+            # wrong number of components
+            with pytest.raises(ValueError):
+                df.Field(mesh, dim=3, value=(1, 1, 1),
+                         components=valid_components)
+            with pytest.raises(ValueError):
+                df.Field(mesh, dim=3, value=(1, 1, 1),
+                         components=['x', 'y'])
+
+            # components not unique
+            with pytest.raises(ValueError):
+                df.Field(mesh, dim=3, value=(1, 1, 1),
+                         components=['x', 'y', 'x'])
 
     def test_value(self):
         p1 = (0, 0, 0)
