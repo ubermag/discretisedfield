@@ -312,6 +312,20 @@ class TestField:
             assert f12.y == f2
             assert f12.z == f3
 
+            fa = df.Field(mesh, dim=1, value=10, components=['g'])
+            fb = df.Field(mesh, dim=1, value=20, components=['h'])
+
+            # default components if not all fields have component labels
+            f1a = f1 << fa
+            check_field(f1a)
+            assert f1a.components == ['x', 'y']
+
+            # custom components if all fields have custom components
+            fab = fa << fb
+            check_field(fab)
+            assert fab.components == ['a', 'b']
+
+
     def test_value(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
