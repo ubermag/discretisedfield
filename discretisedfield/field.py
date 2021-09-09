@@ -1966,12 +1966,13 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim == 1:
+        if self.dim not in [2, 3]:
             msg = f'Cannot compute divergence for dim={self.dim} field.'
             raise ValueError(msg)
 
-        return sum([getattr(self, i).derivative(i) for i in
-                    [dfu.raxesdict[j] for j in range(self.dim)]])
+        return sum([getattr(self,
+                            self.components[i]).derivative(dfu.raxesdict[i])
+                    for i in range(self.dim)])
 
     @property
     def curl(self):
@@ -2042,9 +2043,13 @@ class Field:
             msg = f'Cannot compute curl for dim={self.dim} field.'
             raise ValueError(msg)
 
-        curl_x = self.z.derivative('y') - self.y.derivative('z')
-        curl_y = self.x.derivative('z') - self.z.derivative('x')
-        curl_z = self.y.derivative('x') - self.x.derivative('y')
+        x, y, z = self.components
+        curl_x = (getattr(self, z).derivative('y')
+                  - getattr(self, y).derivative('z'))
+        curl_y = (getattr(self, x).derivative('z')
+                  - getattr(self, z).derivative('x'))
+        curl_z = (getattr(self, y).derivative('x')
+                  - getattr(self, x).derivative('y'))
 
         return curl_x << curl_y << curl_z
 
@@ -2108,12 +2113,18 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
+        if self.dim not in [1, 3]:
+            raise ValueError(
+                f'Cannot compute laplace for dim={self.dim} field.')
         if self.dim == 1:
             return (self.derivative('x', n=2) +
                     self.derivative('y', n=2) +
                     self.derivative('z', n=2))
         else:
-            return self.x.laplace << self.y.laplace << self.z.laplace
+            x, y, z = self.components
+            return (getattr(self, x).laplace
+                    << getattr(self, y).laplace
+                    << getattr(self, z).laplace)
 
     def integral(self, direction='xyz', improper=False):
         r"""Integral.
@@ -2836,9 +2847,10 @@ class Field:
         if self.dim == 1:
             data = dfu.vtk_scalar_data(self, 'field')
         elif self.dim == 3:
-            data = dfu.vtk_scalar_data(self.x, 'x-component')
-            data += dfu.vtk_scalar_data(self.y, 'y-component')
-            data += dfu.vtk_scalar_data(self.z, 'z-component')
+            x, y, z = self.components
+            data = dfu.vtk_scalar_data(getatt(self, x), 'x-component')
+            data += dfu.vtk_scalar_data(getattr(self, y), 'y-component')
+            data += dfu.vtk_scalar_data(getattr(self, z), 'z-component')
             data += dfu.vtk_vector_data(self, 'field')
 
         with open(filename, 'w') as f:
