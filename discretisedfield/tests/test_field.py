@@ -312,8 +312,8 @@ class TestField:
             assert f123.y == f2
             assert f123.z == f3
 
-            fa = df.Field(mesh, dim=1, value=10, components=['g'])
-            fb = df.Field(mesh, dim=1, value=20, components=['h'])
+            fa = df.Field(mesh, dim=1, value=10, components=['a'])
+            fb = df.Field(mesh, dim=1, value=20, components=['b'])
 
             # default components if not all fields have component labels
             f1a = f1 << fa
