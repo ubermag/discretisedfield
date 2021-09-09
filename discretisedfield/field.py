@@ -276,14 +276,14 @@ class Field:
                                  f' {self.dim=}.')
             if len(components) != len(set(components)):
                 raise ValueError('Components must be unique.')
-            for comp in components:
-                if hasattr(self, comp):
+            for c in components:
+                if hasattr(self, c):
                     # redefining component labels is okay.
-                    if self._components is None or comp not in self._components:
-                        raise ValueError(f'Component name {comp} is already '
+                    if self._components is None or c not in self._components:
+                        raise ValueError(f'Component name {c} is already '
                                          'used by a different method/property.'
                                          )
-        self._components = components
+        self._components = list(components)
 
     @property
     def array(self):
