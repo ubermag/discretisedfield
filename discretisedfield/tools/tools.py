@@ -759,11 +759,11 @@ def demag_field(m, tensor):
                   mode='constant')
     m_fft = m_pad.fftn
 
-    hx = tensor.xx * m_fft.x + tensor.xy * m_fft.y + tensor.xz * m_fft.z
-    hy = tensor.xy * m_fft.x + tensor.yy * m_fft.y + tensor.yz * m_fft.z
-    hz = tensor.xz * m_fft.x + tensor.yz * m_fft.y + tensor.zz * m_fft.z
+    hx_fft = tensor.xx * m_fft.x + tensor.xy * m_fft.y + tensor.xz * m_fft.z
+    hy_fft = tensor.xy * m_fft.x + tensor.yy * m_fft.y + tensor.yz * m_fft.z
+    hz_fft = tensor.xz * m_fft.x + tensor.yz * m_fft.y + tensor.zz * m_fft.z
 
-    H = (hx << hy << hz).ifftn
+    H = (hx_fft << hy_fft << hz_fft).ifftn
     return df.Field(m.mesh, dim=3,
                     value=H.array[m.mesh.n[0] - 1:,
                                   m.mesh.n[1] - 1:,
