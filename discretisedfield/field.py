@@ -1330,7 +1330,8 @@ class Field:
             raise TypeError(msg)
 
         res_array = np.multiply(self.array, other.array)
-        components = self.components if self.dim == res_array.shape[-1] else None
+        components = self.components if self.dim == res_array.shape[-1] \
+            else None
         return self.__class__(self.mesh, dim=res_array.shape[-1],
                               value=res_array,
                               components=components)
