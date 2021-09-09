@@ -2848,7 +2848,7 @@ class Field:
             data = dfu.vtk_scalar_data(self, 'field')
         elif self.dim == 3:
             x, y, z = self.components
-            data = dfu.vtk_scalar_data(getatt(self, x), 'x-component')
+            data = dfu.vtk_scalar_data(getattr(self, x), 'x-component')
             data += dfu.vtk_scalar_data(getattr(self, y), 'y-component')
             data += dfu.vtk_scalar_data(getattr(self, z), 'z-component')
             data += dfu.vtk_vector_data(self, 'field')
