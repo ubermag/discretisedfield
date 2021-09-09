@@ -295,6 +295,23 @@ class TestField:
                 df.Field(mesh, dim=3, value=(1, 1, 1),
                          components=['x', 'y', 'x'])
 
+            # test lshift
+            f1 = df.Field(mesh, dim=1, value=1)
+            f2 = df.Field(mesh, dim=1, value=2)
+            f3 = df.Field(mesh, dim=1, value=3)
+
+            f12 = f1 << f2
+            check_field(f12)
+            assert np.allclose(f12.array[0, 0, 0, :], [1, 2])
+            assert f12.x == f1
+            assert f12.y == f2
+
+            f123 = f1 << f2 << f3
+            assert np.allclose(f123.array[0, 0, 0, :], [1, 2, 3])
+            assert f12.x == f1
+            assert f12.y == f2
+            assert f12.z == f3
+
     def test_value(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
