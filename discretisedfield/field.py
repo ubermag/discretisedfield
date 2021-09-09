@@ -115,17 +115,9 @@ class Field:
         self.value = value
         self.norm = norm
 
-        self._components = None  # required for correct initialisation
+        self._components = None  # required in here for correct initialisation
+        self.components = components
 
-        if components is None:
-            if 2 <= dim <= 3:
-                components = ['x', 'y', 'z'][:dim]
-            elif dim > 3:
-                warnings.warn(f'Component labels must be specified for {dim=}'
-                              ' fields to get access to individual vector'
-                              ' components.')
-        if components is not None:
-            self.components = components
 
     @property
     def value(self):
@@ -280,10 +272,18 @@ class Field:
                 if hasattr(self, c):
                     # redefining component labels is okay.
                     if self._components is None or c not in self._components:
-                        raise ValueError(f'Component name {c} is already '
-                                         'used by a different method/property.'
-                                         )
-        self._components = list(components)
+                        raise ValueError(
+                            f'Component name {c} is already '
+                            'used by a different method/property.')
+            self._components = list(components)
+        else:
+            if 2 <= dim <= 3:
+                components = ['x', 'y', 'z'][:dim]
+            elif dim > 3:
+                warnings.warn(f'Component labels must be specified for {dim=}'
+                              ' fields to get access to individual vector'
+                              ' components.')
+            self._components = components
 
     @property
     def array(self):
