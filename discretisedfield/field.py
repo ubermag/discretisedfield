@@ -663,15 +663,18 @@ class Field:
     def __getattr__(self, attr):
         """Extract the component of the vector field.
 
-        If ``'x'``, ``'y'``, or ``'z'`` is accessed, a scalar field of that
-        component will be returned. This method is effective for vector fields
-        with dimension 2 or 3 only.
+        This method provides access to individual field components for fields
+        with dimension > 1. Component labels are defined in the ``components``
+        attribute. For dimension 2 and 3 default values ``'x'``, ``'y'``, and
+        ``'z'`` are used if no custom component labels are provided. For fields
+        with ``dim>3`` component labels must be specified manually to get
+        access to individual vector components.
 
         Parameters
         ----------
         attr : str
 
-            Vector field component (``'x'``, ``'y'``, or ``'z'``)
+            Vector field component defined in ``components``.
 
         Returns
         -------
@@ -681,7 +684,7 @@ class Field:
 
         Examples
         --------
-        1. Accessing the vector field components.
+        1. Accessing the default vector field components.
 
         >>> import discretisedfield as df
         ...
@@ -704,6 +707,32 @@ class Field:
         >>> field.z.average
         1.0
         >>> field.z.dim
+        1
+
+        2. Accessing custom vector field components.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1),
+        ...                  components=['mx', 'my', 'mz'])
+        >>> field.mx
+        Field(...)
+        >>> field.mx.average
+        0.0
+        >>> field.my
+        Field(...)
+        >>> field.my.average
+        0.0
+        >>> field.mz
+        Field(...)
+        >>> field.mz.average
+        1.0
+        >>> field.mz.dim
         1
 
         """
