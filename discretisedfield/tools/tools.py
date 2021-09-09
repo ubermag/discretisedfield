@@ -692,6 +692,37 @@ def count_bps(field, /, direction='x'):
     return results
 
 
+def _demag_tensor_field_based(mesh):
+    """Fourier transform of the demag tensor.
+
+    Computes the demag tensor in Fourier space. Only the six different
+    components Nxx, Nyy, Nzz, Nxy, Nxz, Nyz are returned.
+
+    This version is using discretisedfield which makes it easy to understand
+    but slow compared to the numpy version. (The reason is the array
+    initialisation which is basically a large for-loop.) For actual use the
+    numpy version should be used. This version is kept as a reference.
+
+    Parameters
+    ----------
+    mesh : discretisedfield.Mesh
+        Mesh to compute the demag tensor on.
+
+    Returns
+    -------
+    discretisedfield.Field
+        Demag tensor in Fourier space.
+
+    """
+    p1 = [(-i + 1) * j - j/2 for i, j in zip(mesh.n, mesh.cell)]
+    p2 = [(i - 1) * j + j/2 for i, j in zip(mesh.n, mesh.cell)]
+    n = [2*i - 1 for i in mesh.n]
+    mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
+
+    return df.Field(mesh_new, dim=6, value=_N(mesh_new),
+                    components=['xx', 'yy', 'zz', 'xy', 'xz', 'yz']).fftn
+
+
 def demag_tensor(mesh):
     """Fourier transform of the demag tensor.
 
@@ -708,17 +739,6 @@ def demag_tensor(mesh):
     discretisedfield.Field
         Demag tensor in Fourier space.
     """
-    p1 = [(-i + 1) * j - j/2 for i, j in zip(mesh.n, mesh.cell)]
-    p2 = [(i - 1) * j + j/2 for i, j in zip(mesh.n, mesh.cell)]
-    n = [2*i - 1 for i in mesh.n]
-    mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
-
-    return df.Field(mesh_new, dim=6, value=_N(mesh_new),
-                    components=['xx', 'yy', 'zz', 'xy', 'xz', 'yz']).fftn
-
-
-def demag_tensor_numpy(mesh):
-    """Demag tensor computed using numpy."""
     x = np.linspace((-mesh.n[0] + 1) * mesh.cell[0],
                     (mesh.n[0] - 1) * mesh.cell[0], mesh.n[0] * 2 - 1)
     y = np.linspace((-mesh.n[1] + 1) * mesh.cell[1],
