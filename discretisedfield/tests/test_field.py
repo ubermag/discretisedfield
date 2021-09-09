@@ -29,6 +29,8 @@ def check_field(field):
     assert isinstance(rstr, str)
     pattern = (r'^Field\(mesh=Mesh\(region=Region\(p1=\(.+\), '
                r'p2=\(.+\)\), .+\), dim=\d+\)$')
+    if field.components:
+        pattern = pattern[:-3] + r", components=\[.+\]\)$"
     assert re.search(pattern, rstr)
 
     assert isinstance(field.__iter__(), types.GeneratorType)
@@ -85,15 +87,6 @@ def check_field(field):
         assert norm == abs(field)
         assert norm.dim == 1
 
-        assert isinstance(field.x, df.Field)
-        assert field.x.dim == 1
-
-        assert isinstance(field.y, df.Field)
-        assert field.y.dim == 1
-
-        assert isinstance(field.z, df.Field)
-        assert field.z.dim == 1
-
         div = field.div
         assert isinstance(div, df.Field)
         assert div.dim == 1
@@ -116,7 +109,10 @@ def check_field(field):
         assert isinstance(orientation, df.Field)
         assert orientation.dim == 3
 
-        assert all(i in dir(field) for i in 'xyz')
+    if field.dim > 1 and field.components is not None:
+        for comp in field.components:
+            assert isinstance(getattr(field, comp), df.Field)
+            assert getattr(field, comp).dim == 1
 
 
 class TestField:
@@ -271,6 +267,63 @@ class TestField:
 
             with pytest.raises(ValueError):
                 f = df.Field(mesh, dim=3, value=5+5j)
+
+    def test_components(self):
+        for mesh in self.meshes:
+            valid_components = ['a', 'b', 'c', 'd', 'e', 'f']
+            invalid_components = ['a', 'grad', 'b', 'div', 'array', 'c']
+            for dim in range(2, 7):
+                f = df.Field(mesh, dim=dim, value=list(range(dim)),
+                             components=valid_components[:dim])
+                assert f.components == valid_components[:dim]
+                check_field(f)
+
+                with pytest.raises(ValueError):
+                    df.Field(mesh, dim=dim, value=list(range(dim)),
+                             components=invalid_components[:dim])
+
+            # wrong number of components
+            with pytest.raises(ValueError):
+                df.Field(mesh, dim=3, value=(1, 1, 1),
+                         components=valid_components)
+            with pytest.raises(ValueError):
+                df.Field(mesh, dim=3, value=(1, 1, 1),
+                         components=['x', 'y'])
+
+            # components not unique
+            with pytest.raises(ValueError):
+                df.Field(mesh, dim=3, value=(1, 1, 1),
+                         components=['x', 'y', 'x'])
+
+            # test lshift
+            f1 = df.Field(mesh, dim=1, value=1)
+            f2 = df.Field(mesh, dim=1, value=2)
+            f3 = df.Field(mesh, dim=1, value=3)
+
+            f12 = f1 << f2
+            check_field(f12)
+            assert np.allclose(f12.array[0, 0, 0, :], [1, 2])
+            assert f12.x == f1
+            assert f12.y == f2
+
+            f123 = f1 << f2 << f3
+            assert np.allclose(f123.array[0, 0, 0, :], [1, 2, 3])
+            assert f123.x == f1
+            assert f123.y == f2
+            assert f123.z == f3
+
+            fa = df.Field(mesh, dim=1, value=10, components=['a'])
+            fb = df.Field(mesh, dim=1, value=20, components=['b'])
+
+            # default components if not all fields have component labels
+            f1a = f1 << fa
+            check_field(f1a)
+            assert f1a.components == ['x', 'y']
+
+            # custom components if all fields have custom components
+            fab = fa << fb
+            check_field(fab)
+            assert fab.components == ['a', 'b']
 
     def test_value(self):
         p1 = (0, 0, 0)

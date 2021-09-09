@@ -1,5 +1,6 @@
 import numbers
 import struct
+import warnings
 
 import h5py
 import numpy as np
@@ -108,11 +109,14 @@ class Field:
 
     """
 
-    def __init__(self, mesh, dim, value=0, norm=None):
+    def __init__(self, mesh, dim, value=0, norm=None, components=None):
         self.mesh = mesh
         self.dim = dim
         self.value = value
         self.norm = norm
+
+        self._components = None  # required in here for correct initialisation
+        self.components = components
 
     @property
     def value(self):
@@ -249,6 +253,36 @@ class Field:
     def value(self, val):
         self._value = val
         self.array = dfu.as_array(self.mesh, self.dim, val)
+
+    @property
+    def components(self):
+        """Vector components of the field."""
+        return self._components
+
+    @components.setter
+    def components(self, components):
+        if components is not None:
+            if len(components) != self.dim:
+                raise ValueError('Number of components does not match'
+                                 f' {self.dim=}.')
+            if len(components) != len(set(components)):
+                raise ValueError('Components must be unique.')
+            for c in components:
+                if hasattr(self, c):
+                    # redefining component labels is okay.
+                    if self._components is None or c not in self._components:
+                        raise ValueError(
+                            f'Component name {c} is already '
+                            'used by a different method/property.')
+            self._components = list(components)
+        else:
+            if 2 <= self.dim <= 3:
+                components = ['x', 'y', 'z'][:self.dim]
+            elif self.dim > 3:
+                warnings.warn(f'Component labels must be specified for '
+                              f'{self.dim=} fields to get access to individual'
+                              ' vector components.')
+            self._components = components
 
     @property
     def array(self):
@@ -460,7 +494,8 @@ class Field:
         (0.0, 0.0, 0.0)
 
         """
-        return self.__class__(self.mesh, dim=self.dim, value=0)
+        return self.__class__(self.mesh, dim=self.dim, value=0,
+                              components=self.components)
 
     @property
     def orientation(self):
@@ -512,7 +547,8 @@ class Field:
                                       self.norm.array,
                                       out=np.zeros_like(self.array),
                                       where=(self.norm.array != 0))
-        return self.__class__(self.mesh, dim=self.dim, value=orientation_array)
+        return self.__class__(self.mesh, dim=self.dim, value=orientation_array,
+                              components=self.components)
 
     @property
     def average(self):
@@ -577,7 +613,12 @@ class Field:
         "Field(mesh=..., dim=1)"
 
         """
-        return f"Field(mesh={repr(self.mesh)}, dim={self.dim})"
+        frepr = f"Field(mesh={repr(self.mesh)}, dim={self.dim}"
+        if self.components:
+            frepr += f", components={self.components})"
+        else:
+            frepr += ")"
+        return frepr
 
     def __call__(self, point):
         r"""Sample the field value at ``point``.
@@ -621,15 +662,18 @@ class Field:
     def __getattr__(self, attr):
         """Extract the component of the vector field.
 
-        If ``'x'``, ``'y'``, or ``'z'`` is accessed, a scalar field of that
-        component will be returned. This method is effective for vector fields
-        with dimension 2 or 3 only.
+        This method provides access to individual field components for fields
+        with dimension > 1. Component labels are defined in the ``components``
+        attribute. For dimension 2 and 3 default values ``'x'``, ``'y'``, and
+        ``'z'`` are used if no custom component labels are provided. For fields
+        with ``dim>3`` component labels must be specified manually to get
+        access to individual vector components.
 
         Parameters
         ----------
         attr : str
 
-            Vector field component (``'x'``, ``'y'``, or ``'z'``)
+            Vector field component defined in ``components``.
 
         Returns
         -------
@@ -639,7 +683,7 @@ class Field:
 
         Examples
         --------
-        1. Accessing the vector field components.
+        1. Accessing the default vector field components.
 
         >>> import discretisedfield as df
         ...
@@ -664,9 +708,36 @@ class Field:
         >>> field.z.dim
         1
 
+        2. Accessing custom vector field components.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 2)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1),
+        ...                  components=['mx', 'my', 'mz'])
+        >>> field.mx
+        Field(...)
+        >>> field.mx.average
+        0.0
+        >>> field.my
+        Field(...)
+        >>> field.my.average
+        0.0
+        >>> field.mz
+        Field(...)
+        >>> field.mz.average
+        1.0
+        >>> field.mz.dim
+        1
+
         """
-        if attr in list(dfu.axesdict.keys())[:self.dim] and self.dim in (2, 3):
-            attr_array = self.array[..., dfu.axesdict[attr]][..., np.newaxis]
+        if self.components is not None and attr in self.components:
+            attr_array = self.array[..., self.components.index(attr),
+                                    np.newaxis]
             return self.__class__(mesh=self.mesh, dim=1, value=attr_array)
         else:
             msg = f'Object has no attribute {attr}.'
@@ -1017,7 +1088,8 @@ class Field:
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=1,
-                              value=np.power(self.array, other))
+                              value=np.power(self.array, other),
+                              components=self.components)
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -1097,7 +1169,8 @@ class Field:
             raise TypeError(msg)
 
         return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array + other.array)
+                              value=self.array + other.array,
+                              components=self.components)
 
     def __radd__(self, other):
         return self + other
@@ -1256,8 +1329,11 @@ class Field:
             raise TypeError(msg)
 
         res_array = np.multiply(self.array, other.array)
+        components = self.components if self.dim == res_array.shape[-1] \
+            else None
         return self.__class__(self.mesh, dim=res_array.shape[-1],
-                              value=res_array)
+                              value=res_array,
+                              components=components)
 
     def __rmul__(self, other):
         return self * other
@@ -1383,7 +1459,8 @@ class Field:
                        f'and {other.dim=} fields.')
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self @ self.__class__(self.mesh, dim=3, value=other)
+            return self @ self.__class__(self.mesh, dim=3, value=other,
+                                         components=self.components)
         elif isinstance(other, df.DValue):
             return self @ other(self)
         else:
@@ -1450,14 +1527,16 @@ class Field:
                        f'and {other.dim=} fields.')
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self & self.__class__(self.mesh, dim=3, value=other)
+            return self & self.__class__(self.mesh, dim=3, value=other,
+                                         components=self.components)
         else:
             msg = (f'Unsupported operand type(s) for &: '
                    f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
         res_array = np.cross(self.array, other.array)
-        return self.__class__(self.mesh, dim=3, value=res_array)
+        return self.__class__(self.mesh, dim=3, value=res_array,
+                              components=self.components)
 
     def __rand__(self, other):
         return self & other
@@ -1535,8 +1614,19 @@ class Field:
 
         array_list = [self.array[..., i] for i in range(self.dim)]
         array_list += [other.array[..., i] for i in range(other.dim)]
+
+        if self.components is None or other.components is None:
+            components = None
+        else:
+            components = self.components + other.components
+            if len(components) != len(set(components)):
+                # Component name duplicated; could happen e.g. for lshift with
+                # a number -> choose labels automatically
+                components = None
+
         return self.__class__(self.mesh, dim=len(array_list),
-                              value=np.stack(array_list, axis=3))
+                              value=np.stack(array_list, axis=3),
+                              components=components)
 
     def __rlshift__(self, other):
         if isinstance(other, numbers.Real):
@@ -1611,7 +1701,8 @@ class Field:
                               mode=mode, **kwargs)
         padded_mesh = self.mesh.pad(pad_width)
 
-        return self.__class__(padded_mesh, dim=self.dim, value=padded_array)
+        return self.__class__(padded_mesh, dim=self.dim, value=padded_array,
+                              components=self.components)
 
     def derivative(self, direction, n=1):
         """Directional derivative.
@@ -1763,7 +1854,8 @@ class Field:
                                          (0, self.mesh.n[direction]+1),
                                          axis=direction)
 
-        return self.__class__(self.mesh, dim=self.dim, value=derivative_array)
+        return self.__class__(self.mesh, dim=self.dim, value=derivative_array,
+                              components=self.components)
 
     @property
     def grad(self):
@@ -1903,12 +1995,13 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim == 1:
+        if self.dim not in [2, 3]:
             msg = f'Cannot compute divergence for dim={self.dim} field.'
             raise ValueError(msg)
 
-        return sum([getattr(self, i).derivative(i) for i in
-                    [dfu.raxesdict[j] for j in range(self.dim)]])
+        return sum([getattr(self,
+                            self.components[i]).derivative(dfu.raxesdict[i])
+                    for i in range(self.dim)])
 
     @property
     def curl(self):
@@ -1979,9 +2072,13 @@ class Field:
             msg = f'Cannot compute curl for dim={self.dim} field.'
             raise ValueError(msg)
 
-        curl_x = self.z.derivative('y') - self.y.derivative('z')
-        curl_y = self.x.derivative('z') - self.z.derivative('x')
-        curl_z = self.y.derivative('x') - self.x.derivative('y')
+        x, y, z = self.components
+        curl_x = (getattr(self, z).derivative('y')
+                  - getattr(self, y).derivative('z'))
+        curl_y = (getattr(self, x).derivative('z')
+                  - getattr(self, z).derivative('x'))
+        curl_z = (getattr(self, y).derivative('x')
+                  - getattr(self, x).derivative('y'))
 
         return curl_x << curl_y << curl_z
 
@@ -2045,12 +2142,18 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
+        if self.dim not in [1, 3]:
+            raise ValueError(
+                f'Cannot compute laplace for dim={self.dim} field.')
         if self.dim == 1:
             return (self.derivative('x', n=2) +
                     self.derivative('y', n=2) +
                     self.derivative('z', n=2))
         else:
-            return self.x.laplace << self.y.laplace << self.z.laplace
+            x, y, z = self.components
+            return (getattr(self, x).laplace
+                    << getattr(self, y).laplace
+                    << getattr(self, z).laplace)
 
     def integral(self, direction='xyz', improper=False):
         r"""Integral.
@@ -2179,7 +2282,8 @@ class Field:
         else:
             res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
 
-        res = self.__class__(mesh, dim=self.dim, value=res_array)
+        res = self.__class__(mesh, dim=self.dim, value=res_array,
+                             components=self.components)
 
         if len(direction) == 3:
             return dfu.array2tuple(res.array.squeeze())
@@ -2292,7 +2396,8 @@ class Field:
 
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
-        return self.__class__(plane_mesh, dim=self.dim, value=self)
+        return self.__class__(plane_mesh, dim=self.dim, value=self,
+                              components=self.components)
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
@@ -2370,7 +2475,8 @@ class Field:
         index_max = np.add(index_min, submesh.n)
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
         return self.__class__(submesh, dim=self.dim,
-                              value=self.array[tuple(slices)])
+                              value=self.array[tuple(slices)],
+                              components=self.components)
 
     def project(self, direction):
         """Projects the field along one direction and averages it out along
@@ -2770,9 +2876,10 @@ class Field:
         if self.dim == 1:
             data = dfu.vtk_scalar_data(self, 'field')
         elif self.dim == 3:
-            data = dfu.vtk_scalar_data(self.x, 'x-component')
-            data += dfu.vtk_scalar_data(self.y, 'y-component')
-            data += dfu.vtk_scalar_data(self.z, 'z-component')
+            x, y, z = self.components
+            data = dfu.vtk_scalar_data(getattr(self, x), 'x-component')
+            data += dfu.vtk_scalar_data(getattr(self, y), 'y-component')
+            data += dfu.vtk_scalar_data(getattr(self, z), 'z-component')
             data += dfu.vtk_vector_data(self, 'field')
 
         with open(filename, 'w') as f:
@@ -3210,7 +3317,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     @property
     def ifftn(self):
@@ -3230,7 +3338,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     @property
     def rfftn(self):
@@ -3251,7 +3360,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     @property
     def irfftn(self):
@@ -3274,7 +3384,8 @@ class Field:
             values.append(ft.reshape(mesh.n))
 
         return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3))
+                              value=np.stack(values, axis=3),
+                              components=self.components)
 
     def _fft_mesh(self, rfft=False):
         """FFT can be one of fftfreq, rfftfreq."""
@@ -3320,24 +3431,28 @@ class Field:
     @property
     def real(self):
         """Real part of complex field."""
-        return self.__class__(self.mesh, dim=self.dim, value=self.array.real)
+        return self.__class__(self.mesh, dim=self.dim, value=self.array.real,
+                              components=self.components)
 
     @property
     def imag(self):
         """Imaginary part of complex field."""
-        return self.__class__(self.mesh, dim=self.dim, value=self.array.imag)
+        return self.__class__(self.mesh, dim=self.dim, value=self.array.imag,
+                              components=self.components)
 
     @property
     def phase(self):
         """Phase of complex field."""
         return self.__class__(self.mesh, dim=self.dim,
-                              value=np.angle(self.array))
+                              value=np.angle(self.array),
+                              components=self.components)
 
     @property
     def conjugate(self):
         """Complex conjugate of complex field."""
         return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array.conjugate())
+                              value=self.array.conjugate(),
+                              components=self.components)
 
     # TODO check and write tests
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -3363,9 +3478,11 @@ class Field:
         if isinstance(result, tuple):
             if len(result) != len(mesh):
                 raise ValueError('wrong number of Field objects')
-            return tuple(self.__class__(m, dim=x.shape[-1], value=x)
+            return tuple(self.__class__(m, dim=x.shape[-1], value=x,
+                                        components=self.components)
                          for x, m in zip(result, mesh))
         elif method == 'at':
             return None
         else:
-            return self.__class__(mesh[0], dim=result.shape[-1], value=result)
+            return self.__class__(mesh[0], dim=result.shape[-1], value=result,
+                                  components=self.components)

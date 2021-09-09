@@ -713,7 +713,8 @@ def demag_tensor(mesh):
     n = [2*i - 1 for i in mesh.n]
     mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
 
-    return df.Field(mesh_new, dim=6, value=_N(mesh_new)).fftn
+    return df.Field(mesh_new, dim=6, value=_N(mesh_new),
+                    components=['xx', 'yy', 'zz', 'xy', 'xz', 'yz']).fftn
 
 
 def demag_tensor_numpy(mesh):
@@ -733,7 +734,8 @@ def demag_tensor_numpy(mesh):
     n = [2*i - 1 for i in mesh.n]
     mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
 
-    return df.Field(mesh_new, dim=6, value=values).fftn
+    return df.Field(mesh_new, dim=6, value=values,
+                    components=['xx', 'yy', 'zz', 'xy', 'xz', 'yz']).fftn
 
 
 def demag_field(m, tensor):
@@ -755,23 +757,18 @@ def demag_field(m, tensor):
     m_pad = m.pad({d: (0, m.mesh.n[i] - 1)
                    for d, i in zip(['x', 'y', 'z'], range(3))},
                   mode='constant')
-    m_pad_fft = m_pad.fftn
+    m_fft = m_pad.fftn
 
-    hx = (tensor.array[..., 0] * m_pad_fft.x.array.squeeze()
-          + tensor.array[..., 3] * m_pad_fft.y.array.squeeze()
-          + tensor.array[..., 4] * m_pad_fft.z.array.squeeze())
-    hy = (tensor.array[..., 3] * m_pad_fft.x.array.squeeze()
-          + tensor.array[..., 1] * m_pad_fft.y.array.squeeze()
-          + tensor.array[..., 5] * m_pad_fft.z.array.squeeze())
-    hz = (tensor.array[..., 4] * m_pad_fft.x.array.squeeze()
-          + tensor.array[..., 5] * m_pad_fft.y.array.squeeze()
-          + tensor.array[..., 2] * m_pad_fft.z.array.squeeze())
+    hx_fft = tensor.xx * m_fft.x + tensor.xy * m_fft.y + tensor.xz * m_fft.z
+    hy_fft = tensor.xy * m_fft.x + tensor.yy * m_fft.y + tensor.yz * m_fft.z
+    hz_fft = tensor.xz * m_fft.x + tensor.yz * m_fft.y + tensor.zz * m_fft.z
 
-    H = df.Field(m_pad_fft.mesh, dim=3,
-                 value=np.stack((hx, hy, hz), axis=3)).ifftn
+    H = (hx_fft << hy_fft << hz_fft).ifftn
     return df.Field(m.mesh, dim=3,
-                    value=H.array[m.mesh.n[0] - 1:, m.mesh.n[1] - 1:,
-                                  m.mesh.n[2] - 1:, :]).real
+                    value=H.array[m.mesh.n[0] - 1:,
+                                  m.mesh.n[1] - 1:,
+                                  m.mesh.n[2] - 1:,
+                                  :]).real
 
 
 def _f(x, y, z):
