@@ -277,12 +277,12 @@ class Field:
                             'used by a different method/property.')
             self._components = list(components)
         else:
-            if 2 <= dim <= 3:
-                components = ['x', 'y', 'z'][:dim]
-            elif dim > 3:
-                warnings.warn(f'Component labels must be specified for {dim=}'
-                              ' fields to get access to individual vector'
-                              ' components.')
+            if 2 <= self.dim <= 3:
+                components = ['x', 'y', 'z'][:self.dim]
+            elif self.dim > 3:
+                warnings.warn(f'Component labels must be specified for '
+                              f'{self.dim=} fields to get access to individual'
+                              ' vector components.')
             self._components = components
 
     @property
