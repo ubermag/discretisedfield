@@ -308,9 +308,9 @@ class TestField:
 
             f123 = f1 << f2 << f3
             assert np.allclose(f123.array[0, 0, 0, :], [1, 2, 3])
-            assert f12.x == f1
-            assert f12.y == f2
-            assert f12.z == f3
+            assert f123.x == f1
+            assert f123.y == f2
+            assert f123.z == f3
 
             fa = df.Field(mesh, dim=1, value=10, components=['g'])
             fb = df.Field(mesh, dim=1, value=20, components=['h'])
