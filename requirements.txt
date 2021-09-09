@@ -1,7 +1,7 @@
 ubermagutil==0.4.1
 pandas>=1.1
 matplotlib>=3.3
-jupyterlab>=2.2.10,<3.2
+jupyterlab~=3
 h5py>=3.1
-k3d>=2.9
+k3d>=2.11
 scipy>=1.6
