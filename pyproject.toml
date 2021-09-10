@@ -11,9 +11,6 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {file = "LICENSE"}
 
-# authors could contain email addresses
-# there is a second field "maintainers"
-# we neet to think about where to put contributors
 authors = [
   {name = "Marijan Beg"},
   {name = "Martin Lang"},
@@ -22,12 +19,34 @@ authors = [
   {name = "Hans Fangohr"}
 ]
 
-# not yet supported by setuptools
-# keywords = [...]
-# classifiers = [...]
-# dependescies = [...]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Visualization"
+]
+
+dependescies = [
+  "ubermagutil==0.4.1"
+  "pandas>=1.1"
+  "matplotlib>=3.3"
+  "jupyterlab~=3.0"
+  "h5py>=3.1"
+  "k3d>=2.11"
+  "scipy>=1.6"
+]
+
 # [project.optional-dependencies]
-# ...
+# test = [...]
 
 [project.urls]
 homepage = "ubermag.github.io"
@@ -35,14 +54,12 @@ documentation = "ubermag.github.io/documentation/discretisedfield"
 repository = "github.com/ubermag/discretisedfield"
 
 # console entry points
-# [project.scripts]
-# name = "entry_point:method"
+[project.scripts]
+ovf2vtk = "discretisedfield.ovf2vtk:main"
 
-# to define additional information we could use a custom table
-# - we need to own the entry for tool.NAME on PyPI
-#   see: https://www.python.org/dev/peps/pep-0518/#tool-table
-# - we could use https://github.com/hukkin/tomli
-#   for parsing the file in devtools
+# to define additional information we use a custom table
+# we need to own the entry for tool.NAME on PyPI
+# see: https://www.python.org/dev/peps/pep-0518/#tool-table
 [tool.ubermag]
 doi = "10.5281/zenodo.3539461"
 copyright_holder = "Marijan Beg and Hans Fangohr"
