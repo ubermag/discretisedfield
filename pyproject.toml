@@ -35,7 +35,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Visualization"
 ]
 
-dependescies = [
+dependecies = [
   "ubermagutil==0.4.1"
   "pandas>=1.1"
   "matplotlib>=3.3"
