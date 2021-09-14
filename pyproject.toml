@@ -72,7 +72,10 @@ contributors = [
 ]
 about = """
 - definition of finite-difference regions, meshes, lines, and fields
+
 - analysis of finite-difference fields,
+
 - visualisation using `matplotlib` and `k3d`, and
+
 - manipulation of different file types (OVF, VTK, and HDF5).
 """
