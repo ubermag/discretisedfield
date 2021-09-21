@@ -6,7 +6,7 @@ test-unittests:
 	$(PYTHON) -c "import sys; import $(PROJECT); sys.exit($(PROJECT).test())"
 
 test-coverage:
-	$(PYTHON) -m pytest -v --cov=$(PROJECT) --cov-report=xml --cov-config .coveragerc
+	$(PYTHON) -m pytest -v --cov=$(PROJECT) --cov-report=xml
 
 test-docs:
 	$(PYTHON) -m pytest -v --doctest-modules --ignore=$(PROJECT)/tests $(PROJECT)
@@ -25,3 +25,4 @@ build-dists:
 
 release: build-dists
 	twine upload dist/*
+

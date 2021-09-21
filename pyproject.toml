@@ -49,11 +49,10 @@ dependencies = [
 # test = [...]
 
 [project.urls]
-homepage = "ubermag.github.io"
-documentation = "ubermag.github.io/documentation/discretisedfield"
-repository = "github.com/ubermag/discretisedfield"
+homepage = "https://ubermag.github.io"
+documentation = "https://ubermag.github.io/documentation/discretisedfield"
+repository = "https://github.com/ubermag/discretisedfield"
 
-# console entry points
 [project.scripts]
 ovf2vtk = "discretisedfield.ovf2vtk:main"
 
@@ -78,4 +77,8 @@ about = """
 - visualisation using `matplotlib` and `k3d`, and
 
 - manipulation of different file types (OVF, VTK, and HDF5).
+
 """
+
+[tool.coverage.run]
+omit = discretisedfield/tests/*
