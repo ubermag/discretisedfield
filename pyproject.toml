@@ -71,7 +71,7 @@ contributors = [
   "Rebecca Carey"
 ]
 about = """
-- definition of finite-difference regions, meshes, lines, and fields
+- definition of finite-difference regions, meshes, lines, and fields,
 
 - analysis of finite-difference fields,
 
