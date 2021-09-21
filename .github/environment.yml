@@ -5,4 +5,5 @@ channels:
 
 dependencies:
   - python==3.8
-  - discretisedfield==0.11.1
+  - pip:
+    - git+https://github.com/ubermag/ubermagutil.git
