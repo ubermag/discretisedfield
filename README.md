@@ -1,9 +1,12 @@
 # discretisedfield
-Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, Thomas Kluyver<sup>1,2</sup>, and Hans Fangohr<sup>1,2,3</sup>
+[Marijan Beg](https://github.com/marijanbeg)<sup>1,2</sup>, [Martin Lang](https://github.com/lang-m)<sup>2</sup>, [Samuel Holt](https://github.com/samjrholt)<sup>3</sup>, [Ryan A. Pepper](https://github.com/rpep)<sup>4</sup>, [Hans Fangohr](https://github.com/fangohr)<sup>2,5,6</sup>
 
-<sup>1</sup> *Faculty of Engineering and Physical Sciences, University of Southampton, Southampton SO17 1BJ, United Kingdom*  
-<sup>2</sup> *European XFEL GmbH, Holzkoppel 4, 22869 Schenefeld, Germany*  
-<sup>3</sup> *Max Planck Institute for the Structure and Dynamics of Matter, Luruper Chaussee 149, 22761 Hamburg, Germany*  
+<sup>1</sup> *Department of Earth Science and Engineering, Imperial College London, London SW7 2AZ, UK*  
+<sup>2</sup> *Faculty of Engineering and Physical Sciences, University of Southampton, Southampton SO17 1BJ, UK*  
+<sup>3</sup> *Department of Physics, University of Warwick, Coventry CV4 7AL, UK*  
+<sup>4</sup> *Research Software Group, University of Birmingham, Birmingham B15 2TT, UK*  
+<sup>5</sup> *Max Planck Institute for the Structure and Dynamics of Matter, Luruper Chaussee 149, 22761 Hamburg, Germany*  
+<sup>6</sup> *Center for Free-Electron Laser Science, Luruper Chaussee 149, 22761 Hamburg, Germany*
 
 | Description | Badge |
 | --- | --- |
@@ -12,9 +15,9 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 | Releases | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |          | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg?token=hcK4fofmrL)](https://codecov.io/gh/ubermag/discretisedfield) |
-| Documentation | [![Documentation Status](https://readthedocs.org/projects/discretisedfield/badge/?version=latest)](https://discretisedfield.readthedocs.io/en/latest/?badge=latest) |
+| Documentation | [![Documentation](https://img.shields.io/badge/Docs-ubermag.github.io-blue)](https://ubermag.github.io/documentation/discretisedfield.html) |
 | YouTube | [![YouTube](https://img.shields.io/badge/YouTube-ubermag-blue)](https://www.youtube.com/channel/UC7MSqVQSMFV42R1jAYmKGLg) |
-| Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/HEAD?urlpath=lab/tree/docs/ipynb/index.ipynb) |
+| Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/stable?filepath=docs%2Fipynb%2Findex.ipynb) |
 | Platforms | [![Platforms](https://anaconda.org/conda-forge/discretisedfield/badges/platforms.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Downloads | [![Downloads](https://anaconda.org/conda-forge/discretisedfield/badges/downloads.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
@@ -31,6 +34,7 @@ Marijan Beg<sup>1,2</sup>, Martin Lang<sup>1</sup>, Ryan A. Pepper<sup>1</sup>, 
 - visualisation using `matplotlib` and `k3d`, and
 
 - manipulation of different file types (OVF, VTK, and HDF5).
+
 
 It is available on Windows, MacOS, and Linux. It requires Python 3.8+.
 
@@ -60,10 +64,11 @@ All contributions are welcome, however small they are. If you would like to cont
 
 **Contributors**:
 
-- Sergii Mamedov ([@sergii-mamedov](https://github.com/sergii-mamedov)), European XFEL, Germany
-- Natalie Downing ([@gamdow](https://github.com/gamdow)), University of Southampton, United Kingdom
-- Min RK ([@minrk](https://github.com/minrk)), Simula Research Laboratory, Norway
-- Rebecca Carey ([@rlc2v07](https://github.com/rlc2v07)), University of Southampton, United Kingdom
+- [Thomas Kluyver](https://github.com/takluyver)
+- [Sergii Mamedov](https://github.com/sergii-mamedov)
+- [Natalie Downing](https://github.com/gamdow)
+- [Min RK](https://github.com/minrk)
+- [Rebecca Carey](https://github.com/rlc2v07)
 
 ## License
 
@@ -71,12 +76,15 @@ Licensed under the BSD 3-Clause "New" or "Revised" License. For details, please 
 
 ## How to cite
 
-1. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
+1. M. Beg, M. Lang, and H. Fangohr. Ubermag: Towards more effective micromagnetic workflows. [*IEEE Transactions on Magnetics*](https://doi.org/10.1109/TMAG.2021.3078896) (2021).
 
-2. M. Beg, M. Lang, R. A. Pepper, T. Kluyver, and H. Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2021).
+2. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
+
+3. Marijan Beg, Martin Lang, Samuel Holt, Ryan A. Pepper, Hans Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2021).
 
 ## Acknowledgements
 
 - [OpenDreamKit](http://opendreamkit.org/) – Horizon 2020 European Research Infrastructure project (676541)
 
 - EPSRC Programme Grant on [Skyrmionics](http://www.skyrmions.ac.uk) (EP/N032128/1)
+

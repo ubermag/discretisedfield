@@ -32,3 +32,4 @@ jobs:
 
     - name: Test all
       run: make test-all
+
