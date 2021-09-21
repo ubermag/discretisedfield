@@ -81,4 +81,4 @@ about = """
 """
 
 [tool.coverage.run]
-omit = "discretisedfield/tests/*"
+omit = ["discretisedfield/tests/*"]
