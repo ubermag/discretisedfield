@@ -746,9 +746,9 @@ class Field:
     def __dir__(self):
         """Extension of the ``dir(self)`` list.
 
-        Adds ``'x'``, ``'y'``, or ``'z'``, depending on the dimension of the
-        field, to the ``dir(self)`` list. Similarly, adds or removes methods
-        (``grad``, ``div``,...) depending on the dimension of the field.
+        Adds component labels to the ``dir(self)`` list. Similarly, adds or
+        removes methods (``grad``, ``div``,...) depending on the dimension of
+        the field.
 
         Returns
         -------
@@ -758,8 +758,9 @@ class Field:
 
         """
         dirlist = dir(self.__class__)
-        if self.dim in (2, 3):
-            dirlist += list(dfu.axesdict.keys())[:self.dim]
+
+        if self.components is not None:
+            dirlist += self.components
         if self.dim == 1:
             need_removing = ['div', 'curl', 'orientation']
         if self.dim == 2:
