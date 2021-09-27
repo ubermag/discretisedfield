@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discretisedfield"
-version = "0.11.1"
+version = "0.60.0"
 description = "Python package for the analysis and visualisation of finite-difference fields."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -36,7 +36,7 @@ classifiers = [
 ]
 
 dependencies = [
-  "ubermagutil==0.4.1",
+  "ubermagutil~=0.60.0",
   "pandas>=1.1",
   "matplotlib>=3.3",
   "jupyterlab~=3.0",
