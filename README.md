@@ -17,7 +17,7 @@
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg?token=hcK4fofmrL)](https://codecov.io/gh/ubermag/discretisedfield) |
 | Documentation | [![Documentation](https://img.shields.io/badge/Docs-ubermag.github.io-blue)](https://ubermag.github.io/documentation/discretisedfield.html) |
 | YouTube | [![YouTube](https://img.shields.io/badge/YouTube-ubermag-blue)](https://www.youtube.com/channel/UC7MSqVQSMFV42R1jAYmKGLg) |
-| Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/stable?filepath=docs%2Fipynb%2Findex.ipynb) |
+| Binder | [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ubermag/discretisedfield/stable?urlpath=lab/tree/docs/ipynb/index.ipynb)|
 | Platforms | [![Platforms](https://anaconda.org/conda-forge/discretisedfield/badges/platforms.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Downloads | [![Downloads](https://anaconda.org/conda-forge/discretisedfield/badges/downloads.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
@@ -34,6 +34,7 @@
 - visualisation using `matplotlib` and `k3d`, and
 
 - manipulation of different file types (OVF, VTK, and HDF5).
+
 
 
 It is available on Windows, MacOS, and Linux. It requires Python 3.8+.
