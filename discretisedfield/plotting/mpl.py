@@ -52,8 +52,8 @@ class Mpl:
         All the default values can be changed by passing arguments, which are
         then used in subplots. The way parameters of this function are used to
         create plots can be understood with the following code snippet.
-
-        # TODO: Review example after API stabilises.
+        ``scalar_field`` and ``vector_field`` are computed internally (based on
+        the dimension of the field).
 
         .. code-block::
 
@@ -61,26 +61,19 @@ class Mpl:
                 fig = plt.figure(figsize=figsize)
                 ax = fig.add_subplot(111)
 
-            scalar_field.mpl_scalar(ax=ax, filter_field=scalar_filter_field,
-                                    lightness_field=scalar_lightness_field,
-                                    colorbar=scalar_colorbar,
-                                    colorbar_label=scalar_colorbar_label,
-                                    multiplier=multiplier, cmap=scalar_cmap,
-                                    clim=scalar_clim,)
-
-            vector_field.mpl_vector(ax=ax, use_color=use_vector_color,
-                                    color_field=vector_color_field,
-                                    colorbar=vector_colorbar,
-                                    colorbar_label=vector_colorbar_label,
-                                    multiplier=multiplier, scale=vector_scale,
-                                    cmap=vector_cmap, clim=vector_clim,)
+            if scalar_field is not None:
+                scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
+                                        **scalar_kwargs)
+            if vector_field is not None:
+                vector_field.mpl.vector(ax=ax, multiplier=multiplier,
+                                        **vector_kwargs)
 
             if filename is not None:
                 plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
             ```
 
-            Therefore, to understand the meaning of the arguments which can be
-            passed to this method, please refer to
+            Therefore, to understand the meaning of the keyword arguments which
+            can be passed to this method, please refer to
             ``discretisedfield.plotting.Mpl.scalar`` and
             ``discretisedfield.plotting.Mpl.vector`` documentation.
 
@@ -167,12 +160,10 @@ class Mpl:
         automatically and the size of a figure can be specified using
         ``figsize``. By passing ``filter_field`` the points at which the pixels
         are not coloured can be determined. More precisely, only those
-        discretisation cells where ``filter_field != 0`` are plotted. By
-        passing a scalar field as ``lightness_field``, lightness component is
-        added to HSL colormap. In this case, colormap cannot be passed using
-        ``kwargs``. Colorbar is shown by default and it can be removed from the
-        plot by passing ``colorbar=False``. The label for the colorbar can be
-        defined by passing ``colorbar_label`` as a string.
+        discretisation cells where ``filter_field != 0`` are plotted. Colorbar
+        is shown by default and it can be removed from the plot by passing
+        ``colorbar=False``. The label for the colorbar can be defined by
+        passing ``colorbar_label`` as a string.
 
         It is often the case that the region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). Accordingly,
@@ -180,7 +171,7 @@ class Mpl:
         multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
         axes will be scaled and appropriate units shown. For instance, if
         ``multiplier=1e-9`` is passed, all mesh points will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        :math:`1\,\text{nm}` and :math:`\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the best one is
         calculated internally. The plot can be saved as a PDF when ``filename``
         is passed.
@@ -206,11 +197,6 @@ class Mpl:
             A scalar field used for determining whether certain discretisation
             cells are coloured. More precisely, only those discretisation cells
             where ``filter_field != 0`` are plotted. Defaults to ``None``.
-
-        lightness_field : discretisedfield.Field, optional
-
-            A scalar field used for adding lightness to the color. Field values
-            are hue. Defaults to ``None``.
 
         colorbar : bool, optional
 
@@ -313,7 +299,7 @@ class Mpl:
                   ax=None,
                   figsize=None,
                   multiplier=None,
-                  filter_field=None,
+                  #filter_field=None,
                   lightness_field=None,
                   clim=None,
                   colorwheel=True,
@@ -325,7 +311,39 @@ class Mpl:
         """Lightness plots.
 
         Uses HSV to show inplane angle and lightness for out-of-plane (3d) or
-        norm (1d/2d) of the field.
+        norm (1d/2d) of the field. By passing a scalar field as
+        ``lightness_field``, lightness component is can be specified
+        independently of the field dimension. Most parameters are the same as
+        for ``discretisedfield.plotting.Mpl.scalar``. Colormap cannot be passed
+        using ``kwargs``. Instead of having a colorbar a ``colorwheel`` is
+        displayed by default.
+
+        The use of a ``filter_field`` is not yet supported.
+
+        lightness_field : discretisedfield.Field, optional
+
+            A scalar field used for adding lightness to the color. Field values
+            are hue. Defaults to ``None``.
+
+        colorwheel : bool, optional
+
+            To control if a colorwheel is shown, defaults to ``True``.
+
+        colorwheel_xlabel : str, optional
+
+            If specified, the string and an arrow are plotted onto the
+            colorwheel (in x-direction).
+
+        colorwheel_ylabel : str, optional
+
+            If specified, the string and an arrow are plotted onto the
+            colorwheel (in y-direction).
+
+        colorwheel_args : dict, optional
+
+            Additional keyword arguments to pass to the colorwheel function.
+            For details see ``discretisedfield.plotting.Mpl.colorwheel`` and
+            ``mpl_toolkits.axes_grid1.inset_locator.inset_axes``.
 
         Example
         -------
@@ -352,7 +370,7 @@ class Mpl:
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
-                filter_field=filter_field,
+                # filter_field=filter_field,
                 lightness_field=lightness_field,
                 clim=clim,
                 colorwheel=colorwheel,
@@ -368,7 +386,7 @@ class Mpl:
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
-                filter_field=filter_field,
+                # filter_field=filter_field,
                 lightness_field=lightness_field,
                 clim=clim,
                 colorwheel=colorwheel,
@@ -455,86 +473,86 @@ class Mpl:
                **kwargs):
         r"""Plot the vector field on a plane.
 
-        before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). in addition, field must be a vector field
-        (``dim=3``). otherwise, ``valueerror`` is raised. ``mpl_vector`` adds
-        the plot to ``matplotlib.axes.axes`` passed via ``ax`` argument. if
+        Before the field can be plotted, it must be sliced with a plane (e.g.
+        ``field.plane('z')``). In addition, field must be a vector field
+        (``dim=3``). Otherwise, ``valueerror`` is raised. ``mpl_vector`` adds
+        the plot to ``matplotlib.axes.axes`` passed via ``ax`` argument. If
         ``ax`` is not passed, ``matplotlib.axes.axes`` object is created
         automatically and the size of a figure can be specified using
-        ``figsize``. by default, plotted vectors are coloured according to the
-        out-of-plane component of the vectors. this can be changed by passing
-        ``color_field`` with ``dim=1``. to disable colouring of the plot,
-        ``use_color=false`` can be passed. a uniform vector colour can be
+        ``figsize``. By default, plotted vectors are coloured according to the
+        out-of-plane component of the vectors. This can be changed by passing
+        ``color_field`` with ``dim=1``. To disable colouring of the plot,
+        ``use_color=false`` can be passed. A uniform vector colour can be
         obtained by specifying ``color=color`` which is passed to matplotlib
-        and ``use_color=false``. colorbar is shown by default and it can
-        be removed from the plot by passing ``colorbar=false``. the label for
+        and ``use_color=false``. Colorbar is shown by default and it can
+        be removed from the plot by passing ``colorbar=false``. The label for
         the colorbar can be defined by passing ``colorbar_label`` as a string.
-        it is often the case that the region size is small (e.g. on a
+        It is often the case that the region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). accordingly,
         ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
         multiple of 3  (..., -6, -3, 0, 3, 6,...). according to that value, the
-        axes will be scaled and appropriate units shown. for instance, if
+        axes will be scaled and appropriate units shown. For instance, if
         ``multiplier=1e-9`` is passed, all mesh points will be divided by
         :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
-        axis labels. if ``multiplier`` is not passed, the best one is
-        calculated internally. the plot can be saved as a pdf when ``filename``
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally. The plot can be saved as a pdf when ``filename``
         is passed.
 
-        this method plots the field using ``matplotlib.pyplot.quiver``
+        This method plots the field using ``matplotlib.pyplot.quiver``
         function, so any keyword arguments accepted by it can be passed (for
-        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.). in
+        instance, ``cmap`` - colormap, ``clim`` - colorbar limits, etc.). In
         particular, there are cases when ``matplotlib`` fails to find optimal
-        scale for plotting vectors. more precisely, sometimes vectors appear
-        too large in the plot. this can be resolved by passing ``scale``
-        argument, which scales all vectors in the plot. in other words, larger
-        ``scale``, smaller the vectors and vice versa. please note that scale
+        scale for plotting vectors. More precisely, sometimes vectors appear
+        too large in the plot. This can be resolved by passing ``scale``
+        argument, which scales all vectors in the plot. In other words, larger
+        ``scale``, smaller the vectors and vice versa. Please note that scale
         can be in a very large range (e.g. 1e20).
 
         parameters
         ----------
         ax : matplotlib.axes.axes, optional
 
-            axes to which the field plot is added. defaults to ``None`` - axes
+            Axes to which the field plot is added. defaults to ``None`` - axes
             are created internally.
 
         figsize : tuple, optional
 
-            the size of a created figure if ``ax`` is not passed. defaults to
+            The size of a created figure if ``ax`` is not passed. defaults to
             ``None``.
 
         color_field : discretisedfield.field, optional
 
-            a scalar field used for colouring the vectors. defaults to ``None``
+            A scalar field used for colouring the vectors. defaults to ``None``
             and vectors are coloured according to their out-of-plane
             components.
 
         colorbar : bool, optional
 
-            if ``true``, colorbar is shown and it is hidden when ``false``.
+            If ``true``, colorbar is shown and it is hidden when ``false``.
             defaults to ``true``.
 
         colorbar_label : str, optional
 
-            colorbar label. defaults to ``None``.
+            Colorbar label. Defaults to ``None``.
 
         multiplier : numbers.real, optional
 
             ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
-            a multiple of 3 (..., -6, -3, 0, 3, 6,...). according to that
-            value, the axes will be scaled and appropriate units shown. for
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
             instance, if ``multiplier=1e-9`` is passed, the mesh points will be
             divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
             be used as axis labels. defaults to ``None``.
 
         filename : str, optional
 
-            if filename is passed, the plot is saved. defaults to ``None``.
+            If filename is passed, the plot is saved. defaults to ``None``.
 
         raises
         ------
         valueerror
 
-            if the field has not been sliced, its dimension is not 3, or the
+            If the field has not been sliced, its dimension is not 3, or the
             dimension of ``color_field`` is not 1.
 
         example
@@ -625,9 +643,8 @@ class Mpl:
                 **kwargs):
         """Contour line plot.
 
-        Parameters
-        ----------
-        ...
+        See ``discretisedfield.plotting.Mpl.scalar`` for details and meaning of
+        the arguments.
 
         Example
         -------
@@ -730,7 +747,9 @@ class Mpl:
 def add_colorwheel(ax, width=1, height=1, loc='lower right', **kwargs):
     """Colorwheel for hsv plots.
 
-    Creates colorwheel on new inset axis.
+    Creates colorwheel on new inset axis. See
+    ``mpl_toolkits.axes_grid1.inset_locator.inset_axes`` for the meaning of the
+    arguments and other possible keyword arguments.
 
     Example
     -------
