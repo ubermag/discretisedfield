@@ -299,7 +299,7 @@ class Mpl:
                   ax=None,
                   figsize=None,
                   multiplier=None,
-                  #filter_field=None,
+                  filter_field=None,
                   lightness_field=None,
                   clim=None,
                   colorwheel=True,
@@ -318,7 +318,8 @@ class Mpl:
         using ``kwargs``. Instead of having a colorbar a ``colorwheel`` is
         displayed by default.
 
-        The use of a ``filter_field`` is not yet supported.
+        The use of a ``filter_field`` is not yet supported (passing a
+        ``filter_field`` has no effect).
 
         lightness_field : discretisedfield.Field, optional
 
@@ -370,7 +371,7 @@ class Mpl:
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
-                # filter_field=filter_field,
+                filter_field=filter_field,
                 lightness_field=lightness_field,
                 clim=clim,
                 colorwheel=colorwheel,
@@ -386,7 +387,7 @@ class Mpl:
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
-                # filter_field=filter_field,
+                filter_field=filter_field,
                 lightness_field=lightness_field,
                 clim=clim,
                 colorwheel=colorwheel,
