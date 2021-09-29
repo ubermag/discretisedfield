@@ -1,0 +1,84 @@
+[build-system]
+# 40.8.0 is the first version compatible with PEP 517
+requires = ["setuptools>=40.8.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "discretisedfield"
+version = "0.60.0"
+description = "Python package for the analysis and visualisation of finite-difference fields."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+
+authors = [
+  {name = "Marijan Beg"},
+  {name = "Martin Lang"},
+  {name = "Samuel Holt"},
+  {name = "Ryan A. Pepper"},
+  {name = "Hans Fangohr"}
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Scientific/Engineering :: Visualization"
+]
+
+dependencies = [
+  "ubermagutil~=0.60.0",
+  "pandas>=1.1",
+  "matplotlib>=3.3",
+  "jupyterlab~=3.0",
+  "h5py>=3.1",
+  "k3d>=2.11",
+  "scipy>=1.6"
+]
+
+# [project.optional-dependencies]
+# test = [...]
+
+[project.urls]
+homepage = "https://ubermag.github.io"
+documentation = "https://ubermag.github.io/documentation/discretisedfield"
+repository = "https://github.com/ubermag/discretisedfield"
+
+[project.scripts]
+ovf2vtk = "discretisedfield.ovf2vtk:main"
+
+# to define additional information we use a custom table
+# we need to own the entry for tool.NAME on PyPI
+# see: https://www.python.org/dev/peps/pep-0518/#tool-table
+[tool.ubermag]
+doi = "10.5281/zenodo.3539461"
+copyright_holder = "Marijan Beg and Hans Fangohr"
+contributors = [
+  "Thomas Kluyver",
+  "Sergii Mamedov",
+  "Natalie Downing",
+  "Min RK",
+  "Rebecca Carey"
+]
+about = """
+- definition of finite-difference regions, meshes, lines, and fields,
+
+- analysis of finite-difference fields,
+
+- visualisation using `matplotlib` and `k3d`, and
+
+- manipulation of different file types (OVF, VTK, and HDF5).
+
+"""
+
+[tool.coverage.run]
+omit = ["discretisedfield/tests/*"]
