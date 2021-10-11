@@ -293,6 +293,15 @@ class Region:
         """
         return f'Region(p1={self.pmin}, p2={self.pmax})'
 
+    def _repr_html_(self):
+        html = f'''<strong>Region</strong>
+        <ul>
+          <li>p1 = {self.p1}</li>
+          <li>p2 = {self.p2}</li>
+        </ul>
+        '''
+        return html
+
     def __eq__(self, other):
         r"""Relational operator ``==``.
 

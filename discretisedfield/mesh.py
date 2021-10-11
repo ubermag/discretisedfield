@@ -468,6 +468,33 @@ class Mesh:
                 f'bc=\'{self.bc}\', subregions={self.subregions},'
                 f' attributes={self.attributes})')
 
+    def _repr_html_(self):
+        html_subregions = ''
+        if self.subregions:
+            html_subregions = '<li>Subregions<ul>'
+            for name, sr in self.subregions.items():
+                html_subregions += f'<li>{name}: {sr._repr_html_()}</li>'
+            html_subregions += '</ul></li>'
+        attributes_html = ''
+        for key, val in self.attributes.items():
+            try:
+                value = val._repr_html_()
+            except AttributeError:
+                value = val
+            attributes_html += f'<li>{key}: {value}</li>'
+        html = f'''<strong>Mesh</strong>
+        <ul>
+          <li>{self.region._repr_html_()}</li>
+          <li>n = {self.n}</li>
+          {f"<li>bc = {self.bc}</li>" if self.bc else ""}
+          {html_subregions}
+          <li>Attributes:
+            <ul>{attributes_html}</ul>
+          </li>
+        </ul>
+        '''
+        return html
+
     def index2point(self, index, /):
         """Convert cell's index to its coordinate.
 

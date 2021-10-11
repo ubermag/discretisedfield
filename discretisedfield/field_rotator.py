@@ -181,6 +181,17 @@ class FieldRotator:
                 '* internal rotation matrix:\n'
                 f'{self._rotation.as_matrix()}\n)')
 
+    def _repr_html_(self):
+        html = f'''<strong>FieldRotator</strong>
+        <ul>
+          <li>Unrotated field: {self._orig_field._repr_html_()}</li>
+          <li>Internal rotation matrix:
+            <pre>{self._rotation.as_matrix()}</pre>
+          </li>
+        </ul>
+        '''
+        return html
+
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
         new_mesh_pos = (new_mesh_field.array.reshape((-1, 3))

@@ -620,6 +620,16 @@ class Field:
             frepr += ")"
         return frepr
 
+    def _repr_html_(self):
+        html = f'''<strong>Field</strong>
+        <ul>
+          <li>{self.mesh._repr_html_()}</li>
+          <li>dim = {self.dim}</li>
+          <li>components: {self.components}</li>
+        </ul>
+        '''
+        return html
+
     def __call__(self, point):
         r"""Sample the field value at ``point``.
 
