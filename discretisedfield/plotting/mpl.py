@@ -272,8 +272,8 @@ class Mpl:
         values = self._filter_values(filter_field, points, values)
 
         if symmetric_clim and 'clim' not in kwargs.keys():
-            vmin = np.min(values)
-            vmax = np.max(values)
+            vmin = np.min(values, where=~np.isnan(values))
+            vmax = np.max(values, where=~np.isnan(values))
             if np.sign(vmin) != np.sign(vmax):
                 vmax_abs = max(abs(vmin), vmax)
                 kwargs['clim'] = (-vmax_abs, vmax_abs)
