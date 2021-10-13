@@ -428,24 +428,22 @@ class Mpl:
 
         lightness = [lightness_field(i) for i in self.field.mesh]
 
-        # values = self._filter_values(filter_field, points, values)
         rgb = dfu.hls2rgb(hue=values,
                           lightness=lightness,
                           saturation=None,
                           lightness_clim=clim).squeeze()
 
-        # TODO: filter field affects color range
-        # rgb = self._filter_values(filter_field, points, rgb)
-        # rgba = np.ones((len(rgb), 4))
-        # rgba[..., :3] = rgb
-        # rgba[..., 3][np.isnan(rgb[:, 0])] = 0
+        rgb = np.asarray(self._filter_values(filter_field, points, rgb,
+                                             nan_length=3))
+        # alpha channel to remove nan values (from filter field)
+        rgba = np.ones((len(rgb), 4))
+        rgba[..., :3] = rgb
+        rgba[..., 3][np.isnan(rgb[:, 0])] = 0
 
         kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-        # TODO filtering
-        # ax.imshow(rgba.reshape((*n, 4)), origin='lower',
-        #           extent=extent, **kwargs)
-        ax.imshow(rgb.reshape((*n, 3)), origin='lower',
+        ax.imshow(rgba.reshape((*n, 4)), origin='lower',
                   extent=extent, **kwargs)
+
         if colorwheel:
             if colorwheel_args is None:
                 colorwheel_args = {}
@@ -715,7 +713,7 @@ class Mpl:
         return (self.field.mesh.region.multiplier
                 if multiplier is None else multiplier)
 
-    def _filter_values(self, filter_field, points, values):
+    def _filter_values(self, filter_field, points, values, nan_length=1):
         if filter_field is None:
             return values
 
@@ -723,7 +721,12 @@ class Mpl:
             msg = f'Cannot use {filter_field.dim=}.'
             raise ValueError(msg)
 
-        return [values[i] if filter_field(point) != 0 else np.nan
+        if nan_length == 1:
+            nan = np.nan
+        else:
+            nan = [np.nan] * nan_length
+
+        return [values[i] if filter_field(point) != 0 else nan
                 for i, point in enumerate(points)]
 
     def _axis_labels(self, ax, multiplier):
