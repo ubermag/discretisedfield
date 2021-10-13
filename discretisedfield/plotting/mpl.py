@@ -593,15 +593,14 @@ class Mpl:
 
         if use_color:
             if color_field is None:
-                # todo raises an exception by default; options:
-                # - warning + automatically specify use_color=false
-                # - use_color=false as default
                 if self.field.dim == 2:
-                    msg = 'automatic coloring is only supported for 3d fields.'
-                    raise ValueError(msg)
-                color_field = getattr(self.field, self.planeaxis)
-
-            colors = [color_field(p) for p in points]
+                    warnings.warn('Automatic coloring is only supported for 3d'
+                                  f' fields. Ignoring "{use_color=}".')
+                    use_color = False
+                else:
+                    color_field = getattr(self.field, self.planeaxis)
+            if use_color:
+                colors = [color_field(p) for p in points]
 
         # "unpack" values inside arrays and convert to np.ndarray.
         points = np.array(list(zip(*points)))
