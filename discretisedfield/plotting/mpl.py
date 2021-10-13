@@ -367,6 +367,8 @@ class Mpl:
         if self.field.dim == 2:
             if lightness_field is None:
                 lightness_field = self.field.norm
+            if filter_field is None:
+                filter_field = self.field.norm
             return self.field.angle.mpl.lightness(
                 ax=ax,
                 figsize=figsize,
@@ -383,6 +385,8 @@ class Mpl:
         elif self.field.dim == 3:
             if lightness_field is None:
                 lightness_field = getattr(self.field, self.planeaxis)
+            if filter_field is None:
+                filter_field = self.field.norm
             return self.field.angle.mpl.lightness(
                 ax=ax,
                 figsize=figsize,
@@ -398,6 +402,9 @@ class Mpl:
                 **kwargs)
 
         ax = self._setup_axes(ax, figsize)
+
+        if filter_field is None:
+            filter_field = self.field.norm
 
         multiplier = self._setup_multiplier(multiplier)
 
