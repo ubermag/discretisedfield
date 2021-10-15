@@ -26,15 +26,15 @@ class Mpl:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
 
-        self.field = field  # TODO: Consider renaming data to field.
+        self.field = field
         self.planeaxis = dfu.raxesdict[field.mesh.attributes['planeaxis']]
 
     def __call__(self,
                  ax=None,
                  figsize=None,
                  multiplier=None,
-                 scalar_kwargs=None,
-                 vector_kwargs=None,
+                 scalar_kw=None,
+                 vector_kw=None,
                  filename=None):
         """Plot the field on a plane.
 
@@ -49,11 +49,12 @@ class Mpl:
         plot visualises the in-plane components of the vector and scalar plot
         encodes the out-of-plane component.
 
-        All the default values can be changed by passing arguments, which are
-        then used in subplots. The way parameters of this function are used to
-        create plots can be understood with the following code snippet.
-        ``scalar_field`` and ``vector_field`` are computed internally (based on
-        the dimension of the field).
+        All the default values can be changed by passing dictionaries to
+        ``scalar_kw`` and ``vector_kw``, which are then used in subplots. The
+        way parameters of this function are used to create plots can be
+        understood with the following code snippet. ``scalar_field`` and
+        ``vector_field`` are computed internally (based on the dimension of the
+        field).
 
         .. code-block::
 
@@ -63,10 +64,10 @@ class Mpl:
 
             if scalar_field is not None:
                 scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
-                                        **scalar_kwargs)
+                                        **scalar_kw)
             if vector_field is not None:
                 vector_field.mpl.vector(ax=ax, multiplier=multiplier,
-                                        **vector_kwargs)
+                                        **vector_kw)
 
             if filename is not None:
                 plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
@@ -75,7 +76,10 @@ class Mpl:
             Therefore, to understand the meaning of the keyword arguments which
             can be passed to this method, please refer to
             ``discretisedfield.plotting.Mpl.scalar`` and
-            ``discretisedfield.plotting.Mpl.vector`` documentation.
+            ``discretisedfield.plotting.Mpl.vector`` documentation. Filtering
+            of the scalar component is applied by default (using the norm for
+            vector fields, absolute values for scalar fields). To turn of
+            filtering add ``{'filter_field': None}`` to ``scalar_kw``.
 
         Example
         -------
@@ -102,14 +106,12 @@ class Mpl:
 
         multiplier = self._setup_multiplier(multiplier)
 
-        scalar_kwargs = {} if scalar_kwargs is None else scalar_kwargs
-        vector_kwargs = {} if vector_kwargs is None else vector_kwargs
-        vector_kwargs.setdefault('use_color', False)
-        vector_kwargs.setdefault('colorbar', False)
+        scalar_kw = {} if scalar_kw is None else scalar_kw
+        vector_kw = {} if vector_kw is None else vector_kw
+        vector_kw.setdefault('use_color', False)
+        vector_kw.setdefault('colorbar', False)
 
         # Set up default scalar and vector fields.
-        # TODO: Do we allow user to specify what scalar and vector fields are?
-        # Did we have that before?
         if self.field.dim == 1:
             scalar_field = self.field
             vector_field = None
@@ -121,19 +123,18 @@ class Mpl:
         else:
             vector_field = self.field
             scalar_field = getattr(self.field, self.planeaxis)
-            scalar_kwargs['colorbar_label'] = scalar_kwargs.get(
-                'colorbar_label', f'{self.planeaxis}-component')
+            scalar_kw.setdefault('colorbar_label',
+                                 f'{self.planeaxis}-component')
 
-        # TODO user should specify filter_field=None to avoid filtering
-        # TODO what is the norm if dim=1
-        scalar_kwargs.setdefault('filter_field', self.field.norm)
+        # for dim=1 fields absolute values are used as filter_field
+        scalar_kw.setdefault('filter_field', self.field.norm)
 
         if scalar_field is not None:
             scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
-                                    **scalar_kwargs)
+                                    **scalar_kw)
         if vector_field is not None:
             vector_field.mpl.vector(ax=ax, multiplier=multiplier,
-                                    **vector_kwargs)
+                                    **vector_kw)
 
         self._axis_labels(ax, multiplier)
 
