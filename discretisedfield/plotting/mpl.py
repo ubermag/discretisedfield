@@ -147,7 +147,7 @@ class Mpl:
                multiplier=None,
                filter_field=None,
                colorbar=True,
-               colorbar_label=None,  # TODO: Can we maybe use an empty string?
+               colorbar_label='',
                filename=None,
                symmetric_clim=False,
                **kwargs):
@@ -164,7 +164,11 @@ class Mpl:
         discretisation cells where ``filter_field != 0`` are plotted. Colorbar
         is shown by default and it can be removed from the plot by passing
         ``colorbar=False``. The label for the colorbar can be defined by
-        passing ``colorbar_label`` as a string.
+        passing ``colorbar_label`` as a string. If ``symmetric_clim=True`` is
+        passed colorbar limits are internally computed to be symmetric around
+        zero. This is most useful in combination with a diverging colormap.
+        ``clim`` takes precedence over ``symmetric_clim`` if both are
+        specified.
 
         It is often the case that the region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). Accordingly,
@@ -207,6 +211,10 @@ class Mpl:
         colorbar_label : str, optional
 
             Colorbar label. Defaults to ``None``.
+
+        symmetric_clim : bool, optional
+
+            Automatic ``clim`` symmetric around 0. Defaults to False.
 
         multiplier : numbers.Real, optional
 
@@ -275,12 +283,9 @@ class Mpl:
         if symmetric_clim and 'clim' not in kwargs.keys():
             vmin = np.min(values, where=~np.isnan(values), initial=0)
             vmax = np.max(values, where=~np.isnan(values), initial=0)
-            if np.sign(vmin) != np.sign(vmax):
-                vmax_abs = max(abs(vmin), vmax)
-                kwargs['clim'] = (-vmax_abs, vmax_abs)
-            else:
-                warnings.warn('Symmetric clim only possible if the field has '
-                              'positive and negative values.')
+            vmax_abs = max(abs(vmin), abs(vmax))
+            kwargs['clim'] = (-vmax_abs, vmax_abs)
+
         cp = ax.imshow(np.array(values).reshape(n),
                        origin='lower', extent=extent, **kwargs)
 
