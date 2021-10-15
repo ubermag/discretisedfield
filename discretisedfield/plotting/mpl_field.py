@@ -9,7 +9,7 @@ import discretisedfield.util as dfu
 import ubermagutil.units as uu
 
 
-class Mpl:
+class MplField:
     """Matplotlib-based plotting methods.
 
     Before the field can be plotted, it must be sliced with a plane (e.g.

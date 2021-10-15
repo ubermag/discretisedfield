@@ -7,7 +7,7 @@ import discretisedfield.util as dfu
 import ubermagutil.units as uu
 
 
-class K3d:
+class K3dField:
     """K3d plotting.
 
     """

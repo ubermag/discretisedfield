@@ -3322,12 +3322,12 @@ class Field:
             >>> field.plane(z=50, n=(5, 5)).mpl()
 
         """
-        return dfp.Mpl(self)
+        return dfp.MplField(self)
 
     @property
     def k3d(self):
         """Plot interface, k3d based."""
-        return dfp.K3d(self)
+        return dfp.K3dField(self)
 
     @property
     def fftn(self):
