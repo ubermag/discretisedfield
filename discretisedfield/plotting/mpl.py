@@ -10,18 +10,31 @@ import ubermagutil.units as uu
 
 
 class Mpl:
-    """Matplotlib-based plotting convenience methods.
+    """Matplotlib-based plotting methods.
+
+    Before the field can be plotted, it must be sliced with a plane (e.g.
+    ``field.plane('z')``). This class should not be accessed directly. Use
+    ``field.mpl`` to use the different plotting methods.
 
     Parameters
     ----------
-    data : df.Field
+    field : df.Field
 
         Field sliced with a plane, e.g. field.plane('x').
+
+    Raises
+    ------
+    ValueError
+
+        If the field has not been sliced.
+
+    .. seealso::
+
+        py:func:`~discretisedfield.Field.mpl`
 
     """
 
     def __init__(self, field):
-        # We never allow plotting fields that are not sliced.
         if not field.mesh.attributes['isplane']:
             msg = 'The field must be sliced before it can be plotted.'
             raise ValueError(msg)
@@ -126,7 +139,6 @@ class Mpl:
             scalar_kw.setdefault('colorbar_label',
                                  f'{self.planeaxis}-component')
 
-        # for dim=1 fields absolute values are used as filter_field
         scalar_kw.setdefault('filter_field', self.field.norm)
 
         if scalar_field is not None:
@@ -154,7 +166,7 @@ class Mpl:
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a scalar field
-        (``dim=1``). Otherwise, ``ValueError`` is raised. ``mpl_scalar`` adds
+        (``dim=1``). Otherwise, ``ValueError`` is raised. ``mpl.scalar`` adds
         the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
         ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
@@ -312,16 +324,13 @@ class Mpl:
                   **kwargs):
         """Lightness plots.
 
-        Uses HSV to show inplane angle and lightness for out-of-plane (3d) or
+        Uses HSV to show in-plane angle and lightness for out-of-plane (3d) or
         norm (1d/2d) of the field. By passing a scalar field as
         ``lightness_field``, lightness component is can be specified
         independently of the field dimension. Most parameters are the same as
         for ``discretisedfield.plotting.Mpl.scalar``. Colormap cannot be passed
         using ``kwargs``. Instead of having a colorbar a ``colorwheel`` is
         displayed by default.
-
-        The use of a ``filter_field`` is not yet supported (passing a
-        ``filter_field`` has no effect).
 
         lightness_field : discretisedfield.Field, optional
 
@@ -482,25 +491,26 @@ class Mpl:
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a vector field
-        (``dim=3``). Otherwise, ``valueerror`` is raised. ``mpl_vector`` adds
+        (``dim=2`` or ``dim=3``). Otherwise, ``ValueError`` is raised. ``mpl.vector`` adds
         the plot to ``matplotlib.axes.axes`` passed via ``ax`` argument. If
         ``ax`` is not passed, ``matplotlib.axes.axes`` object is created
         automatically and the size of a figure can be specified using
         ``figsize``. By default, plotted vectors are coloured according to the
-        out-of-plane component of the vectors. This can be changed by passing
+        out-of-plane component of the vectors if the field has ``dim=3``. This can be changed by passing
         ``color_field`` with ``dim=1``. To disable colouring of the plot,
-        ``use_color=false`` can be passed. A uniform vector colour can be
-        obtained by specifying ``color=color`` which is passed to matplotlib
-        and ``use_color=false``. Colorbar is shown by default and it can
-        be removed from the plot by passing ``colorbar=false``. The label for
+        ``use_color=False`` can be passed. A uniform vector colour can be
+        obtained by specifying ``use_color=false`` and ``color=color`` which is passed to matplotlib.
+        Colorbar is shown by default and it can
+        be removed from the plot by passing ``colorbar=False``. The label for
         the colorbar can be defined by passing ``colorbar_label`` as a string.
+
         It is often the case that the region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). accordingly,
         ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
         multiple of 3  (..., -6, -3, 0, 3, 6,...). according to that value, the
         axes will be scaled and appropriate units shown. For instance, if
         ``multiplier=1e-9`` is passed, all mesh points will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        :math:`1\,\text{nm}` and :math:`\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the best one is
         calculated internally. The plot can be saved as a pdf when ``filename``
         is passed.
@@ -548,7 +558,7 @@ class Mpl:
             a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
             value, the axes will be scaled and appropriate units shown. For
             instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            divided by :math:`1\,\text{nm}` and :math:`\text{nm}` units will
             be used as axis labels. defaults to ``None``.
 
         filename : str, optional
@@ -648,8 +658,80 @@ class Mpl:
                 **kwargs):
         """Contour line plot.
 
-        See ``discretisedfield.plotting.Mpl.scalar`` for details and meaning of
-        the arguments.
+        Before the field can be plotted, it must be sliced with a plane (e.g.
+        ``field.plane('z')``). In addition, field must be a scalar field
+        (``dim=1``). Otherwise, ``ValueError`` is raised. ``mpl.contour`` adds
+        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
+        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        automatically and the size of a figure can be specified using
+        ``figsize``. By passing ``filter_field`` the points at which the pixels
+        are not coloured can be determined. More precisely, only those
+        discretisation cells where ``filter_field != 0`` are plotted. Colorbar
+        is shown by default and it can be removed from the plot by passing
+        ``colorbar=False``. The label for the colorbar can be defined by
+        passing ``colorbar_label`` as a string.
+
+        It is often the case that the region size is small (e.g. on a
+        nanoscale) or very large (e.g. in units of kilometers). Accordingly,
+        ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is a
+        multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
+        axes will be scaled and appropriate units shown. For instance, if
+        ``multiplier=1e-9`` is passed, all mesh points will be divided by
+        :math:`1\,\text{nm}` and :math:`\text{nm}` units will be used as
+        axis labels. If ``multiplier`` is not passed, the best one is
+        calculated internally. The plot can be saved as a PDF when ``filename``
+        is passed.
+
+        This method plots the field using ``matplotlib.pyplot.contour``
+        function, so any keyword arguments accepted by it can be passed (for
+        instance, ``levels`` - number of levels, etc.).
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes, optional
+
+            Axes to which the field plot is added. Defaults to ``None`` - axes
+            are created internally.
+
+        figsize : (2,) tuple, optional
+
+            The size of a created figure if ``ax`` is not passed. Defaults to
+            ``None``.
+
+        filter_field : discretisedfield.Field, optional
+
+            A scalar field used for determining whether certain discretisation
+            cells are coloured. More precisely, only those discretisation cells
+            where ``filter_field != 0`` are plotted. Defaults to ``None``.
+
+        colorbar : bool, optional
+
+            If ``True``, colorbar is shown and it is hidden when ``False``.
+            Defaults to ``True``.
+
+        colorbar_label : str, optional
+
+            Colorbar label. Defaults to ``None``.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+
+        Raises
+        ------
+        ValueError
+
+            If the field has not been sliced, its dimension is not 1, or the
+            dimension of ``filter_field`` is not 1.
 
         Example
         -------
@@ -669,7 +751,6 @@ class Mpl:
             ...     x, y, z = point
             ...     return math.sin(x) + math.sin(y)
             >>> field = df.Field(mesh, dim=1, value=init_value)
-            ...
             >>> field.plane('z').mpl.contour()
 
         """
