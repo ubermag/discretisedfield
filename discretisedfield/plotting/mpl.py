@@ -138,8 +138,7 @@ class Mpl:
 
         self._axis_labels(ax, multiplier)
 
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
+        self._savefig(filename)
 
     def scalar(self,
                ax=None,
@@ -296,10 +295,7 @@ class Mpl:
 
         self._axis_labels(ax, multiplier)
 
-        if filename is not None:
-            # TODO: We use pad inches 0 and 0.02.
-            # We should figure out which one is the best.
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        self._savefig(filename)
 
     def lightness(self,
                   ax=None,
@@ -448,7 +444,7 @@ class Mpl:
 
         rgb = np.asarray(self._filter_values(filter_field, points, rgb,
                                              nan_length=3))
-        # alpha channel to remove nan values (from filter field)
+        # alpha channel to hide points with nan values (filter field)
         rgba = np.ones((len(rgb), 4))
         rgba[..., :3] = rgb
         rgba[..., 3][np.isnan(rgb[:, 0])] = 0
@@ -470,8 +466,7 @@ class Mpl:
 
         self._axis_labels(ax, multiplier)
 
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        self._savefig(filename)
 
     def vector(self,
                ax=None,
@@ -480,7 +475,7 @@ class Mpl:
                use_color=True,
                color_field=None,
                colorbar=True,
-               colorbar_label=None,
+               colorbar_label='',
                filename=None,
                **kwargs):
         r"""Plot the vector field on a plane.
@@ -520,7 +515,7 @@ class Mpl:
         ``scale``, smaller the vectors and vice versa. Please note that scale
         can be in a very large range (e.g. 1e20).
 
-        parameters
+        Parameters
         ----------
         ax : matplotlib.axes.axes, optional
 
@@ -560,19 +555,19 @@ class Mpl:
 
             If filename is passed, the plot is saved. defaults to ``None``.
 
-        raises
+        Raises
         ------
-        valueerror
+        ValueError
 
             If the field has not been sliced, its dimension is not 3, or the
             dimension of ``color_field`` is not 1.
 
-        example
+        Example
         -------
         .. plot::
             :context: close-figs
 
-            1. visualising the vector field using ``matplotlib``.
+            1. Visualising the vector field using ``matplotlib``.
 
             >>> import discretisedfield as df
             ...
@@ -640,8 +635,7 @@ class Mpl:
 
         self._axis_labels(ax, multiplier)
 
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        self._savefig(filename)
 
     def contour(self,
                 ax=None,
@@ -659,7 +653,6 @@ class Mpl:
 
         Example
         -------
-
         .. plot::
             :context: close-figs
 
@@ -712,8 +705,7 @@ class Mpl:
 
         self._axis_labels(ax, multiplier)
 
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+        self._savefig(filename)
 
     def _setup_axes(self, ax, figsize, **kwargs):
         if ax is None:
@@ -749,6 +741,10 @@ class Mpl:
                       + unit)
         ax.set_ylabel(dfu.raxesdict[self.field.mesh.attributes['axis2']]
                       + unit)
+
+    def _savefig(self, filename):
+        if filename is not None:
+            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
 
     def __dir__(self):
         dirlist = dir(self.__class__)
