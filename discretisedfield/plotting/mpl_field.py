@@ -491,18 +491,19 @@ class MplField:
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a vector field
-        (``dim=2`` or ``dim=3``). Otherwise, ``ValueError`` is raised. ``mpl.vector`` adds
-        the plot to ``matplotlib.axes.axes`` passed via ``ax`` argument. If
-        ``ax`` is not passed, ``matplotlib.axes.axes`` object is created
-        automatically and the size of a figure can be specified using
-        ``figsize``. By default, plotted vectors are coloured according to the
-        out-of-plane component of the vectors if the field has ``dim=3``. This can be changed by passing
-        ``color_field`` with ``dim=1``. To disable colouring of the plot,
-        ``use_color=False`` can be passed. A uniform vector colour can be
-        obtained by specifying ``use_color=false`` and ``color=color`` which is passed to matplotlib.
-        Colorbar is shown by default and it can
-        be removed from the plot by passing ``colorbar=False``. The label for
-        the colorbar can be defined by passing ``colorbar_label`` as a string.
+        (``dim=2`` or ``dim=3``). Otherwise, ``ValueError`` is raised.
+        ``mpl.vector`` adds the plot to ``matplotlib.axes.axes`` passed via
+        ``ax`` argument. If ``ax`` is not passed, ``matplotlib.axes.axes``
+        object is created automatically and the size of a figure can be
+        specified using ``figsize``. By default, plotted vectors are coloured
+        according to the out-of-plane component of the vectors if the field has
+        ``dim=3``. This can be changed by passing ``color_field`` with
+        ``dim=1``. To disable colouring of the plot, ``use_color=False`` can be
+        passed. A uniform vector colour can be obtained by specifying
+        ``use_color=false`` and ``color=color`` which is passed to matplotlib.
+        Colorbar is shown by default and it can be removed from the plot by
+        passing ``colorbar=False``. The label for the colorbar can be defined
+        by passing ``colorbar_label`` as a string.
 
         It is often the case that the region size is small (e.g. on a
         nanoscale) or very large (e.g. in units of kilometers). accordingly,
@@ -656,7 +657,7 @@ class MplField:
                 colorbar_label=None,
                 filename=None,
                 **kwargs):
-        """Contour line plot.
+        r"""Contour line plot.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a scalar field
@@ -677,7 +678,7 @@ class MplField:
         multiple of 3  (..., -6, -3, 0, 3, 6,...). According to that value, the
         axes will be scaled and appropriate units shown. For instance, if
         ``multiplier=1e-9`` is passed, all mesh points will be divided by
-        :math:`1\,\text{nm}` and :math:`\text{nm}` units will be used as
+        :math:`1,\text{nm}` and :math:`\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the best one is
         calculated internally. The plot can be saved as a PDF when ``filename``
         is passed.
@@ -719,7 +720,7 @@ class MplField:
             a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
             value, the axes will be scaled and appropriate units shown. For
             instance, if ``multiplier=1e-9`` is passed, the mesh points will be
-            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            divided by :math:`1\,\text{nm}` and :math:`\text{nm}` units will
             be used as axis labels. Defaults to ``None``.
 
         filename : str, optional
