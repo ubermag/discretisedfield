@@ -1,15 +1,16 @@
 """Matplotlib-based plotting."""
 import warnings
 
-import mpl_toolkits.axes_grid1.inset_locator
 import matplotlib.pyplot as plt
 import numpy as np
 
 import discretisedfield.util as dfu
 import ubermagutil.units as uu
 
+from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
-class MplField:
+
+class MplField(Mpl):
     """Matplotlib-based plotting methods.
 
     Before the field can be plotted, it must be sliced with a plane (e.g.
@@ -789,13 +790,6 @@ class MplField:
 
         self._savefig(filename)
 
-    def _setup_axes(self, ax, figsize, **kwargs):
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111, **kwargs)
-
-        return ax
-
     def _setup_multiplier(self, multiplier):
         return (self.field.mesh.region.multiplier
                 if multiplier is None else multiplier)
@@ -824,10 +818,6 @@ class MplField:
         ax.set_ylabel(dfu.raxesdict[self.field.mesh.attributes['axis2']]
                       + unit)
 
-    def _savefig(self, filename):
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
-
     def __dir__(self):
         dirlist = dir(self.__class__)
 
@@ -836,51 +826,3 @@ class MplField:
             dirlist.remove(attr)
 
         return dirlist
-
-
-def add_colorwheel(ax, width=1, height=1, loc='lower right', **kwargs):
-    """Colorwheel for hsv plots.
-
-    Creates colorwheel on new inset axis. See
-    ``mpl_toolkits.axes_grid1.inset_locator.inset_axes`` for the meaning of the
-    arguments and other possible keyword arguments.
-
-    Example
-    -------
-
-    .. plot::
-        :context: close-figs
-
-        1. Adding a colorwheel to an empty axis
-        >>> import discretisedfield.plotting as dfp
-        >>> import matplotlib.pyplot as plt
-        ...
-        >>> fig, ax = plt.subplots()
-        >>> ins_ax = dfp.add_colorwheel(ax)
-
-    """
-    n = 200
-    x = np.linspace(-1, 1, n)
-    y = np.linspace(-1, 1, n)
-    X, Y = np.meshgrid(x, y)
-
-    theta = np.arctan2(Y, X)
-    r = np.sqrt(X**2 + Y**2)
-
-    rgb = dfu.hls2rgb(hue=theta, lightness=r,
-                      lightness_clim=[0, 1 / np.sqrt(2)])
-
-    theta = theta.reshape((n, n, 1))
-
-    rgba = np.zeros((n, n, 4))
-    for i, xi in enumerate(x):
-        for j, yi in enumerate(y):
-            if xi**2 + yi**2 <= 1:
-                rgba[i, j, :3] = rgb[i, j, :]
-                rgba[i, j, 3] = 1
-
-    ax_ins = mpl_toolkits.axes_grid1.inset_locator.inset_axes(
-        ax, width=width, height=height, loc=loc, **kwargs)
-    ax_ins.imshow(rgba[:, ::-1, :])
-    ax_ins.axis('off')
-    return ax_ins
