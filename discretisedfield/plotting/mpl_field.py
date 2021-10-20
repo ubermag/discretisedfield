@@ -9,6 +9,7 @@ import ubermagutil.units as uu
 
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
+
 class MplField(Mpl):
     """Matplotlib-based plotting methods.
 

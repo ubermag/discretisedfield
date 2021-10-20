@@ -4,6 +4,7 @@ import discretisedfield.util as dfu
 
 from discretisedfield.plotting.mpl import Mpl
 
+
 class MplRegion(Mpl):
     def __init__(self, region):
         self.region = region
