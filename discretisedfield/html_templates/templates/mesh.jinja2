@@ -20,7 +20,9 @@
     <ul>
       {% for attr, val in mesh.attributes.items() %}
         {% if val.__class__ is defined and 'Mesh' in val.__class__.__name__%}
-          <li> MESH IN FOURIER SPACE</li>
+          {# "overwritten" `mesh` cleared at the end of the iteration #}
+          {% set mesh = val %}
+          <li>realspace {% include 'mesh.jinja2' %}</li>
         {% else %}
           <li>{{ attr }}: {{ val }}</li>
         {% endif %}
