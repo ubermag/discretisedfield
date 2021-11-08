@@ -1,0 +1,30 @@
+<strong>Mesh</strong>
+<ul>
+  {% set region = mesh.region %}
+  <li>{% include 'region.jinja2' %}</li>
+  <li>n = {{ mesh.n }}</li>
+  {%- if mesh.bc %}
+    <li>bc = {{ mesh.bc }}
+  {%- endif %}
+  {% if mesh.subregions %}
+    <li>Subregions:
+    <ul>
+      {% for key, subregion in mesh.subregions.items() %}
+        {% set region = subregion %}
+        {% set region_name = key %}
+        <li>{% include 'region.jinja2' %}</li>
+      {% endfor %}
+    </ul></li>
+  {% endif %}
+  <li>Attributes:
+    <ul>
+      {% for attr, val in mesh.attributes.items() %}
+        {% if val.__class__ is defined and 'Mesh' in val.__class__.__name__%}
+          <li> MESH IN FOURIER SPACE</li>
+        {% else %}
+          <li>{{ attr }}: {{ val }}</li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </li>
+</ul>

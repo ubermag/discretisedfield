@@ -1,4 +1,5 @@
 import k3d
+import os
 import copy
 import itertools
 import ipywidgets
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
+from .html_templates import html_template
 
 
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
@@ -440,7 +442,7 @@ class Mesh:
         else:
             return False
 
-    def __repr__(self):
+    def __str__(self):
         """Representation string.
 
         Returns
@@ -464,36 +466,13 @@ class Mesh:
         "Mesh(region=Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), ...)"
 
         """
-        return (f'Mesh(region={repr(self.region)}, n={self.n}, '
-                f'bc=\'{self.bc}\', subregions={self.subregions},'
-                f' attributes={self.attributes})')
+        string = f'Mesh(p1={self.region.p1}, p2={self.region.p2}, n={self.n}'
+        if self.bc:
+            string += f', bc={self.bc}'
+        return string + ')'
 
     def _repr_html_(self):
-        html_subregions = ''
-        if self.subregions:
-            html_subregions = '<li>Subregions<ul>'
-            for name, sr in self.subregions.items():
-                html_subregions += f'<li>{name}: {sr._repr_html_()}</li>'
-            html_subregions += '</ul></li>'
-        attributes_html = ''
-        for key, val in self.attributes.items():
-            try:
-                value = val._repr_html_()
-            except AttributeError:
-                value = val
-            attributes_html += f'<li>{key}: {value}</li>'
-        html = f'''<strong>Mesh</strong>
-        <ul>
-          <li>{self.region._repr_html_()}</li>
-          <li>n = {self.n}</li>
-          {f"<li>bc = {self.bc}</li>" if self.bc else ""}
-          {html_subregions}
-          <li>Attributes:
-            <ul>{attributes_html}</ul>
-          </li>
-        </ul>
-        '''
-        return html
+        return html_template('mesh').render(mesh=self)
 
     def index2point(self, index, /):
         """Convert cell's index to its coordinate.

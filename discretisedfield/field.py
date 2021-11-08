@@ -9,6 +9,7 @@ import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 import ubermagutil.typesystem as ts
+from .html_templates import html_template
 
 # TODO: tutorials, line operations
 
@@ -588,7 +589,7 @@ class Field:
         """
         return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
 
-    def __repr__(self):
+    def __str__(self):
         """Representation string.
 
         Returns
@@ -613,22 +614,15 @@ class Field:
         "Field(mesh=..., dim=1)"
 
         """
-        frepr = f"Field(mesh={repr(self.mesh)}, dim={self.dim}"
+        string = f'Field({str(self.mesh)}'
         if self.components:
-            frepr += f", components={self.components})"
+            string += f", components={self.components})"
         else:
-            frepr += ")"
-        return frepr
+            string += f"dim={self.dim})"
+        return string
 
     def _repr_html_(self):
-        html = f'''<strong>Field</strong>
-        <ul>
-          <li>{self.mesh._repr_html_()}</li>
-          <li>dim = {self.dim}</li>
-          <li>components: {self.components}</li>
-        </ul>
-        '''
-        return html
+        return html_template('field').render(field=self)
 
     def __call__(self, point):
         r"""Sample the field value at ``point``.
