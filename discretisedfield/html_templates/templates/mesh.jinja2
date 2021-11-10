@@ -1,33 +1,33 @@
 <strong>Mesh</strong>
 <ul>
-  {% set region = mesh.region %}
+  {%- set region = mesh.region %}
   <li>{% include 'region.jinja2' %}</li>
   <li>n = {{ mesh.n }}</li>
   {%- if mesh.bc %}
-    <li>bc = {{ mesh.bc }}
+    <li>bc = {{ mesh.bc }}</li>
   {%- endif %}
-  {% if mesh.subregions %}
+  {% if mesh.subregions -%}
     <li>Subregions:
     <ul>
-      {% for key, subregion in mesh.subregions.items() %}
-        {% set region = subregion %}
-        {% set region_name = key %}
+      {% for key, subregion in mesh.subregions.items() -%}
+        {% set region = subregion -%}
+        {% set region_name = key -%}
         <li>{% include 'region.jinja2' %}</li>
-      {% endfor %}
+      {% endfor -%}
     </ul></li>
-  {% endif %}
+  {% endif -%}
   <li>Attributes:
     <ul>
-      {% for attr, val in mesh.attributes.items() %}
+      {% for attr, val in mesh.attributes.items() -%}
         {# In Fourier space the corresponding realspace mesh is stored in the attributes. #}
-        {% if val.__class__ is defined and 'Mesh' in val.__class__.__name__%}
+        {%- if val.__class__ is defined and 'Mesh' in val.__class__.__name__ -%}
           {# "overwritten" `mesh` cleared at the end of the iteration #}
-          {% set mesh = val %}
+          {%- set mesh = val -%}
           <li>realspace {% include 'mesh.jinja2' %}</li>
-        {% else %}
+        {%- else -%}
           <li>{{ attr }}: {{ val }}</li>
-        {% endif %}
-      {% endfor %}
+        {%- endif %}
+      {% endfor -%}
     </ul>
   </li>
 </ul>

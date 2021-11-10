@@ -9,6 +9,12 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
+html_re = (r'<strong>Region</strong>( <i>\w+</i>)?\s*'
+           r'<ul>\s*'
+           r'<li>p1 = .*</li>\s*'
+           r'<li>p2 = .*</li>\s*'
+           r'</ul>')
+
 def check_region(region):
     assert isinstance(region.p1, tuple)
     assert len(region.p1) == 3
@@ -51,9 +57,7 @@ def check_region(region):
     assert re.match(pattern, str(region))
 
     assert isinstance(region._repr_html_(), str)
-    html_repr = region._repr_html_()
-    for key in ['Region', 'p1 = ', 'p2 = ']:
-        assert key in html_repr
+    assert re.match(html_re, region._repr_html_())
 
     assert region == region
     assert not region != region

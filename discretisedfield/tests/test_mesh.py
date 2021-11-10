@@ -8,7 +8,19 @@ import ipywidgets
 import numpy as np
 import discretisedfield as df
 import matplotlib.pyplot as plt
+from .test_region import html_re as region_html_re
 
+html_re = (
+    r'<strong>Mesh</strong>\s*<ul>\s*'
+    rf'<li>{region_html_re}</li>\s*'
+    r'<li>n = .*</li>\s*'
+    r'(<li>bc = ([xyz]{1,3}|neumann|dirichlet)<li>)?\s*'
+    fr'(<li>Subregions:\s*<ul>\s*(<li>{region_html_re}</li>\s*)+</ul></li>)?'
+    r'\s*<li>Attributes:\s*<ul>\s*'
+    r'(\s*<li>(.*:.*|.*Mesh.*)</li>)+\s*'
+    r'</ul>\s*</li>\s*'
+    r'</ul>'
+)
 
 def check_mesh(mesh):
     assert isinstance(mesh.region, df.Region)
@@ -40,11 +52,7 @@ def check_mesh(mesh):
     assert re.match(pattern, str(mesh))
 
     assert isinstance(mesh._repr_html_(), str)
-    html_repr = mesh._repr_html_()
-    for key in ['Mesh', 'Region', 'p1 = ', 'p2 = ', 'n = ', 'Attributes:']:
-        assert key in html_repr
-    if mesh.subregions:
-        assert 'Subregions' in html_repr
+    assert re.match(html_re, mesh._repr_html_(), re.DOTALL)
 
     assert isinstance(mesh.indices, types.GeneratorType)
     assert isinstance(mesh.__iter__(), types.GeneratorType)
