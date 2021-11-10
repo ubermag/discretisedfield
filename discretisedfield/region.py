@@ -45,7 +45,7 @@ class Region:
     >>> region = df.Region(p1=p1, p2=p2)
     ...
     >>> region
-    Region(...)
+    <discretisedfield.region.Region object at ...>
 
     2. An attempt to define a region whose one of the edge lengths is zero.
 
@@ -288,7 +288,7 @@ class Region:
         >>> p2 = (2, 2, 1)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> repr(region)
+        >>> str(region)
         'Region(p1=(0, 0, 0), p2=(2, 2, 1))'
 
         """

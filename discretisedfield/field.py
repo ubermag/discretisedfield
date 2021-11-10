@@ -69,7 +69,7 @@ class Field:
     ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
-    Field(mesh=...)
+    <discretisedfield.field.Field object at ...>
     >>> field.average
     (0.0, 0.0, 1.0)
 
@@ -84,7 +84,7 @@ class Field:
     ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
-    Field(mesh=...)
+    <discretisedfield.field.Field object at ...>
     >>> field.average
     3.14
 
@@ -102,7 +102,7 @@ class Field:
     ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value, norm=norm)
     >>> field
-    Field(mesh=...)
+    <discretisedfield.field.Field object at ...>
     >>> field.average
     (0.0, 0.0, 1.0)
 
@@ -390,7 +390,7 @@ class Field:
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.norm
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.norm.average
         1.0
         >>> field.norm = 2
@@ -534,7 +534,7 @@ class Field:
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(6, 0, 8))
         >>> field.orientation
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.orientation.norm.average
         1.0
 
@@ -610,8 +610,8 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh, dim=1, value=1)
-        >>> repr(field)
-        "Field(mesh=..., dim=1)"
+        >>> str(field)
+        'Field(Mesh(...), dim=1)'
 
         """
         string = f'Field({str(self.mesh)}'
@@ -698,15 +698,15 @@ class Field:
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.x
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.x.average
         0.0
         >>> field.y
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.y.average
         0.0
         >>> field.z
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.z.average
         1.0
         >>> field.z.dim
@@ -724,15 +724,15 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1),
         ...                  components=['mx', 'my', 'mz'])
         >>> field.mx
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.mx.average
         0.0
         >>> field.my
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.my.average
         0.0
         >>> field.mz
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.mz.average
         1.0
         >>> field.mz.dim
@@ -1059,7 +1059,7 @@ class Field:
         >>> f = df.Field(mesh, dim=1, value=2)
         >>> res = f**(-1)
         >>> res
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> res.average
         0.5
         >>> res = f**2
@@ -2270,7 +2270,7 @@ class Field:
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
         >>> (f_plane * df.dx).integral(direction='x', improper=True)
-        Field(...)
+        <discretisedfield.field.Field object at ...>
 
         """
         if improper and len(direction) > 1:
@@ -2385,17 +2385,17 @@ class Field:
         >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
         ...
         >>> f.plane(y=1)
-        Field(...)
+        <discretisedfield.field.Field object at ...>
 
         2. Extracting the field at the mesh region centre.
 
         >>> f.plane('z')
-        Field(...)
+        <discretisedfield.field.Field object at ...>
 
         3. Specifying the number of points.
 
         >>> f.plane('z', n=(10, 10))
-        Field(...)
+        <discretisedfield.field.Field object at ...>
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.plane`
 
@@ -2450,7 +2450,7 @@ class Field:
         >>> f.average
         (0.0, 0.0, 0.0)
         >>> f['r1']
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> f['r1'].average
         (1.0, 2.0, 3.0)
         >>> f['r2'].average
@@ -2518,7 +2518,7 @@ class Field:
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
         ...
         >>> field.project('z')
-        Field(...)
+        <discretisedfield.field.Field object at ...>
         >>> field.project('z').average
         (1.0, 2.0, 3.0)
         >>> field.project('z').array.shape
@@ -2974,21 +2974,21 @@ class Field:
         >>> filename = os.path.join(dirname, 'oommf-ovf2-bin4.omf')
         >>> field = df.Field.fromfile(filename)
         >>> field
-        Field(mesh=...)
+        <discretisedfield.field.Field object at ...>
 
         2. Read a field from the VTK file.
 
         >>> filename = os.path.join(dirname, 'vtk-file.vtk')
         >>> field = df.Field.fromfile(filename)
         >>> field
-        Field(mesh=...)
+        <discretisedfield.field.Field object at ...>
 
         3. Read a field from the HDF5 file.
 
         >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
         >>> field = df.Field.fromfile(filename)
         >>> field
-        Field(mesh=...)
+        <discretisedfield.field.Field object at ...>
 
         .. seealso:: :py:func:`~discretisedfield.Field._fromovf`
         .. seealso:: :py:func:`~discretisedfield.Field._fromhdf5`
@@ -3042,7 +3042,7 @@ class Field:
         >>> filename = os.path.join(dirname, 'oommf-ovf2-bin8.omf')
         >>> field = df.Field._fromovf(filename)
         >>> field
-        Field(mesh=...)
+        <discretisedfield.field.Field object at ...>
 
         .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
 
@@ -3188,7 +3188,7 @@ class Field:
         >>> filename = os.path.join(dirname, 'vtk-file.vtk')
         >>> field = df.Field._fromvtk(filename)
         >>> field
-        Field(mesh=...)
+        <discretisedfield.field.Field object at ...>
 
         .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
 
@@ -3277,7 +3277,7 @@ class Field:
         >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
         >>> field = df.Field._fromhdf5(filename)
         >>> field
-        Field(mesh=...)
+        <discretisedfield.field.Field object at ...>
 
         .. seealso:: :py:func:`~discretisedfield.Field._writehdf5`
 

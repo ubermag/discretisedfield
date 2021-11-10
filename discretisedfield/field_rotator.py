@@ -46,7 +46,7 @@ class FieldRotator:
     Access the rotated field.
 
     >>> field_rotator.field
-    Field(...)
+    <discretisedfield.field.Field object at ...>
     >>> field_rotator.field.mesh.n
     (20, 2, 10)
 

@@ -115,7 +115,7 @@ class Mesh:
     >>> region = df.Region(p1=p1, p2=p2)
     >>> mesh = df.Mesh(region=region, cell=cell)
     >>> mesh
-    Mesh(...)
+    <discretisedfield.mesh.Mesh object at ...>
 
     2. Defining a nano-sized thin film mesh by passing ``p1``, ``p2`` and ``n``
     parameters.
@@ -123,7 +123,7 @@ class Mesh:
     >>> n = (100, 50, 5)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> mesh
-    Mesh(...)
+    <discretisedfield.mesh.Mesh object at ...>
 
     3. Defining a mesh with periodic boundary conditions in :math:`x` and
     :math:`y` directions.
@@ -132,7 +132,7 @@ class Mesh:
     >>> region = df.Region(p1=p1, p2=p2)
     >>> mesh = df.Mesh(region=region, n=n, bc=bc)
     >>> mesh
-    Mesh(...)
+    <discretisedfield.mesh.Mesh object at ...>
 
     4. Defining a mesh with two subregions.
 
@@ -143,7 +143,7 @@ class Mesh:
     ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
     >>> mesh
-    Mesh(...)
+    <discretisedfield.mesh.Mesh object at ...>
 
     5. An attempt to define a mesh, whose region is not an aggregate of
     discretisation cells in the :math:`z` direction.
@@ -462,8 +462,8 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> bc = 'x'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc=bc)
-        >>> repr(mesh)
-        "Mesh(region=Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), ...)"
+        >>> str(mesh)
+        'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), n=(2, 2, 1), bc=x)'
 
         """
         string = f'Mesh(p1={self.region.p1}, p2={self.region.p2}, n={self.n}'
