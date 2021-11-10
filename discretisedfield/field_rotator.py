@@ -175,7 +175,7 @@ class FieldRotator:
         self._rotation = Rotation.from_matrix(np.eye(3))
         self._rotated_field = self._orig_field
 
-    def __repr__(self):
+    def __str__(self):
         return (f'FieldRotator(original={self._orig_field}, '
                 f'rotation quaternion={self._rotation.as_quat()})')
 
