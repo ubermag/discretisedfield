@@ -135,14 +135,14 @@ class TestRegion:
         assert np.allclose(region.centre, (-4.25e-9, 7.5e-9, -5e-9))
         assert abs(region.volume - 1425 * (1e-9**3)) < 1e-30
 
-    def test_repr(self):
+    def test_str(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         region = df.Region(p1=p1, p2=p2)
 
         check_region(region)
         rstr = 'Region(p1=(-1.0, -4.0, 11.0), p2=(15.0, 10.1, 12.5))'
-        assert repr(region) == rstr
+        assert str(region) == rstr
 
     def test_eq(self):
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))

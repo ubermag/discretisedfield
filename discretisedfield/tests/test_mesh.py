@@ -275,7 +275,7 @@ class TestMesh:
         assert mesh1 != mesh3
         assert mesh2 != mesh3
 
-    def test_repr(self):
+    def test_str(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
@@ -283,11 +283,9 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc='x')
         check_mesh(mesh)
 
-        rstr = ("Mesh(region=Region(p1=(-1.0, -4.0, 11.0), "
-                "p2=(15.0, 10.1, 12.5)), n=(16, 141, 3), "
-                "bc='x', subregions={}, attributes={'unit': 'm', "
-                "'fourierspace': False, 'isplane': False})")
-        assert repr(mesh) == rstr
+        rstr = ("Mesh(p1=(-1.0, -4.0, 11.0), p2=(15.0, 10.1, 12.5))"
+                ", n=(16, 141, 3), bc='x')")
+        assert str(mesh) == rstr
 
     def test_index2point(self):
         p1 = (15, -4, 12.5)

@@ -27,7 +27,7 @@ def check_field(field):
 
     rstr = str(field)
     assert isinstance(rstr, str)
-    pattern = r'^Field(Mesh\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\), n=.+'
+    pattern = r'^Field\(Mesh\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\), n=.+'
     if field.mesh.bc:
         pattern += r', bc=([xyz]{1,3}|neumann|dirichlet)'
     pattern += r'\)'
