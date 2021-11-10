@@ -618,7 +618,7 @@ class Field:
         if self.components:
             string += f", components={self.components})"
         else:
-            string += f"dim={self.dim})"
+            string += f", dim={self.dim})"
         return string
 
     def _repr_html_(self):
