@@ -283,8 +283,8 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc='x')
         check_mesh(mesh)
 
-        rstr = ("Mesh(p1=(-1.0, -4.0, 11.0), p2=(15.0, 10.1, 12.5))"
-                ", n=(16, 141, 3), bc='x')")
+        rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), n=(16, 141, 3), "
+                "bc=x)")
         assert str(mesh) == rstr
 
     def test_index2point(self):

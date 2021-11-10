@@ -12,9 +12,9 @@ def check_rotator(rotator):
     pattern = r'^FieldRotator\(original=.*, rotation quaternion=.*\)$'
     assert re.match(pattern, str(rotator))
 
-    assert isinstance(rotator._repr_html(), str)
+    assert isinstance(rotator._repr_html_(), str)
     html_repr = rotator._repr_html_()
-    for key in ['FieldRotator', 'Unrotated Field', 'Internal rotation matrix']:
+    for key in ['FieldRotator', 'Unrotated', 'Internal rotation matrix']:
         assert key in html_repr
 
 

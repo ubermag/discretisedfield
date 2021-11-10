@@ -32,18 +32,18 @@ def check_field(field):
         pattern += r', bc=([xyz]{1,3}|neumann|dirichlet)'
     pattern += r'\)'
     if field.components:
-        pattern += r', components=\[\w+\]'
+        pattern += r', components=\[.+\]'
     else:
         pattern += r', dim=\d+'
     pattern += r'\)$'
-    assert re.match(pattern, rstr)
+    assert re.search(pattern, rstr)
 
     assert isinstance(field._repr_html_(), str)
     html_repr = field._repr_html_()
     for key in ['Field', 'Mesh', 'Region', 'p1 = ', 'p2 = ', 'n = ',
                 'Attributes:', 'dim = ']:
         assert key in html_repr
-    if mesh.subregions:
+    if field.mesh.subregions:
         assert 'Subregions' in html_repr
     if field.components:
         assert 'components' in html_repr
