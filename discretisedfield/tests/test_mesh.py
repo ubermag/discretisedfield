@@ -32,9 +32,19 @@ def check_mesh(mesh):
     assert isinstance(len(mesh), int)
     assert len(mesh) > 0
 
-    assert isinstance(repr(mesh), str)
-    pattern = r'^Mesh\(region=Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$'
-    assert re.search(pattern, repr(mesh))
+    assert isinstance(str(mesh), str)
+    pattern = r'^Mesh\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\), n=.+'
+    if mesh.bc:
+        pattern += r', bc=([xyz]{1,3}|neumann|dirichlet)'
+    pattern += r'\)$'
+    assert re.match(pattern, str(mesh))
+
+    assert isinstance(mesh._repr_html_(), str)
+    html_repr = mesh._repr_html_()
+    for key in ['Mesh', 'Region', 'p1 = ', 'p2 = ', 'n = ', 'Attributes:']:
+        assert key in html_repr
+    if mesh.subregions:
+        assert 'Subregions' in html_repr
 
     assert isinstance(mesh.indices, types.GeneratorType)
     assert isinstance(mesh.__iter__(), types.GeneratorType)

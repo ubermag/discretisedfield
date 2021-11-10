@@ -46,9 +46,14 @@ def check_region(region):
 
     assert isinstance(region.volume, numbers.Real)
 
-    assert isinstance(repr(region), str)
+    assert isinstance(str(region), str)
     pattern = r'^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$'
-    assert re.search(pattern, repr(region))
+    assert re.match(pattern, str(region))
+
+    assert isinstance(region._repr_html_(), str)
+    html_repr = region._repr_html_()
+    for key in ['Region', 'p1 = ', 'p2 = ']:
+        assert key in html_repr
 
     assert region == region
     assert not region != region
