@@ -120,8 +120,8 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        scalar_kw = {} if scalar_kw is None else scalar_kw
-        vector_kw = {} if vector_kw is None else vector_kw
+        scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
+        vector_kw = {} if vector_kw is None else vector_kw.copy()
         vector_kw.setdefault('use_color', False)
         vector_kw.setdefault('colorbar', False)
 
