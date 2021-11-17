@@ -2,4 +2,4 @@ include README.md
 include LICENSE
 include discretisedfield/util/plotting-style.mplstyle
 recursive-include discretisedfield/tests/test_sample *
-include discretisedfield/html_templates/templates/*.jinja2
+include discretisedfield/html/templates/*.jinja2
