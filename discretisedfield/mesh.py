@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
-from .html_templates import html_template
+from . import html
 
 
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
@@ -471,8 +471,11 @@ class Mesh:
             string += f', bc={self.bc}'
         return string + ')'
 
+    def __repr__(self):
+        return html.strip_tags(self._repr_html_())
+
     def _repr_html_(self):
-        return html_template('mesh').render(mesh=self)
+        return html.get_template('mesh').render(mesh=self)
 
     def index2point(self, index, /):
         """Convert cell's index to its coordinate.

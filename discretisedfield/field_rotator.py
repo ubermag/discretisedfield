@@ -4,7 +4,7 @@ import discretisedfield as df
 from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial.transform import Rotation
 
-from .html_templates import html_template
+from . import html
 
 class FieldRotator:
     r"""Rotate a field.
@@ -179,8 +179,11 @@ class FieldRotator:
         return (f'FieldRotator(original={self._orig_field}, '
                 f'rotation quaternion={self._rotation.as_quat()})')
 
+    def __repr__(self):
+        return html.strip_tags(self._repr_html_())
+
     def _repr_html_(self):
-        return html_template('field_rotator').render(
+        return html.get_template('field_rotator').render(
             field=self._orig_field, rotation_matrix=self._rotation.as_matrix())
 
     def _map_and_interpolate(self, new_mesh, rot_field):

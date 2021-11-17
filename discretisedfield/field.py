@@ -9,7 +9,7 @@ import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 import ubermagutil.typesystem as ts
-from .html_templates import html_template
+from . import html
 
 # TODO: tutorials, line operations
 
@@ -621,8 +621,11 @@ class Field:
             string += f", dim={self.dim})"
         return string
 
+    def __repr__(self):
+        return html.strip_tags(self._repr_html_())
+
     def _repr_html_(self):
-        return html_template('field').render(field=self)
+        return html.get_template('field').render(field=self)
 
     def __call__(self, point):
         r"""Sample the field value at ``point``.
