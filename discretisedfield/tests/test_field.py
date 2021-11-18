@@ -1932,12 +1932,12 @@ class TestField:
         self.pf.x.plane('x', n=(3, 4)).mpl(ax=ax)
 
         self.pf.z.plane('x').mpl(figsize=(12, 6),
-                                 scalar_kwargs={
+                                 scalar_kw={
                                      'filter_field': self.pf.norm,
                                      'colorbar_label': 'scalar',
                                      'cmap': 'twilight',
                                  },
-                                 vector_kwargs={
+                                 vector_kw={
                                      'color_field': self.pf.y,
                                      'use_color': True,
                                      'colorbar': True,
