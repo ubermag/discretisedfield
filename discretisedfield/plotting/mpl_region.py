@@ -2,8 +2,10 @@ import ubermagutil.units as uu
 import matplotlib.pyplot as plt
 import discretisedfield.util as dfu
 
+from discretisedfield.plotting.mpl import Mpl
 
-class MplRegion:
+
+class MplRegion(Mpl):
     def __init__(self, region):
         self.region = region
 
@@ -91,15 +93,7 @@ class MplRegion:
         ax.set_facecolor('#ffffff')  # white face color
         ax.tick_params(axis='both', which='major', pad=0)  # no pad for ticks
 
-        if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
-
-    def _setup_axes(self, ax, figsize, **kwargs):
-        if ax is None:
-            fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111, **kwargs)
-
-        return ax
+        self._savefig(filename)
 
     def _setup_multiplier(self, multiplier):
         return self.region.multiplier if multiplier is None else multiplier
