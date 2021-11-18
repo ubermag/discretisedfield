@@ -175,16 +175,41 @@ class FieldRotator:
         self._rotation = Rotation.from_matrix(np.eye(3))
         self._rotated_field = self._orig_field
 
-    def __str__(self):
-        return (f'FieldRotator(original={self._orig_field}, '
-                f'rotation quaternion={self._rotation.as_quat()})')
-
     def __repr__(self):
+        """Representation string.
+
+        Internally `self._repr_html_()` is called and all html tags are removed
+        from this string.
+
+        Returns
+        -------
+        str
+
+            Representation string.
+
+        Example
+        -------
+        1. Getting representation string.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh, dim=1, value=1)
+        >>> rotator = df.FieldRotator(field)
+        >>> rotator
+        'FieldRotator(...)'
+
+        """
         return html.strip_tags(self._repr_html_())
 
     def _repr_html_(self):
+        """Show HTML-based representation in Jupyter notebook."""
         return html.get_template('field_rotator').render(
-            field=self._orig_field, rotation_matrix=self._rotation.as_matrix())
+            field=self._orig_field, rotation_quat=self._rotation.as_quat())
 
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
