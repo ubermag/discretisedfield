@@ -7,7 +7,7 @@
     <li>bc = {{ mesh.bc }}</li>
   {%- endif %}
   {% if mesh.subregions -%}
-    <li>Subregions:
+    <li>subregions:
     <ul>
       {% for key, subregion in mesh.subregions.items() -%}
         {% set region = subregion -%}
@@ -16,7 +16,7 @@
       {% endfor -%}
     </ul></li>
   {% endif -%}
-  <li>Attributes:
+  <li>attributes:
     <ul>
       {% for attr, val in mesh.attributes.items() -%}
         {# In Fourier space the corresponding realspace mesh is stored in the attributes. #}
