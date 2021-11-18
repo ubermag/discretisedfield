@@ -226,10 +226,10 @@ class DValue:
         >>> dS2 = dS * dS
         >>> # DValue and field dot product.
         >>> field.plane('z') @ dS
-        <discretisedfield.field.Field object at ...>
+        Field(...)
         >>> # DValue and array_like object
         >>> field.plane('z') * (dS @ (1, 1, 1))
-        <discretisedfield.field.Field object at ...>
+        Field(...)
 
         """
         if isinstance(other, self.__class__):

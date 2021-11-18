@@ -46,7 +46,7 @@ class FieldRotator:
     Access the rotated field.
 
     >>> field_rotator.field
-    <discretisedfield.field.Field object at ...>
+    Field(...)
     >>> field_rotator.field.mesh.n
     (20, 2, 10)
 
@@ -201,7 +201,7 @@ class FieldRotator:
         >>> field = df.Field(mesh, dim=1, value=1)
         >>> rotator = df.FieldRotator(field)
         >>> rotator
-        'FieldRotator(...)'
+        FieldRotator(...)
 
         """
         return html.strip_tags(self._repr_html_())

@@ -74,9 +74,9 @@ def topological_charge_density(field, /, method='continuous'):
     >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
     ...
     >>> dft.topological_charge_density(f.plane('z'))
-    <discretisedfield.field.Field object at ...>
+    Field(...)
     >>> dft.topological_charge_density(f.plane('z'), method='berg-luescher')
-    <discretisedfield.field.Field object at ...>
+    Field(...)
 
     2. An attempt to compute the topological charge density of a scalar field.
 
@@ -360,7 +360,7 @@ def emergent_magnetic_field(field):
     >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
     ...
     >>> dft.emergent_magnetic_field(f)
-    <discretisedfield.field.Field object at ...>
+    Field(...)
 
     """
     if field.dim != 3:
@@ -430,7 +430,7 @@ def neigbouring_cell_angle(field, /, direction, units='rad'):
     >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
     ...
     >>> dft.neigbouring_cell_angle(field, direction='z')
-    <discretisedfield.field.Field object at ...>
+    Field(...)
 
     """
     if not field.dim == 3:
@@ -520,7 +520,7 @@ def max_neigbouring_cell_angle(field, /, units='rad'):
     >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
     ...
     >>> dft.max_neigbouring_cell_angle(field)
-    <discretisedfield.field.Field object at ...>
+    Field(...)
 
     """
     x_angles = neigbouring_cell_angle(field, 'x', units=units).array.squeeze()
