@@ -51,8 +51,8 @@ def add_colorwheel(ax, width=1, height=1, loc='lower right', **kwargs):
         >>> import discretisedfield.plotting as dfp
         >>> import matplotlib.pyplot as plt
         ...
-        >>> fig, ax = plt.subplots()
-        >>> ins_ax = dfp.add_colorwheel(ax)
+        >>> fig, ax = plt.subplots()  # doctest: +SKIP
+        >>> ins_ax = dfp.add_colorwheel(ax)  # doctest: +SKIP
 
     """
     n = 200
