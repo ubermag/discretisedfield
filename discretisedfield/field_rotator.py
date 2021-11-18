@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation
 
 from . import html
 
+
 class FieldRotator:
     r"""Rotate a field.
 

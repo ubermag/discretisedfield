@@ -10,6 +10,7 @@ import discretisedfield as df
 import matplotlib.pyplot as plt
 from .test_region import html_re as region_html_re
 
+
 html_re = (
     r'<strong>Mesh</strong>\s*<ul>\s*'
     rf'<li>{region_html_re}</li>\s*'
@@ -21,6 +22,7 @@ html_re = (
     r'</ul>\s*</li>\s*'
     r'</ul>'
 )
+
 
 def check_mesh(mesh):
     assert isinstance(mesh.region, df.Region)

@@ -12,6 +12,7 @@ import discretisedfield as df
 import matplotlib.pyplot as plt
 from .test_mesh import TestMesh, html_re as mesh_html_re
 
+
 html_re = (
     r'<strong>Field</strong>\s*<ul>\s*'
     fr'<li>{mesh_html_re}</li>\s*'

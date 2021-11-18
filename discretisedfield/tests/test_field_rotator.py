@@ -11,6 +11,7 @@ html_re = (
     r'<li>rotation_quaternion:\s*<pre>.*</pre>\s*</li>\s*</ul>'
 )
 
+
 def check_rotator(rotator):
     check_field(rotator.field)
 

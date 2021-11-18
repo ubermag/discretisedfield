@@ -9,11 +9,14 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
-html_re = (r'<strong>Region</strong>( <i>\w+</i>)?\s*'
-           r'<ul>\s*'
-           r'<li>p1 = .*</li>\s*'
-           r'<li>p2 = .*</li>\s*'
-           r'</ul>')
+html_re = (
+    r'<strong>Region</strong>( <i>\w+</i>)?\s*'
+    r'<ul>\s*'
+    r'<li>p1 = .*</li>\s*'
+    r'<li>p2 = .*</li>\s*'
+    r'</ul>'
+)
+
 
 def check_region(region):
     assert isinstance(region.p1, tuple)
