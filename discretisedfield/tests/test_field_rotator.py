@@ -7,21 +7,19 @@ from .test_field import check_field, html_re as field_html_re
 
 html_re = (
     r'<strong>FieldRotator</strong>\s*<ul>\s*'
-    fr'<li>Unrotated {field_html_re}</li>\s*'
-    r'<li>Internal rotation matrix:\s*<pre>.*</pre>\s*</li></ul>'
+    fr'<li>unrotated {field_html_re}</li>\s*'
+    r'<li>rotation_quaternion:\s*<pre>.*</pre>\s*</li>\s*</ul>'
 )
 
 def check_rotator(rotator):
     check_field(rotator.field)
 
-    assert isinstance(str(rotator), str)
-    pattern = r'^FieldRotator\(original=.*, rotation quaternion=.*\)$'
-    assert re.match(pattern, str(rotator))
+    assert isinstance(repr(rotator), str)
+    pattern = r'^FieldRotator\(unrotatedField\(.+\), rotation_quaternion:.*\)$'
+    assert re.match(pattern, repr(rotator))
 
     assert isinstance(rotator._repr_html_(), str)
-    html_repr = rotator._repr_html_()
-    for key in ['FieldRotator', 'Unrotated', 'Internal rotation matrix']:
-        assert key in html_repr
+    assert re.match(html_re, rotator._repr_html_(), re.DOTALL)
 
 
 class TestFieldRotator:

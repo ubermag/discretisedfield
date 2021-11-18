@@ -15,8 +15,8 @@ html_re = (
     rf'<li>{region_html_re}</li>\s*'
     r'<li>n = .*</li>\s*'
     r'(<li>bc = ([xyz]{1,3}|neumann|dirichlet)<li>)?\s*'
-    fr'(<li>Subregions:\s*<ul>\s*(<li>{region_html_re}</li>\s*)+</ul></li>)?'
-    r'\s*<li>Attributes:\s*<ul>\s*'
+    fr'(<li>subregions:\s*<ul>\s*(<li>{region_html_re}</li>\s*)+</ul></li>)?'
+    r'\s*<li>attributes:\s*<ul>\s*'
     r'(\s*<li>(.*:.*|.*Mesh.*)</li>)+\s*'
     r'</ul>\s*</li>\s*'
     r'</ul>'
@@ -44,11 +44,8 @@ def check_mesh(mesh):
     assert isinstance(len(mesh), int)
     assert len(mesh) > 0
 
-    assert isinstance(str(mesh), str)
-    pattern = r'^Mesh\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\), n=.+'
-    if mesh.bc:
-        pattern += r', bc=([xyz]{1,3}|neumann|dirichlet)'
-    pattern += r'\)$'
+    assert isinstance(repr(mesh), str)
+    pattern = r'^Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$'
     assert re.match(pattern, str(mesh))
 
     assert isinstance(mesh._repr_html_(), str)
@@ -283,7 +280,7 @@ class TestMesh:
         assert mesh1 != mesh3
         assert mesh2 != mesh3
 
-    def test_str(self):
+    def test_repr(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
@@ -291,9 +288,10 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc='x')
         check_mesh(mesh)
 
-        rstr = ("Mesh(p1=(-1, -4, 11), p2=(15, 10.1, 12.5), n=(16, 141, 3), "
-                "bc=x)")
-        assert str(mesh) == rstr
+        rstr = ("Mesh(Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5)), "
+                "n=(16, 141, 3), bc=x, attributes: (unit: m, fourierspace: "
+                "False, isplane: False))")
+        assert repr(mesh) == rstr
 
     def test_index2point(self):
         p1 = (15, -4, 12.5)

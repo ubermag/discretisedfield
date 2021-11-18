@@ -33,21 +33,16 @@ def check_field(field):
     average = field.average
     assert isinstance(average, (tuple, numbers.Complex))
 
-    rstr = str(field)
+    rstr = repr(field)
     assert isinstance(rstr, str)
-    pattern = r'^Field\(Mesh\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\), n=.+'
-    if field.mesh.bc:
-        pattern += r', bc=([xyz]{1,3}|neumann|dirichlet)'
-    pattern += r'\)'
+    pattern = (r'^Field\(Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), .+\),'
+               r' dim=\d+\)$')
     if field.components:
-        pattern += r', components=\[.+\]'
-    else:
-        pattern += r', dim=\d+'
-    pattern += r'\)$'
+        pattern = pattern[:-3] + r', components: \(.+\)\)$'
     assert re.search(pattern, rstr)
 
     assert isinstance(field._repr_html_(), str)
-    assert re.search(html_re, field._repr_html_())
+    assert re.search(html_re, field._repr_html_(), re.DOTALL)
 
     assert isinstance(field.__iter__(), types.GeneratorType)
     assert len(list(field)) == len(field.mesh)
