@@ -442,8 +442,11 @@ class Mesh:
         else:
             return False
 
-    def __str__(self):
+    def __repr__(self):
         """Representation string.
+
+        Internally `self._repr_html_()` is called and all html tags are removed
+        from this string.
 
         Returns
         -------
@@ -462,19 +465,14 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> bc = 'x'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc=bc)
-        >>> str(mesh)
+        >>> mesh
         'Mesh(p1=(0, 0, 0), p2=(2, 2, 1), n=(2, 2, 1), bc=x)'
 
         """
-        string = f'Mesh(p1={self.region.p1}, p2={self.region.p2}, n={self.n}'
-        if self.bc:
-            string += f', bc={self.bc}'
-        return string + ')'
-
-    def __repr__(self):
         return html.strip_tags(self._repr_html_())
 
     def _repr_html_(self):
+        """Show HTML-based representation in Jupyter notebook."""
         return html.get_template('mesh').render(mesh=self)
 
     def index2point(self, index, /):

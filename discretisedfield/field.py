@@ -589,8 +589,11 @@ class Field:
         """
         return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
 
-    def __str__(self):
+    def __repr__(self):
         """Representation string.
+
+        Internally `self._repr_html_()` is called and all html tags are removed
+        from this string.
 
         Returns
         -------
@@ -610,21 +613,14 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh, dim=1, value=1)
-        >>> str(field)
-        'Field(Mesh(...), dim=1)'
+        >>> field
+        'Field(...)'
 
         """
-        string = f'Field({str(self.mesh)}'
-        if self.components:
-            string += f", components={self.components})"
-        else:
-            string += f", dim={self.dim})"
-        return string
-
-    def __repr__(self):
         return html.strip_tags(self._repr_html_())
 
     def _repr_html_(self):
+        """Show HTML-based representation in Jupyter notebook."""
         return html.get_template('field').render(field=self)
 
     def __call__(self, point):

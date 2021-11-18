@@ -269,8 +269,11 @@ class Region:
         """
         return dfu.array2tuple(np.random.random(3) * self.edges + self.pmin)
 
-    def __str__(self):
+    def __repr__(self):
         r"""Representation string.
+
+        Internally `self._repr_html_()` is called and all html tags are removed
+        from this string.
 
         Returns
         -------
@@ -288,16 +291,14 @@ class Region:
         >>> p2 = (2, 2, 1)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> str(region)
+        >>> region
         'Region(p1=(0, 0, 0), p2=(2, 2, 1))'
 
         """
-        return f'Region(p1={self.pmin}, p2={self.pmax})'
-
-    def __repr__(self):
         return html.strip_tags(self._repr_html_())
 
     def _repr_html_(self):
+        """Show HTML-based representation in Jupyter notebook."""
         return html.get_template('region').render(region=self)
 
     def __eq__(self, other):
