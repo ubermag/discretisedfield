@@ -109,11 +109,13 @@ class Field:
 
     """
 
-    def __init__(self, mesh, dim, value=0, norm=None, components=None):
+    def __init__(self, mesh, dim, value=0, norm=None, components=None,
+                 dtype=np.float64):
         self.mesh = mesh
         self.dim = dim
         self.value = value
         self.norm = norm
+        self.dtype = dtype
 
         self._components = None  # required in here for correct initialisation
         self.components = components
@@ -243,7 +245,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = dfu.as_array(self.mesh, self.dim, self._value)
+        value_array = dfu.as_array(self.mesh, self.dim, self._value,
+                                   dtype=self.dtype)
         if np.array_equal(self.array, value_array):
             return self._value
         else:
@@ -252,7 +255,7 @@ class Field:
     @value.setter
     def value(self, val):
         self._value = val
-        self.array = dfu.as_array(self.mesh, self.dim, val)
+        self.array = dfu.as_array(self.mesh, self.dim, val, dtype=self.dtype)
 
     @property
     def components(self):
@@ -3348,7 +3351,8 @@ class Field:
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components)
+                              components=self.components,
+                              dtype=np.complex128)
 
     @property
     def ifftn(self):
@@ -3369,7 +3373,8 @@ class Field:
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components)
+                              components=self.components,
+                              dtype=np.complex128)
 
     @property
     def rfftn(self):
@@ -3391,7 +3396,8 @@ class Field:
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components)
+                              components=self.components,
+                              dtype=np.complex128)
 
     @property
     def irfftn(self):
@@ -3415,7 +3421,8 @@ class Field:
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components)
+                              components=self.components,
+                              dtype=np.complex128)
 
     def _fft_mesh(self, rfft=False):
         """FFT can be one of fftfreq, rfftfreq."""
@@ -3482,7 +3489,8 @@ class Field:
         """Complex conjugate of complex field."""
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array.conjugate(),
-                              components=self.components)
+                              components=self.components,
+                              dtype=np.complex128)
 
     # TODO check and write tests
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
