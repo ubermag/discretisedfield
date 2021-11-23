@@ -20,8 +20,7 @@ def array2tuple(array):
 
 def as_array(mesh, dim, val, dtype=np.float64):
     array = np.empty((*mesh.n, dim), dtype=dtype)
-    _fill_array(val, array, mesh, dim)
-    return array
+    return _fill_array(val, array, mesh, dim)
 
 
 @functools.singledispatch
@@ -36,6 +35,7 @@ def _(val, array, mesh, dim):
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
     array.fill(val)
+    return array
 
 
 @_fill_array.register(list)
@@ -45,6 +45,7 @@ def _(val, array, mesh, dim):
         raise ValueError(f'Wrong dimension {len(val)} provided for value;'
                          f' expected dimension is {dim}')
     array[..., :] = val
+    return array
 
 
 @_fill_array.register(np.ndarray)
@@ -56,6 +57,7 @@ def _(val, array, mesh, dim):
     else:
         raise ValueError(f'Wrong shape {val.shape} provided for value;'
                          f' expected shape is {(*mesh.n, dim)} or {(dim,)}.')
+    return array
 
 
 @_fill_array.register(collections.abc.Callable)
@@ -63,6 +65,7 @@ def _(val, array, mesh, dim):
     for index, point in zip(mesh.indices, mesh):
         res = val(point)
         array[index] = res
+    return array
 
 
 @_fill_array.register(dict)
@@ -98,6 +101,7 @@ def _(val, array, mesh, dim):
                         + "contained within one of the subregions, " \
                         + "key 'default' must be specified for value."
                 raise KeyError(msg)
+    return array
 
 
 def bergluescher_angle(v1, v2, v3):
