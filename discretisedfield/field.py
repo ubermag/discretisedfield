@@ -113,12 +113,14 @@ class Field:
                  dtype=np.float64):
         self.mesh = mesh
         self.dim = dim
-        self.value = value
-        self.norm = norm
         self.dtype = dtype
 
+        # order in here is important to avoid infinite recursion
         self._components = None  # required in here for correct initialisation
         self.components = components
+
+        self.value = value
+        self.norm = norm
 
     @property
     def value(self):
