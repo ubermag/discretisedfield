@@ -2,6 +2,7 @@ import cmath
 import numbers
 import colorsys
 import collections
+import functools
 import numpy as np
 
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
@@ -17,72 +18,86 @@ def array2tuple(array):
     return array.item() if array.size == 1 else tuple(array.tolist())
 
 
-def as_array(mesh, dim, val):
-    array = np.empty((*mesh.n, dim))
-    if isinstance(val, numbers.Real) and (dim == 1 or val == 0):
-        # The array for a scalar field with numbers.Real value or any
-        # field with zero value.
-        array.fill(val)
-    elif isinstance(val, complex) and (dim == 1 or val == 0):
-        array = np.empty((*mesh.n, dim), dtype='complex128')
-        array.fill(val)
-    elif isinstance(val, np.ndarray) and val.shape == array.shape:
-        array = val
-    elif isinstance(val, (tuple, list, np.ndarray)):
-        if len(val) != dim:
-            msg = (f'Wrong dimension {len(val)} provided for value;'
-                   f' expected dimension is {dim}')
-            raise ValueError(msg)
-        if (isinstance(val, np.ndarray) and val.dtype == 'complex128'
-                or np.iscomplex(val).any()):
-            array = np.empty((*mesh.n, dim), dtype='complex128')
-        array[..., :] = val
-    elif callable(val):
-        for index, point in zip(mesh.indices, mesh):
-            res = val(point)
-            try:
-                array[index] = res
-            except TypeError:
-                array = np.array(array, dtype='complex128')
-                array[index] = res
-    elif isinstance(val, dict) and mesh.subregions:
-        if np.iscomplex(list(val.values())).any():
-            array = np.empty((*mesh.n, dim), dtype='complex128')
-        for index, point in zip(mesh.indices, mesh):
-            for region in mesh.subregions.keys():
-                if point in mesh.subregions[region]:
-                    try:
-                        if callable(val[region]):
-                            array[index] = val[region](point)
-                        else:
-                            array[index] = val[region]
-                    except KeyError:
-                        try:
-                            if callable(val['default']):
-                                array[index] = val['default'](point)
-                            else:
-                                array[index] = val['default']
-                        except KeyError:
-                            msg = f"'{region}' or 'default' in value. " \
-                                  + "Either specify all subregions or " \
-                                  + "use key 'default'."
-                            raise KeyError(msg)
-                    break
-            else:
-                try:
-                    if callable(val['default']):
-                        array[index] = val['default'](point)
-                    else:
-                        array[index] = val['default']
-                except KeyError:
-                    msg = "'default'. If parts of the mesh are not " \
-                          + "contained within one of the subregions, " \
-                          + "key 'default' must be specified for value."
-                    raise KeyError(msg)
-    else:
-        msg = f'Unsupported {type(val)} or invalid value dimensions.'
-        raise ValueError(msg)
+def as_array(mesh, dim, val, dtype=np.float64):
+    array = np.empty((*mesh.n, dim), dtype=dtype)
+    _fill_array(val, array, mesh, dim)
     return array
+
+
+@functools.singledispatch
+def _fill_array(val, array, mesh, dim):
+    raise ValueError('Unsupported type {type(val)}.')
+
+
+@_fill_array.register(numbers.Complex)  # contains numbers.Real
+def _(val, array, mesh, dim):
+    # TODO why not allow uniform values for vector fields
+    if dim > 1 and val != 0:
+        raise ValueError('Wrong dimension 1 provided for value;'
+                         f' expected dimension is {dim}')
+    array.fill(val)
+
+
+@_fill_array.register(list)
+@_fill_array.register(tuple)
+def _(val, array, mesh, dim):
+    if len(val) != dim:
+        raise ValueError(f'Wrong dimension {len(val)} provided for value;'
+                         f' expected dimension is {dim}')
+    array[..., :] = val
+
+
+@_fill_array.register(np.ndarray)
+def _(val, array, mesh, dim):
+    if val.shape == (dim,):
+        array[..., :] = val
+    elif val.shape == array.shape:
+        array = val
+    else:
+        raise ValueError(f'Wrong shape {val.shape} provided for value;'
+                         f' expected shape is {(*mesh.n, dim)} or {(dim,)}.')
+
+
+@_fill_array.register(collections.abc.Callable)
+def _(val, array, mesh, dim):
+    for index, point in zip(mesh.indices, mesh):
+        res = val(point)
+        array[index] = res
+
+
+@_fill_array.register(dict)
+def _(val, array, mesh, dim):
+    for index, point in zip(mesh.indices, mesh):
+        for region in mesh.subregions.keys():
+            if point in mesh.subregions[region]:
+                try:
+                    if callable(val[region]):
+                        array[index] = val[region](point)
+                    else:
+                        array[index] = val[region]
+                except KeyError:
+                    try:
+                        if callable(val['default']):
+                            array[index] = val['default'](point)
+                        else:
+                            array[index] = val['default']
+                    except KeyError:
+                        msg = f"'{region}' or 'default' in value. " \
+                                + "Either specify all subregions or " \
+                                + "use key 'default'."
+                        raise KeyError(msg)
+                break
+        else:
+            try:
+                if callable(val['default']):
+                    array[index] = val['default'](point)
+                else:
+                    array[index] = val['default']
+            except KeyError:
+                msg = "'default'. If parts of the mesh are not " \
+                        + "contained within one of the subregions, " \
+                        + "key 'default' must be specified for value."
+                raise KeyError(msg)
 
 
 def bergluescher_angle(v1, v2, v3):
