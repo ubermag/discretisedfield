@@ -203,6 +203,9 @@ class TestField:
                 with pytest.raises((ValueError, TypeError)):
                     f = df.Field(mesh, dim=dim)
 
+        with pytest.raises(ValueError):
+            df.Field(self.meshes[0], dim=1, value='string')
+
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
             f = df.Field(mesh, dim=3)
