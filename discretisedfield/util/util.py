@@ -18,56 +18,33 @@ def array2tuple(array):
     return array.item() if array.size == 1 else tuple(array.tolist())
 
 
-def as_array(mesh, dim, val, dtype):
-    array = np.empty((*mesh.n, dim), dtype=dtype)
-    return _fill_array(val, array, mesh, dim)
-
-
 @functools.singledispatch
-def _fill_array(val, array, mesh, dim):
+def as_array(val, mesh, dim, dtype):
     raise ValueError('Unsupported type {type(val)}.')
 
 
-@_fill_array.register(numbers.Complex)  # contains numbers.Real
-def _(val, array, mesh, dim):
-    if dim > 1 and val != 0:
+@as_array.register(numbers.Complex)
+@as_array.register(collections.abc.Iterable)
+def _(val, mesh, dim, dtype):
+    # we should think about allowing this as well
+    if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
-    array.fill(val)
-    return array
+    return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
-@_fill_array.register(collections.abc.Iterable)
-def _(val, array, mesh, dim):
-    if len(val) != dim:
-        raise ValueError(f'Wrong dimension {len(val)} provided for value;'
-                         f' expected dimension is {dim}')
-    array[..., :] = val
-    return array
-
-
-@_fill_array.register(np.ndarray)
-def _(val, array, mesh, dim):
-    if val.shape == (dim,):
-        array[..., :] = val
-    elif val.shape == array.shape:
-        array = val
-    else:
-        raise ValueError(f'Wrong shape {val.shape} provided for value;'
-                         f' expected shape is {(*mesh.n, dim)} or {(dim,)}.')
-    return array
-
-
-@_fill_array.register(collections.abc.Callable)
-def _(val, array, mesh, dim):
+@as_array.register(collections.abc.Callable)
+def _(val, mesh, dim, dtype):
+    array = np.empty((*mesh.n, dim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
         res = val(point)
         array[index] = res
     return array
 
 
-@_fill_array.register(dict)
-def _(val, array, mesh, dim):
+@as_array.register(dict)
+def _(val, mesh, dim, dtype):
+    array = np.empty((*mesh.n, dim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
         for region in mesh.subregions.keys():
             if point in mesh.subregions[region]:

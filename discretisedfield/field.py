@@ -248,7 +248,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = dfu.as_array(self.mesh, self.dim, self._value,
+        value_array = dfu.as_array(self._value, self.mesh, self.dim,
                                    dtype=self.dtype)
         if np.array_equal(self.array, value_array):
             return self._value
@@ -258,7 +258,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
     @value.setter
     def value(self, val):
         self._value = val
-        self.array = dfu.as_array(self.mesh, self.dim, val, dtype=self.dtype)
+        self.array = dfu.as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def components(self):
@@ -347,7 +347,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
     @array.setter
     def array(self, val):
-        self._array = dfu.as_array(self.mesh, self.dim, val, dtype=self.dtype)
+        self._array = dfu.as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def norm(self):
@@ -435,7 +435,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 raise ValueError(msg)
 
             self.array /= self.norm.array  # normalise to 1
-            self.array *= dfu.as_array(self.mesh, dim=1, val=val,
+            self.array *= dfu.as_array(val=val, self.mesh, dim=1,
                                        dtype=self.dtype)
 
     def __abs__(self):
