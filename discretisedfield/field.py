@@ -9,6 +9,7 @@ import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 import ubermagutil.typesystem as ts
+from . import html
 
 # TODO: tutorials, line operations
 
@@ -68,7 +69,7 @@ class Field:
     ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
-    Field(mesh=...)
+    Field(...)
     >>> field.average
     (0.0, 0.0, 1.0)
 
@@ -83,7 +84,7 @@ class Field:
     ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
-    Field(mesh=...)
+    Field(...)
     >>> field.average
     3.14
 
@@ -101,7 +102,7 @@ class Field:
     ...
     >>> field = df.Field(mesh=mesh, dim=dim, value=value, norm=norm)
     >>> field
-    Field(mesh=...)
+    Field(...)
     >>> field.average
     (0.0, 0.0, 1.0)
 
@@ -591,6 +592,9 @@ class Field:
     def __repr__(self):
         """Representation string.
 
+        Internally `self._repr_html_()` is called and all html tags are removed
+        from this string.
+
         Returns
         -------
         str
@@ -609,16 +613,15 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh, dim=1, value=1)
-        >>> repr(field)
-        "Field(mesh=..., dim=1)"
+        >>> field
+        Field(...)
 
         """
-        frepr = f"Field(mesh={repr(self.mesh)}, dim={self.dim}"
-        if self.components:
-            frepr += f", components={self.components})"
-        else:
-            frepr += ")"
-        return frepr
+        return html.strip_tags(self._repr_html_())
+
+    def _repr_html_(self):
+        """Show HTML-based representation in Jupyter notebook."""
+        return html.get_template('field').render(field=self)
 
     def __call__(self, point):
         r"""Sample the field value at ``point``.
@@ -2970,21 +2973,21 @@ class Field:
         >>> filename = os.path.join(dirname, 'oommf-ovf2-bin4.omf')
         >>> field = df.Field.fromfile(filename)
         >>> field
-        Field(mesh=...)
+        Field(...)
 
         2. Read a field from the VTK file.
 
         >>> filename = os.path.join(dirname, 'vtk-file.vtk')
         >>> field = df.Field.fromfile(filename)
         >>> field
-        Field(mesh=...)
+        Field(...)
 
         3. Read a field from the HDF5 file.
 
         >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
         >>> field = df.Field.fromfile(filename)
         >>> field
-        Field(mesh=...)
+        Field(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field._fromovf`
         .. seealso:: :py:func:`~discretisedfield.Field._fromhdf5`
@@ -3038,7 +3041,7 @@ class Field:
         >>> filename = os.path.join(dirname, 'oommf-ovf2-bin8.omf')
         >>> field = df.Field._fromovf(filename)
         >>> field
-        Field(mesh=...)
+        Field(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
 
@@ -3184,7 +3187,7 @@ class Field:
         >>> filename = os.path.join(dirname, 'vtk-file.vtk')
         >>> field = df.Field._fromvtk(filename)
         >>> field
-        Field(mesh=...)
+        Field(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
 
@@ -3273,7 +3276,7 @@ class Field:
         >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
         >>> field = df.Field._fromhdf5(filename)
         >>> field
-        Field(mesh=...)
+        Field(...)
 
         .. seealso:: :py:func:`~discretisedfield.Field._writehdf5`
 

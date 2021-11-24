@@ -10,7 +10,16 @@ import itertools
 import numpy as np
 import discretisedfield as df
 import matplotlib.pyplot as plt
-from .test_mesh import TestMesh
+from .test_mesh import TestMesh, html_re as mesh_html_re
+
+
+html_re = (
+    r'<strong>Field</strong>\s*<ul>\s*'
+    fr'<li>{mesh_html_re}</li>\s*'
+    r'<li>dim = \d+</li>\s*'
+    r'(<li>components:\s*<ul>(<li>.*</li>\s*)+</ul>\s*</li>)?\s*'
+    r'</ul>'
+)
 
 
 def check_field(field):
@@ -27,11 +36,14 @@ def check_field(field):
 
     rstr = repr(field)
     assert isinstance(rstr, str)
-    pattern = (r'^Field\(mesh=Mesh\(region=Region\(p1=\(.+\), '
-               r'p2=\(.+\)\), .+\), dim=\d+\)$')
+    pattern = (r'^Field\(Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), .+\),'
+               r' dim=\d+\)$')
     if field.components:
-        pattern = pattern[:-3] + r", components=\[.+\]\)$"
+        pattern = pattern[:-3] + r', components: \(.+\)\)$'
     assert re.search(pattern, rstr)
+
+    assert isinstance(field._repr_html_(), str)
+    assert re.search(html_re, field._repr_html_(), re.DOTALL)
 
     assert isinstance(field.__iter__(), types.GeneratorType)
     assert len(list(field)) == len(field.mesh)

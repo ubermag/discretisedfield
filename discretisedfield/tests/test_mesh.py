@@ -8,6 +8,20 @@ import ipywidgets
 import numpy as np
 import discretisedfield as df
 import matplotlib.pyplot as plt
+from .test_region import html_re as region_html_re
+
+
+html_re = (
+    r'<strong>Mesh</strong>\s*<ul>\s*'
+    rf'<li>{region_html_re}</li>\s*'
+    r'<li>n = .*</li>\s*'
+    r'(<li>bc = ([xyz]{1,3}|neumann|dirichlet)<li>)?\s*'
+    fr'(<li>subregions:\s*<ul>\s*(<li>{region_html_re}</li>\s*)+</ul></li>)?'
+    r'\s*<li>attributes:\s*<ul>\s*'
+    r'(\s*<li>(.*:.*|.*Mesh.*)</li>)+\s*'
+    r'</ul>\s*</li>\s*'
+    r'</ul>'
+)
 
 
 def check_mesh(mesh):
@@ -33,8 +47,11 @@ def check_mesh(mesh):
     assert len(mesh) > 0
 
     assert isinstance(repr(mesh), str)
-    pattern = r'^Mesh\(region=Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$'
-    assert re.search(pattern, repr(mesh))
+    pattern = r'^Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$'
+    assert re.match(pattern, str(mesh))
+
+    assert isinstance(mesh._repr_html_(), str)
+    assert re.match(html_re, mesh._repr_html_(), re.DOTALL)
 
     assert isinstance(mesh.indices, types.GeneratorType)
     assert isinstance(mesh.__iter__(), types.GeneratorType)
@@ -273,10 +290,9 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc='x')
         check_mesh(mesh)
 
-        rstr = ("Mesh(region=Region(p1=(-1.0, -4.0, 11.0), "
-                "p2=(15.0, 10.1, 12.5)), n=(16, 141, 3), "
-                "bc='x', subregions={}, attributes={'unit': 'm', "
-                "'fourierspace': False, 'isplane': False})")
+        rstr = ("Mesh(Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5)), "
+                "n=(16, 141, 3), bc=x, attributes: (unit: m, fourierspace: "
+                "False, isplane: False))")
         assert repr(mesh) == rstr
 
     def test_index2point(self):

@@ -9,6 +9,15 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
+html_re = (
+    r'<strong>Region</strong>( <i>\w+</i>)?\s*'
+    r'<ul>\s*'
+    r'<li>p1 = .*</li>\s*'
+    r'<li>p2 = .*</li>\s*'
+    r'</ul>'
+)
+
+
 def check_region(region):
     assert isinstance(region.p1, tuple)
     assert len(region.p1) == 3
@@ -48,7 +57,10 @@ def check_region(region):
 
     assert isinstance(repr(region), str)
     pattern = r'^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$'
-    assert re.search(pattern, repr(region))
+    assert re.match(pattern, str(region))
+
+    assert isinstance(region._repr_html_(), str)
+    assert re.match(html_re, region._repr_html_())
 
     assert region == region
     assert not region != region
@@ -136,7 +148,7 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         check_region(region)
-        rstr = 'Region(p1=(-1.0, -4.0, 11.0), p2=(15.0, 10.1, 12.5))'
+        rstr = 'Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5))'
         assert repr(region) == rstr
 
     def test_eq(self):
