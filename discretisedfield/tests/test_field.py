@@ -127,31 +127,40 @@ class TestField:
             self.meshes.append(mesh)
 
         # Create lists of field values.
-        self.consts = [0, -5., np.pi, 1e-15, 1.2e12, random.random(), 1+1j]
-        self.iters = [(0, 0, 1),
-                      (0, -5.1, np.pi),
-                      [70, 1e15, 2*np.pi],
-                      [5, random.random(), np.pi],
-                      np.array([4, -1, 3.7]),
-                      np.array([2.1, 0.0, -5*random.random()]),
-                      (1+1j, 1+1j, 1+1j),
-                      (0, 0, 1j),
-                      np.random.random(3) + np.random.random(3) * 1j]
-        self.sfuncs = [lambda c: 1,
-                       lambda c: -2.4,
-                       lambda c: -6.4e-15,
-                       lambda c: 1 + 2j,
-                       lambda c: c[0] + c[1] + c[2] + 1,
-                       lambda c: (c[0]-1)**2 - c[1]+7 + c[2]*0.1,
-                       lambda c: np.sin(c[0]) + np.cos(c[1]) - np.sin(2*c[2])]
-        self.vfuncs = [lambda c: (1, 2, 0),
-                       lambda c: (-2.4, 1e-3, 9),
-                       lambda c: (1+1j, 2+2j, 3+3j),
-                       lambda c: (0, 1j, 1),
-                       lambda c: (c[0], c[1], c[2] + 100),
-                       lambda c: (c[0]+c[2]+10, c[1], c[2]+1),
-                       lambda c: (c[0]-1, c[1]+70, c[2]*0.1),
-                       lambda c: (np.sin(c[0]), np.cos(c[1]), -np.sin(2*c[2]))]
+        self.consts = [[0, np.float64],
+                       [-5., np.float64],
+                       [np.pi, np.float64],
+                       [1e-15, np.float64],
+                       [1.2e12, np.float64],
+                       [random.random(), np.float64],
+                       [1+1j, np.complex128]]
+        self.iters = [[(0, 0, 1), np.float64],
+                      [(0, -5.1, np.pi), np.float64],
+                      [[70, 1e15, 2*np.pi], np.float64],
+                      [[5, random.random(), np.pi], np.float64],
+                      [np.array([4, -1, 3.7]), np.float64],
+                      [np.array([2.1, 0.0, -5*random.random()]), np.float64],
+                      [(1+1j, 1+1j, 1+1j), np.complex128],
+                      [(0, 0, 1j), np.complex128],
+                      [np.random.random(3) + np.random.random(3) * 1j,
+                       np.complex128]]
+        self.sfuncs = [[lambda c: 1, np.float64],
+                       [lambda c: -2.4, np.float64],
+                       [lambda c: -6.4e-15, np.float64],
+                       [lambda c: 1 + 2j, np.complex128],
+                       [lambda c: c[0] + c[1] + c[2] + 1, np.float64],
+                       [lambda c: (c[0]-1)**2 - c[1]+7 + c[2]*0.1, np.float64],
+                       [lambda c: np.sin(c[0]) + np.cos(c[1]) - np.sin(2*c[2]),
+                        np.float64]]
+        self.vfuncs = [[lambda c: (1, 2, 0), np.float64],
+                       [lambda c: (-2.4, 1e-3, 9), np.float64],
+                       [lambda c: (1+1j, 2+2j, 3+3j), np.complex128],
+                       [lambda c: (0, 1j, 1), np.complex128],
+                       [lambda c: (c[0], c[1], c[2] + 100), np.float64],
+                       [lambda c: (c[0]+c[2]+10, c[1], c[2]+1), np.float64],
+                       [lambda c: (c[0]-1, c[1]+70, c[2]*0.1), np.float64],
+                       [lambda c: (np.sin(c[0]), np.cos(c[1]),
+                                   -np.sin(2*c[2])), np.float64]]
 
         # Create a field for plotting tests
         mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9),
@@ -176,12 +185,12 @@ class TestField:
 
     def test_init_valid_args(self):
         for mesh in self.meshes:
-            for value in self.consts + self.sfuncs:
-                f = df.Field(mesh, dim=1, value=value)
+            for value, dtype in self.consts + self.sfuncs:
+                f = df.Field(mesh, dim=1, value=value, dtype=dtype)
                 check_field(f)
 
-            for value in self.iters + self.vfuncs:
-                f = df.Field(mesh, dim=3, value=value)
+            for value, dtype in self.iters + self.vfuncs:
+                f = df.Field(mesh, dim=3, value=value, dtype=dtype)
                 check_field(f)
 
     def test_init_invalid_args(self):
@@ -208,8 +217,8 @@ class TestField:
 
     def test_set_with_callable(self):
         for mesh in self.meshes:
-            for func in self.sfuncs:
-                f = df.Field(mesh, dim=1, value=func)
+            for func, dtype in self.sfuncs:
+                f = df.Field(mesh, dim=1, value=func, dtype=dtype)
                 check_field(f)
 
                 rp = f.mesh.region.random_point()
@@ -218,8 +227,8 @@ class TestField:
                 assert f(rp) == func(rp)
 
         for mesh in self.meshes:
-            for func in self.vfuncs:
-                f = df.Field(mesh, dim=3, value=func)
+            for func, dtype in self.vfuncs:
+                f = df.Field(mesh, dim=3, value=func, dtype=dtype)
                 check_field(f)
 
                 rp = f.mesh.region.random_point()
@@ -256,7 +265,8 @@ class TestField:
         assert np.all(field.array == (1, 1, 1))
 
         field = df.Field(mesh, dim=3, value={'r1': (0, 0, 1+2j),
-                                             'default': (1, 1, 1)})
+                                             'default': (1, 1, 1)},
+                         dtype=np.complex128)
         assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1+2j))
         assert np.all(field((8e-9, 2e-9, 9e-9)) == (1, 1, 1))
 
@@ -357,9 +367,10 @@ class TestField:
         assert not np.all(f.norm.value == 1)
 
         for mesh in self.meshes:
-            for value in self.iters + self.vfuncs:
+            for value, dtype in self.iters + self.vfuncs:
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
-                    f = df.Field(mesh, dim=3, value=value, norm=norm_value)
+                    f = df.Field(mesh, dim=3, value=value, norm=norm_value,
+                                 dtype=dtype)
 
                     # TODO: Why is this included?
                     # Compute norm.
@@ -2144,7 +2155,7 @@ class TestField:
         assert df.Field(mesh, dim=3).allclose(np.mod(self.pf.phase, np.pi))
 
         # complex field
-        field = df.Field(mesh, dim=1, value=1 + 1j)
+        field = df.Field(mesh, dim=1, value=1 + 1j, dtype=np.complex128)
         real_field = field.real
         check_field(real_field)
         assert df.Field(mesh, dim=1, value=1).allclose(real_field)
