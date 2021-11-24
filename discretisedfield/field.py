@@ -347,7 +347,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
     @array.setter
     def array(self, val):
-        self._array = dfu.as_array(self.mesh, self.dim, val)
+        self._array = dfu.as_array(self.mesh, self.dim, val, dtype=self.dtype)
 
     @property
     def norm(self):
@@ -435,7 +435,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 raise ValueError(msg)
 
             self.array /= self.norm.array  # normalise to 1
-            self.array *= dfu.as_array(self.mesh, dim=1, val=val)
+            self.array *= dfu.as_array(self.mesh, dim=1, val=val,
+                                       dtype=self.dtype)
 
     def __abs__(self):
         """Field norm.
