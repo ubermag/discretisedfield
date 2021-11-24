@@ -553,7 +553,7 @@ class Field:
                                       out=np.zeros_like(self.array),
                                       where=(self.norm.array != 0))
         return self.__class__(self.mesh, dim=self.dim, value=orientation_array,
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     @property
     def average(self):
@@ -743,7 +743,8 @@ class Field:
         if self.components is not None and attr in self.components:
             attr_array = self.array[..., self.components.index(attr),
                                     np.newaxis]
-            return self.__class__(mesh=self.mesh, dim=1, value=attr_array)
+            return self.__class__(mesh=self.mesh, dim=1, value=attr_array,
+                                  dtype=self.dtype)
         else:
             msg = f'Object has no attribute {attr}.'
             raise AttributeError(msg)
@@ -1095,7 +1096,7 @@ class Field:
 
         return self.__class__(self.mesh, dim=1,
                               value=np.power(self.array, other),
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -1166,9 +1167,11 @@ class Field:
                        'defined on different meshes.')
                 raise ValueError(msg)
         elif self.dim == 1 and isinstance(other, numbers.Real):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other)
+            return self + self.__class__(self.mesh, dim=self.dim, value=other,
+                                         dtype=self.dtype)
         elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other)
+            return self + self.__class__(self.mesh, dim=self.dim, value=other,
+                                         dtype=self.dtype)
         else:
             msg = (f'Unsupported operand type(s) for +: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1176,7 +1179,7 @@ class Field:
 
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array + other.array,
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     def __radd__(self, other):
         return self + other
@@ -1322,11 +1325,12 @@ class Field:
                        'defined on different meshes.')
                 raise ValueError(msg)
         elif isinstance(other, numbers.Complex):
-            return self * self.__class__(self.mesh, dim=1, value=other)
+            return self * self.__class__(self.mesh, dim=1, value=other,
+                                         dtype=self.dtype)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
             return self * self.__class__(self.mesh,
                                          dim=np.array(other).shape[-1],
-                                         value=other)
+                                         value=other, dtype=self.dtype)
         elif isinstance(other, df.DValue):
             return self * other(self)
         else:
@@ -1339,7 +1343,7 @@ class Field:
             else None
         return self.__class__(self.mesh, dim=res_array.shape[-1],
                               value=res_array,
-                              components=components)
+                              components=components, dtype=self.dtype)
 
     def __rmul__(self, other):
         return self * other
@@ -1466,7 +1470,8 @@ class Field:
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self @ self.__class__(self.mesh, dim=3, value=other,
-                                         components=self.components)
+                                         components=self.components,
+                                         dtype=self.dtype)
         elif isinstance(other, df.DValue):
             return self @ other(self)
         else:
@@ -1534,7 +1539,8 @@ class Field:
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self & self.__class__(self.mesh, dim=3, value=other,
-                                         components=self.components)
+                                         components=self.components,
+                                         dtype=self.dtype)
         else:
             msg = (f'Unsupported operand type(s) for &: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1542,7 +1548,7 @@ class Field:
 
         res_array = np.cross(self.array, other.array)
         return self.__class__(self.mesh, dim=3, value=res_array,
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     def __rand__(self, other):
         return self & other
@@ -1609,10 +1615,11 @@ class Field:
                        'defined on different meshes.')
                 raise ValueError(msg)
         elif isinstance(other, numbers.Real):
-            return self << self.__class__(self.mesh, dim=1, value=other)
+            return self << self.__class__(self.mesh, dim=1, value=other,
+                                          dtype=self.dtype)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self << self.__class__(self.mesh, dim=len(other),
-                                          value=other)
+                                          value=other, dtype=self.dtype)
         else:
             msg = (f'Unsupported operand type(s) for <<: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1632,14 +1639,15 @@ class Field:
 
         return self.__class__(self.mesh, dim=len(array_list),
                               value=np.stack(array_list, axis=3),
-                              components=components)
+                              components=components, dtype=self.dtype)
 
     def __rlshift__(self, other):
         if isinstance(other, numbers.Real):
-            return self.__class__(self.mesh, dim=1, value=other) << self
+            return self.__class__(self.mesh, dim=1, value=other,
+                                  dtype=self.dtype) << self
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self.__class__(self.mesh, dim=len(other),
-                                  value=other) << self
+                                  value=other, dtype=self.dtype) << self
         else:
             msg = (f'Unsupported operand type(s) for <<: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1708,7 +1716,7 @@ class Field:
         padded_mesh = self.mesh.pad(pad_width)
 
         return self.__class__(padded_mesh, dim=self.dim, value=padded_array,
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     def derivative(self, direction, n=1):
         """Directional derivative.
@@ -1861,7 +1869,7 @@ class Field:
                                          axis=direction)
 
         return self.__class__(self.mesh, dim=self.dim, value=derivative_array,
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     @property
     def grad(self):
@@ -2289,7 +2297,7 @@ class Field:
             res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
 
         res = self.__class__(mesh, dim=self.dim, value=res_array,
-                             components=self.components)
+                             components=self.components, dtype=self.dtype)
 
         if len(direction) == 3:
             return dfu.array2tuple(res.array.squeeze())
@@ -2403,7 +2411,7 @@ class Field:
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self,
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
@@ -2482,7 +2490,7 @@ class Field:
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
         return self.__class__(submesh, dim=self.dim,
                               value=self.array[tuple(slices)],
-                              components=self.components)
+                              components=self.components, dtype=self.dtype)
 
     def project(self, direction):
         """Projects the field along one direction and averages it out along
@@ -2580,7 +2588,8 @@ class Field:
         angle_array[angle_array < 0] += 2 * np.pi
 
         return self.__class__(self.mesh, dim=1,
-                              value=angle_array[..., np.newaxis])
+                              value=angle_array[..., np.newaxis],
+                              dtype=self.dtype)
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
@@ -3492,7 +3501,7 @@ class Field:
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array.conjugate(),
                               components=self.components,
-                              dtype=np.complex128)
+                              dtype=self.dtype)
 
     # TODO check and write tests
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -3519,10 +3528,11 @@ class Field:
             if len(result) != len(mesh):
                 raise ValueError('wrong number of Field objects')
             return tuple(self.__class__(m, dim=x.shape[-1], value=x,
-                                        components=self.components)
+                                        components=self.components,
+                                        dtype=self.dtype)
                          for x, m in zip(result, mesh))
         elif method == 'at':
             return None
         else:
             return self.__class__(mesh[0], dim=result.shape[-1], value=result,
-                                  components=self.components)
+                                  components=self.components, dtype=self.dtype)
