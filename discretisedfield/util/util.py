@@ -37,8 +37,7 @@ def _(val, array, mesh, dim):
     return array
 
 
-@_fill_array.register(list)
-@_fill_array.register(tuple)
+@_fill_array.register(collections.abc.Iterable)
 def _(val, array, mesh, dim):
     if len(val) != dim:
         raise ValueError(f'Wrong dimension {len(val)} provided for value;'
