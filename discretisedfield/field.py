@@ -116,12 +116,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         self.dim = dim
         self.dtype = dtype
 
-        # order in here is important to avoid infinite recursion
-        self._components = None  # required in here for correct initialisation
-        self.components = components
-
         self.value = value
         self.norm = norm
+
+        self._components = None  # required in here for correct initialisation
+        self.components = components
 
     @property
     def value(self):
