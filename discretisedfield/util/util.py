@@ -20,7 +20,7 @@ def array2tuple(array):
 
 @functools.singledispatch
 def as_array(val, mesh, dim, dtype):
-    raise ValueError('Unsupported type {type(val)}.')
+    raise TypeError('Unsupported type {type(val)}.')
 
 
 @as_array.register(numbers.Complex)
