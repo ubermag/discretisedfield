@@ -30,7 +30,6 @@ def _fill_array(val, array, mesh, dim):
 
 @_fill_array.register(numbers.Complex)  # contains numbers.Real
 def _(val, array, mesh, dim):
-    # TODO why not allow uniform values for vector fields
     if dim > 1 and val != 0:
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
