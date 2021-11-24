@@ -207,9 +207,11 @@ class TestField:
         with pytest.raises(ValueError):
             df.Field(self.meshes[0], dim=1, value='string')
 
-        # wrong type
+        # all builtin types are numeric types or Iterable
+        class WrongType:
+            pass
         with pytest.raises(TypeError):
-            df.Field(self.meshes[0], dim=1, value=True)
+            df.Field(self.meshes[0], dim=1, value=WrongType())
 
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
