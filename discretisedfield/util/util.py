@@ -18,7 +18,7 @@ def array2tuple(array):
     return array.item() if array.size == 1 else tuple(array.tolist())
 
 
-def as_array(mesh, dim, val, dtype=np.float64):
+def as_array(mesh, dim, val, dtype):
     array = np.empty((*mesh.n, dim), dtype=dtype)
     return _fill_array(val, array, mesh, dim)
 
