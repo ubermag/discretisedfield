@@ -1,3 +1,4 @@
+import collections
 import numbers
 import struct
 import warnings
@@ -15,7 +16,7 @@ import ubermagutil.typesystem as ts
 
 @ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
-class Field:
+class Field(collections.abc.Callable):  # could be avoided by using type hints
     """Finite-difference field.
 
     This class specifies a finite-difference field and defines operations for
