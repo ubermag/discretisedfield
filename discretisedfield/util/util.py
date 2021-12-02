@@ -63,7 +63,8 @@ def _(val, mesh, dim, dtype):
     if np.any(np.isnan(array)):
         # not all subregion keys specified and 'default' is missing or callable
         if 'default' not in val:
-            raise KeyError("Key 'default' is missing.")
+            raise KeyError("Key 'default' required if not all subregion keys"
+                           " are specified.")
         subval = val['default']
         for ix, iy, iz in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
