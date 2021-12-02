@@ -564,6 +564,13 @@ class Mesh:
 
         return dfu.array2tuple(index)
 
+    def region2slice(self, region):
+        """Return slice of the indices of the mesh in the given region."""
+
+        i1 = self.point2index(np.array(region.p1) + np.array(self.cell) / 2)
+        i2 = self.point2index(np.array(region.p2) - np.array(self.cell) / 2)
+        return tuple(slice(i1[i], i2[i] + 1) for i in range(3))
+
     def neighbours(self, index, /):
         """Indices of discretisation cell neighbours.
 
