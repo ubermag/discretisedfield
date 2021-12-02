@@ -50,7 +50,8 @@ def _(val, mesh, dim, dtype):
         fill_value = np.nan
     array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
 
-    for subregion in mesh.subregions.keys():
+    for subregion in reversed(mesh.subregions.keys()):
+        # subregions can overlap, first subregion takes precedence
         try:
             submesh = mesh[subregion]
             subval = val[subregion]
