@@ -44,38 +44,31 @@ def _(val, mesh, dim, dtype):
 
 @as_array.register(dict)
 def _(val, mesh, dim, dtype):
-    array = np.empty((*mesh.n, dim), dtype=dtype)
-    for index, point in zip(mesh.indices, mesh):
-        for region in mesh.subregions.keys():
-            if point in mesh.subregions[region]:
-                try:
-                    if callable(val[region]):
-                        array[index] = val[region](point)
-                    else:
-                        array[index] = val[region]
-                except KeyError:
-                    try:
-                        if callable(val['default']):
-                            array[index] = val['default'](point)
-                        else:
-                            array[index] = val['default']
-                    except KeyError:
-                        msg = f"'{region}' or 'default' in value. " \
-                                + "Either specify all subregions or " \
-                                + "use key 'default'."
-                        raise KeyError(msg)
-                break
+    if 'default' in val and not callable(val['default']):
+        fill_value = val['default']
+    else:
+        fill_value = np.nan
+    array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
+
+    for subregion in mesh.subregions.keys():
+        try:
+            submesh = mesh[subregion]
+            subval = val[subregion]
+        except KeyError:
+            continue
         else:
-            try:
-                if callable(val['default']):
-                    array[index] = val['default'](point)
-                else:
-                    array[index] = val['default']
-            except KeyError:
-                msg = "'default'. If parts of the mesh are not " \
-                        + "contained within one of the subregions, " \
-                        + "key 'default' must be specified for value."
-                raise KeyError(msg)
+            slices = mesh.region2slices(submesh.region)
+            array[slices] = as_array(subval, submesh, dim, dtype)
+
+    if np.any(np.isnan(array)):
+        # not all subregion keys specified and 'default' is missing or callable
+        if 'default' not in val:
+            raise ValueError("Key 'default' is missing.")
+        subval = val['default']
+        for ix, iy, iz in np.argwhere(np.isnan(array[..., 0])):
+            # only spatial indices required -> array[..., 0]
+            array[ix, iy, iz] = subval(mesh.index2point((ix, iy, iz)))
+
     return array
 
 
