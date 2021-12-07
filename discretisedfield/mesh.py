@@ -1,4 +1,5 @@
 import k3d
+import os
 import copy
 import itertools
 import ipywidgets
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 from mpl_toolkits.mplot3d import Axes3D
+from . import html
 
 
 @ts.typesystem(region=ts.Typed(expected_type=df.Region),
@@ -443,6 +445,9 @@ class Mesh:
     def __repr__(self):
         """Representation string.
 
+        Internally `self._repr_html_()` is called and all html tags are removed
+        from this string.
+
         Returns
         -------
         str
@@ -460,13 +465,15 @@ class Mesh:
         >>> cell = (1, 1, 1)
         >>> bc = 'x'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc=bc)
-        >>> repr(mesh)
-        "Mesh(region=Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), ...)"
+        >>> mesh
+        Mesh(Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), bc=x, ...)
 
         """
-        return (f'Mesh(region={repr(self.region)}, n={self.n}, '
-                f'bc=\'{self.bc}\', subregions={self.subregions},'
-                f' attributes={self.attributes})')
+        return html.strip_tags(self._repr_html_())
+
+    def _repr_html_(self):
+        """Show HTML-based representation in Jupyter notebook."""
+        return html.get_template('mesh').render(mesh=self)
 
     def index2point(self, index, /):
         """Convert cell's index to its coordinate.

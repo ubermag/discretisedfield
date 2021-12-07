@@ -7,6 +7,7 @@ import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 import discretisedfield.plotting as dfp
+from . import html
 
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
@@ -271,6 +272,9 @@ class Region:
     def __repr__(self):
         r"""Representation string.
 
+        Internally `self._repr_html_()` is called and all html tags are removed
+        from this string.
+
         Returns
         -------
         str
@@ -287,11 +291,15 @@ class Region:
         >>> p2 = (2, 2, 1)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> repr(region)
-        'Region(p1=(0, 0, 0), p2=(2, 2, 1))'
+        >>> region
+        Region(p1=(0, 0, 0), p2=(2, 2, 1))
 
         """
-        return f'Region(p1={self.pmin}, p2={self.pmax})'
+        return html.strip_tags(self._repr_html_())
+
+    def _repr_html_(self):
+        """Show HTML-based representation in Jupyter notebook."""
+        return html.get_template('region').render(region=self)
 
     def __eq__(self, other):
         r"""Relational operator ``==``.

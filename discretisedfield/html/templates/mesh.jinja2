@@ -1,0 +1,33 @@
+<strong>Mesh</strong>
+<ul>
+  {%- set region = mesh.region %}
+  <li>{% include 'region.jinja2' %}</li>
+  <li>n = {{ mesh.n }}</li>
+  {%- if mesh.bc %}
+    <li>bc = {{ mesh.bc }}</li>
+  {%- endif %}
+  {% if mesh.subregions -%}
+    <li>subregions:
+    <ul>
+      {% for key, subregion in mesh.subregions.items() -%}
+        {% set region = subregion -%}
+        {% set region_name = key -%}
+        <li>{% include 'region.jinja2' %}</li>
+      {% endfor -%}
+    </ul></li>
+  {% endif -%}
+  <li>attributes:
+    <ul>
+      {% for attr, val in mesh.attributes.items() -%}
+        {# In Fourier space the corresponding realspace mesh is stored in the attributes. #}
+        {%- if val.__class__ is defined and 'Mesh' in val.__class__.__name__ -%}
+          {# "overwritten" `mesh` cleared at the end of the iteration #}
+          {%- set mesh = val -%}
+          <li>realspace {% include 'mesh.jinja2' %}</li>
+        {%- else -%}
+          <li>{{ attr }}: {{ val }}</li>
+        {%- endif %}
+      {% endfor -%}
+    </ul>
+  </li>
+</ul>
