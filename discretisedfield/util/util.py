@@ -2,6 +2,7 @@ import cmath
 import numbers
 import colorsys
 import collections
+import functools
 import numpy as np
 
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
@@ -17,71 +18,64 @@ def array2tuple(array):
     return array.item() if array.size == 1 else tuple(array.tolist())
 
 
-def as_array(mesh, dim, val):
-    array = np.empty((*mesh.n, dim))
-    if isinstance(val, numbers.Real) and (dim == 1 or val == 0):
-        # The array for a scalar field with numbers.Real value or any
-        # field with zero value.
-        array.fill(val)
-    elif isinstance(val, complex) and (dim == 1 or val == 0):
-        array = np.empty((*mesh.n, dim), dtype='complex128')
-        array.fill(val)
-    elif isinstance(val, np.ndarray) and val.shape == array.shape:
-        array = val
-    elif isinstance(val, (tuple, list, np.ndarray)):
-        if len(val) != dim:
-            msg = (f'Wrong dimension {len(val)} provided for value;'
-                   f' expected dimension is {dim}')
-            raise ValueError(msg)
-        if (isinstance(val, np.ndarray) and val.dtype == 'complex128'
-                or np.iscomplex(val).any()):
-            array = np.empty((*mesh.n, dim), dtype='complex128')
-        array[..., :] = val
-    elif callable(val):
-        for index, point in zip(mesh.indices, mesh):
-            res = val(point)
-            try:
-                array[index] = res
-            except TypeError:
-                array = np.array(array, dtype='complex128')
-                array[index] = res
-    elif isinstance(val, dict) and mesh.subregions:
-        if np.iscomplex(list(val.values())).any():
-            array = np.empty((*mesh.n, dim), dtype='complex128')
-        for index, point in zip(mesh.indices, mesh):
-            for region in mesh.subregions.keys():
-                if point in mesh.subregions[region]:
-                    try:
-                        if callable(val[region]):
-                            array[index] = val[region](point)
-                        else:
-                            array[index] = val[region]
-                    except KeyError:
-                        try:
-                            if callable(val['default']):
-                                array[index] = val['default'](point)
-                            else:
-                                array[index] = val['default']
-                        except KeyError:
-                            msg = f"'{region}' or 'default' in value. " \
-                                  + "Either specify all subregions or " \
-                                  + "use key 'default'."
-                            raise KeyError(msg)
-                    break
-            else:
+@functools.singledispatch
+def as_array(val, mesh, dim, dtype):
+    raise TypeError('Unsupported type {type(val)}.')
+
+
+@as_array.register(numbers.Complex)
+@as_array.register(collections.abc.Iterable)
+def _(val, mesh, dim, dtype):
+    # we should think about allowing this as well
+    if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
+        raise ValueError('Wrong dimension 1 provided for value;'
+                         f' expected dimension is {dim}')
+    return np.full((*mesh.n, dim), val, dtype=dtype)
+
+
+@as_array.register(collections.abc.Callable)
+def _(val, mesh, dim, dtype):
+    array = np.empty((*mesh.n, dim), dtype=dtype)
+    for index, point in zip(mesh.indices, mesh):
+        res = val(point)
+        array[index] = res
+    return array
+
+
+@as_array.register(dict)
+def _(val, mesh, dim, dtype):
+    array = np.empty((*mesh.n, dim), dtype=dtype)
+    for index, point in zip(mesh.indices, mesh):
+        for region in mesh.subregions.keys():
+            if point in mesh.subregions[region]:
                 try:
-                    if callable(val['default']):
-                        array[index] = val['default'](point)
+                    if callable(val[region]):
+                        array[index] = val[region](point)
                     else:
-                        array[index] = val['default']
+                        array[index] = val[region]
                 except KeyError:
-                    msg = "'default'. If parts of the mesh are not " \
-                          + "contained within one of the subregions, " \
-                          + "key 'default' must be specified for value."
-                    raise KeyError(msg)
-    else:
-        msg = f'Unsupported {type(val)} or invalid value dimensions.'
-        raise ValueError(msg)
+                    try:
+                        if callable(val['default']):
+                            array[index] = val['default'](point)
+                        else:
+                            array[index] = val['default']
+                    except KeyError:
+                        msg = f"'{region}' or 'default' in value. " \
+                                + "Either specify all subregions or " \
+                                + "use key 'default'."
+                        raise KeyError(msg)
+                break
+        else:
+            try:
+                if callable(val['default']):
+                    array[index] = val['default'](point)
+                else:
+                    array[index] = val['default']
+            except KeyError:
+                msg = "'default'. If parts of the mesh are not " \
+                        + "contained within one of the subregions, " \
+                        + "key 'default' must be specified for value."
+                raise KeyError(msg)
     return array
 
 
