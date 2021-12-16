@@ -317,7 +317,7 @@ def emergent_magnetic_field(field):
     r"""Emergent magnetic field.
 
     Emergent magnetic field for a (magnetic) unit vector field
-    :math:`\boldsymbol{m}`is defined as:
+    :math:`\boldsymbol{m}` is defined as:
 
     .. math::
 
