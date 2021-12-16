@@ -84,53 +84,43 @@ def check_mesh(mesh):
 
 class TestMesh:
     def setup(self):
-        self.valid_args = [[(0, 0, 0), (5, 5, 5),
-                            [1, 1, 1], None],
-                           [(-1, 0, -3), (5, 7, 5),
-                            None, (1, 1, 1)],
-                           [(0, 0, 0), (5e-9, 5e-9, 5e-9),
-                            None, (1e-9, 1e-9, 1e-9)],
-                           [(0, 0, 0), (5e-9, 5e-9, 5e-9),
-                            (5, 5, 5), None],
+        self.valid_args = [[(0, 0, 0), (5, 5, 5), [1, 1, 1], None],
+                           [(-1, 0, -3), (5, 7, 5), None, (1, 1, 1)],
+                           [(0, 0, 0), (5e-9, 5e-9, 5e-9), None,
+                            (1e-9, 1e-9, 1e-9)],
+                           [(0, 0, 0), (5e-9, 5e-9, 5e-9), (5, 5, 5), None],
                            [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9),
                             None, (1.5e-9, 0.5e-9, 10e-9)],
                            [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9),
                             (3, 10, 2), None],
-                           [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)),
-                            None, (0.5e-9, 1e-9, 5e-9)],
-                           [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)),
-                            (5, 5, 7), None],
-                           [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6),
-                            None, (0.5e-6, 2e-6, 2.5e-6)],
-                           [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6),
-                            (1, 10, 20), None],
-                           [(0, 125e-9, 0), (500e-9, 0, -3e-9),
-                            None, (25e-9, 25e-9, 3e-9)]]
+                           [(-1.5e-9, -5e-9, -5e-9),
+                            np.array((0, 0, 0)), None, (0.5e-9, 1e-9, 5e-9)],
+                           [(-1.5e-9, -5e-9, -5e-9),
+                            np.array((0, 0, 0)), (5, 5, 7), None],
+                           [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), None,
+                            (0.5e-6, 2e-6, 2.5e-6)],
+                           [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), (1, 10, 20),
+                            None],
+                           [(0, 125e-9, 0), (500e-9, 0, -3e-9), None,
+                            (25e-9, 25e-9, 3e-9)]]
 
-        self.invalid_args = [[(0, 0, 0), (5, 5, 5),
-                              None, (-1, 1, 1)],
-                             [(0, 0, 0), (5, 5, 5),
-                              (-1, 1, 1), None],
-                             [(0, 0, 0), (5, 5, 5),
-                              'n', None],
-                             [(0, 0, 0), (5, 5, 5),
-                              (1, 2, 2+1j), None],
-                             [(0, 0, 0), (5, 5, 5),
-                              (1, 2, '2'), None],
-                             [('1', 0, 0), (1, 1, 1),
-                              None, (0, 0, 1e-9)],
+        self.invalid_args = [[(0, 0, 0), (5, 5, 5), None, (-1, 1, 1)],
+                             [(0, 0, 0), (5, 5, 5), (-1, 1, 1), None],
+                             [(0, 0, 0), (5, 5, 5), 'n', None],
+                             [(0, 0, 0), (5, 5, 5), (1, 2, 2 + 1j), None],
+                             [(0, 0, 0), (5, 5, 5), (1, 2, '2'), None],
+                             [('1', 0, 0), (1, 1, 1), None, (0, 0, 1e-9)],
                              [(-1.5e-9, -5e-9, 'a'), (1.5e-9, 15e-9, 16e-9),
                               None, (5, 1, -1e-9)],
                              [(-1.5e-9, -5e-9, 'a'), (1.5e-9, 15e-9, 16e-9),
                               (5, 1, -1), None],
-                             [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9),
-                              None, (0.1e-9, 0.1e-9, 1e-9)],
-                             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1+2j),
+                             [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9), None,
+                              (0.1e-9, 0.1e-9, 1e-9)],
+                             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1 + 2j),
                               None, (5, 1, 1e-9)],
-                             ['string', (5, 1, 1e-9),
-                              None, 'string'],
+                             ['string', (5, 1, 1e-9), None, 'string'],
                              [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 16e-9),
-                              None, 2+2j]]
+                              None, 2 + 2j]]
 
     def test_init_valid_args(self):
         for p1, p2, n, cell in self.valid_args:
@@ -154,8 +144,10 @@ class TestMesh:
         p1 = (0, 0, 0)
         p2 = (100, 50, 10)
         cell = (10, 10, 10)
-        subregions = {'r1': df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
-                      'r2': df.Region(p1=(50, 0, 0), p2=(100, 50, 10))}
+        subregions = {
+            'r1': df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
+            'r2': df.Region(p1=(50, 0, 0), p2=(100, 50, 10))
+        }
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
         check_mesh(mesh)
 
@@ -170,8 +162,9 @@ class TestMesh:
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
         # Subregion not aligned.
-        subregions = {'r1': df.Region(p1=(5e-9, 0, 0),
-                                      p2=(45e-9, 50e-9, 10e-9))}
+        subregions = {
+            'r1': df.Region(p1=(5e-9, 0, 0), p2=(45e-9, 50e-9, 10e-9))
+        }
         with pytest.raises(ValueError):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
@@ -201,15 +194,11 @@ class TestMesh:
         assert 'not both.' in str(excinfo.value)
 
     def test_region_not_aggregate_of_cell(self):
-        args = [[(0, 100e-9, 1e-9),
-                 (150e-9, 120e-9, 6e-9),
+        args = [[(0, 100e-9, 1e-9), (150e-9, 120e-9, 6e-9),
                  (4e-9, 1e-9, 1e-9)],
-                [(0, 100e-9, 0),
-                 (150e-9, 104e-9, 1e-9),
+                [(0, 100e-9, 0), (150e-9, 104e-9, 1e-9),
                  (2e-9, 1.5e-9, 0.1e-9)],
-                [(10e9, 10e3, 0),
-                 (11e9, 11e3, 5),
-                 (1e9, 1e3, 1.5)]]
+                [(10e9, 10e3, 0), (11e9, 11e3, 5), (1e9, 1e3, 1.5)]]
 
         for p1, p2, cell in args:
             with pytest.raises(ValueError) as excinfo:
@@ -218,9 +207,7 @@ class TestMesh:
     def test_cell_greater_than_domain(self):
         p1 = (0, 0, 0)
         p2 = (1e-9, 1e-9, 1e-9)
-        args = [(2e-9, 1e-9, 1e-9),
-                (1e-9, 2e-9, 1e-9),
-                (1e-9, 1e-9, 2e-9),
+        args = [(2e-9, 1e-9, 1e-9), (1e-9, 2e-9, 1e-9), (1e-9, 1e-9, 2e-9),
                 (1e-9, 5e-9, 0.1e-9)]
 
         for cell in args:
@@ -234,7 +221,7 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         check_mesh(mesh)
 
-        assert len(mesh) == 5*4*3
+        assert len(mesh) == 5 * 4 * 3
 
     def test_indices_coordinates_iter(self):
         p1 = (0, 0, 0)
@@ -358,17 +345,17 @@ class TestMesh:
 
         tol = 1e-12  # picometer tolerance
         with pytest.raises(ValueError):
-            mesh.point2index((-10-tol, 0, 5))
+            mesh.point2index((-10 - tol, 0, 5))
         with pytest.raises(ValueError):
-            mesh.point2index((-5, -5-tol, 5))
+            mesh.point2index((-5, -5 - tol, 5))
         with pytest.raises(ValueError):
             mesh.point2index((-5, 0, -tol))
         with pytest.raises(ValueError):
-            mesh.point2index((10+tol, 0, 5))
+            mesh.point2index((10 + tol, 0, 5))
         with pytest.raises(ValueError):
-            mesh.point2index((6, 5+tol, 5))
+            mesh.point2index((6, 5 + tol, 5))
         with pytest.raises(ValueError):
-            mesh.point2index((0, 0, 10e-9+tol))
+            mesh.point2index((0, 0, 10e-9 + tol))
 
     def test_index2point_point2index_mutually_inverse(self):
         p1 = (15, -4, 12.5)
@@ -382,6 +369,24 @@ class TestMesh:
 
         for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]:
             assert mesh.point2index(mesh.index2point(i)) == i
+
+    def test_region2slice(self):
+        p1 = (0, 0, -2)
+        p2 = (4, 5, 4)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        check_mesh(mesh)
+        assert mesh.region2slices(
+            df.Region(p1=p1, p2=p2)
+        ) == (slice(0, 4, None), slice(0, 5, None), slice(0, 6, None))
+        assert mesh.region2slices(
+            df.Region(p1=(0, 0, 0), p2=(1, 1, 1))
+        ) == (slice(0, 1, None), slice(0, 1, None), slice(2, 3, None))
+        assert mesh.region2slices(
+            df.Region(p1=(2, 3, -1), p2=(3, 5, 0))
+        ) == (slice(2, 3, None), slice(3, 5, None), slice(1, 2, None))
+        with pytest.raises(ValueError):
+            mesh.region2slices(df.Region(p1=(-1, 3, -1), p2=(3, 5, 0)))
 
     def test_axis_points(self):
         p1 = (0, 0, 0)

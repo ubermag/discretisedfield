@@ -571,6 +571,39 @@ class Mesh:
 
         return dfu.array2tuple(index)
 
+    def region2slices(self, region):
+        """Slices of indices that correspond to cells contained in the region.
+
+        Parameters
+        ----------
+        region : df.Region
+
+            Region to convert to slices.
+
+        Returns
+        -------
+        tuple
+
+            Tuple of slices of region indices.
+
+        Examples
+        --------
+        1. Slices of a subregion
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 1)
+        >>> cell = (1, 1, 1)
+        >>> subregions = {'sr': df.Region(p1=p1, p2=(10, 5, 1))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+        >>> mesh.region2slices(mesh.subregions['sr'])
+        (slice(0, 10, None), slice(0, 5, None), slice(0, 1, None))
+        """
+
+        i1 = self.point2index(np.array(region.p1) + np.array(self.cell) / 2)
+        i2 = self.point2index(np.array(region.p2) - np.array(self.cell) / 2)
+        return tuple(slice(i1[i], i2[i] + 1) for i in range(3))
+
     def neighbours(self, index, /):
         """Indices of discretisation cell neighbours.
 
