@@ -198,7 +198,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> # if value is not specified, zero-field is defined
         >>> field = df.Field(mesh=mesh, dim=3)
         >>> field.value
-        0
+        0.0
         >>> field.value = (0, 0, 1)
         >>> field.value
         (0, 0, 1)
@@ -669,7 +669,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> field = df.Field(mesh, dim=3, value=(1, 3, 4))
         >>> point = (10, 2, 3)
         >>> field(point)
-        (1.0, 3.0, 4.0)
+        (1, 3, 4)
 
         """
         return dfu.array2tuple(self.array[self.mesh.point2index(point)])
@@ -813,10 +813,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
         >>> for coord, value in field:
         ...     print (coord, value)
-        (0.5, 0.5, 0.5) (0.0, 0.0, 1.0)
-        (1.5, 0.5, 0.5) (0.0, 0.0, 1.0)
-        (0.5, 1.5, 0.5) (0.0, 0.0, 1.0)
-        (1.5, 1.5, 0.5) (0.0, 0.0, 1.0)
+        (0.5, 0.5, 0.5) (0, 0, 1)
+        (1.5, 0.5, 0.5) (0, 0, 1)
+        (0.5, 1.5, 0.5) (0, 0, 1)
+        (1.5, 1.5, 0.5) (0, 0, 1)
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
 
@@ -2230,7 +2230,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
         >>> (f * df.dV).integral()
-        5000.0
+        5000
 
         2. Volume integral of a vector field.
 
