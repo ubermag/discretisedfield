@@ -255,7 +255,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = dfu.as_array(self._value, self.mesh, self.dim)
+        value_array = dfu.as_array(self._value, self.mesh, self.dim,
                                    dtype=self.dtype)
         if np.array_equal(self.array, value_array):
             return self._value
