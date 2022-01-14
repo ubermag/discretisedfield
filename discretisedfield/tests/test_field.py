@@ -217,7 +217,7 @@ class TestField:
                     f = df.Field(mesh, dim=dim)
 
         # wrong abc.Iterable
-        with pytest.raises(ValueError):
+        with pytest.raises(Type):
             df.Field(self.meshes[0], dim=1, value='string')
 
         # all builtin types are numeric types or Iterable
@@ -296,7 +296,7 @@ class TestField:
 
     def test_set_exception(self):
         for mesh in self.meshes:
-            with pytest.raises(ValueError):
+            with pytest.raises(TypeError):
                 f = df.Field(mesh, dim=3, value='meaningless_string')
 
             with pytest.raises(ValueError):
