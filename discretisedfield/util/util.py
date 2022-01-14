@@ -53,6 +53,10 @@ def _(val, mesh, dim, dtype):
 def _(val, mesh, dim, dtype):
     # will only be called on user input
     # dtype must be specified by the user for complex values
+    if dtype is None:
+        # set explicitly to avoid problems with integers in the dictionary
+        # behaviour is more consistent like this
+        dtype = np.float64
     if 'default' in val and not callable(val['default']):
         fill_value = val['default']
     else:
