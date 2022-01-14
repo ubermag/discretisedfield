@@ -26,12 +26,9 @@ def as_array(val, mesh, dim, dtype):
 @as_array.register(numbers.Complex)
 @as_array.register(collections.abc.Iterable)
 def _(val, mesh, dim, dtype):
-    # we should think about allowing this as well
     if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
-    if dtype is None:
-        dtype = np.array(val).dtype
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
