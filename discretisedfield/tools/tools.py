@@ -121,7 +121,7 @@ def topological_charge_density(field, /, method='continuous'):
                                    of.derivative(dfu.raxesdict[axis2]))
 
     elif method == 'berg-luescher':
-        q = field.__class__(field.mesh, dim=1, value=0)
+        q = df.Field(field.mesh, dim=1)
 
         # Area of a single triangle
         area = 0.5 * field.mesh.cell[axis1] * field.mesh.cell[axis2]
