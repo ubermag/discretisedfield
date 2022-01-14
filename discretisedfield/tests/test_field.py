@@ -217,7 +217,7 @@ class TestField:
                     f = df.Field(mesh, dim=dim)
 
         # wrong abc.Iterable
-        with pytest.raises(Type):
+        with pytest.raises(TypeError):
             df.Field(self.meshes[0], dim=1, value='string')
 
         # all builtin types are numeric types or Iterable
