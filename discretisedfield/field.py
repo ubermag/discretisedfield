@@ -2275,7 +2275,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
         >>> (f_plane * df.dx).integral(direction='x').average
-        (10., 20., 30.)
+        (10.0, 20.0, 30.0)
 
         6. Improper integral along x-direction.
 
