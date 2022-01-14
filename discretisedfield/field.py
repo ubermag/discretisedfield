@@ -118,7 +118,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
     """
 
-    def __init__(self, mesh, dim, value=0, norm=None, components=None,
+    def __init__(self, mesh, dim, value=0., norm=None, components=None,
                  dtype=None):
         self.mesh = mesh
         self.dim = dim
