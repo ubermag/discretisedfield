@@ -23,6 +23,11 @@ def as_array(val, mesh, dim, dtype):
     raise TypeError('Unsupported type {type(val)}.')
 
 
+@as_array.register(str)
+def _(val, mesh, dim, dtype):
+    raise TypeError('Unsupported type {type(val)}.')
+
+
 @as_array.register(numbers.Complex)
 @as_array.register(collections.abc.Iterable)
 def _(val, mesh, dim, dtype):
