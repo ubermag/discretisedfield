@@ -1103,9 +1103,15 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                    f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
-        return self.__class__(self.mesh, dim=1,
-                              value=np.power(self.array, other),
-                              components=self.components)
+        if self.array.dtype == int and isinstance(other, int) and other < 0:
+            # in numpy "Integers to negative integer powers are not allowed."
+            return self.__class__(self.mesh, dim=1,
+                                  value=np.power(self.array, float(other)),
+                                  components=self.components)
+        else:
+            return self.__class__(self.mesh, dim=1,
+                                  value=np.power(self.array, other),
+                                  components=self.components)
 
     def __add__(self, other):
         """Binary ``+`` operator.
