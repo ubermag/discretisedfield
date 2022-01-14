@@ -36,7 +36,7 @@ def _(val, mesh, dim, dtype):
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
     if dtype is None:
-        dtype = max(np.asarray(val), np.float64)
+        dtype = max(np.asarray(val).dtype, np.float64)
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
