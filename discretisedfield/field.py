@@ -2251,7 +2251,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> f = df.Field(mesh, dim=1, value=5)
         >>> f_plane = f.plane('z')
         >>> (f_plane * abs(df.dS)).integral()
-        500
+        500.0
 
         4. Surface integral of a vector field (flux).
 
@@ -2263,7 +2263,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
         >>> (f_plane @ df.dS).integral()
-        300
+        300.0
 
         5. Integral along x-direction.
 
