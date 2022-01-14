@@ -2240,7 +2240,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         >>> f = df.Field(mesh, dim=3, value=(-1, -2, -3))
         >>> (f * df.dV).integral()
-        (-1000.0, -2000.0, -3000.0)
+        (-1000, -2000, -3000)
 
         3. Surface integral of a scalar field.
 
@@ -2251,7 +2251,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> f = df.Field(mesh, dim=1, value=5)
         >>> f_plane = f.plane('z')
         >>> (f_plane * abs(df.dS)).integral()
-        500.0
+        500
 
         4. Surface integral of a vector field (flux).
 
@@ -2263,7 +2263,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
         >>> (f_plane @ df.dS).integral()
-        300.0
+        300
 
         5. Integral along x-direction.
 
@@ -2275,7 +2275,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
         >>> (f_plane * df.dx).integral(direction='x').average
-        (10.0, 20.0, 30.0)
+        (10, 20, 30)
 
         6. Improper integral along x-direction.
 
