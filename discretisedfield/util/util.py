@@ -23,6 +23,7 @@ def as_array(val, mesh, dim, dtype):
     raise TypeError('Unsupported type {type(val)}.')
 
 
+# to avoid str being interpreted as iterable
 @as_array.register(str)
 def _(val, mesh, dim, dtype):
     raise TypeError('Unsupported type {type(val)}.')
