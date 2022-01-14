@@ -527,7 +527,7 @@ def max_neigbouring_cell_angle(field, /, units='rad'):
     y_angles = neigbouring_cell_angle(field, 'y', units=units).array.squeeze()
     z_angles = neigbouring_cell_angle(field, 'z', units=units).array.squeeze()
 
-    max_angles = np.zeros((*field.array.shape[:-1], 6), dtype=np.float64)
+    max_angles = np.zeros((*field.array.shape[:-1], 6))
     max_angles[1:, :, :, 0] = x_angles
     max_angles[:-1, :, :, 1] = x_angles
     max_angles[:, 1:, :, 2] = y_angles

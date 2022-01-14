@@ -30,11 +30,15 @@ def _(val, mesh, dim, dtype):
     if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
+    if dtype is None:
+        dtype = np.array(val).dtype
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
 @as_array.register(collections.abc.Callable)
 def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, dim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
         res = val(point)
@@ -44,6 +48,8 @@ def _(val, mesh, dim, dtype):
 
 @as_array.register(dict)
 def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
     if 'default' in val and not callable(val['default']):
         fill_value = val['default']
     else:
