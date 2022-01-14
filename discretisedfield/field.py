@@ -558,8 +558,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         orientation_array = np.divide(self.array,
                                       self.norm.array,
-                                      # TODO why do we specify out
-                                      out=np.zeros_like(self.array),
                                       where=(self.norm.array != 0))
         return self.__class__(self.mesh, dim=self.dim, value=orientation_array,
                               components=self.components)
