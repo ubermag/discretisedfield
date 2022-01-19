@@ -441,7 +441,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 msg = 'Cannot normalise field with zero values.'
                 raise ValueError(msg)
 
-            # /= cannot be used because of possibly different data types
+            # not using /= because of possibly different data types
             self.array = self.array / self.norm.array  # normalise to 1
             self.array *= dfu.as_array(val, self.mesh, dim=1, dtype=None)
 
@@ -1103,15 +1103,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                    f'{type(self)=} and {type(other)=}.')
             raise TypeError(msg)
 
-        if self.array.dtype == int and isinstance(other, int) and other < 0:
-            # in numpy "Integers to negative integer powers are not allowed."
-            return self.__class__(self.mesh, dim=1,
-                                  value=np.power(self.array, float(other)),
-                                  components=self.components)
-        else:
-            return self.__class__(self.mesh, dim=1,
-                                  value=np.power(self.array, other),
-                                  components=self.components)
+        return self.__class__(self.mesh, dim=1,
+                              value=np.power(self.array, other),
+                              components=self.components)
 
     def __add__(self, other):
         """Binary ``+`` operator.
