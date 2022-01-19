@@ -2191,9 +2191,13 @@ class TestField:
 
     def test_numpy_ufunc(self):
         assert np.allclose(np.sin(self.pf).array, np.sin(self.pf.array))
-        assert np.allclose(np.exp(self.pf.orientation).array,
-                           np.exp(self.pf.orientation.array))
         assert np.sum([self.pf, self.pf]).allclose(self.pf + self.pf)
         assert np.multiply(self.pf.x, self.pf.y).allclose(self.pf.x
                                                           * self.pf.y)
         assert np.power(self.pf.z, 2).allclose(self.pf.z**2)
+
+        # self.pf contains values of 1e5 and exp of this produces an overflow
+        field = df.Field(self.pf.mesh, dim=3,
+                         value=lambda _: np.random.random(3)*2 - 1)
+        assert np.allclose(np.exp(self.pf.orientation).array,
+                           np.exp(self.pf.orientation.array))
