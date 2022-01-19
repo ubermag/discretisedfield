@@ -54,7 +54,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         Please refer to ``discretisedfield.Field.norm`` property. Defaults to
         ``None`` (``norm=None`` defines no norm).
 
-    dtype : str, type, np.dtype
+    dtype : str, type, np.dtype, optional
 
         Data type of the underlying numpy array. If not specified the best data
         type is automatically determined if ``value`` is  array_like, for
