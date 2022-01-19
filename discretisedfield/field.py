@@ -441,8 +441,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 msg = 'Cannot normalise field with zero values.'
                 raise ValueError(msg)
 
-            # not using /= because of possibly different data types
-            self.array = self.array / self.norm.array  # normalise to 1
+            self.array /= self.norm.array  # normalise to 1
             self.array *= dfu.as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
