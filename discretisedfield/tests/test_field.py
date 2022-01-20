@@ -139,23 +139,24 @@ class TestField:
             self.meshes.append(mesh)
 
         # Create lists of field values.
-        self.consts = [[0, np.float64],
-                       [-5., np.float64],
-                       [np.pi, np.float64],
-                       [1e-15, np.float64],
-                       [1.2e12, np.float64],
-                       [random.random(), np.float64],
-                       [1+1j, np.complex128]]
-        self.iters = [[(0, 0, 1), np.float64],
-                      [(0, -5.1, np.pi), np.float64],
-                      [[70, 1e15, 2*np.pi], np.float64],
-                      [[5, random.random(), np.pi], np.float64],
-                      [np.array([4, -1, 3.7]), np.float64],
-                      [np.array([2.1, 0.0, -5*random.random()]), np.float64],
-                      [(1+1j, 1+1j, 1+1j), np.complex128],
-                      [(0, 0, 1j), np.complex128],
-                      [np.random.random(3) + np.random.random(3) * 1j,
-                       np.complex128]]
+        # dtype is computed automatically for array_like
+        self.consts = [[0, None],
+                       [-5., None],
+                       [np.pi, None],
+                       [1e-15, None],
+                       [1.2e12, None],
+                       [random.random(), None],
+                       [1+1j, None]]
+        self.iters = [[(0, 0, 1), None],
+                      [(0, -5.1, np.pi), None],
+                      [[70, 1e15, 2*np.pi], None],
+                      [[5, random.random(), np.pi], None],
+                      [np.array([4, -1, 3.7]), None],
+                      [np.array([2.1, 0.0, -5*random.random()]), None],
+                      [(1+1j, 1+1j, 1+1j), None],
+                      [(0, 0, 1j), None],
+                      [np.random.random(3) + np.random.random(3) * 1j, None]]
+        # dtype has to be specified for callable
         self.sfuncs = [[lambda c: 1, np.float64],
                        [lambda c: -2.4, np.float64],
                        [lambda c: -6.4e-15, np.float64],
@@ -216,7 +217,7 @@ class TestField:
                     f = df.Field(mesh, dim=dim)
 
         # wrong abc.Iterable
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             df.Field(self.meshes[0], dim=1, value='string')
 
         # all builtin types are numeric types or Iterable
@@ -286,6 +287,7 @@ class TestField:
         field = df.Field(mesh, dim=3, value={'default': (1, 1, 1)})
         assert np.all(field.array == (1, 1, 1))
 
+        # dtype has to be specified for isinstance(value, dict)
         field = df.Field(mesh, dim=3, value={'r1': (0, 0, 1+2j),
                                              'default': (1, 1, 1)},
                          dtype=np.complex128)
@@ -294,7 +296,7 @@ class TestField:
 
     def test_set_exception(self):
         for mesh in self.meshes:
-            with pytest.raises(ValueError):
+            with pytest.raises(TypeError):
                 f = df.Field(mesh, dim=3, value='meaningless_string')
 
             with pytest.raises(ValueError):
@@ -2177,7 +2179,7 @@ class TestField:
         assert df.Field(mesh, dim=3).allclose(np.mod(self.pf.phase, np.pi))
 
         # complex field
-        field = df.Field(mesh, dim=1, value=1 + 1j, dtype=np.complex128)
+        field = df.Field(mesh, dim=1, value=1 + 1j)
         real_field = field.real
         check_field(real_field)
         assert df.Field(mesh, dim=1, value=1).allclose(real_field)
@@ -2189,9 +2191,13 @@ class TestField:
 
     def test_numpy_ufunc(self):
         assert np.allclose(np.sin(self.pf).array, np.sin(self.pf.array))
-        assert np.allclose(np.exp(self.pf.orientation).array,
-                           np.exp(self.pf.orientation.array))
         assert np.sum([self.pf, self.pf]).allclose(self.pf + self.pf)
         assert np.multiply(self.pf.x, self.pf.y).allclose(self.pf.x
                                                           * self.pf.y)
         assert np.power(self.pf.z, 2).allclose(self.pf.z**2)
+
+        # self.pf contains values of 1e5 and exp of this,produces an overflow
+        field = df.Field(self.pf.mesh, dim=3,
+                         value=lambda _: np.random.random(3)*2 - 1)
+        assert np.allclose(np.exp(field.orientation).array,
+                           np.exp(field.orientation.array))

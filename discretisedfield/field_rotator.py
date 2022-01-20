@@ -169,8 +169,7 @@ class FieldRotator:
 
         self._rotated_field = df.Field(mesh=new_mesh,
                                        dim=self._orig_field.dim,
-                                       value=new_m,
-                                       dtype=self._orig_field.dtype)
+                                       value=new_m)
 
     def clear_rotation(self):
         """Remove all rotations."""

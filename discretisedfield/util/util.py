@@ -23,18 +23,27 @@ def as_array(val, mesh, dim, dtype):
     raise TypeError('Unsupported type {type(val)}.')
 
 
+# to avoid str being interpreted as iterable
+@as_array.register(str)
+def _(val, mesh, dim, dtype):
+    raise TypeError('Unsupported type {type(val)}.')
+
+
 @as_array.register(numbers.Complex)
 @as_array.register(collections.abc.Iterable)
 def _(val, mesh, dim, dtype):
-    # we should think about allowing this as well
     if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
+    if dtype is None:
+        dtype = max(np.asarray(val).dtype, np.float64)
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
 @as_array.register(collections.abc.Callable)
 def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, dim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
         res = val(point)
@@ -44,6 +53,10 @@ def _(val, mesh, dim, dtype):
 
 @as_array.register(dict)
 def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
+    if dtype is None:
+        dtype = np.float64
     if 'default' in val and not callable(val['default']):
         fill_value = val['default']
     else:

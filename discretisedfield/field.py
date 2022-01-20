@@ -54,6 +54,13 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         Please refer to ``discretisedfield.Field.norm`` property. Defaults to
         ``None`` (``norm=None`` defines no norm).
 
+    dtype : str, type, np.dtype, optional
+
+        Data type of the underlying numpy array. If not specified the best data
+        type is automatically determined if ``value`` is  array_like, for
+        callable and dict ``value`` the numpy default (currently
+        ``float64``) is used. Defaults to ``None``.
+
     Examples
     --------
     1. Defining a uniform three-dimensional vector field on a nano-sized thin
@@ -111,8 +118,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
     """
 
-    def __init__(self, mesh, dim, value=0, norm=None, components=None,
-                 dtype=np.float64):
+    def __init__(self, mesh, dim, value=0., norm=None, components=None,
+                 dtype=None):
         self.mesh = mesh
         self.dim = dim
         self.dtype = dtype
@@ -191,7 +198,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> # if value is not specified, zero-field is defined
         >>> field = df.Field(mesh=mesh, dim=3)
         >>> field.value
-        0
+        0.0
         >>> field.value = (0, 0, 1)
         >>> field.value
         (0, 0, 1)
@@ -435,8 +442,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 raise ValueError(msg)
 
             self.array /= self.norm.array  # normalise to 1
-            self.array *= dfu.as_array(val, self.mesh, dim=1,
-                                       dtype=self.dtype)
+            self.array *= dfu.as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
         """Field norm.
@@ -552,10 +558,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         orientation_array = np.divide(self.array,
                                       self.norm.array,
-                                      out=np.zeros_like(self.array),
                                       where=(self.norm.array != 0))
         return self.__class__(self.mesh, dim=self.dim, value=orientation_array,
-                              components=self.components, dtype=self.dtype)
+                              components=self.components)
 
     @property
     def average(self):
@@ -747,8 +752,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         if self.components is not None and attr in self.components:
             attr_array = self.array[..., self.components.index(attr),
                                     np.newaxis]
-            return self.__class__(mesh=self.mesh, dim=1, value=attr_array,
-                                  dtype=self.dtype)
+            return self.__class__(mesh=self.mesh, dim=1, value=attr_array)
         else:
             msg = f'Object has no attribute {attr}.'
             raise AttributeError(msg)
@@ -1100,7 +1104,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         return self.__class__(self.mesh, dim=1,
                               value=np.power(self.array, other),
-                              components=self.components, dtype=self.dtype)
+                              components=self.components)
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -1170,12 +1174,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 msg = ('Cannot apply operator + on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
-        elif self.dim == 1 and isinstance(other, numbers.Real):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other,
-                                         dtype=self.dtype)
+        elif self.dim == 1 and isinstance(other, numbers.Complex):
+            return self + self.__class__(self.mesh, dim=self.dim, value=other)
         elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other,
-                                         dtype=self.dtype)
+            return self + self.__class__(self.mesh, dim=self.dim, value=other)
         else:
             msg = (f'Unsupported operand type(s) for +: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1183,7 +1185,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array + other.array,
-                              components=self.components, dtype=self.dtype)
+                              components=self.components)
 
     def __radd__(self, other):
         return self + other
@@ -1329,12 +1331,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                        'defined on different meshes.')
                 raise ValueError(msg)
         elif isinstance(other, numbers.Complex):
-            return self * self.__class__(self.mesh, dim=1, value=other,
-                                         dtype=self.dtype)
+            return self * self.__class__(self.mesh, dim=1, value=other)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
             return self * self.__class__(self.mesh,
                                          dim=np.array(other).shape[-1],
-                                         value=other, dtype=self.dtype)
+                                         value=other)
         elif isinstance(other, df.DValue):
             return self * other(self)
         else:
@@ -1347,7 +1348,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             else None
         return self.__class__(self.mesh, dim=res_array.shape[-1],
                               value=res_array,
-                              components=components, dtype=self.dtype)
+                              components=components)
 
     def __rmul__(self, other):
         return self * other
@@ -1474,8 +1475,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self @ self.__class__(self.mesh, dim=3, value=other,
-                                         components=self.components,
-                                         dtype=self.dtype)
+                                         components=self.components)
         elif isinstance(other, df.DValue):
             return self @ other(self)
         else:
@@ -1543,8 +1543,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self & self.__class__(self.mesh, dim=3, value=other,
-                                         components=self.components,
-                                         dtype=self.dtype)
+                                         components=self.components)
         else:
             msg = (f'Unsupported operand type(s) for &: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1552,7 +1551,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         res_array = np.cross(self.array, other.array)
         return self.__class__(self.mesh, dim=3, value=res_array,
-                              components=self.components, dtype=self.dtype)
+                              components=self.components)
 
     def __rand__(self, other):
         return self & other
@@ -1618,12 +1617,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 msg = ('Cannot apply operator << on fields '
                        'defined on different meshes.')
                 raise ValueError(msg)
-        elif isinstance(other, numbers.Real):
-            return self << self.__class__(self.mesh, dim=1, value=other,
-                                          dtype=self.dtype)
+        elif isinstance(other, numbers.Complex):
+            return self << self.__class__(self.mesh, dim=1, value=other)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self << self.__class__(self.mesh, dim=len(other),
-                                          value=other, dtype=self.dtype)
+                                          value=other)
         else:
             msg = (f'Unsupported operand type(s) for <<: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1643,15 +1641,14 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         return self.__class__(self.mesh, dim=len(array_list),
                               value=np.stack(array_list, axis=3),
-                              components=components, dtype=self.dtype)
+                              components=components)
 
     def __rlshift__(self, other):
-        if isinstance(other, numbers.Real):
-            return self.__class__(self.mesh, dim=1, value=other,
-                                  dtype=self.dtype) << self
+        if isinstance(other, numbers.Complex):
+            return self.__class__(self.mesh, dim=1, value=other) << self
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self.__class__(self.mesh, dim=len(other),
-                                  value=other, dtype=self.dtype) << self
+                                  value=other) << self
         else:
             msg = (f'Unsupported operand type(s) for <<: '
                    f'{type(self)=} and {type(other)=}.')
@@ -1720,7 +1717,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         padded_mesh = self.mesh.pad(pad_width)
 
         return self.__class__(padded_mesh, dim=self.dim, value=padded_array,
-                              components=self.components, dtype=self.dtype)
+                              components=self.components)
 
     def derivative(self, direction, n=1):
         """Directional derivative.
@@ -1873,7 +1870,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                          axis=direction)
 
         return self.__class__(self.mesh, dim=self.dim, value=derivative_array,
-                              components=self.components, dtype=self.dtype)
+                              components=self.components)
 
     @property
     def grad(self):
@@ -2301,7 +2298,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
 
         res = self.__class__(mesh, dim=self.dim, value=res_array,
-                             components=self.components, dtype=self.dtype)
+                             components=self.components)
 
         if len(direction) == 3:
             return dfu.array2tuple(res.array.squeeze())
@@ -2415,7 +2412,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         return self.__class__(plane_mesh, dim=self.dim, value=self,
-                              components=self.components, dtype=self.dtype)
+                              components=self.components,
+                              dtype=self.array.dtype  # callable requires dtype
+                              )
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
@@ -2494,7 +2493,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
         return self.__class__(submesh, dim=self.dim,
                               value=self.array[tuple(slices)],
-                              components=self.components, dtype=self.dtype)
+                              components=self.components)
 
     def project(self, direction):
         """Projects the field along one direction and averages it out along
@@ -2592,8 +2591,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         angle_array[angle_array < 0] += 2 * np.pi
 
         return self.__class__(self.mesh, dim=1,
-                              value=angle_array[..., np.newaxis],
-                              dtype=self.dtype)
+                              value=angle_array[..., np.newaxis])
 
     def write(self, filename, representation='txt', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
@@ -3366,8 +3364,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components,
-                              dtype=np.complex128)
+                              components=self.components)
 
     @property
     def ifftn(self):
@@ -3388,8 +3385,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components,
-                              dtype=np.complex128)
+                              components=self.components)
 
     @property
     def rfftn(self):
@@ -3411,8 +3407,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components,
-                              dtype=np.complex128)
+                              components=self.components)
 
     @property
     def irfftn(self):
@@ -3436,8 +3431,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         return self.__class__(mesh, dim=len(values),
                               value=np.stack(values, axis=3),
-                              components=self.components,
-                              dtype=np.complex128)
+                              components=self.components)
 
     def _fft_mesh(self, rfft=False):
         """FFT can be one of fftfreq, rfftfreq."""
@@ -3504,8 +3498,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         """Complex conjugate of complex field."""
         return self.__class__(self.mesh, dim=self.dim,
                               value=self.array.conjugate(),
-                              components=self.components,
-                              dtype=self.dtype)
+                              components=self.components)
 
     # TODO check and write tests
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -3532,11 +3525,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             if len(result) != len(mesh):
                 raise ValueError('wrong number of Field objects')
             return tuple(self.__class__(m, dim=x.shape[-1], value=x,
-                                        components=self.components,
-                                        dtype=self.dtype)
+                                        components=self.components)
                          for x, m in zip(result, mesh))
         elif method == 'at':
             return None
         else:
             return self.__class__(mesh[0], dim=result.shape[-1], value=result,
-                                  components=self.components, dtype=self.dtype)
+                                  components=self.components)

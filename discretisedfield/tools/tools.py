@@ -121,7 +121,7 @@ def topological_charge_density(field, /, method='continuous'):
                                    of.derivative(dfu.raxesdict[axis2]))
 
     elif method == 'berg-luescher':
-        q = field.__class__(field.mesh, dim=1, value=0)
+        q = df.Field(field.mesh, dim=1)
 
         # Area of a single triangle
         area = 0.5 * field.mesh.cell[axis1] * field.mesh.cell[axis2]
@@ -527,7 +527,7 @@ def max_neigbouring_cell_angle(field, /, units='rad'):
     y_angles = neigbouring_cell_angle(field, 'y', units=units).array.squeeze()
     z_angles = neigbouring_cell_angle(field, 'z', units=units).array.squeeze()
 
-    max_angles = np.zeros((*field.array.shape[:-1], 6), dtype=np.float64)
+    max_angles = np.zeros((*field.array.shape[:-1], 6))
     max_angles[1:, :, :, 0] = x_angles
     max_angles[:-1, :, :, 1] = x_angles
     max_angles[:, 1:, :, 2] = y_angles
