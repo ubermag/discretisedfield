@@ -42,7 +42,8 @@ dependencies = [
   "jupyterlab~=3.0",
   "h5py>=3.1",
   "k3d>=2.11",
-  "scipy>=1.6"
+  "scipy>=1.6",
+  "jinja2"
 ]
 
 # [project.optional-dependencies]
