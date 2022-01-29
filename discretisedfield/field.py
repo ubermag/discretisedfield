@@ -3108,15 +3108,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             # >>> READ DATA <<<
             if mode == 'Binary':
-                data = next(f)
-                while not (line := next(f)).startswith(b'#'):
-                    # some ovf file contain mutiple data lines even though
-                    # this does not seem to be in the standard
-                    data += line.strip()
                 decoder = struct.Struct(
                     f'{endian}{"d" if nbytes == 8 else "f"}')
 
-                test_data = decoder.unpack(data[:nbytes])[0]
+                test_data = decoder.unpack(f.read(nbytes))[0]
                 check = {4: 1234567.0, 8: 123456789012345.0}
                 if nbytes not in (4, 8) or test_data != check[nbytes]:
                     raise ValueError(  # pragma: no cover
@@ -3125,13 +3120,14 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                         f' is not correct: Expected {check[nbytes]}, got'
                         f' {check}.')
 
-                data = data[nbytes:].strip()  # remove trailing newline
+                data = f.read()
 
-                # mumax3 violates the ovf format specification and does not
-                # insert a newline character before the "End: Data ..." string
-                mumax_end = bytes(f'# End: Data Binary {nbytes}', 'utf-8')
-                if data.endswith(mumax_end):
-                    data = data[:-len(mumax_end)]
+                # length of b'# End: Data Binary X\n# End: Segement\n' (37)
+                # plus additional safety
+                footer_length_estimate = 45
+                end = data.find(b'# End: Data Binary', footer_length_estimate)
+
+                data = data[:end].strip()  # trailing newline character in ovf
                 bdata = decoder.iter_unpack(data)
                 dtype = np.float64 if nbytes == 8 else np.float32
                 array = np.fromiter((e[0] for e in bdata), dtype=dtype)
