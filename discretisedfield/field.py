@@ -3081,14 +3081,12 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             header['valuedim'] = int(header['valuedim']) if ovf_v2 else 3
 
             # >>> MESH <<<
-            p1 = (float(header[key]) for key in ['xmin', 'ymin', 'zmin'])
-            p2 = (float(header[key]) for key in ['xmax', 'ymax', 'zmax'])
-            cell = (float(header[key]) for key in ['xstepsize', 'ystepsize',
-                                                   'zstepsize'])
+            p1 = (float(header[f'{key}min']) for key in 'xyz')
+            p2 = (float(header[f'{key}max']) for key in 'xyz')
+            cell = (float(header[f'{key}stepsize']) for key in 'xyz')
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-            nodes = math.prod(int(header[key]) for key in ['xnodes', 'ynodes',
-                                                           'znodes'])
+            nodes = math.prod(int(header[f'{key}nodes']) for key in 'xyz')
 
             # >>> READ DATA <<<
             if mode == 'Binary':
@@ -3096,18 +3094,18 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 format = (f'{"<" if ovf_v2 else ">"}'
                           f'{"d" if nbytes == 8 else "f"}')
 
-                test_data = struct.unpack(format, f.read(nbytes))[0]
+                test_value = struct.unpack(format, f.read(nbytes))[0]
                 check = {4: 1234567.0, 8: 123456789012345.0}
-                if nbytes not in (4, 8) or test_data != check[nbytes]:
+                if nbytes not in (4, 8) or test_value != check[nbytes]:
                     raise ValueError(  # pragma: no cover
                         f'Cannot read file {filename}. The file seems to be in'
-                        ' binary format ({nbytes} bytes) but the check value'
+                        f' binary format ({nbytes} bytes) but the check value'
                         f' is not correct: Expected {check[nbytes]}, got'
-                        f' {check}.')
+                        f' {test_value}.')
 
                 array = np.fromfile(f, count=int(nodes * header['valuedim']),
-                                    dtype=format)
-                array.shape = (-1, int(header['valuedim']))
+                                    dtype=format).reshape(
+                                        (-1, header['valuedim']))
             else:
                 array = pd.read_csv(f,
                                     sep=' ',
