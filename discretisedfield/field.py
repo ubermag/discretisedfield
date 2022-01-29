@@ -3077,7 +3077,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     key = information[0].strip()
                     header[key] = information[-1].strip()
 
-            print(header)
             if header['ovf_version'] == '1':
                 # valuedim is fixed to 3 and not in the header
                 header['valuedim'] = 3
