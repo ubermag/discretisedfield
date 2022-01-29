@@ -3072,6 +3072,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         header = {}
         with open(filename, 'rb') as f:
             # >>> READ HEADER <<<
+            header['ovf_version'] = next(f).decode('utf-8').split()[-1][-3]
             for line in f:
                 line = line.decode('utf-8')
                 if line.startswith('# Begin: Data'):
@@ -3091,13 +3092,15 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     elif key in mdata_list:
                         header[key] = information[-3:]
 
-            if 'valuedim' not in header:  # ovf1 file
-                # valuedim is fixed to 3
+            if header['ovf_version'] == '1':
+                # valuedim is fixed to 3 and not in the header
                 header['valuedim'] = 3
-                if mode == 'Binary':
-                    endian = '>'  # ovf1 has big-endian
-            elif mode == 'Binary':  # ovf2 file
-                endian = '<'  # ovf2 has little-endian
+
+            if mode == 'Binary':
+                if header['ovf_version'] == '1':
+                    endian = '>'  # ovf1 uses big-endian
+                else:
+                    endian = '<'  # ovf2 uses little-endian
 
             # >>> MESH <<<
             p1 = (header[key] for key in ['xmin', 'ymin', 'zmin'])
