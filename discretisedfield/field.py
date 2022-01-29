@@ -3151,7 +3151,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         r_tuple = (*reversed(mesh.n), header['valuedim'])
         t_tuple = (*range(2, -1, -1), 3)
 
-        return cls(mesh, dim=int(header['valuedim']),
+        return cls(mesh, dim=header['valuedim'],
                    value=array.reshape(r_tuple).transpose(t_tuple))
 
     @classmethod
