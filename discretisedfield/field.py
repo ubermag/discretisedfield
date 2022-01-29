@@ -3064,7 +3064,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         header = {}
         with open(filename, 'rb') as f:
             # >>> READ HEADER <<<
-            header['ovf_version'] = '2' if b'2.0' in next(f) else '1'
+            ovf_v2 = b'2.0' in next(f)
             for line in f:
                 line = line.decode('utf-8')
                 if line.startswith('# Begin: Data'):
@@ -3078,8 +3078,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     header[key] = information[-1].strip()
 
             # valuedim is fixed to 3 and not in the header for OVF 1.0
-            header['valuedim'] = (3 if header['ovf_version'] == '1'
-                                  else int(header['valuedim']))
+            header['valuedim'] = int(header['valuedim']) if ovf_v2 else 3
 
             # >>> MESH <<<
             p1 = (float(header[key]) for key in ['xmin', 'ymin', 'zmin'])
@@ -3094,7 +3093,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             # >>> READ DATA <<<
             if mode == 'Binary':
                 # OVF1 uses big-endian and OVF2 uses little-endian
-                format = (f'{">" if header["ovf_version"] == "1" else "<"}'
+                format = (f'{">" if ovf_v2 else "<"}'
                           f'{"d" if nbytes == 8 else "f"}')
 
                 test_data = struct.unpack(format, f.read(nbytes))[0]
