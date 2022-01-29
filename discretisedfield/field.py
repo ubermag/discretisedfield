@@ -3099,9 +3099,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             # >>> READ DATA <<<
             if mode == 'Binary':
                 byte_order = f'{endian}{"d" if nbytes == 8 else "f"}'
-                decoder = struct.Struct(byte_order)
 
-                test_data = decoder.unpack(f.read(nbytes))[0]
+                test_data = struct.unpack(byte_order, f.read(nbytes))[0]
                 check = {4: 1234567.0, 8: 123456789012345.0}
                 if nbytes not in (4, 8) or test_data != check[nbytes]:
                     raise ValueError(  # pragma: no cover
