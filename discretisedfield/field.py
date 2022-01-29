@@ -3072,10 +3072,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     if mode == 'Binary':
                         nbytes = int(line.split()[-1])
                     break
-                information = line[1:].split(':')  # remove trailing `#`
+                information = line[1:].split(':')  # remove leading `#`
                 if len(information) > 1:
                     key = information[0].strip()
-                    header[key] = information[-1].strip()
+                    header[key] = information[1].strip()
 
             # valuedim is fixed to 3 and not in the header for OVF 1.0
             header['valuedim'] = int(header['valuedim']) if ovf_v2 else 3
