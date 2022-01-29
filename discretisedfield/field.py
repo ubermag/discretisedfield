@@ -3120,7 +3120,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                     comment='#').to_numpy()
 
         r_tuple = (*reversed(mesh.n), header['valuedim'])
-        t_tuple = (*range(2, -1, -1), 3)
+        t_tuple = (2, 1, 0, 3)
 
         return cls(mesh, dim=header['valuedim'],
                    value=array.reshape(r_tuple).transpose(t_tuple))
