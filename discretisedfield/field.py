@@ -3061,14 +3061,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
 
         """
-        mdata_float = ['xmin', 'ymin', 'zmin',
-                       'xmax', 'ymax', 'zmax',
-                       'xstepsize', 'ystepsize', 'zstepsize']
-        mdata_int = ['xnodes', 'ynodes', 'znodes',
-                     'valuedim']
-        mdata_str = ['meshunit', 'valueunit']  # information not used
-        mdata_list = ['valuelabels', 'valueunits']  # information not used
-
         header = {}
         with open(filename, 'rb') as f:
             # >>> READ HEADER <<<
@@ -3078,23 +3070,19 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 if line.startswith('# Begin: Data'):
                     mode = line.split()[3]
                     if mode == 'Binary':
-                        nbytes = int(line.split()[4])
+                        nbytes = int(line.split()[-1])
                     break
-                information = line.split()
+                information = line[1:].split(':')  # remove trailing `#`
                 if len(information) > 1:
-                    key = information[1][:-1]  # remove trailing colon
-                    if key in mdata_float:
-                        header[key] = float(information[-1])
-                    elif key in mdata_int:
-                        header[key] = int(information[-1])
-                    elif key in mdata_str:
-                        header[key] = information[-1]
-                    elif key in mdata_list:
-                        header[key] = information[-3:]
+                    key = information[0].strip()
+                    header[key] = information[-1].strip()
 
+            print(header)
             if header['ovf_version'] == '1':
                 # valuedim is fixed to 3 and not in the header
                 header['valuedim'] = 3
+            else:
+                header['valuedim'] = int(header['valuedim'])
 
             if mode == 'Binary':
                 if header['ovf_version'] == '1':
@@ -3103,13 +3091,14 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     endian = '<'  # ovf2 uses little-endian
 
             # >>> MESH <<<
-            p1 = (header[key] for key in ['xmin', 'ymin', 'zmin'])
-            p2 = (header[key] for key in ['xmax', 'ymax', 'zmax'])
-            cell = (header[key] for key in ['xstepsize', 'ystepsize',
-                                            'zstepsize'])
+            p1 = (float(header[key]) for key in ['xmin', 'ymin', 'zmin'])
+            p2 = (float(header[key]) for key in ['xmax', 'ymax', 'zmax'])
+            cell = (float(header[key]) for key in ['xstepsize', 'ystepsize',
+                                                   'zstepsize'])
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-            nodes = int(header['xnodes'] * header['ynodes'] * header['znodes'])
+            nodes = math.prod(int(header[key]) for key in ['xnodes', 'ynodes',
+                                                           'znodes'])
 
             # >>> READ DATA <<<
             if mode == 'Binary':
