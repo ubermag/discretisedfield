@@ -3092,8 +3092,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             # >>> READ DATA <<<
             if mode == 'Binary':
-                # OVF1 uses big-endian and OVF2 uses little-endian
-                format = (f'{">" if ovf_v2 else "<"}'
+                # OVF2 uses little-endian and OVF1 uses big-endian
+                format = (f'{"<" if ovf_v2 else ">"}'
                           f'{"d" if nbytes == 8 else "f"}')
 
                 test_data = struct.unpack(format, f.read(nbytes))[0]
