@@ -3064,7 +3064,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         header = {}
         with open(filename, 'rb') as f:
             # >>> READ HEADER <<<
-            header['ovf_version'] = next(f).decode('utf-8').split()[-1][-3]
+            # first line ends with '2.0\n' and we only keep the major version
+            header['ovf_version'] = next(f).decode('utf-8')[-4]
             for line in f:
                 line = line.decode('utf-8')
                 if line.startswith('# Begin: Data'):
