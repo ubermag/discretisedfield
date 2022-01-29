@@ -3082,10 +3082,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             header['valuedim'] = (3 if header['ovf_version'] == '1'
                                   else int(header['valuedim']))
 
-            if mode == 'Binary':
-                # OVF1 uses big-endian and OVF2 uses little-endian
-                endian = '>' if header['ovf_version'] == '1' else '<'
-
             # >>> MESH <<<
             p1 = (float(header[key]) for key in ['xmin', 'ymin', 'zmin'])
             p2 = (float(header[key]) for key in ['xmax', 'ymax', 'zmax'])
@@ -3098,6 +3094,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             # >>> READ DATA <<<
             if mode == 'Binary':
+                # OVF1 uses big-endian and OVF2 uses little-endian
+                endian = '>' if header['ovf_version'] == '1' else '<'
                 byte_order = f'{endian}{"d" if nbytes == 8 else "f"}'
 
                 test_data = struct.unpack(byte_order, f.read(nbytes))[0]
