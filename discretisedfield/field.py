@@ -1,10 +1,12 @@
 import collections
+import math
 import numbers
 import struct
 import warnings
 
 import h5py
 import numpy as np
+import pandas as pd
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
@@ -3059,6 +3061,99 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
 
         """
+        mdata_float = ['xmin', 'ymin', 'zmin',
+                       'xmax', 'ymax', 'zmax',
+                       'xstepsize', 'ystepsize', 'zstepsize']
+        mdata_int = ['xnodes', 'ynodes', 'znodes',
+                     'valuedim']
+        mdata_str = ['meshunit', 'valueunit']  # information not used
+        mdata_list = ['valuelabels', 'valueunits']  # information not used
+
+        header = {}
+        with open(filename, 'rb') as f:
+            # >>> READ HEADER <<<
+            for line in f:
+                line = line.decode('utf-8')
+                if line.startswith('# Begin: Data'):
+                    mode = line.split()[3]
+                    if mode == 'Binary':
+                        nbytes = int(line.split()[4])
+                    break
+                information = line.split()
+                if len(information) > 1:
+                    key = information[1][:-1]  # remove trailing colon
+                    if key in mdata_float:
+                        header[key] = float(information[-1])
+                    elif key in mdata_int:
+                        header[key] = int(information[-1])
+                    elif key in mdata_str:
+                        header[key] = information[-1]
+                    elif key in mdata_list:
+                        header[key] = information[-3:]
+
+            if 'valuedim' not in header:  # ovf1 file
+                # valuedim is fixed to 3
+                header['valuedim'] = 3
+                if mode == 'Binary':
+                    endian = '>'  # ovf1 has big-endian
+            elif mode == 'Binary':  # ovf2 file
+                endian = '<'  # ovf2 has little-endian
+
+            # >>> MESH <<<
+            p1 = (header[key] for key in ['xmin', 'ymin', 'zmin'])
+            p2 = (header[key] for key in ['xmax', 'ymax', 'zmax'])
+            cell = (header[key] for key in ['xstepsize', 'ystepsize',
+                                            'zstepsize'])
+            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+            # >>> READ DATA <<<
+            if mode == 'Binary':
+                data = next(f)
+                decoder = struct.Struct(
+                    f'{endian}{"d" if nbytes == 8 else "f"}')
+
+                test_data = decoder.unpack(data[:nbytes])[0]
+                check = {4: 1234567.0, 8: 123456789012345.0}
+                if nbytes not in (4, 8) or test_data != check[nbytes]:
+                    raise ValueError(  # pragma: no cover
+                        f'Cannot read file {filename}. The file seems to be in'
+                        ' binary format ({nbytes} bytes) but the check value'
+                        f' is not correct: Expected {check[nbytes]}, got'
+                        f' {check}.')
+
+                data = data[nbytes:].strip()  # remove trailing newline
+
+                # mumax3 violates the ovf format specification and does not
+                # insert a newline character before the "End: Data ..." string
+                mumax_end = bytes(f'# End: Data Binary {nbytes}', 'utf-8')
+                if data.endswith(mumax_end):
+                    data = data[:len(mumax_end)]
+
+                bdata = decoder.iter_unpack(data)
+                dtype = np.float64 if nbytes == 8 else np.float32
+                array = np.fromiter((e[0] for e in bdata), dtype=dtype)
+                array.shape = (-1, int(header['valuedim']))
+            else:
+                nrows = header['xnodes'] * header['ynodes'] * header['znodes']
+                data = pd.read_csv(
+                    f,
+                    sep=' ',
+                    header=None,
+                    dtype=np.float64,
+                    skipinitialspace=True,
+                    nrows=nrows,
+                    comment='#')
+                array = np.stack([data[i].to_numpy() for i in data.columns],
+                                 axis=-1)
+
+        r_tuple = (*reversed(mesh.n), header['valuedim'])
+        t_tuple = (*range(2, -1, -1), 3)
+
+        return cls(mesh, dim=int(header['valuedim']),
+                   value=array.reshape(r_tuple).transpose(t_tuple))
+
+    @classmethod
+    def _fromovf_old(cls, filename):
         # valuedim is not in OVF1 metadata and has to be extracted
         # from the data itself.
         mdatalist = ['xmin', 'ymin', 'zmin',
