@@ -3109,6 +3109,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             # >>> READ DATA <<<
             if mode == 'Binary':
                 data = next(f)
+                while not (line := next(f)).startswith(b'#'):
+                    # some ovf file contain mutiple data lines even though
+                    # this does not seem to be in the standard
+                    data += line.strip()
                 decoder = struct.Struct(
                     f'{endian}{"d" if nbytes == 8 else "f"}')
 
