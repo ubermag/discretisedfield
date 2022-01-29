@@ -3109,6 +3109,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                             'zstepsize'])
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
+            nodes = header['xnodes'] * header['ynodes'] * header['znodes']
+
             # >>> READ DATA <<<
             if mode == 'Binary':
                 decoder = struct.Struct(
@@ -3123,27 +3125,19 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                         f' is not correct: Expected {check[nbytes]}, got'
                         f' {check}.')
 
-                data = f.read()
-
-                # length of b'# End: Data Binary X\n# End: Segement\n' (37)
-                # plus additional safety
-                footer_length_estimate = 45
-                end = data.find(b'# End: Data Binary', footer_length_estimate)
-
-                data = data[:end].strip()  # trailing newline character in ovf
+                data = f.read(nodes * header['valuedim'] * nbytes)
                 bdata = decoder.iter_unpack(data)
                 dtype = np.float64 if nbytes == 8 else np.float32
                 array = np.fromiter((e[0] for e in bdata), dtype=dtype)
                 array.shape = (-1, int(header['valuedim']))
             else:
-                nrows = header['xnodes'] * header['ynodes'] * header['znodes']
                 data = pd.read_csv(
                     f,
                     sep=' ',
                     header=None,
                     dtype=np.float64,
                     skipinitialspace=True,
-                    nrows=nrows,
+                    nrows=nodes,
                     comment='#')
                 array = np.stack([data[i].to_numpy() for i in data.columns],
                                  axis=-1)
