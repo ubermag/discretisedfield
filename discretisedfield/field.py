@@ -3127,8 +3127,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 # insert a newline character before the "End: Data ..." string
                 mumax_end = bytes(f'# End: Data Binary {nbytes}', 'utf-8')
                 if data.endswith(mumax_end):
-                    data = data[:len(mumax_end)]
-
+                    data = data[:-len(mumax_end)]
                 bdata = decoder.iter_unpack(data)
                 dtype = np.float64 if nbytes == 8 else np.float32
                 array = np.fromiter((e[0] for e in bdata), dtype=dtype)
