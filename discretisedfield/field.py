@@ -3118,16 +3118,13 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                     dtype=byte_order)
                 array.shape = (-1, int(header['valuedim']))
             else:
-                data = pd.read_csv(
-                    f,
-                    sep=' ',
-                    header=None,
-                    dtype=np.float64,
-                    skipinitialspace=True,
-                    nrows=nodes,
-                    comment='#')
-                array = np.stack([data[i].to_numpy() for i in data.columns],
-                                 axis=-1)
+                array = pd.read_csv(f,
+                                    sep=' ',
+                                    header=None,
+                                    dtype=np.float64,
+                                    skipinitialspace=True,
+                                    nrows=nodes,
+                                    comment='#').to_numpy()
 
         r_tuple = (*reversed(mesh.n), header['valuedim'])
         t_tuple = (*range(2, -1, -1), 3)
