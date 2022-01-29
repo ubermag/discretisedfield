@@ -3077,17 +3077,12 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     key = information[0].strip()
                     header[key] = information[-1].strip()
 
-            if header['ovf_version'] == '1':
-                # valuedim is fixed to 3 and not in the header
-                header['valuedim'] = 3
-            else:
-                header['valuedim'] = int(header['valuedim'])
+            # valuedim is fixed to 3 and not in the header for OVF 1.0
+            header['valuedim'] = 3 if header['ovf_version'] == '1' else int(header['valuedim'])
 
             if mode == 'Binary':
-                if header['ovf_version'] == '1':
-                    endian = '>'  # ovf1 uses big-endian
-                else:
-                    endian = '<'  # ovf2 uses little-endian
+                # OVF1 uses big-endian and OVF2 uses little-endian
+                endian = '>' if header['ovf_version'] == '1' else '<'
 
             # >>> MESH <<<
             p1 = (float(header[key]) for key in ['xmin', 'ymin', 'zmin'])
