@@ -3079,7 +3079,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     header[key] = information[-1].strip()
 
             # valuedim is fixed to 3 and not in the header for OVF 1.0
-            header['valuedim'] = 3 if header['ovf_version'] == '1' else int(header['valuedim'])
+            header['valuedim'] = (3 if header['ovf_version'] == '1'
+                                  else int(header['valuedim']))
 
             if mode == 'Binary':
                 # OVF1 uses big-endian and OVF2 uses little-endian
