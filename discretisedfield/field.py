@@ -3109,12 +3109,12 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                             'zstepsize'])
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-            nodes = header['xnodes'] * header['ynodes'] * header['znodes']
+            nodes = int(header['xnodes'] * header['ynodes'] * header['znodes'])
 
             # >>> READ DATA <<<
             if mode == 'Binary':
-                decoder = struct.Struct(
-                    f'{endian}{"d" if nbytes == 8 else "f"}')
+                byte_order = f'{endian}{"d" if nbytes == 8 else "f"}'
+                decoder = struct.Struct(byte_order)
 
                 test_data = decoder.unpack(f.read(nbytes))[0]
                 check = {4: 1234567.0, 8: 123456789012345.0}
@@ -3125,10 +3125,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                         f' is not correct: Expected {check[nbytes]}, got'
                         f' {check}.')
 
-                data = f.read(nodes * header['valuedim'] * nbytes)
-                bdata = decoder.iter_unpack(data)
-                dtype = np.float64 if nbytes == 8 else np.float32
-                array = np.fromiter((e[0] for e in bdata), dtype=dtype)
+                array = np.fromfile(f, count=int(nodes * header['valuedim']),
+                                    dtype=byte_order)
                 array.shape = (-1, int(header['valuedim']))
             else:
                 data = pd.read_csv(
