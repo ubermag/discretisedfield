@@ -2796,8 +2796,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         reordered = self.array.transpose((2, 1, 0, 3))  # ovf ordering
 
-        bin_rep = {'bin4': (1234567.0, '<f'),
-                   'bin8': (123456789012345.0, '<d')}
+        bin_rep = {'bin4': ('<f', 1234567.0),
+                   'bin8': ('<d', 123456789012345.0)}
 
         with open(filename, 'wb') as f:
             f.write(bheader)
@@ -2813,7 +2813,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                           np.zeros_like(reordered)), axis=-1)
 
                 f.write(np.asarray(reordered,
-                                   dtype=bin_rep[representation][1]).tobytes())
+                                   dtype=bin_rep[representation][0]).tobytes())
                 f.write(b'\n')
             else:
                 data = pd.DataFrame(reordered.reshape((-1, self.dim)))
