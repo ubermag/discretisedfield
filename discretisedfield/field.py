@@ -2677,7 +2677,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         if filename.endswith(('.omf', '.ovf', '.ohf')):
             self._writeovf(filename, representation=representation,
                            extend_scalar=extend_scalar)
-        elif any([filename.endswith(ext) for ext in ['.hdf5', '.h5']]):
+        elif filename.endswith(('.hdf5', '.h5')):
             self._writehdf5(filename)
         elif filename.endswith('.vtk'):
             self._writevtk(filename)
@@ -2999,12 +2999,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field.write`
 
         """
-        if any([filename.endswith(ext) for ext in ['.omf', '.ovf',
-                                                   '.ohf', '.oef']]):
+        if filename.endswith(('.omf', '.ovf', '.ohf', '.oef')):
             return cls._fromovf(filename)
-        elif any([filename.endswith(ext) for ext in ['.vtk']]):
+        elif filename.endswith('.vtk'):
             return cls._fromvtk(filename)
-        elif any([filename.endswith(ext) for ext in ['.hdf5', '.h5']]):
+        elif filename.endswith(('.hdf5', '.h5')):
             return cls._fromhdf5(filename)
         else:
             msg = (f'Reading file with extension {filename.split(".")[-1]} '
