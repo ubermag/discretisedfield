@@ -1664,6 +1664,7 @@ class TestField:
 
         # Write/read
         for dim, value in [(1, lambda point: point[0] + point[1] + point[2]),
+                           (2, lambda point: (point[0], point[1] + point[2])),
                            (3, lambda point: (point[0], point[1], point[2]))]:
             f = df.Field(mesh, dim=dim, value=value)
             for rep in representations:
@@ -1715,11 +1716,6 @@ class TestField:
             # We know the saved magentisation.
             f_saved = df.Field(f_read.mesh, dim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
-
-        # Exception (dim=2)
-        f = df.Field(mesh, dim=2, value=(1, 2))
-        with pytest.raises(TypeError) as excinfo:
-            f.write(filename)
 
     def test_write_read_vtk(self):
         filename = 'testfile.vtk'
