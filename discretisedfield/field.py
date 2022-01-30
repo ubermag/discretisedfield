@@ -2812,8 +2812,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     reordered = np.stack((reordered, np.zeros_like(reordered),
                                           np.zeros_like(reordered)), axis=-1)
 
-                f.write(np.asarray(reordered,
-                                   dtype=bin_rep[representation][0]).tobytes())
+                f.write(np.asarray(
+                    reordered, dtype=bin_rep[representation][0]).tobytes())
                 f.write(b'\n')
             else:
                 data = pd.DataFrame(reordered.reshape((-1, self.dim)))
