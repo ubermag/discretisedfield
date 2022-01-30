@@ -1678,10 +1678,10 @@ class TestField:
         # Extend scalar
         for rep in representations:
             f = df.Field(mesh, dim=1,
-                         value=lambda point: point[0]+point[1]+point[2])
+                         value=lambda point: point[0] + point[1] + point[2])
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmpfilename = os.path.join(tmpdir, filename)
-                f.write(tmpfilename, extend_scalar=True)
+                f.write(tmpfilename, representation=rep, extend_scalar=True)
                 f_read = df.Field.fromfile(tmpfilename)
 
                 assert f.allclose(f_read.x)
