@@ -2753,7 +2753,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         bheader = ''.join(
             f'# {line}\n' for line in
-            ('OOMMF OVF 2.0',
+            ['OOMMF OVF 2.0',
              '',
              'Segment count: 1',
              '',
@@ -2785,13 +2785,13 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
              '',
              'End: Header',
              '',
-             f'Begin: Data {repr_string}')
+             f'Begin: Data {repr_string}']
         ).encode('utf-8')
 
         bfooter = ''.join(
             f'# {line}\n' for line in
-            (f'End: Data {repr_string}',
-             'End: Segment')
+            [f'End: Data {repr_string}',
+             'End: Segment']
         ).encode('utf-8')
 
         reordered = self.array.transpose((2, 1, 0, 3))  # ovf ordering
