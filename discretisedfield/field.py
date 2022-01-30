@@ -2674,7 +2674,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
-        if any([filename.endswith(ext) for ext in ['.omf', '.ovf', '.ohf']]):
+        if filename.endswith(('.omf', '.ovf', '.ohf')):
             self._writeovf(filename, representation=representation,
                            extend_scalar=extend_scalar)
         elif any([filename.endswith(ext) for ext in ['.hdf5', '.h5']]):
