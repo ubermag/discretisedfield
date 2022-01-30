@@ -1717,6 +1717,10 @@ class TestField:
             f_saved = df.Field(f_read.mesh, dim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
+        # Directly read with wrong representation
+        with pytest.raises(ValueError):
+            df.Field._fromovf(filenames[0], representation='bin5')
+
     def test_write_read_vtk(self):
         filename = 'testfile.vtk'
 
