@@ -14,6 +14,7 @@
 | --- | --- |
 | Tests | [![Build status](https://github.com/ubermag/discretisedfield/workflows/workflow/badge.svg)](https://github.com/ubermag/discretisedfield/actions?query=workflow%3Aworkflow) |
 |       | [![conda](https://github.com/ubermag/discretisedfield/workflows/conda/badge.svg)](https://github.com/ubermag/discretisedfield/actions?query=workflow%3Aconda) |
+|       | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ubermag/discretisedfield/master.svg)](https://results.pre-commit.ci/latest/github/ubermag/discretisedfield/master)
 | Releases | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |          | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg?token=hcK4fofmrL)](https://codecov.io/gh/ubermag/discretisedfield) |

@@ -92,3 +92,6 @@ about = """
 
 [tool.coverage.run]
 omit = ["discretisedfield/tests/*"]
+
+[tool.isort]
+skip_gitignore = true  # ignores files listed in .gitignore
