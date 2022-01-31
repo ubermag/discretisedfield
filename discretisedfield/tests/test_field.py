@@ -1664,6 +1664,7 @@ class TestField:
 
         # Write/read
         for dim, value in [(1, lambda point: point[0] + point[1] + point[2]),
+                           (2, lambda point: (point[0], point[1] + point[2])),
                            (3, lambda point: (point[0], point[1], point[2]))]:
             f = df.Field(mesh, dim=dim, value=value)
             for rep in representations:
@@ -1674,13 +1675,17 @@ class TestField:
 
                     assert f.allclose(f_read)
 
+            # Directly write with wrong representation (no data is written)
+            with pytest.raises(ValueError):
+                f._writeovf('fname.ovf', representation='bin5')
+
         # Extend scalar
         for rep in representations:
             f = df.Field(mesh, dim=1,
-                         value=lambda point: point[0]+point[1]+point[2])
+                         value=lambda point: point[0] + point[1] + point[2])
             with tempfile.TemporaryDirectory() as tmpdir:
                 tmpfilename = os.path.join(tmpdir, filename)
-                f.write(tmpfilename, extend_scalar=True)
+                f.write(tmpfilename, representation=rep, extend_scalar=True)
                 f_read = df.Field.fromfile(tmpfilename)
 
                 assert f.allclose(f_read.x)
@@ -1715,11 +1720,6 @@ class TestField:
             # We know the saved magentisation.
             f_saved = df.Field(f_read.mesh, dim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
-
-        # Exception (dim=2)
-        f = df.Field(mesh, dim=2, value=(1, 2))
-        with pytest.raises(TypeError) as excinfo:
-            f.write(filename)
 
     def test_write_read_vtk(self):
         filename = 'testfile.vtk'
