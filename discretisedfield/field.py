@@ -2621,7 +2621,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             In the case of OVF files (``.ovf``, ``.omf``, or ``.ohf``),
             representation can be specified (``'bin4'``, ``'bin8'``, or
-            ``'txt'``). Defaults to ``'txt'``.
+            ``'txt'``). Defaults to ``'bin8'``.
 
         extend_scalar : bool, optional
 
