@@ -2738,12 +2738,13 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         """
         write_dim = 3 if extend_scalar and self.dim == 1 else self.dim
-        valuelabels = (' '.join(f'field_{c}' for c in self.components)
-                       if self.components else 'field_x')
-        valueunits = ' '.join(['None'] * self.dim)
-        if extend_scalar:
-            valuelabels = ' '.join([valuelabels] * write_dim)
-            valueunits = ' '.join([valueunits] * write_dim)
+        valueunits = ' '.join(['None'] * write_dim)
+        if write_dim == 1:
+            valuelabels = 'field_x'
+        elif extend_scalar:
+            valuelabels = ' '.join(['field_x'] * write_dim)
+        else:
+            valuelabels = ' '.join(f'field_{c}' for c in self.components)
 
         if representation == 'bin4':
             repr_string = 'Binary 4'
