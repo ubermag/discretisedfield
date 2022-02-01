@@ -43,7 +43,8 @@ dependencies = [
     "h5py>=3.1",
     "k3d>=2.11",
     "scipy>=1.6",
-    "jinja2"
+    "jinja2",
+    "xarray"
 ]
 
 [project.optional-dependencies]
