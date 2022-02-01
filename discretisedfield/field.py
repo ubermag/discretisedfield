@@ -3551,7 +3551,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         ...
         TypeError: units argument must be a string.
 
-    """
+        """
 
         if type(name) != str:
             msg = "name argument must be a string."
