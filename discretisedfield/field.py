@@ -6,6 +6,7 @@ import warnings
 
 import h5py
 import numpy as np
+import xarray as xr
 import pandas as pd
 
 import discretisedfield as df
@@ -3475,3 +3476,82 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         else:
             return self.__class__(mesh[0], dim=result.shape[-1], value=result,
                                   components=self.components)
+
+    def to_xarray(self, name='field', units=None):
+        """Field value as ``xarray.DataArray``.
+
+        The function returns a ``xarray.DataArray`` with dimensions ``x``,
+        ``y``, ``z``, and ``comp`` (only if vector field). The coordinate of
+        the geometric dimensions are derived from ``self.mesh.axis_points``,
+        and for vector field components from ``self.components``. The ``units``
+        attribute of geometric dimensions is set to ``'m'``.
+
+        The name and units of the field ``DataArray`` can be set by using
+        ``name`` and ``units``. If the type of value passed to any of the two
+        arguments is not string, then a TypeError is raised.
+
+        Parameters
+        ----------
+        name : str
+
+            String to set name of the field ``DataArray``
+
+        units : str
+
+            String to set units of the field ``DataArray``
+
+        Returns
+        -------
+        xarray.DataArray
+
+            Field values DataArray.
+
+        Raises
+        ------
+        TypeError
+
+            If either ``name`` or ``units`` argument is not a string.
+
+        Examples
+        --------
+        # TODO: Examples that illustrate usability.
+
+        """
+
+        if type(name) != str:
+            msg = "name argument must be a string."
+            raise TypeError(msg)
+        elif units is not None and type(units) != str:
+            msg = "units argument must be a string."
+            raise TypeError(msg)
+
+        geo_dim = ['x', 'y', 'z']
+
+        data_array_coords = {dim: np.fromiter(self.mesh.axis_points(dim),
+                                              dtype=float)
+                             for dim in geo_dim
+                             }
+
+        geo_units_dict = {dim: 'm' for dim in geo_dim}  # fix units for geo
+
+        if self.dim != 1:
+            data_array_dims = geo_dim + ['comp']
+            data_array_coords['comp'] = self.components
+            field_array = self.array
+        else:
+            data_array_dims = geo_dim
+            field_array = np.squeeze(self.array, self.array.ndim - 1)
+
+        data_array = xr.DataArray(field_array,
+                                  dims=data_array_dims,
+                                  coords=data_array_coords)
+
+        for dim in geo_units_dict:
+            data_array[dim].attrs['units'] = geo_units_dict[dim]
+
+        if units is not None:
+            data_array.attrs['units'] = units
+
+        data_array.name = name
+
+        return data_array
