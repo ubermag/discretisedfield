@@ -2595,7 +2595,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         return self.__class__(self.mesh, dim=1,
                               value=angle_array[..., np.newaxis])
 
-    def write(self, filename, representation='txt', extend_scalar=False):
+    def write(self, filename, representation='bin8', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
 
         If the extension of ``filename`` is ``.vtk``, a VTK file is written
