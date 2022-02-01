@@ -2741,6 +2741,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         valuelabels = (' '.join(f'field_{c}' for c in self.components)
                        if self.components else 'field_x')
         valueunits = ' '.join(['None'] * self.dim)
+        if extend_scalar:
+            valuelabels = ' '.join([valuelabels] * write_dim)
+            valueunits = ' '.join([valueunits] * write_dim)
 
         if representation == 'bin4':
             repr_string = 'Binary 4'
