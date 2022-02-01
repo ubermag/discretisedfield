@@ -1,5 +1,7 @@
 import os
+
 import pytest
+
 import discretisedfield as df
 import discretisedfield.tools as dft
 
