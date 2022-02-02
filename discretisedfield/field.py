@@ -3480,25 +3480,25 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
     def to_xarray(self, name='field', units=None):
         """Field value as ``xarray.DataArray``.
 
-        The function returns a ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``comp`` (only if vector field). The coordinate of
+        The function returns an ``xarray.DataArray`` with dimensions ``x``,
+        ``y``, ``z``, and ``comp`` (only if vector field). The coordinates of
         the geometric dimensions are derived from ``self.mesh.axis_points``,
         and for vector field components from ``self.components``. The ``units``
         attribute of geometric dimensions is set to ``'m'``.
 
-        The name and units of the field ``DataArray`` can be set by using
+        The name and units of the field ``DataArray`` can be set by passing
         ``name`` and ``units``. If the type of value passed to any of the two
-        arguments is not string, then a TypeError is raised.
+        arguments is not ``str``, then a ``TypeError`` is raised.
 
         Parameters
         ----------
         name : str, optional
 
-            String to set name of the field ``DataArray``
+            String to set name of the field ``DataArray``.
 
         units : str, optional
 
-            String to set units of the field ``DataArray``
+            String to set units of the field ``DataArray``.
 
         Returns
         -------
@@ -3552,7 +3552,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         TypeError: units argument must be a string.
 
         """
-
         if type(name) != str:
             msg = "name argument must be a string."
             raise TypeError(msg)
