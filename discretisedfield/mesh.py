@@ -168,8 +168,10 @@ class Mesh:
     ValueError: ...
 
     """
+
     def __init__(self, *, region=None, p1=None, p2=None, n=None, cell=None,
                  bc='', subregions=dict(), attributes={'unit': 'm'}):
+        # TODO NO MUTABLE DEFAULT
         if region is not None and p1 is None and p2 is None:
             self.region = region
         elif region is None and p1 is not None and p2 is not None:
