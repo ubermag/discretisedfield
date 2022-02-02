@@ -3524,24 +3524,22 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         ...
         >>> field
         Field(...)
-        ...
         >>> field.to_xarray()
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10, comp: 3)>
-        array[...]
-        Coordinates:
-        * x        (x) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-        * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-        * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-        * comp     (comp) <U1 'x' 'y' 'z'
         ...
+        Coordinates:
+          * x        (x) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+          * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+          * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+          * comp     (comp) <U1 'x' 'y' 'z'
         >>> field.to_xarray().sel(comp='x')
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
-        Coordinates:
-        * x        (x) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-        * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-        * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-        comp     <U1 'x'
         ...
+        Coordinates:
+          * x        (x) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+          * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+          * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
+            comp     <U1 'x'
         >>> field.to_xarray(name=21)
         Traceback (most recent call last):
         ...
