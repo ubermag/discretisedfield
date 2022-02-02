@@ -3561,10 +3561,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         geo_dim = ['x', 'y', 'z']
 
-        data_array_coords = {dim: np.fromiter(self.mesh.axis_points(dim),
-                                              dtype=float)
-                             for dim in geo_dim
-                             }
+        data_array_coords = {
+            dim: np.fromiter(self.mesh.axis_points(dim), dtype=float)
+            for dim in geo_dim
+        }
 
         geo_units_dict = {dim: 'm' for dim in geo_dim}  # fix units for geo
 
