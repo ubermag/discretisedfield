@@ -3481,10 +3481,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         """Field value as ``xarray.DataArray``.
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``comp`` (only if vector field). The coordinates of
-        the geometric dimensions are derived from ``self.mesh.axis_points``,
+        ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
+        of the geometric dimensions are derived from ``self.mesh.axis_points``,
         and for vector field components from ``self.components``. The ``units``
-        attribute of geometric dimensions is set to ``'m'``.
+        attribute of geometric dimensions is set to
+        ``self.mesh.attributes['unit']``.
 
         The name and units of the field ``DataArray`` can be set by passing
         ``name`` and ``units``. If the type of value passed to any of the two
@@ -3550,10 +3551,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         TypeError: units argument must be a string.
 
         """
-        if type(name) != str:
+        if not isinstance(name, str):
             msg = "name argument must be a string."
             raise TypeError(msg)
-        elif units is not None and type(units) != str:
+
+        if units is not None and not isinstance(units, str):
             msg = "units argument must be a string."
             raise TypeError(msg)
 
@@ -3564,7 +3566,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             for dim in geo_dim
         }
 
-        geo_units_dict = {dim: 'm' for dim in geo_dim}  # fix units for geo
+        geo_units_dict = {dim: self.mesh.attributes['unit'] for dim in geo_dim}
 
         if self.dim != 1:
             data_array_dims = geo_dim + ['comp']
@@ -3572,7 +3574,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             field_array = self.array
         else:
             data_array_dims = geo_dim
-            field_array = np.squeeze(self.array, self.array.ndim - 1)
+            field_array = np.squeeze(self.array, axis=-1)
 
         data_array = xr.DataArray(field_array,
                                   dims=data_array_dims,
