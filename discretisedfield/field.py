@@ -3570,7 +3570,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         if self.dim != 1:
             data_array_dims = geo_dim + ['comp']
-            data_array_coords['comp'] = self.components
+            if self.components is not None:
+                data_array_coords['comp'] = self.components
             field_array = self.array
         else:
             data_array_dims = geo_dim
