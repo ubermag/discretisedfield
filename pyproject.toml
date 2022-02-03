@@ -15,9 +15,9 @@ authors = [
     {name = "Marijan Beg"},
     {name = "Martin Lang"},
     {name = "Samuel Holt"},
+    {name = "Swapneel Amit Pathak"},
     {name = "Ryan A. Pepper"},
-    {name = "Hans Fangohr"},
-    {name = "Swapneel Amit Pathak"}
+    {name = "Hans Fangohr"}
 ]
 
 classifiers = [
