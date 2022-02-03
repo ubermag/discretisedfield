@@ -3544,37 +3544,37 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> field.to_xarray(name=21)
         Traceback (most recent call last):
         ...
-        TypeError: name argument must be a string.
+        TypeError: Name argument must be a string.
         >>> field.to_xarray(units={'field': 'A/m'})
         Traceback (most recent call last):
         ...
-        TypeError: units argument must be a string.
+        TypeError: Units argument must be a string.
 
         """
         if not isinstance(name, str):
-            msg = "name argument must be a string."
+            msg = "Name argument must be a string."
             raise TypeError(msg)
 
         if units is not None and not isinstance(units, str):
-            msg = "units argument must be a string."
+            msg = "Units argument must be a string."
             raise TypeError(msg)
 
-        geo_dim = ['x', 'y', 'z']
+        axes = ['x', 'y', 'z']
 
         data_array_coords = {
-            dim: np.fromiter(self.mesh.axis_points(dim), dtype=float)
-            for dim in geo_dim
+            axis: np.fromiter(self.mesh.axis_points(axis), dtype=float)
+            for axis in axes
         }
 
-        geo_units_dict = {dim: self.mesh.attributes['unit'] for dim in geo_dim}
+        geo_units_dict = {axis: self.mesh.attributes['unit'] for axis in axes}
 
         if self.dim != 1:
-            data_array_dims = geo_dim + ['comp']
+            data_array_dims = axes + ['comp']
             if self.components is not None:
                 data_array_coords['comp'] = self.components
             field_array = self.array
         else:
-            data_array_dims = geo_dim
+            data_array_dims = axes
             field_array = np.squeeze(self.array, axis=-1)
 
         data_array = xr.DataArray(field_array,
