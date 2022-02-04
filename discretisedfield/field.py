@@ -3533,7 +3533,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
           * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
           * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
           * comp     (comp) <U1 'x' 'y' 'z'
-        >>> field.to_xarray().sel(comp='x')
+        >>> xa = field.to_xarray()
+        >>> xa.sel(comp='x')
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
         ...
         Coordinates:
@@ -3541,14 +3542,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
           * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
           * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
             comp     <U1 'x'
-        >>> field.to_xarray(name=21)
-        Traceback (most recent call last):
-        ...
-        TypeError: Name argument must be a string.
-        >>> field.to_xarray(units={'field': 'A/m'})
-        Traceback (most recent call last):
-        ...
-        TypeError: Units argument must be a string.
 
         """
         if not isinstance(name, str):
