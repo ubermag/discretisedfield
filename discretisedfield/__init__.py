@@ -1,15 +1,17 @@
 """Main package"""
 import os
-import pytest
-import pkg_resources
-from .region import Region
-from .mesh import Mesh
-from .field import Field
-from .line import Line
-from .operators import DValue, dx, dy, dz, dV, dS, integral
-from .interact import interact
-from .field_rotator import FieldRotator
+
 import matplotlib.pyplot as plt
+import pkg_resources
+import pytest
+
+from .field import Field
+from .field_rotator import FieldRotator
+from .interact import interact
+from .line import Line
+from .mesh import Mesh
+from .operators import DValue, dS, dV, dx, dy, dz, integral
+from .region import Region
 
 # Enable default plotting style.
 dirname = os.path.abspath(os.path.dirname(__file__))

@@ -1,17 +1,20 @@
-import k3d
-import os
+import collections
 import copy
 import itertools
-import ipywidgets
-import collections
-import numpy as np
+import os
 import warnings
-import discretisedfield as df
-import ubermagutil.units as uu
+
+import ipywidgets
+import k3d
 import matplotlib.pyplot as plt
+import numpy as np
 import ubermagutil.typesystem as ts
-import discretisedfield.util as dfu
+import ubermagutil.units as uu
 from mpl_toolkits.mplot3d import Axes3D
+
+import discretisedfield as df
+import discretisedfield.util as dfu
+
 from . import html
 
 

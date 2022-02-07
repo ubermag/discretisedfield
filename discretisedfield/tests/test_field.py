@@ -1,17 +1,20 @@
-import os
-import re
-import k3d
-import types
-import random
-import pytest
-import numbers
-import tempfile
 import itertools
-import numpy as np
-import discretisedfield as df
-import matplotlib.pyplot as plt
-from .test_mesh import TestMesh, html_re as mesh_html_re
+import numbers
+import os
+import random
+import re
+import tempfile
+import types
 
+import k3d
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import discretisedfield as df
+
+from .test_mesh import TestMesh
+from .test_mesh import html_re as mesh_html_re
 
 html_re = (
     r'<strong>Field</strong>\s*<ul>\s*'

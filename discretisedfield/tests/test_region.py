@@ -1,13 +1,14 @@
+import numbers
 import os
 import re
-import pytest
-import numbers
 import tempfile
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
 import discretisedfield as df
 import discretisedfield.util as dfu
-
 
 html_re = (
     r'<strong>Region</strong>( <i>\w+</i>)?\s*'
