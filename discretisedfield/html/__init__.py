@@ -1,7 +1,6 @@
+import jinja2
 import os
 import re
-
-import jinja2
 
 
 def get_template(name):

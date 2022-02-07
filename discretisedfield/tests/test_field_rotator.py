@@ -1,12 +1,9 @@
 import re
-
 import numpy as np
 import pytest
-
 import discretisedfield as df
+from .test_field import check_field, html_re as field_html_re
 
-from .test_field import check_field
-from .test_field import html_re as field_html_re
 
 html_re = (
     r'<strong>FieldRotator</strong>\s*<ul>\s*'

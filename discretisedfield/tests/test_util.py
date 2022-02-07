@@ -1,6 +1,5 @@
-import numpy as np
 import pytest
-
+import numpy as np
 import discretisedfield as df
 import discretisedfield.util as dfu
 

@@ -1,11 +1,11 @@
 """Matplotlib-based plotting."""
-import abc
-
-import matplotlib.pyplot as plt
 import mpl_toolkits.axes_grid1.inset_locator
+import matplotlib.pyplot as plt
 import numpy as np
 
 import discretisedfield.util as dfu
+
+import abc
 
 
 class Mpl(metaclass=abc.ABCMeta):

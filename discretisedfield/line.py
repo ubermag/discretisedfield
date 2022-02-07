@@ -1,12 +1,10 @@
 import numbers
-
 import ipywidgets
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import ubermagutil.typesystem as ts
 import ubermagutil.units as uu
-
+import matplotlib.pyplot as plt
+import ubermagutil.typesystem as ts
 import discretisedfield.util as dfu
 
 

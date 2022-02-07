@@ -1,10 +1,8 @@
 import os
-import subprocess
 import sys
 import tempfile
-
+import subprocess
 import numpy as np
-
 import discretisedfield as df
 
 

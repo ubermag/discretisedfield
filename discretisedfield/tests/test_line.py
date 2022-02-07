@@ -1,15 +1,13 @@
-import numbers
 import os
 import re
+import pytest
+import numbers
 import tempfile
-
 import ipywidgets
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pytest
-
 import discretisedfield as df
+import matplotlib.pyplot as plt
 
 
 def check_line(line):

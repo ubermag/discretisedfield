@@ -1,5 +1,5 @@
 """Convenience tools"""
-from .tools import (count_bps, count_large_cell_angle_regions, demag_field,
-                    demag_tensor, emergent_magnetic_field,
-                    max_neigbouring_cell_angle, neigbouring_cell_angle,
-                    topological_charge, topological_charge_density)
+from .tools import (neigbouring_cell_angle, max_neigbouring_cell_angle,
+                    topological_charge_density, topological_charge,
+                    emergent_magnetic_field, count_large_cell_angle_regions,
+                    count_bps, demag_tensor, demag_field)

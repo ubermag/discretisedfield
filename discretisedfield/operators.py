@@ -1,7 +1,5 @@
 import numbers
-
 import numpy as np
-
 import discretisedfield as df
 
 

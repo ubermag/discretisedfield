@@ -7,12 +7,11 @@ import warnings
 import h5py
 import numpy as np
 import pandas as pd
-import ubermagutil.typesystem as ts
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
-
+import ubermagutil.typesystem as ts
 from . import html
 
 # TODO: tutorials, line operations
