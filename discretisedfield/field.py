@@ -3559,7 +3559,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             for axis in axes
         }
 
-        geo_units_dict = {axis: self.mesh.attributes['unit'] for axis in axes}
+        geo_units_dict = None
+        if 'unit' in self.mesh.attributes:
+            geo_units_dict = {
+                axis: self.mesh.attributes['unit'] for axis in axes
+            }
 
         if self.dim != 1:
             data_array_dims = axes + ['comp']
@@ -3574,8 +3578,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                   dims=data_array_dims,
                                   coords=data_array_coords)
 
-        for dim in geo_units_dict:
-            data_array[dim].attrs['units'] = geo_units_dict[dim]
+        if geo_units_dict is not None:
+            for dim in geo_units_dict:
+                data_array[dim].attrs['units'] = geo_units_dict[dim]
 
         if units is not None:
             data_array.attrs['units'] = units
