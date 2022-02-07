@@ -107,8 +107,6 @@ def check_field(field):
         assert isinstance(curl, df.Field)
         assert curl.dim == 3
 
-        field_plane = field.plane('z')
-
         assert isinstance((field * df.dx).integral(), tuple)
         assert isinstance((field * df.dy).integral(), tuple)
         assert isinstance((field * df.dz).integral(), tuple)
