@@ -8,6 +8,7 @@ import numbers
 import tempfile
 import itertools
 import numpy as np
+import xarray as xr
 import discretisedfield as df
 import matplotlib.pyplot as plt
 from .test_mesh import TestMesh, html_re as mesh_html_re
@@ -2199,3 +2200,78 @@ class TestField:
                          value=lambda _: np.random.random(3)*2 - 1)
         assert np.allclose(np.exp(field.orientation).array,
                            np.exp(field.orientation.array))
+
+    def test_to_xarray_valid_args(self):
+        for mesh in self.meshes:
+            for value, dtype in self.vfuncs:
+                f = df.Field(mesh, dim=3, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                assert f.dim == fxa['comp'].size
+                assert isinstance(fxa, xr.DataArray)
+                assert np.array_equal(
+                    np.array(list(f.mesh.axis_points('x'))),
+                    fxa.x.values
+                )
+                assert np.array_equal(
+                    np.array(list(f.mesh.axis_points('y'))),
+                    fxa.y.values
+                )
+                assert np.array_equal(
+                    np.array(list(f.mesh.axis_points('z'))),
+                    fxa.z.values
+                )
+                assert np.array_equal(f.array, fxa.values)
+                assert all(
+                    fxa[i].attrs['units'] == f.mesh.attributes['unit']
+                    for i in ['x', 'y', 'z']
+                )
+                assert all(fxa['comp'].values == f.components)
+
+            for value, dtype in self.sfuncs:
+                f = df.Field(mesh, dim=1, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                assert isinstance(fxa, xr.DataArray)
+                assert np.array_equal(
+                    np.array(list(f.mesh.axis_points('x'))),
+                    fxa.x.values
+                )
+                assert np.array_equal(
+                    np.array(list(f.mesh.axis_points('y'))),
+                    fxa.y.values
+                )
+                assert np.array_equal(
+                    np.array(list(f.mesh.axis_points('z'))),
+                    fxa.z.values
+                )
+                assert 'comp' not in fxa.dims
+                assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
+                assert all(
+                    fxa[i].attrs['units'] == f.mesh.attributes['unit']
+                    for i in ['x', 'y', 'z']
+                )
+
+        f6d = self.pf << self.pf
+        f6d_xa = f6d.to_xarray()
+        assert f6d_xa['comp'].size == 6
+
+        # test name and units defaults
+        f3d_xa = self.pf.to_xarray()
+        assert f3d_xa.name == 'field'
+        assert 'units' not in f3d_xa.attrs
+
+        # test name and units
+        f3d_xa_2 = self.pf.to_xarray('m', 'A/m')
+        assert f3d_xa_2.name == 'm'
+        assert f3d_xa_2.attrs['units'] == 'A/m'
+
+    def test_to_xarray_invalid_args(self):
+        args = [
+            ['m', 42.0], [21.0, 42], [21, 'A/m'],
+            [{'name': 'm'}, {'units': 'A/m'}], [['m'], ['A/m']],
+            [['m', 'A/m'], None], [('m', 'A/m'), None],
+            [{'name': 'm', 'units': 'A/m'}, None]
+        ]
+
+        for name, units in args:
+            with pytest.raises(TypeError):
+                fxa = self.pf.to_xarray(name, units)
