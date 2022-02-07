@@ -7,6 +7,7 @@ repos:
   - id: debug-statements  # checks for debugger imports and py37+ `breakpoint()` calls in python source
   - id: trailing-whitespace
     args: [--markdown-linebreak-ext=md]
+    exclude: 'discretisedfield/tests/test_sample/.*'
 
 - repo: https://github.com/pycqa/isort
   rev: 5.10.1
