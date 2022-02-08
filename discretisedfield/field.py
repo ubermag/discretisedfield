@@ -3525,7 +3525,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         ...
         >>> field
         Field(...)
-        >>> field.to_xarray()
+        >>> xa = field.to_xarray()
+        >>> xa
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10, comp: 3)>
         ...
         Coordinates:
@@ -3533,7 +3534,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
           * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
           * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
           * comp     (comp) <U1 'x' 'y' 'z'
-        >>> xa = field.to_xarray()
+        Attributes:
+            units:    None
         >>> xa.sel(comp='x')
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
         ...
@@ -3542,6 +3544,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
           * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
           * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
             comp     <U1 'x'
+        Attributes:
+            units:    None
 
         """
         if not isinstance(name, str):
