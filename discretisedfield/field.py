@@ -3515,6 +3515,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         Examples
         --------
+        1. Create a field
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0, 0, 0)
@@ -3525,6 +3527,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         ...
         >>> field
         Field(...)
+
+        2. Create `xarray.DataArray` from field
+
         >>> xa = field.to_xarray()
         >>> xa
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10, comp: 3)>
@@ -3536,6 +3541,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
           * comp     (comp) <U1 'x' 'y' 'z'
         Attributes:
             units:    None
+
+        3. Select values of `x` component
+
         >>> xa.sel(comp='x')
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
         ...
