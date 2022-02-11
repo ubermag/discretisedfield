@@ -2596,7 +2596,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         return self.__class__(self.mesh, dim=1,
                               value=angle_array[..., np.newaxis])
 
-    def write(self, filename, representation='txt', extend_scalar=False):
+    def write(self, filename, representation='bin8', extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
 
         If the extension of ``filename`` is ``.vtk``, a VTK file is written
@@ -2622,7 +2622,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             In the case of OVF files (``.ovf``, ``.omf``, or ``.ohf``),
             representation can be specified (``'bin4'``, ``'bin8'``, or
-            ``'txt'``). Defaults to ``'txt'``.
+            ``'txt'``). Defaults to ``'bin8'``.
 
         extend_scalar : bool, optional
 
@@ -2739,9 +2739,13 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         """
         write_dim = 3 if extend_scalar and self.dim == 1 else self.dim
-        valuelabels = (' '.join(f'field_{c}' for c in self.components)
-                       if self.components else 'field_x')
-        valueunits = ' '.join(['None'] * self.dim)
+        valueunits = ' '.join(['None'] * write_dim)
+        if write_dim == 1:
+            valuelabels = 'field_x'
+        elif extend_scalar:
+            valuelabels = ' '.join(['field_x'] * write_dim)
+        else:
+            valuelabels = ' '.join(f'field_{c}' for c in self.components)
 
         if representation == 'bin4':
             repr_string = 'Binary 4'
