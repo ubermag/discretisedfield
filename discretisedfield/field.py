@@ -8,7 +8,6 @@ import h5py
 import numpy as np
 import xarray as xr
 import pandas as pd
-import decimal as dc
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
