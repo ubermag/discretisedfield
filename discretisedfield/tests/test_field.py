@@ -2241,7 +2241,7 @@ class TestField:
         assert f3d_xa.attrs['units'] is None
 
         # test name and units
-        f3d_xa_2 = self.pf.to_xarray('m', 'A/m')
+        f3d_xa_2 = self.pf.to_xarray(name='m', units='A/m')
         assert f3d_xa_2.name == 'm'
         assert f3d_xa_2.attrs['units'] == 'A/m'
 
@@ -2256,3 +2256,148 @@ class TestField:
         for name, units in args:
             with pytest.raises(TypeError):
                 fxa = self.pf.to_xarray(name, units)
+
+    def test_from_xarray_valid_args(self):
+        for mesh in self.meshes:
+            for value, dtype in self.vfuncs:
+                f = df.Field(mesh, dim=3, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                f_new = df.Field.from_xarray(fxa)
+                assert f_new == f  # or use allclose()
+
+            for value, dtype in self.sfuncs:
+                f = df.Field(mesh, dim=1, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                f_new = df.Field.from_xarray(fxa)
+                assert f_new == f  # or use allclose()
+
+        f_plane = self.pf.plane('z')
+        f_plane_xa = f_plane.to_xarray()
+        f_plane_new = df.Field.from_xarray(f_plane_xa)
+        assert f_plane_new == f_plane  # or use allclose()
+
+        f6d = self.pf << self.pf
+        f6d_xa = f6d.to_xarray()
+        f6d_new = df.Field.from_xarray(f6d_xa)
+        assert f6d_new == f6d  # or use allclose()
+
+    def test_from_xarray_invalid_args_and_DataArrays(self):
+        args = [int(), float(), str(), list(), dict(), xr.Dataset(),
+                np.empty((20, 20, 20, 3))]
+        bad_value1 = xr.DataArray(np.ones((20, 20, 5, 3), dtype=np.int8),
+                                  dims=['x', 'y', 'z', 'comp'],
+                                  coords=dict(x=np.arange(0, 20),
+                                              y=np.arange(0, 20),
+                                              z=np.arange(0, 5),
+                                              comp=['x', 'y', 'z']),
+                                  name='mag',
+                                  attrs=dict(units='A/m'))
+
+        bad_value2 = xr.DataArray(np.ones((20, 20, 5, 3), dtype=str),
+                                  dims=['x', 'y', 'z', 'comp'],
+                                  coords=dict(x=np.arange(0, 20),
+                                              y=np.arange(0, 20),
+                                              z=np.arange(0, 5),
+                                              comp=['x', 'y', 'z']),
+                                  name='mag',
+                                  attrs=dict(units='A/m'))
+
+        bad_dim_no = xr.DataArray(np.ones((20, 20, 20, 5, 3), dtype=float),
+                                  dims=['x', 'y', 'z', 'a', 'comp'],
+                                  coords=dict(x=np.arange(0, 20),
+                                              y=np.arange(0, 20),
+                                              z=np.arange(0, 20),
+                                              a=np.arange(0, 5),
+                                              comp=['x', 'y', 'z']),
+                                  name='mag',
+                                  attrs=dict(units='A/m'))
+
+        bad_dim_no2 = xr.DataArray(np.ones((20, 20), dtype=float),
+                                   dims=['x', 'y'],
+                                   coords=dict(x=np.arange(0, 20),
+                                               y=np.arange(0, 20)),
+                                   name='mag',
+                                   attrs=dict(units='A/m'))
+
+        bad_dim3 = xr.DataArray(np.ones((20, 20, 5), dtype=float),
+                                dims=['a', 'b', 'c'],
+                                coords=dict(a=np.arange(0, 20),
+                                            b=np.arange(0, 20),
+                                            c=np.arange(0, 5)),
+                                name='mag',
+                                attrs=dict(units='A/m'))
+
+        bad_dim4 = xr.DataArray(np.ones((20, 20, 5, 3), dtype=float),
+                                dims=['x', 'y', 'z', 'c'],
+                                coords=dict(x=np.arange(0, 20),
+                                            y=np.arange(0, 20),
+                                            z=np.arange(0, 5),
+                                            c=['x', 'y', 'z']),
+                                name='mag',
+                                attrs=dict(units='A/m'))
+
+        def bad_coord_gen():
+            rng = np.random.default_rng()
+            for coord in 'xyz':
+                coord_dict = {coord: rng.normal(size=20)}
+                for other_coord in 'xyz'.translate({ord(coord): None}):
+                    coord_dict[other_coord] = np.arange(0, 20)
+                coord_dict['comp'] = ['x', 'y', 'z']
+
+                yield xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+                                   dims=['x', 'y', 'z', 'comp'],
+                                   coords=coord_dict,
+                                   name='mag',
+                                   attrs=dict(units='A/m'))
+
+        bad_coord_comp1 = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+                                       dims=['x', 'y', 'z', 'comp'],
+                                       coords=dict(x=np.arange(0, 20),
+                                                   y=np.arange(0, 20),
+                                                   z=np.arange(0, 20),
+                                                   comp=['x', 'x', 'z']),
+                                       name='mag',
+                                       attrs=dict(units='A/m'))
+
+        bad_coord_comp2 = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+                                       dims=['x', 'y', 'z', 'comp'],
+                                       coords=dict(x=np.arange(0, 20),
+                                                   y=np.arange(0, 20),
+                                                   z=np.arange(0, 20),
+                                                   comp=['a', 'b', 'c']),
+                                       name='mag',
+                                       attrs=dict(units='A/m'))
+
+        bad_coord_comp3 = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+                                       dims=['x', 'y', 'z', 'comp'],
+                                       coords=dict(x=np.arange(0, 20),
+                                                   y=np.arange(0, 20),
+                                                   z=np.arange(0, 20),
+                                                   comp=[1, 2, 3]),
+                                       name='mag',
+                                       attrs=dict(units='A/m'))
+
+        for arg in args:
+            with pytest.raises(TypeError):
+                f = df.Field.from_xarray(arg)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_value1)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_value2)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_dim_no)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_dim_no2)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_dim3)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_dim4)
+        for bad_coord_geo in bad_coord_gen():
+            with pytest.raises(ValueError):
+                f = df.Field.from_xarray(bad_coord_geo)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_coord_comp1)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_coord_comp2)
+        with pytest.raises(ValueError):
+            f = df.Field.from_xarray(bad_coord_comp3)
