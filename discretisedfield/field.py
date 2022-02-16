@@ -8,6 +8,7 @@ import h5py
 import numpy as np
 import xarray as xr
 import pandas as pd
+import decimal as dc
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
@@ -3599,3 +3600,91 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             data_array[dim].attrs['units'] = geo_units_dict[dim]
 
         return data_array
+
+    @classmethod
+    def from_xarray(cls, xa):
+        if not isinstance(xa, xr.DataArray):
+            msg = "Argument must be a xr.DataArray."
+            raise TypeError(msg)
+
+        if xa.ndim not in [3, 4]:
+            msg = "DataArray dimensions must be 3 or 4."
+            raise ValueError(msg)
+
+        if xa.ndim == 3:
+            for dim in xa.dims:
+                if dim not in ['x', 'y', 'z']:
+                    msg = "The dimensions must be either 'x', 'y', or 'z'."
+                    raise ValueError(msg)
+        elif xa.ndim == 4:
+            for dim in xa.dims:
+                if dim not in ['x', 'y', 'z', 'comp']:
+                    msg = "The dimensions must be either "\
+                          "'x', 'y', 'z' or 'comp'."
+                    raise ValueError(msg)
+            if xa['comp'].values.size != len(set(xa['comp'].values)):
+                msg = "All the components should be unique."
+                raise ValueError(msg)
+            if 'comp' in xa.coords:
+                for comp in xa['comp'].values:
+                    if not isinstance(comp, str):
+                        msg = "The values of 'comp' must be a string."
+                        raise ValueError(msg)
+                    elif comp not in ['x', 'y', 'z']:
+                        msg = "The values of 'comp' must be either "\
+                              "'x', 'y', or 'z'."
+                        raise ValueError(msg)
+
+        for i in 'xyz':
+            if xa[i].values.size != 1:
+                if not np.allclose(np.diff(xa[i].values),
+                                   np.diff(xa[i].values).mean()):
+                    msg = f'Co-ordinates of {i} must be'\
+                          ' equally spaced.'
+                    raise ValueError(msg)
+
+        if xa.values.dtype not in [np.float64, np.complex128]:
+            msg = "DataArray values must be either "\
+                  "np.float64 or np.complex128."
+            raise ValueError(msg)
+
+        cell = tuple()
+        p1 = tuple()
+        p2 = tuple()
+        for i in 'xyz':
+            dec = 5  # minimum decimal places to round to.
+
+            if xa[i].values.size > 1:
+                diff = np.diff(xa[i].values).mean()
+            else:
+                diff = np.float64(1e-9)  # imput value for cell dimension.
+
+            exp = np.log10(np.abs(diff))
+            if exp < 0:
+                dec = dec + int(np.abs(exp).round())
+
+            diff = diff.round(decimals=dec)
+            cell = cell + (abs(diff),)
+            p1 = p1 + ((xa[i].values[0] - diff * 0.5).round(decimals=dec),)
+            p2 = p2 + ((xa[i].values[-1] + diff * 0.5).round(decimals=dec),)
+
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell,
+                       attributes={'unit': xa['x'].attrs['units']})
+
+        if 'comp' in xa.coords:
+            return cls(mesh=mesh,
+                       dim=xa['comp'].values.size,
+                       value=xa.values,
+                       components=xa['comp'].values,
+                       dtype=xa.values.dtype)
+        elif xa.ndim == 3:
+            return cls(mesh=mesh,
+                       dim=1,
+                       value=np.expand_dims(xa.values, axis=-1),
+                       dtype=xa.values.dtype)
+
+        else:
+            return cls(mesh=mesh,
+                       dim=xa['comp'].values.size,
+                       value=xa.values,
+                       dtype=xa.values.dtype)
