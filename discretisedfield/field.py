@@ -3538,26 +3538,12 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> xa
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10, comp: 3)>
         ...
-        Coordinates:
-          * x        (x) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-          * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-          * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-          * comp     (comp) <U1 'x' 'y' 'z'
-        Attributes:
-            units:    None
 
         3. Select values of `x` component
 
         >>> xa.sel(comp='x')
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
         ...
-        Coordinates:
-          * x        (x) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-          * y        (y) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-          * z        (z) float64 0.5 1.5 2.5 3.5 4.5 5.5 6.5 7.5 8.5 9.5
-            comp     <U1 'x'
-        Attributes:
-            units:    None
 
         """
         if not isinstance(name, str):
@@ -3569,6 +3555,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             raise TypeError(msg)
 
         axes = ['x', 'y', 'z']
+        cell_attr = None
+
+        if any(i == 1 for i in self.array.shape[:3]):
+            cell_attr = {axes[i]: self.mesh.cell[i] for i in range(3)}
 
         data_array_coords = {
             axis: np.fromiter(self.mesh.axis_points(axis), dtype=float)
@@ -3593,7 +3583,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                   dims=data_array_dims,
                                   coords=data_array_coords,
                                   name=name,
-                                  attrs=dict(units=units))
+                                  attrs=dict(units=units, cell=cell_attr))
 
         for dim in geo_units_dict:
             data_array[dim].attrs['units'] = geo_units_dict[dim]
@@ -3609,23 +3599,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             raise ValueError("DataArray dimensions must be 3 for a scalar "
                              "and 4 for a vector field.")
 
-        if xa.ndim == 3 and any(dim not in 'xyz' for dim in xa.dims):
+        if xa.ndim == 3 and sorted(xa.dims) != ['x', 'y', 'z']:
             raise ValueError("The dimensions must be 'x', 'y', and 'z'.")
-        elif (xa.ndim == 4 and
-              any(dim not in ['x', 'y', 'z', 'comp'] for dim in xa.dims)):
+        elif xa.ndim == 4 and sorted(xa.dims) != ['comp', 'x', 'y', 'z']:
             raise ValueError("The dimensions must be 'x', 'y', 'z'"
                              "and 'comp'.")
-
-        if 'comp' in xa.coords:
-            if xa['comp'].values.size != len(set(xa['comp'].values)):
-                raise ValueError("All the components must be unique.")
-
-            for comp in xa['comp'].values:
-                if not isinstance(comp, str):
-                    raise ValueError("The values of 'comp' must be strings.")
-                elif comp not in 'xyz':
-                    raise ValueError("The values of 'comp' must be either "
-                                     "'x', 'y', or 'z'.")
 
         for i in 'xyz':
             if xa[i].values.size != 1:
@@ -3634,32 +3612,45 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     raise ValueError(f'Co-ordinates of {i} must be'
                                      ' equally spaced.')
 
-        if xa.values.dtype not in [np.float64, np.complex128]:
-            raise ValueError("DataArray values must be either "
-                             "np.float64 or np.complex128.")
+        if (
+                any(i == 1 for i in xa.values.shape[:3]) and
+                'cell' not in xa.attrs
+           ):
+            raise KeyError("DataArray must have a 'cell' attribute if any "
+                           "of the geometric directions has a single cell.")
 
         cell = tuple()
         p1 = tuple()
         p2 = tuple()
         for i in 'xyz':
-            dec = 5  # minimum decimal places to round to.
+            rounding = True
+            try:
+                dec = np.finfo(xa[i].values.dtype).precision
+            except ValueError:
+                rounding = False
 
             if xa[i].values.size > 1:
                 diff = np.diff(xa[i].values).mean()
+                if rounding:
+                    diff = diff.round(decimals=dec)
             else:
-                diff = np.float64(1e-9)  # impute value for cell dimension.
+                diff = xa.attrs['cell'][i]
 
-            exp = np.log10(np.abs(diff))
-            if exp < 0:
-                dec = dec + int(np.abs(exp).round())
+            p1_coord = (xa[i].values[0] - diff * 0.5)
+            p2_coord = (xa[i].values[-1] + diff * 0.5)
+            if rounding:
+                p1_coord = p1_coord.round(decimals=dec)
+                p2_coord = p2_coord.round(decimals=dec)
 
-            diff = diff.round(decimals=dec)
             cell = cell + (abs(diff),)
-            p1 = p1 + ((xa[i].values[0] - diff * 0.5).round(decimals=dec),)
-            p2 = p2 + ((xa[i].values[-1] + diff * 0.5).round(decimals=dec),)
+            p1 = p1 + (p1_coord,)
+            p2 = p2 + (p2_coord,)
 
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell,
-                       attributes={'unit': xa['z'].attrs['units']})
+        if any('units' not in xa[i].attrs for i in 'xyz'):
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        else:
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell,
+                           attributes={'unit': xa['z'].attrs['units']})
 
         comp = xa.comp.values if 'comp' in xa.coords else None
         val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
