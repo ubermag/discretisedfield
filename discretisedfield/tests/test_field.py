@@ -2281,26 +2281,31 @@ class TestField:
         f6d_new = df.Field.from_xarray(f6d_xa)
         assert f6d_new == f6d  # or use allclose()
 
+        good_darray1 = xr.DataArray(np.ones((20, 20, 5, 3)),
+                                    dims=['x', 'y', 'z', 'comp'],
+                                    coords=dict(x=np.arange(0, 20),
+                                                y=np.arange(0, 20),
+                                                z=np.arange(0, 5),
+                                                comp=['x', 'y', 'z']),
+                                    name='mag',
+                                    attrs=dict(units='A/m'))
+
+        good_darray2 = xr.DataArray(np.ones((20, 20, 1, 3)),
+                                    dims=['x', 'y', 'z', 'comp'],
+                                    coords=dict(x=np.arange(0, 20),
+                                                y=np.arange(0, 20),
+                                                z=[5.0],
+                                                comp=['x', 'y', 'z']),
+                                    name='mag',
+                                    attrs=dict(units='A/m',
+                                               cell=dict(x=1., y=1., z=1.)))
+
+        f = df.Field.from_xarray(good_darray1)
+        f = df.Field.from_xarray(good_darray2)
+
     def test_from_xarray_invalid_args_and_DataArrays(self):
         args = [int(), float(), str(), list(), dict(), xr.Dataset(),
                 np.empty((20, 20, 20, 3))]
-        bad_value1 = xr.DataArray(np.ones((20, 20, 5, 3), dtype=np.int8),
-                                  dims=['x', 'y', 'z', 'comp'],
-                                  coords=dict(x=np.arange(0, 20),
-                                              y=np.arange(0, 20),
-                                              z=np.arange(0, 5),
-                                              comp=['x', 'y', 'z']),
-                                  name='mag',
-                                  attrs=dict(units='A/m'))
-
-        bad_value2 = xr.DataArray(np.ones((20, 20, 5, 3), dtype=str),
-                                  dims=['x', 'y', 'z', 'comp'],
-                                  coords=dict(x=np.arange(0, 20),
-                                              y=np.arange(0, 20),
-                                              z=np.arange(0, 5),
-                                              comp=['x', 'y', 'z']),
-                                  name='mag',
-                                  attrs=dict(units='A/m'))
 
         bad_dim_no = xr.DataArray(np.ones((20, 20, 20, 5, 3), dtype=float),
                                   dims=['x', 'y', 'z', 'a', 'comp'],
@@ -2336,6 +2341,15 @@ class TestField:
                                 name='mag',
                                 attrs=dict(units='A/m'))
 
+        bad_attrs = xr.DataArray(np.ones((20, 20, 1, 3), dtype=float),
+                                 dims=['x', 'y', 'z', 'comp'],
+                                 coords=dict(x=np.arange(0, 20),
+                                             y=np.arange(0, 20),
+                                             z=[5.0],
+                                             comp=['x', 'y', 'z']),
+                                 name='mag',
+                                 attrs=dict(units='A/m'))
+
         def bad_coord_gen():
             rng = np.random.default_rng()
             for coord in 'xyz':
@@ -2350,40 +2364,9 @@ class TestField:
                                    name='mag',
                                    attrs=dict(units='A/m'))
 
-        bad_coord_comp1 = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
-                                       dims=['x', 'y', 'z', 'comp'],
-                                       coords=dict(x=np.arange(0, 20),
-                                                   y=np.arange(0, 20),
-                                                   z=np.arange(0, 20),
-                                                   comp=['x', 'x', 'z']),
-                                       name='mag',
-                                       attrs=dict(units='A/m'))
-
-        bad_coord_comp2 = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
-                                       dims=['x', 'y', 'z', 'comp'],
-                                       coords=dict(x=np.arange(0, 20),
-                                                   y=np.arange(0, 20),
-                                                   z=np.arange(0, 20),
-                                                   comp=['a', 'b', 'c']),
-                                       name='mag',
-                                       attrs=dict(units='A/m'))
-
-        bad_coord_comp3 = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
-                                       dims=['x', 'y', 'z', 'comp'],
-                                       coords=dict(x=np.arange(0, 20),
-                                                   y=np.arange(0, 20),
-                                                   z=np.arange(0, 20),
-                                                   comp=[1, 2, 3]),
-                                       name='mag',
-                                       attrs=dict(units='A/m'))
-
         for arg in args:
             with pytest.raises(TypeError):
                 f = df.Field.from_xarray(arg)
-        with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_value1)
-        with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_value2)
         with pytest.raises(ValueError):
             f = df.Field.from_xarray(bad_dim_no)
         with pytest.raises(ValueError):
@@ -2395,9 +2378,5 @@ class TestField:
         for bad_coord_geo in bad_coord_gen():
             with pytest.raises(ValueError):
                 f = df.Field.from_xarray(bad_coord_geo)
-        with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_coord_comp1)
-        with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_coord_comp2)
-        with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_coord_comp3)
+        with pytest.raises(KeyError):
+            f = df.Field.from_xarray(bad_attrs)
