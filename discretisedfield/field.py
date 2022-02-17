@@ -3555,10 +3555,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             raise TypeError(msg)
 
         axes = ['x', 'y', 'z']
-        cell_attr = None
-
-        if any(i == 1 for i in self.array.shape[:3]):
-            cell_attr = {axes[i]: self.mesh.cell[i] for i in range(3)}
 
         data_array_coords = {
             axis: np.fromiter(self.mesh.axis_points(axis), dtype=float)
@@ -3583,7 +3579,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                   dims=data_array_dims,
                                   coords=data_array_coords,
                                   name=name,
-                                  attrs=dict(units=units, cell=cell_attr))
+                                  attrs=dict(units=units, cell=self.mesh.cell))
 
         for dim in geo_units_dict:
             data_array[dim].attrs['units'] = geo_units_dict[dim]
@@ -3629,10 +3625,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         else:
             cell = [round_(np.diff(xa[i].values).mean()) for i in 'xyz']
 
-        p1 = round_([xa[d].values[0] - cell[i] / 2
-                     for i, d in enumerate('xyz')])
-        p2 = round_([xa[d].values[-1] + cell[i] / 2
-                     for i, d in enumerate('xyz')])
+        p1 = round_([xa[i].values[0] - c / 2 for i, c in zip('xyz', cell)])
+        p2 = round_([xa[i].values[-1] + c / 2 for i, c in zip('xyz', cell)])
 
         if any('units' not in xa[i].attrs for i in 'xyz'):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)

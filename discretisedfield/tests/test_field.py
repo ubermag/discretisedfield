@@ -2298,7 +2298,7 @@ class TestField:
                                                 comp=['x', 'y', 'z']),
                                     name='mag',
                                     attrs=dict(units='A/m',
-                                               cell=dict(x=1., y=1., z=1.)))
+                                               cell=[1., 1., 1.]))
 
         f = df.Field.from_xarray(good_darray1)
         f = df.Field.from_xarray(good_darray2)
