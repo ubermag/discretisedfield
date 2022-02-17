@@ -2255,7 +2255,7 @@ class TestField:
 
         for name, units in args:
             with pytest.raises(TypeError):
-                fxa = self.pf.to_xarray(name, units)
+                self.pf.to_xarray(name, units)
 
     def test_from_xarray_valid_args(self):
         for mesh in self.meshes:
