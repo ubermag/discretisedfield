@@ -3602,49 +3602,35 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         if xa.ndim == 3 and sorted(xa.dims) != ['x', 'y', 'z']:
             raise ValueError("The dimensions must be 'x', 'y', and 'z'.")
         elif xa.ndim == 4 and sorted(xa.dims) != ['comp', 'x', 'y', 'z']:
-            raise ValueError("The dimensions must be 'x', 'y', 'z'"
+            raise ValueError("The dimensions must be 'x', 'y', 'z',"
                              "and 'comp'.")
 
         for i in 'xyz':
-            if xa[i].values.size != 1:
-                if not np.allclose(np.diff(xa[i].values),
-                                   np.diff(xa[i].values).mean()):
-                    raise ValueError(f'Co-ordinates of {i} must be'
-                                     ' equally spaced.')
+            if xa[i].values.size > 1 and not np.allclose(
+                    np.diff(xa[i].values), np.diff(xa[i].values).mean()):
+                raise ValueError(f'Co-ordinates of {i} must be'
+                                 ' equally spaced.')
 
-        if (
-                any(i == 1 for i in xa.values.shape[:3]) and
-                'cell' not in xa.attrs
-           ):
-            raise KeyError("DataArray must have a 'cell' attribute if any "
-                           "of the geometric directions has a single cell.")
-
-        cell = tuple()
-        p1 = tuple()
-        p2 = tuple()
-        for i in 'xyz':
-            rounding = True
+        def round_(value):
             try:
-                dec = np.finfo(xa[i].values.dtype).precision
+                dec = np.finfo(np.asarray(value).dtype).precision
             except ValueError:
-                rounding = False
+                return value
+            return np.round(value, dec)
 
-            if xa[i].values.size > 1:
-                diff = np.diff(xa[i].values).mean()
-                if rounding:
-                    diff = diff.round(decimals=dec)
-            else:
-                diff = xa.attrs['cell'][i]
+        if any(len_ == 1 for len_ in xa.values.shape[:3]):
+            try:
+                cell = xa.attrs['cell']
+            except KeyError:
+                raise KeyError(
+                    "DataArray must have a 'cell' attribute if any "
+                    "of the geometric directions has a single cell."
+                ) from None
+        else:
+            cell = [round_(np.diff(xa[i].values).mean()) for i in 'xyz']
 
-            p1_coord = (xa[i].values[0] - diff * 0.5)
-            p2_coord = (xa[i].values[-1] + diff * 0.5)
-            if rounding:
-                p1_coord = p1_coord.round(decimals=dec)
-                p2_coord = p2_coord.round(decimals=dec)
-
-            cell = cell + (abs(diff),)
-            p1 = p1 + (p1_coord,)
-            p2 = p2 + (p2_coord,)
+        p1 = round_([xa[i].values[0] - cell[i] / 2 for i in 'xyz'])
+        p2 = round_([xa[i].values[-1] + cell[i] / 2 for i in 'xyz'])
 
         if any('units' not in xa[i].attrs for i in 'xyz'):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
