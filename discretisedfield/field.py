@@ -3629,8 +3629,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         else:
             cell = [round_(np.diff(xa[i].values).mean()) for i in 'xyz']
 
-        p1 = round_([xa[i].values[0] - cell[i] / 2 for i in 'xyz'])
-        p2 = round_([xa[i].values[-1] + cell[i] / 2 for i in 'xyz'])
+        p1 = round_([xa[d].values[0] - cell[i] / 2
+                     for i, d in enumerate('xyz')])
+        p2 = round_([xa[d].values[-1] + cell[i] / 2
+                     for i, d in enumerate('xyz')])
 
         if any('units' not in xa[i].attrs for i in 'xyz'):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
