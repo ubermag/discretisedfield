@@ -49,6 +49,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build",
+    "invoke",
     "pre-commit",
     "twine"
 ]
@@ -92,3 +93,6 @@ about = """
 
 [tool.coverage.run]
 omit = ["discretisedfield/tests/*"]
+
+[tool.isort]
+skip_gitignore = true  # ignores files listed in .gitignore
