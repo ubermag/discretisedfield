@@ -2206,8 +2206,9 @@ class TestField:
             for value, dtype in self.vfuncs:
                 f = df.Field(mesh, dim=3, value=value, dtype=dtype)
                 fxa = f.to_xarray()
-                assert f.dim == fxa['comp'].size
                 assert isinstance(fxa, xr.DataArray)
+                assert f.dim == fxa['comp'].size
+                assert 'cell' in fxa.attrs
                 for i in 'xyz':
                     assert np.array_equal(
                         np.array(list(f.mesh.axis_points(i))),
@@ -2221,6 +2222,7 @@ class TestField:
                 f = df.Field(mesh, dim=1, value=value, dtype=dtype)
                 fxa = f.to_xarray()
                 assert isinstance(fxa, xr.DataArray)
+                assert 'cell' in fxa.attrs
                 for i in 'xyz':
                     assert np.array_equal(
                         np.array(list(f.mesh.axis_points(i))),
