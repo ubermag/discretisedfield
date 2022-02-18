@@ -1,4 +1,4 @@
-"""Main package"""
+"""Finite-differend fields."""
 import os
 import pytest
 import pkg_resources
