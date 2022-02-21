@@ -1,4 +1,4 @@
-"""Main package"""
+"""Finite-difference fields."""
 import os
 import pytest
 import pkg_resources

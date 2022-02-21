@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discretisedfield"
-version = "0.60.0"
+version = "0.61.0"
 description = "Python package for the analysis and visualisation of finite-difference fields."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -37,7 +37,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "ubermagutil~=0.60.0",
+    "ubermagutil~=0.61.0",
     "pandas>=1.1",
     "matplotlib>=3.3",
     "jupyterlab~=3.0",
@@ -51,6 +51,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build",
+    "invoke",
     "pre-commit",
     "twine"
 ]
@@ -94,3 +95,6 @@ about = """
 
 [tool.coverage.run]
 omit = ["discretisedfield/tests/*"]
+
+[tool.isort]
+skip_gitignore = true  # ignores files listed in .gitignore
