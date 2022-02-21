@@ -3600,17 +3600,17 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         either three (``x``, ``y``, and ``z`` for a scalar field) or four
         (additionally ``comp`` for a vector field) dimensions corresponding to
         geometric axes and components of the field, respectively. The
-        coordinates of the ``x``, ``y`` and ``z`` dimensions represent the
+        coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
         discretisation along the respective axis and must have equally spaced
         values. The coordinates of ``comp`` represent the field components
         (for eg. ['x', 'y', 'z']).
 
-        The DataArray is expected to have ``cell``, ``p1`` and ``p2``
+        The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
         attributes for creating ``discretisedfield.Mesh`` required by the
         ``discretisedfield.Field`` object. However, in the absence of these
         attributes, the coordinates of ``x``, ``y``, and ``z`` dimensions are
-        utilized. It should be noted that ``cell`` attribute is a must if any
-        of the geometric directions has only a single cell.
+        utilized. It should be noted that ``cell`` attribute is required if
+        any of the geometric directions has only a single cell.
 
         Failing to meet the above mentioned conditions will lead to a KeyError
         in the absence of ``cell`` attribute or a ValueError for the rest.
@@ -3644,7 +3644,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             - If ``DataArray.ndim`` is not 3 or 4.
             - If ``DataArray.dims`` are not either ``['x', 'y', 'z']`` or
               ``['x', 'y', 'z', 'comp']``
-            - If coordinates of any ``x``, ``y`` or ``z`` are not equally
+            - If coordinates of ``x``, ``y``, or ``z`` are not equally
               spaced
 
         Examples
