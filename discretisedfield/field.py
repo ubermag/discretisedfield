@@ -3487,9 +3487,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
         ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
         of the geometric dimensions are derived from ``self.mesh.axis_points``,
-        and for vector field components from ``self.components``. The ``units``
-        attribute of geometric dimensions is set to
-        ``self.mesh.attributes['unit']``.
+        and for vector field components from ``self.components``. Addtionally,
+        the values of ``self.mesh.cell``, ``self.mesh.region.p1``, and
+        ``self.mesh.region.p2`` are stored as ``cell``, ``p1``, and ``p2``
+        attributes of the DataArray. The ``units`` attribute of geometric
+        dimensions is set to ``self.mesh.attributes['unit']``.
 
         The name and units of the field ``DataArray`` can be set by passing
         ``name`` and ``units``. If the type of value passed to any of the two
@@ -3579,7 +3581,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                                   dims=data_array_dims,
                                   coords=data_array_coords,
                                   name=name,
-                                  attrs=dict(units=units, cell=self.mesh.cell))
+                                  attrs=dict(units=units,
+                                             cell=self.mesh.cell,
+                                             p1=self.mesh.region.p1,
+                                             p2=self.mesh.region.p2))
 
         for dim in geo_units_dict:
             data_array[dim].attrs['units'] = geo_units_dict[dim]
@@ -3604,17 +3609,13 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         for i in 'xyz':
             if xa[i].values.size > 1 and not np.allclose(
                     np.diff(xa[i].values), np.diff(xa[i].values).mean()):
-                raise ValueError(f'Co-ordinates of {i} must be'
+                raise ValueError(f'Coordinates of {i} must be'
                                  ' equally spaced.')
 
-        def round_(value):
-            try:
-                dec = np.finfo(np.asarray(value).dtype).precision
-            except ValueError:
-                return value
-            return np.round(value, dec)
-
-        if any(len_ == 1 for len_ in xa.values.shape[:3]):
+        if (
+                'cell' in xa.attrs or
+                any(len_ == 1 for len_ in xa.values.shape[:3])
+        ):
             try:
                 cell = xa.attrs['cell']
             except KeyError:
@@ -3623,10 +3624,16 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                     "of the geometric directions has a single cell."
                 ) from None
         else:
-            cell = [round_(np.diff(xa[i].values).mean()) for i in 'xyz']
+            cell = [np.diff(xa[i].values).mean() for i in 'xyz']
 
-        p1 = round_([xa[i].values[0] - c / 2 for i, c in zip('xyz', cell)])
-        p2 = round_([xa[i].values[-1] + c / 2 for i, c in zip('xyz', cell)])
+        p1 = (
+            xa.attrs['p1'] if 'p1' in xa.attrs else
+            [xa[i].values[0] - c / 2 for i, c in zip('xyz', cell)]
+        )
+        p2 = (
+            xa.attrs['p2'] if 'p2' in xa.attrs else
+            [xa[i].values[-1] + c / 2 for i, c in zip('xyz', cell)]
+        )
 
         if any('units' not in xa[i].attrs for i in 'xyz'):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
