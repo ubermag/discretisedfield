@@ -3593,6 +3593,92 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
     @classmethod
     def from_xarray(cls, xa):
+        """Create Field from ``xarray.DataArray``
+
+        The class method accepts an ``xarray.DataArray`` as an argument to
+        return a ``discretisedfield.Field`` object. The DataArray must have
+        either three (``x``, ``y``, and ``z`` for a scalar field) or four
+        (additionally ``comp`` for a vector field) dimensions corresponding to
+        geometric axes and components of the field, respectively. The
+        coordinates of the ``x``, ``y`` and ``z`` dimensions represent the
+        discretisation along the respective axis and must have equally spaced
+        values. The coordinates of ``comp`` represent the field components
+        (for eg. ['x', 'y', 'z']).
+
+        The DataArray is expected to have ``cell``, ``p1`` and ``p2``
+        attributes for creating ``discretisedfield.Mesh`` required by the
+        ``discretisedfield.Field`` object. However, in the absence of these
+        attributes, the coordinates of ``x``, ``y``, and ``z`` dimensions are
+        utilized. It should be noted that ``cell`` attribute is a must if any
+        of the geometric directions has only a single cell.
+
+        Failing to meet the above mentioned conditions will lead to a KeyError
+        in the absence of ``cell`` attribute or a ValueError for the rest.
+        TypeError is raised if input argument is not an ``xarray.DataArray``.
+
+        Parameters
+        ----------
+        xa : xarray.DataArray
+
+            DataArray to create Field.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Field created from DataArray.
+
+        Raises
+        ------
+        TypeError
+
+            If argument is not ``xarray.DataArray``.
+
+        KeyError
+
+            If at least one of the geometric dimension has only a single cell
+            and ``cell`` attribute is absent.
+
+        ValueError
+
+            - If ``DataArray.ndim`` is not 3 or 4.
+            - If ``DataArray.dims`` are not either ``['x', 'y', 'z']`` or
+              ``['x', 'y', 'z', 'comp']``
+            - If coordinates of any ``x``, ``y`` or ``z`` are not equally
+              spaced
+
+        Examples
+        --------
+        1. Create a DataArray
+
+        >>> import xarray as xr
+        >>> import numpy as np
+        ...
+        >>> xa = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+        ...                   dims = ['x', 'y', 'z', 'comp'],
+        ...                   coords = dict(x=np.arange(0, 20),
+        ...                                 y=np.arange(0, 20),
+        ...                                 z=np.arange(0, 20),
+        ...                                 comp=['x', 'y', 'z']),
+        ...                   name = 'mag',
+        ...                   attrs = dict(cell=[1., 1., 1.],
+        ...                                p1=[1., 1., 1.],
+        ...                                p2=[21., 21., 21.]))
+        >>> xa
+        <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, comp: 3)>
+        ...
+
+        2. Create Field from DataArray
+
+        >>> import discretisedfield as df
+        ...
+        >>> fld = df.Field.from_xarray(xa)
+        >>> fld
+        Field(...)
+        >>> fld.average
+        (1.0, 1.0, 1.0)
+
+        """
         if not isinstance(xa, xr.DataArray):
             raise TypeError("Argument must be a xr.DataArray.")
 
