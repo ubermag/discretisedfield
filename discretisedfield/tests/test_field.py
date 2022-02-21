@@ -2208,7 +2208,10 @@ class TestField:
                 fxa = f.to_xarray()
                 assert isinstance(fxa, xr.DataArray)
                 assert f.dim == fxa['comp'].size
-                assert 'cell' in fxa.attrs
+                assert sorted([*fxa.attrs]) == ['cell', 'p1', 'p2', 'units']
+                assert fxa.attrs['cell'] == f.mesh.cell
+                assert fxa.attrs['p1'] == f.mesh.region.p1
+                assert fxa.attrs['p2'] == f.mesh.region.p2
                 for i in 'xyz':
                     assert np.array_equal(
                         np.array(list(f.mesh.axis_points(i))),
@@ -2222,7 +2225,10 @@ class TestField:
                 f = df.Field(mesh, dim=1, value=value, dtype=dtype)
                 fxa = f.to_xarray()
                 assert isinstance(fxa, xr.DataArray)
-                assert 'cell' in fxa.attrs
+                assert sorted([*fxa.attrs]) == ['cell', 'p1', 'p2', 'units']
+                assert fxa.attrs['cell'] == f.mesh.cell
+                assert fxa.attrs['p1'] == f.mesh.region.p1
+                assert fxa.attrs['p2'] == f.mesh.region.p2
                 for i in 'xyz':
                     assert np.array_equal(
                         np.array(list(f.mesh.axis_points(i))),
@@ -2302,8 +2308,24 @@ class TestField:
                                     attrs=dict(units='A/m',
                                                cell=[1., 1., 1.]))
 
-        f = df.Field.from_xarray(good_darray1)
-        f = df.Field.from_xarray(good_darray2)
+        good_darray3 = xr.DataArray(np.ones((20, 20, 1, 3)),
+                                    dims=['x', 'y', 'z', 'comp'],
+                                    coords=dict(x=np.arange(0, 20),
+                                                y=np.arange(0, 20),
+                                                z=[5.0],
+                                                comp=['x', 'y', 'z']),
+                                    name='mag',
+                                    attrs=dict(units='A/m',
+                                               cell=[1., 1., 1.],
+                                               p1=[1., 1., 1.],
+                                               p2=[21., 21., 2.]))
+
+        fg_1 = df.Field.from_xarray(good_darray1)
+        check_field(fg_1)
+        fg_2 = df.Field.from_xarray(good_darray2)
+        check_field(fg_2)
+        fg_3 = df.Field.from_xarray(good_darray3)
+        check_field(fg_3)
 
     def test_from_xarray_invalid_args_and_DataArrays(self):
         args = [int(), float(), str(), list(), dict(), xr.Dataset(),
