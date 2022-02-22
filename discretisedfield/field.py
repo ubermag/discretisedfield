@@ -3603,7 +3603,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
         discretisation along the respective axis and must have equally spaced
         values. The coordinates of ``comp`` represent the field components
-        (e.g. ['x', 'y', 'z']).
+        (e.g. ['x', 'y', 'z'] for a 3D vector field).
 
         The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
         attributes for creating ``discretisedfield.Mesh`` required by the
