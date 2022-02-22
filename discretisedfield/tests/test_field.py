@@ -2242,6 +2242,10 @@ class TestField:
         f6d_xa = f6d.to_xarray()
         assert f6d_xa['comp'].size == 6
         assert 'comp' not in f6d_xa.coords
+        f6d.components = ['a', 'c', 'b', 'e', 'd', 'f']
+        f6d_xa2 = f6d.to_xarray()
+        assert 'comp' in f6d_xa2.coords
+        assert [*f6d_xa2['comp'].values] == ['a', 'c', 'b', 'e', 'd', 'f']
 
         # test name and units defaults
         f3d_xa = self.pf.to_xarray()
