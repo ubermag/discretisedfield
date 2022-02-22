@@ -3593,7 +3593,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
     @classmethod
     def from_xarray(cls, xa):
-        """Create Field from ``xarray.DataArray``
+        """Create ``discretisedfield.Field`` from ``xarray.DataArray``
 
         The class method accepts an ``xarray.DataArray`` as an argument to
         return a ``discretisedfield.Field`` object. The DataArray must have
@@ -3603,7 +3603,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
         discretisation along the respective axis and must have equally spaced
         values. The coordinates of ``comp`` represent the field components
-        (for eg. ['x', 'y', 'z']).
+        (e.g. ['x', 'y', 'z']).
 
         The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
         attributes for creating ``discretisedfield.Mesh`` required by the
@@ -3611,10 +3611,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         attributes, the coordinates of ``x``, ``y``, and ``z`` dimensions are
         utilized. It should be noted that ``cell`` attribute is required if
         any of the geometric directions has only a single cell.
-
-        Failing to meet the above mentioned conditions will lead to a KeyError
-        in the absence of ``cell`` attribute or a ValueError for the rest.
-        TypeError is raised if input argument is not an ``xarray.DataArray``.
 
         Parameters
         ----------
@@ -3636,8 +3632,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         KeyError
 
-            If at least one of the geometric dimension has only a single cell
-            and ``cell`` attribute is absent.
+            If at least one of the geometric dimension coordinates has a single
+            value and ``cell`` attribute is missing.
 
         ValueError
 
@@ -3672,10 +3668,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         >>> import discretisedfield as df
         ...
-        >>> fld = df.Field.from_xarray(xa)
-        >>> fld
+        >>> field = df.Field.from_xarray(xa)
+        >>> field
         Field(...)
-        >>> fld.average
+        >>> field.average
         (1.0, 1.0, 1.0)
 
         """
@@ -3698,18 +3694,14 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 raise ValueError(f'Coordinates of {i} must be'
                                  ' equally spaced.')
 
-        if (
-                'cell' in xa.attrs or
-                any(len_ == 1 for len_ in xa.values.shape[:3])
-        ):
-            try:
-                cell = xa.attrs['cell']
-            except KeyError:
+        try:
+            cell = xa.attrs['cell']
+        except KeyError:
+            if any(len_ == 1 for len_ in xa.values.shape[:3]):
                 raise KeyError(
                     "DataArray must have a 'cell' attribute if any "
                     "of the geometric directions has a single cell."
                 ) from None
-        else:
             cell = [np.diff(xa[i].values).mean() for i in 'xyz']
 
         p1 = (
