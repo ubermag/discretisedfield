@@ -1,18 +1,21 @@
-import os
-import re
-import k3d
-import types
-import random
-import pytest
-import numbers
-import tempfile
 import itertools
-import numpy as np
-import xarray as xr
-import discretisedfield as df
-import matplotlib.pyplot as plt
-from .test_mesh import TestMesh, html_re as mesh_html_re
+import numbers
+import os
+import random
+import re
+import tempfile
+import types
 
+import k3d
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+import xarray as xr
+
+import discretisedfield as df
+
+from .test_mesh import TestMesh
+from .test_mesh import html_re as mesh_html_re
 
 html_re = (
     r'<strong>Field</strong>\s*<ul>\s*'
@@ -107,6 +110,8 @@ def check_field(field):
         curl = field.curl
         assert isinstance(curl, df.Field)
         assert curl.dim == 3
+
+        field.plane('z')
 
         assert isinstance((field * df.dx).integral(), tuple)
         assert isinstance((field * df.dy).integral(), tuple)
@@ -208,12 +213,12 @@ class TestField:
     def test_init_invalid_args(self):
         with pytest.raises(TypeError):
             mesh = 'meaningless_mesh_string'
-            f = df.Field(mesh, dim=1)
+            df.Field(mesh, dim=1)
 
         for mesh in self.meshes:
             for dim in [0, -1, 'dim', (2, 3)]:
                 with pytest.raises((ValueError, TypeError)):
-                    f = df.Field(mesh, dim=dim)
+                    df.Field(mesh, dim=dim)
 
         # wrong abc.Iterable
         with pytest.raises(TypeError):
@@ -296,10 +301,10 @@ class TestField:
     def test_set_exception(self):
         for mesh in self.meshes:
             with pytest.raises(TypeError):
-                f = df.Field(mesh, dim=3, value='meaningless_string')
+                df.Field(mesh, dim=3, value='meaningless_string')
 
             with pytest.raises(ValueError):
-                f = df.Field(mesh, dim=3, value=5+5j)
+                df.Field(mesh, dim=3, value=5+5j)
 
     def test_components(self):
         for mesh in self.meshes:
@@ -482,10 +487,9 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=0)
         with pytest.raises(ValueError):
-            of = f.orientation
+            f.orientation
 
     def test_average(self):
-        value = -1e-3 + np.pi
         tol = 1e-12
 
         p1 = (-5e-9, -5e-9, -5e-9)
@@ -512,7 +516,7 @@ class TestField:
             # Exception.
             f = df.Field(mesh, dim=1, value=1)
             with pytest.raises(AttributeError):
-                fx = f.x.dim
+                f.x.dim
 
     def test_get_attribute_exception(self):
         for mesh in self.meshes:
@@ -1161,7 +1165,7 @@ class TestField:
         assert f.derivative('z', n=2).average == (0, 0, 6)
 
         with pytest.raises(NotImplementedError):
-            res = f.derivative('x', n=3)
+            f.derivative('x', n=3)
 
     def test_derivative_pbc(self):
         p1 = (0, 0, 0)
@@ -1308,7 +1312,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
 
         with pytest.raises(ValueError):
-            res = f.grad
+            f.grad
 
     def test_div_curl(self):
         p1 = (0, 0, 0)
@@ -1372,9 +1376,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=3.11)
 
         with pytest.raises(ValueError):
-            res = f.div
+            f.div
         with pytest.raises(ValueError):
-            res = f.curl
+            f.curl
 
     def test_laplace(self):
         p1 = (0, 0, 0)
@@ -1522,7 +1526,7 @@ class TestField:
 
         # Exceptions
         with pytest.raises(ValueError):
-            res = f.integral(direction='xy', improper=True)
+            f.integral(direction='xy', improper=True)
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
@@ -1651,7 +1655,7 @@ class TestField:
 
         # Exception
         with pytest.raises(ValueError):
-            res = f.angle  # the field is not sliced
+            f.angle  # the field is not sliced
 
     def test_write_read_ovf(self):
         representations = ['txt', 'bin4', 'bin8']
@@ -1768,10 +1772,10 @@ class TestField:
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         f = df.Field(mesh, dim=1, value=5e-12)
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             f.write(filename)
-        with pytest.raises(ValueError) as excinfo:
-            f = df.Field.fromfile(filename)
+        with pytest.raises(ValueError):
+            df.Field.fromfile(filename)
 
     def test_fft(self):
         p1 = (-10, -10, -5)
@@ -1868,13 +1872,13 @@ class TestField:
                 field.plane('z').mpl.lightness(filename=tmpfilename)
 
         # Exceptions
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.mpl.lightness()  # not sliced
         # TODO Filtering for lightness plots
         # with pytest.raises(ValueError) as excinfo:
         #     # wrong filter field
         #     self.pf.plane('z').mpl.lightness(filter_field=self.pf)
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             # wrong lightness field
             self.pf.plane('z').mpl.lightness(lightness_field=self.pf)
         plt.close('all')
@@ -1903,11 +1907,11 @@ class TestField:
             self.pf.plane('x', n=(3, 4)).mpl.vector(filename=tmpfilename)
 
         # Exceptions
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.mpl.vector()  # not sliced
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.y.plane('z').mpl.vector()  # scalar field
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             # wrong color field
             self.pf.plane('z').mpl.vector(color_field=self.pf)
 
@@ -1935,11 +1939,11 @@ class TestField:
             self.pf.plane('z').z.mpl.contour(filename=tmpfilename)
 
         # Exceptions
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.mpl.contour()  # not sliced
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.plane('z').mpl.contour()  # vector field
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             # wrong filter field
             self.pf.plane('z').mpl.contour(filter_field=self.pf)
 
@@ -1958,16 +1962,14 @@ class TestField:
                                  scalar_kw={
                                      'filter_field': self.pf.norm,
                                      'colorbar_label': 'scalar',
-                                     'cmap': 'twilight',
-                                 },
+                                     'cmap': 'twilight'},
                                  vector_kw={
                                      'color_field': self.pf.y,
                                      'use_color': True,
                                      'colorbar': True,
                                      'colorbar_label': 'vector',
                                      'cmap': 'hsv',
-                                     'clim': (0, 1e6),
-                                 },
+                                     'clim': (0, 1e6)},
                                  multiplier=1e-12)
 
         # Saving plot
@@ -2019,7 +2021,7 @@ class TestField:
 
         assert len(plot.objects) == 2
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.k3d.nonzero()
 
     def test_k3d_scalar(self):
@@ -2071,7 +2073,7 @@ class TestField:
         assert len(plot.objects) == 2
 
         # Exceptions
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.k3d.scalar()
         with pytest.raises(ValueError):
             self.pf.x.k3d.scalar(filter_field=self.pf)  # filter field dim=3
@@ -2143,7 +2145,7 @@ class TestField:
         assert len(plot.objects) == 3
 
         # Exceptions
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             self.pf.x.k3d.vector()
         with pytest.raises(ValueError):
             self.pf.k3d.vector(color_field=self.pf)  # filter field dim=3

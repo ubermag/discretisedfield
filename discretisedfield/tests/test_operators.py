@@ -1,4 +1,5 @@
 import pytest
+
 import discretisedfield as df
 
 
@@ -45,7 +46,7 @@ def test_integral():
     assert df.integral(field * dV) == df.integral(field * df.dV)
 
     with pytest.raises(TypeError):
-        res = df.dx * 'dy'
+        df.dx * 'dy'
 
     with pytest.raises(TypeError):
-        res = df.dS @ 'dy'
+        df.dS @ 'dy'

@@ -1,6 +1,7 @@
 import k3d
 import numpy as np
 import ubermagutil.units as uu
+
 import discretisedfield.util as dfu
 
 

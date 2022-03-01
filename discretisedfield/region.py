@@ -1,12 +1,14 @@
-import k3d
-import numbers
-import functools
 import collections
+import functools
+import numbers
+
 import numpy as np
-import ubermagutil.units as uu
 import ubermagutil.typesystem as ts
-import discretisedfield.util as dfu
+import ubermagutil.units as uu
+
 import discretisedfield.plotting as dfp
+import discretisedfield.util as dfu
+
 from . import html
 
 

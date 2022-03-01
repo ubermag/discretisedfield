@@ -1,8 +1,10 @@
 import itertools
+
 import numpy as np
+from scipy import ndimage
+
 import discretisedfield as df
 import discretisedfield.util as dfu
-from scipy import ndimage
 
 
 def topological_charge_density(field, /, method='continuous'):

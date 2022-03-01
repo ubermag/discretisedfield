@@ -1,15 +1,17 @@
+import numbers
 import os
 import re
-import types
-import pytest
-import numbers
 import tempfile
-import ipywidgets
-import numpy as np
-import discretisedfield as df
-import matplotlib.pyplot as plt
-from .test_region import html_re as region_html_re
+import types
 
+import ipywidgets
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import discretisedfield as df
+
+from .test_region import html_re as region_html_re
 
 html_re = (
     r'<strong>Mesh</strong>\s*<ul>\s*'
@@ -135,10 +137,10 @@ class TestMesh:
     def test_init_invalid_args(self):
         for p1, p2, n, cell in self.invalid_args:
             with pytest.raises((TypeError, ValueError)):
-                mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
+                df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
 
             with pytest.raises((TypeError, ValueError)):
-                mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+                df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
 
     def test_init_subregions(self):
         p1 = (0, 0, 0)
@@ -180,7 +182,7 @@ class TestMesh:
         n = (10, 10, 10)
 
         with pytest.raises(ValueError) as excinfo:
-            mesh = df.Mesh(region=region, p1=p1, p2=p2, n=n)
+            df.Mesh(region=region, p1=p1, p2=p2, n=n)
         assert 'not both.' in str(excinfo.value)
 
     def test_init_with_n_and_cell(self):
@@ -190,7 +192,7 @@ class TestMesh:
         cell = (1, 0.1, 0.5)
 
         with pytest.raises(ValueError) as excinfo:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+            df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
         assert 'not both.' in str(excinfo.value)
 
     def test_region_not_aggregate_of_cell(self):
@@ -201,8 +203,8 @@ class TestMesh:
                 [(10e9, 10e3, 0), (11e9, 11e3, 5), (1e9, 1e3, 1.5)]]
 
         for p1, p2, cell in args:
-            with pytest.raises(ValueError) as excinfo:
-                mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+            with pytest.raises(ValueError):
+                df.Mesh(p1=p1, p2=p2, cell=cell)
 
     def test_cell_greater_than_domain(self):
         p1 = (0, 0, 0)
@@ -211,8 +213,8 @@ class TestMesh:
                 (1e-9, 5e-9, 0.1e-9)]
 
         for cell in args:
-            with pytest.raises(ValueError) as excinfo:
-                mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+            with pytest.raises(ValueError):
+                df.Mesh(p1=p1, p2=p2, cell=cell)
 
     def test_len(self):
         p1 = (0, 0, 0)
@@ -453,7 +455,6 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         check_mesh(mesh)
 
-        tol = 1e-12
         line = mesh.line(p1=(0, 0, 0), p2=(10, 10, 10), n=10)
         assert isinstance(line, types.GeneratorType)
         assert len(list(line)) == 10
@@ -585,19 +586,19 @@ class TestMesh:
         assert info['point'] == 5
 
         with pytest.raises(KeyError):
-            plane_mesh = mesh.plane('xy')
+            mesh.plane('xy')
         with pytest.raises(KeyError):
-            plane_mesh = mesh.plane('zy')
+            mesh.plane('zy')
         with pytest.raises(ValueError):
-            plane_mesh = mesh.plane('y', 'x')
+            mesh.plane('y', 'x')
         with pytest.raises(KeyError):
-            plane_mesh = mesh.plane('xzy')
+            mesh.plane('xzy')
         with pytest.raises(ValueError):
-            plane_mesh = mesh.plane('z', x=3)
+            mesh.plane('z', x=3)
         with pytest.raises(ValueError):
-            plane_mesh = mesh.plane('y', y=5)
+            mesh.plane('y', y=5)
         with pytest.raises(ValueError):
-            plane_mesh = mesh.plane('z', x=5)
+            mesh.plane('z', x=5)
 
     def test_or(self):
         p1 = (-50e-9, -25e-9, 0)
@@ -723,7 +724,7 @@ class TestMesh:
         assert mesh.dz == 10e-9
 
         with pytest.raises(AttributeError):
-            res = mesh.dk
+            mesh.dk
 
     def test_dir(self):
         p1 = (0, 0, 0)
@@ -753,7 +754,7 @@ class TestMesh:
 
         # Exception
         with pytest.raises(ValueError):
-            res = mesh.dS
+            mesh.dS
 
     def test_mpl(self):
         for p1, p2, n, cell in self.valid_args:
@@ -811,10 +812,10 @@ class TestMesh:
         assert isinstance(x_slider, ipywidgets.SelectionSlider)
 
         y_slider = mesh.slider('y', multiplier=1)
-        assert isinstance(x_slider, ipywidgets.SelectionSlider)
+        assert isinstance(y_slider, ipywidgets.SelectionSlider)
 
         z_slider = mesh.slider('z', multiplier=1e3)
-        assert isinstance(x_slider, ipywidgets.SelectionSlider)
+        assert isinstance(z_slider, ipywidgets.SelectionSlider)
 
     def test_axis_selector(self):
         p1 = (-10e-9, -5e-9, 10e-9)
