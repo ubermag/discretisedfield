@@ -2380,7 +2380,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             The number of points on the plane in two dimensions.
 
         Returns
-        ------
+        -------
         discretisedfield.Field
 
             An extracted field.
@@ -2515,7 +2515,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             ``'z'``).
 
         Returns
-        ------
+        -------
         discretisedfield.Field
 
             A projected field.

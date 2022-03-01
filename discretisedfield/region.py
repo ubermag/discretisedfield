@@ -2,7 +2,6 @@ import collections
 import functools
 import numbers
 
-import k3d
 import numpy as np
 import ubermagutil.typesystem as ts
 import ubermagutil.units as uu

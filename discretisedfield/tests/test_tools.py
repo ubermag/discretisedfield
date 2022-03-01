@@ -48,20 +48,20 @@ def test_topological_charge():
     for function in ['topological_charge_density', 'topological_charge']:
         for method in ['continuous', 'berg-luescher']:
             with pytest.raises(ValueError):
-                res = getattr(dft, function)(f, method=method)
+                getattr(dft, function)(f, method=method)
 
     # Scalar field
     f = df.Field(mesh, dim=1, value=3.14)
     for function in ['topological_charge_density', 'topological_charge']:
         for method in ['continuous', 'berg-luescher']:
             with pytest.raises(ValueError):
-                res = getattr(dft, function)(f.plane('z'), method=method)
+                getattr(dft, function)(f.plane('z'), method=method)
 
     # Method does not exist
     f = df.Field(mesh, dim=3, value=(1, 2, 3))
     for function in ['topological_charge_density', 'topological_charge']:
         with pytest.raises(ValueError):
-            res = getattr(dft, function)(f.plane('z'), method='wrong')
+            getattr(dft, function)(f.plane('z'), method='wrong')
 
 
 def test_emergent_magnetic_field():
@@ -78,7 +78,7 @@ def test_emergent_magnetic_field():
     assert dft.emergent_magnetic_field(f).average == (0, 0, 0)
 
     with pytest.raises(ValueError):
-        res = dft.emergent_magnetic_field(f.x)
+        dft.emergent_magnetic_field(f.x)
 
 
 def test_neigbouring_cell_angle():
@@ -98,13 +98,13 @@ def test_neigbouring_cell_angle():
     # Exceptions
     scalar_field = df.Field(mesh, dim=1, value=5)
     with pytest.raises(ValueError):
-        res = dft.neigbouring_cell_angle(scalar_field, direction='x')
+        dft.neigbouring_cell_angle(scalar_field, direction='x')
 
     with pytest.raises(ValueError):
-        res = dft.neigbouring_cell_angle(field, direction='l')
+        dft.neigbouring_cell_angle(field, direction='l')
 
     with pytest.raises(ValueError):
-        res = dft.neigbouring_cell_angle(field, direction='x', units='wrong')
+        dft.neigbouring_cell_angle(field, direction='x', units='wrong')
 
 
 def test_max_neigbouring_cell_angle():

@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import ubermagutil.units as uu
 
 import discretisedfield.util as dfu

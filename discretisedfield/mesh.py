@@ -1,7 +1,6 @@
 import collections
 import copy
 import itertools
-import os
 import warnings
 
 import ipywidgets
@@ -10,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import ubermagutil.typesystem as ts
 import ubermagutil.units as uu
-from mpl_toolkits.mplot3d import Axes3D
 
 import discretisedfield as df
 import discretisedfield.util as dfu
@@ -750,7 +748,7 @@ class Mesh:
             The number of points on the plane in two dimensions.
 
         Returns
-        ------
+        -------
         discretisedfield.Mesh
 
             An extracted mesh.

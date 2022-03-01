@@ -1,6 +1,5 @@
 import numbers
 import os
-import re
 import tempfile
 
 import ipywidgets

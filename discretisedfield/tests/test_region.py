@@ -70,7 +70,7 @@ def check_region(region):
 
     # There are no facing surfaces in region | region
     with pytest.raises(ValueError):
-        res = region | region
+        region | region
 
 
 class TestRegion:
@@ -97,7 +97,7 @@ class TestRegion:
     def test_init_invalid_args(self):
         for p1, p2 in self.invalid_args:
             with pytest.raises((TypeError, ValueError)):
-                region = df.Region(p1=p1, p2=p2)  # Raised by descriptors.
+                df.Region(p1=p1, p2=p2)  # Raised by descriptors.
 
     def test_init_zero_edge_length(self):
         args = [[(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9)],
@@ -106,7 +106,7 @@ class TestRegion:
 
         for p1, p2 in args:
             with pytest.raises(ValueError) as excinfo:
-                region = df.Region(p1=p1, p2=p2)
+                df.Region(p1=p1, p2=p2)
             assert 'is zero' in str(excinfo.value)
 
     def test_pmin_pmax_edges_centre_volume(self):
