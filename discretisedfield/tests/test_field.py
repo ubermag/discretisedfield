@@ -2396,17 +2396,17 @@ class TestField:
 
         for arg in args:
             with pytest.raises(TypeError):
-                f = df.Field.from_xarray(arg)
+                df.Field.from_xarray(arg)
         with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_dim_no)
+            df.Field.from_xarray(bad_dim_no)
         with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_dim_no2)
+            df.Field.from_xarray(bad_dim_no2)
         with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_dim3)
+            df.Field.from_xarray(bad_dim3)
         with pytest.raises(ValueError):
-            f = df.Field.from_xarray(bad_dim4)
+            df.Field.from_xarray(bad_dim4)
         for bad_coord_geo in bad_coord_gen():
             with pytest.raises(ValueError):
-                f = df.Field.from_xarray(bad_coord_geo)
+                df.Field.from_xarray(bad_coord_geo)
         with pytest.raises(KeyError):
-            f = df.Field.from_xarray(bad_attrs)
+            df.Field.from_xarray(bad_attrs)
