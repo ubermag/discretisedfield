@@ -7,17 +7,19 @@ import warnings
 import h5py
 import numpy as np
 import pandas as pd
+import ubermagutil.typesystem as ts
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
-import ubermagutil.typesystem as ts
+
 from . import html
+from .mesh import Mesh
 
 # TODO: tutorials, line operations
 
 
-@ts.typesystem(mesh=ts.Typed(expected_type=df.Mesh, const=True),
+@ts.typesystem(mesh=ts.Typed(expected_type=Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
 class Field(collections.abc.Callable):  # could be avoided by using type hints
     """Finite-difference field.
@@ -2379,7 +2381,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             The number of points on the plane in two dimensions.
 
         Returns
-        ------
+        -------
         discretisedfield.Field
 
             An extracted field.
@@ -2514,7 +2516,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             ``'z'``).
 
         Returns
-        ------
+        -------
         discretisedfield.Field
 
             A projected field.

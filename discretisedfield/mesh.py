@@ -1,21 +1,23 @@
-import k3d
-import os
+import collections
 import copy
 import itertools
-import ipywidgets
-import collections
-import numpy as np
 import warnings
-import discretisedfield as df
-import ubermagutil.units as uu
+
+import ipywidgets
+import k3d
 import matplotlib.pyplot as plt
+import numpy as np
 import ubermagutil.typesystem as ts
+import ubermagutil.units as uu
+
+import discretisedfield as df
 import discretisedfield.util as dfu
-from mpl_toolkits.mplot3d import Axes3D
+
 from . import html
+from .region import Region
 
 
-@ts.typesystem(region=ts.Typed(expected_type=df.Region),
+@ts.typesystem(region=ts.Typed(expected_type=Region),
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
@@ -747,7 +749,7 @@ class Mesh:
             The number of points on the plane in two dimensions.
 
         Returns
-        ------
+        -------
         discretisedfield.Mesh
 
             An extracted mesh.

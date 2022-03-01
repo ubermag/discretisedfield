@@ -1,7 +1,6 @@
 import ubermagutil.units as uu
-import matplotlib.pyplot as plt
-import discretisedfield.util as dfu
 
+import discretisedfield.util as dfu
 from discretisedfield.plotting.mpl import Mpl
 
 

@@ -2,9 +2,9 @@
 import k3d
 import matplotlib
 import numpy as np
+import ubermagutil.units as uu
 
 import discretisedfield.util as dfu
-import ubermagutil.units as uu
 
 
 class K3dField:

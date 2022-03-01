@@ -1,8 +1,10 @@
 import warnings
+
 import numpy as np
-import discretisedfield as df
 from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial.transform import Rotation
+
+import discretisedfield as df
 
 from . import html
 
