@@ -3,10 +3,9 @@ import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
-
-import discretisedfield.util as dfu
 import ubermagutil.units as uu
 
+import discretisedfield.util as dfu
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
 

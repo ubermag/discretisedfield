@@ -1,15 +1,17 @@
+import numbers
 import os
 import re
-import types
-import pytest
-import numbers
 import tempfile
-import ipywidgets
-import numpy as np
-import discretisedfield as df
-import matplotlib.pyplot as plt
-from .test_region import html_re as region_html_re
+import types
 
+import ipywidgets
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+import discretisedfield as df
+
+from .test_region import html_re as region_html_re
 
 html_re = (
     r'<strong>Mesh</strong>\s*<ul>\s*'

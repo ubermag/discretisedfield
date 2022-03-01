@@ -1,8 +1,9 @@
 import cmath
-import numbers
-import colorsys
 import collections
+import colorsys
 import functools
+import numbers
+
 import numpy as np
 
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
