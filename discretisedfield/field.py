@@ -6,9 +6,9 @@ import warnings
 
 import h5py
 import numpy as np
-import xarray as xr
 import pandas as pd
 import ubermagutil.typesystem as ts
+import xarray as xr
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
