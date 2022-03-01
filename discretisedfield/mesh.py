@@ -14,9 +14,10 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 from . import html
+from .region import Region
 
 
-@ts.typesystem(region=ts.Typed(expected_type=df.Region),
+@ts.typesystem(region=ts.Typed(expected_type=Region),
                cell=ts.Vector(size=3, positive=True, const=True),
                n=ts.Vector(size=3, component_type=int, unsigned=True,
                            const=True),
