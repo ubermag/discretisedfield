@@ -1723,7 +1723,7 @@ class TestField:
             f_saved = df.Field(f_read.mesh, dim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
-    def test_write_read_vtk(self):
+    def test_write_read_vtk(self, tmp_path):
         filename = 'testfile.vtk'
 
         p1 = (0, 0, 0)
@@ -1733,16 +1733,15 @@ class TestField:
 
         for dim, value in [(1, -1.2), (3, (1e-3, -5e6, 5e6))]:
             f = df.Field(mesh, dim=dim, value=value)
-            with tempfile.TemporaryDirectory() as tmpdir:
-                tmpfilename = os.path.join(tmpdir, filename)
-                f.write(tmpfilename)
-                f_read = df.Field.fromfile(tmpfilename)
+            tmpfilename = str(tmp_path / filename)
+            f.write(tmpfilename)
+            f_read = df.Field.fromfile(tmpfilename)
 
-                assert np.allclose(f.array, f_read.array)
-                assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
-                assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
-                assert np.allclose(f.mesh.cell, f_read.mesh.cell)
-                assert f.mesh.n == f_read.mesh.n
+            assert np.allclose(f.array, f_read.array)
+            assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
+            assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
+            assert np.allclose(f.mesh.cell, f_read.mesh.cell)
+            assert f.mesh.n == f_read.mesh.n
 
     def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']
