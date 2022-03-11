@@ -1731,17 +1731,37 @@ class TestField:
         cell = (1e-9, 1e-9, 1e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        for dim, value in [(1, -1.2), (3, (1e-3, -5e6, 5e6))]:
-            f = df.Field(mesh, dim=dim, value=value)
-            tmpfilename = str(tmp_path / filename)
-            f.write(tmpfilename)
-            f_read = df.Field.fromfile(tmpfilename)
+        for dim, value, components in zip(
+                [1, 2, 3, 4],
+                [1.2, (1, 2.5), (1e-3, -5e6, 5e6), np.random.random(4)],
+                [None, ('m_mag', 'm_phase'), None, 'abcd']
+        ):
+            for representation in ['txt', 'bin', 'xml']:
+                f = df.Field(mesh, dim=dim, value=value, components=components)
+                tmpfilename = str(tmp_path / filename)
+                f.write(tmpfilename, representation=representation)
+                f_read = df.Field.fromfile(tmpfilename)
 
-            assert np.allclose(f.array, f_read.array)
-            assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
-            assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
-            assert np.allclose(f.mesh.cell, f_read.mesh.cell)
-            assert f.mesh.n == f_read.mesh.n
+                assert np.allclose(f.array, f_read.array)
+                assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
+                assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
+                assert np.allclose(f.mesh.cell, f_read.mesh.cell)
+                assert f.mesh.n == f_read.mesh.n
+                assert f.components == f_read.components
+
+        # test reading legacy vtk file (written with discretisedfield<=0.61.0)
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        f = df.Field.fromfile(f'{dirname}/vtk-file-legacy.vtk')
+        check_field(f)
+        assert f.mesh.n == (8, 1, 1)
+        assert f.dim == 3
+
+        f = df.Field(mesh, dim=1, value=1)
+        with pytest.raises(ValueError):
+            f.write(str(tmp_path / filename), representation='wrong')
+        f.components = None
+        with pytest.raises(AttributeError):
+            f.write(str(tmp_path / filename))
 
     def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']

@@ -8,6 +8,8 @@ import h5py
 import numpy as np
 import pandas as pd
 import ubermagutil.typesystem as ts
+import vtk
+from vtk.util import numpy_support as vns
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
@@ -2682,7 +2684,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         elif filename.endswith(('.hdf5', '.h5')):
             self._writehdf5(filename)
         elif filename.endswith('.vtk'):
-            self._writevtk(filename)
+            self._writevtk(filename, representation=representation)
         else:
             msg = (f'Writing file with extension {filename.split(".")[-1]} '
                    f'not supported.')
@@ -2834,14 +2836,68 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             f.write(bfooter)
 
-    def _writevtk(self, filename):
+    def _to_vtk(self):
+        """Convert field to vtk rectilinear grid.
+
+        The field data is stored as ``CELL_DATA`` of the ``RECTILINEAR_GRID``.
+        Scalar fields (``dim=1``) contain one VTV array called ``field``.
+        Vector fields (``dim>1``) contain one VTK array called ``field``
+        containing vector data and scalar VTK arrays for each field component
+        (called ``<component-name>-component``).
+
+        Returns
+        -------
+        vtk.vtkRectilinearGrid
+
+            VTK representation of the field.
+
+        Raises
+        ------
+        AttributeError
+
+            If the field has ``dim>1`` and component labels are missing.
+        """
+        if self.dim > 1 and self.components is None:
+            raise AttributeError('Field components must be assigned manually'
+                                 ' before converting to vtk.')
+        rgrid = vtk.vtkRectilinearGrid()
+        rgrid.SetDimensions(*[n + 1 for n in self.mesh.n])
+
+        rgrid.SetXCoordinates(vns.numpy_to_vtk(
+            np.fromiter(self.mesh.cell_points('x'), float)))
+        rgrid.SetYCoordinates(vns.numpy_to_vtk(
+            np.fromiter(self.mesh.cell_points('y'), float)))
+        rgrid.SetZCoordinates(vns.numpy_to_vtk(
+            np.fromiter(self.mesh.cell_points('z'), float)))
+
+        cell_data = rgrid.GetCellData()
+        if self.dim > 1:
+            for comp in self.components:
+                component_array = vns.numpy_to_vtk(getattr(
+                    self, comp).array.transpose((2, 1, 0, 3)).reshape(
+                        (-1)))
+                component_array.SetName(f'{comp}-component')
+                cell_data.AddArray(component_array)
+                cell_data.SetActiveScalars(f'{comp}-component')
+        field_array = vns.numpy_to_vtk(
+            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim)))
+        field_array.SetName('field')
+        cell_data.AddArray(field_array)
+
+        if self.dim > 1:
+            cell_data.SetActiveVectors('field')
+        else:
+            cell_data.SetActiveScalars('field')
+        return rgrid
+
+    def _writevtk(self, filename, representation='bin'):
         """Write the field to a VTK file.
 
         The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
         (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
         (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
         three components to enable easy colouring of vectors in some
-        visualisation packages.
+        visualisation packages. The data is stored as ``CELL_DATA``.
 
         The saved VTK file can be opened with `Paraview
         <https://www.paraview.org/>`_ or `Mayavi
@@ -2874,6 +2930,23 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> os.remove(filename)  # delete the file
 
         """
+        if representation == 'xml':
+            writer = vtk.vtkXMLRectilinearGridWriter()
+        elif representation in ['bin', 'bin8', 'txt']:
+            # allow bin8 for convenience as this is the default for omf
+            # this does not affect the actual datatype used in vtk files
+            writer = vtk.vtkRectilinearGridWriter()
+            if representation == 'txt':
+                writer.SetFileTypeToASCII()
+            else:
+                writer.SetFileTypeToBinary()
+        else:
+            raise ValueError(f'Unknown {representation=}.')
+        writer.SetFileName(filename)
+        writer.SetInputData(self._to_vtk())
+        writer.Write()
+
+    def _writevtk_old(self, filename):
         header = ['# vtk DataFile Version 3.0',
                   'Field',
                   'ASCII',
@@ -3119,11 +3192,12 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
     def _fromvtk(cls, filename):
         """Read the field from a VTK file.
 
-        This method reads the field from a VTK file defined on
-        STRUCTURED_POINTS written by ``discretisedfield._writevtk``.
-
-        This is a ``classmethod`` and should be called as, for instance,
-        ``discretisedfield.Field._fromvtk('myfile.vtk')``.
+        This method reads the field from a VTK file defined on RECTILINEAR GRID
+        written by ``discretisedfield._writevtk``. It expects the data do be
+        specified as cell data and one (vector) field with the name ``field``.
+        A vector field should also contain data for the individual components.
+        The individual component names are used as ``components`` for the new
+        field.
 
         Parameters
         ----------
@@ -3153,6 +3227,53 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
 
+        """
+        with open(filename, 'rb') as f:
+            xml = 'xml' in f.readline().decode('utf8')
+        if xml:
+            reader = vtk.vtkXMLRectilinearGridReader()
+        else:
+            reader = vtk.vtkRectilinearGridReader()
+            reader.ReadAllVectorsOn()
+            reader.ReadAllScalarsOn()
+        reader.SetFileName(filename)
+        reader.Update()
+
+        output = reader.GetOutput()
+        p1 = output.GetBounds()[::2]
+        p2 = output.GetBounds()[1::2]
+        n = [i - 1 for i in output.GetDimensions()]
+
+        cell_data = output.GetCellData()
+
+        if cell_data.GetNumberOfArrays() == 0:
+            return cls._fromvtk_legacy(filename)
+
+        components = []
+        for i in range(cell_data.GetNumberOfArrays()):
+            name = cell_data.GetArrayName(i)
+            if name == 'field':
+                field_idx = i
+            else:
+                components.append(name)
+        array = cell_data.GetArray(field_idx)
+        dim = array.GetNumberOfComponents()
+
+        if len(components) != dim:
+            components = None
+
+        value = vns.vtk_to_numpy(array).reshape(*n, dim)
+        value = value.transpose((2, 1, 0, 3))
+
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        return cls(mesh, dim=dim, value=value, components=components)
+
+    @classmethod
+    def _fromvtk_legacy(cls, filename):
+        """Read the field from a VTK file (legacy).
+
+        This method reads vtk files written with discretisedfield <= 0.61.0
+        in which the data is stored as point data instead of cell data.
         """
         with open(filename, 'r') as f:
             content = f.read()

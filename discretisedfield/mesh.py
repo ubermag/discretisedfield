@@ -396,6 +396,13 @@ class Mesh:
         for i in range(self.n[axis]):
             yield self.index2point((0, 0, 0))[axis] + i*self.cell[axis]
 
+    def cell_points(self, axis, /):
+        """Generate cell coordinates along the given axis."""
+        if isinstance(axis, str):
+            axis = dfu.axesdict[axis]
+        return (self.region.p1[axis] + i * self.cell[axis]
+                for i in range(self.n[axis] + 1))
+
     def __eq__(self, other):
         """Relational operator ``==``.
 
