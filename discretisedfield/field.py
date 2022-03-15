@@ -2838,14 +2838,16 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             f.write(bfooter)
 
-    def _to_vtk(self):
+    def to_vtk(self):
         """Convert field to vtk rectilinear grid.
 
-        The field data is stored as ``CELL_DATA`` of the ``RECTILINEAR_GRID``.
-        Scalar fields (``dim=1``) contain one VTK array called ``field``.
-        Vector fields (``dim>1``) contain one VTK array called ``field``
-        containing vector data and scalar VTK arrays for each field component
-        (called ``<component-name>-component``).
+        This method convers at `discretisedfield.Field` into a
+        `vtk.vtkRectilinearGrid`. The field data (``field.array``) is stored as
+        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Scalar fields (``dim=1``)
+        contain one VTK array called ``field``. Vector fields (``dim>1``)
+        contain one VTK array called ``field`` containing vector data and
+        scalar VTK arrays for each field component (called
+        ``<component-name>-component``).
 
         Returns
         -------
@@ -2858,6 +2860,18 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         AttributeError
 
             If the field has ``dim>1`` and component labels are missing.
+
+        Examples
+        --------
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> f_vtk = f.to_vtk()
+        >>> print(f_vtk)
+        vtkRectilinearGrid (...)
+        ...
+        >>> f_vtk.GetNumberOfCells()
+        1000
+
         """
         if self.dim > 1 and self.components is None:
             raise AttributeError('Field components must be assigned'
