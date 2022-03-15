@@ -400,6 +400,16 @@ class TestMesh:
         assert list(mesh.axis_points('y')) == [1.0, 3.0, 5.0]
         assert list(mesh.axis_points('z')) == [1.0, 3.0, 5.0, 7.0]
 
+    def test_cell_points(self):
+        p1 = (0, 0, 0)
+        p2 = (5, 1, 6)
+        cell = (1, 1, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        assert list(mesh.cell_points('x')) == [0, 1, 2, 3, 4, 5]
+        assert list(mesh.cell_points('y')) == [0, 1]
+        assert list(mesh.cell_points('z')) == [0, 2, 4, 6]
+
     def test_neighbours(self):
         p1 = (0, 0, 0)
         p2 = (5, 3, 2)
