@@ -1727,7 +1727,7 @@ class TestField:
         filename = 'testfile.vtk'
 
         p1 = (0, 0, 0)
-        p2 = (1e-9, 2e-9, 1e-9)
+        p2 = (5e-9, 2e-9, 1e-9)
         cell = (1e-9, 1e-9, 1e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
@@ -1756,10 +1756,10 @@ class TestField:
         assert f.mesh.n == (8, 1, 1)
         assert f.dim == 3
 
-        f = df.Field(mesh, dim=1, value=1)
+        f = df.Field(mesh, dim=3, value=(0, 0, 1))
         with pytest.raises(ValueError):
             f.write(str(tmp_path / filename), representation='wrong')
-        f.components = None
+        f._components = None  # manually remove component labels
         with pytest.raises(AttributeError):
             f.write(str(tmp_path / filename))
 
