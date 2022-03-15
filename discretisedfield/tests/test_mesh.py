@@ -390,7 +390,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.region2slices(df.Region(p1=(-1, 3, -1), p2=(3, 5, 0)))
 
-    @pytest.mark.filterwarnings('ignore:FutureWarning')
+    @pytest.mark.filterwarnings('ignore::FutureWarning')
     def test_axis_points(self):
         p1 = (0, 0, 0)
         p2 = (10, 6, 8)
