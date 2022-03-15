@@ -3254,14 +3254,14 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             if name == 'field':
                 field_idx = i
             else:
-                components.append(name)
+                components.append(name[:-len('-component')])
         array = cell_data.GetArray(field_idx)
         dim = array.GetNumberOfComponents()
 
         if len(components) != dim:
             components = None
 
-        value = vns.vtk_to_numpy(array).reshape(*n, dim)
+        value = vns.vtk_to_numpy(array).reshape(*reversed(n), dim)
         value = value.transpose((2, 1, 0, 3))
 
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
