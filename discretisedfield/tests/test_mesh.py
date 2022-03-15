@@ -390,6 +390,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.region2slices(df.Region(p1=(-1, 3, -1), p2=(3, 5, 0)))
 
+    @pytest.mark.filterwarnings('ignore:FutureWarning')
     def test_axis_points(self):
         p1 = (0, 0, 0)
         p2 = (10, 6, 8)
@@ -400,15 +401,25 @@ class TestMesh:
         assert list(mesh.axis_points('y')) == [1.0, 3.0, 5.0]
         assert list(mesh.axis_points('z')) == [1.0, 3.0, 5.0, 7.0]
 
-    def test_cell_points(self):
+    def test_midpoints(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 6, 4)
+        cell = (2, 2, 1)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert list(mesh.midpoints.x) == [1.0, 3.0, 5.0, 7.0, 9.0]
+        assert list(mesh.midpoints.y) == [1.0, 3.0, 5.0]
+        assert list(mesh.midpoints.z) == [0.5, 1.5, 2.5, 3.5]
+
+    def test_vertices(self):
         p1 = (0, 0, 0)
         p2 = (5, 1, 6)
         cell = (1, 1, 2)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        assert list(mesh.cell_points('x')) == [0, 1, 2, 3, 4, 5]
-        assert list(mesh.cell_points('y')) == [0, 1]
-        assert list(mesh.cell_points('z')) == [0, 2, 4, 6]
+        assert list(mesh.vertices.x) == [0, 1, 2, 3, 4, 5]
+        assert list(mesh.vertices.y) == [0, 1]
+        assert list(mesh.vertices.z) == [0, 2, 4, 6]
 
     def test_neighbours(self):
         p1 = (0, 0, 0)

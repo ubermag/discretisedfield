@@ -358,26 +358,27 @@ class Mesh:
             yield self.index2point(index)
 
     def axis_points(self, axis, /):
-        """Points (ticks) on ``axis``.
+        warnings.warn('Deprecated; use `mesh.midpoints` instead.',
+                      FutureWarning)
+        return getattr(self.midpoints, axis)
 
-        This method is a generator yielding points on ``axis`` at which
-        discretisation cell coordinates are defined.
+    @property
+    def midpoints(self):
+        """Midpoints of the cells of the mesh along the three directions.
 
-        Parameters
-        ----------
-        axis : str
+        This method returns a named tuple with generators yielding midpoints of
+        the cells along the three spatial directions. Individual directions can
+        be accessed from the tuple.
 
-            Axis ``'x'``, ``'y'``, or ``'z'``.
+        Returns
+        -------
+        collections.namedtuple
 
-        Yields
-        ------
-        numbers.Real
-
-            Point on ``axis``.
+            Generators for midpoint of the cells along ``x``, ``y``, and ``z``.
 
         Examples
         --------
-        1. Getting points (ticks) on the axis.
+        1. Getting midpoints on the axis.
 
         >>> import discretisedfield as df
         ...
@@ -386,22 +387,56 @@ class Mesh:
         >>> cell = (2, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
-        >>> list(mesh.axis_points('x'))
+        >>> list(mesh.midpoints.x)
         [1.0, 3.0, 5.0, 7.0, 9.0]
 
         """
-        if isinstance(axis, str):
-            axis = dfu.axesdict[axis]
+        midpoints = collections.namedtuple('midpoints', ['x', 'y', 'z'])
+        x = (self.region.p1[0] + self.cell[0] / 2 + i * self.cell[0]
+             for i in range(self.n[0]))
+        y = (self.region.p1[1] + self.cell[1] / 2 + i * self.cell[1]
+             for i in range(self.n[1]))
+        z = (self.region.p1[2] + self.cell[2] / 2 + i * self.cell[2]
+             for i in range(self.n[2]))
+        return midpoints(x, y, z)
 
-        for i in range(self.n[axis]):
-            yield self.index2point((0, 0, 0))[axis] + i*self.cell[axis]
+    @property
+    def vertices(self):
+        """Vertices of the cells of the mesh along the three directions.
 
-    def cell_points(self, axis, /):
-        """Generate cell coordinates along the given axis."""
-        if isinstance(axis, str):
-            axis = dfu.axesdict[axis]
-        return (self.region.p1[axis] + i * self.cell[axis]
-                for i in range(self.n[axis] + 1))
+        This method returns a named tuple with generators yielding midpoints of
+        the cells along the three spatial directions. Individual directions can
+        be accessed from the tuple.
+
+        Returns
+        -------
+        collections.namedtuple
+
+            Generators for vertices of the cells along ``x``, ``y``, and ``z``.
+
+        Examples
+        --------
+        1. Getting vertices on the axis.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 1, 1)
+        >>> cell = (2, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> list(mesh.vertices.x)
+        [0, 2, 4, 6, 8, 10]
+
+        """
+        vertices = collections.namedtuple('vertices', ['x', 'y', 'z'])
+        x = (self.region.p1[0] + i * self.cell[0]
+             for i in range(self.n[0] + 1))
+        y = (self.region.p1[1] + i * self.cell[1]
+             for i in range(self.n[1] + 1))
+        z = (self.region.p1[2] + i * self.cell[2]
+             for i in range(self.n[2] + 1))
+        return vertices(x, y, z)
 
     def __eq__(self, other):
         """Relational operator ``==``.
