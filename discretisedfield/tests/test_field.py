@@ -1751,11 +1751,20 @@ class TestField:
 
         # test reading legacy vtk file (written with discretisedfield<=0.61.0)
         dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
-        f = df.Field.fromfile(f'{dirname}/vtk-file-legacy.vtk')
+        f = df.Field.fromfile(f'{dirname}/vtk-vector-legacy.vtk')
         check_field(f)
         assert f.mesh.n == (8, 1, 1)
+        assert f.array.shape == (8, 1, 1, 3)
         assert f.dim == 3
 
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        f = df.Field.fromfile(f'{dirname}/vtk-scalar-legacy.vtk')
+        check_field(f)
+        assert f.mesh.n == (5, 1, 2)
+        assert f.array.shape == (5, 1, 2, 1)
+        assert f.dim == 1
+
+        # test invalid arguments
         f = df.Field(mesh, dim=3, value=(0, 0, 1))
         with pytest.raises(ValueError):
             f.write(str(tmp_path / filename), representation='wrong')
