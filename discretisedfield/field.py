@@ -2623,9 +2623,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         representation : str, optional
 
-            In the case of OVF files (``.ovf``, ``.omf``, or ``.ohf``),
-            representation can be specified (``'bin4'``, ``'bin8'``, or
-            ``'txt'``). Defaults to ``'bin8'``.
+            Only supported for OVF and VTK files. In the case of OVF files
+            (``.ovf``, ``.omf``, or ``.ohf``) the representation can be
+            ``'bin4'``, ``'bin8'``, or ``'txt'``. For VTK files (``.vtk``) the
+            representation can be ``bin``, ``xml``, or ``txt``. Defaults to
+            ``'bin8'`` (interpreted as ``bin`` for VTK files).
 
         extend_scalar : bool, optional
 
