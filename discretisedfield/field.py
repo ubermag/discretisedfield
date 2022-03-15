@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import ubermagutil.typesystem as ts
 import vtk
-from vtk.util import numpy_support as vns
+import vtk.util.numpy_support as vns
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
@@ -2842,7 +2842,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         """Convert field to vtk rectilinear grid.
 
         The field data is stored as ``CELL_DATA`` of the ``RECTILINEAR_GRID``.
-        Scalar fields (``dim=1``) contain one VTV array called ``field``.
+        Scalar fields (``dim=1``) contain one VTK array called ``field``.
         Vector fields (``dim>1``) contain one VTK array called ``field``
         containing vector data and scalar VTK arrays for each field component
         (called ``<component-name>-component``).
@@ -2860,10 +2860,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             If the field has ``dim>1`` and component labels are missing.
         """
         if self.dim > 1 and self.components is None:
-            raise AttributeError('Field components must be assigned manually'
+            raise AttributeError('Field components must be assigned'
                                  ' before converting to vtk.')
         rgrid = vtk.vtkRectilinearGrid()
-        rgrid.SetDimensions(*[n + 1 for n in self.mesh.n])
+        rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
 
         rgrid.SetXCoordinates(vns.numpy_to_vtk(
             np.fromiter(self.mesh.cell_points('x'), float)))
@@ -2939,12 +2939,15 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             # allow bin8 for convenience as this is the default for omf
             # this does not affect the actual datatype used in vtk files
             writer = vtk.vtkRectilinearGridWriter()
-            if representation == 'txt':
-                writer.SetFileTypeToASCII()
-            else:
-                writer.SetFileTypeToBinary()
         else:
             raise ValueError(f'Unknown {representation=}.')
+
+        if representation == 'txt':
+            writer.SetFileTypeToASCII()
+        elif representation in ['bin', 'bin8', 'txt']:
+            writer.SetFileTypeToBinary()
+        # xml has no distinction between ascii and binary
+
         writer.SetFileName(filename)
         writer.SetInputData(self._to_vtk())
         writer.Write()
