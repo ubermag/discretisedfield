@@ -2900,7 +2900,9 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         The saved VTK file can be opened with `Paraview
         <https://www.paraview.org/>`_ or `Mayavi
-        <https://docs.enthought.com/mayavi/mayavi/>`_.
+        <https://docs.enthought.com/mayavi/mayavi/>`_. To show contour lines in
+        Paraview one has to first convert Cell Data to Point Data using a
+        filter.
 
         Parameters
         ----------
@@ -2944,32 +2946,6 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         writer.SetFileName(filename)
         writer.SetInputData(self._to_vtk())
         writer.Write()
-
-    def _writevtk_old(self, filename):
-        header = ['# vtk DataFile Version 3.0',
-                  'Field',
-                  'ASCII',
-                  'DATASET RECTILINEAR_GRID',
-                  'DIMENSIONS {} {} {}'.format(*self.mesh.n),
-                  f'X_COORDINATES {self.mesh.n[0]} float',
-                  ' '.join(map(str, self.mesh.axis_points('x'))),
-                  f'Y_COORDINATES {self.mesh.n[1]} float',
-                  ' '.join(map(str, self.mesh.axis_points('y'))),
-                  f'Z_COORDINATES {self.mesh.n[2]} float',
-                  ' '.join(map(str, self.mesh.axis_points('z'))),
-                  f'POINT_DATA {len(self.mesh)}']
-
-        if self.dim == 1:
-            data = dfu.vtk_scalar_data(self, 'field')
-        elif self.dim == 3:
-            x, y, z = self.components
-            data = dfu.vtk_scalar_data(getattr(self, x), 'x-component')
-            data += dfu.vtk_scalar_data(getattr(self, y), 'y-component')
-            data += dfu.vtk_scalar_data(getattr(self, z), 'z-component')
-            data += dfu.vtk_vector_data(self, 'field')
-
-        with open(filename, 'w') as f:
-            f.write('\n'.join(header+data))
 
     def _writehdf5(self, filename):
         """Write the field to an HDF5 file.
@@ -3246,6 +3222,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         cell_data = output.GetCellData()
 
         if cell_data.GetNumberOfArrays() == 0:
+            # Old writing routine did write to points instead of cells.
             return cls._fromvtk_legacy(filename)
 
         components = []
