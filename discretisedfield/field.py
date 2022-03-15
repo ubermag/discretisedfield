@@ -2878,15 +2878,14 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                         (-1)))
                 component_array.SetName(f'{comp}-component')
                 cell_data.AddArray(component_array)
-                cell_data.SetActiveScalars(f'{comp}-component')
         field_array = vns.numpy_to_vtk(
             self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim)))
         field_array.SetName('field')
         cell_data.AddArray(field_array)
 
-        if self.dim > 1:
+        if self.dim == 3:
             cell_data.SetActiveVectors('field')
-        else:
+        elif self.dim == 1:
             cell_data.SetActiveScalars('field')
         return rgrid
 
