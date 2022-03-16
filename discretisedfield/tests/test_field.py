@@ -1753,7 +1753,7 @@ class TestField:
         f = df.Field.fromfile(f'{dirname}/vtk-file.vtk')
         check_field(f)
         assert f.mesh.n == (5, 1, 2)
-        assert f.array.shape == (2, 1, 2, 3)
+        assert f.array.shape == (5, 1, 2, 3)
         assert f.dim == 3
 
         # test reading legacy vtk file (written with discretisedfield<=0.61.0)
