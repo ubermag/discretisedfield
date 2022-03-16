@@ -824,7 +824,7 @@ def _g(x, y, z):
 def _N_element(x, y, z, mesh, function):
     dx, dy, dz = mesh.cell
     value = 0.
-    for i in np.rollaxis(np.indices((2,) * 6), 0, 7).reshape(64, 6):
+    for i in itertools.product([0, 1], repeat=6):
         value += (-1)**np.sum(i) * function(x + (i[0] - i[3]) * dx,
                                             y + (i[1] - i[4]) * dy,
                                             z + (i[2] - i[5]) * dz)
