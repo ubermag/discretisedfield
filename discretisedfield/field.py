@@ -2880,11 +2880,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
 
         rgrid.SetXCoordinates(vns.numpy_to_vtk(
-            np.fromiter(self.mesh.cell_points('x'), float)))
+            np.fromiter(self.mesh.vertices.x, float)))
         rgrid.SetYCoordinates(vns.numpy_to_vtk(
-            np.fromiter(self.mesh.cell_points('y'), float)))
+            np.fromiter(self.mesh.vertices.y, float)))
         rgrid.SetZCoordinates(vns.numpy_to_vtk(
-            np.fromiter(self.mesh.cell_points('z'), float)))
+            np.fromiter(self.mesh.vertices.z, float)))
 
         cell_data = rgrid.GetCellData()
         if self.dim > 1:
