@@ -2963,7 +2963,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         # xml has no distinction between ascii and binary
 
         writer.SetFileName(filename)
-        writer.SetInputData(self._to_vtk())
+        writer.SetInputData(self.to_vtk())
         writer.Write()
 
     def _writehdf5(self, filename):
