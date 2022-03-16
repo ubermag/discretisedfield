@@ -1749,6 +1749,13 @@ class TestField:
                 assert f.mesh.n == f_read.mesh.n
                 assert f.components == f_read.components
 
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        f = df.Field.fromfile(f'{dirname}/vtk-file.vtk')
+        check_field(f)
+        assert f.mesh.n == (5, 1, 2)
+        assert f.array.shape == (2, 1, 2, 3)
+        assert f.dim == 3
+
         # test reading legacy vtk file (written with discretisedfield<=0.61.0)
         dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
         f = df.Field.fromfile(f'{dirname}/vtk-vector-legacy.vtk')
