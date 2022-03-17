@@ -2887,6 +2887,10 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             np.fromiter(self.mesh.vertices.z, float)))
 
         cell_data = rgrid.GetCellData()
+        field_norm = vns.numpy_to_vtk(
+            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1))
+        field_norm.SetName('norm')
+        cell_data.AddArray(field_norm)
         if self.dim > 1:
             for comp in self.components:
                 component_array = vns.numpy_to_vtk(getattr(
