@@ -275,8 +275,6 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points, values = map(list, zip(*list(self.field)))
-
         pmin = np.divide(self.field.mesh.region.pmin, multiplier)
         pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
@@ -289,7 +287,8 @@ class MplField(Mpl):
         n = (self.field.mesh.n[self.field.mesh.attributes['axis2']],
              self.field.mesh.n[self.field.mesh.attributes['axis1']])
 
-        values = self._filter_values(filter_field, points, values)
+        values = self.field.array.reshape(n)
+        self._filter_values(filter_field, values)
 
         if symmetric_clim and 'clim' not in kwargs.keys():
             vmin = np.min(values, where=~np.isnan(values), initial=0)
@@ -297,8 +296,7 @@ class MplField(Mpl):
             vmax_abs = max(abs(vmin), abs(vmax))
             kwargs['clim'] = (-vmax_abs, vmax_abs)
 
-        cp = ax.imshow(np.array(values).reshape(n),
-                       origin='lower', extent=extent, **kwargs)
+        cp = ax.imshow(values, origin='lower', extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp, ax=ax)
@@ -793,7 +791,7 @@ class MplField(Mpl):
         return (self.field.mesh.region.multiplier
                 if multiplier is None else multiplier)
 
-    def _filter_values(self, filter_field, points, values, nan_length=1):
+    def _filter_values(self, filter_field, values):
         if filter_field is None:
             return values
 
@@ -801,13 +799,11 @@ class MplField(Mpl):
             msg = f'Cannot use {filter_field.dim=}.'
             raise ValueError(msg)
 
-        if nan_length == 1:
-            nan = np.nan
-        else:
-            nan = [np.nan] * nan_length
+        attrs = self.field.mesh.attributes
+        filter_plane = filter_field.plane(
+            **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']})
 
-        return [values[i] if filter_field(point) != 0 else nan
-                for i, point in enumerate(points)]
+        values[filter_plane.array.reshape(values.shape) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
