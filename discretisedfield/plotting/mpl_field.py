@@ -296,7 +296,8 @@ class MplField(Mpl):
             vmax_abs = max(abs(vmin), abs(vmax))
             kwargs['clim'] = (-vmax_abs, vmax_abs)
 
-        cp = ax.imshow(values, origin='lower', extent=extent, **kwargs)
+        cp = ax.imshow(np.transpose(values),
+                       origin='lower', extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp, ax=ax)
