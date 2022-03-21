@@ -3253,7 +3253,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
             name = cell_data.GetArrayName(i)
             if name == 'field':
                 field_idx = i
-            else:
+            elif name.endswith('-component'):
                 components.append(name[:-len('-component')])
         array = cell_data.GetArray(field_idx)
         dim = array.GetNumberOfComponents()
