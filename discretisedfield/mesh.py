@@ -395,7 +395,8 @@ class Mesh:
         midpoints = collections.namedtuple('midpoints', ['x', 'y', 'z'])
 
         def _midpoints(ax):
-            return (self.region.p1[ax] + self.cell[ax] / 2 + i * self.cell[ax]
+            return (self.region.pmin[ax] + self.cell[ax] / 2
+                    + i * self.cell[ax]
                     for i in range(self.n[ax]))
 
         return midpoints(_midpoints(0), _midpoints(1), _midpoints(2))
@@ -432,7 +433,7 @@ class Mesh:
         vertices = collections.namedtuple('vertices', ['x', 'y', 'z'])
 
         def _vertices(ax):
-            return (self.region.p1[ax] + i * self.cell[ax]
+            return (self.region.pmin[ax] + i * self.cell[ax]
                     for i in range(self.n[ax] + 1))
 
         return vertices(_vertices(0), _vertices(1), _vertices(2))
