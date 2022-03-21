@@ -394,11 +394,11 @@ class Mesh:
         """
         midpoints = collections.namedtuple('midpoints', ['x', 'y', 'z'])
 
-        def _generator(ax):
+        def _midpoints(ax):
             return (self.region.p1[ax] + self.cell[ax] / 2 + i * self.cell[ax]
                     for i in range(self.n[ax]))
 
-        return midpoints(_generator(0), _generator(1), _generator(2))
+        return midpoints(_midpoints(0), _midpoints(1), _midpoints(2))
 
     @property
     def vertices(self):
@@ -431,11 +431,11 @@ class Mesh:
         """
         vertices = collections.namedtuple('vertices', ['x', 'y', 'z'])
 
-        def _generator(ax):
+        def _vertices(ax):
             return (self.region.p1[ax] + i * self.cell[ax]
                     for i in range(self.n[ax] + 1))
 
-        return vertices(_generator(0), _generator(1), _generator(2))
+        return vertices(_vertices(0), _vertices(1), _vertices(2))
 
     def __eq__(self, other):
         """Relational operator ``==``.
