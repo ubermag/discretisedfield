@@ -38,7 +38,11 @@ def _(val, mesh, dim, dtype):
                          f' expected dimension is {dim}')
     if dtype is None:
         dtype = max(np.asarray(val).dtype, np.float64)
-    return np.full((*mesh.n, dim), val, dtype=dtype)
+
+    if isinstance(val, np.ndarray) and val.shape == mesh.n + (dim,):
+        return np.asarray(val, dtype=dtype)  # no int arrays
+    else:
+        return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
 @as_array.register(collections.abc.Callable)
