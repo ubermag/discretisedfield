@@ -3195,7 +3195,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         specified as cell data and one (vector) field with the name ``field``.
         A vector field should also contain data for the individual components.
         The individual component names are used as ``components`` for the new
-        field.
+        field. They must appear in the form ``<componentname>-component``.
 
         Parameters
         ----------

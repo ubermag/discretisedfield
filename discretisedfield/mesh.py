@@ -374,11 +374,12 @@ class Mesh:
         -------
         collections.namedtuple
 
-            Generators for midpoint of the cells along ``x``, ``y``, and ``z``.
+            Generators for midpoints of the cells along ``x``, ``y``, and
+            ``z``.
 
         Examples
         --------
-        1. Getting midpoints on the axis.
+        1. Getting midpoints along the ``x`` axis.
 
         >>> import discretisedfield as df
         ...
@@ -404,7 +405,7 @@ class Mesh:
     def vertices(self):
         """Vertices of the cells of the mesh along the three directions.
 
-        This method returns a named tuple with generators yielding midpoints of
+        This method returns a named tuple with generators yielding vertices of
         the cells along the three spatial directions. Individual directions can
         be accessed from the tuple.
 
@@ -416,7 +417,7 @@ class Mesh:
 
         Examples
         --------
-        1. Getting vertices on the axis.
+        1. Getting vertices along the ``x`` axis.
 
         >>> import discretisedfield as df
         ...
