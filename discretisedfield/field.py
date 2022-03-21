@@ -2962,7 +2962,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         if representation == 'txt':
             writer.SetFileTypeToASCII()
-        elif representation in ['bin', 'bin8', 'txt']:
+        elif representation in ['bin', 'bin8']:
             writer.SetFileTypeToBinary()
         # xml has no distinction between ascii and binary
 
