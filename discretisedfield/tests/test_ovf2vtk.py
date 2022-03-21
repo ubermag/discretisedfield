@@ -52,7 +52,6 @@ def test_ovf2vtk(tmp_path, capfd):
     proc_return = subprocess.run(cmd)
     captured = capfd.readouterr()
     assert proc_return.returncode != 0
-    print(captured)
     msg = ('The number of input files (2) does not '
            'match the number of output files (1).')
     assert msg in captured.err
