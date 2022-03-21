@@ -2892,6 +2892,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         field_norm.SetName('norm')
         cell_data.AddArray(field_norm)
         if self.dim > 1:
+            # For some visualisation packages it is an advantage to have direct
+            # access to the individual field components, e.g. for colouring.
             for comp in self.components:
                 component_array = vns.numpy_to_vtk(getattr(
                     self, comp).array.transpose((2, 1, 0, 3)).reshape(
@@ -2954,8 +2956,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         if representation == 'xml':
             writer = vtk.vtkXMLRectilinearGridWriter()
         elif representation in ['bin', 'bin8', 'txt']:
-            # allow bin8 for convenience as this is the default for omf
-            # this does not affect the actual datatype used in vtk files
+            # Allow bin8 for convenience as this is the default for omf.
+            # This does not affect the actual datatype used in vtk files.
             writer = vtk.vtkRectilinearGridWriter()
         else:
             raise ValueError(f'Unknown {representation=}.')
