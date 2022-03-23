@@ -286,7 +286,7 @@ class MplField(Mpl):
         multiplier = self._setup_multiplier(multiplier)
         extent = self._extent(multiplier)
 
-        values = self.field.array.reshape(self.n)
+        values = self.field.array.copy().reshape(self.n)
         self._filter_values(filter_field, values)
 
         if symmetric_clim and 'clim' not in kwargs.keys():
@@ -425,10 +425,10 @@ class MplField(Mpl):
                 msg = f'Cannot use {lightness_field.dim=} lightness_field.'
                 raise ValueError(msg)
 
-        values = self.field.array.reshape(self.n)
+        values = self.field.array.copy().reshape(self.n)
 
         lightness = lightness_field.plane(
-            **self.planeaxis_point).array.reshape(self.n)
+            **self.planeaxis_point).array.copy().reshape(self.n)
 
         rgb = dfu.hls2rgb(hue=values,
                           lightness=lightness,
@@ -589,7 +589,7 @@ class MplField(Mpl):
         points1 = self.field.mesh.midpoints[self.axis1] / multiplier
         points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
-        values = self.field.array.reshape(self.n + (self.field.dim,))
+        values = self.field.array.copy().reshape(self.n + (self.field.dim,))
         # filter out points where norm is 0
         values[np.all(np.isclose(values, 0, atol=0), axis=-1)] = np.nan
 
@@ -607,7 +607,8 @@ class MplField(Mpl):
                     color_field = getattr(self.field, self.planeaxis)
             if use_color:
                 quiver_args.append(color_field.plane(
-                    **self.planeaxis_point).array.reshape(self.n).transpose())
+                    **self.planeaxis_point).array.copy().reshape(
+                        self.n).transpose())
 
         cp = ax.quiver(*quiver_args, pivot='mid', **kwargs)
 
@@ -739,7 +740,7 @@ class MplField(Mpl):
         points1 = self.field.mesh.midpoints[self.axis1] / multiplier
         points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
-        values = self.field.array.reshape(self.n)
+        values = self.field.array.copy().reshape(self.n)
 
         cp = ax.contour(points1, points2, np.transpose(values), **kwargs)
         ax.set_aspect('equal')
@@ -767,7 +768,7 @@ class MplField(Mpl):
 
         filter_plane = filter_field.plane(**self.planeaxis_point)
 
-        values[filter_plane.array.reshape(self.n) == 0] = np.nan
+        values[filter_plane.array.copy().reshape(self.n) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
