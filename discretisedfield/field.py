@@ -3832,10 +3832,12 @@ def _(val, mesh, dim, dtype):
 
 @_as_array.register(Field)
 def _(val, mesh, dim, dtype):
+    # reshaping required for scalar fields
+    # where the xarray is only 3 dimensional
     return val.to_xarray().sel(x=mesh.midpoints.x,
                                y=mesh.midpoints.y,
                                z=mesh.midpoints.z,
-                               method='nearest').data
+                               method='nearest').data.reshape(mesh.n + (-1,))
 
 
 @_as_array.register(dict)
