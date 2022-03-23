@@ -748,7 +748,7 @@ class MplField(Mpl):
         points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
         values = self.field.array.copy().reshape(self.n)
-        self._filter.values(filter_field, values)
+        self._filter_values(filter_field, values)
 
         cp = ax.contour(points1, points2, np.transpose(values), **kwargs)
         ax.set_aspect('equal')
