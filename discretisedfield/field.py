@@ -2429,7 +2429,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         return self.__class__(plane_mesh,
                               dim=self.dim,
                               value=value,
-                              components=self.components)
+                              components=self.components,
+                              dtype=self.dtype)
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
