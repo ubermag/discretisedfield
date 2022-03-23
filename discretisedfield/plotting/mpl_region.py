@@ -61,9 +61,10 @@ class MplRegion(Mpl):
 
         box_aspect : str, array_like (3), optional
 
-            Set the aspect-ratio of the plot. If set to `auto` the aspect ratio
-            is determined from the edge lengths of the region. To set different
-            aspect ratios a tuple can be passed. Defaults to ``'auto'``.
+            Set the aspect-ratio of the plot. If set to `'auto'` the aspect
+            ratio is determined from the edge lengths of the region. To set
+            different aspect ratios a tuple can be passed. Defaults to
+            ``'auto'``.
 
         filename : str, optional
 
