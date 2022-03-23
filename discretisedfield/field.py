@@ -263,8 +263,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = as_array(self._value, self.mesh, self.dim,
-                               dtype=self.dtype)
+        value_array = _as_array(self._value, self.mesh, self.dim,
+                                dtype=self.dtype)
         if np.array_equal(self.array, value_array):
             return self._value
         else:
@@ -273,7 +273,7 @@ class Field:
     @value.setter
     def value(self, val):
         self._value = val
-        self.array = as_array(val, self.mesh, self.dim, dtype=self.dtype)
+        self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def components(self):
@@ -362,7 +362,7 @@ class Field:
 
     @array.setter
     def array(self, val):
-        self._array = as_array(val, self.mesh, self.dim, dtype=self.dtype)
+        self._array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def norm(self):
@@ -450,7 +450,7 @@ class Field:
                 raise ValueError(msg)
 
             self.array /= self.norm.array  # normalise to 1
-            self.array *= as_array(val, self.mesh, dim=1, dtype=None)
+            self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
         """Field norm.
@@ -3798,18 +3798,18 @@ class Field:
 
 
 @functools.singledispatch
-def as_array(val, mesh, dim, dtype):
+def _as_array(val, mesh, dim, dtype):
     raise TypeError('Unsupported type {type(val)}.')
 
 
 # to avoid str being interpreted as iterable
-@as_array.register(str)
+@_as_array.register(str)
 def _(val, mesh, dim, dtype):
     raise TypeError('Unsupported type {type(val)}.')
 
 
-@as_array.register(numbers.Complex)
-@as_array.register(collections.abc.Iterable)
+@_as_array.register(numbers.Complex)
+@_as_array.register(collections.abc.Iterable)
 def _(val, mesh, dim, dtype):
     if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
         raise ValueError('Wrong dimension 1 provided for value;'
@@ -3819,7 +3819,7 @@ def _(val, mesh, dim, dtype):
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
-@as_array.register(collections.abc.Callable)
+@_as_array.register(collections.abc.Callable)
 def _(val, mesh, dim, dtype):
     # will only be called on user input
     # dtype must be specified by the user for complex values
@@ -3830,7 +3830,7 @@ def _(val, mesh, dim, dtype):
     return array
 
 
-@as_array.register(dict)
+@_as_array.register(dict)
 def _(val, mesh, dim, dtype):
     # will only be called on user input
     # dtype must be specified by the user for complex values
@@ -3851,7 +3851,7 @@ def _(val, mesh, dim, dtype):
             continue
         else:
             slices = mesh.region2slices(submesh.region)
-            array[slices] = as_array(subval, submesh, dim, dtype)
+            array[slices] = _as_array(subval, submesh, dim, dtype)
 
     if np.any(np.isnan(array)):
         # not all subregion keys specified and 'default' is missing or callable
