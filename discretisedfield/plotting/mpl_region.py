@@ -14,6 +14,8 @@ class MplRegion(Mpl):
                  multiplier=None,
                  color=dfu.cp_hex[0],
                  filename=None,
+                 box_aspect='auto',
+                 mode='wireframe',
                  **kwargs):
         r"""``matplotlib`` plot.
 
@@ -81,6 +83,11 @@ class MplRegion(Mpl):
         kwargs.setdefault('color', color)
 
         rescaled_region = self.region / multiplier
+
+        if box_aspect == 'auto':
+            ax.set_box_aspect(rescaled_region.edges)
+        elif box_aspect is not None:
+            ax.set_box_aspect(box_aspect)
 
         dfu.plot_box(ax=ax,
                      pmin=rescaled_region.pmin,
