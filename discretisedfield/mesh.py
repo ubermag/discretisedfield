@@ -367,16 +367,16 @@ class Mesh:
     def midpoints(self):
         """Midpoints of the cells of the mesh along the three directions.
 
-        This method returns a named tuple with generators yielding midpoints of
-        the cells along the three spatial directions. Individual directions can
-        be accessed from the tuple.
+        This method returns a named tuple containing three numpy arrays with
+        midpoints of the cells along the three spatial directions ``x``, ``y``,
+        and ``z``. Individual directions can be accessed from the tuple.
 
         Returns
         -------
         collections.namedtuple
 
-            Generators for midpoints of the cells along ``x``, ``y``, and
-            ``z``.
+            Namedtuple with three elements ``x``, ``y``, and ``z``, the cell
+            midpoints along the three spatial directions as numpy arrays.
 
         Examples
         --------
@@ -389,8 +389,8 @@ class Mesh:
         >>> cell = (2, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
-        >>> list(mesh.midpoints.x)
-        [1.0, 3.0, 5.0, 7.0, 9.0]
+        >>> mesh.midpoints.x
+        array([1., 3., 5., 7., 9.])
 
         """
         midpoints = collections.namedtuple('midpoints', ['x', 'y', 'z'])
@@ -405,15 +405,16 @@ class Mesh:
     def vertices(self):
         """Vertices of the cells of the mesh along the three directions.
 
-        This method returns a named tuple with generators yielding vertices of
-        the cells along the three spatial directions. Individual directions can
-        be accessed from the tuple.
+        This method returns a named tuple containing three numpy arrays with
+        vertices of the cells along the three spatial directions ``x``, ``y``,
+        and ``z``. Individual directions can be accessed from the tuple.
 
         Returns
         -------
         collections.namedtuple
 
-            Generators for vertices of the cells along ``x``, ``y``, and ``z``.
+            Namedtuple with three elements ``x``, ``y``, and ``z``, the cell
+            vertices along the three spatial directions as numpy arrays.
 
         Examples
         --------
@@ -426,8 +427,8 @@ class Mesh:
         >>> cell = (2, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
-        >>> list(mesh.vertices.x)
-        [0, 2, 4, 6, 8, 10]
+        >>> mesh.vertices.x
+        array([ 0.,  2.,  4.,  6.,  8., 10.])
 
         """
         vertices = collections.namedtuple('vertices', ['x', 'y', 'z'])
