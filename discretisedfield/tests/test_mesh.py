@@ -781,6 +781,7 @@ class TestMesh:
         for p1, p2, n, cell in self.valid_args:
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
             mesh.mpl()
+            mesh.mpl(box_aspect=[1, 2, 3])
 
             filename = 'figure.pdf'
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -810,7 +811,7 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
         # matplotlib tests
-        mesh.mpl_subregions()
+        mesh.mpl_subregions(box_aspect=(1, 1, 1), show_region=True)
 
         filename = 'figure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:
