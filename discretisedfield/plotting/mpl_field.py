@@ -284,11 +284,11 @@ class MplField(Mpl):
                   pmax[self.field.mesh.attributes['axis1']],
                   pmin[self.field.mesh.attributes['axis2']],
                   pmax[self.field.mesh.attributes['axis2']]]
-        n = (self.field.mesh.n[self.field.mesh.attributes['axis2']],
-             self.field.mesh.n[self.field.mesh.attributes['axis1']])
+        n = (self.field.mesh.n[self.field.mesh.attributes['axis1']],
+             self.field.mesh.n[self.field.mesh.attributes['axis2']])
 
         values = self.field.array.reshape(n)
-        self._filter_values(filter_field, values)
+        self._filter_values(filter_field, values, n)
 
         if symmetric_clim and 'clim' not in kwargs.keys():
             vmin = np.min(values, where=~np.isnan(values), initial=0)
@@ -296,8 +296,8 @@ class MplField(Mpl):
             vmax_abs = max(abs(vmin), abs(vmax))
             kwargs['clim'] = (-vmax_abs, vmax_abs)
 
-        cp = ax.imshow(np.transpose(values),
-                       origin='lower', extent=extent, **kwargs)
+        cp = ax.imshow(np.transpose(values), origin='lower',
+                       extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp, ax=ax)
@@ -433,8 +433,8 @@ class MplField(Mpl):
                   pmax[self.field.mesh.attributes['axis1']],
                   pmin[self.field.mesh.attributes['axis2']],
                   pmax[self.field.mesh.attributes['axis2']]]
-        n = (self.field.mesh.n[self.field.mesh.attributes['axis2']],
-             self.field.mesh.n[self.field.mesh.attributes['axis1']])
+        n = (self.field.mesh.n[self.field.mesh.attributes['axis1']],
+             self.field.mesh.n[self.field.mesh.attributes['axis2']])
 
         if lightness_field is None:
             lightness_field = self.field.norm
@@ -443,22 +443,27 @@ class MplField(Mpl):
                 msg = f'Cannot use {lightness_field.dim=} lightness_field.'
                 raise ValueError(msg)
 
-        lightness = [lightness_field(i) for i in self.field.mesh]
+        values = self.field.array.reshape(n)
+
+        attrs = self.field.mesh.attributes
+        lightness = lightness_field.plane(
+            **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']}).array
+        lightness.reshape(n)
 
         rgb = dfu.hls2rgb(hue=values,
                           lightness=lightness,
                           saturation=None,
                           lightness_clim=clim).squeeze()
+        self._filter_values(filter_field, rgb, n)
 
-        rgb = np.asarray(self._filter_values(filter_field, points, rgb,
-                                             nan_length=3))
         # alpha channel to hide points with nan values (filter field)
-        rgba = np.ones((len(rgb), 4))
+        rgba = np.empty((*rgb.shape[:-1], 4))
         rgba[..., :3] = rgb
-        rgba[..., 3][np.isnan(rgb[:, 0])] = 0
+        rgba[..., 3] = 1.
+        rgba[..., 3][np.isnan(rgb[..., 0])] = 0  # filtered -> all channels nan
 
         kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-        ax.imshow(rgba.reshape((*n, 4)), origin='lower',
+        ax.imshow(np.transpose(rgba, (1, 0, 2)), origin='lower',
                   extent=extent, **kwargs)
 
         if colorwheel:
@@ -762,21 +767,17 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points, values = map(list, zip(*list(self.field)))
+        n = (self.field.mesh.n[self.field.mesh.attributes['axis1']],
+             self.field.mesh.n[self.field.mesh.attributes['axis2']])
 
-        values = self._filter_values(filter_field, points, values)
+        points_x = self.field.mesh.midpoints[
+            self.field.mesh.attributes['axis1']] / multiplier
+        points_y = self.field.mesh.midpoints[
+            self.field.mesh.attributes['axis2']] / multiplier
 
-        n = (self.field.mesh.n[self.field.mesh.attributes['axis2']],
-             self.field.mesh.n[self.field.mesh.attributes['axis1']])
+        values = self.field.array.reshape(n)
 
-        points = np.array(list(zip(*points)))
-        points = np.divide(points, multiplier)
-
-        values = np.array(values).reshape(n)
-
-        cp = ax.contour(points[self.field.mesh.attributes['axis1']].reshape(n),
-                        points[self.field.mesh.attributes['axis2']].reshape(n),
-                        values, **kwargs)
+        cp = ax.contour(points_x, points_y, np.transpose(values), **kwargs)
         ax.set_aspect('equal')
 
         if colorbar:
@@ -787,12 +788,13 @@ class MplField(Mpl):
         self._axis_labels(ax, multiplier)
 
         self._savefig(filename)
+        return points_x, points_y, values
 
     def _setup_multiplier(self, multiplier):
         return (self.field.mesh.region.multiplier
                 if multiplier is None else multiplier)
 
-    def _filter_values(self, filter_field, values):
+    def _filter_values(self, filter_field, values, n):
         if filter_field is None:
             return values
 
@@ -804,7 +806,7 @@ class MplField(Mpl):
         filter_plane = filter_field.plane(
             **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']})
 
-        values[filter_plane.array.reshape(values.shape) == 0] = np.nan
+        values[filter_plane.array.reshape(n) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
