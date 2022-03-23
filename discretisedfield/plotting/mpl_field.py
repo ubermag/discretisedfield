@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import ubermagutil.units as uu
 
+import discretisedfield as df
 import discretisedfield.util as dfu
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
@@ -427,8 +428,11 @@ class MplField(Mpl):
 
         values = self.field.array.copy().reshape(self.n)
 
-        lightness = lightness_field.plane(
-            **self.planeaxis_point).array.copy().reshape(self.n)
+        lightness_plane = lightness_field.plane(**self.planeaxis_point)
+        if lightness_plane.mesh != self.field.mesh:
+            lightness_plane = df.Field(self.field.mesh, dim=1,
+                                       value=lightness_plane)
+        lightness = lightness_plane.array.copy().reshape(self.n)
 
         rgb = dfu.hls2rgb(hue=values,
                           lightness=lightness,
@@ -606,9 +610,12 @@ class MplField(Mpl):
                 else:
                     color_field = getattr(self.field, self.planeaxis)
             if use_color:
-                quiver_args.append(color_field.plane(
-                    **self.planeaxis_point).array.copy().reshape(
-                        self.n).transpose())
+                color_plane = color_field.plane(**self.planeaxis_point)
+                if color_plane.mesh != self.field.mesh:
+                    color_plane = df.Field(self.field.mesh, dim=1,
+                                           value=color_plane)
+                quiver_args.append(color_plane.array.copy().reshape(
+                    self.n).transpose())
 
         cp = ax.quiver(*quiver_args, pivot='mid', **kwargs)
 
@@ -741,6 +748,7 @@ class MplField(Mpl):
         points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
         values = self.field.array.copy().reshape(self.n)
+        self._filter.values(filter_field, values)
 
         cp = ax.contour(points1, points2, np.transpose(values), **kwargs)
         ax.set_aspect('equal')
@@ -767,6 +775,8 @@ class MplField(Mpl):
             raise ValueError(msg)
 
         filter_plane = filter_field.plane(**self.planeaxis_point)
+        if filter_plane.mesh != self.field.mesh:
+            filter_plane = df.Field(self.field.mesh, dim=1, value=filter_plane)
 
         values[filter_plane.array.copy().reshape(self.n) == 0] = np.nan
 
