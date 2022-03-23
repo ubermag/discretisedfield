@@ -40,7 +40,17 @@ class MplField(Mpl):
             raise ValueError(msg)
 
         self.field = field
+
         self.planeaxis = dfu.raxesdict[field.mesh.attributes['planeaxis']]
+        self.planeaxis_point = {
+            dfu.raxesdict[self.field.mesh.attributes['planeaxis']]:
+            self.field.mesh.attributes['point']
+        }
+        self.axis1 = self.field.mesh.attributes['axis1']
+        self.axis2 = self.field.mesh.attributes['axis2']
+        # TODO: After refactoring code, maybe n can become
+        # part of PlaneMesh.
+        self.n = (self.field.mesh.n[self.axis1], self.field.mesh.n[self.axis2])
 
     def __call__(self,
                  ax=None,
@@ -274,19 +284,10 @@ class MplField(Mpl):
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
+        extent = self._extent(multiplier)
 
-        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
-        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
-
-        axis1 = self.field.mesh.attributes['axis1']
-        axis2 = self.field.mesh.attributes['axis2']
-        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
-        # TODO: After refactoring code, maybe extent and n can become
-        # part of PlaneMesh.
-        extent = [pmin[axis1], pmax[axis1], pmin[axis2], pmax[axis2]]
-
-        values = self.field.array.reshape(n)
-        self._filter_values(filter_field, values, n)
+        values = self.field.array.reshape(self.n)
+        self._filter_values(filter_field, values)
 
         if symmetric_clim and 'clim' not in kwargs.keys():
             vmin = np.min(values, where=~np.isnan(values), initial=0)
@@ -415,22 +416,7 @@ class MplField(Mpl):
             filter_field = self.field.norm
 
         multiplier = self._setup_multiplier(multiplier)
-
-        points, values = map(list, zip(*list(self.field)))
-
-        # TODO Requires refactoring of df.Mesh
-        # rescaled_region = self.field.mesh.region.rescale(multiplier)
-        # pmin = rescaled_region.pmin
-        # pmax = rescaled_region.pmax
-
-        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
-        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
-
-        axis1 = self.field.mesh.attributes['axis1']
-        axis2 = self.field.mesh.attributes['axis2']
-        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
-        # This depends on plane mesh orientation and should be in PlaneMesh.
-        extent = [pmin[axis1], pmax[axis1], pmin[axis2], pmax[axis2]]
+        extent = self._extent(multiplier)
 
         if lightness_field is None:
             lightness_field = self.field.norm
@@ -439,20 +425,16 @@ class MplField(Mpl):
                 msg = f'Cannot use {lightness_field.dim=} lightness_field.'
                 raise ValueError(msg)
 
-        values = self.field.array.reshape(n)
+        values = self.field.array.reshape(self.n)
 
-        attrs = self.field.mesh.attributes
         lightness = lightness_field.plane(
-            **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']}
-        ).array.reshape(n)
+            **self.planeaxis_point).array.reshape(self.n)
 
-        print(f'{values.shape=}')
-        print(f'{lightness.shape=}')
         rgb = dfu.hls2rgb(hue=values,
                           lightness=lightness,
                           saturation=None,
                           lightness_clim=clim).squeeze()
-        self._filter_values(filter_field, rgb, n)
+        self._filter_values(filter_field, rgb)
 
         # alpha channel to hide points with nan values (filter field)
         # all three rgb values are set to nan
@@ -604,17 +586,16 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        axis1 = self.field.mesh.attributes['axis1']
-        axis2 = self.field.mesh.attributes['axis2']
-        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
+        points_x = self.field.mesh.midpoints[self.axis1] / multiplier
+        points_y = self.field.mesh.midpoints[self.axis2] / multiplier
 
-        points_x = self.field.mesh.midpoints[axis1] / multiplier
-        points_y = self.field.mesh.midpoints[axis2] / multiplier
-
-        values = self.field.array.reshape(n + (self.field.dim,))
-
+        values = self.field.array.reshape(self.n + (self.field.dim,))
         # filter out points where norm is 0
         values[np.all(np.isclose(values, 0, atol=0), axis=-1)] = np.nan
+
+        quiver_args = [points_x, points_y,
+                       np.transpose(values[..., self.axis1]),
+                       np.transpose(values[..., self.axis2])]
 
         if use_color:
             if color_field is None:
@@ -625,22 +606,10 @@ class MplField(Mpl):
                 else:
                     color_field = getattr(self.field, self.planeaxis)
             if use_color:
-                attrs = self.field.mesh.attributes
-                colors = color_field.plane(
-                    **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']})
-                colors = colors.array.reshape(n)
+                quiver_args.append(color_field.plane(
+                    **self.planeaxis_point).array.reshape(self.n).transpose())
 
-        if use_color:
-            cp = ax.quiver(*np.meshgrid(points_x, points_y),
-                           np.transpose(values[..., axis1]),
-                           np.transpose(values[..., axis2]),
-                           np.transpose(colors),
-                           pivot='mid', **kwargs)
-        else:
-            cp = ax.quiver(points_x, points_y,
-                           np.transpose(values[..., axis1]),
-                           np.transpose(values[..., axis2]),
-                           pivot='mid', **kwargs)
+        cp = ax.quiver(*quiver_args, pivot='mid', **kwargs)
 
         ax.set_aspect('equal')
         if colorbar and use_color:
@@ -767,14 +736,10 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        axis1 = self.field.mesh.attributes['axis1']
-        axis2 = self.field.mesh.attributes['axis2']
-        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
+        points_x = self.field.mesh.midpoints[self.axis1] / multiplier
+        points_y = self.field.mesh.midpoints[self.axis2] / multiplier
 
-        points_x = self.field.mesh.midpoints[axis1] / multiplier
-        points_y = self.field.mesh.midpoints[axis2] / multiplier
-
-        values = self.field.array.reshape(n)
+        values = self.field.array.reshape(self.n)
 
         cp = ax.contour(points_x, points_y, np.transpose(values), **kwargs)
         ax.set_aspect('equal')
@@ -787,13 +752,12 @@ class MplField(Mpl):
         self._axis_labels(ax, multiplier)
 
         self._savefig(filename)
-        return points_x, points_y, values
 
     def _setup_multiplier(self, multiplier):
         return (self.field.mesh.region.multiplier
                 if multiplier is None else multiplier)
 
-    def _filter_values(self, filter_field, values, n):
+    def _filter_values(self, filter_field, values):
         if filter_field is None:
             return values
 
@@ -801,19 +765,28 @@ class MplField(Mpl):
             msg = f'Cannot use {filter_field.dim=}.'
             raise ValueError(msg)
 
-        attrs = self.field.mesh.attributes
-        filter_plane = filter_field.plane(
-            **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']})
+        filter_plane = filter_field.plane(**self.planeaxis_point)
 
-        values[filter_plane.array.reshape(n) == 0] = np.nan
+        values[filter_plane.array.reshape(self.n) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
                 rf'{self.field.mesh.attributes["unit"]})')
-        ax.set_xlabel(dfu.raxesdict[self.field.mesh.attributes['axis1']]
-                      + unit)
-        ax.set_ylabel(dfu.raxesdict[self.field.mesh.attributes['axis2']]
-                      + unit)
+        ax.set_xlabel(dfu.raxesdict[self.axis1] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.axis1] + unit)
+
+    def _extent(self, multiplier):
+        # TODO Requires refactoring of df.Mesh
+        # rescaled_region = self.field.mesh.region.rescale(multiplier)
+        # pmin = rescaled_region.pmin
+        # pmax = rescaled_region.pmax
+        # TODO: After refactoring code, maybe extent can become
+        # part of PlaneMesh.
+        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
+        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
+
+        return [pmin[self.axis1], pmax[self.axis1],
+                pmin[self.axis2], pmax[self.axis2]]
 
     def __dir__(self):
         dirlist = dir(self.__class__)
