@@ -15,6 +15,7 @@ authors = [
     {name = "Marijan Beg"},
     {name = "Martin Lang"},
     {name = "Samuel Holt"},
+    {name = "Swapneel Amit Pathak"},
     {name = "Ryan A. Pepper"},
     {name = "Hans Fangohr"}
 ]
@@ -43,7 +44,9 @@ dependencies = [
     "h5py>=3.1",
     "k3d>=2.11",
     "scipy>=1.6",
-    "jinja2"
+    "jinja2",
+    "vtk",
+    "xarray"
 ]
 
 [project.optional-dependencies]

@@ -8,6 +8,9 @@ import h5py
 import numpy as np
 import pandas as pd
 import ubermagutil.typesystem as ts
+import vtk
+import vtk.util.numpy_support as vns
+import xarray as xr
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
@@ -2633,9 +2636,11 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         representation : str, optional
 
-            In the case of OVF files (``.ovf``, ``.omf``, or ``.ohf``),
-            representation can be specified (``'bin4'``, ``'bin8'``, or
-            ``'txt'``). Defaults to ``'bin8'``.
+            Only supported for OVF and VTK files. In the case of OVF files
+            (``.ovf``, ``.omf``, or ``.ohf``) the representation can be
+            ``'bin4'``, ``'bin8'``, or ``'txt'``. For VTK files (``.vtk``) the
+            representation can be ``bin``, ``xml``, or ``txt``. Defaults to
+            ``'bin8'`` (interpreted as ``bin`` for VTK files).
 
         extend_scalar : bool, optional
 
@@ -2694,7 +2699,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         elif filename.endswith(('.hdf5', '.h5')):
             self._writehdf5(filename)
         elif filename.endswith('.vtk'):
-            self._writevtk(filename)
+            self._writevtk(filename, representation=representation)
         else:
             msg = (f'Writing file with extension {filename.split(".")[-1]} '
                    f'not supported.')
@@ -2846,18 +2851,93 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
             f.write(bfooter)
 
-    def _writevtk(self, filename):
+    def to_vtk(self):
+        """Convert field to vtk rectilinear grid.
+
+        This method convers at `discretisedfield.Field` into a
+        `vtk.vtkRectilinearGrid`. The field data (``field.array``) is stored as
+        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Scalar fields (``dim=1``)
+        contain one VTK array called ``field``. Vector fields (``dim>1``)
+        contain one VTK array called ``field`` containing vector data and
+        scalar VTK arrays for each field component (called
+        ``<component-name>-component``).
+
+        Returns
+        -------
+        vtk.vtkRectilinearGrid
+
+            VTK representation of the field.
+
+        Raises
+        ------
+        AttributeError
+
+            If the field has ``dim>1`` and component labels are missing.
+
+        Examples
+        --------
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> f_vtk = f.to_vtk()
+        >>> print(f_vtk)
+        vtkRectilinearGrid (...)
+        ...
+        >>> f_vtk.GetNumberOfCells()
+        1000
+
+        """
+        if self.dim > 1 and self.components is None:
+            raise AttributeError('Field components must be assigned'
+                                 ' before converting to vtk.')
+        rgrid = vtk.vtkRectilinearGrid()
+        rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
+
+        rgrid.SetXCoordinates(vns.numpy_to_vtk(
+            np.fromiter(self.mesh.vertices.x, float)))
+        rgrid.SetYCoordinates(vns.numpy_to_vtk(
+            np.fromiter(self.mesh.vertices.y, float)))
+        rgrid.SetZCoordinates(vns.numpy_to_vtk(
+            np.fromiter(self.mesh.vertices.z, float)))
+
+        cell_data = rgrid.GetCellData()
+        field_norm = vns.numpy_to_vtk(
+            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1))
+        field_norm.SetName('norm')
+        cell_data.AddArray(field_norm)
+        if self.dim > 1:
+            # For some visualisation packages it is an advantage to have direct
+            # access to the individual field components, e.g. for colouring.
+            for comp in self.components:
+                component_array = vns.numpy_to_vtk(getattr(
+                    self, comp).array.transpose((2, 1, 0, 3)).reshape(
+                        (-1)))
+                component_array.SetName(f'{comp}-component')
+                cell_data.AddArray(component_array)
+        field_array = vns.numpy_to_vtk(
+            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim)))
+        field_array.SetName('field')
+        cell_data.AddArray(field_array)
+
+        if self.dim == 3:
+            cell_data.SetActiveVectors('field')
+        elif self.dim == 1:
+            cell_data.SetActiveScalars('field')
+        return rgrid
+
+    def _writevtk(self, filename, representation='bin'):
         """Write the field to a VTK file.
 
         The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
         (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
         (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
         three components to enable easy colouring of vectors in some
-        visualisation packages.
+        visualisation packages. The data is stored as ``CELL_DATA``.
 
         The saved VTK file can be opened with `Paraview
         <https://www.paraview.org/>`_ or `Mayavi
-        <https://docs.enthought.com/mayavi/mayavi/>`_.
+        <https://docs.enthought.com/mayavi/mayavi/>`_. To show contour lines in
+        Paraview one has to first convert Cell Data to Point Data using a
+        filter.
 
         Parameters
         ----------
@@ -2886,30 +2966,24 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         >>> os.remove(filename)  # delete the file
 
         """
-        header = ['# vtk DataFile Version 3.0',
-                  'Field',
-                  'ASCII',
-                  'DATASET RECTILINEAR_GRID',
-                  'DIMENSIONS {} {} {}'.format(*self.mesh.n),
-                  f'X_COORDINATES {self.mesh.n[0]} float',
-                  ' '.join(map(str, self.mesh.axis_points('x'))),
-                  f'Y_COORDINATES {self.mesh.n[1]} float',
-                  ' '.join(map(str, self.mesh.axis_points('y'))),
-                  f'Z_COORDINATES {self.mesh.n[2]} float',
-                  ' '.join(map(str, self.mesh.axis_points('z'))),
-                  f'POINT_DATA {len(self.mesh)}']
+        if representation == 'xml':
+            writer = vtk.vtkXMLRectilinearGridWriter()
+        elif representation in ['bin', 'bin8', 'txt']:
+            # Allow bin8 for convenience as this is the default for omf.
+            # This does not affect the actual datatype used in vtk files.
+            writer = vtk.vtkRectilinearGridWriter()
+        else:
+            raise ValueError(f'Unknown {representation=}.')
 
-        if self.dim == 1:
-            data = dfu.vtk_scalar_data(self, 'field')
-        elif self.dim == 3:
-            x, y, z = self.components
-            data = dfu.vtk_scalar_data(getattr(self, x), 'x-component')
-            data += dfu.vtk_scalar_data(getattr(self, y), 'y-component')
-            data += dfu.vtk_scalar_data(getattr(self, z), 'z-component')
-            data += dfu.vtk_vector_data(self, 'field')
+        if representation == 'txt':
+            writer.SetFileTypeToASCII()
+        elif representation in ['bin', 'bin8']:
+            writer.SetFileTypeToBinary()
+        # xml has no distinction between ascii and binary
 
-        with open(filename, 'w') as f:
-            f.write('\n'.join(header+data))
+        writer.SetFileName(filename)
+        writer.SetInputData(self.to_vtk())
+        writer.Write()
 
     def _writehdf5(self, filename):
         """Write the field to an HDF5 file.
@@ -3131,11 +3205,12 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
     def _fromvtk(cls, filename):
         """Read the field from a VTK file.
 
-        This method reads the field from a VTK file defined on
-        STRUCTURED_POINTS written by ``discretisedfield._writevtk``.
-
-        This is a ``classmethod`` and should be called as, for instance,
-        ``discretisedfield.Field._fromvtk('myfile.vtk')``.
+        This method reads the field from a VTK file defined on RECTILINEAR GRID
+        written by ``discretisedfield._writevtk``. It expects the data do be
+        specified as cell data and one (vector) field with the name ``field``.
+        A vector field should also contain data for the individual components.
+        The individual component names are used as ``components`` for the new
+        field. They must appear in the form ``<componentname>-component``.
 
         Parameters
         ----------
@@ -3166,55 +3241,46 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
 
         """
-        with open(filename, 'r') as f:
-            content = f.read()
-        lines = content.split('\n')
-
-        # Determine the dimension of the field.
-        if 'VECTORS' in content:
-            dim = 3
-            data_marker = 'VECTORS'
-            skip = 0  # after how many lines data starts after marker
+        with open(filename, 'rb') as f:
+            xml = 'xml' in f.readline().decode('utf8')
+        if xml:
+            reader = vtk.vtkXMLRectilinearGridReader()
         else:
-            dim = 1
-            data_marker = 'SCALARS'
-            skip = 1
+            reader = vtk.vtkRectilinearGridReader()
+            reader.ReadAllVectorsOn()
+            reader.ReadAllScalarsOn()
+        reader.SetFileName(filename)
+        reader.Update()
 
-        # Extract the metadata
-        mdatalist = ['X_COORDINATES', 'Y_COORDINATES', 'Z_COORDINATES']
-        n = []
-        cell = []
-        origin = []
-        for i, line in enumerate(lines):
-            for mdatum in mdatalist:
-                if mdatum in line:
-                    n.append(int(line.split()[1]))
-                    coordinates = list(map(float, lines[i+1].split()))
-                    origin.append(coordinates[0])
-                    if len(coordinates) > 1:
-                        cell.append(coordinates[1] - coordinates[0])
-                    else:
-                        # If only one cell exists, 1nm cell is used by default.
-                        cell.append(1e-9)
+        output = reader.GetOutput()
+        p1 = output.GetBounds()[::2]
+        p2 = output.GetBounds()[1::2]
+        n = [i - 1 for i in output.GetDimensions()]
 
-        # Create objects from metadata info
-        p1 = np.subtract(origin, np.multiply(cell, 0.5))
-        p2 = np.add(p1, np.multiply(n, cell))
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-        field = cls(mesh, dim=dim)
+        cell_data = output.GetCellData()
 
-        # Find where data starts.
-        for i, line in enumerate(lines):
-            if line.startswith(data_marker):
-                start_index = i
-                break
+        if cell_data.GetNumberOfArrays() == 0:
+            # Old writing routine did write to points instead of cells.
+            return dfu.fromvtk_legacy(filename)
 
-        # Extract data.
-        for i, line in zip(mesh.indices, lines[start_index+skip+1:]):
-            if not line[0].isalpha():
-                field.array[i] = list(map(float, line.split()))
+        components = []
+        for i in range(cell_data.GetNumberOfArrays()):
+            name = cell_data.GetArrayName(i)
+            if name == 'field':
+                field_idx = i
+            elif name.endswith('-component'):
+                components.append(name[:-len('-component')])
+        array = cell_data.GetArray(field_idx)
+        dim = array.GetNumberOfComponents()
 
-        return field
+        if len(components) != dim:
+            components = None
+
+        value = vns.vtk_to_numpy(array).reshape(*reversed(n), dim)
+        value = value.transpose((2, 1, 0, 3))
+
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        return cls(mesh, dim=dim, value=value, components=components)
 
     @classmethod
     def _fromhdf5(cls, filename):
@@ -3493,3 +3559,250 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         else:
             return self.__class__(mesh[0], dim=result.shape[-1], value=result,
                                   components=self.components)
+
+    def to_xarray(self, name='field', units=None):
+        """Field value as ``xarray.DataArray``.
+
+        The function returns an ``xarray.DataArray`` with dimensions ``x``,
+        ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
+        of the geometric dimensions are derived from ``self.mesh.midpoints``,
+        and for vector field components from ``self.components``. Addtionally,
+        the values of ``self.mesh.cell``, ``self.mesh.region.p1``, and
+        ``self.mesh.region.p2`` are stored as ``cell``, ``p1``, and ``p2``
+        attributes of the DataArray. The ``units`` attribute of geometric
+        dimensions is set to ``self.mesh.attributes['unit']``.
+
+        The name and units of the field ``DataArray`` can be set by passing
+        ``name`` and ``units``. If the type of value passed to any of the two
+        arguments is not ``str``, then a ``TypeError`` is raised.
+
+        Parameters
+        ----------
+        name : str, optional
+
+            String to set name of the field ``DataArray``.
+
+        units : str, optional
+
+            String to set units of the field ``DataArray``.
+
+        Returns
+        -------
+        xarray.DataArray
+
+            Field values DataArray.
+
+        Raises
+        ------
+        TypeError
+
+            If either ``name`` or ``units`` argument is not a string.
+
+        Examples
+        --------
+        1. Create a field
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh=mesh, dim=3, value=(1, 0, 0), norm=1.)
+        ...
+        >>> field
+        Field(...)
+
+        2. Create `xarray.DataArray` from field
+
+        >>> xa = field.to_xarray()
+        >>> xa
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, comp: 3)>
+        ...
+
+        3. Select values of `x` component
+
+        >>> xa.sel(comp='x')
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
+        ...
+
+        """
+        if not isinstance(name, str):
+            msg = "Name argument must be a string."
+            raise TypeError(msg)
+
+        if units is not None and not isinstance(units, str):
+            msg = "Units argument must be a string."
+            raise TypeError(msg)
+
+        axes = ['x', 'y', 'z']
+
+        data_array_coords = {
+            axis: getattr(self.mesh.midpoints, axis)
+            for axis in axes
+        }
+
+        if 'unit' in self.mesh.attributes:
+            geo_units_dict = dict.fromkeys(axes, self.mesh.attributes['unit'])
+        else:
+            geo_units_dict = dict.fromkeys(axes, 'm')
+
+        if self.dim > 1:
+            data_array_dims = axes + ['comp']
+            if self.components is not None:
+                data_array_coords['comp'] = self.components
+            field_array = self.array
+        else:
+            data_array_dims = axes
+            field_array = np.squeeze(self.array, axis=-1)
+
+        data_array = xr.DataArray(field_array,
+                                  dims=data_array_dims,
+                                  coords=data_array_coords,
+                                  name=name,
+                                  attrs=dict(units=units,
+                                             cell=self.mesh.cell,
+                                             p1=self.mesh.region.p1,
+                                             p2=self.mesh.region.p2))
+
+        for dim in geo_units_dict:
+            data_array[dim].attrs['units'] = geo_units_dict[dim]
+
+        return data_array
+
+    @classmethod
+    def from_xarray(cls, xa):
+        """Create ``discretisedfield.Field`` from ``xarray.DataArray``
+
+        The class method accepts an ``xarray.DataArray`` as an argument to
+        return a ``discretisedfield.Field`` object. The DataArray must have
+        either three (``x``, ``y``, and ``z`` for a scalar field) or four
+        (additionally ``comp`` for a vector field) dimensions corresponding to
+        geometric axes and components of the field, respectively. The
+        coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
+        discretisation along the respective axis and must have equally spaced
+        values. The coordinates of ``comp`` represent the field components
+        (e.g. ['x', 'y', 'z'] for a 3D vector field).
+
+        The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
+        attributes for creating ``discretisedfield.Mesh`` required by the
+        ``discretisedfield.Field`` object. However, in the absence of these
+        attributes, the coordinates of ``x``, ``y``, and ``z`` dimensions are
+        utilized. It should be noted that ``cell`` attribute is required if
+        any of the geometric directions has only a single cell.
+
+        Parameters
+        ----------
+        xa : xarray.DataArray
+
+            DataArray to create Field.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Field created from DataArray.
+
+        Raises
+        ------
+        TypeError
+
+            If argument is not ``xarray.DataArray``.
+
+        KeyError
+
+            If at least one of the geometric dimension coordinates has a single
+            value and ``cell`` attribute is missing.
+
+        ValueError
+
+            - If ``DataArray.ndim`` is not 3 or 4.
+            - If ``DataArray.dims`` are not either ``['x', 'y', 'z']`` or
+              ``['x', 'y', 'z', 'comp']``
+            - If coordinates of ``x``, ``y``, or ``z`` are not equally
+              spaced
+
+        Examples
+        --------
+        1. Create a DataArray
+
+        >>> import xarray as xr
+        >>> import numpy as np
+        ...
+        >>> xa = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+        ...                   dims = ['x', 'y', 'z', 'comp'],
+        ...                   coords = dict(x=np.arange(0, 20),
+        ...                                 y=np.arange(0, 20),
+        ...                                 z=np.arange(0, 20),
+        ...                                 comp=['x', 'y', 'z']),
+        ...                   name = 'mag',
+        ...                   attrs = dict(cell=[1., 1., 1.],
+        ...                                p1=[1., 1., 1.],
+        ...                                p2=[21., 21., 21.]))
+        >>> xa
+        <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, comp: 3)>
+        ...
+
+        2. Create Field from DataArray
+
+        >>> import discretisedfield as df
+        ...
+        >>> field = df.Field.from_xarray(xa)
+        >>> field
+        Field(...)
+        >>> field.average
+        (1.0, 1.0, 1.0)
+
+        """
+        if not isinstance(xa, xr.DataArray):
+            raise TypeError("Argument must be a xr.DataArray.")
+
+        if xa.ndim not in [3, 4]:
+            raise ValueError("DataArray dimensions must be 3 for a scalar "
+                             "and 4 for a vector field.")
+
+        if xa.ndim == 3 and sorted(xa.dims) != ['x', 'y', 'z']:
+            raise ValueError("The dimensions must be 'x', 'y', and 'z'.")
+        elif xa.ndim == 4 and sorted(xa.dims) != ['comp', 'x', 'y', 'z']:
+            raise ValueError("The dimensions must be 'x', 'y', 'z',"
+                             "and 'comp'.")
+
+        for i in 'xyz':
+            if xa[i].values.size > 1 and not np.allclose(
+                    np.diff(xa[i].values), np.diff(xa[i].values).mean()):
+                raise ValueError(f'Coordinates of {i} must be'
+                                 ' equally spaced.')
+
+        try:
+            cell = xa.attrs['cell']
+        except KeyError:
+            if any(len_ == 1 for len_ in xa.values.shape[:3]):
+                raise KeyError(
+                    "DataArray must have a 'cell' attribute if any "
+                    "of the geometric directions has a single cell."
+                ) from None
+            cell = [np.diff(xa[i].values).mean() for i in 'xyz']
+
+        p1 = (
+            xa.attrs['p1'] if 'p1' in xa.attrs else
+            [xa[i].values[0] - c / 2 for i, c in zip('xyz', cell)]
+        )
+        p2 = (
+            xa.attrs['p2'] if 'p2' in xa.attrs else
+            [xa[i].values[-1] + c / 2 for i, c in zip('xyz', cell)]
+        )
+
+        if any('units' not in xa[i].attrs for i in 'xyz'):
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        else:
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell,
+                           attributes={'unit': xa['z'].attrs['units']})
+
+        comp = xa.comp.values if 'comp' in xa.coords else None
+        val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
+        dim = 1 if xa.ndim == 3 else val.shape[-1]
+        return cls(mesh=mesh,
+                   dim=dim,
+                   value=val,
+                   components=comp,
+                   dtype=xa.values.dtype)
