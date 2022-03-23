@@ -2415,15 +2415,20 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
-        axis_idx = plane_mesh.attributes['planeaxis']
-        plane_idx = self.mesh.point2index(plane_mesh.region.centre)[axis_idx]
-        slices = tuple(
-            slice(plane_idx, plane_idx + 1) if i == axis_idx
-            else slice(0, axis_len)
-            for i, axis_len in enumerate(self.array.shape)
-        )
-        return self.__class__(plane_mesh, dim=self.dim,
-                              value=self.array[slices],
+        if n is not None:
+            value = self
+        else:
+            p_axis = plane_mesh.attributes['planeaxis']
+            plane_idx = self.mesh.point2index(plane_mesh.region.centre)[p_axis]
+            slices = tuple(
+                slice(plane_idx, plane_idx + 1) if i == p_axis
+                else slice(0, axis_len)
+                for i, axis_len in enumerate(self.array.shape)
+            )
+            value = self.array[slices]
+        return self.__class__(plane_mesh,
+                              dim=self.dim,
+                              value=value,
                               components=self.components)
 
     def __getitem__(self, item):
