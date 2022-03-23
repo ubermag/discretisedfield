@@ -278,14 +278,12 @@ class MplField(Mpl):
         pmin = np.divide(self.field.mesh.region.pmin, multiplier)
         pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
+        axis1 = self.field.mesh.attributes['axis1']
+        axis2 = self.field.mesh.attributes['axis2']
+        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
         # TODO: After refactoring code, maybe extent and n can become
         # part of PlaneMesh.
-        extent = [pmin[self.field.mesh.attributes['axis1']],
-                  pmax[self.field.mesh.attributes['axis1']],
-                  pmin[self.field.mesh.attributes['axis2']],
-                  pmax[self.field.mesh.attributes['axis2']]]
-        n = (self.field.mesh.n[self.field.mesh.attributes['axis1']],
-             self.field.mesh.n[self.field.mesh.attributes['axis2']])
+        extent = [pmin[axis1], pmax[axis1], pmin[axis2], pmax[axis2]]
 
         values = self.field.array.reshape(n)
         self._filter_values(filter_field, values, n)
@@ -428,13 +426,11 @@ class MplField(Mpl):
         pmin = np.divide(self.field.mesh.region.pmin, multiplier)
         pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
+        axis1 = self.field.mesh.attributes['axis1']
+        axis2 = self.field.mesh.attributes['axis2']
+        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
         # This depends on plane mesh orientation and should be in PlaneMesh.
-        extent = [pmin[self.field.mesh.attributes['axis1']],
-                  pmax[self.field.mesh.attributes['axis1']],
-                  pmin[self.field.mesh.attributes['axis2']],
-                  pmax[self.field.mesh.attributes['axis2']]]
-        n = (self.field.mesh.n[self.field.mesh.attributes['axis1']],
-             self.field.mesh.n[self.field.mesh.attributes['axis2']])
+        extent = [pmin[axis1], pmax[axis1], pmin[axis2], pmax[axis2]]
 
         if lightness_field is None:
             lightness_field = self.field.norm
@@ -771,13 +767,12 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        n = (self.field.mesh.n[self.field.mesh.attributes['axis1']],
-             self.field.mesh.n[self.field.mesh.attributes['axis2']])
+        axis1 = self.field.mesh.attributes['axis1']
+        axis2 = self.field.mesh.attributes['axis2']
+        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
 
-        points_x = self.field.mesh.midpoints[
-            self.field.mesh.attributes['axis1']] / multiplier
-        points_y = self.field.mesh.midpoints[
-            self.field.mesh.attributes['axis2']] / multiplier
+        points_x = self.field.mesh.midpoints[axis1] / multiplier
+        points_y = self.field.mesh.midpoints[axis2] / multiplier
 
         values = self.field.array.reshape(n)
 
