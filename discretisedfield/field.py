@@ -10,6 +10,7 @@ import pandas as pd
 import ubermagutil.typesystem as ts
 import vtk
 import vtk.util.numpy_support as vns
+import xarray as xr
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
@@ -3546,3 +3547,250 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         else:
             return self.__class__(mesh[0], dim=result.shape[-1], value=result,
                                   components=self.components)
+
+    def to_xarray(self, name='field', units=None):
+        """Field value as ``xarray.DataArray``.
+
+        The function returns an ``xarray.DataArray`` with dimensions ``x``,
+        ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
+        of the geometric dimensions are derived from ``self.mesh.midpoints``,
+        and for vector field components from ``self.components``. Addtionally,
+        the values of ``self.mesh.cell``, ``self.mesh.region.p1``, and
+        ``self.mesh.region.p2`` are stored as ``cell``, ``p1``, and ``p2``
+        attributes of the DataArray. The ``units`` attribute of geometric
+        dimensions is set to ``self.mesh.attributes['unit']``.
+
+        The name and units of the field ``DataArray`` can be set by passing
+        ``name`` and ``units``. If the type of value passed to any of the two
+        arguments is not ``str``, then a ``TypeError`` is raised.
+
+        Parameters
+        ----------
+        name : str, optional
+
+            String to set name of the field ``DataArray``.
+
+        units : str, optional
+
+            String to set units of the field ``DataArray``.
+
+        Returns
+        -------
+        xarray.DataArray
+
+            Field values DataArray.
+
+        Raises
+        ------
+        TypeError
+
+            If either ``name`` or ``units`` argument is not a string.
+
+        Examples
+        --------
+        1. Create a field
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh=mesh, dim=3, value=(1, 0, 0), norm=1.)
+        ...
+        >>> field
+        Field(...)
+
+        2. Create `xarray.DataArray` from field
+
+        >>> xa = field.to_xarray()
+        >>> xa
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, comp: 3)>
+        ...
+
+        3. Select values of `x` component
+
+        >>> xa.sel(comp='x')
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
+        ...
+
+        """
+        if not isinstance(name, str):
+            msg = "Name argument must be a string."
+            raise TypeError(msg)
+
+        if units is not None and not isinstance(units, str):
+            msg = "Units argument must be a string."
+            raise TypeError(msg)
+
+        axes = ['x', 'y', 'z']
+
+        data_array_coords = {
+            axis: getattr(self.mesh.midpoints, axis)
+            for axis in axes
+        }
+
+        if 'unit' in self.mesh.attributes:
+            geo_units_dict = dict.fromkeys(axes, self.mesh.attributes['unit'])
+        else:
+            geo_units_dict = dict.fromkeys(axes, 'm')
+
+        if self.dim > 1:
+            data_array_dims = axes + ['comp']
+            if self.components is not None:
+                data_array_coords['comp'] = self.components
+            field_array = self.array
+        else:
+            data_array_dims = axes
+            field_array = np.squeeze(self.array, axis=-1)
+
+        data_array = xr.DataArray(field_array,
+                                  dims=data_array_dims,
+                                  coords=data_array_coords,
+                                  name=name,
+                                  attrs=dict(units=units,
+                                             cell=self.mesh.cell,
+                                             p1=self.mesh.region.p1,
+                                             p2=self.mesh.region.p2))
+
+        for dim in geo_units_dict:
+            data_array[dim].attrs['units'] = geo_units_dict[dim]
+
+        return data_array
+
+    @classmethod
+    def from_xarray(cls, xa):
+        """Create ``discretisedfield.Field`` from ``xarray.DataArray``
+
+        The class method accepts an ``xarray.DataArray`` as an argument to
+        return a ``discretisedfield.Field`` object. The DataArray must have
+        either three (``x``, ``y``, and ``z`` for a scalar field) or four
+        (additionally ``comp`` for a vector field) dimensions corresponding to
+        geometric axes and components of the field, respectively. The
+        coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
+        discretisation along the respective axis and must have equally spaced
+        values. The coordinates of ``comp`` represent the field components
+        (e.g. ['x', 'y', 'z'] for a 3D vector field).
+
+        The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
+        attributes for creating ``discretisedfield.Mesh`` required by the
+        ``discretisedfield.Field`` object. However, in the absence of these
+        attributes, the coordinates of ``x``, ``y``, and ``z`` dimensions are
+        utilized. It should be noted that ``cell`` attribute is required if
+        any of the geometric directions has only a single cell.
+
+        Parameters
+        ----------
+        xa : xarray.DataArray
+
+            DataArray to create Field.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Field created from DataArray.
+
+        Raises
+        ------
+        TypeError
+
+            If argument is not ``xarray.DataArray``.
+
+        KeyError
+
+            If at least one of the geometric dimension coordinates has a single
+            value and ``cell`` attribute is missing.
+
+        ValueError
+
+            - If ``DataArray.ndim`` is not 3 or 4.
+            - If ``DataArray.dims`` are not either ``['x', 'y', 'z']`` or
+              ``['x', 'y', 'z', 'comp']``
+            - If coordinates of ``x``, ``y``, or ``z`` are not equally
+              spaced
+
+        Examples
+        --------
+        1. Create a DataArray
+
+        >>> import xarray as xr
+        >>> import numpy as np
+        ...
+        >>> xa = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+        ...                   dims = ['x', 'y', 'z', 'comp'],
+        ...                   coords = dict(x=np.arange(0, 20),
+        ...                                 y=np.arange(0, 20),
+        ...                                 z=np.arange(0, 20),
+        ...                                 comp=['x', 'y', 'z']),
+        ...                   name = 'mag',
+        ...                   attrs = dict(cell=[1., 1., 1.],
+        ...                                p1=[1., 1., 1.],
+        ...                                p2=[21., 21., 21.]))
+        >>> xa
+        <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, comp: 3)>
+        ...
+
+        2. Create Field from DataArray
+
+        >>> import discretisedfield as df
+        ...
+        >>> field = df.Field.from_xarray(xa)
+        >>> field
+        Field(...)
+        >>> field.average
+        (1.0, 1.0, 1.0)
+
+        """
+        if not isinstance(xa, xr.DataArray):
+            raise TypeError("Argument must be a xr.DataArray.")
+
+        if xa.ndim not in [3, 4]:
+            raise ValueError("DataArray dimensions must be 3 for a scalar "
+                             "and 4 for a vector field.")
+
+        if xa.ndim == 3 and sorted(xa.dims) != ['x', 'y', 'z']:
+            raise ValueError("The dimensions must be 'x', 'y', and 'z'.")
+        elif xa.ndim == 4 and sorted(xa.dims) != ['comp', 'x', 'y', 'z']:
+            raise ValueError("The dimensions must be 'x', 'y', 'z',"
+                             "and 'comp'.")
+
+        for i in 'xyz':
+            if xa[i].values.size > 1 and not np.allclose(
+                    np.diff(xa[i].values), np.diff(xa[i].values).mean()):
+                raise ValueError(f'Coordinates of {i} must be'
+                                 ' equally spaced.')
+
+        try:
+            cell = xa.attrs['cell']
+        except KeyError:
+            if any(len_ == 1 for len_ in xa.values.shape[:3]):
+                raise KeyError(
+                    "DataArray must have a 'cell' attribute if any "
+                    "of the geometric directions has a single cell."
+                ) from None
+            cell = [np.diff(xa[i].values).mean() for i in 'xyz']
+
+        p1 = (
+            xa.attrs['p1'] if 'p1' in xa.attrs else
+            [xa[i].values[0] - c / 2 for i, c in zip('xyz', cell)]
+        )
+        p2 = (
+            xa.attrs['p2'] if 'p2' in xa.attrs else
+            [xa[i].values[-1] + c / 2 for i, c in zip('xyz', cell)]
+        )
+
+        if any('units' not in xa[i].attrs for i in 'xyz'):
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        else:
+            mesh = df.Mesh(p1=p1, p2=p2, cell=cell,
+                           attributes={'unit': xa['z'].attrs['units']})
+
+        comp = xa.comp.values if 'comp' in xa.coords else None
+        val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
+        dim = 1 if xa.ndim == 3 else val.shape[-1]
+        return cls(mesh=mesh,
+                   dim=dim,
+                   value=val,
+                   components=comp,
+                   dtype=xa.values.dtype)

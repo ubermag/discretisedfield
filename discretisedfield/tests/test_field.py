@@ -10,6 +10,7 @@ import k3d
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import xarray as xr
 
 import discretisedfield as df
 
@@ -2236,3 +2237,211 @@ class TestField:
                          value=lambda _: np.random.random(3)*2 - 1)
         assert np.allclose(np.exp(field.orientation).array,
                            np.exp(field.orientation.array))
+
+    def test_to_xarray_valid_args(self):
+        for mesh in self.meshes:
+            for value, dtype in self.vfuncs:
+                f = df.Field(mesh, dim=3, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                assert isinstance(fxa, xr.DataArray)
+                assert f.dim == fxa['comp'].size
+                assert sorted([*fxa.attrs]) == ['cell', 'p1', 'p2', 'units']
+                assert fxa.attrs['cell'] == f.mesh.cell
+                assert fxa.attrs['p1'] == f.mesh.region.p1
+                assert fxa.attrs['p2'] == f.mesh.region.p2
+                for i in 'xyz':
+                    assert np.array_equal(
+                        getattr(f.mesh.midpoints, i),
+                        fxa[i].values
+                    )
+                    assert fxa[i].attrs['units'] == f.mesh.attributes['unit']
+                assert all(fxa['comp'].values == f.components)
+                assert np.array_equal(f.array, fxa.values)
+
+            for value, dtype in self.sfuncs:
+                f = df.Field(mesh, dim=1, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                assert isinstance(fxa, xr.DataArray)
+                assert sorted([*fxa.attrs]) == ['cell', 'p1', 'p2', 'units']
+                assert fxa.attrs['cell'] == f.mesh.cell
+                assert fxa.attrs['p1'] == f.mesh.region.p1
+                assert fxa.attrs['p2'] == f.mesh.region.p2
+                for i in 'xyz':
+                    assert np.array_equal(
+                        getattr(f.mesh.midpoints, i),
+                        fxa[i].values
+                    )
+                    assert fxa[i].attrs['units'] == f.mesh.attributes['unit']
+                assert 'comp' not in fxa.dims
+                assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
+
+        f6d = self.pf << self.pf
+        f6d_xa = f6d.to_xarray()
+        assert f6d_xa['comp'].size == 6
+        assert 'comp' not in f6d_xa.coords
+        f6d.components = ['a', 'c', 'b', 'e', 'd', 'f']
+        f6d_xa2 = f6d.to_xarray()
+        assert 'comp' in f6d_xa2.coords
+        assert [*f6d_xa2['comp'].values] == ['a', 'c', 'b', 'e', 'd', 'f']
+
+        # test name and units defaults
+        f3d_xa = self.pf.to_xarray()
+        assert f3d_xa.name == 'field'
+        assert f3d_xa.attrs['units'] is None
+
+        # test name and units
+        f3d_xa_2 = self.pf.to_xarray(name='m', units='A/m')
+        assert f3d_xa_2.name == 'm'
+        assert f3d_xa_2.attrs['units'] == 'A/m'
+
+    def test_to_xarray_invalid_args(self):
+        args = [
+            ['m', 42.0], [21.0, 42], [21, 'A/m'],
+            [{'name': 'm'}, {'units': 'A/m'}], [['m'], ['A/m']],
+            [['m', 'A/m'], None], [('m', 'A/m'), None],
+            [{'name': 'm', 'units': 'A/m'}, None]
+        ]
+
+        for name, units in args:
+            with pytest.raises(TypeError):
+                self.pf.to_xarray(name, units)
+
+    def test_from_xarray_valid_args(self):
+        for mesh in self.meshes:
+            for value, dtype in self.vfuncs:
+                f = df.Field(mesh, dim=3, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                f_new = df.Field.from_xarray(fxa)
+                assert f_new == f  # or use allclose()
+
+            for value, dtype in self.sfuncs:
+                f = df.Field(mesh, dim=1, value=value, dtype=dtype)
+                fxa = f.to_xarray()
+                f_new = df.Field.from_xarray(fxa)
+                assert f_new == f  # or use allclose()
+
+        f_plane = self.pf.plane('z')
+        f_plane_xa = f_plane.to_xarray()
+        f_plane_new = df.Field.from_xarray(f_plane_xa)
+        assert f_plane_new == f_plane  # or use allclose()
+
+        f6d = self.pf << self.pf
+        f6d_xa = f6d.to_xarray()
+        f6d_new = df.Field.from_xarray(f6d_xa)
+        assert f6d_new == f6d  # or use allclose()
+
+        good_darray1 = xr.DataArray(np.ones((20, 20, 5, 3)),
+                                    dims=['x', 'y', 'z', 'comp'],
+                                    coords=dict(x=np.arange(0, 20),
+                                                y=np.arange(0, 20),
+                                                z=np.arange(0, 5),
+                                                comp=['x', 'y', 'z']),
+                                    name='mag',
+                                    attrs=dict(units='A/m'))
+
+        good_darray2 = xr.DataArray(np.ones((20, 20, 1, 3)),
+                                    dims=['x', 'y', 'z', 'comp'],
+                                    coords=dict(x=np.arange(0, 20),
+                                                y=np.arange(0, 20),
+                                                z=[5.0],
+                                                comp=['x', 'y', 'z']),
+                                    name='mag',
+                                    attrs=dict(units='A/m',
+                                               cell=[1., 1., 1.]))
+
+        good_darray3 = xr.DataArray(np.ones((20, 20, 1, 3)),
+                                    dims=['x', 'y', 'z', 'comp'],
+                                    coords=dict(x=np.arange(0, 20),
+                                                y=np.arange(0, 20),
+                                                z=[5.0],
+                                                comp=['x', 'y', 'z']),
+                                    name='mag',
+                                    attrs=dict(units='A/m',
+                                               cell=[1., 1., 1.],
+                                               p1=[1., 1., 1.],
+                                               p2=[21., 21., 2.]))
+
+        fg_1 = df.Field.from_xarray(good_darray1)
+        check_field(fg_1)
+        fg_2 = df.Field.from_xarray(good_darray2)
+        check_field(fg_2)
+        fg_3 = df.Field.from_xarray(good_darray3)
+        check_field(fg_3)
+
+    def test_from_xarray_invalid_args_and_DataArrays(self):
+        args = [int(), float(), str(), list(), dict(), xr.Dataset(),
+                np.empty((20, 20, 20, 3))]
+
+        bad_dim_no = xr.DataArray(np.ones((20, 20, 20, 5, 3), dtype=float),
+                                  dims=['x', 'y', 'z', 'a', 'comp'],
+                                  coords=dict(x=np.arange(0, 20),
+                                              y=np.arange(0, 20),
+                                              z=np.arange(0, 20),
+                                              a=np.arange(0, 5),
+                                              comp=['x', 'y', 'z']),
+                                  name='mag',
+                                  attrs=dict(units='A/m'))
+
+        bad_dim_no2 = xr.DataArray(np.ones((20, 20), dtype=float),
+                                   dims=['x', 'y'],
+                                   coords=dict(x=np.arange(0, 20),
+                                               y=np.arange(0, 20)),
+                                   name='mag',
+                                   attrs=dict(units='A/m'))
+
+        bad_dim3 = xr.DataArray(np.ones((20, 20, 5), dtype=float),
+                                dims=['a', 'b', 'c'],
+                                coords=dict(a=np.arange(0, 20),
+                                            b=np.arange(0, 20),
+                                            c=np.arange(0, 5)),
+                                name='mag',
+                                attrs=dict(units='A/m'))
+
+        bad_dim4 = xr.DataArray(np.ones((20, 20, 5, 3), dtype=float),
+                                dims=['x', 'y', 'z', 'c'],
+                                coords=dict(x=np.arange(0, 20),
+                                            y=np.arange(0, 20),
+                                            z=np.arange(0, 5),
+                                            c=['x', 'y', 'z']),
+                                name='mag',
+                                attrs=dict(units='A/m'))
+
+        bad_attrs = xr.DataArray(np.ones((20, 20, 1, 3), dtype=float),
+                                 dims=['x', 'y', 'z', 'comp'],
+                                 coords=dict(x=np.arange(0, 20),
+                                             y=np.arange(0, 20),
+                                             z=[5.0],
+                                             comp=['x', 'y', 'z']),
+                                 name='mag',
+                                 attrs=dict(units='A/m'))
+
+        def bad_coord_gen():
+            rng = np.random.default_rng()
+            for coord in 'xyz':
+                coord_dict = {coord: rng.normal(size=20)}
+                for other_coord in 'xyz'.translate({ord(coord): None}):
+                    coord_dict[other_coord] = np.arange(0, 20)
+                coord_dict['comp'] = ['x', 'y', 'z']
+
+                yield xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
+                                   dims=['x', 'y', 'z', 'comp'],
+                                   coords=coord_dict,
+                                   name='mag',
+                                   attrs=dict(units='A/m'))
+
+        for arg in args:
+            with pytest.raises(TypeError):
+                df.Field.from_xarray(arg)
+        with pytest.raises(ValueError):
+            df.Field.from_xarray(bad_dim_no)
+        with pytest.raises(ValueError):
+            df.Field.from_xarray(bad_dim_no2)
+        with pytest.raises(ValueError):
+            df.Field.from_xarray(bad_dim3)
+        with pytest.raises(ValueError):
+            df.Field.from_xarray(bad_dim4)
+        for bad_coord_geo in bad_coord_gen():
+            with pytest.raises(ValueError):
+                df.Field.from_xarray(bad_coord_geo)
+        with pytest.raises(KeyError):
+            df.Field.from_xarray(bad_attrs)
