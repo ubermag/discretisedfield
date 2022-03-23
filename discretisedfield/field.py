@@ -2433,7 +2433,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                               dim=self.dim,
                               value=value,
                               components=self.components,
-                              dtype=self.dtype)
+                              dtype=self.array.dtype  # callable requires dtype
+                              )
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
