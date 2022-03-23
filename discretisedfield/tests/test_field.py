@@ -1723,19 +1723,23 @@ class TestField:
             f_saved = df.Field(f_read.mesh, dim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
-    def test_write_read_vtk(self):
+    def test_write_read_vtk(self, tmp_path):
         filename = 'testfile.vtk'
 
         p1 = (0, 0, 0)
-        p2 = (1e-9, 2e-9, 1e-9)
+        p2 = (5e-9, 2e-9, 1e-9)
         cell = (1e-9, 1e-9, 1e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        for dim, value in [(1, -1.2), (3, (1e-3, -5e6, 5e6))]:
-            f = df.Field(mesh, dim=dim, value=value)
-            with tempfile.TemporaryDirectory() as tmpdir:
-                tmpfilename = os.path.join(tmpdir, filename)
-                f.write(tmpfilename)
+        for dim, value, components in zip(
+                [1, 2, 3, 4],
+                [1.2, (1, 2.5), (1e-3, -5e6, 5e6), np.random.random(4)],
+                [None, ('m_mag', 'm_phase'), None, 'abcd']
+        ):
+            for representation in ['txt', 'bin', 'xml']:
+                f = df.Field(mesh, dim=dim, value=value, components=components)
+                tmpfilename = str(tmp_path / filename)
+                f.write(tmpfilename, representation=representation)
                 f_read = df.Field.fromfile(tmpfilename)
 
                 assert np.allclose(f.array, f_read.array)
@@ -1743,6 +1747,37 @@ class TestField:
                 assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
                 assert np.allclose(f.mesh.cell, f_read.mesh.cell)
                 assert f.mesh.n == f_read.mesh.n
+                assert f.components == f_read.components
+
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        f = df.Field.fromfile(os.path.join(dirname, 'vtk-file.vtk'))
+        check_field(f)
+        assert f.mesh.n == (5, 1, 2)
+        assert f.array.shape == (5, 1, 2, 3)
+        assert f.dim == 3
+
+        # test reading legacy vtk file (written with discretisedfield<=0.61.0)
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        f = df.Field.fromfile(os.path.join(dirname, 'vtk-vector-legacy.vtk'))
+        check_field(f)
+        assert f.mesh.n == (8, 1, 1)
+        assert f.array.shape == (8, 1, 1, 3)
+        assert f.dim == 3
+
+        dirname = os.path.join(os.path.dirname(__file__), 'test_sample')
+        f = df.Field.fromfile(os.path.join(dirname, 'vtk-scalar-legacy.vtk'))
+        check_field(f)
+        assert f.mesh.n == (5, 1, 2)
+        assert f.array.shape == (5, 1, 2, 1)
+        assert f.dim == 1
+
+        # test invalid arguments
+        f = df.Field(mesh, dim=3, value=(0, 0, 1))
+        with pytest.raises(ValueError):
+            f.write(str(tmp_path / filename), representation='wrong')
+        f._components = None  # manually remove component labels
+        with pytest.raises(AttributeError):
+            f.write(str(tmp_path / filename))
 
     def test_write_read_hdf5(self):
         filenames = ['testfile.hdf5', 'testfile.h5']

@@ -1,4 +1,4 @@
-"""OVF to VTK file conversion"""
+"""OVF to VTK file conversion."""
 import argparse
 
 import discretisedfield as df

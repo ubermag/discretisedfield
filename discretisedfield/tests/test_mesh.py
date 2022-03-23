@@ -390,15 +390,36 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.region2slices(df.Region(p1=(-1, 3, -1), p2=(3, 5, 0)))
 
+    @pytest.mark.filterwarnings('ignore::FutureWarning')
     def test_axis_points(self):
         p1 = (0, 0, 0)
         p2 = (10, 6, 8)
         cell = (2, 2, 2)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert list(mesh.axis_points('x')) == [1.0, 3.0, 5.0, 7.0, 9.0]
-        assert list(mesh.axis_points('y')) == [1.0, 3.0, 5.0]
-        assert list(mesh.axis_points('z')) == [1.0, 3.0, 5.0, 7.0]
+        assert np.allclose(mesh.axis_points('x'), [1., 3., 5., 7., 9.])
+        assert np.allclose(mesh.axis_points('y'), [1., 3., 5.])
+        assert np.allclose(mesh.axis_points('z'), [1., 3., 5., 7.])
+
+    def test_midpoints(self):
+        p1 = (0, 0, 4)
+        p2 = (10, 6, 0)
+        cell = (2, 2, 1)
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert np.allclose(mesh.midpoints.x, [1., 3., 5., 7., 9.])
+        assert np.allclose(mesh.midpoints.y, [1., 3., 5.])
+        assert np.allclose(mesh.midpoints.z, [0.5, 1.5, 2.5, 3.5])
+
+    def test_vertices(self):
+        p1 = (0, 1, 0)
+        p2 = (5, 0, 6)
+        cell = (1, 1, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        assert np.allclose(mesh.vertices.x, [0., 1., 2., 3., 4., 5.])
+        assert np.allclose(mesh.vertices.y, [0., 1.])
+        assert np.allclose(mesh.vertices.z, [0., 2., 4., 6.])
 
     def test_neighbours(self):
         p1 = (0, 0, 0)
