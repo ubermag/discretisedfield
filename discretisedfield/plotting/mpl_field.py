@@ -447,9 +447,11 @@ class MplField(Mpl):
 
         attrs = self.field.mesh.attributes
         lightness = lightness_field.plane(
-            **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']}).array
-        lightness.reshape(n)
+            **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']}
+        ).array.reshape(n)
 
+        print(f'{values.shape=}')
+        print(f'{lightness.shape=}')
         rgb = dfu.hls2rgb(hue=values,
                           lightness=lightness,
                           saturation=None,
@@ -457,10 +459,11 @@ class MplField(Mpl):
         self._filter_values(filter_field, rgb, n)
 
         # alpha channel to hide points with nan values (filter field)
+        # all three rgb values are set to nan
         rgba = np.empty((*rgb.shape[:-1], 4))
         rgba[..., :3] = rgb
         rgba[..., 3] = 1.
-        rgba[..., 3][np.isnan(rgb[..., 0])] = 0  # filtered -> all channels nan
+        rgba[..., 3][np.isnan(rgb[..., 0])] = 0
 
         kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
         ax.imshow(np.transpose(rgba, (1, 0, 2)), origin='lower',
