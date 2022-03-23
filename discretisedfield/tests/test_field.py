@@ -2251,7 +2251,7 @@ class TestField:
                 assert fxa.attrs['p2'] == f.mesh.region.p2
                 for i in 'xyz':
                     assert np.array_equal(
-                        np.array(list(f.mesh.axis_points(i))),
+                        getattr(f.mesh.midpoints, i),
                         fxa[i].values
                     )
                     assert fxa[i].attrs['units'] == f.mesh.attributes['unit']
@@ -2268,7 +2268,7 @@ class TestField:
                 assert fxa.attrs['p2'] == f.mesh.region.p2
                 for i in 'xyz':
                     assert np.array_equal(
-                        np.array(list(f.mesh.axis_points(i))),
+                        getattr(f.mesh.midpoints, i),
                         fxa[i].values
                     )
                     assert fxa[i].attrs['units'] == f.mesh.attributes['unit']
