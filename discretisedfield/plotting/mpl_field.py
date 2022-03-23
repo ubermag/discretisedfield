@@ -586,14 +586,14 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points_x = self.field.mesh.midpoints[self.axis1] / multiplier
-        points_y = self.field.mesh.midpoints[self.axis2] / multiplier
+        points1 = self.field.mesh.midpoints[self.axis1] / multiplier
+        points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
         values = self.field.array.reshape(self.n + (self.field.dim,))
         # filter out points where norm is 0
         values[np.all(np.isclose(values, 0, atol=0), axis=-1)] = np.nan
 
-        quiver_args = [points_x, points_y,
+        quiver_args = [points1, points2,
                        np.transpose(values[..., self.axis1]),
                        np.transpose(values[..., self.axis2])]
 
@@ -736,12 +736,12 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points_x = self.field.mesh.midpoints[self.axis1] / multiplier
-        points_y = self.field.mesh.midpoints[self.axis2] / multiplier
+        points1 = self.field.mesh.midpoints[self.axis1] / multiplier
+        points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
         values = self.field.array.reshape(self.n)
 
-        cp = ax.contour(points_x, points_y, np.transpose(values), **kwargs)
+        cp = ax.contour(points1, points2, np.transpose(values), **kwargs)
         ax.set_aspect('equal')
 
         if colorbar:
