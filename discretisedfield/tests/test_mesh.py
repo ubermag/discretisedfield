@@ -397,9 +397,9 @@ class TestMesh:
         cell = (2, 2, 2)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert list(mesh.axis_points('x')) == [1.0, 3.0, 5.0, 7.0, 9.0]
-        assert list(mesh.axis_points('y')) == [1.0, 3.0, 5.0]
-        assert list(mesh.axis_points('z')) == [1.0, 3.0, 5.0, 7.0]
+        assert mesh.axis_points('x') == np.array([1., 3., 5., 7., 9.])
+        assert mesh.axis_points('y') == np.array([1., 3., 5.])
+        assert mesh.axis_points('z') == np.array([1., 3., 5., 7.])
 
     def test_midpoints(self):
         p1 = (0, 0, 4)
@@ -407,9 +407,9 @@ class TestMesh:
         cell = (2, 2, 1)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert list(mesh.midpoints.x) == [1.0, 3.0, 5.0, 7.0, 9.0]
-        assert list(mesh.midpoints.y) == [1.0, 3.0, 5.0]
-        assert list(mesh.midpoints.z) == [0.5, 1.5, 2.5, 3.5]
+        assert mesh.midpoints.x == np.array([1., 3., 5., 7., 9.])
+        assert mesh.midpoints.y == np.array([1., 3., 5.])
+        assert mesh.midpoints.z == np.array([0.5, 1.5, 2.5, 3.5])
 
     def test_vertices(self):
         p1 = (0, 1, 0)
@@ -417,9 +417,9 @@ class TestMesh:
         cell = (1, 1, 2)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        assert list(mesh.vertices.x) == [0, 1, 2, 3, 4, 5]
-        assert list(mesh.vertices.y) == [0, 1]
-        assert list(mesh.vertices.z) == [0, 2, 4, 6]
+        assert mesh.vertices.x == np.array([0., 1., 2., 3., 4., 5.])
+        assert mesh.vertices.y == np.array([0., 1.])
+        assert mesh.vertices.z == np.array([0., 2., 4., 6.])
 
     def test_neighbours(self):
         p1 = (0, 0, 0)
