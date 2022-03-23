@@ -3830,6 +3830,14 @@ def _(val, mesh, dim, dtype):
     return array
 
 
+@_as_array.register(Field)
+def _(val, mesh, dim, dtype):
+    return val.to_xarray().sel(x=mesh.midpoints.x,
+                               y=mesh.midpoints.y,
+                               z=mesh.midpoints.z,
+                               method='nearest').data
+
+
 @_as_array.register(dict)
 def _(val, mesh, dim, dtype):
     # will only be called on user input
