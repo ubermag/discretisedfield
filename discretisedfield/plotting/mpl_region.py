@@ -13,6 +13,7 @@ class MplRegion(Mpl):
                  figsize=None,
                  multiplier=None,
                  color=dfu.cp_hex[0],
+                 box_aspect='auto',
                  filename=None,
                  **kwargs):
         r"""``matplotlib`` plot.
@@ -58,6 +59,13 @@ class MplRegion(Mpl):
 
             Axes multiplier. Defaults to ``None``.
 
+        box_aspect : str, array_like (3), optional
+
+            Set the aspect-ratio of the plot. If set to `'auto'` the aspect
+            ratio is determined from the edge lengths of the region. To set
+            different aspect ratios a tuple can be passed. Defaults to
+            ``'auto'``.
+
         filename : str, optional
 
             If filename is passed, the plot is saved. Defaults to ``None``.
@@ -81,6 +89,11 @@ class MplRegion(Mpl):
         kwargs.setdefault('color', color)
 
         rescaled_region = self.region / multiplier
+
+        if box_aspect == 'auto':
+            ax.set_box_aspect(rescaled_region.edges)
+        elif box_aspect is not None:
+            ax.set_box_aspect(box_aspect)
 
         dfu.plot_box(ax=ax,
                      pmin=rescaled_region.pmin,

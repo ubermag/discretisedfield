@@ -293,7 +293,7 @@ class TestRegion:
         # Check if it runs.
         region.mpl()
         region.mpl(figsize=(10, 10), multiplier=1e-9, color=dfu.cp_hex[1],
-                   linewidth=3, linestyle='dashed')
+                   linewidth=3, box_aspect=(1, 1.5, 2), linestyle='dashed')
 
         filename = 'figure.pdf'
         with tempfile.TemporaryDirectory() as tmpdir:

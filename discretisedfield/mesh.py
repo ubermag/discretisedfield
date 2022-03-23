@@ -1207,7 +1207,7 @@ class Mesh:
         return df.Field(self, dim=3, value=dn, norm=norm)
 
     def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[:2],
-            multiplier=None, filename=None, **kwargs):
+            multiplier=None, box_aspect='auto', filename=None, **kwargs):
         """``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -1253,6 +1253,13 @@ class Mesh:
 
             Axes multiplier. Defaults to ``None``.
 
+        box_aspect : str, array_like (3), optional
+
+            Set the aspect-ratio of the plot. If set to `'auto'` the aspect
+            ratio is determined from the edge lengths of the region on which
+            the mesh is defined. To set different aspect ratios a tuple can be
+            passed. Defaults to ``'auto'``.
+
         filename : str, optional
 
             If filename is passed, the plot is saved. Defaults to ``None``.
@@ -1282,15 +1289,17 @@ class Mesh:
 
         cell_region = df.Region(p1=self.region.pmin,
                                 p2=np.add(self.region.pmin, self.cell))
-        self.region.mpl(ax=ax, color=color[0], multiplier=multiplier, **kwargs)
-        cell_region.mpl(ax=ax, color=color[1], multiplier=multiplier, **kwargs)
+        self.region.mpl(ax=ax, color=color[0], multiplier=multiplier,
+                        box_aspect=box_aspect, **kwargs)
+        cell_region.mpl(ax=ax, color=color[1], multiplier=multiplier,
+                        box_aspect=None, **kwargs)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def mpl_subregions(self, *, ax=None, figsize=None, color=dfu.cp_hex,
-                       multiplier=None, filename=None, show_region=False,
-                       **kwargs):
+                       multiplier=None, show_region=False, box_aspect='auto',
+                       filename=None, **kwargs):
         """``matplotlib`` subregions plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -1334,13 +1343,20 @@ class Mesh:
 
             Axes multiplier. Defaults to ``None``.
 
-        filename : str, optional
-
-            If filename is passed, the plot is saved. Defaults to ``None``.
-
         show_region : bool, optional
 
             If ``True`` also plot the whole region. Defaults to ``False``.
+
+        box_aspect : str, array_like (3), optional
+
+            Set the aspect-ratio of the plot. If set to `'auto'` the aspect
+            ratio is determined from the edge lengths of the region on which
+            the mesh is defined. To set different aspect ratios a tuple can be
+            passed. Defaults to ``'auto'``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Examples
         --------
@@ -1362,15 +1378,22 @@ class Mesh:
             fig = plt.figure(figsize=figsize)
             ax = fig.add_subplot(111, projection='3d')
 
+        if box_aspect == 'auto':
+            ax.set_box_aspect(self.region.edges)
+        elif box_aspect is not None:
+            ax.set_box_aspect(box_aspect)
+
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.region.edges)
 
         if show_region:
-            self.region.mpl(ax=ax, multiplier=multiplier, color='grey')
+            self.region.mpl(ax=ax, multiplier=multiplier, color='grey',
+                            box_aspect=None)
 
         for i, subregion in enumerate(self.subregions.values()):
             subregion.mpl(ax=ax, multiplier=multiplier,
-                          color=color[i % len(color)], **kwargs)
+                          color=color[i % len(color)], box_aspect=None,
+                          **kwargs)
 
         if filename is not None:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
