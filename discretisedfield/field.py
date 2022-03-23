@@ -3553,7 +3553,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
         ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
-        of the geometric dimensions are derived from ``self.mesh.axis_points``,
+        of the geometric dimensions are derived from ``self.mesh.midpoints``,
         and for vector field components from ``self.components``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.p1``, and
         ``self.mesh.region.p2`` are stored as ``cell``, ``p1``, and ``p2``
@@ -3626,7 +3626,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         axes = ['x', 'y', 'z']
 
         data_array_coords = {
-            axis: np.fromiter(self.mesh.axis_points(axis), dtype=float)
+            axis: getattr(self.mesh.midpoints, axis)
             for axis in axes
         }
 
