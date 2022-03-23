@@ -13,9 +13,8 @@ class MplRegion(Mpl):
                  figsize=None,
                  multiplier=None,
                  color=dfu.cp_hex[0],
-                 filename=None,
                  box_aspect='auto',
-                 mode='wireframe',
+                 filename=None,
                  **kwargs):
         r"""``matplotlib`` plot.
 
@@ -59,6 +58,12 @@ class MplRegion(Mpl):
         multiplier : numbers.Real, optional
 
             Axes multiplier. Defaults to ``None``.
+
+        box_aspect : str, array_like (3), optional
+
+            Set the aspect-ratio of the plot. If set to `auto` the aspect ratio
+            is determined from the edge lengths of the region. To set different
+            aspect ratios a tuple can be passed. Defaults to ``'auto'``.
 
         filename : str, optional
 

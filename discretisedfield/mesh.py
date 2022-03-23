@@ -1253,6 +1253,13 @@ class Mesh:
 
             Axes multiplier. Defaults to ``None``.
 
+        box_aspect : str, array_like (3), optional
+
+            Set the aspect-ratio of the plot. If set to `auto` the aspect ratio
+            is determined from the edge lengths of the region on which the mesh
+            is defined. To set different aspect ratios a tuple can be passed.
+            Defaults to ``'auto'``.
+
         filename : str, optional
 
             If filename is passed, the plot is saved. Defaults to ``None``.
@@ -1291,8 +1298,8 @@ class Mesh:
             plt.savefig(filename, bbox_inches='tight', pad_inches=0)
 
     def mpl_subregions(self, *, ax=None, figsize=None, color=dfu.cp_hex,
-                       multiplier=None, filename=None, show_region=False,
-                       box_aspect='auto', **kwargs):
+                       multiplier=None, show_region=False, box_aspect='auto',
+                       filename=None, **kwargs):
         """``matplotlib`` subregions plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -1336,13 +1343,20 @@ class Mesh:
 
             Axes multiplier. Defaults to ``None``.
 
-        filename : str, optional
-
-            If filename is passed, the plot is saved. Defaults to ``None``.
-
         show_region : bool, optional
 
             If ``True`` also plot the whole region. Defaults to ``False``.
+
+        box_aspect : str, array_like (3), optional
+
+            Set the aspect-ratio of the plot. If set to `auto` the aspect ratio
+            is determined from the edge lengths of the region on which the mesh
+            is defined. To set different aspect ratios a tuple can be passed.
+            Defaults to ``'auto'``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
 
         Examples
         --------
