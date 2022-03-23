@@ -605,12 +605,17 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points, values = map(list, zip(*list(self.field)))
+        axis1 = self.field.mesh.attributes['axis1']
+        axis2 = self.field.mesh.attributes['axis2']
+        n = (self.field.mesh.n[axis1], self.field.mesh.n[axis2])
 
-        # remove points and values where norm is 0.
-        points = [p for p, v in zip(points, values)
-                  if not np.equal(v, 0).all()]
-        values = [v for v in values if not np.equal(v, 0).all()]
+        points_x = self.field.mesh.midpoints[axis1] / multiplier
+        points_y = self.field.mesh.midpoints[axis2] / multiplier
+
+        values = self.field.array.reshape(n + (self.field.dim,))
+
+        # filter out points where norm is 0
+        values[np.all(np.isclose(values, 0, atol=0), axis=-1)] = np.nan
 
         if use_color:
             if color_field is None:
@@ -621,26 +626,22 @@ class MplField(Mpl):
                 else:
                     color_field = getattr(self.field, self.planeaxis)
             if use_color:
-                colors = [color_field(p) for p in points]
-
-        # "unpack" values inside arrays and convert to np.ndarray.
-        points = np.array(list(zip(*points)))
-        values = np.array(list(zip(*values)))
-
-        points = np.divide(points, multiplier)
+                attrs = self.field.mesh.attributes
+                colors = color_field.plane(
+                    **{dfu.raxesdict[attrs['planeaxis']]: attrs['point']})
+                colors = colors.array.reshape(n)
 
         if use_color:
-            cp = ax.quiver(points[self.field.mesh.attributes['axis1']],
-                           points[self.field.mesh.attributes['axis2']],
-                           values[self.field.mesh.attributes['axis1']],
-                           values[self.field.mesh.attributes['axis2']],
-                           colors, pivot='mid', **kwargs)
+            cp = ax.quiver(*np.meshgrid(points_x, points_y),
+                           np.transpose(values[..., axis1]),
+                           np.transpose(values[..., axis2]),
+                           np.transpose(colors),
+                           pivot='mid', **kwargs)
         else:
-            ax.quiver(points[self.field.mesh.attributes['axis1']],
-                      points[self.field.mesh.attributes['axis2']],
-                      values[self.field.mesh.attributes['axis1']],
-                      values[self.field.mesh.attributes['axis2']],
-                      pivot='mid', **kwargs)
+            cp = ax.quiver(points_x, points_y,
+                           np.transpose(values[..., axis1]),
+                           np.transpose(values[..., axis2]),
+                           pivot='mid', **kwargs)
 
         ax.set_aspect('equal')
         if colorbar and use_color:
