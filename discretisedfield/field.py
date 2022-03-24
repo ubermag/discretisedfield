@@ -3814,8 +3814,7 @@ def _(val, mesh, dim, dtype):
     if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
         raise ValueError('Wrong dimension 1 provided for value;'
                          f' expected dimension is {dim}')
-    if dtype is None:
-        dtype = max(np.asarray(val).dtype, np.float64)
+    dtype = dtype or max(np.asarray(val).dtype, np.float64)
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
@@ -3825,8 +3824,7 @@ def _(val, mesh, dim, dtype):
     # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, dim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
-        res = val(point)
-        array[index] = res
+        array[index] = val(point)
     return array
 
 
@@ -3850,12 +3848,9 @@ def _(val, mesh, dim, dtype):
 def _(val, mesh, dim, dtype):
     # will only be called on user input
     # dtype must be specified by the user for complex values
-    if dtype is None:
-        dtype = np.float64
-    if 'default' in val and not callable(val['default']):
-        fill_value = val['default']
-    else:
-        fill_value = np.nan
+    dtype = dtype or np.float64
+    fill_value = val['default'] if 'default' in val and not callable(
+        val['default']) else np.nan
     array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
 
     for subregion in reversed(mesh.subregions.keys()):
