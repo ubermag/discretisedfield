@@ -407,8 +407,12 @@ class Region:
 
         """
         if isinstance(other, collections.abc.Iterable):
-            return not np.any(np.less(other, self.pmin) |
-                              np.greater(other, self.pmax))
+            return np.all(np.logical_and(
+                np.less_equal(self.pmin, other) | np.allclose(self.pmin,
+                                                              other, atol=0),
+                np.greater_equal(self.pmax, other) | np.allclose(self.pmax,
+                                                                 other, atol=0)
+            ))
         if isinstance(other, self.__class__):
             return other.pmin in self and other.pmax in self
 
