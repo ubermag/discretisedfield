@@ -3832,12 +3832,18 @@ def _(val, mesh, dim, dtype):
 
 @_as_array.register(Field)
 def _(val, mesh, dim, dtype):
-    # reshaping required for scalar fields
-    # where the xarray is only 3 dimensional
-    return val.to_xarray().sel(x=mesh.midpoints.x,
-                               y=mesh.midpoints.y,
-                               z=mesh.midpoints.z,
-                               method='nearest').data.reshape(mesh.n + (-1,))
+    if mesh.region not in val.mesh.region:
+        raise ValueError(f'The region {val.mesh.region} of the provided field'
+                         f' does not contain the region {mesh.region} of the'
+                         ' field that is being created.')
+    value = val.to_xarray().sel(x=mesh.midpoints.x,
+                                y=mesh.midpoints.y,
+                                z=mesh.midpoints.z,
+                                method='nearest').data
+    if dim == 1:
+        # xarray dataarrays for scalar data are three dimensional
+        return value.reshape(mesh.n + (-1,))
+    return value
 
 
 @_as_array.register(dict)
