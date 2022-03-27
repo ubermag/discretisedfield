@@ -14,7 +14,8 @@ from . import html
 
 @ts.typesystem(p1=ts.Vector(size=3, const=True),
                p2=ts.Vector(size=3, const=True),
-               unit=ts.Name(const=True))
+               unit=ts.Name(const=True),
+               tolerance_factor=ts.Scalar(expected_type=float, positive=True))
 class Region:
     r"""Region.
 
@@ -29,6 +30,19 @@ class Region:
 
         Diagonally-opposite corner points of the region :math:`\mathbf{p}_i =
         (p_x, p_y, p_z)`.
+
+    unit : str, optional
+
+        Physical unit of the region. This is mainly used for labelling plots.
+        Defaults to ``m``.
+
+    tolerance_factor : float, optional
+
+        This factor is used to obtain a tolerance for comparison operations,
+        e.g. ``region1 in region2``. It is internally multiplied with the
+        minimum of the edge lengths to adjust the tolerance to the region size
+        and have more accurate floating-point comparisons. Defaults to
+        ``1e-12``.
 
     Raises
     ------
@@ -61,10 +75,12 @@ class Region:
 
     """
 
-    def __init__(self, p1, p2, unit='m'):
+    def __init__(self, p1, p2, unit='m', tolerance_factor=1e-12):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.unit = unit
+
+        self.tolerance_factor = tolerance_factor
 
         if not np.all(self.edges):
             msg = f'One of the region\'s edge lengths is zero: {self.edges=}.'
@@ -407,11 +423,16 @@ class Region:
 
         """
         if isinstance(other, collections.abc.Iterable):
+            tol = np.min(self.edges) * self.tolerance_factor
             return np.all(np.logical_and(
                 np.less_equal(self.pmin, other) | np.allclose(self.pmin,
-                                                              other, atol=0),
+                                                              other,
+                                                              rtol=tol,
+                                                              atol=tol),
                 np.greater_equal(self.pmax, other) | np.allclose(self.pmax,
-                                                                 other, atol=0)
+                                                                 other,
+                                                                 rtol=tol,
+                                                                 atol=tol)
             ))
         if isinstance(other, self.__class__):
             return other.pmin in self and other.pmax in self
