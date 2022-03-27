@@ -41,10 +41,7 @@ def _(val, mesh, dim, dtype):
     if dtype is None:
         dtype = max(np.asarray(val).dtype, np.float64)
 
-    if isinstance(val, np.ndarray) and val.shape == mesh.n + (dim,):
-        return np.asarray(val, dtype=dtype)  # no int arrays
-    else:
-        return np.full((*mesh.n, dim), val, dtype=dtype)
+    return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
 @as_array.register(collections.abc.Callable)
