@@ -165,21 +165,61 @@ class TestRegion:
         assert region1 != region3
         assert not region1 == region3
 
+    def test_tolerance_factor(self):
+        p1 = (0, 0, 0)
+        p2 = (100e-9, 100e-9, 100e-9)
+        region = df.Region(p1=p1, p2=p2)
+        assert np.isclose(region.tolerance_factor, 1e-12)
+
+        region = df.Region(p1=p1, p2=p2, tolerance_factor=1e-3)
+        assert np.isclose(region.tolerance_factor, 1e-3)
+        region.tolerance_factor = 1e-6
+        assert np.isclose(region.tolerance_factor, 1e-6)
+
     def test_contains(self):
         p1 = (0, 10e-9, 0)
         p2 = (10e-9, 0, 20e-9)
         region = df.Region(p1=p1, p2=p2)
 
         check_region(region)
-        tol = 1e-18
+        tol = np.min(region.edges) * region.tolerance_factor
+        tol_in = tol / 2
+        tol_out = tol * 2
         assert (0, 0, 0) in region
-        assert (0-tol, 0, 0) not in region
-        assert (0, 0-tol, 0) not in region
-        assert (0, 0, 0-tol) not in region
+        assert (-tol_in, 0, 0) in region
+        assert (0, -tol_in, 0) in region
+        assert (0, 0, -tol_in) in region
         assert (10e-9, 10e-9, 20e-9) in region
-        assert (10e-9+tol, 10e-9, 20e-9) not in region
-        assert (10e-9, 10e-9+tol, 20e-9) not in region
-        assert (10e-9, 10e-9, 20e-9+tol) not in region
+        assert (10e-9 + tol_in, 10e-9, 20e-9) in region
+        assert (10e-9, 10e-9 + tol_in, 20e-9) in region
+        assert (10e-9, 10e-9, 20e-9 + tol_in) in region
+
+        assert (-tol_out, 0, 0) not in region
+        assert (0, -tol_out, 0) not in region
+        assert (0, 0, -tol_out) not in region
+        assert (10e-9 + tol_out, 10e-9, 20e-9) not in region
+        assert (10e-9, 10e-9 + tol_out, 20e-9) not in region
+        assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
+
+        region.tolerance_factor = 1.
+        tol = np.min(region.edges) * region.tolerance_factor
+        tol_in = tol / 2
+        tol_out = tol * 2
+        assert (0, 0, 0) in region
+        assert (-tol_in, 0, 0) in region
+        assert (0, -tol_in, 0) in region
+        assert (0, 0, -tol_in) in region
+        assert (10e-9, 10e-9, 20e-9) in region
+        assert (10e-9 + tol_in, 10e-9, 20e-9) in region
+        assert (10e-9, 10e-9 + tol_in, 20e-9) in region
+        assert (10e-9, 10e-9, 20e-9 + tol_in) in region
+
+        assert (-tol_out, 0, 0) not in region
+        assert (0, -tol_out, 0) not in region
+        assert (0, 0, -tol_out) not in region
+        assert (10e-9 + tol_out, 10e-9, 20e-9) not in region
+        assert (10e-9, 10e-9 + tol_out, 20e-9) not in region
+        assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
 
     def test_or(self):
         # x-direction

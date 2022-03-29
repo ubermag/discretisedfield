@@ -1,4 +1,5 @@
 import collections
+import functools
 import math
 import numbers
 import struct
@@ -24,7 +25,7 @@ from .mesh import Mesh
 
 @ts.typesystem(mesh=ts.Typed(expected_type=Mesh, const=True),
                dim=ts.Scalar(expected_type=int, positive=True, const=True))
-class Field(collections.abc.Callable):  # could be avoided by using type hints
+class Field:
     """Finite-difference field.
 
     This class specifies a finite-difference field and defines operations for
@@ -262,8 +263,8 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = dfu.as_array(self._value, self.mesh, self.dim,
-                                   dtype=self.dtype)
+        value_array = _as_array(self._value, self.mesh, self.dim,
+                                dtype=self.dtype)
         if np.array_equal(self.array, value_array):
             return self._value
         else:
@@ -272,7 +273,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
     @value.setter
     def value(self, val):
         self._value = val
-        self.array = dfu.as_array(val, self.mesh, self.dim, dtype=self.dtype)
+        self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def components(self):
@@ -361,7 +362,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
 
     @array.setter
     def array(self, val):
-        self._array = dfu.as_array(val, self.mesh, self.dim, dtype=self.dtype)
+        self._array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def norm(self):
@@ -449,7 +450,7 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                 raise ValueError(msg)
 
             self.array /= self.norm.array  # normalise to 1
-            self.array *= dfu.as_array(val, self.mesh, dim=1, dtype=None)
+            self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
         """Field norm.
@@ -3794,3 +3795,83 @@ class Field(collections.abc.Callable):  # could be avoided by using type hints
                    value=val,
                    components=comp,
                    dtype=xa.values.dtype)
+
+
+@functools.singledispatch
+def _as_array(val, mesh, dim, dtype):
+    raise TypeError('Unsupported type {type(val)}.')
+
+
+# to avoid str being interpreted as iterable
+@_as_array.register(str)
+def _(val, mesh, dim, dtype):
+    raise TypeError('Unsupported type {type(val)}.')
+
+
+@_as_array.register(numbers.Complex)
+@_as_array.register(collections.abc.Iterable)
+def _(val, mesh, dim, dtype):
+    if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
+        raise ValueError('Wrong dimension 1 provided for value;'
+                         f' expected dimension is {dim}')
+    dtype = dtype or max(np.asarray(val).dtype, np.float64)
+    return np.full((*mesh.n, dim), val, dtype=dtype)
+
+
+@_as_array.register(collections.abc.Callable)
+def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
+    array = np.empty((*mesh.n, dim), dtype=dtype)
+    for index, point in zip(mesh.indices, mesh):
+        array[index] = val(point)
+    return array
+
+
+@_as_array.register(Field)
+def _(val, mesh, dim, dtype):
+    if mesh.region not in val.mesh.region:
+        raise ValueError(f'{val.mesh.region} of the provided field does not '
+                         f'contain {mesh.region} of the field that is being '
+                         'created.')
+    value = val.to_xarray().sel(x=mesh.midpoints.x,
+                                y=mesh.midpoints.y,
+                                z=mesh.midpoints.z,
+                                method='nearest').data
+    if dim == 1:
+        # xarray dataarrays for scalar data are three dimensional
+        return value.reshape(mesh.n + (-1,))
+    return value
+
+
+@_as_array.register(dict)
+def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
+    dtype = dtype or np.float64
+    fill_value = val['default'] if 'default' in val and not callable(
+        val['default']) else np.nan
+    array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
+
+    for subregion in reversed(mesh.subregions.keys()):
+        # subregions can overlap, first subregion takes precedence
+        try:
+            submesh = mesh[subregion]
+            subval = val[subregion]
+        except KeyError:
+            continue
+        else:
+            slices = mesh.region2slices(submesh.region)
+            array[slices] = _as_array(subval, submesh, dim, dtype)
+
+    if np.any(np.isnan(array)):
+        # not all subregion keys specified and 'default' is missing or callable
+        if 'default' not in val:
+            raise KeyError("Key 'default' required if not all subregion keys"
+                           " are specified.")
+        subval = val['default']
+        for ix, iy, iz in np.argwhere(np.isnan(array[..., 0])):
+            # only spatial indices required -> array[..., 0]
+            array[ix, iy, iz] = subval(mesh.index2point((ix, iy, iz)))
+
+    return array
