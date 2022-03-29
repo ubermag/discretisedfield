@@ -2419,10 +2419,21 @@ class Field:
 
         """
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
-        return self.__class__(plane_mesh, dim=self.dim, value=self,
-                              components=self.components,
-                              dtype=self.array.dtype  # callable requires dtype
-                              )
+        if n is not None:
+            value = self
+        else:
+            p_axis = plane_mesh.attributes['planeaxis']
+            plane_idx = self.mesh.point2index(plane_mesh.region.centre)[p_axis]
+            slices = tuple(
+                slice(plane_idx, plane_idx + 1) if i == p_axis
+                else slice(0, axis_len)
+                for i, axis_len in enumerate(self.array.shape)
+            )
+            value = self.array[slices]
+        return self.__class__(plane_mesh,
+                              dim=self.dim,
+                              value=value,
+                              components=self.components)
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.

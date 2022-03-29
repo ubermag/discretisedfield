@@ -75,7 +75,7 @@ def plot_box(ax, pmin, pmax, *args, **kwargs):
 
 
 def normalise_to_range(values, value_range, int_round=True):
-    values = np.array(values)
+    values = np.asarray(values)
 
     values -= values.min()  # min value is 0
     # For uniform fields, avoid division by zero.
