@@ -778,7 +778,7 @@ class MplField(Mpl):
         if filter_plane.mesh != self.field.mesh:
             filter_plane = df.Field(self.field.mesh, dim=1, value=filter_plane)
 
-        values[filter_plane.array.copy().reshape(self.n) == 0] = np.nan
+        values[filter_plane.array.reshape(self.n) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'

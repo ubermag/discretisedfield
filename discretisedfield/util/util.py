@@ -40,7 +40,6 @@ def _(val, mesh, dim, dtype):
                          f' expected dimension is {dim}')
     if dtype is None:
         dtype = max(np.asarray(val).dtype, np.float64)
-
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
 
