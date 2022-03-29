@@ -2433,9 +2433,7 @@ class Field:
         return self.__class__(plane_mesh,
                               dim=self.dim,
                               value=value,
-                              components=self.components,
-                              dtype=self.array.dtype  # callable requires dtype
-                              )
+                              components=self.components)
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
