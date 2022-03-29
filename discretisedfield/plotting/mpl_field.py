@@ -784,7 +784,7 @@ class MplField(Mpl):
         unit = (rf' ({uu.rsi_prefixes[multiplier]}'
                 rf'{self.field.mesh.attributes["unit"]})')
         ax.set_xlabel(dfu.raxesdict[self.axis1] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.axis1] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.axis2] + unit)
 
     def _extent(self, multiplier):
         # TODO Requires refactoring of df.Mesh
