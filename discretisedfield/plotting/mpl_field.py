@@ -432,7 +432,7 @@ class MplField(Mpl):
         if lightness_plane.mesh != self.field.mesh:
             lightness_plane = df.Field(self.field.mesh, dim=1,
                                        value=lightness_plane)
-        lightness = lightness_plane.array.copy().reshape(self.n)
+        lightness = lightness_plane.array.reshape(self.n)
 
         rgb = dfu.hls2rgb(hue=values,
                           lightness=lightness,
@@ -594,8 +594,7 @@ class MplField(Mpl):
         points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
         values = self.field.array.copy().reshape(self.n + (self.field.dim,))
-        # filter out points where norm is 0
-        values[np.all(np.isclose(values, 0, atol=0), axis=-1)] = np.nan
+        self._filter_values(self.field.norm, values)
 
         quiver_args = [points1, points2,
                        np.transpose(values[..., self.axis1]),
@@ -614,7 +613,7 @@ class MplField(Mpl):
                 if color_plane.mesh != self.field.mesh:
                     color_plane = df.Field(self.field.mesh, dim=1,
                                            value=color_plane)
-                quiver_args.append(color_plane.array.copy().reshape(
+                quiver_args.append(color_plane.array.reshape(
                     self.n).transpose())
 
         cp = ax.quiver(*quiver_args, pivot='mid', **kwargs)
