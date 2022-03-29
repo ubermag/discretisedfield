@@ -79,7 +79,6 @@ class Region:
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.unit = unit
-
         self.tolerance_factor = tolerance_factor
 
         if not np.all(self.edges):
