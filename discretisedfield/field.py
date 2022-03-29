@@ -3831,9 +3831,9 @@ def _(val, mesh, dim, dtype):
 @_as_array.register(Field)
 def _(val, mesh, dim, dtype):
     if mesh.region not in val.mesh.region:
-        raise ValueError(f'The region {val.mesh.region} of the provided field'
-                         f' does not contain the region {mesh.region} of the'
-                         ' field that is being created.')
+        raise ValueError(f'{val.mesh.region} of the provided field does not '
+                         f'contain {mesh.region} of the field that is being '
+                         'created.')
     value = val.to_xarray().sel(x=mesh.midpoints.x,
                                 y=mesh.midpoints.y,
                                 z=mesh.midpoints.z,
