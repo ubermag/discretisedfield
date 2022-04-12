@@ -794,7 +794,7 @@ def demag_field(m, tensor):
 
 
 def _f(x, y, z):
-    eps = 1e-18  # to avoid zero division; similar to Albert et al. 2015
+    eps = _eps(x, y, z)
     return (abs(y) / 2 * (z**2 - x**2)
             * np.arcsinh(abs(y) / (np.sqrt(x**2 + z**2) + eps))
             + abs(z) / 2 * (y**2 - x**2)
@@ -806,7 +806,7 @@ def _f(x, y, z):
 
 
 def _g(x, y, z):
-    eps = 1e-18  # to avoid zero division; similar to Albert et al. 2015
+    eps = _eps(x, y, z)
     return (x * y * z * np.arcsinh(z / (np.sqrt(x**2 + y**2) + eps))
             + y / 6 * (3 * z**2 - y**2)
             * np.arcsinh(x / (np.sqrt(y**2 + z**2) + eps))
@@ -819,6 +819,24 @@ def _g(x, y, z):
             - z * x**2 / 2
             * np.arctan(y * z / (x * np.sqrt(x**2 + y**2 + z**2) + eps))
             - x * y * np.sqrt(x**2 + y**2 + z**2) / 3)
+
+
+def _eps(x, y, z):
+    # to avoid zero division; somewhat similar to Albert et al. 2015
+    # In the paper they use a fixed value 1e-18.
+    # However, a fixed value can have the same abs value as the denominator
+    # in which case both values cancel out and we again have a zero division.
+    min_val = []
+    for i in [x, y, z]:
+        try:
+            min_val_i = np.min(np.abs(i)[np.nonzero(i)])
+            min_val.append(min_val_i)
+        except ValueError:
+            # there is no non-zero value in i
+            pass
+    if len(min_val) == 0:
+        return 1e-20  # somewhat smaller than 1e-18 which caused problems
+    return min(min_val)**2 * 1e-12
 
 
 def _N_element(x, y, z, mesh, function):
