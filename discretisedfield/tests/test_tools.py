@@ -152,6 +152,15 @@ def test_count_bps():
     assert result['bp_pattern_x'] == '[[0.0, 10]]'
 
 
+def test_demag_tensor_demag_tensor_field_based():
+    L = 5e-9
+    mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
+    # The second method is very slow and only intended for demonstration
+    # purposes as it is easier to understand. It is not exposed anywhere.
+    assert dft.demag_tensor(mesh).allclose(
+        df.tools.tools._demag_tensor_field_based(mesh))
+
+
 def test_demag_field_sphere():
     L = 10e-9
     mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
