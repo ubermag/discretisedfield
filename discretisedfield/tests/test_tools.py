@@ -153,7 +153,7 @@ def test_count_bps():
 
 
 def test_demag_field_sphere():
-    L = 1e-9
+    L = 10e-9
     mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
 
     def norm(p):
