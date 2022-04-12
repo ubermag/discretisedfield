@@ -153,7 +153,7 @@ def test_count_bps():
 
 
 def test_demag_tensor_demag_tensor_field_based():
-    L = 5e-9
+    L = 2e-9
     mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
     # The second method is very slow and only intended for demonstration
     # purposes as it is easier to understand. It is not exposed anywhere.

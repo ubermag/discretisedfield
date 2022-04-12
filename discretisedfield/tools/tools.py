@@ -831,8 +831,8 @@ def _eps(x, y, z):
         try:
             min_val_i = np.min(np.abs(i)[np.nonzero(i)])
             min_val.append(min_val_i)
-        except ValueError:
-            # there is no non-zero value in i
+        except (IndexError, ValueError):
+            # i is scalar or there is no non-zero value in i
             pass
     if len(min_val) == 0:
         return 1e-20  # somewhat smaller than 1e-18 which caused problems
