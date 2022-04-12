@@ -835,7 +835,7 @@ def _eps(x, y, z):
             # i is scalar or there is no non-zero value in i
             pass
     if len(min_val) == 0:
-        return 1e-20  # somewhat smaller than 1e-18 which caused problems
+        return 1e-25  # value adjusted for nm scale regions
     return min(min_val)**2 * 1e-12
 
 
