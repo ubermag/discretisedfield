@@ -96,3 +96,10 @@ omit = ["discretisedfield/tests/*"]
 
 [tool.isort]
 skip_gitignore = true  # ignores files listed in .gitignore
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning"
+]
