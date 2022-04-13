@@ -934,7 +934,7 @@ def _N(mesh):
             _N_element(z, x, y, mesh, _f),  # Nzz
             _N_element(x, y, z, mesh, _g),  # Nxy
             _N_element(x, z, y, mesh, _g),  # Nxz
-            _N_element(y, z, x, mesh, _g),
-        )  # Nyz
+            _N_element(y, z, x, mesh, _g),  # Nyz
+        )
 
     return _inner
