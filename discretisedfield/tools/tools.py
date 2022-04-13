@@ -731,6 +731,9 @@ def demag_tensor(mesh):
     Computes the demag tensor in Fourier space. Only the six different
     components Nxx, Nyy, Nzz, Nxy, Nxz, Nyz are returned.
 
+    The implementation is based on Albert et al. JMMM 387 (2015)
+    https://doi.org/10.1016/j.jmmm.2015.03.081
+
     Parameters
     ----------
     mesh : discretisedfield.Mesh
@@ -761,7 +764,10 @@ def demag_tensor(mesh):
 
 
 def demag_field(m, tensor):
-    """Demagnetisation field computed using ...
+    """Calculate the demagnetisation field.
+
+    The calculation of the demag field is based on Albert et al. JMMM 387
+    (2015) https://doi.org/10.1016/j.jmmm.2015.03.081
 
     Parameters
     ----------
@@ -794,34 +800,68 @@ def demag_field(m, tensor):
 
 
 def _f(x, y, z):
-    eps = 1e-18  # to avoid zero division; similar to Albert et al. 2015
-    return (abs(y) / 2 * (z**2 - x**2)
-            * np.arcsinh(abs(y) / (np.sqrt(x**2 + z**2) + eps))
-            + abs(z) / 2 * (y**2 - x**2)
-            * np.arcsinh(abs(z) / (np.sqrt(x**2 + y**2) + eps))
+    """Helper function to compute the demag tensor.
+
+    This method implements function f from Albert et al. JMMM 387 (2015)
+    https://doi.org/10.1016/j.jmmm.2015.03.081 which is required for the demag
+    tensor.
+
+    x, y, and z are mesh midpoints (either single points or numpy arrays).
+    """
+    x2 = x**2
+    y2 = y**2
+    z2 = z**2
+    # the total fraction goes to zero when the denominator is zero
+    return (abs(y) / 2 * (z2 - x2)
+            * np.arcsinh(np.divide(abs(y), np.sqrt(x2 + z2),
+                                   out=np.zeros_like(x), where=(x2 + z2) != 0))
+            + abs(z) / 2 * (y2 - x2)
+            * np.arcsinh(np.divide(abs(z), np.sqrt(x2 + y2),
+                                   out=np.zeros_like(x), where=(x2 + y2) != 0))
             - abs(x * y * z)
-            * np.arctan(abs(y * z) /
-                        (abs(x) * np.sqrt(x**2 + y**2 + z**2) + eps))
-            + 1/6 * (2 * x**2 - y**2 - z**2) * np.sqrt(x**2 + y**2 + z**2))
+            * np.arctan(np.divide(abs(y * z),
+                                  abs(x) * np.sqrt(x2 + y2 + z2),
+                                  out=np.zeros_like(x),
+                                  where=x != 0))
+            + 1/6 * (2 * x2 - y2 - z2) * np.sqrt(x2 + y2 + z2))
 
 
 def _g(x, y, z):
-    eps = 1e-18  # to avoid zero division; similar to Albert et al. 2015
-    return (x * y * z * np.arcsinh(z / (np.sqrt(x**2 + y**2) + eps))
-            + y / 6 * (3 * z**2 - y**2)
-            * np.arcsinh(x / (np.sqrt(y**2 + z**2) + eps))
-            + x / 6 * (3 * z**2 - x**2)
-            * np.arcsinh(y / (np.sqrt(x**2 + z**2) + eps))
+    """Helper function to compute the demag tensor.
+
+    This method implements function g from Albert et al. JMMM 387 (2015)
+    https://doi.org/10.1016/j.jmmm.2015.03.081 which is required for the demag
+    tensor.
+
+    x, y, and z are mesh midpoints (either single points or numpy arrays).
+    """
+    x2 = x**2
+    y2 = y**2
+    z2 = z**2
+    # the total fraction goes to zero when the denominator is zero
+    return (x * y * z * np.arcsinh(np.divide(z, np.sqrt(x2 + y2),
+                                             out=np.zeros_like(x),
+                                             where=(x2 + y2) != 0))
+            + y / 6 * (3 * z2 - y2)
+            * np.arcsinh(np.divide(x, np.sqrt(y2 + z2),
+                                   out=np.zeros_like(x), where=(y2 + z2) != 0))
+            + x / 6 * (3 * z2 - x2)
+            * np.arcsinh(np.divide(y, np.sqrt(x2 + z2),
+                                   out=np.zeros_like(x), where=(x2 + z2) != 0))
             - z**3 / 6
-            * np.arctan(x * y / (z * np.sqrt(x**2 + y**2 + z**2) + eps))
+            * np.arctan(np.divide(x * y, z * np.sqrt(x2 + y2 + z2),
+                                  out=np.zeros_like(x), where=z != 0))
             - z * y**2 / 2
-            * np.arctan(x * z / (y * np.sqrt(x**2 + y**2 + z**2) + eps))
+            * np.arctan(np.divide(x * z, y * np.sqrt(x2 + y2 + z2),
+                                  out=np.zeros_like(x), where=y != 0))
             - z * x**2 / 2
-            * np.arctan(y * z / (x * np.sqrt(x**2 + y**2 + z**2) + eps))
-            - x * y * np.sqrt(x**2 + y**2 + z**2) / 3)
+            * np.arctan(np.divide(y * z, x * np.sqrt(x2 + y2 + z2),
+                                  out=np.zeros_like(x), where=x != 0))
+            - x * y * np.sqrt(x2 + y2 + z2) / 3)
 
 
 def _N_element(x, y, z, mesh, function):
+    """Helper function to compute the demag tensor."""
     dx, dy, dz = mesh.cell
     value = 0.
     for i in itertools.product([0, 1], repeat=6):
@@ -832,6 +872,7 @@ def _N_element(x, y, z, mesh, function):
 
 
 def _N(mesh):
+    """Helper function to compute the demag tensor."""
     def _inner(p):
         x, y, z = p
         return (_N_element(x, y, z, mesh, _f),  # Nxx

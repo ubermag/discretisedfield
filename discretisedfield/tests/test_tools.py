@@ -1,5 +1,6 @@
 import os
 
+import numpy as np
 import pytest
 
 import discretisedfield as df
@@ -149,3 +150,63 @@ def test_count_bps():
     assert result['bp_number_hh'] == 0
     assert result['bp_number_tt'] == 0
     assert result['bp_pattern_x'] == '[[0.0, 10]]'
+
+
+def test_demag_tensor():
+    L = 2e-9
+    mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
+    # The second method is very slow and only intended for demonstration
+    # purposes as it is easier to understand. It is not exposed anywhere.
+    assert dft.demag_tensor(mesh).allclose(
+        df.tools.tools._demag_tensor_field_based(mesh))
+
+    mesh = df.Mesh(p1=(-.5, -.5, -.5), p2=(19.5, 9.5, 2.5), cell=(1, 1, 1))
+    tensor = dft.demag_tensor(mesh)
+    # differences to oommf:
+    # - an additional minus sign in the tensor definiton
+    # - the tensor is in fourier space
+    # - the tensor is padded as required for the calculation of the demag field
+    rtensor = -tensor.ifftn.real[df.Region(p1=(-.5+1e-12, -.5+1e-12, -.5),
+                                           p2=(19.5, 9.5, 2.5))]
+    # the tensor computed with oommf is obtained with Oxs_SimpleDemag
+    oommf_tensor = os.path.join(os.path.dirname(__file__), 'test_sample',
+                                'demag_tensor_oommf.omf')
+    assert rtensor.allclose(df.Field.fromfile(oommf_tensor))
+
+
+def test_demag_field_sphere():
+    L = 10e-9
+    mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
+
+    def norm(p):
+        x, y, z = p
+        if x**2 + y**2 + z**2 < L**2:
+            return 1
+        return 0
+
+    f = df.Field(mesh, dim=3, value=(0, 0, 1), norm=norm)
+
+    tensor = dft.demag_tensor(mesh)
+    assert np.allclose(dft.demag_field(f, tensor)((0, 0, 0)),
+                       (0, 0, -1/3),
+                       atol=1e-4  # non-accurate sphere approximation
+                       )
+
+    oommf_sphere = os.path.join(os.path.dirname(__file__), 'test_sample',
+                                'demag_field_sphere.omf')
+    assert dft.demag_field(f, tensor).allclose(df.Field.fromfile(oommf_sphere))
+
+
+def test_demag_field_plane():
+    L = 100
+    mesh = df.Mesh(p1=(-L, -L, -1/2), p2=(L, L, 1/2), cell=(1, 1, 1))
+    f = df.Field(mesh, dim=3, value=(0, 0, 1), norm=1)
+    tensor = dft.demag_tensor(mesh)
+    assert np.allclose(dft.demag_field(f, tensor)((0, 0, 0)),
+                       (0, 0, -1),
+                       rtol=5e-3  # plane is not really infinite
+                       )
+
+    oommf_plane = os.path.join(os.path.dirname(__file__), 'test_sample',
+                               'demag_field_plane.omf')
+    assert dft.demag_field(f, tensor).allclose(df.Field.fromfile(oommf_plane))
