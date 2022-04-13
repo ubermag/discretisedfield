@@ -8,15 +8,19 @@ import discretisedfield.util as dfu
 
 
 class K3dField:
-    """K3d plotting.
-
-    """
+    """K3d plotting."""
 
     def __init__(self, data):
         self.data = data
 
-    def nonzero(self, plot=None, color=dfu.cp_int[0], multiplier=None,
-                interactive_field=None, **kwargs):
+    def nonzero(
+        self,
+        plot=None,
+        color=dfu.cp_int[0],
+        multiplier=None,
+        interactive_field=None,
+        **kwargs,
+    ):
         r"""``k3d`` plot of non-zero discretisation cells.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
@@ -96,7 +100,7 @@ class K3dField:
 
         """
         if self.data.dim != 1:
-            msg = f'Cannot plot dim={self.data.dim} field.'
+            msg = f"Cannot plot dim={self.data.dim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -106,24 +110,24 @@ class K3dField:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
+        unit = (
+            rf" ({uu.rsi_prefixes[multiplier]}" rf'{self.data.mesh.attributes["unit"]})'
+        )
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
 
             objects_to_be_removed = []
             for i in plot.objects:
-                if i.name != 'total_region':
+                if i.name != "total_region":
                     objects_to_be_removed.append(i)
             for i in objects_to_be_removed:
                 plot -= i
 
-            if not any([o.name == 'total_region' for o in plot.objects]):
-                interactive_field.mesh.region.k3d(plot=plot,
-                                                  multiplier=multiplier,
-                                                  name='total_region',
-                                                  opacity=0.025)
+            if not any([o.name == "total_region" for o in plot.objects]):
+                interactive_field.mesh.region.k3d(
+                    plot=plot, multiplier=multiplier, name="total_region", opacity=0.025
+                )
 
         # all voxels have the same color
         plot_array = np.ones_like(self.data.array)
@@ -133,24 +137,30 @@ class K3dField:
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
         plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
 
-        bounds = [i for sublist in
-                  zip(np.divide(self.data.mesh.region.pmin, multiplier),
-                      np.divide(self.data.mesh.region.pmax, multiplier))
-                  for i in sublist]
+        bounds = [
+            i
+            for sublist in zip(
+                np.divide(self.data.mesh.region.pmin, multiplier),
+                np.divide(self.data.mesh.region.pmax, multiplier),
+            )
+            for i in sublist
+        ]
 
-        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
-                           outlines=False, **kwargs)
+        plot += k3d.voxels(
+            plot_array, color_map=color, bounds=bounds, outlines=False, **kwargs
+        )
 
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
 
-    def scalar(self,
-               plot=None,
-               filter_field=None,
-               cmap='cividis',
-               multiplier=None,
-               interactive_field=None,
-               **kwargs):
+    def scalar(
+        self,
+        plot=None,
+        filter_field=None,
+        cmap="cividis",
+        multiplier=None,
+        interactive_field=None,
+        **kwargs,
+    ):
         """``k3d`` plot of a scalar field.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
@@ -229,7 +239,7 @@ class K3dField:
 
         """
         if self.data.dim != 1:
-            msg = f'Cannot plot dim={self.data.dim} field.'
+            msg = f"Cannot plot dim={self.data.dim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -238,30 +248,30 @@ class K3dField:
 
         if filter_field is not None:
             if filter_field.dim != 1:
-                msg = f'Cannot use dim={self.data.dim} filter_field.'
+                msg = f"Cannot use dim={self.data.dim} filter_field."
                 raise ValueError(msg)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
+        unit = (
+            rf" ({uu.rsi_prefixes[multiplier]}" rf'{self.data.mesh.attributes["unit"]})'
+        )
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
 
             objects_to_be_removed = []
             for i in plot.objects:
-                if i.name != 'total_region':
+                if i.name != "total_region":
                     objects_to_be_removed.append(i)
             for i in objects_to_be_removed:
                 plot -= i
 
-            if not any(o.name == 'total_region' for o in plot.objects):
-                interactive_field.mesh.region.k3d(plot=plot,
-                                                  multiplier=multiplier,
-                                                  name='total_region',
-                                                  opacity=0.025)
+            if not any(o.name == "total_region" for o in plot.objects):
+                interactive_field.mesh.region.k3d(
+                    plot=plot, multiplier=multiplier, name="total_region", opacity=0.025
+                )
 
         plot_array = np.copy(self.data.array)  # make a deep copy
         plot_array = plot_array[..., 0]  # remove an empty dimension
@@ -284,28 +294,34 @@ class K3dField:
             rgb = cmap(i)[:3]
             cmap_int.append(int(matplotlib.colors.rgb2hex(rgb)[1:], 16))
 
-        bounds = [i for sublist in
-                  zip(np.divide(self.data.mesh.region.pmin, multiplier),
-                      np.divide(self.data.mesh.region.pmax, multiplier))
-                  for i in sublist]
+        bounds = [
+            i
+            for sublist in zip(
+                np.divide(self.data.mesh.region.pmin, multiplier),
+                np.divide(self.data.mesh.region.pmax, multiplier),
+            )
+            for i in sublist
+        ]
 
-        plot += k3d.voxels(plot_array, color_map=cmap_int, bounds=bounds,
-                           outlines=False, **kwargs)
+        plot += k3d.voxels(
+            plot_array, color_map=cmap_int, bounds=bounds, outlines=False, **kwargs
+        )
 
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
 
-    def vector(self,
-               plot=None,
-               color_field=None,
-               cmap='cividis',
-               head_size=1,
-               points=True,
-               point_size=None,
-               vector_multiplier=None,
-               multiplier=None,
-               interactive_field=None,
-               **kwargs):
+    def vector(
+        self,
+        plot=None,
+        color_field=None,
+        cmap="cividis",
+        head_size=1,
+        points=True,
+        point_size=None,
+        vector_multiplier=None,
+        multiplier=None,
+        interactive_field=None,
+        **kwargs,
+    ):
         """``k3d`` plot of a vector field.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
@@ -407,7 +423,7 @@ class K3dField:
 
         """
         if self.data.dim != 3:
-            msg = f'Cannot plot dim={self.data.dim} field.'
+            msg = f"Cannot plot dim={self.data.dim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -416,30 +432,30 @@ class K3dField:
 
         if color_field is not None:
             if color_field.dim != 1:
-                msg = f'Cannot use dim={self.data.dim} color_field.'
+                msg = f"Cannot use dim={self.data.dim} color_field."
                 raise ValueError(msg)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.data.mesh.attributes["unit"]})')
+        unit = (
+            rf" ({uu.rsi_prefixes[multiplier]}" rf'{self.data.mesh.attributes["unit"]})'
+        )
 
         if interactive_field is not None:
             plot.camera_auto_fit = False
 
             objects_to_be_removed = []
             for i in plot.objects:
-                if i.name != 'total_region':
+                if i.name != "total_region":
                     objects_to_be_removed.append(i)
             for i in objects_to_be_removed:
                 plot -= i
 
-            if not any(o.name == 'total_region' for o in plot.objects):
-                interactive_field.mesh.region.k3d(plot=plot,
-                                                  multiplier=multiplier,
-                                                  name='total_region',
-                                                  opacity=0.025)
+            if not any(o.name == "total_region" for o in plot.objects):
+                interactive_field.mesh.region.k3d(
+                    plot=plot, multiplier=multiplier, name="total_region", opacity=0.025
+                )
 
         coordinates, vectors, color_values = [], [], []
         norm_field = self.data.norm  # assigned to be computed only once
@@ -462,18 +478,18 @@ class K3dField:
 
             colors = []
             for cval in color_values:
-                colors.append(2*(cmap_int[cval],))
+                colors.append(2 * (cmap_int[cval],))
         else:
             # Uniform colour.
-            colors = (len(vectors) * ([2*(dfu.cp_int[1],)]))
+            colors = len(vectors) * ([2 * (dfu.cp_int[1],)])
 
         coordinates = np.array(coordinates)
         vectors = np.array(vectors)
 
         if vector_multiplier is None:
-            vector_multiplier = (vectors.max() /
-                                 np.divide(self.data.mesh.cell,
-                                           multiplier).min())
+            vector_multiplier = (
+                vectors.max() / np.divide(self.data.mesh.cell, multiplier).min()
+            )
 
         coordinates = np.divide(coordinates, multiplier)
         vectors = np.divide(vectors, vector_multiplier)
@@ -481,28 +497,30 @@ class K3dField:
         coordinates = coordinates.astype(np.float32)
         vectors = vectors.astype(np.float32)
 
-        plot += k3d.vectors(coordinates-0.5*vectors, vectors, colors=colors,
-                            head_size=head_size, **kwargs)
+        plot += k3d.vectors(
+            coordinates - 0.5 * vectors,
+            vectors,
+            colors=colors,
+            head_size=head_size,
+            **kwargs,
+        )
 
         if points:
             if point_size is None:
                 # If undefined, the size of the point is 1/4 of the smallest
                 # cell dimension.
-                point_size = np.divide(self.data.mesh.cell,
-                                       multiplier).min() / 4
+                point_size = np.divide(self.data.mesh.cell, multiplier).min() / 4
 
-            plot += k3d.points(coordinates, color=dfu.cp_int[0],
-                               point_size=point_size)
+            plot += k3d.points(coordinates, color=dfu.cp_int[0], point_size=point_size)
 
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
 
     def __dir__(self):
         dirlist = dir(self.__class__)
         if self.data.dim == 1:
-            need_removing = ['k3d_vector']
+            need_removing = ["k3d_vector"]
         else:
-            need_removing = ['k3d_scalar', 'k3d_nonzero']
+            need_removing = ["k3d_scalar", "k3d_nonzero"]
 
         for attr in need_removing:
             dirlist.remove(attr)

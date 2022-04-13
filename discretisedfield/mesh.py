@@ -18,11 +18,12 @@ from . import html
 from .region import Region
 
 
-@ts.typesystem(region=ts.Typed(expected_type=Region),
-               cell=ts.Vector(size=3, positive=True, const=True),
-               n=ts.Vector(size=3, component_type=int, unsigned=True,
-                           const=True),
-               bc=ts.Typed(expected_type=str))
+@ts.typesystem(
+    region=ts.Typed(expected_type=Region),
+    cell=ts.Vector(size=3, positive=True, const=True),
+    n=ts.Vector(size=3, component_type=int, unsigned=True, const=True),
+    bc=ts.Typed(expected_type=str),
+)
 class Mesh:
     """Finite-difference mesh.
 
@@ -172,15 +173,25 @@ class Mesh:
 
     """
 
-    def __init__(self, *, region=None, p1=None, p2=None, n=None, cell=None,
-                 bc='', subregions=dict(), attributes={'unit': 'm'}):
+    def __init__(
+        self,
+        *,
+        region=None,
+        p1=None,
+        p2=None,
+        n=None,
+        cell=None,
+        bc="",
+        subregions=dict(),
+        attributes={"unit": "m"},
+    ):
         # TODO NO MUTABLE DEFAULT
         if region is not None and p1 is None and p2 is None:
             self.region = region
         elif region is None and p1 is not None and p2 is not None:
             self.region = df.Region(p1=p1, p2=p2)
         else:
-            msg = 'Either region or p1 and p2 can be passed, not both.'
+            msg = "Either region or p1 and p2 can be passed, not both."
             raise ValueError(msg)
 
         if cell is not None and n is None:
@@ -192,16 +203,19 @@ class Mesh:
             cell = np.divide(self.region.edges, self.n).astype(float)
             self.cell = dfu.array2tuple(cell)
         else:
-            msg = 'Either n or cell can be passed, not both.'
+            msg = "Either n or cell can be passed, not both."
             raise ValueError(msg)
 
         # Check if the mesh region is an aggregate of the discretisation cell.
         tol = np.min(self.cell) * 1e-3  # tolerance
         rem = np.remainder(self.region.edges, self.cell)
-        if np.logical_and(np.greater(rem, tol),
-                          np.less(rem, np.subtract(self.cell, tol))).any():
-            msg = (f'Region cannot be divided into '
-                   f'discretisation cells of size {self.cell=}.')
+        if np.logical_and(
+            np.greater(rem, tol), np.less(rem, np.subtract(self.cell, tol))
+        ).any():
+            msg = (
+                "Region cannot be divided into "
+                f"discretisation cells of size {self.cell=}."
+            )
             raise ValueError(msg)
 
         self.bc = bc.lower()
@@ -209,14 +223,14 @@ class Mesh:
         self.subregions = subregions
 
         self.attributes = attributes
-        if 'fourierspace' not in attributes.keys():
-            self.attributes['fourierspace'] = False
-        if 'isplane' not in attributes.keys():
-            self.attributes['isplane'] = False
+        if "fourierspace" not in attributes.keys():
+            self.attributes["fourierspace"] = False
+        if "isplane" not in attributes.keys():
+            self.attributes["isplane"] = False
 
     @property
     def subregions(self):
-        """"Subregions of the mesh.
+        """ "Subregions of the mesh.
 
         Returns
         -------
@@ -235,25 +249,31 @@ class Mesh:
         for key, value in subregions.items():
             # Is the subregion in the mesh region?
             if value not in self.region:
-                msg = f'Subregion {key} is not in the mesh region.'
+                msg = f"Subregion {key} is not in the mesh region."
                 raise ValueError(msg)
 
             # Is the subregion an aggregate of discretisation cell?
             try:
                 self.__class__(region=value, cell=self.cell)
             except ValueError:
-                msg = (f'Subregion {key} cannot be divided into '
-                       f'discretisation cells of size {self.cell=}.')
+                msg = (
+                    f"Subregion {key} cannot be divided into "
+                    f"discretisation cells of size {self.cell=}."
+                )
                 raise ValueError(msg)
 
             # Is the subregion aligned with the mesh?
-            if not (self.__class__(region=self.region, cell=self.cell) |
-                    self.__class__(region=value, cell=self.cell)):
-                msg = f'Subregion {key} is not aligned with the mesh.'
+            if not (
+                self.__class__(region=self.region, cell=self.cell)
+                | self.__class__(region=value, cell=self.cell)
+            ):
+                msg = f"Subregion {key} is not aligned with the mesh."
                 raise ValueError(msg)
-        if 'default' in subregions.keys():
-            msg = ('Subregion name ``default`` has a special meaning when '
-                   'initialising field values')
+        if "default" in subregions.keys():
+            msg = (
+                "Subregion name ``default`` has a special meaning when "
+                "initialising field values"
+            )
             warnings.warn(msg)
         self._subregions = subregions
 
@@ -359,8 +379,7 @@ class Mesh:
             yield self.index2point(index)
 
     def axis_points(self, axis, /):
-        warnings.warn('Deprecated; use `mesh.midpoints` instead.',
-                      FutureWarning)
+        warnings.warn("Deprecated; use `mesh.midpoints` instead.", FutureWarning)
         return getattr(self.midpoints, axis)
 
     @functools.cached_property
@@ -393,13 +412,16 @@ class Mesh:
         array([1., 3., 5., 7., 9.])
 
         """
-        midpoints = collections.namedtuple('midpoints', ['x', 'y', 'z'])
+        midpoints = collections.namedtuple("midpoints", ["x", "y", "z"])
 
-        return midpoints(*(
-            np.linspace(pmin + cell / 2, pmax - cell / 2, n)
-            for pmin, pmax, cell, n in
-            zip(self.region.pmin, self.region.pmax, self.cell, self.n)
-        ))
+        return midpoints(
+            *(
+                np.linspace(pmin + cell / 2, pmax - cell / 2, n)
+                for pmin, pmax, cell, n in zip(
+                    self.region.pmin, self.region.pmax, self.cell, self.n
+                )
+            )
+        )
 
     @functools.cached_property
     def vertices(self):
@@ -431,10 +453,14 @@ class Mesh:
         array([ 0.,  2.,  4.,  6.,  8., 10.])
 
         """
-        vertices = collections.namedtuple('vertices', ['x', 'y', 'z'])
+        vertices = collections.namedtuple("vertices", ["x", "y", "z"])
 
-        return vertices(*(np.linspace(pmin, pmax, n + 1) for pmin, pmax, n in
-                          zip(self.region.pmin, self.region.pmax, self.n)))
+        return vertices(
+            *(
+                np.linspace(pmin, pmax, n + 1)
+                for pmin, pmax, n in zip(self.region.pmin, self.region.pmax, self.n)
+            )
+        )
 
     def __eq__(self, other):
         """Relational operator ``==``.
@@ -517,7 +543,7 @@ class Mesh:
 
     def _repr_html_(self):
         """Show HTML-based representation in Jupyter notebook."""
-        return html.get_template('mesh').render(mesh=self)
+        return html.get_template("mesh").render(mesh=self)
 
     def index2point(self, index, /):
         """Convert cell's index to its coordinate.
@@ -558,13 +584,11 @@ class Mesh:
         .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
         """
-        if np.logical_or(np.less(index, 0),
-                         np.greater_equal(index, self.n)).any():
-            msg = f'Index {index=} out of range.'
+        if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
+            msg = f"Index {index=} out of range."
             raise ValueError(msg)
 
-        point = np.add(self.region.pmin,
-                       np.multiply(np.add(index, 0.5), self.cell))
+        point = np.add(self.region.pmin, np.multiply(np.add(index, 0.5), self.cell))
         return dfu.array2tuple(point)
 
     def point2index(self, point, /):
@@ -605,11 +629,14 @@ class Mesh:
 
         """
         if point not in self.region:
-            msg = f'Point {point=} is outside the mesh region.'
+            msg = f"Point {point=} is outside the mesh region."
             raise ValueError(msg)
 
-        index = np.subtract(np.divide(np.subtract(point, self.region.pmin),
-                                      self.cell), 0.5).round().astype(int)
+        index = (
+            np.subtract(np.divide(np.subtract(point, self.region.pmin), self.cell), 0.5)
+            .round()
+            .astype(int)
+        )
         # If index is rounded to the out-of-range values.
         index = np.clip(index, 0, np.subtract(self.n, 1))
 
@@ -685,21 +712,20 @@ class Mesh:
         [(1, 1, 0), (0, 0, 0)]
 
         """
-        if np.logical_or(np.less(index, 0),
-                         np.greater_equal(index, self.n)).any():
-            msg = f'Index {index=} out of range.'
+        if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
+            msg = f"Index {index=} out of range."
             raise ValueError(msg)
 
         nghbrs = []
         for axis in range(3):
-            for i in [index[axis]-1, index[axis]+1]:
+            for i in [index[axis] - 1, index[axis] + 1]:
                 nghbr_index = list(index)  # make it mutable
-                if 0 <= i <= self.n[axis]-1:
+                if 0 <= i <= self.n[axis] - 1:
                     # not outside the mesh
                     nghbr_index[axis] = i
                 elif dfu.raxesdict[axis] in self.bc:
                     if i == -1 and self.n[axis] != 1:
-                        nghbr_index[axis] = self.n[0]-1
+                        nghbr_index[axis] = self.n[0] - 1
                     elif i == self.n[axis] and self.n[axis] != 1:
                         nghbr_index[axis] = 0
                 if tuple(nghbr_index) != index:
@@ -761,12 +787,12 @@ class Mesh:
 
         """
         if p1 not in self.region or p2 not in self.region:
-            msg = f'Point {p1=} or point {p2=} is outside the mesh region.'
+            msg = f"Point {p1=} or point {p2=} is outside the mesh region."
             raise ValueError(msg)
 
-        dl = np.subtract(p2, p1) / (n-1)
+        dl = np.subtract(p2, p1) / (n - 1)
         for i in range(n):
-            yield dfu.array2tuple(np.add(p1, i*dl))
+            yield dfu.array2tuple(np.add(p1, i * dl))
 
     def plane(self, *args, n=None, **kwargs):
         """Extracts plane mesh.
@@ -820,7 +846,7 @@ class Mesh:
         """
         if args and not kwargs:
             if len(args) != 1:
-                msg = f'Multiple args ({args}) passed.'
+                msg = f"Multiple args ({args}) passed."
                 raise ValueError(msg)
 
             # Only planeaxis is provided via args and the point is defined as
@@ -829,7 +855,7 @@ class Mesh:
             point = self.region.centre[planeaxis]
         elif kwargs and not args:
             if len(kwargs) != 1:
-                msg = f'Multiple kwargs ({kwargs}) passed.'
+                msg = f"Multiple kwargs ({kwargs}) passed."
                 raise ValueError(msg)
 
             planeaxis, point = list(kwargs.items())[0]
@@ -839,15 +865,16 @@ class Mesh:
             test_point = list(self.region.centre)  # make it mutable
             test_point[planeaxis] = point
             if test_point not in self.region:
-                msg = f'Point {test_point} is outside the mesh region.'
+                msg = f"Point {test_point} is outside the mesh region."
                 raise ValueError(msg)
         else:
-            msg = 'Either one arg or one kwarg can be passed, not both.'
+            msg = "Either one arg or one kwarg can be passed, not both."
             raise ValueError(msg)
 
         # Get indices of in-plane axes.
-        axis1, axis2 = tuple(filter(lambda val: val != planeaxis,
-                                    dfu.axesdict.values()))
+        axis1, axis2 = tuple(
+            filter(lambda val: val != planeaxis, dfu.axesdict.values())
+        )
 
         if n is None:
             n = (self.n[axis1], self.n[axis2])
@@ -855,23 +882,28 @@ class Mesh:
         # Build plane-mesh.
         p1pm, p2pm, npm = np.zeros(3), np.zeros(3), np.zeros(3, dtype=int)
         ilist = [axis1, axis2, planeaxis]
-        p1pm[ilist] = (self.region.pmin[axis1],
-                       self.region.pmin[axis2],
-                       point - self.cell[planeaxis]/2)
-        p2pm[ilist] = (self.region.pmax[axis1],
-                       self.region.pmax[axis2],
-                       point + self.cell[planeaxis]/2)
+        p1pm[ilist] = (
+            self.region.pmin[axis1],
+            self.region.pmin[axis2],
+            point - self.cell[planeaxis] / 2,
+        )
+        p2pm[ilist] = (
+            self.region.pmax[axis1],
+            self.region.pmax[axis2],
+            point + self.cell[planeaxis] / 2,
+        )
         npm[ilist] = (*n, 1)
 
         attributes = self.attributes
 
-        plane_mesh = self.__class__(p1=p1pm, p2=p2pm, n=dfu.array2tuple(npm),
-                                    attributes=attributes)
-        plane_mesh.attributes['isplane'] = True
-        plane_mesh.attributes['planeaxis'] = planeaxis
-        plane_mesh.attributes['point'] = point
-        plane_mesh.attributes['axis1'] = axis1
-        plane_mesh.attributes['axis2'] = axis2
+        plane_mesh = self.__class__(
+            p1=p1pm, p2=p2pm, n=dfu.array2tuple(npm), attributes=attributes
+        )
+        plane_mesh.attributes["isplane"] = True
+        plane_mesh.attributes["planeaxis"] = planeaxis
+        plane_mesh.attributes["point"] = point
+        plane_mesh.attributes["axis1"] = axis1
+        plane_mesh.attributes["axis2"] = axis2
 
         return plane_mesh
 
@@ -932,12 +964,12 @@ class Mesh:
             return False
 
         tol = 1e-12  # picometre tolerance
-        for i in ['pmin', 'pmax']:
-            diff = np.subtract(getattr(self.region, i),
-                               getattr(other.region, i))
+        for i in ["pmin", "pmax"]:
+            diff = np.subtract(getattr(self.region, i), getattr(other.region, i))
             rem = np.remainder(abs(diff), self.cell)
-            if np.logical_and(np.greater(rem, tol),
-                              np.less(rem, np.subtract(self.cell, tol))).any():
+            if np.logical_and(
+                np.greater(rem, tol), np.less(rem, np.subtract(self.cell, tol))
+            ).any():
                 return False
 
         return True
@@ -1009,19 +1041,21 @@ class Mesh:
 
         """
         if isinstance(item, str):
-            return self.__class__(region=self.subregions[item], cell=self.cell,
-                                  attributes=self.attributes)
+            return self.__class__(
+                region=self.subregions[item], cell=self.cell, attributes=self.attributes
+            )
 
         if item not in self.region:
-            msg = 'Subregion is outside the mesh region.'
+            msg = "Subregion is outside the mesh region."
             raise ValueError(msg)
 
         hc = np.divide(self.cell, 2)  # half-cell
         p1 = np.subtract(self.index2point(self.point2index(item.pmin)), hc)
         p2 = np.add(self.index2point(self.point2index(item.pmax)), hc)
 
-        return self.__class__(region=df.Region(p1=p1, p2=p2), cell=self.cell,
-                              attributes=self.attributes)
+        return self.__class__(
+            region=df.Region(p1=p1, p2=p2), cell=self.cell, attributes=self.attributes
+        )
 
     def pad(self, pad_width):
         """Mesh padding.
@@ -1079,8 +1113,9 @@ class Mesh:
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
-        return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc,
-                              attributes=self.attributes)
+        return self.__class__(
+            p1=pmin, p2=pmax, cell=self.cell, bc=self.bc, attributes=self.attributes
+        )
 
     def __getattr__(self, attr):
         """Extracting the discretisation in a particular direction.
@@ -1120,10 +1155,10 @@ class Mesh:
 
         """
         for axis, i in dfu.axesdict.items():
-            if attr == f'd{axis}':
+            if attr == f"d{axis}":
                 return self.cell[i]
         else:
-            msg = f'Object has no attribute {attr}.'
+            msg = f"Object has no attribute {attr}."
             raise AttributeError(msg)
 
     def __dir__(self):
@@ -1138,7 +1173,7 @@ class Mesh:
             Avalilable attributes.
 
         """
-        return dir(self.__class__) + [f'd{i}' for i in dfu.axesdict.keys()]
+        return dir(self.__class__) + [f"d{i}" for i in dfu.axesdict.keys()]
 
     @property
     def dV(self):
@@ -1197,17 +1232,25 @@ class Mesh:
         (0.0, 0.0, 2.0)
 
         """
-        if not self.attributes['isplane']:
-            msg = 'The mesh must be sliced before dS can be computed.'
+        if not self.attributes["isplane"]:
+            msg = "The mesh must be sliced before dS can be computed."
             raise ValueError(msg)
 
-        norm = (self.cell[self.attributes['axis1']]
-                * self.cell[self.attributes['axis2']])
-        dn = dfu.assemble_index(0, 3, {self.attributes['planeaxis']: 1})
+        norm = self.cell[self.attributes["axis1"]] * self.cell[self.attributes["axis2"]]
+        dn = dfu.assemble_index(0, 3, {self.attributes["planeaxis"]: 1})
         return df.Field(self, dim=3, value=dn, norm=norm)
 
-    def mpl(self, *, ax=None, figsize=None, color=dfu.cp_hex[:2],
-            multiplier=None, box_aspect='auto', filename=None, **kwargs):
+    def mpl(
+        self,
+        *,
+        ax=None,
+        figsize=None,
+        color=dfu.cp_hex[:2],
+        multiplier=None,
+        box_aspect="auto",
+        filename=None,
+        **kwargs,
+    ):
         """``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -1282,24 +1325,40 @@ class Mesh:
         """
         if ax is None:
             fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.region.edges)
 
-        cell_region = df.Region(p1=self.region.pmin,
-                                p2=np.add(self.region.pmin, self.cell))
-        self.region.mpl(ax=ax, color=color[0], multiplier=multiplier,
-                        box_aspect=box_aspect, **kwargs)
-        cell_region.mpl(ax=ax, color=color[1], multiplier=multiplier,
-                        box_aspect=None, **kwargs)
+        cell_region = df.Region(
+            p1=self.region.pmin, p2=np.add(self.region.pmin, self.cell)
+        )
+        self.region.mpl(
+            ax=ax,
+            color=color[0],
+            multiplier=multiplier,
+            box_aspect=box_aspect,
+            **kwargs,
+        )
+        cell_region.mpl(
+            ax=ax, color=color[1], multiplier=multiplier, box_aspect=None, **kwargs
+        )
 
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+            plt.savefig(filename, bbox_inches="tight", pad_inches=0)
 
-    def mpl_subregions(self, *, ax=None, figsize=None, color=dfu.cp_hex,
-                       multiplier=None, show_region=False, box_aspect='auto',
-                       filename=None, **kwargs):
+    def mpl_subregions(
+        self,
+        *,
+        ax=None,
+        figsize=None,
+        color=dfu.cp_hex,
+        multiplier=None,
+        show_region=False,
+        box_aspect="auto",
+        filename=None,
+        **kwargs,
+    ):
         """``matplotlib`` subregions plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -1376,9 +1435,9 @@ class Mesh:
         """
         if ax is None:
             fig = plt.figure(figsize=figsize)
-            ax = fig.add_subplot(111, projection='3d')
+            ax = fig.add_subplot(111, projection="3d")
 
-        if box_aspect == 'auto':
+        if box_aspect == "auto":
             ax.set_box_aspect(self.region.edges)
         elif box_aspect is not None:
             ax.set_box_aspect(box_aspect)
@@ -1387,19 +1446,21 @@ class Mesh:
             multiplier = uu.si_max_multiplier(self.region.edges)
 
         if show_region:
-            self.region.mpl(ax=ax, multiplier=multiplier, color='grey',
-                            box_aspect=None)
+            self.region.mpl(ax=ax, multiplier=multiplier, color="grey", box_aspect=None)
 
         for i, subregion in enumerate(self.subregions.values()):
-            subregion.mpl(ax=ax, multiplier=multiplier,
-                          color=color[i % len(color)], box_aspect=None,
-                          **kwargs)
+            subregion.mpl(
+                ax=ax,
+                multiplier=multiplier,
+                color=color[i % len(color)],
+                box_aspect=None,
+                **kwargs,
+            )
 
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+            plt.savefig(filename, bbox_inches="tight", pad_inches=0)
 
-    def k3d(self, *, plot=None, color=dfu.cp_int[:2], multiplier=None,
-            **kwargs):
+    def k3d(self, *, plot=None, color=dfu.cp_int[:2], multiplier=None, **kwargs):
         """``k3d`` plot.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
@@ -1459,24 +1520,27 @@ class Mesh:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.region.edges)
 
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+        unit = f"({uu.rsi_prefixes[multiplier]}m)"
 
         plot_array = np.ones(tuple(reversed(self.n))).astype(np.uint8)
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
 
-        bounds = [i for sublist in
-                  zip(np.divide(self.region.pmin, multiplier),
-                      np.divide(self.region.pmax, multiplier))
-                  for i in sublist]
+        bounds = [
+            i
+            for sublist in zip(
+                np.divide(self.region.pmin, multiplier),
+                np.divide(self.region.pmax, multiplier),
+            )
+            for i in sublist
+        ]
 
-        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
-                           outlines=False, **kwargs)
+        plot += k3d.voxels(
+            plot_array, color_map=color, bounds=bounds, outlines=False, **kwargs
+        )
 
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
 
-    def k3d_subregions(self, *, plot=None, color=dfu.cp_int, multiplier=None,
-                       **kwargs):
+    def k3d_subregions(self, *, plot=None, color=dfu.cp_int, multiplier=None, **kwargs):
         """``k3d`` subregions plot.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
@@ -1535,7 +1599,7 @@ class Mesh:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.region.edges)
 
-        unit = f'({uu.rsi_prefixes[multiplier]}m)'
+        unit = f"({uu.rsi_prefixes[multiplier]}m)"
 
         plot_array = np.zeros(self.n)
         for index in self.indices:
@@ -1547,16 +1611,20 @@ class Mesh:
         # swap axes for k3d.voxels and astypr to avoid k3d warning
         plot_array = np.swapaxes(plot_array, 0, 2).astype(np.uint8)
 
-        bounds = [i for sublist in
-                  zip(np.divide(self.region.pmin, multiplier),
-                      np.divide(self.region.pmax, multiplier))
-                  for i in sublist]
+        bounds = [
+            i
+            for sublist in zip(
+                np.divide(self.region.pmin, multiplier),
+                np.divide(self.region.pmax, multiplier),
+            )
+            for i in sublist
+        ]
 
-        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
-                           outlines=False, **kwargs)
+        plot += k3d.voxels(
+            plot_array, color_map=color, bounds=bounds, outlines=False, **kwargs
+        )
 
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
 
     def slider(self, axis, /, *, multiplier=None, description=None, **kwargs):
         """Axis slider.
@@ -1608,22 +1676,20 @@ class Mesh:
         slider_max = self.index2point(np.subtract(self.n, 1))[axis]
         slider_step = self.cell[axis]
         if description is None:
-            description = (f'{dfu.raxesdict[axis]} '
-                           f'({uu.rsi_prefixes[multiplier]}m)')
+            description = f"{dfu.raxesdict[axis]} ({uu.rsi_prefixes[multiplier]}m)"
 
-        values = np.arange(slider_min, slider_max+1e-20, slider_step)
-        labels = np.around(values/multiplier, decimals=3)
+        values = np.arange(slider_min, slider_max + 1e-20, slider_step)
+        labels = np.around(values / multiplier, decimals=3)
         options = list(zip(labels, values))
 
         # Select middle element for slider value
-        slider_value = values[int(self.n[axis]/2)]
+        slider_value = values[int(self.n[axis] / 2)]
 
-        return ipywidgets.SelectionSlider(options=options,
-                                          value=slider_value,
-                                          description=description,
-                                          **kwargs)
+        return ipywidgets.SelectionSlider(
+            options=options, value=slider_value, description=description, **kwargs
+        )
 
-    def axis_selector(self, *, widget='dropdown', description='axis'):
+    def axis_selector(self, *, widget="dropdown", description="axis"):
         """Axis selector.
 
         For ``widget='dropdown'``, ``ipywidgets.Dropdown`` is returned, whereas
@@ -1659,15 +1725,17 @@ class Mesh:
         RadioButtons(...)
 
         """
-        if widget.lower() == 'dropdown':
+        if widget.lower() == "dropdown":
             widget_cls = ipywidgets.Dropdown
-        elif widget == 'radiobuttons':
+        elif widget == "radiobuttons":
             widget_cls = ipywidgets.RadioButtons
         else:
-            msg = f'Widget {widget} is not supported.'
+            msg = f"Widget {widget} is not supported."
             raise ValueError(msg)
 
-        return widget_cls(options=list(dfu.axesdict.keys()),
-                          value='z',
-                          description=description,
-                          disabled=False)
+        return widget_cls(
+            options=list(dfu.axesdict.keys()),
+            value="z",
+            description=description,
+            disabled=False,
+        )

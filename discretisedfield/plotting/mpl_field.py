@@ -36,30 +36,33 @@ class MplField(Mpl):
     """
 
     def __init__(self, field):
-        if not field.mesh.attributes['isplane']:
-            msg = 'The field must be sliced before it can be plotted.'
+        if not field.mesh.attributes["isplane"]:
+            msg = "The field must be sliced before it can be plotted."
             raise ValueError(msg)
 
         self.field = field
 
-        self.planeaxis = dfu.raxesdict[field.mesh.attributes['planeaxis']]
+        self.planeaxis = dfu.raxesdict[field.mesh.attributes["planeaxis"]]
         self.planeaxis_point = {
-            dfu.raxesdict[self.field.mesh.attributes['planeaxis']]:
-            self.field.mesh.attributes['point']
+            dfu.raxesdict[
+                self.field.mesh.attributes["planeaxis"]
+            ]: self.field.mesh.attributes["point"]
         }
-        self.axis1 = self.field.mesh.attributes['axis1']
-        self.axis2 = self.field.mesh.attributes['axis2']
+        self.axis1 = self.field.mesh.attributes["axis1"]
+        self.axis2 = self.field.mesh.attributes["axis2"]
         # TODO: After refactoring code, maybe n can become
         # part of PlaneMesh.
         self.n = (self.field.mesh.n[self.axis1], self.field.mesh.n[self.axis2])
 
-    def __call__(self,
-                 ax=None,
-                 figsize=None,
-                 multiplier=None,
-                 scalar_kw=None,
-                 vector_kw=None,
-                 filename=None):
+    def __call__(
+        self,
+        ax=None,
+        figsize=None,
+        multiplier=None,
+        scalar_kw=None,
+        vector_kw=None,
+        filename=None,
+    ):
         """Plot the field on a plane.
 
         This is a convenience method used for quick plotting, and it combines
@@ -132,8 +135,8 @@ class MplField(Mpl):
 
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
-        vector_kw.setdefault('use_color', False)
-        vector_kw.setdefault('colorbar', False)
+        vector_kw.setdefault("use_color", False)
+        vector_kw.setdefault("colorbar", False)
 
         # Set up default scalar and vector fields.
         if self.field.dim == 1:
@@ -147,32 +150,31 @@ class MplField(Mpl):
         else:
             vector_field = self.field
             scalar_field = getattr(self.field, self.planeaxis)
-            scalar_kw.setdefault('colorbar_label',
-                                 f'{self.planeaxis}-component')
+            scalar_kw.setdefault("colorbar_label", f"{self.planeaxis}-component")
 
-        scalar_kw.setdefault('filter_field', self.field.norm)
+        scalar_kw.setdefault("filter_field", self.field.norm)
 
         if scalar_field is not None:
-            scalar_field.mpl.scalar(ax=ax, multiplier=multiplier,
-                                    **scalar_kw)
+            scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_kw)
         if vector_field is not None:
-            vector_field.mpl.vector(ax=ax, multiplier=multiplier,
-                                    **vector_kw)
+            vector_field.mpl.vector(ax=ax, multiplier=multiplier, **vector_kw)
 
         self._axis_labels(ax, multiplier)
 
         self._savefig(filename)
 
-    def scalar(self,
-               ax=None,
-               figsize=None,
-               multiplier=None,
-               filter_field=None,
-               colorbar=True,
-               colorbar_label='',
-               filename=None,
-               symmetric_clim=False,
-               **kwargs):
+    def scalar(
+        self,
+        ax=None,
+        figsize=None,
+        multiplier=None,
+        filter_field=None,
+        colorbar=True,
+        colorbar_label="",
+        filename=None,
+        symmetric_clim=False,
+        **kwargs,
+    ):
         r"""Plot the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
@@ -279,7 +281,7 @@ class MplField(Mpl):
 
         """
         if self.field.dim > 1:
-            msg = f'Cannot plot {self.field.dim=} field.'
+            msg = f"Cannot plot {self.field.dim=} field."
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
@@ -290,14 +292,13 @@ class MplField(Mpl):
         values = self.field.array.copy().reshape(self.n)
         self._filter_values(filter_field, values)
 
-        if symmetric_clim and 'clim' not in kwargs.keys():
+        if symmetric_clim and "clim" not in kwargs.keys():
             vmin = np.min(values, where=~np.isnan(values), initial=0)
             vmax = np.max(values, where=~np.isnan(values), initial=0)
             vmax_abs = max(abs(vmin), abs(vmax))
-            kwargs['clim'] = (-vmax_abs, vmax_abs)
+            kwargs["clim"] = (-vmax_abs, vmax_abs)
 
-        cp = ax.imshow(np.transpose(values), origin='lower',
-                       extent=extent, **kwargs)
+        cp = ax.imshow(np.transpose(values), origin="lower", extent=extent, **kwargs)
 
         if colorbar:
             cbar = plt.colorbar(cp, ax=ax)
@@ -308,19 +309,21 @@ class MplField(Mpl):
 
         self._savefig(filename)
 
-    def lightness(self,
-                  ax=None,
-                  figsize=None,
-                  multiplier=None,
-                  filter_field=None,
-                  lightness_field=None,
-                  clim=None,
-                  colorwheel=True,
-                  colorwheel_xlabel=None,
-                  colorwheel_ylabel=None,
-                  colorwheel_args=None,
-                  filename=None,
-                  **kwargs):
+    def lightness(
+        self,
+        ax=None,
+        figsize=None,
+        multiplier=None,
+        filter_field=None,
+        lightness_field=None,
+        clim=None,
+        colorwheel=True,
+        colorwheel_xlabel=None,
+        colorwheel_ylabel=None,
+        colorwheel_args=None,
+        filename=None,
+        **kwargs,
+    ):
         """Lightness plots.
 
         Uses HSV to show in-plane angle and lightness for out-of-plane (3d) or
@@ -391,7 +394,8 @@ class MplField(Mpl):
                 colorwheel_ylabel=colorwheel_ylabel,
                 colorwheel_args=colorwheel_args,
                 filename=filename,
-                **kwargs)
+                **kwargs,
+            )
         elif self.field.dim == 3:
             if lightness_field is None:
                 lightness_field = getattr(self.field, self.planeaxis)
@@ -409,7 +413,8 @@ class MplField(Mpl):
                 colorwheel_ylabel=colorwheel_ylabel,
                 colorwheel_args=colorwheel_args,
                 filename=filename,
-                **kwargs)
+                **kwargs,
+            )
 
         ax = self._setup_axes(ax, figsize)
 
@@ -423,59 +428,60 @@ class MplField(Mpl):
             lightness_field = self.field.norm
         else:
             if lightness_field.dim != 1:
-                msg = f'Cannot use {lightness_field.dim=} lightness_field.'
+                msg = f"Cannot use {lightness_field.dim=} lightness_field."
                 raise ValueError(msg)
 
         values = self.field.array.copy().reshape(self.n)
 
         lightness_plane = lightness_field.plane(**self.planeaxis_point)
         if lightness_plane.mesh != self.field.mesh:
-            lightness_plane = df.Field(self.field.mesh, dim=1,
-                                       value=lightness_plane)
+            lightness_plane = df.Field(self.field.mesh, dim=1, value=lightness_plane)
         lightness = lightness_plane.array.reshape(self.n)
 
-        rgb = dfu.hls2rgb(hue=values,
-                          lightness=lightness,
-                          saturation=None,
-                          lightness_clim=clim).squeeze()
+        rgb = dfu.hls2rgb(
+            hue=values, lightness=lightness, saturation=None, lightness_clim=clim
+        ).squeeze()
         self._filter_values(filter_field, rgb)
 
         # alpha channel to hide points with nan values (filter field)
         # all three rgb values are set to nan
         rgba = np.empty((*rgb.shape[:-1], 4))
         rgba[..., :3] = rgb
-        rgba[..., 3] = 1.
+        rgba[..., 3] = 1.0
         rgba[..., 3][np.isnan(rgb[..., 0])] = 0
 
-        kwargs['cmap'] = 'hsv'  # only hsv cmap allowed
-        ax.imshow(np.transpose(rgba, (1, 0, 2)), origin='lower',
-                  extent=extent, **kwargs)
+        kwargs["cmap"] = "hsv"  # only hsv cmap allowed
+        ax.imshow(
+            np.transpose(rgba, (1, 0, 2)), origin="lower", extent=extent, **kwargs
+        )
 
         if colorwheel:
             if colorwheel_args is None:
                 colorwheel_args = {}
             cw_ax = add_colorwheel(ax, **colorwheel_args)
             if colorwheel_xlabel is not None:
-                cw_ax.arrow(100, 100, 60, 0, width=5, fc='w', ec='w')
-                cw_ax.annotate(colorwheel_xlabel, (115, 140), c='w')
+                cw_ax.arrow(100, 100, 60, 0, width=5, fc="w", ec="w")
+                cw_ax.annotate(colorwheel_xlabel, (115, 140), c="w")
             if colorwheel_ylabel is not None:
-                cw_ax.arrow(100, 100, 0, -60, width=5, fc='w', ec='w')
-                cw_ax.annotate(colorwheel_ylabel, (40, 80), c='w')
+                cw_ax.arrow(100, 100, 0, -60, width=5, fc="w", ec="w")
+                cw_ax.annotate(colorwheel_ylabel, (40, 80), c="w")
 
         self._axis_labels(ax, multiplier)
 
         self._savefig(filename)
 
-    def vector(self,
-               ax=None,
-               figsize=None,
-               multiplier=None,
-               use_color=True,
-               color_field=None,
-               colorbar=True,
-               colorbar_label='',
-               filename=None,
-               **kwargs):
+    def vector(
+        self,
+        ax=None,
+        figsize=None,
+        multiplier=None,
+        use_color=True,
+        color_field=None,
+        colorbar=True,
+        colorbar_label="",
+        filename=None,
+        **kwargs,
+    ):
         r"""Plot the vector field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
@@ -583,7 +589,7 @@ class MplField(Mpl):
 
         """
         if self.field.dim not in [2, 3]:
-            msg = f'cannot plot dim={self.field.dim} field.'
+            msg = f"cannot plot dim={self.field.dim} field."
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
@@ -596,29 +602,32 @@ class MplField(Mpl):
         values = self.field.array.copy().reshape(self.n + (self.field.dim,))
         self._filter_values(self.field.norm, values)
 
-        quiver_args = [points1, points2,
-                       np.transpose(values[..., self.axis1]),
-                       np.transpose(values[..., self.axis2])]
+        quiver_args = [
+            points1,
+            points2,
+            np.transpose(values[..., self.axis1]),
+            np.transpose(values[..., self.axis2]),
+        ]
 
         if use_color:
             if color_field is None:
                 if self.field.dim == 2:
-                    warnings.warn('Automatic coloring is only supported for 3d'
-                                  f' fields. Ignoring "{use_color=}".')
+                    warnings.warn(
+                        "Automatic coloring is only supported for 3d"
+                        f' fields. Ignoring "{use_color=}".'
+                    )
                     use_color = False
                 else:
                     color_field = getattr(self.field, self.planeaxis)
             if use_color:
                 color_plane = color_field.plane(**self.planeaxis_point)
                 if color_plane.mesh != self.field.mesh:
-                    color_plane = df.Field(self.field.mesh, dim=1,
-                                           value=color_plane)
-                quiver_args.append(color_plane.array.reshape(
-                    self.n).transpose())
+                    color_plane = df.Field(self.field.mesh, dim=1, value=color_plane)
+                quiver_args.append(color_plane.array.reshape(self.n).transpose())
 
-        cp = ax.quiver(*quiver_args, pivot='mid', **kwargs)
+        cp = ax.quiver(*quiver_args, pivot="mid", **kwargs)
 
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
         if colorbar and use_color:
             cbar = plt.colorbar(cp, ax=ax)
             if colorbar_label is not None:
@@ -628,15 +637,17 @@ class MplField(Mpl):
 
         self._savefig(filename)
 
-    def contour(self,
-                ax=None,
-                figsize=None,
-                multiplier=None,
-                filter_field=None,
-                colorbar=True,
-                colorbar_label=None,
-                filename=None,
-                **kwargs):
+    def contour(
+        self,
+        ax=None,
+        figsize=None,
+        multiplier=None,
+        filter_field=None,
+        colorbar=True,
+        colorbar_label=None,
+        filename=None,
+        **kwargs,
+    ):
         r"""Contour line plot.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
@@ -736,7 +747,7 @@ class MplField(Mpl):
 
         """
         if self.field.dim != 1:
-            msg = f'Cannot plot dim={self.field.dim} field.'
+            msg = f"Cannot plot dim={self.field.dim} field."
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
@@ -750,7 +761,7 @@ class MplField(Mpl):
         self._filter_values(filter_field, values)
 
         cp = ax.contour(points1, points2, np.transpose(values), **kwargs)
-        ax.set_aspect('equal')
+        ax.set_aspect("equal")
 
         if colorbar:
             cbar = plt.colorbar(cp, ax=ax)
@@ -762,15 +773,14 @@ class MplField(Mpl):
         self._savefig(filename)
 
     def _setup_multiplier(self, multiplier):
-        return (self.field.mesh.region.multiplier
-                if multiplier is None else multiplier)
+        return self.field.mesh.region.multiplier if multiplier is None else multiplier
 
     def _filter_values(self, filter_field, values):
         if filter_field is None:
             return values
 
         if filter_field.dim != 1:
-            msg = f'Cannot use {filter_field.dim=}.'
+            msg = f"Cannot use {filter_field.dim=}."
             raise ValueError(msg)
 
         filter_plane = filter_field.plane(**self.planeaxis_point)
@@ -780,8 +790,10 @@ class MplField(Mpl):
         values[filter_plane.array.reshape(self.n) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}'
-                rf'{self.field.mesh.attributes["unit"]})')
+        unit = (
+            rf" ({uu.rsi_prefixes[multiplier]}"
+            rf'{self.field.mesh.attributes["unit"]})'
+        )
         ax.set_xlabel(dfu.raxesdict[self.axis1] + unit)
         ax.set_ylabel(dfu.raxesdict[self.axis2] + unit)
 
@@ -795,14 +807,12 @@ class MplField(Mpl):
         pmin = np.divide(self.field.mesh.region.pmin, multiplier)
         pmax = np.divide(self.field.mesh.region.pmax, multiplier)
 
-        return [pmin[self.axis1], pmax[self.axis1],
-                pmin[self.axis2], pmax[self.axis2]]
+        return [pmin[self.axis1], pmax[self.axis1], pmin[self.axis2], pmax[self.axis2]]
 
     def __dir__(self):
         dirlist = dir(self.__class__)
 
-        for attr in ['vector'] if self.field.dim == 1 else ['scalar',
-                                                            'contour']:
+        for attr in ["vector"] if self.field.dim == 1 else ["scalar", "contour"]:
             dirlist.remove(attr)
 
         return dirlist

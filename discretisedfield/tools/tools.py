@@ -7,7 +7,7 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
-def topological_charge_density(field, /, method='continuous'):
+def topological_charge_density(field, /, method="continuous"):
     r"""Topological charge density.
 
     This method computes the topological charge density for a vector field
@@ -101,52 +101,55 @@ def topological_charge_density(field, /, method='continuous'):
 
     """
     if field.dim != 3:
-        msg = (f'Cannot compute topological charge density '
-               f'for {field.dim=} field.')
+        msg = f"Cannot compute topological charge density for {field.dim=} field."
         raise ValueError(msg)
 
-    if not field.mesh.attributes['isplane']:
-        msg = ('The field must be sliced before the topological '
-               'charge density can be computed.')
+    if not field.mesh.attributes["isplane"]:
+        msg = (
+            "The field must be sliced before the topological "
+            "charge density can be computed."
+        )
         raise ValueError(msg)
 
-    if method not in ['continuous', 'berg-luescher']:
-        msg = 'Method can be either continuous or berg-luescher'
+    if method not in ["continuous", "berg-luescher"]:
+        msg = "Method can be either continuous or berg-luescher"
         raise ValueError(msg)
 
-    axis1 = field.mesh.attributes['axis1']
-    axis2 = field.mesh.attributes['axis2']
+    axis1 = field.mesh.attributes["axis1"]
+    axis2 = field.mesh.attributes["axis2"]
     of = field.orientation  # unit field - orientation field
 
-    if method == 'continuous':
-        return 1/(4*np.pi) * of @ (of.derivative(dfu.raxesdict[axis1]) &
-                                   of.derivative(dfu.raxesdict[axis2]))
+    if method == "continuous":
+        return (
+            1
+            / (4 * np.pi)
+            * of
+            @ (
+                of.derivative(dfu.raxesdict[axis1])
+                & of.derivative(dfu.raxesdict[axis2])
+            )
+        )
 
-    elif method == 'berg-luescher':
+    elif method == "berg-luescher":
         q = df.Field(field.mesh, dim=1)
 
         # Area of a single triangle
         area = 0.5 * field.mesh.cell[axis1] * field.mesh.cell[axis2]
 
-        for i, j in itertools.product(range(of.mesh.n[axis1]),
-                                      range(of.mesh.n[axis2])):
+        for i, j in itertools.product(range(of.mesh.n[axis1]), range(of.mesh.n[axis2])):
             index = dfu.assemble_index(0, 3, {axis1: i, axis2: j})
             v0 = of.array[index]
 
             # Extract 4 neighbouring vectors (if they exist)
             v1 = v2 = v3 = v4 = None
             if i + 1 < of.mesh.n[axis1]:
-                v1 = of.array[dfu.assemble_index(0, 3, {axis1: i+1,
-                                                        axis2: j})]
+                v1 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j})]
             if j + 1 < of.mesh.n[axis2]:
-                v2 = of.array[dfu.assemble_index(0, 3, {axis1: i,
-                                                        axis2: j+1})]
+                v2 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j + 1})]
             if i - 1 >= 0:
-                v3 = of.array[dfu.assemble_index(0, 3, {axis1: i-1,
-                                                        axis2: j})]
+                v3 = of.array[dfu.assemble_index(0, 3, {axis1: i - 1, axis2: j})]
             if j - 1 >= 0:
-                v4 = of.array[dfu.assemble_index(0, 3, {axis1: i,
-                                                        axis2: j-1})]
+                v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j - 1})]
 
             charge = 0
             triangle_count = 0
@@ -176,7 +179,7 @@ def topological_charge_density(field, /, method='continuous'):
         return q
 
 
-def topological_charge(field, /, method='continuous', absolute=False):
+def topological_charge(field, /, method="continuous", absolute=False):
     """Topological charge.
 
     This function computes topological charge for a vector field (``dim=3``).
@@ -267,41 +270,37 @@ def topological_charge(field, /, method='continuous', absolute=False):
 
     """
     if field.dim != 3:
-        msg = f'Cannot compute topological charge for {field.dim=} field.'
+        msg = f"Cannot compute topological charge for {field.dim=} field."
         raise ValueError(msg)
 
-    if not field.mesh.attributes['isplane']:
-        msg = ('The field must be sliced before the '
-               'topological charge can be computed.')
+    if not field.mesh.attributes["isplane"]:
+        msg = "The field must be sliced before the topological charge can be computed."
         raise ValueError(msg)
 
-    if method not in ['continuous', 'berg-luescher']:
-        msg = 'Method can be either continuous or berg-luescher'
+    if method not in ["continuous", "berg-luescher"]:
+        msg = "Method can be either continuous or berg-luescher"
         raise ValueError(msg)
 
-    if method == 'continuous':
+    if method == "continuous":
         q = topological_charge_density(field, method=method)
         if absolute:
             return df.integral(abs(q) * abs(df.dS))
         else:
             return df.integral(q * abs(df.dS))
 
-    elif method == 'berg-luescher':
-        axis1 = field.mesh.attributes['axis1']
-        axis2 = field.mesh.attributes['axis2']
+    elif method == "berg-luescher":
+        axis1 = field.mesh.attributes["axis1"]
+        axis2 = field.mesh.attributes["axis2"]
         of = field.orientation
 
         topological_charge = 0
-        for i, j in itertools.product(range(of.mesh.n[axis1] - 1),
-                                      range(of.mesh.n[axis2] - 1)):
-            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i,
-                                                    axis2: j})]
-            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1,
-                                                    axis2: j})]
-            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1,
-                                                    axis2: j + 1})]
-            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i,
-                                                    axis2: j + 1})]
+        for i, j in itertools.product(
+            range(of.mesh.n[axis1] - 1), range(of.mesh.n[axis2] - 1)
+        ):
+            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j})]
+            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j})]
+            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j + 1})]
+            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j + 1})]
 
             triangle1 = dfu.bergluescher_angle(v1, v2, v4)
             triangle2 = dfu.bergluescher_angle(v2, v3, v4)
@@ -366,18 +365,17 @@ def emergent_magnetic_field(field):
 
     """
     if field.dim != 3:
-        msg = (f'Cannot compute emergent magnetic field '
-               f'for {field.dim=} field.')
+        msg = f"Cannot compute emergent magnetic field for {field.dim=} field."
         raise ValueError(msg)
 
-    Fx = field @ (field.derivative('y') & field.derivative('z'))
-    Fy = field @ (field.derivative('z') & field.derivative('x'))
-    Fz = field @ (field.derivative('x') & field.derivative('y'))
+    Fx = field @ (field.derivative("y") & field.derivative("z"))
+    Fy = field @ (field.derivative("z") & field.derivative("x"))
+    Fz = field @ (field.derivative("x") & field.derivative("y"))
 
     return Fx << Fy << Fz
 
 
-def neigbouring_cell_angle(field, /, direction, units='rad'):
+def neigbouring_cell_angle(field, /, direction, units="rad"):
     """Calculate angles between neighbouring cells.
 
     This method calculates the angle between magnetic moments in all
@@ -436,36 +434,34 @@ def neigbouring_cell_angle(field, /, direction, units='rad'):
 
     """
     if not field.dim == 3:
-        msg = f'Cannot compute spin angles for a field with {field.dim=}.'
+        msg = f"Cannot compute spin angles for a field with {field.dim=}."
         raise ValueError(msg)
 
     if direction not in dfu.axesdict.keys():
-        msg = f'Cannot compute spin angles for direction {direction=}.'
+        msg = f"Cannot compute spin angles for direction {direction=}."
         raise ValueError(msg)
 
-    if units not in ['rad', 'deg']:
-        msg = f'Units {units=} not supported.'
+    if units not in ["rad", "deg"]:
+        msg = f"Units {units=} not supported."
         raise ValueError(msg)
 
     # Orientation field
     fo = field.orientation
 
-    if direction == 'x':
-        dot_product = np.einsum('...j,...j->...',
-                                fo.array[:-1, ...],
-                                fo.array[1:, ...])
+    if direction == "x":
+        dot_product = np.einsum("...j,...j->...", fo.array[:-1, ...], fo.array[1:, ...])
         delta_p = np.divide((field.mesh.dx, 0, 0), 2)
 
-    elif direction == 'y':
-        dot_product = np.einsum('...j,...j->...',
-                                fo.array[:, :-1, ...],
-                                fo.array[:, 1:, ...])
+    elif direction == "y":
+        dot_product = np.einsum(
+            "...j,...j->...", fo.array[:, :-1, ...], fo.array[:, 1:, ...]
+        )
         delta_p = np.divide((0, field.mesh.dy, 0), 2)
 
-    elif direction == 'z':
-        dot_product = np.einsum('...j,...j->...',
-                                fo.array[..., :-1, :],
-                                fo.array[..., 1:, :])
+    elif direction == "z":
+        dot_product = np.einsum(
+            "...j,...j->...", fo.array[..., :-1, :], fo.array[..., 1:, :]
+        )
         delta_p = np.divide((0, 0, field.mesh.dz), 2)
 
     # Define new mesh.
@@ -474,13 +470,13 @@ def neigbouring_cell_angle(field, /, direction, units='rad'):
     mesh = df.Mesh(p1=p1, p2=p2, cell=field.mesh.cell)
 
     angles = np.arccos(np.clip(dot_product, -1.0, 1.0))
-    if units == 'deg':
+    if units == "deg":
         angles = np.degrees(angles)
 
     return df.Field(mesh, dim=1, value=angles.reshape(*angles.shape, 1))
 
 
-def max_neigbouring_cell_angle(field, /, units='rad'):
+def max_neigbouring_cell_angle(field, /, units="rad"):
     """Calculate maximum angle between neighbouring cells in all directions.
 
     This function computes an angle between a cell and all its six neighbouring
@@ -525,9 +521,9 @@ def max_neigbouring_cell_angle(field, /, units='rad'):
     Field(...)
 
     """
-    x_angles = neigbouring_cell_angle(field, 'x', units=units).array.squeeze()
-    y_angles = neigbouring_cell_angle(field, 'y', units=units).array.squeeze()
-    z_angles = neigbouring_cell_angle(field, 'z', units=units).array.squeeze()
+    x_angles = neigbouring_cell_angle(field, "x", units=units).array.squeeze()
+    y_angles = neigbouring_cell_angle(field, "y", units=units).array.squeeze()
+    z_angles = neigbouring_cell_angle(field, "z", units=units).array.squeeze()
 
     max_angles = np.zeros((*field.array.shape[:-1], 6))
     max_angles[1:, :, :, 0] = x_angles
@@ -541,8 +537,7 @@ def max_neigbouring_cell_angle(field, /, units='rad'):
     return df.Field(field.mesh, dim=1, value=max_angles)
 
 
-def count_large_cell_angle_regions(field, /, min_angle,
-                                   direction=None, units='rad'):
+def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="rad"):
     """Count regions with large angles between neighbouring cells.
 
     This method counts regions, where the angle between neighbouring
@@ -620,13 +615,14 @@ def count_large_cell_angle_regions(field, /, min_angle,
     if direction is None:
         cell_angles = max_neigbouring_cell_angle(field, units=units).array
     else:
-        cell_angles = neigbouring_cell_angle(field, direction=direction,
-                                             units=units).array
+        cell_angles = neigbouring_cell_angle(
+            field, direction=direction, units=units
+        ).array
     _, num_features = ndimage.label(cell_angles > min_angle)
     return num_features
 
 
-def count_bps(field, /, direction='x'):
+def count_bps(field, /, direction="x"):
     """Bloch point count and arrangement.
 
     Function to obtain information about Bloch point number and arrangement.
@@ -667,8 +663,8 @@ def count_bps(field, /, direction='x'):
     """
     F_div = emergent_magnetic_field(field.orientation).div
 
-    d_vals = {'x': df.dx, 'y': df.dy, 'z': df.dz}
-    averaged = str.replace('xyz', direction, '')
+    d_vals = {"x": df.dx, "y": df.dy, "z": df.dz}
+    averaged = str.replace("xyz", direction, "")
     dF = d_vals[averaged[0]] * d_vals[averaged[1]]
     dl = d_vals[direction]
 
@@ -678,9 +674,9 @@ def count_bps(field, /, direction='x'):
     bp_count = bp_number[1:] - bp_number[:-1]
 
     results = {}
-    results['bp_number'] = abs(bp_count).sum()
-    results['bp_number_hh'] = abs(bp_count[bp_count < 0].sum())
-    results['bp_number_tt'] = bp_count[bp_count > 0].sum()
+    results["bp_number"] = abs(bp_count).sum()
+    results["bp_number_hh"] = abs(bp_count[bp_count < 0].sum())
+    results["bp_number_tt"] = bp_count[bp_count > 0].sum()
 
     # pattern = list([<local BP_count>, <repetitions>])
     pattern = [[bp_number[0], 1]]
@@ -689,7 +685,7 @@ def count_bps(field, /, direction='x'):
             pattern[-1][1] += 1
         else:
             pattern.append([q_val, 1])
-    results[f'bp_pattern_{direction}'] = str(pattern)
+    results[f"bp_pattern_{direction}"] = str(pattern)
 
     return results
 
@@ -716,13 +712,17 @@ def _demag_tensor_field_based(mesh):
         Demag tensor in Fourier space.
 
     """
-    p1 = [(-i + 1) * j - j/2 for i, j in zip(mesh.n, mesh.cell)]
-    p2 = [(i - 1) * j + j/2 for i, j in zip(mesh.n, mesh.cell)]
-    n = [2*i - 1 for i in mesh.n]
+    p1 = [(-i + 1) * j - j / 2 for i, j in zip(mesh.n, mesh.cell)]
+    p2 = [(i - 1) * j + j / 2 for i, j in zip(mesh.n, mesh.cell)]
+    n = [2 * i - 1 for i in mesh.n]
     mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
 
-    return df.Field(mesh_new, dim=6, value=_N(mesh_new),
-                    components=['xx', 'yy', 'zz', 'xy', 'xz', 'yz']).fftn
+    return df.Field(
+        mesh_new,
+        dim=6,
+        value=_N(mesh_new),
+        components=["xx", "yy", "zz", "xy", "xz", "yz"],
+    ).fftn
 
 
 def demag_tensor(mesh):
@@ -744,23 +744,33 @@ def demag_tensor(mesh):
     discretisedfield.Field
         Demag tensor in Fourier space.
     """
-    x = np.linspace((-mesh.n[0] + 1) * mesh.cell[0],
-                    (mesh.n[0] - 1) * mesh.cell[0], mesh.n[0] * 2 - 1)
-    y = np.linspace((-mesh.n[1] + 1) * mesh.cell[1],
-                    (mesh.n[1] - 1) * mesh.cell[1], mesh.n[1] * 2 - 1)
-    z = np.linspace((-mesh.n[2] + 1) * mesh.cell[2],
-                    (mesh.n[2] - 1) * mesh.cell[2], mesh.n[2] * 2 - 1)
-    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    x = np.linspace(
+        (-mesh.n[0] + 1) * mesh.cell[0],
+        (mesh.n[0] - 1) * mesh.cell[0],
+        mesh.n[0] * 2 - 1,
+    )
+    y = np.linspace(
+        (-mesh.n[1] + 1) * mesh.cell[1],
+        (mesh.n[1] - 1) * mesh.cell[1],
+        mesh.n[1] * 2 - 1,
+    )
+    z = np.linspace(
+        (-mesh.n[2] + 1) * mesh.cell[2],
+        (mesh.n[2] - 1) * mesh.cell[2],
+        mesh.n[2] * 2 - 1,
+    )
+    xx, yy, zz = np.meshgrid(x, y, z, indexing="ij")
 
     values = np.stack(_N(mesh)((xx, yy, zz)), axis=3)
 
-    p1 = [(-i + 1) * j - j/2 for i, j in zip(mesh.n, mesh.cell)]
-    p2 = [(i - 1) * j + j/2 for i, j in zip(mesh.n, mesh.cell)]
-    n = [2*i - 1 for i in mesh.n]
+    p1 = [(-i + 1) * j - j / 2 for i, j in zip(mesh.n, mesh.cell)]
+    p2 = [(i - 1) * j + j / 2 for i, j in zip(mesh.n, mesh.cell)]
+    n = [2 * i - 1 for i in mesh.n]
     mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
 
-    return df.Field(mesh_new, dim=6, value=values,
-                    components=['xx', 'yy', 'zz', 'xy', 'xz', 'yz']).fftn
+    return df.Field(
+        mesh_new, dim=6, value=values, components=["xx", "yy", "zz", "xy", "xz", "yz"]
+    ).fftn
 
 
 def demag_field(m, tensor):
@@ -782,9 +792,10 @@ def demag_field(m, tensor):
     discretisedfield.Field
         Demagnetisation field
     """
-    m_pad = m.pad({d: (0, m.mesh.n[i] - 1)
-                   for d, i in zip(['x', 'y', 'z'], range(3))},
-                  mode='constant')
+    m_pad = m.pad(
+        {d: (0, m.mesh.n[i] - 1) for d, i in zip(["x", "y", "z"], range(3))},
+        mode="constant",
+    )
     m_fft = m_pad.fftn
 
     hx_fft = tensor.xx * m_fft.x + tensor.xy * m_fft.y + tensor.xz * m_fft.z
@@ -792,11 +803,11 @@ def demag_field(m, tensor):
     hz_fft = tensor.xz * m_fft.x + tensor.yz * m_fft.y + tensor.zz * m_fft.z
 
     H = (hx_fft << hy_fft << hz_fft).ifftn
-    return df.Field(m.mesh, dim=3,
-                    value=H.array[m.mesh.n[0] - 1:,
-                                  m.mesh.n[1] - 1:,
-                                  m.mesh.n[2] - 1:,
-                                  :]).real
+    return df.Field(
+        m.mesh,
+        dim=3,
+        value=H.array[m.mesh.n[0] - 1 :, m.mesh.n[1] - 1 :, m.mesh.n[2] - 1 :, :],
+    ).real
 
 
 def _f(x, y, z):
@@ -812,18 +823,34 @@ def _f(x, y, z):
     y2 = y**2
     z2 = z**2
     # the total fraction goes to zero when the denominator is zero
-    return (abs(y) / 2 * (z2 - x2)
-            * np.arcsinh(np.divide(abs(y), np.sqrt(x2 + z2),
-                                   out=np.zeros_like(x), where=(x2 + z2) != 0))
-            + abs(z) / 2 * (y2 - x2)
-            * np.arcsinh(np.divide(abs(z), np.sqrt(x2 + y2),
-                                   out=np.zeros_like(x), where=(x2 + y2) != 0))
-            - abs(x * y * z)
-            * np.arctan(np.divide(abs(y * z),
-                                  abs(x) * np.sqrt(x2 + y2 + z2),
-                                  out=np.zeros_like(x),
-                                  where=x != 0))
-            + 1/6 * (2 * x2 - y2 - z2) * np.sqrt(x2 + y2 + z2))
+    return (
+        abs(y)
+        / 2
+        * (z2 - x2)
+        * np.arcsinh(
+            np.divide(
+                abs(y), np.sqrt(x2 + z2), out=np.zeros_like(x), where=(x2 + z2) != 0
+            )
+        )
+        + abs(z)
+        / 2
+        * (y2 - x2)
+        * np.arcsinh(
+            np.divide(
+                abs(z), np.sqrt(x2 + y2), out=np.zeros_like(x), where=(x2 + y2) != 0
+            )
+        )
+        - abs(x * y * z)
+        * np.arctan(
+            np.divide(
+                abs(y * z),
+                abs(x) * np.sqrt(x2 + y2 + z2),
+                out=np.zeros_like(x),
+                where=x != 0,
+            )
+        )
+        + 1 / 6 * (2 * x2 - y2 - z2) * np.sqrt(x2 + y2 + z2)
+    )
 
 
 def _g(x, y, z):
@@ -839,46 +866,75 @@ def _g(x, y, z):
     y2 = y**2
     z2 = z**2
     # the total fraction goes to zero when the denominator is zero
-    return (x * y * z * np.arcsinh(np.divide(z, np.sqrt(x2 + y2),
-                                             out=np.zeros_like(x),
-                                             where=(x2 + y2) != 0))
-            + y / 6 * (3 * z2 - y2)
-            * np.arcsinh(np.divide(x, np.sqrt(y2 + z2),
-                                   out=np.zeros_like(x), where=(y2 + z2) != 0))
-            + x / 6 * (3 * z2 - x2)
-            * np.arcsinh(np.divide(y, np.sqrt(x2 + z2),
-                                   out=np.zeros_like(x), where=(x2 + z2) != 0))
-            - z**3 / 6
-            * np.arctan(np.divide(x * y, z * np.sqrt(x2 + y2 + z2),
-                                  out=np.zeros_like(x), where=z != 0))
-            - z * y**2 / 2
-            * np.arctan(np.divide(x * z, y * np.sqrt(x2 + y2 + z2),
-                                  out=np.zeros_like(x), where=y != 0))
-            - z * x**2 / 2
-            * np.arctan(np.divide(y * z, x * np.sqrt(x2 + y2 + z2),
-                                  out=np.zeros_like(x), where=x != 0))
-            - x * y * np.sqrt(x2 + y2 + z2) / 3)
+    return (
+        x
+        * y
+        * z
+        * np.arcsinh(
+            np.divide(z, np.sqrt(x2 + y2), out=np.zeros_like(x), where=(x2 + y2) != 0)
+        )
+        + y
+        / 6
+        * (3 * z2 - y2)
+        * np.arcsinh(
+            np.divide(x, np.sqrt(y2 + z2), out=np.zeros_like(x), where=(y2 + z2) != 0)
+        )
+        + x
+        / 6
+        * (3 * z2 - x2)
+        * np.arcsinh(
+            np.divide(y, np.sqrt(x2 + z2), out=np.zeros_like(x), where=(x2 + z2) != 0)
+        )
+        - z**3
+        / 6
+        * np.arctan(
+            np.divide(
+                x * y, z * np.sqrt(x2 + y2 + z2), out=np.zeros_like(x), where=z != 0
+            )
+        )
+        - z
+        * y**2
+        / 2
+        * np.arctan(
+            np.divide(
+                x * z, y * np.sqrt(x2 + y2 + z2), out=np.zeros_like(x), where=y != 0
+            )
+        )
+        - z
+        * x**2
+        / 2
+        * np.arctan(
+            np.divide(
+                y * z, x * np.sqrt(x2 + y2 + z2), out=np.zeros_like(x), where=x != 0
+            )
+        )
+        - x * y * np.sqrt(x2 + y2 + z2) / 3
+    )
 
 
 def _N_element(x, y, z, mesh, function):
     """Helper function to compute the demag tensor."""
     dx, dy, dz = mesh.cell
-    value = 0.
+    value = 0.0
     for i in itertools.product([0, 1], repeat=6):
-        value += (-1)**np.sum(i) * function(x + (i[0] - i[3]) * dx,
-                                            y + (i[1] - i[4]) * dy,
-                                            z + (i[2] - i[5]) * dz)
-    return - value / (4 * np.pi * np.prod(mesh.cell))
+        value += (-1) ** np.sum(i) * function(
+            x + (i[0] - i[3]) * dx, y + (i[1] - i[4]) * dy, z + (i[2] - i[5]) * dz
+        )
+    return -value / (4 * np.pi * np.prod(mesh.cell))
 
 
 def _N(mesh):
     """Helper function to compute the demag tensor."""
+
     def _inner(p):
         x, y, z = p
-        return (_N_element(x, y, z, mesh, _f),  # Nxx
-                _N_element(y, z, x, mesh, _f),  # Nyy
-                _N_element(z, x, y, mesh, _f),  # Nzz
-                _N_element(x, y, z, mesh, _g),  # Nxy
-                _N_element(x, z, y, mesh, _g),  # Nxz
-                _N_element(y, z, x, mesh, _g))  # Nyz
+        return (
+            _N_element(x, y, z, mesh, _f),  # Nxx
+            _N_element(y, z, x, mesh, _f),  # Nyy
+            _N_element(z, x, y, mesh, _f),  # Nzz
+            _N_element(x, y, z, mesh, _g),  # Nxy
+            _N_element(x, z, y, mesh, _g),  # Nxz
+            _N_element(y, z, x, mesh, _g),
+        )  # Nyz
+
     return _inner

@@ -10,8 +10,10 @@ import ubermagutil.units as uu
 import discretisedfield.util as dfu
 
 
-@ts.typesystem(dim=ts.Scalar(expected_type=int, positive=True, const=True),
-               n=ts.Scalar(expected_type=int, positive=True, const=True))
+@ts.typesystem(
+    dim=ts.Scalar(expected_type=int, positive=True, const=True),
+    n=ts.Scalar(expected_type=int, positive=True, const=True),
+)
 class Line:
     """Line class.
 
@@ -88,10 +90,13 @@ class Line:
     3
 
     """
+
     def __init__(self, points, values, point_columns=None, value_columns=None):
         if len(points) != len(values):
-            msg = (f'The number of points ({len(points)}) must be the same '
-                   f'as the number of values ({len(values)}).')
+            msg = (
+                f"The number of points ({len(points)}) must be the same "
+                f"as the number of values ({len(values)})."
+            )
             raise ValueError(msg)
 
         # Set the dimension (const descriptor).
@@ -107,7 +112,7 @@ class Line:
         values = np.array(values).reshape((points.shape[0], -1))
 
         self.data = pd.DataFrame()
-        self.data['r'] = np.linalg.norm(points - points[0, :], axis=1)
+        self.data["r"] = np.linalg.norm(points - points[0, :], axis=1)
         for i, column in enumerate(self.point_columns):
             self.data[column] = points[..., i]
         for i, column in zip(range(values.shape[-1]), self.value_columns):
@@ -161,20 +166,18 @@ class Line:
         Index(['r', 'p0', 'p1', 'p2', 'v'], dtype='object')
 
         """
-        if not hasattr(self, '_point_columns'):
-            return [f'p{i}' for i in dfu.axesdict.keys()]
+        if not hasattr(self, "_point_columns"):
+            return [f"p{i}" for i in dfu.axesdict.keys()]
         else:
             return self._point_columns
 
     @point_columns.setter
     def point_columns(self, val):
         if len(val) != 3:
-            msg = (f'Cannot change column names with a '
-                   f'list of lenght {len(val)}.')
+            msg = f"Cannot change column names with a list of lenght {len(val)}."
             raise ValueError(msg)
 
-        self.data = self.data.rename(dict(zip(self.point_columns, val)),
-                                     axis=1)
+        self.data = self.data.rename(dict(zip(self.point_columns, val)), axis=1)
         self._point_columns = val
 
     @property
@@ -220,23 +223,21 @@ class Line:
         Index(['r', 'px', 'py', 'pz', 'my_interesting_value'], dtype='object')
 
         """
-        if not hasattr(self, '_value_columns'):
+        if not hasattr(self, "_value_columns"):
             if self.dim == 1:
-                return ['v']
+                return ["v"]
             else:
-                return [f'v{i}' for i in list(dfu.axesdict.keys())[:self.dim]]
+                return [f"v{i}" for i in list(dfu.axesdict.keys())[: self.dim]]
         else:
             return self._value_columns
 
     @value_columns.setter
     def value_columns(self, val):
         if len(val) != self.dim:
-            msg = (f'Cannot change column names with a '
-                   f'list of lenght {len(val)}.')
+            msg = f"Cannot change column names with a list of lenght {len(val)}."
             raise ValueError(msg)
 
-        self.data = self.data.rename(dict(zip(self.value_columns, val)),
-                                     axis=1)
+        self.data = self.data.rename(dict(zip(self.value_columns, val)), axis=1)
         self._value_columns = val
 
     @property
@@ -265,7 +266,7 @@ class Line:
         4.0
 
         """
-        return self.data['r'].iloc[-1]
+        return self.data["r"].iloc[-1]
 
     def __repr__(self):
         """Representation string.
@@ -291,8 +292,16 @@ class Line:
         """
         return repr(self.data)
 
-    def mpl(self, ax=None, figsize=None, yaxis=None, xlim=None,
-            multiplier=None, filename=None, **kwargs):
+    def mpl(
+        self,
+        ax=None,
+        figsize=None,
+        yaxis=None,
+        xlim=None,
+        multiplier=None,
+        filename=None,
+        **kwargs,
+    ):
         """Line values plot.
 
         This method plots the values (scalar or individual components) as a
@@ -372,11 +381,15 @@ class Line:
             yaxis = self.value_columns
 
         for i in yaxis:
-            ax.plot(np.divide(self.data['r'].to_numpy(), multiplier),
-                    self.data[i], label=i, **kwargs)
+            ax.plot(
+                np.divide(self.data["r"].to_numpy(), multiplier),
+                self.data[i],
+                label=i,
+                **kwargs,
+            )
 
-        ax.set_xlabel(f'r ({uu.rsi_prefixes[multiplier]}m)')
-        ax.set_ylabel('value')
+        ax.set_xlabel(f"r ({uu.rsi_prefixes[multiplier]}m)")
+        ax.set_ylabel("value")
 
         ax.grid(True)  # grid is turned off by default for field plots
         ax.legend()
@@ -385,7 +398,7 @@ class Line:
             plt.xlim(*np.divide(xlim, multiplier))
 
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0)
+            plt.savefig(filename, bbox_inches="tight", pad_inches=0)
 
     def slider(self, multiplier=None, **kwargs):
         """Slider for interactive plotting.
@@ -431,15 +444,17 @@ class Line:
         if multiplier is None:
             multiplier = uu.si_multiplier(self.length)
 
-        values = self.data['r'].to_numpy()
-        labels = np.around(values/multiplier, decimals=2)
+        values = self.data["r"].to_numpy()
+        labels = np.around(values / multiplier, decimals=2)
         options = list(zip(labels, values))
-        slider_description = f'r ({uu.rsi_prefixes[multiplier]}m):'
+        slider_description = f"r ({uu.rsi_prefixes[multiplier]}m):"
 
-        return ipywidgets.SelectionRangeSlider(options=options,
-                                               value=(values[0], values[-1]),
-                                               description=slider_description,
-                                               **kwargs)
+        return ipywidgets.SelectionRangeSlider(
+            options=options,
+            value=(values[0], values[-1]),
+            description=slider_description,
+            **kwargs,
+        )
 
     def selector(self, **kwargs):
         """Selection list for interactive plotting.
@@ -469,9 +484,11 @@ class Line:
         SelectMultiple(...)
 
         """
-        return ipywidgets.SelectMultiple(options=self.value_columns,
-                                         value=self.value_columns,
-                                         rows=3,
-                                         description='y-axis:',
-                                         disabled=False,
-                                         **kwargs)
+        return ipywidgets.SelectMultiple(
+            options=self.value_columns,
+            value=self.value_columns,
+            rows=3,
+            description="y-axis:",
+            disabled=False,
+            **kwargs,
+        )

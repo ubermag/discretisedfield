@@ -32,10 +32,10 @@ class Mpl(metaclass=abc.ABCMeta):
 
     def _savefig(self, filename):
         if filename is not None:
-            plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
+            plt.savefig(filename, bbox_inches="tight", pad_inches=0.02)
 
 
-def add_colorwheel(ax, width=1, height=1, loc='lower right', **kwargs):
+def add_colorwheel(ax, width=1, height=1, loc="lower right", **kwargs):
     """Colorwheel for hsv plots.
 
     Creates colorwheel on new inset axis. See
@@ -63,8 +63,7 @@ def add_colorwheel(ax, width=1, height=1, loc='lower right', **kwargs):
     theta = np.arctan2(Y, X)
     r = np.sqrt(X**2 + Y**2)
 
-    rgb = dfu.hls2rgb(hue=theta, lightness=r,
-                      lightness_clim=[0, 1 / np.sqrt(2)])
+    rgb = dfu.hls2rgb(hue=theta, lightness=r, lightness_clim=[0, 1 / np.sqrt(2)])
 
     theta = theta.reshape((n, n, 1))
 
@@ -76,7 +75,8 @@ def add_colorwheel(ax, width=1, height=1, loc='lower right', **kwargs):
                 rgba[i, j, 3] = 1
 
     ax_ins = mpl_toolkits.axes_grid1.inset_locator.inset_axes(
-        ax, width=width, height=height, loc=loc, **kwargs)
+        ax, width=width, height=height, loc=loc, **kwargs
+    )
     ax_ins.imshow(rgba[:, ::-1, :])
-    ax_ins.axis('off')
+    ax_ins.axis("off")
     return ax_ins

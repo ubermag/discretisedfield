@@ -8,14 +8,17 @@ class MplRegion(Mpl):
     def __init__(self, region):
         self.region = region
 
-    def __call__(self, *,
-                 ax=None,
-                 figsize=None,
-                 multiplier=None,
-                 color=dfu.cp_hex[0],
-                 box_aspect='auto',
-                 filename=None,
-                 **kwargs):
+    def __call__(
+        self,
+        *,
+        ax=None,
+        figsize=None,
+        multiplier=None,
+        color=dfu.cp_hex[0],
+        box_aspect="auto",
+        filename=None,
+        **kwargs,
+    ):
         r"""``matplotlib`` plot.
 
         If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -82,28 +85,28 @@ class MplRegion(Mpl):
         >>> region.mpl()
 
         """
-        ax = self._setup_axes(ax, figsize, projection='3d')
+        ax = self._setup_axes(ax, figsize, projection="3d")
 
         multiplier = self._setup_multiplier(multiplier)
 
-        kwargs.setdefault('color', color)
+        kwargs.setdefault("color", color)
 
         rescaled_region = self.region / multiplier
 
-        if box_aspect == 'auto':
+        if box_aspect == "auto":
             ax.set_box_aspect(rescaled_region.edges)
         elif box_aspect is not None:
             ax.set_box_aspect(box_aspect)
 
-        dfu.plot_box(ax=ax,
-                     pmin=rescaled_region.pmin,
-                     pmax=rescaled_region.pmax, **kwargs)
+        dfu.plot_box(
+            ax=ax, pmin=rescaled_region.pmin, pmax=rescaled_region.pmax, **kwargs
+        )
 
         self._axis_labels(ax, multiplier)
 
         # Overwrite default plotting parameters.
-        ax.set_facecolor('#ffffff')  # white face color
-        ax.tick_params(axis='both', which='major', pad=0)  # no pad for ticks
+        ax.set_facecolor("#ffffff")  # white face color
+        ax.tick_params(axis="both", which="major", pad=0)  # no pad for ticks
 
         self._savefig(filename)
 
@@ -111,5 +114,5 @@ class MplRegion(Mpl):
         return self.region.multiplier if multiplier is None else multiplier
 
     def _axis_labels(self, ax, multiplier):
-        unit = (rf' ({uu.rsi_prefixes[multiplier]}{self.region.unit})')
-        ax.set(xlabel=f'x {unit}', ylabel=f'y {unit}', zlabel=f'z {unit}')
+        unit = rf" ({uu.rsi_prefixes[multiplier]}{self.region.unit})"
+        ax.set(xlabel=f"x {unit}", ylabel=f"y {unit}", zlabel=f"z {unit}")

@@ -9,11 +9,7 @@ class K3dRegion:
     def __init__(self, region):
         self.region = region
 
-    def __call__(self, *,
-                 plot=None,
-                 color=dfu.cp_int[0],
-                 multiplier=None,
-                 **kwargs):
+    def __call__(self, *, plot=None, color=dfu.cp_int[0], multiplier=None, **kwargs):
         """``k3d`` plot.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created
@@ -63,12 +59,15 @@ class K3dRegion:
         plot_array = np.ones((1, 1, 1)).astype(np.uint8)  # avoid k3d warning
 
         rescaled_region = self.region / multiplier
-        bounds = [i for sublist in zip(rescaled_region.pmin,
-                                       rescaled_region.pmax)
-                  for i in sublist]
+        bounds = [
+            i
+            for sublist in zip(rescaled_region.pmin, rescaled_region.pmax)
+            for i in sublist
+        ]
 
-        plot += k3d.voxels(plot_array, color_map=color, bounds=bounds,
-                           outlines=False, **kwargs)
+        plot += k3d.voxels(
+            plot_array, color_map=color, bounds=bounds, outlines=False, **kwargs
+        )
 
         self._axis_labels(plot, multiplier)
 
@@ -76,6 +75,5 @@ class K3dRegion:
         return self.region.multiplier if multiplier is None else multiplier
 
     def _axis_labels(self, plot, multiplier):
-        unit = f'({uu.rsi_prefixes[multiplier]}{self.region.unit})'
-        plot.axes = [i + r'\,\text{{{}}}'.format(unit)
-                     for i in dfu.axesdict.keys()]
+        unit = f"({uu.rsi_prefixes[multiplier]}{self.region.unit})"
+        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]

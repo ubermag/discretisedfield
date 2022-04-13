@@ -15,7 +15,7 @@ from .region import Region
 
 # Enable default plotting style.
 dirname = os.path.abspath(os.path.dirname(__file__))
-path = os.path.join(dirname, './util/plotting-style.mplstyle')
+path = os.path.join(dirname, "./util/plotting-style.mplstyle")
 plt.style.use(path)
 
 __version__ = pkg_resources.get_distribution(__name__).version
@@ -33,5 +33,4 @@ def test():
     >>> # df.test()
 
     """
-    return pytest.main(['-v', '--pyargs',
-                        'discretisedfield', '-l'])  # pragma: no cover
+    return pytest.main(["-v", "--pyargs", "discretisedfield", "-l"])  # pragma: no cover
