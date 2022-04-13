@@ -173,6 +173,7 @@ def test_demag_tensor():
                                 'demag_tensor_oommf.omf')
     assert rtensor.allclose(df.Field.fromfile(oommf_tensor))
 
+
 def test_demag_field_sphere():
     L = 10e-9
     mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
