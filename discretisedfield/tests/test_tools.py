@@ -152,7 +152,7 @@ def test_count_bps():
     assert result['bp_pattern_x'] == '[[0.0, 10]]'
 
 
-def test_demag_tensor_demag_tensor_field_based():
+def test_demag_tensor():
     L = 2e-9
     mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
     # The second method is very slow and only intended for demonstration
@@ -160,6 +160,18 @@ def test_demag_tensor_demag_tensor_field_based():
     assert dft.demag_tensor(mesh).allclose(
         df.tools.tools._demag_tensor_field_based(mesh))
 
+    mesh = df.Mesh(p1=(-.5, -.5, -.5), p2=(19.5, 9.5, 2.5), cell=(1, 1, 1))
+    tensor = dft.demag_tensor(mesh)
+    # differences to oommf:
+    # - an additional minus sign in the tensor definiton
+    # - the tensor is in fourier space
+    # - the tensor is padded as required for the calculation of the demag field
+    rtensor = -tensor.ifftn.real[df.Region(p1=(-.5+1e-12, -.5+1e-12, -.5),
+                                           p2=(19.5, 9.5, 2.5))]
+    # the tensor computed with oommf is obtained with Oxs_SimpleDemag
+    oommf_tensor = os.path.join(os.path.dirname(__file__), 'test_sample',
+                                'demag_tensor_oommf.omf')
+    assert rtensor.allclose(df.Field.fromfile(oommf_tensor))
 
 def test_demag_field_sphere():
     L = 10e-9
