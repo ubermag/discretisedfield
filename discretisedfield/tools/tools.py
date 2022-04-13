@@ -731,6 +731,9 @@ def demag_tensor(mesh):
     Computes the demag tensor in Fourier space. Only the six different
     components Nxx, Nyy, Nzz, Nxy, Nxz, Nyz are returned.
 
+    The implementation is based on Albert et al. JMMM 387 (2015)
+    https://doi.org/10.1016/j.jmmm.2015.03.081
+
     Parameters
     ----------
     mesh : discretisedfield.Mesh
@@ -761,7 +764,10 @@ def demag_tensor(mesh):
 
 
 def demag_field(m, tensor):
-    """Demagnetisation field computed using ...
+    """Calculate the demagnetisation field.
+
+    The calculation of the demag field is based on Albert et al. JMMM 387
+    (2015) https://doi.org/10.1016/j.jmmm.2015.03.081
 
     Parameters
     ----------
@@ -794,6 +800,14 @@ def demag_field(m, tensor):
 
 
 def _f(x, y, z):
+    """Helper function to compute the demag tensor.
+
+    This method implements function f from Albert et al. JMMM 387 (2015)
+    https://doi.org/10.1016/j.jmmm.2015.03.081 which is required for the demag
+    tensor.
+
+    x, y, and z are mesh midpoints (either single points or numpy arrays).
+    """
     x2 = x**2
     y2 = y**2
     z2 = z**2
@@ -813,6 +827,14 @@ def _f(x, y, z):
 
 
 def _g(x, y, z):
+    """Helper function to compute the demag tensor.
+
+    This method implements function g from Albert et al. JMMM 387 (2015)
+    https://doi.org/10.1016/j.jmmm.2015.03.081 which is required for the demag
+    tensor.
+
+    x, y, and z are mesh midpoints (either single points or numpy arrays).
+    """
     x2 = x**2
     y2 = y**2
     z2 = z**2
@@ -839,6 +861,7 @@ def _g(x, y, z):
 
 
 def _N_element(x, y, z, mesh, function):
+    """Helper function to compute the demag tensor."""
     dx, dy, dz = mesh.cell
     value = 0.
     for i in itertools.product([0, 1], repeat=6):
@@ -849,6 +872,7 @@ def _N_element(x, y, z, mesh, function):
 
 
 def _N(mesh):
+    """Helper function to compute the demag tensor."""
     def _inner(p):
         x, y, z = p
         return (_N_element(x, y, z, mesh, _f),  # Nxx
