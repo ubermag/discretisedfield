@@ -9,6 +9,6 @@ def test_interact():
     field = df.Field(mesh, dim=3, value=(1, 2, 0))
 
     # Only test whether it runs.
-    @df.interact(x=field.mesh.slider('x'))
+    @df.interact(x=field.mesh.slider("x"))
     def myplot(x):
         field.plane(x=x).mpl()

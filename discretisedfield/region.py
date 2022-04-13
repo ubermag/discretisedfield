@@ -12,10 +12,12 @@ import discretisedfield.util as dfu
 from . import html
 
 
-@ts.typesystem(p1=ts.Vector(size=3, const=True),
-               p2=ts.Vector(size=3, const=True),
-               unit=ts.Name(const=True),
-               tolerance_factor=ts.Scalar(expected_type=float, positive=True))
+@ts.typesystem(
+    p1=ts.Vector(size=3, const=True),
+    p2=ts.Vector(size=3, const=True),
+    unit=ts.Name(const=True),
+    tolerance_factor=ts.Scalar(expected_type=float, positive=True),
+)
 class Region:
     r"""Region.
 
@@ -75,14 +77,14 @@ class Region:
 
     """
 
-    def __init__(self, p1, p2, unit='m', tolerance_factor=1e-12):
+    def __init__(self, p1, p2, unit="m", tolerance_factor=1e-12):
         self.p1 = tuple(p1)
         self.p2 = tuple(p2)
         self.unit = unit
         self.tolerance_factor = tolerance_factor
 
         if not np.all(self.edges):
-            msg = f'One of the region\'s edge lengths is zero: {self.edges=}.'
+            msg = f"One of the region's edge lengths is zero: {self.edges=}."
             raise ValueError(msg)
 
     @functools.cached_property
@@ -316,7 +318,7 @@ class Region:
 
     def _repr_html_(self):
         """Show HTML-based representation in Jupyter notebook."""
-        return html.get_template('region').render(region=self)
+        return html.get_template("region").render(region=self)
 
     def __eq__(self, other):
         r"""Relational operator ``==``.
@@ -359,8 +361,9 @@ class Region:
 
         """
         if isinstance(other, self.__class__):
-            return (np.allclose(self.pmin, other.pmin, atol=0) and
-                    np.allclose(self.pmax, other.pmax, atol=0))
+            return np.allclose(self.pmin, other.pmin, atol=0) and np.allclose(
+                self.pmax, other.pmax, atol=0
+            )
 
         return False
 
@@ -423,16 +426,14 @@ class Region:
         """
         if isinstance(other, collections.abc.Iterable):
             tol = np.min(self.edges) * self.tolerance_factor
-            return np.all(np.logical_and(
-                np.less_equal(self.pmin, other) | np.allclose(self.pmin,
-                                                              other,
-                                                              rtol=tol,
-                                                              atol=tol),
-                np.greater_equal(self.pmax, other) | np.allclose(self.pmax,
-                                                                 other,
-                                                                 rtol=tol,
-                                                                 atol=tol)
-            ))
+            return np.all(
+                np.logical_and(
+                    np.less_equal(self.pmin, other)
+                    | np.allclose(self.pmin, other, rtol=tol, atol=tol),
+                    np.greater_equal(self.pmax, other)
+                    | np.allclose(self.pmax, other, rtol=tol, atol=tol),
+                )
+            )
         if isinstance(other, self.__class__):
             return other.pmin in self and other.pmax in self
 
@@ -481,8 +482,9 @@ class Region:
 
         """
         if not isinstance(other, self.__class__):
-            msg = (f'Unsupported operand type(s) for |: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for |: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
         for i in range(3):
@@ -491,7 +493,7 @@ class Region:
             if other.pmin[i] >= self.pmax[i]:
                 return (dfu.raxesdict[i], self, other)
         else:
-            msg = 'Cannot find facing surface.'
+            msg = "Cannot find facing surface."
             raise ValueError(msg)
 
     @functools.cached_property
@@ -545,13 +547,16 @@ class Region:
 
         """
         if not isinstance(other, numbers.Real):
-            msg = (f'Unsupported operand type(s) for *: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
-        return self.__class__(p1=np.multiply(self.pmin, other),
-                              p2=np.multiply(self.pmax, other),
-                              unit=self.unit)
+        return self.__class__(
+            p1=np.multiply(self.pmin, other),
+            p2=np.multiply(self.pmax, other),
+            unit=self.unit,
+        )
 
     def __rmul__(self, other):
         return self * other
@@ -601,7 +606,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
 
         """
-        return self * other**(-1)
+        return self * other ** (-1)
 
     @property
     def mpl(self):

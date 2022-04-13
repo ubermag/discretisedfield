@@ -63,11 +63,11 @@ class FieldRotator:
 
     def __init__(self, field):
         if field.dim not in [1, 3]:
-            raise ValueError('Rotations are not supported for fields with'
-                             f'{field.dim=}.')
-        if field.mesh.bc != '':
-            warnings.warn('Boundary conditions are lost when rotating '
-                          'the field.')
+            raise ValueError(
+                f"Rotations are not supported for fields with{field.dim=}."
+            )
+        if field.mesh.bc != "":
+            warnings.warn("Boundary conditions are lost when rotating the field.")
         self._orig_field = field
         # set up state without rotations
         self.clear_rotation()
@@ -134,17 +134,21 @@ class FieldRotator:
 
         """
         # create rotation object
-        if method in ['from_quat', 'from_matrix', 'from_rotvec', 'from_mrp',
-                      'from_euler']:
+        if method in [
+            "from_quat",
+            "from_matrix",
+            "from_rotvec",
+            "from_mrp",
+            "from_euler",
+        ]:
             rotation = getattr(Rotation, method)(*args, **kwargs)
-        elif method == 'align_vector':
-            initial = kwargs['initial']
-            final = kwargs['final']
+        elif method == "align_vector":
+            initial = kwargs["initial"]
+            final = kwargs["final"]
             fixed = np.cross(initial, final)
-            rotation = Rotation.align_vectors([final, fixed],
-                                              [initial, fixed])[0]
+            rotation = Rotation.align_vectors([final, fixed], [initial, fixed])[0]
         else:
-            msg = f'Method {method} is unknown.'
+            msg = f"Method {method} is unknown."
             raise ValueError(msg)
 
         # Multiplication from left is important
@@ -162,16 +166,15 @@ class FieldRotator:
             rot_field = self._orig_field.array
         elif self._orig_field.dim == 3:
             rot_field = self._rotation.apply(
-                self._orig_field.array.reshape(
-                    (-1, self._orig_field.dim))).reshape(
-                        (*self._orig_field.mesh.n, self._orig_field.dim))
+                self._orig_field.array.reshape((-1, self._orig_field.dim))
+            ).reshape((*self._orig_field.mesh.n, self._orig_field.dim))
 
         # Calculate field at new mesh positions
         new_m = self._map_and_interpolate(new_mesh, rot_field)
 
-        self._rotated_field = df.Field(mesh=new_mesh,
-                                       dim=self._orig_field.dim,
-                                       value=new_m)
+        self._rotated_field = df.Field(
+            mesh=new_mesh, dim=self._orig_field.dim, value=new_m
+        )
 
     def clear_rotation(self):
         """Remove all rotations."""
@@ -211,22 +214,24 @@ class FieldRotator:
 
     def _repr_html_(self):
         """Show HTML-based representation in Jupyter notebook."""
-        return html.get_template('field_rotator').render(
-            field=self._orig_field, rotation_quat=self._rotation.as_quat())
+        return html.get_template("field_rotator").render(
+            field=self._orig_field, rotation_quat=self._rotation.as_quat()
+        )
 
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
-        new_mesh_pos = (new_mesh_field.array.reshape((-1, 3))
-                        - self._orig_field.mesh.region.centre)
+        new_mesh_pos = (
+            new_mesh_field.array.reshape((-1, 3)) - self._orig_field.mesh.region.centre
+        )
 
         new_pos_old_mesh = self._rotation.inv().apply(new_mesh_pos)
 
         # Get values of field at new mesh locations
-        result = np.ndarray(shape=[*new_mesh_field.mesh.n,
-                                   self._orig_field.dim])
+        result = np.ndarray(shape=[*new_mesh_field.mesh.n, self._orig_field.dim])
         for i in range(self._orig_field.dim):
-            result[..., i] = self._create_interpolation_funcs(
-                rot_field[..., i])(new_pos_old_mesh).reshape(new_mesh.n)
+            result[..., i] = self._create_interpolation_funcs(rot_field[..., i])(
+                new_pos_old_mesh
+            ).reshape(new_mesh.n)
         return result
 
     def _create_interpolation_funcs(self, rot_field_component):
@@ -237,19 +242,25 @@ class FieldRotator:
         coords = []
         tol = 1e-9  # to avoid numerical errors at the sample boundaries
         for i in range(3):
-            coords.append(np.array([pmin[i] - cell[i] * tol,
-                                    *np.linspace(pmin[i] + cell[i] / 2,
-                                                 pmax[i] - cell[i] / 2,
-                                                 self._orig_field.mesh.n[i]),
-                                    # *rot_field.mesh.coordinates[i],
-                                    pmax[i] + cell[i] * tol])
-                          - self._orig_field.mesh.region.centre[i])
+            coords.append(
+                np.array(
+                    [
+                        pmin[i] - cell[i] * tol,
+                        *np.linspace(
+                            pmin[i] + cell[i] / 2,
+                            pmax[i] - cell[i] / 2,
+                            self._orig_field.mesh.n[i],
+                        ),
+                        # *rot_field.mesh.coordinates[i],
+                        pmax[i] + cell[i] * tol,
+                    ]
+                )
+                - self._orig_field.mesh.region.centre[i]
+            )
 
-        m = np.pad(rot_field_component,
-                   pad_width=[(1, 1), (1, 1), (1, 1)], mode='edge')
+        m = np.pad(rot_field_component, pad_width=[(1, 1), (1, 1), (1, 1)], mode="edge")
 
-        return RegularGridInterpolator(coords, m, fill_value=0,
-                                       bounds_error=False)
+        return RegularGridInterpolator(coords, m, fill_value=0, bounds_error=False)
 
     def _calculate_new_n(self, new_region):
         cell_edges = np.eye(3) * self._orig_field.mesh.cell
@@ -257,10 +268,12 @@ class FieldRotator:
         rotated_edge_lenths = np.sum(rotated_cell_edges, axis=0)
 
         new_vol = np.prod(rotated_edge_lenths)
-        adjust = (self._orig_field.mesh.dV / new_vol)**(1/3)
-        return np.round(
-            np.divide(new_region.edges,
-                      rotated_edge_lenths * adjust)).astype(int).tolist()
+        adjust = (self._orig_field.mesh.dV / new_vol) ** (1 / 3)
+        return (
+            np.round(np.divide(new_region.edges, rotated_edge_lenths * adjust))
+            .astype(int)
+            .tolist()
+        )
 
     def _calculate_new_region(self):
         edges = np.eye(3) * self._orig_field.mesh.region.edges
@@ -268,4 +281,5 @@ class FieldRotator:
         edge_centre_length = np.sum(rotated_edges, axis=0) / 2
         return df.Region(
             p1=(self._orig_field.mesh.region.centre - edge_centre_length),
-            p2=(self._orig_field.mesh.region.centre + edge_centre_length))
+            p2=(self._orig_field.mesh.region.centre + edge_centre_length),
+        )

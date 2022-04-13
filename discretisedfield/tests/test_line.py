@@ -61,12 +61,15 @@ class TestLine:
         points = [(0, 0, 0), (1, 1, 1)]
         values = [(0, 0, 1), (0, 1, 0)]
 
-        line = df.Line(points=points, values=values,
-                       point_columns=['a', 'b', 'c'],
-                       value_columns=['x', 'y', 'z'])
+        line = df.Line(
+            points=points,
+            values=values,
+            point_columns=["a", "b", "c"],
+            value_columns=["x", "y", "z"],
+        )
         check_line(line)
-        assert line.point_columns == ['a', 'b', 'c']
-        assert line.value_columns == ['x', 'y', 'z']
+        assert line.point_columns == ["a", "b", "c"]
+        assert line.value_columns == ["x", "y", "z"]
 
         assert abs(line.length - np.sqrt(3)) < 1e-12
         assert line.n == 2
@@ -103,27 +106,26 @@ class TestLine:
         values = [-1, 2, -3]
         line = df.Line(points=points, values=values)
 
-        assert line.point_columns == ['px', 'py', 'pz']
-        assert line.value_columns == ['v']
+        assert line.point_columns == ["px", "py", "pz"]
+        assert line.value_columns == ["v"]
 
-        line.point_columns = ['a', 'b', 'c']
-        line.value_columns = ['val']
+        line.point_columns = ["a", "b", "c"]
+        line.value_columns = ["val"]
 
-        assert line.data.columns.to_list() == ['r', 'a', 'b', 'c', 'val']
+        assert line.data.columns.to_list() == ["r", "a", "b", "c", "val"]
 
         # Vector values.
         points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
         values = [(0, 1, 3), (-1, 0, 0), (-2.13, 0, 0)]
         line = df.Line(points=points, values=values)
 
-        assert line.point_columns == ['px', 'py', 'pz']
-        assert line.value_columns == ['vx', 'vy', 'vz']
+        assert line.point_columns == ["px", "py", "pz"]
+        assert line.value_columns == ["vx", "vy", "vz"]
 
-        line.point_columns = ['a', 'b', 'c']
-        line.value_columns = ['v0', 'v1', 'v2']
+        line.point_columns = ["a", "b", "c"]
+        line.value_columns = ["v0", "v1", "v2"]
 
-        assert line.data.columns.to_list() == ['r', 'a', 'b', 'c',
-                                               'v0', 'v1', 'v2']
+        assert line.data.columns.to_list() == ["r", "a", "b", "c", "v0", "v1", "v2"]
 
         # Exceptions
         points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
@@ -131,9 +133,9 @@ class TestLine:
         line = df.Line(points=points, values=values)
 
         with pytest.raises(ValueError):
-            line.point_columns = ['a', 'b']
+            line.point_columns = ["a", "b"]
         with pytest.raises(ValueError):
-            line.value_columns = ['a', 'b', 'c', 'd']
+            line.value_columns = ["a", "b", "c", "d"]
 
     def test_mpl(self):
         p1 = (0, 0, 0)
@@ -159,21 +161,21 @@ class TestLine:
         line.mpl(multiplier=1e-6)
 
         # y
-        line.mpl(yaxis=['vx', 'vz'])
+        line.mpl(yaxis=["vx", "vz"])
 
         # xlim
         line.mpl(xlim=(0, 10e-9))
 
         # kwargs
-        line.mpl(marker='o')
+        line.mpl(marker="o")
 
         # filename
-        filename = 'line.pdf'
+        filename = "line.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
             line.mpl(filename=tmpfilename)
 
-        plt.close('all')
+        plt.close("all")
 
     def test_slider_selector(self):
         p1 = (0, 0, 0)

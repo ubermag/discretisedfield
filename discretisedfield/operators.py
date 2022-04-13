@@ -38,6 +38,7 @@ class DValue:
     125
 
     """
+
     def __init__(self, function, /):
         self.function = function
 
@@ -173,8 +174,9 @@ class DValue:
         elif isinstance(other, numbers.Real):
             return self.__class__(lambda f: self(f) * other)
         else:
-            msg = (f'Unsupported operand type(s) for *: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
     def __rmul__(self, other):
@@ -241,15 +243,16 @@ class DValue:
         elif isinstance(other, (list, tuple, np.ndarray)):
             return self.__class__(lambda f: self(f) @ other)
         else:
-            msg = (f'Unsupported operand type(s) for *: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
     def __rmatmul__(self, other):
         return self @ other
 
 
-def integral(field, direction='xyz', improper=False):
+def integral(field, direction="xyz", improper=False):
     """Integral.
 
     This function calls ``integral`` method of the ``discrteisedfield.Field``

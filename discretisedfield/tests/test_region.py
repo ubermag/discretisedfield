@@ -11,11 +11,11 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 html_re = (
-    r'<strong>Region</strong>( <i>\w+</i>)?\s*'
-    r'<ul>\s*'
-    r'<li>p1 = .*</li>\s*'
-    r'<li>p2 = .*</li>\s*'
-    r'</ul>'
+    r"<strong>Region</strong>( <i>\w+</i>)?\s*"
+    r"<ul>\s*"
+    r"<li>p1 = .*</li>\s*"
+    r"<li>p2 = .*</li>\s*"
+    r"</ul>"
 )
 
 
@@ -57,7 +57,7 @@ def check_region(region):
     assert isinstance(region.volume, numbers.Real)
 
     assert isinstance(repr(region), str)
-    pattern = r'^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$'
+    pattern = r"^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$"
     assert re.match(pattern, str(region))
 
     assert isinstance(region._repr_html_(), str)
@@ -75,19 +75,23 @@ def check_region(region):
 
 class TestRegion:
     def setup(self):
-        self.valid_args = [[(0, 0, 0), (5, 5, 5)],
-                           [(-1, 0, -3), (5, 7, 5)],
-                           [(0, 0, 0), (5e-9, 5e-9, 5e-9)],
-                           [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9)],
-                           [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0))],
-                           [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6)],
-                           [(0, 125e-9, 0), (500e-9, 0, -3e-9)]]
+        self.valid_args = [
+            [(0, 0, 0), (5, 5, 5)],
+            [(-1, 0, -3), (5, 7, 5)],
+            [(0, 0, 0), (5e-9, 5e-9, 5e-9)],
+            [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9)],
+            [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0))],
+            [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6)],
+            [(0, 125e-9, 0), (500e-9, 0, -3e-9)],
+        ]
 
-        self.invalid_args = [[('1', 0, 0), (1, 1, 1)],
-                             [(-1.5e-9, -5e-9, 'a'), (1.5e-9, 15e-9, 16e-9)],
-                             [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9)],
-                             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1+2j)],
-                             ['string', (5, 1, 1e-9)]]
+        self.invalid_args = [
+            [("1", 0, 0), (1, 1, 1)],
+            [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9)],
+            [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9)],
+            [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1 + 2j)],
+            ["string", (5, 1, 1e-9)],
+        ]
 
     def test_init_valid_args(self):
         for p1, p2 in self.valid_args:
@@ -100,14 +104,16 @@ class TestRegion:
                 df.Region(p1=p1, p2=p2)  # Raised by descriptors.
 
     def test_init_zero_edge_length(self):
-        args = [[(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9)],
-                [(0, 101e-9, -1), (150e-9, 101e-9, 0)],
-                [(10e9, 10e3, 0), (0.01e12, 11e3, 5)]]
+        args = [
+            [(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9)],
+            [(0, 101e-9, -1), (150e-9, 101e-9, 0)],
+            [(10e9, 10e3, 0), (0.01e12, 11e3, 5)],
+        ]
 
         for p1, p2 in args:
             with pytest.raises(ValueError) as excinfo:
                 df.Region(p1=p1, p2=p2)
-            assert 'is zero' in str(excinfo.value)
+            assert "is zero" in str(excinfo.value)
 
     def test_pmin_pmax_edges_centre_volume(self):
         p1 = (0, -4, 16.5)
@@ -130,7 +136,7 @@ class TestRegion:
         assert region.pmax == (10e6, 1e6, 1e6)
         assert region.edges == (20e6, 1e6, 1e6)
         assert region.centre == (0, 0.5e6, 0.5e6)
-        assert abs(region.volume - 20 * (1e6)**3) < 1
+        assert abs(region.volume - 20 * (1e6) ** 3) < 1
 
         p1 = (-18.5e-9, 10e-9, 0)
         p2 = (10e-9, 5e-9, -10e-9)
@@ -149,7 +155,7 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         check_region(region)
-        rstr = 'Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5))'
+        rstr = "Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5))"
         assert repr(region) == rstr
 
     def test_eq(self):
@@ -201,7 +207,7 @@ class TestRegion:
         assert (10e-9, 10e-9 + tol_out, 20e-9) not in region
         assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
 
-        region.tolerance_factor = 1.
+        region.tolerance_factor = 1.0
         tol = np.min(region.edges) * region.tolerance_factor
         tol_in = tol / 2
         tol_out = tol * 2
@@ -233,7 +239,7 @@ class TestRegion:
 
         res = region1 | region2
 
-        assert res[0] == 'x'
+        assert res[0] == "x"
         assert res[1] == region1
         assert res[2] == region2
         assert region1 | region2 == region2 | region1
@@ -249,7 +255,7 @@ class TestRegion:
 
         res = region1 | region2
 
-        assert res[0] == 'y'
+        assert res[0] == "y"
         assert res[1] == region2
         assert res[2] == region1
         assert region1 | region2 == region2 | region1
@@ -265,7 +271,7 @@ class TestRegion:
 
         res = region1 | region2
 
-        assert res[0] == 'z'
+        assert res[0] == "z"
         assert res[1] == region1
         assert res[2] == region2
         assert region1 | region2 == region2 | region1
@@ -332,15 +338,21 @@ class TestRegion:
 
         # Check if it runs.
         region.mpl()
-        region.mpl(figsize=(10, 10), multiplier=1e-9, color=dfu.cp_hex[1],
-                   linewidth=3, box_aspect=(1, 1.5, 2), linestyle='dashed')
+        region.mpl(
+            figsize=(10, 10),
+            multiplier=1e-9,
+            color=dfu.cp_hex[1],
+            linewidth=3,
+            box_aspect=(1, 1.5, 2),
+            linestyle="dashed",
+        )
 
-        filename = 'figure.pdf'
+        filename = "figure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
             region.mpl(filename=tmpfilename)
 
-        plt.close('all')
+        plt.close("all")
 
     def test_k3d(self):
         p1 = (-50e9, -50e9, 0)

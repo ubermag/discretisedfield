@@ -23,8 +23,10 @@ from .mesh import Mesh
 # TODO: tutorials, line operations
 
 
-@ts.typesystem(mesh=ts.Typed(expected_type=Mesh, const=True),
-               dim=ts.Scalar(expected_type=int, positive=True, const=True))
+@ts.typesystem(
+    mesh=ts.Typed(expected_type=Mesh, const=True),
+    dim=ts.Scalar(expected_type=int, positive=True, const=True),
+)
 class Field:
     """Finite-difference field.
 
@@ -126,8 +128,7 @@ class Field:
 
     """
 
-    def __init__(self, mesh, dim, value=0., norm=None, components=None,
-                 dtype=None):
+    def __init__(self, mesh, dim, value=0.0, norm=None, components=None, dtype=None):
         self.mesh = mesh
         self.dim = dim
         self.dtype = dtype
@@ -263,8 +264,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = _as_array(self._value, self.mesh, self.dim,
-                                dtype=self.dtype)
+        value_array = _as_array(self._value, self.mesh, self.dim, dtype=self.dtype)
         if np.array_equal(self.array, value_array):
             return self._value
         else:
@@ -284,25 +284,27 @@ class Field:
     def components(self, components):
         if components is not None:
             if len(components) != self.dim:
-                raise ValueError('Number of components does not match'
-                                 f' {self.dim=}.')
+                raise ValueError(f"Number of components does not match {self.dim=}.")
             if len(components) != len(set(components)):
-                raise ValueError('Components must be unique.')
+                raise ValueError("Components must be unique.")
             for c in components:
                 if hasattr(self, c):
                     # redefining component labels is okay.
                     if self._components is None or c not in self._components:
                         raise ValueError(
-                            f'Component name {c} is already '
-                            'used by a different method/property.')
+                            f"Component name {c} is already "
+                            "used by a different method/property."
+                        )
             self._components = list(components)
         else:
             if 2 <= self.dim <= 3:
-                components = ['x', 'y', 'z'][:self.dim]
+                components = ["x", "y", "z"][: self.dim]
             elif self.dim > 3:
-                warnings.warn(f'Component labels must be specified for '
-                              f'{self.dim=} fields to get access to individual'
-                              ' vector components.')
+                warnings.warn(
+                    "Component labels must be specified for "
+                    f"{self.dim=} fields to get access to individual"
+                    " vector components."
+                )
             self._components = components
 
     @property
@@ -442,11 +444,11 @@ class Field:
     def norm(self, val):
         if val is not None:
             if self.dim == 1:
-                msg = f'Cannot set norm for field with dim={self.dim}.'
+                msg = f"Cannot set norm for field with dim={self.dim}."
                 raise ValueError(msg)
 
             if not np.all(self.norm.array):
-                msg = 'Cannot normalise field with zero values.'
+                msg = "Cannot normalise field with zero values."
                 raise ValueError(msg)
 
             self.array /= self.norm.array  # normalise to 1
@@ -515,8 +517,9 @@ class Field:
         (0.0, 0.0, 0.0)
 
         """
-        return self.__class__(self.mesh, dim=self.dim, value=0,
-                              components=self.components)
+        return self.__class__(
+            self.mesh, dim=self.dim, value=0, components=self.components
+        )
 
     @property
     def orientation(self):
@@ -560,15 +563,15 @@ class Field:
 
         """
         if self.dim == 1:
-            msg = (f'Cannot compute orientation field for a '
-                   f'dim={self.dim} field.')
+            msg = f"Cannot compute orientation field for a dim={self.dim} field."
             raise ValueError(msg)
 
-        orientation_array = np.divide(self.array,
-                                      self.norm.array,
-                                      where=(self.norm.array != 0))
-        return self.__class__(self.mesh, dim=self.dim, value=orientation_array,
-                              components=self.components)
+        orientation_array = np.divide(
+            self.array, self.norm.array, where=(self.norm.array != 0)
+        )
+        return self.__class__(
+            self.mesh, dim=self.dim, value=orientation_array, components=self.components
+        )
 
     @property
     def average(self):
@@ -640,7 +643,7 @@ class Field:
 
     def _repr_html_(self):
         """Show HTML-based representation in Jupyter notebook."""
-        return html.get_template('field').render(field=self)
+        return html.get_template("field").render(field=self)
 
     def __call__(self, point):
         r"""Sample the field value at ``point``.
@@ -758,11 +761,10 @@ class Field:
 
         """
         if self.components is not None and attr in self.components:
-            attr_array = self.array[..., self.components.index(attr),
-                                    np.newaxis]
+            attr_array = self.array[..., self.components.index(attr), np.newaxis]
             return self.__class__(mesh=self.mesh, dim=1, value=attr_array)
         else:
-            msg = f'Object has no attribute {attr}.'
+            msg = f"Object has no attribute {attr}."
             raise AttributeError(msg)
 
     def __dir__(self):
@@ -784,11 +786,11 @@ class Field:
         if self.components is not None:
             dirlist += self.components
         if self.dim == 1:
-            need_removing = ['div', 'curl', 'orientation']
+            need_removing = ["div", "curl", "orientation"]
         if self.dim == 2:
-            need_removing = ['grad', 'curl', 'k3d']
+            need_removing = ["grad", "curl", "k3d"]
         if self.dim == 3:
-            need_removing = ['grad']
+            need_removing = ["grad"]
 
         for attr in need_removing:
             dirlist.remove(attr)
@@ -881,8 +883,11 @@ class Field:
         """
         if not isinstance(other, self.__class__):
             return False
-        elif (self.mesh == other.mesh and self.dim == other.dim and
-              np.array_equal(self.array, other.array)):
+        elif (
+            self.mesh == other.mesh
+            and self.dim == other.dim
+            and np.array_equal(self.array, other.array)
+        ):
             return True
         else:
             return False
@@ -946,11 +951,13 @@ class Field:
 
         """
         if not isinstance(other, self.__class__):
-            msg = (f'Cannot apply allclose method between '
-                   f'{type(self)=} and {type(other)=} objects.')
+            msg = (
+                "Cannot apply allclose method between "
+                f"{type(self)=} and {type(other)=} objects."
+            )
             raise TypeError(msg)
 
-        if (self.mesh == other.mesh and self.dim == other.dim):
+        if self.mesh == other.mesh and self.dim == other.dim:
             return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
         else:
             return False
@@ -1103,16 +1110,20 @@ class Field:
 
         """
         if self.dim != 1:
-            msg = f'Cannot apply ** operator on {self.dim=} field.'
+            msg = f"Cannot apply ** operator on {self.dim=} field."
             raise ValueError(msg)
         if not isinstance(other, numbers.Real):
-            msg = (f'Unsupported operand type(s) for **: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for **: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
-        return self.__class__(self.mesh, dim=1,
-                              value=np.power(self.array, other),
-                              components=self.components)
+        return self.__class__(
+            self.mesh,
+            dim=1,
+            value=np.power(self.array, other),
+            components=self.components,
+        )
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -1175,25 +1186,27 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.dim != other.dim:
-                msg = (f'Cannot apply operator + on {self.dim=} '
-                       f'and {other.dim=} fields.')
+                msg = f"Cannot apply operator + on {self.dim=} and {other.dim=} fields."
                 raise ValueError(msg)
             if self.mesh != other.mesh:
-                msg = ('Cannot apply operator + on fields '
-                       'defined on different meshes.')
+                msg = "Cannot apply operator + on fields defined on different meshes."
                 raise ValueError(msg)
         elif self.dim == 1 and isinstance(other, numbers.Complex):
             return self + self.__class__(self.mesh, dim=self.dim, value=other)
         elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
             return self + self.__class__(self.mesh, dim=self.dim, value=other)
         else:
-            msg = (f'Unsupported operand type(s) for +: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for +: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
-        return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array + other.array,
-                              components=self.components)
+        return self.__class__(
+            self.mesh,
+            dim=self.dim,
+            value=self.array + other.array,
+            components=self.components,
+        )
 
     def __radd__(self, other):
         return self + other
@@ -1331,32 +1344,30 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.dim == 3 and other.dim == 3:
-                msg = (f'Cannot apply operator * on {self.dim=} '
-                       f'and {other.dim=} fields.')
+                msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
                 raise ValueError(msg)
             if self.mesh != other.mesh:
-                msg = ('Cannot apply operator * on fields '
-                       'defined on different meshes.')
+                msg = "Cannot apply operator * on fields defined on different meshes."
                 raise ValueError(msg)
         elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other)
         elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(self.mesh,
-                                         dim=np.array(other).shape[-1],
-                                         value=other)
+            return self * self.__class__(
+                self.mesh, dim=np.array(other).shape[-1], value=other
+            )
         elif isinstance(other, df.DValue):
             return self * other(self)
         else:
-            msg = (f'Unsupported operand type(s) for *: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
         res_array = np.multiply(self.array, other.array)
-        components = self.components if self.dim == res_array.shape[-1] \
-            else None
-        return self.__class__(self.mesh, dim=res_array.shape[-1],
-                              value=res_array,
-                              components=components)
+        components = self.components if self.dim == res_array.shape[-1] else None
+        return self.__class__(
+            self.mesh, dim=res_array.shape[-1], value=res_array, components=components
+        )
 
     def __rmul__(self, other):
         return self * other
@@ -1426,10 +1437,10 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
         """
-        return self * other**(-1)
+        return self * other ** (-1)
 
     def __rtruediv__(self, other):
-        return self**(-1) * other
+        return self ** (-1) * other
 
     def __matmul__(self, other):
         """Binary ``@`` operator, defined as dot product.
@@ -1474,24 +1485,24 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
-                msg = ('Cannot apply operator @ on fields '
-                       'defined on different meshes.')
+                msg = "Cannot apply operator @ on fields defined on different meshes."
                 raise ValueError(msg)
             if self.dim != 3 or other.dim != 3:
-                msg = (f'Cannot apply operator @ on {self.dim=} '
-                       f'and {other.dim=} fields.')
+                msg = f"Cannot apply operator @ on {self.dim=} and {other.dim=} fields."
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self @ self.__class__(self.mesh, dim=3, value=other,
-                                         components=self.components)
+            return self @ self.__class__(
+                self.mesh, dim=3, value=other, components=self.components
+            )
         elif isinstance(other, df.DValue):
             return self @ other(self)
         else:
-            msg = (f'Unsupported operand type(s) for @: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for @: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
-        res_array = np.einsum('ijkl,ijkl->ijk', self.array, other.array)
+        res_array = np.einsum("ijkl,ijkl->ijk", self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
 
     def __rmatmul__(self, other):
@@ -1542,24 +1553,25 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
-                msg = ('Cannot apply operator & on fields '
-                       'defined on different meshes.')
+                msg = "Cannot apply operator & on fields defined on different meshes."
                 raise ValueError(msg)
             if self.dim != 3 or other.dim != 3:
-                msg = (f'Cannot apply operator & on {self.dim=} '
-                       f'and {other.dim=} fields.')
+                msg = f"Cannot apply operator & on {self.dim=} and {other.dim=} fields."
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self & self.__class__(self.mesh, dim=3, value=other,
-                                         components=self.components)
+            return self & self.__class__(
+                self.mesh, dim=3, value=other, components=self.components
+            )
         else:
-            msg = (f'Unsupported operand type(s) for &: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for &: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
         res_array = np.cross(self.array, other.array)
-        return self.__class__(self.mesh, dim=3, value=res_array,
-                              components=self.components)
+        return self.__class__(
+            self.mesh, dim=3, value=res_array, components=self.components
+        )
 
     def __rand__(self, other):
         return self & other
@@ -1622,17 +1634,16 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
-                msg = ('Cannot apply operator << on fields '
-                       'defined on different meshes.')
+                msg = "Cannot apply operator << on fields defined on different meshes."
                 raise ValueError(msg)
         elif isinstance(other, numbers.Complex):
             return self << self.__class__(self.mesh, dim=1, value=other)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self << self.__class__(self.mesh, dim=len(other),
-                                          value=other)
+            return self << self.__class__(self.mesh, dim=len(other), value=other)
         else:
-            msg = (f'Unsupported operand type(s) for <<: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for <<: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
         array_list = [self.array[..., i] for i in range(self.dim)]
@@ -1647,19 +1658,22 @@ class Field:
                 # a number -> choose labels automatically
                 components = None
 
-        return self.__class__(self.mesh, dim=len(array_list),
-                              value=np.stack(array_list, axis=3),
-                              components=components)
+        return self.__class__(
+            self.mesh,
+            dim=len(array_list),
+            value=np.stack(array_list, axis=3),
+            components=components,
+        )
 
     def __rlshift__(self, other):
         if isinstance(other, numbers.Complex):
             return self.__class__(self.mesh, dim=1, value=other) << self
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self.__class__(self.mesh, dim=len(other),
-                                  value=other) << self
+            return self.__class__(self.mesh, dim=len(other), value=other) << self
         else:
-            msg = (f'Unsupported operand type(s) for <<: '
-                   f'{type(self)=} and {type(other)=}.')
+            msg = (
+                f"Unsupported operand type(s) for <<: {type(self)=} and {type(other)=}."
+            )
             raise TypeError(msg)
 
     def pad(self, pad_width, mode, **kwargs):
@@ -1720,12 +1734,12 @@ class Field:
             d[dfu.axesdict[key]] = value
         padding_sequence = dfu.assemble_index((0, 0), len(self.array.shape), d)
 
-        padded_array = np.pad(self.array, padding_sequence,
-                              mode=mode, **kwargs)
+        padded_array = np.pad(self.array, padding_sequence, mode=mode, **kwargs)
         padded_mesh = self.mesh.pad(pad_width)
 
-        return self.__class__(padded_mesh, dim=self.dim, value=padded_array,
-                              components=self.components)
+        return self.__class__(
+            padded_mesh, dim=self.dim, value=padded_array, components=self.components
+        )
 
     def derivative(self, direction, n=1):
         """Directional derivative.
@@ -1829,56 +1843,58 @@ class Field:
         # the field array is padded.
         if dfu.raxesdict[direction] in self.mesh.bc:  # PBC
             pad_width = {dfu.raxesdict[direction]: (1, 1)}
-            padding_mode = 'wrap'
-        elif self.mesh.bc == 'neumann':
+            padding_mode = "wrap"
+        elif self.mesh.bc == "neumann":
             pad_width = {dfu.raxesdict[direction]: (1, 1)}
-            padding_mode = 'edge'
+            padding_mode = "edge"
         else:  # No BC - no padding
             pad_width = {}
-            padding_mode = 'constant'
+            padding_mode = "constant"
 
         padded_array = self.pad(pad_width, mode=padding_mode).array
 
         if n not in (1, 2):
-            msg = f'Derivative of the n={n} order is not implemented.'
+            msg = f"Derivative of the n={n} order is not implemented."
             raise NotImplementedError(msg)
 
         elif n == 1:
             if self.dim == 1:
-                derivative_array = np.gradient(padded_array[..., 0],
-                                               self.mesh.cell[direction],
-                                               axis=direction)[..., np.newaxis]
+                derivative_array = np.gradient(
+                    padded_array[..., 0], self.mesh.cell[direction], axis=direction
+                )[..., np.newaxis]
             else:
-                derivative_array = np.gradient(padded_array,
-                                               self.mesh.cell[direction],
-                                               axis=direction)
+                derivative_array = np.gradient(
+                    padded_array, self.mesh.cell[direction], axis=direction
+                )
 
         elif n == 2:
             derivative_array = np.zeros_like(padded_array)
             for i in range(padded_array.shape[direction]):
                 if i == 0:
-                    i1, i2, i3 = i+2, i+1, i
+                    i1, i2, i3 = i + 2, i + 1, i
                 elif i == padded_array.shape[direction] - 1:
-                    i1, i2, i3 = i, i-1, i-2
+                    i1, i2, i3 = i, i - 1, i - 2
                 else:
-                    i1, i2, i3 = i+1, i, i-1
+                    i1, i2, i3 = i + 1, i, i - 1
                 index1 = dfu.assemble_index(slice(None), 4, {direction: i1})
                 index2 = dfu.assemble_index(slice(None), 4, {direction: i2})
                 index3 = dfu.assemble_index(slice(None), 4, {direction: i3})
                 index = dfu.assemble_index(slice(None), 4, {direction: i})
-                derivative_array[index] = ((padded_array[index1] -
-                                           2*padded_array[index2] +
-                                           padded_array[index3]) /
-                                           self.mesh.cell[direction]**2)
+                derivative_array[index] = (
+                    padded_array[index1]
+                    - 2 * padded_array[index2]
+                    + padded_array[index3]
+                ) / self.mesh.cell[direction] ** 2
 
         # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:
-            derivative_array = np.delete(derivative_array,
-                                         (0, self.mesh.n[direction]+1),
-                                         axis=direction)
+            derivative_array = np.delete(
+                derivative_array, (0, self.mesh.n[direction] + 1), axis=direction
+            )
 
-        return self.__class__(self.mesh, dim=self.dim, value=derivative_array,
-                              components=self.components)
+        return self.__class__(
+            self.mesh, dim=self.dim, value=derivative_array, components=self.components
+        )
 
     @property
     def grad(self):
@@ -1949,12 +1965,10 @@ class Field:
 
         """
         if self.dim != 1:
-            msg = f'Cannot compute gradient for dim={self.dim} field.'
+            msg = f"Cannot compute gradient for dim={self.dim} field."
             raise ValueError(msg)
 
-        return (self.derivative('x') <<
-                self.derivative('y') <<
-                self.derivative('z'))
+        return self.derivative("x") << self.derivative("y") << self.derivative("z")
 
     @property
     def div(self):
@@ -2019,12 +2033,15 @@ class Field:
 
         """
         if self.dim not in [2, 3]:
-            msg = f'Cannot compute divergence for dim={self.dim} field.'
+            msg = f"Cannot compute divergence for dim={self.dim} field."
             raise ValueError(msg)
 
-        return sum([getattr(self,
-                            self.components[i]).derivative(dfu.raxesdict[i])
-                    for i in range(self.dim)])
+        return sum(
+            [
+                getattr(self, self.components[i]).derivative(dfu.raxesdict[i])
+                for i in range(self.dim)
+            ]
+        )
 
     @property
     def curl(self):
@@ -2092,16 +2109,13 @@ class Field:
 
         """
         if self.dim != 3:
-            msg = f'Cannot compute curl for dim={self.dim} field.'
+            msg = f"Cannot compute curl for dim={self.dim} field."
             raise ValueError(msg)
 
         x, y, z = self.components
-        curl_x = (getattr(self, z).derivative('y')
-                  - getattr(self, y).derivative('z'))
-        curl_y = (getattr(self, x).derivative('z')
-                  - getattr(self, z).derivative('x'))
-        curl_z = (getattr(self, y).derivative('x')
-                  - getattr(self, x).derivative('y'))
+        curl_x = getattr(self, z).derivative("y") - getattr(self, y).derivative("z")
+        curl_y = getattr(self, x).derivative("z") - getattr(self, z).derivative("x")
+        curl_z = getattr(self, y).derivative("x") - getattr(self, x).derivative("y")
 
         return curl_x << curl_y << curl_z
 
@@ -2166,19 +2180,22 @@ class Field:
 
         """
         if self.dim not in [1, 3]:
-            raise ValueError(
-                f'Cannot compute laplace for dim={self.dim} field.')
+            raise ValueError(f"Cannot compute laplace for dim={self.dim} field.")
         if self.dim == 1:
-            return (self.derivative('x', n=2) +
-                    self.derivative('y', n=2) +
-                    self.derivative('z', n=2))
+            return (
+                self.derivative("x", n=2)
+                + self.derivative("y", n=2)
+                + self.derivative("z", n=2)
+            )
         else:
             x, y, z = self.components
-            return (getattr(self, x).laplace
-                    << getattr(self, y).laplace
-                    << getattr(self, z).laplace)
+            return (
+                getattr(self, x).laplace
+                << getattr(self, y).laplace
+                << getattr(self, z).laplace
+            )
 
-    def integral(self, direction='xyz', improper=False):
+    def integral(self, direction="xyz", improper=False):
         r"""Integral.
 
         This method integrates the field over the mesh along the specified
@@ -2292,7 +2309,7 @@ class Field:
 
         """
         if improper and len(direction) > 1:
-            msg = 'Cannot compute improper integral along multiple directions.'
+            msg = "Cannot compute improper integral along multiple directions."
             raise ValueError(msg)
 
         mesh = self.mesh
@@ -2305,8 +2322,9 @@ class Field:
         else:
             res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
 
-        res = self.__class__(mesh, dim=self.dim, value=res_array,
-                             components=self.components)
+        res = self.__class__(
+            mesh, dim=self.dim, value=res_array, components=self.components
+        )
 
         if len(direction) == 3:
             return dfu.array2tuple(res.array.squeeze())
@@ -2422,18 +2440,16 @@ class Field:
         if n is not None:
             value = self
         else:
-            p_axis = plane_mesh.attributes['planeaxis']
+            p_axis = plane_mesh.attributes["planeaxis"]
             plane_idx = self.mesh.point2index(plane_mesh.region.centre)[p_axis]
             slices = tuple(
-                slice(plane_idx, plane_idx + 1) if i == p_axis
-                else slice(0, axis_len)
+                slice(plane_idx, plane_idx + 1) if i == p_axis else slice(0, axis_len)
                 for i, axis_len in enumerate(self.array.shape)
             )
             value = self.array[slices]
-        return self.__class__(plane_mesh,
-                              dim=self.dim,
-                              value=value,
-                              components=self.components)
+        return self.__class__(
+            plane_mesh, dim=self.dim, value=value, components=self.components
+        )
 
     def __getitem__(self, item):
         """Extracts the field on a subregion.
@@ -2510,9 +2526,12 @@ class Field:
         index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
         index_max = np.add(index_min, submesh.n)
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
-        return self.__class__(submesh, dim=self.dim,
-                              value=self.array[tuple(slices)],
-                              components=self.components)
+        return self.__class__(
+            submesh,
+            dim=self.dim,
+            value=self.array[tuple(slices)],
+            components=self.components,
+        )
 
     def project(self, direction):
         """Projects the field along one direction and averages it out along
@@ -2598,21 +2617,21 @@ class Field:
         True
 
         """
-        if not self.mesh.attributes['isplane']:
-            msg = 'The field must be sliced before angle can be computed.'
+        if not self.mesh.attributes["isplane"]:
+            msg = "The field must be sliced before angle can be computed."
             raise ValueError(msg)
 
         angle_array = np.arctan2(
-            self.array[..., self.mesh.attributes['axis2']],
-            self.array[..., self.mesh.attributes['axis1']])
+            self.array[..., self.mesh.attributes["axis2"]],
+            self.array[..., self.mesh.attributes["axis1"]],
+        )
 
         # Place all values in [0, 2pi] range
         angle_array[angle_array < 0] += 2 * np.pi
 
-        return self.__class__(self.mesh, dim=1,
-                              value=angle_array[..., np.newaxis])
+        return self.__class__(self.mesh, dim=1, value=angle_array[..., np.newaxis])
 
-    def write(self, filename, representation='bin8', extend_scalar=False):
+    def write(self, filename, representation="bin8", extend_scalar=False):
         """Write the field to OVF, HDF5, or VTK file.
 
         If the extension of ``filename`` is ``.vtk``, a VTK file is written
@@ -2693,19 +2712,21 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
-        if filename.endswith(('.omf', '.ovf', '.ohf')):
-            self._writeovf(filename, representation=representation,
-                           extend_scalar=extend_scalar)
-        elif filename.endswith(('.hdf5', '.h5')):
+        if filename.endswith((".omf", ".ovf", ".ohf")):
+            self._writeovf(
+                filename, representation=representation, extend_scalar=extend_scalar
+            )
+        elif filename.endswith((".hdf5", ".h5")):
             self._writehdf5(filename)
-        elif filename.endswith('.vtk'):
+        elif filename.endswith(".vtk"):
             self._writevtk(filename, representation=representation)
         else:
-            msg = (f'Writing file with extension {filename.split(".")[-1]} '
-                   f'not supported.')
+            msg = (
+                f'Writing file with extension {filename.split(".")[-1]} not supported.'
+            )
             raise ValueError(msg)
 
-    def _writeovf(self, filename, representation='bin8', extend_scalar=False):
+    def _writeovf(self, filename, representation="bin8", extend_scalar=False):
         """Write the field to an OVF2.0 file.
 
         Data representation (``'bin4'``, ``'bin8'``, or ``'txt'``) is passed
@@ -2757,72 +2778,71 @@ class Field:
 
         """
         write_dim = 3 if extend_scalar and self.dim == 1 else self.dim
-        valueunits = ' '.join(['None'] * write_dim)
+        valueunits = " ".join(["None"] * write_dim)
         if write_dim == 1:
-            valuelabels = 'field_x'
+            valuelabels = "field_x"
         elif extend_scalar:
-            valuelabels = ' '.join(['field_x'] * write_dim)
+            valuelabels = " ".join(["field_x"] * write_dim)
         else:
-            valuelabels = ' '.join(f'field_{c}' for c in self.components)
+            valuelabels = " ".join(f"field_{c}" for c in self.components)
 
-        if representation == 'bin4':
-            repr_string = 'Binary 4'
-        elif representation == 'bin8':
-            repr_string = 'Binary 8'
-        elif representation == 'txt':
-            repr_string = 'Text'
+        if representation == "bin4":
+            repr_string = "Binary 4"
+        elif representation == "bin8":
+            repr_string = "Binary 8"
+        elif representation == "txt":
+            repr_string = "Text"
         else:
-            raise ValueError(f'Unknown {representation=}.')
+            raise ValueError(f"Unknown {representation=}.")
 
-        bheader = ''.join(
-            f'# {line}\n' for line in
-            ['OOMMF OVF 2.0',
-             '',
-             'Segment count: 1',
-             '',
-             'Begin: Segment',
-             'Begin: Header',
-             '',
-             'Title: Field',
-             'Desc: File generated by Field class',
-             f'meshunit: {self.mesh.attributes["unit"]}',
-             'meshtype: rectangular',
-             f'xbase: {self.mesh.region.pmin[0] + self.mesh.cell[0]/2}',
-             f'ybase: {self.mesh.region.pmin[1] + self.mesh.cell[1]/2}',
-             f'zbase: {self.mesh.region.pmin[2] + self.mesh.cell[2]/2}',
-             f'xnodes: {self.mesh.n[0]}',
-             f'ynodes: {self.mesh.n[1]}',
-             f'znodes: {self.mesh.n[2]}',
-             f'xstepsize: {self.mesh.cell[0]}',
-             f'ystepsize: {self.mesh.cell[1]}',
-             f'zstepsize: {self.mesh.cell[2]}',
-             f'xmin: {self.mesh.region.pmin[0]}',
-             f'ymin: {self.mesh.region.pmin[1]}',
-             f'zmin: {self.mesh.region.pmin[2]}',
-             f'xmax: {self.mesh.region.pmax[0]}',
-             f'ymax: {self.mesh.region.pmax[1]}',
-             f'zmax: {self.mesh.region.pmax[2]}',
-             f'valuedim: {write_dim}',
-             f'valuelabels: {valuelabels}',
-             f'valueunits: {valueunits}',
-             '',
-             'End: Header',
-             '',
-             f'Begin: Data {repr_string}']
-        ).encode('utf-8')
+        bheader = "".join(
+            f"# {line}\n"
+            for line in [
+                "OOMMF OVF 2.0",
+                "",
+                "Segment count: 1",
+                "",
+                "Begin: Segment",
+                "Begin: Header",
+                "",
+                "Title: Field",
+                "Desc: File generated by Field class",
+                f'meshunit: {self.mesh.attributes["unit"]}',
+                "meshtype: rectangular",
+                f"xbase: {self.mesh.region.pmin[0] + self.mesh.cell[0]/2}",
+                f"ybase: {self.mesh.region.pmin[1] + self.mesh.cell[1]/2}",
+                f"zbase: {self.mesh.region.pmin[2] + self.mesh.cell[2]/2}",
+                f"xnodes: {self.mesh.n[0]}",
+                f"ynodes: {self.mesh.n[1]}",
+                f"znodes: {self.mesh.n[2]}",
+                f"xstepsize: {self.mesh.cell[0]}",
+                f"ystepsize: {self.mesh.cell[1]}",
+                f"zstepsize: {self.mesh.cell[2]}",
+                f"xmin: {self.mesh.region.pmin[0]}",
+                f"ymin: {self.mesh.region.pmin[1]}",
+                f"zmin: {self.mesh.region.pmin[2]}",
+                f"xmax: {self.mesh.region.pmax[0]}",
+                f"ymax: {self.mesh.region.pmax[1]}",
+                f"zmax: {self.mesh.region.pmax[2]}",
+                f"valuedim: {write_dim}",
+                f"valuelabels: {valuelabels}",
+                f"valueunits: {valueunits}",
+                "",
+                "End: Header",
+                "",
+                f"Begin: Data {repr_string}",
+            ]
+        ).encode("utf-8")
 
-        bfooter = ''.join(
-            f'# {line}\n' for line in
-            [f'End: Data {repr_string}',
-             'End: Segment']
-        ).encode('utf-8')
+        bfooter = "".join(
+            f"# {line}\n" for line in [f"End: Data {repr_string}", "End: Segment"]
+        ).encode("utf-8")
 
         reordered = self.array.transpose((2, 1, 0, 3))  # ovf ordering
 
-        bin_rep = {'bin4': ('<f', 1234567.0),
-                   'bin8': ('<d', 123456789012345.0)}
+        bin_rep = {"bin4": ("<f", 1234567.0), "bin8": ("<d", 123456789012345.0)}
 
-        with open(filename, 'wb') as f:
+        with open(filename, "wb") as f:
             f.write(bheader)
 
             if representation in bin_rep:
@@ -2832,22 +2852,25 @@ class Field:
                 if extend_scalar:
                     # remove scalar vector dimension
                     reordered = reordered.reshape(list(reversed(self.mesh.n)))
-                    reordered = np.stack((reordered, np.zeros_like(reordered),
-                                          np.zeros_like(reordered)), axis=-1)
+                    reordered = np.stack(
+                        (reordered, np.zeros_like(reordered), np.zeros_like(reordered)),
+                        axis=-1,
+                    )
 
                 # ndarray.tofile seems to be ~20% slower
-                f.write(np.asarray(
-                    reordered, dtype=bin_rep[representation][0]).tobytes())
-                f.write(b'\n')
+                f.write(
+                    np.asarray(reordered, dtype=bin_rep[representation][0]).tobytes()
+                )
+                f.write(b"\n")
             else:
                 data = pd.DataFrame(reordered.reshape((-1, self.dim)))
-                data.insert(loc=0, column='leading_space', value='')
+                data.insert(loc=0, column="leading_space", value="")
 
                 if extend_scalar:
-                    data.insert(loc=2, column='y', value=0.0)
-                    data.insert(loc=3, column='z', value=0.0)
+                    data.insert(loc=2, column="y", value=0.0)
+                    data.insert(loc=3, column="z", value=0.0)
 
-                data.to_csv(f, sep=' ', header=False, index=False)
+                data.to_csv(f, sep=" ", header=False, index=False)
 
             f.write(bfooter)
 
@@ -2887,44 +2910,50 @@ class Field:
 
         """
         if self.dim > 1 and self.components is None:
-            raise AttributeError('Field components must be assigned'
-                                 ' before converting to vtk.')
+            raise AttributeError(
+                "Field components must be assigned before converting to vtk."
+            )
         rgrid = vtk.vtkRectilinearGrid()
         rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
 
-        rgrid.SetXCoordinates(vns.numpy_to_vtk(
-            np.fromiter(self.mesh.vertices.x, float)))
-        rgrid.SetYCoordinates(vns.numpy_to_vtk(
-            np.fromiter(self.mesh.vertices.y, float)))
-        rgrid.SetZCoordinates(vns.numpy_to_vtk(
-            np.fromiter(self.mesh.vertices.z, float)))
+        rgrid.SetXCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.x, float))
+        )
+        rgrid.SetYCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.y, float))
+        )
+        rgrid.SetZCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.z, float))
+        )
 
         cell_data = rgrid.GetCellData()
         field_norm = vns.numpy_to_vtk(
-            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1))
-        field_norm.SetName('norm')
+            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1)
+        )
+        field_norm.SetName("norm")
         cell_data.AddArray(field_norm)
         if self.dim > 1:
             # For some visualisation packages it is an advantage to have direct
             # access to the individual field components, e.g. for colouring.
             for comp in self.components:
-                component_array = vns.numpy_to_vtk(getattr(
-                    self, comp).array.transpose((2, 1, 0, 3)).reshape(
-                        (-1)))
-                component_array.SetName(f'{comp}-component')
+                component_array = vns.numpy_to_vtk(
+                    getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
+                )
+                component_array.SetName(f"{comp}-component")
                 cell_data.AddArray(component_array)
         field_array = vns.numpy_to_vtk(
-            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim)))
-        field_array.SetName('field')
+            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim))
+        )
+        field_array.SetName("field")
         cell_data.AddArray(field_array)
 
         if self.dim == 3:
-            cell_data.SetActiveVectors('field')
+            cell_data.SetActiveVectors("field")
         elif self.dim == 1:
-            cell_data.SetActiveScalars('field')
+            cell_data.SetActiveScalars("field")
         return rgrid
 
-    def _writevtk(self, filename, representation='bin'):
+    def _writevtk(self, filename, representation="bin"):
         """Write the field to a VTK file.
 
         The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
@@ -2966,18 +2995,18 @@ class Field:
         >>> os.remove(filename)  # delete the file
 
         """
-        if representation == 'xml':
+        if representation == "xml":
             writer = vtk.vtkXMLRectilinearGridWriter()
-        elif representation in ['bin', 'bin8', 'txt']:
+        elif representation in ["bin", "bin8", "txt"]:
             # Allow bin8 for convenience as this is the default for omf.
             # This does not affect the actual datatype used in vtk files.
             writer = vtk.vtkRectilinearGridWriter()
         else:
-            raise ValueError(f'Unknown {representation=}.')
+            raise ValueError(f"Unknown {representation=}.")
 
-        if representation == 'txt':
+        if representation == "txt":
             writer.SetFileTypeToASCII()
-        elif representation in ['bin', 'bin8']:
+        elif representation in ["bin", "bin8"]:
             writer.SetFileTypeToBinary()
         # xml has no distinction between ascii and binary
 
@@ -3020,18 +3049,18 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
-        with h5py.File(filename, 'w') as f:
+        with h5py.File(filename, "w") as f:
             # Set up the file structure
-            gfield = f.create_group('field')
-            gmesh = gfield.create_group('mesh')
-            gregion = gmesh.create_group('region')
+            gfield = f.create_group("field")
+            gmesh = gfield.create_group("mesh")
+            gregion = gmesh.create_group("region")
 
             # Save everything as datasets
-            gregion.create_dataset('p1', data=self.mesh.region.p1)
-            gregion.create_dataset('p2', data=self.mesh.region.p2)
-            gmesh.create_dataset('n', dtype='i4', data=self.mesh.n)
-            gfield.create_dataset('dim', dtype='i4', data=self.dim)
-            gfield.create_dataset('array', data=self.array)
+            gregion.create_dataset("p1", data=self.mesh.region.p1)
+            gregion.create_dataset("p2", data=self.mesh.region.p2)
+            gmesh.create_dataset("n", dtype="i4", data=self.mesh.n)
+            gfield.create_dataset("dim", dtype="i4", data=self.dim)
+            gfield.create_dataset("array", data=self.array)
 
     @classmethod
     def fromfile(cls, filename):
@@ -3091,15 +3120,16 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.write`
 
         """
-        if filename.endswith(('.omf', '.ovf', '.ohf', '.oef')):
+        if filename.endswith((".omf", ".ovf", ".ohf", ".oef")):
             return cls._fromovf(filename)
-        elif filename.endswith('.vtk'):
+        elif filename.endswith(".vtk"):
             return cls._fromvtk(filename)
-        elif filename.endswith(('.hdf5', '.h5')):
+        elif filename.endswith((".hdf5", ".h5")):
             return cls._fromhdf5(filename)
         else:
-            msg = (f'Reading file with extension {filename.split(".")[-1]} '
-                   f'not supported.')
+            msg = (
+                f'Reading file with extension {filename.split(".")[-1]} not supported.'
+            )
             raise ValueError(msg)
 
     @classmethod
@@ -3142,64 +3172,69 @@ class Field:
 
         """
         header = {}
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             # >>> READ HEADER <<<
-            ovf_v2 = b'2.0' in next(f)
+            ovf_v2 = b"2.0" in next(f)
             for line in f:
-                line = line.decode('utf-8')
-                if line.startswith('# Begin: Data'):
+                line = line.decode("utf-8")
+                if line.startswith("# Begin: Data"):
                     mode = line.split()[3]
-                    if mode == 'Binary':
+                    if mode == "Binary":
                         nbytes = int(line.split()[-1])
                     break
-                information = line[1:].split(':')  # remove leading `#`
+                information = line[1:].split(":")  # remove leading `#`
                 if len(information) > 1:
                     key = information[0].strip()
                     header[key] = information[1].strip()
 
             # valuedim is fixed to 3 and not in the header for OVF 1.0
-            header['valuedim'] = int(header['valuedim']) if ovf_v2 else 3
+            header["valuedim"] = int(header["valuedim"]) if ovf_v2 else 3
 
             # >>> MESH <<<
-            p1 = (float(header[f'{key}min']) for key in 'xyz')
-            p2 = (float(header[f'{key}max']) for key in 'xyz')
-            cell = (float(header[f'{key}stepsize']) for key in 'xyz')
+            p1 = (float(header[f"{key}min"]) for key in "xyz")
+            p2 = (float(header[f"{key}max"]) for key in "xyz")
+            cell = (float(header[f"{key}stepsize"]) for key in "xyz")
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-            nodes = math.prod(int(header[f'{key}nodes']) for key in 'xyz')
+            nodes = math.prod(int(header[f"{key}nodes"]) for key in "xyz")
 
             # >>> READ DATA <<<
-            if mode == 'Binary':
+            if mode == "Binary":
                 # OVF2 uses little-endian and OVF1 uses big-endian
-                format = (f'{"<" if ovf_v2 else ">"}'
-                          f'{"d" if nbytes == 8 else "f"}')
+                format = f'{"<" if ovf_v2 else ">"}{"d" if nbytes == 8 else "f"}'
 
                 test_value = struct.unpack(format, f.read(nbytes))[0]
                 check = {4: 1234567.0, 8: 123456789012345.0}
                 if nbytes not in (4, 8) or test_value != check[nbytes]:
                     raise ValueError(  # pragma: no cover
-                        f'Cannot read file {filename}. The file seems to be in'
-                        f' binary format ({nbytes} bytes) but the check value'
-                        f' is not correct: Expected {check[nbytes]}, got'
-                        f' {test_value}.')
+                        f"Cannot read file {filename}. The file seems to be in"
+                        f" binary format ({nbytes} bytes) but the check value"
+                        f" is not correct: Expected {check[nbytes]}, got"
+                        f" {test_value}."
+                    )
 
-                array = np.fromfile(f, count=int(nodes * header['valuedim']),
-                                    dtype=format).reshape(
-                                        (-1, header['valuedim']))
+                array = np.fromfile(
+                    f, count=int(nodes * header["valuedim"]), dtype=format
+                ).reshape((-1, header["valuedim"]))
             else:
-                array = pd.read_csv(f,
-                                    sep=' ',
-                                    header=None,
-                                    dtype=np.float64,
-                                    skipinitialspace=True,
-                                    nrows=nodes,
-                                    comment='#').to_numpy()
+                array = pd.read_csv(
+                    f,
+                    sep=" ",
+                    header=None,
+                    dtype=np.float64,
+                    skipinitialspace=True,
+                    nrows=nodes,
+                    comment="#",
+                ).to_numpy()
 
-        r_tuple = (*reversed(mesh.n), header['valuedim'])
+        r_tuple = (*reversed(mesh.n), header["valuedim"])
         t_tuple = (2, 1, 0, 3)
 
-        return cls(mesh, dim=header['valuedim'],
-                   value=array.reshape(r_tuple).transpose(t_tuple))
+        return cls(
+            mesh,
+            dim=header["valuedim"],
+            value=array.reshape(r_tuple).transpose(t_tuple),
+        )
 
     @classmethod
     def _fromvtk(cls, filename):
@@ -3241,8 +3276,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
 
         """
-        with open(filename, 'rb') as f:
-            xml = 'xml' in f.readline().decode('utf8')
+        with open(filename, "rb") as f:
+            xml = "xml" in f.readline().decode("utf8")
         if xml:
             reader = vtk.vtkXMLRectilinearGridReader()
         else:
@@ -3266,10 +3301,10 @@ class Field:
         components = []
         for i in range(cell_data.GetNumberOfArrays()):
             name = cell_data.GetArrayName(i)
-            if name == 'field':
+            if name == "field":
                 field_idx = i
-            elif name.endswith('-component'):
-                components.append(name[:-len('-component')])
+            elif name.endswith("-component"):
+                components.append(name[: -len("-component")])
         array = cell_data.GetArray(field_idx)
         dim = array.GetNumberOfComponents()
 
@@ -3321,13 +3356,13 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field._writehdf5`
 
         """
-        with h5py.File(filename, 'r') as f:
+        with h5py.File(filename, "r") as f:
             # Read data from the file.
-            p1 = f['field/mesh/region/p1']
-            p2 = f['field/mesh/region/p2']
-            n = np.array(f['field/mesh/n']).tolist()
-            dim = np.array(f['field/dim']).tolist()
-            array = f['field/array']
+            p1 = f["field/mesh/region/p1"]
+            p2 = f["field/mesh/region/p2"]
+            n = np.array(f["field/mesh/n"]).tolist()
+            dim = np.array(f["field/dim"]).tolist()
+            array = f["field/array"]
 
             # Create field.
             mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
@@ -3389,9 +3424,12 @@ class Field:
             ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
             values.append(ft.reshape(mesh.n))
 
-        return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3),
-                              components=self.components)
+        return self.__class__(
+            mesh,
+            dim=len(values),
+            value=np.stack(values, axis=3),
+            components=self.components,
+        )
 
     @property
     def ifftn(self):
@@ -3401,18 +3439,21 @@ class Field:
         -------
         discretisedfield.Field
         """
-        mesh = self.mesh.attributes['realspace_mesh']
-        if self.mesh.attributes['isplane'] and not mesh.attributes['isplane']:
-            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
+        mesh = self.mesh.attributes["realspace_mesh"]
+        if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
         values = []
         for idx in range(self.dim):
             ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
             values.append(ft.reshape(mesh.n))
 
-        return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3),
-                              components=self.components)
+        return self.__class__(
+            mesh,
+            dim=len(values),
+            value=np.stack(values, axis=3),
+            components=self.components,
+        )
 
     @property
     def rfftn(self):
@@ -3428,13 +3469,15 @@ class Field:
         for idx in range(self.dim):
             array = self.array[..., idx].squeeze()
             # no shifting for the last axis
-            ft = np.fft.fftshift(np.fft.rfftn(array),
-                                 axes=range(len(array.shape) - 1))
+            ft = np.fft.fftshift(np.fft.rfftn(array), axes=range(len(array.shape) - 1))
             values.append(ft.reshape(mesh.n))
 
-        return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3),
-                              components=self.components)
+        return self.__class__(
+            mesh,
+            dim=len(values),
+            value=np.stack(values, axis=3),
+            components=self.components,
+        )
 
     @property
     def irfftn(self):
@@ -3444,21 +3487,25 @@ class Field:
         -------
         discretisedfield.Field
         """
-        mesh = self.mesh.attributes['realspace_mesh']
-        if self.mesh.attributes['isplane'] and not mesh.attributes['isplane']:
-            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
+        mesh = self.mesh.attributes["realspace_mesh"]
+        if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
         values = []
         for idx in range(self.dim):
             array = self.array[..., idx].squeeze()
             ft = np.fft.irfftn(
                 np.fft.ifftshift(array, axes=range(len(array.shape) - 1)),
-                s=[i for i in mesh.n if i > 1])
+                s=[i for i in mesh.n if i > 1],
+            )
             values.append(ft.reshape(mesh.n))
 
-        return self.__class__(mesh, dim=len(values),
-                              value=np.stack(values, axis=3),
-                              components=self.components)
+        return self.__class__(
+            mesh,
+            dim=len(values),
+            value=np.stack(values, axis=3),
+            components=self.components,
+        )
 
     def _fft_mesh(self, rfft=False):
         """FFT can be one of fftfreq, rfftfreq."""
@@ -3471,8 +3518,9 @@ class Field:
                 p2.append(1 / self.mesh.cell[i])
                 n.append(1)
             else:
-                freqs = np.fft.fftshift(np.fft.fftfreq(self.mesh.n[i],
-                                                       self.mesh.cell[i]))
+                freqs = np.fft.fftshift(
+                    np.fft.fftfreq(self.mesh.n[i], self.mesh.cell[i])
+                )
                 # Shift the region boundaries to get the correct coordinates of
                 # mesh cells.
                 dfreq = (freqs[1] - freqs[0]) / 2
@@ -3486,46 +3534,54 @@ class Field:
                 if self.mesh.n[i] > 1:
                     freqs = np.fft.rfftfreq(self.mesh.n[i], self.mesh.cell[i])
                     dfreq = (freqs[1] - freqs[0]) / 2
-                    p1[i] = (min(freqs) - dfreq)
-                    p2[i] = (max(freqs) + dfreq)
+                    p1[i] = min(freqs) - dfreq
+                    p2[i] = max(freqs) + dfreq
                     n[i] = len(freqs)
                     break
 
         # TODO: Using PlaneMesh will simplify the code a lot here.
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        if self.mesh.attributes['isplane']:
-            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes['planeaxis']])
+        if self.mesh.attributes["isplane"]:
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
-        mesh.attributes['realspace_mesh'] = self.mesh
-        mesh.attributes['fourierspace'] = True
-        mesh.attributes['unit'] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
+        mesh.attributes["realspace_mesh"] = self.mesh
+        mesh.attributes["fourierspace"] = True
+        mesh.attributes["unit"] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
         return mesh
 
     @property
     def real(self):
         """Real part of complex field."""
-        return self.__class__(self.mesh, dim=self.dim, value=self.array.real,
-                              components=self.components)
+        return self.__class__(
+            self.mesh, dim=self.dim, value=self.array.real, components=self.components
+        )
 
     @property
     def imag(self):
         """Imaginary part of complex field."""
-        return self.__class__(self.mesh, dim=self.dim, value=self.array.imag,
-                              components=self.components)
+        return self.__class__(
+            self.mesh, dim=self.dim, value=self.array.imag, components=self.components
+        )
 
     @property
     def phase(self):
         """Phase of complex field."""
-        return self.__class__(self.mesh, dim=self.dim,
-                              value=np.angle(self.array),
-                              components=self.components)
+        return self.__class__(
+            self.mesh,
+            dim=self.dim,
+            value=np.angle(self.array),
+            components=self.components,
+        )
 
     @property
     def conjugate(self):
         """Complex conjugate of complex field."""
-        return self.__class__(self.mesh, dim=self.dim,
-                              value=self.array.conjugate(),
-                              components=self.components)
+        return self.__class__(
+            self.mesh,
+            dim=self.dim,
+            value=self.array.conjugate(),
+            components=self.components,
+        )
 
     # TODO check and write tests
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
@@ -3535,32 +3591,33 @@ class Field:
         for x in inputs:
             if not isinstance(x, (Field, np.ndarray, numbers.Number)):
                 return NotImplemented
-        out = kwargs.get('out', ())
+        out = kwargs.get("out", ())
         if out:
             for x in out:
                 if not isinstance(x, Field):
                     return NotImplemented
 
         mesh = [x.mesh for x in inputs if isinstance(x, Field)]
-        inputs = tuple(x.array if isinstance(x, Field) else x
-                       for x in inputs)
+        inputs = tuple(x.array if isinstance(x, Field) else x for x in inputs)
         if out:
-            kwargs['out'] = tuple(x.array for x in out)
+            kwargs["out"] = tuple(x.array for x in out)
 
         result = getattr(ufunc, method)(*inputs, **kwargs)
         if isinstance(result, tuple):
             if len(result) != len(mesh):
-                raise ValueError('wrong number of Field objects')
-            return tuple(self.__class__(m, dim=x.shape[-1], value=x,
-                                        components=self.components)
-                         for x, m in zip(result, mesh))
-        elif method == 'at':
+                raise ValueError("wrong number of Field objects")
+            return tuple(
+                self.__class__(m, dim=x.shape[-1], value=x, components=self.components)
+                for x, m in zip(result, mesh)
+            )
+        elif method == "at":
             return None
         else:
-            return self.__class__(mesh[0], dim=result.shape[-1], value=result,
-                                  components=self.components)
+            return self.__class__(
+                mesh[0], dim=result.shape[-1], value=result, components=self.components
+            )
 
-    def to_xarray(self, name='field', units=None):
+    def to_xarray(self, name="field", units=None):
         """Field value as ``xarray.DataArray``.
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
@@ -3635,38 +3692,39 @@ class Field:
             msg = "Units argument must be a string."
             raise TypeError(msg)
 
-        axes = ['x', 'y', 'z']
+        axes = ["x", "y", "z"]
 
-        data_array_coords = {
-            axis: getattr(self.mesh.midpoints, axis)
-            for axis in axes
-        }
+        data_array_coords = {axis: getattr(self.mesh.midpoints, axis) for axis in axes}
 
-        if 'unit' in self.mesh.attributes:
-            geo_units_dict = dict.fromkeys(axes, self.mesh.attributes['unit'])
+        if "unit" in self.mesh.attributes:
+            geo_units_dict = dict.fromkeys(axes, self.mesh.attributes["unit"])
         else:
-            geo_units_dict = dict.fromkeys(axes, 'm')
+            geo_units_dict = dict.fromkeys(axes, "m")
 
         if self.dim > 1:
-            data_array_dims = axes + ['comp']
+            data_array_dims = axes + ["comp"]
             if self.components is not None:
-                data_array_coords['comp'] = self.components
+                data_array_coords["comp"] = self.components
             field_array = self.array
         else:
             data_array_dims = axes
             field_array = np.squeeze(self.array, axis=-1)
 
-        data_array = xr.DataArray(field_array,
-                                  dims=data_array_dims,
-                                  coords=data_array_coords,
-                                  name=name,
-                                  attrs=dict(units=units,
-                                             cell=self.mesh.cell,
-                                             p1=self.mesh.region.p1,
-                                             p2=self.mesh.region.p2))
+        data_array = xr.DataArray(
+            field_array,
+            dims=data_array_dims,
+            coords=data_array_coords,
+            name=name,
+            attrs=dict(
+                units=units,
+                cell=self.mesh.cell,
+                p1=self.mesh.region.p1,
+                p2=self.mesh.region.p2,
+            ),
+        )
 
         for dim in geo_units_dict:
-            data_array[dim].attrs['units'] = geo_units_dict[dim]
+            data_array[dim].attrs["units"] = geo_units_dict[dim]
 
         return data_array
 
@@ -3758,73 +3816,75 @@ class Field:
             raise TypeError("Argument must be a xr.DataArray.")
 
         if xa.ndim not in [3, 4]:
-            raise ValueError("DataArray dimensions must be 3 for a scalar "
-                             "and 4 for a vector field.")
+            raise ValueError(
+                "DataArray dimensions must be 3 for a scalar and 4 for a vector field."
+            )
 
-        if xa.ndim == 3 and sorted(xa.dims) != ['x', 'y', 'z']:
+        if xa.ndim == 3 and sorted(xa.dims) != ["x", "y", "z"]:
             raise ValueError("The dimensions must be 'x', 'y', and 'z'.")
-        elif xa.ndim == 4 and sorted(xa.dims) != ['comp', 'x', 'y', 'z']:
-            raise ValueError("The dimensions must be 'x', 'y', 'z',"
-                             "and 'comp'.")
+        elif xa.ndim == 4 and sorted(xa.dims) != ["comp", "x", "y", "z"]:
+            raise ValueError("The dimensions must be 'x', 'y', 'z',and 'comp'.")
 
-        for i in 'xyz':
+        for i in "xyz":
             if xa[i].values.size > 1 and not np.allclose(
-                    np.diff(xa[i].values), np.diff(xa[i].values).mean()):
-                raise ValueError(f'Coordinates of {i} must be'
-                                 ' equally spaced.')
+                np.diff(xa[i].values), np.diff(xa[i].values).mean()
+            ):
+                raise ValueError(f"Coordinates of {i} must be equally spaced.")
 
         try:
-            cell = xa.attrs['cell']
+            cell = xa.attrs["cell"]
         except KeyError:
             if any(len_ == 1 for len_ in xa.values.shape[:3]):
                 raise KeyError(
                     "DataArray must have a 'cell' attribute if any "
                     "of the geometric directions has a single cell."
                 ) from None
-            cell = [np.diff(xa[i].values).mean() for i in 'xyz']
+            cell = [np.diff(xa[i].values).mean() for i in "xyz"]
 
         p1 = (
-            xa.attrs['p1'] if 'p1' in xa.attrs else
-            [xa[i].values[0] - c / 2 for i, c in zip('xyz', cell)]
+            xa.attrs["p1"]
+            if "p1" in xa.attrs
+            else [xa[i].values[0] - c / 2 for i, c in zip("xyz", cell)]
         )
         p2 = (
-            xa.attrs['p2'] if 'p2' in xa.attrs else
-            [xa[i].values[-1] + c / 2 for i, c in zip('xyz', cell)]
+            xa.attrs["p2"]
+            if "p2" in xa.attrs
+            else [xa[i].values[-1] + c / 2 for i, c in zip("xyz", cell)]
         )
 
-        if any('units' not in xa[i].attrs for i in 'xyz'):
+        if any("units" not in xa[i].attrs for i in "xyz"):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         else:
-            mesh = df.Mesh(p1=p1, p2=p2, cell=cell,
-                           attributes={'unit': xa['z'].attrs['units']})
+            mesh = df.Mesh(
+                p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
+            )
 
-        comp = xa.comp.values if 'comp' in xa.coords else None
+        comp = xa.comp.values if "comp" in xa.coords else None
         val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
         dim = 1 if xa.ndim == 3 else val.shape[-1]
-        return cls(mesh=mesh,
-                   dim=dim,
-                   value=val,
-                   components=comp,
-                   dtype=xa.values.dtype)
+        return cls(
+            mesh=mesh, dim=dim, value=val, components=comp, dtype=xa.values.dtype
+        )
 
 
 @functools.singledispatch
 def _as_array(val, mesh, dim, dtype):
-    raise TypeError('Unsupported type {type(val)}.')
+    raise TypeError("Unsupported type {type(val)}.")
 
 
 # to avoid str being interpreted as iterable
 @_as_array.register(str)
 def _(val, mesh, dim, dtype):
-    raise TypeError('Unsupported type {type(val)}.')
+    raise TypeError("Unsupported type {type(val)}.")
 
 
 @_as_array.register(numbers.Complex)
 @_as_array.register(collections.abc.Iterable)
 def _(val, mesh, dim, dtype):
     if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
-        raise ValueError('Wrong dimension 1 provided for value;'
-                         f' expected dimension is {dim}')
+        raise ValueError(
+            f"Wrong dimension 1 provided for value; expected dimension is {dim}"
+        )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
     return np.full((*mesh.n, dim), val, dtype=dtype)
 
@@ -3842,13 +3902,18 @@ def _(val, mesh, dim, dtype):
 @_as_array.register(Field)
 def _(val, mesh, dim, dtype):
     if mesh.region not in val.mesh.region:
-        raise ValueError(f'{val.mesh.region} of the provided field does not '
-                         f'contain {mesh.region} of the field that is being '
-                         'created.')
-    value = val.to_xarray().sel(x=mesh.midpoints.x,
-                                y=mesh.midpoints.y,
-                                z=mesh.midpoints.z,
-                                method='nearest').data
+        raise ValueError(
+            f"{val.mesh.region} of the provided field does not "
+            f"contain {mesh.region} of the field that is being "
+            "created."
+        )
+    value = (
+        val.to_xarray()
+        .sel(
+            x=mesh.midpoints.x, y=mesh.midpoints.y, z=mesh.midpoints.z, method="nearest"
+        )
+        .data
+    )
     if dim == 1:
         # xarray dataarrays for scalar data are three dimensional
         return value.reshape(mesh.n + (-1,))
@@ -3860,8 +3925,9 @@ def _(val, mesh, dim, dtype):
     # will only be called on user input
     # dtype must be specified by the user for complex values
     dtype = dtype or np.float64
-    fill_value = val['default'] if 'default' in val and not callable(
-        val['default']) else np.nan
+    fill_value = (
+        val["default"] if "default" in val and not callable(val["default"]) else np.nan
+    )
     array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
 
     for subregion in reversed(mesh.subregions.keys()):
@@ -3877,10 +3943,11 @@ def _(val, mesh, dim, dtype):
 
     if np.any(np.isnan(array)):
         # not all subregion keys specified and 'default' is missing or callable
-        if 'default' not in val:
-            raise KeyError("Key 'default' required if not all subregion keys"
-                           " are specified.")
-        subval = val['default']
+        if "default" not in val:
+            raise KeyError(
+                "Key 'default' required if not all subregion keys are specified."
+            )
+        subval = val["default"]
         for ix, iy, iz in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
             array[ix, iy, iz] = subval(mesh.index2point((ix, iy, iz)))

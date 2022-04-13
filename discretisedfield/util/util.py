@@ -10,8 +10,18 @@ axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
 
 # Color pallete as hex and int.
-cp_hex = ['#4c72b0', '#dd8452', '#55a868', '#c44e52', '#8172b3',
-          '#937860', '#da8bc3', '#8c8c8c', '#ccb974', '#64b5cd']
+cp_hex = [
+    "#4c72b0",
+    "#dd8452",
+    "#55a868",
+    "#c44e52",
+    "#8172b3",
+    "#937860",
+    "#da8bc3",
+    "#8c8c8c",
+    "#ccb974",
+    "#64b5cd",
+]
 cp_int = [int(color[1:], 16) for color in cp_hex]
 
 
@@ -26,24 +36,27 @@ def bergluescher_angle(v1, v2, v3):
         # space angle is zero.
         return 0.0
     else:
-        rho = (2 *
-               (1 + np.dot(v1, v2)) *
-               (1 + np.dot(v2, v3)) *
-               (1 + np.dot(v3, v1)))**0.5
+        rho = (
+            2 * (1 + np.dot(v1, v2)) * (1 + np.dot(v2, v3)) * (1 + np.dot(v3, v1))
+        ) ** 0.5
 
-        numerator = (1 +
-                     np.dot(v1, v2) +
-                     np.dot(v2, v3) +
-                     np.dot(v3, v1) +
-                     1j*(np.dot(v1, np.cross(v2, v3))))
+        numerator = (
+            1
+            + np.dot(v1, v2)
+            + np.dot(v2, v3)
+            + np.dot(v3, v1)
+            + 1j * (np.dot(v1, np.cross(v2, v3)))
+        )
 
-        exp_omega = numerator/rho
+        exp_omega = numerator / rho
 
-        return 2 * cmath.log(exp_omega).imag / (4*np.pi)
+        return 2 * cmath.log(exp_omega).imag / (4 * np.pi)
 
 
 def assemble_index(value, n, dictionary):
-    index = [value, ] * n
+    index = [
+        value,
+    ] * n
     for key, value in dictionary.items():
         index[key] = value
 
@@ -81,7 +94,7 @@ def normalise_to_range(values, value_range, int_round=True):
     # For uniform fields, avoid division by zero.
     if values.max() != 0:
         values /= values.max()  # all values in (0, 1)
-    values *= (value_range[1] - value_range[0])  # all values in (0, r[1]-r[0])
+    values *= value_range[1] - value_range[0]  # all values in (0, r[1]-r[0])
     values += value_range[0]  # all values is range (r[0], r[1])
     if int_round:
         values = values.round()
@@ -95,8 +108,7 @@ def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
     if lightness is not None:
         if lightness_clim is None:
             lightness_clim = (0, 1)
-        lightness = normalise_to_range(lightness, lightness_clim,
-                                       int_round=False)
+        lightness = normalise_to_range(lightness, lightness_clim, int_round=False)
     else:
         lightness = np.ones_like(hue)
     if saturation is not None:
@@ -104,9 +116,9 @@ def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
     else:
         saturation = np.ones_like(hue)
 
-    rgb = np.apply_along_axis(lambda x: colorsys.hls_to_rgb(*x),
-                              -1,
-                              np.dstack((hue, lightness, saturation)))
+    rgb = np.apply_along_axis(
+        lambda x: colorsys.hls_to_rgb(*x), -1, np.dstack((hue, lightness, saturation))
+    )
 
     return rgb.squeeze()
 
@@ -117,22 +129,22 @@ def fromvtk_legacy(filename):
     This method reads vtk files written with discretisedfield <= 0.61.0
     in which the data is stored as point data instead of cell data.
     """
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         content = f.read()
-    lines = content.split('\n')
+    lines = content.split("\n")
 
     # Determine the dimension of the field.
-    if 'VECTORS' in content:
+    if "VECTORS" in content:
         dim = 3
-        data_marker = 'VECTORS'
+        data_marker = "VECTORS"
         skip = 0  # after how many lines data starts after marker
     else:
         dim = 1
-        data_marker = 'SCALARS'
+        data_marker = "SCALARS"
         skip = 1
 
     # Extract the metadata
-    mdatalist = ['X_COORDINATES', 'Y_COORDINATES', 'Z_COORDINATES']
+    mdatalist = ["X_COORDINATES", "Y_COORDINATES", "Z_COORDINATES"]
     n = []
     cell = []
     origin = []
@@ -140,7 +152,7 @@ def fromvtk_legacy(filename):
         for mdatum in mdatalist:
             if mdatum in line:
                 n.append(int(line.split()[1]))
-                coordinates = list(map(float, lines[i+1].split()))
+                coordinates = list(map(float, lines[i + 1].split()))
                 origin.append(coordinates[0])
                 if len(coordinates) > 1:
                     cell.append(coordinates[1] - coordinates[0])
@@ -161,7 +173,7 @@ def fromvtk_legacy(filename):
             break
 
     # Extract data.
-    for i, line in zip(mesh.indices, lines[start_index+skip+1:]):
+    for i, line in zip(mesh.indices, lines[start_index + skip + 1 :]):
         if not line[0].isalpha():
             field.array[i] = list(map(float, line.split()))
 
