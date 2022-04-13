@@ -1,12 +1,12 @@
 # discretisedfield
 
-[Marijan Beg](https://github.com/marijanbeg)<sup>1,2</sup>, [Martin Lang](https://github.com/lang-m)<sup>2</sup>, [Samuel Holt](https://github.com/samjrholt)<sup>2,3</sup>, [Ryan A. Pepper](https://github.com/rpep)<sup>4</sup>, and [Hans Fangohr](https://github.com/fangohr)<sup>2,5,6</sup>
+[Marijan Beg](https://github.com/marijanbeg)<sup>1,2</sup>, [Martin Lang](https://github.com/lang-m)<sup>2</sup>, [Samuel Holt](https://github.com/samjrholt)<sup>2,3</sup>, [Swapneel Amit Pathak](https://github.com/swapneelap)<sup>4</sup>, [Ryan A. Pepper](https://github.com/rpep)<sup>5</sup>, and [Hans Fangohr](https://github.com/fangohr)<sup>2,4,6</sup>
 
 <sup>1</sup> *Department of Earth Science and Engineering, Imperial College London, London SW7 2AZ, UK*  
 <sup>2</sup> *Faculty of Engineering and Physical Sciences, University of Southampton, Southampton SO17 1BJ, UK*  
 <sup>3</sup> *Department of Physics, University of Warwick, Coventry CV4 7AL, UK*  
-<sup>4</sup> *Research Software Group, University of Birmingham, Birmingham B15 2TT, UK*  
-<sup>5</sup> *Max Planck Institute for the Structure and Dynamics of Matter, Luruper Chaussee 149, 22761 Hamburg, Germany*  
+<sup>4</sup> *Max Planck Institute for the Structure and Dynamics of Matter, Luruper Chaussee 149, 22761 Hamburg, Germany*  
+<sup>5</sup> *Research Software Group, University of Birmingham, Birmingham B15 2TT, UK*  
 <sup>6</sup> *Center for Free-Electron Laser Science, Luruper Chaussee 149, 22761 Hamburg, Germany*  
 
 
@@ -14,7 +14,8 @@
 | --- | --- |
 | Tests | [![Build status](https://github.com/ubermag/discretisedfield/workflows/workflow/badge.svg)](https://github.com/ubermag/discretisedfield/actions?query=workflow%3Aworkflow) |
 |       | [![conda](https://github.com/ubermag/discretisedfield/workflows/conda/badge.svg)](https://github.com/ubermag/discretisedfield/actions?query=workflow%3Aconda) |
-| Linting | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ubermag/discretisedfield/master.svg)](https://results.pre-commit.ci/latest/github/ubermag/discretisedfield/master)
+| Linting | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ubermag/discretisedfield/master.svg)](https://results.pre-commit.ci/latest/github/ubermag/discretisedfield/master) |
+|         | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
 | Releases | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
 |          | [![Anaconda-Server Badge](https://anaconda.org/conda-forge/discretisedfield/badges/version.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Coverage | [![codecov](https://codecov.io/gh/ubermag/discretisedfield/branch/master/graph/badge.svg?token=hcK4fofmrL)](https://codecov.io/gh/ubermag/discretisedfield) |
@@ -84,7 +85,7 @@ Licensed under the BSD 3-Clause "New" or "Revised" License. For details, please 
 
 2. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
 
-3. Marijan Beg, Martin Lang, Samuel Holt, Ryan A. Pepper, and Hans Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2022).
+3. Marijan Beg, Martin Lang, Samuel Holt, Swapneel Amit Pathak, Ryan A. Pepper, and Hans Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2022).
 
 ## Acknowledgements
 
