@@ -46,7 +46,8 @@ dependencies = [
     "scipy>=1.6",
     "jinja2",
     "vtk",
-    "xarray"
+    "xarray",
+    "hvplot"
 ]
 
 [project.optional-dependencies]
