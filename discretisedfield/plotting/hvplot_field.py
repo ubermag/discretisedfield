@@ -45,12 +45,10 @@ class HvplotField:
         field = self.xrfield if comp is None else self.xrfield.sel(comp=comp)
         return field.hvplot(x=x, y=y, groupby=slider, **kwargs)
 
-    def vector(
-        self, slider, use_color=False, color_field=None, **kwargs
-    ):
+    def vector(self, slider, use_color=False, color_field=None, **kwargs):
         """Plot the vector field on a plane."""
         if use_color:
-            print('Use_color and color_field are not yet supported.')
+            print("Use_color and color_field are not yet supported.")
             use_color = False
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
@@ -72,7 +70,9 @@ class HvplotField:
         plot_kw = dict(x=x, y=y, angle="angle", mag="mag")
         if use_color:
             plot_kw["color"] = "color_comp"
-        vectors = ip_vector.hvplot.vectorfield(**plot_kw, **kwargs).opts(magnitude="mag")
+        vectors = ip_vector.hvplot.vectorfield(**plot_kw, **kwargs).opts(
+            magnitude="mag"
+        )
 
         if use_color:  # TODO adding the color component does not work
             cfield = (
