@@ -3408,6 +3408,11 @@ class Field:
         return dfp.K3dField(self)
 
     @property
+    def hvplot(self):
+        """Plot interface, holoviews/hvplot based."""
+        return dfp.HvplotField(self)
+
+    @property
     def fftn(self):
         """Fourier transform.
 
