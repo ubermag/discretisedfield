@@ -3,6 +3,8 @@ import hvplot.xarray  # noqa: F401
 import numpy as np
 import xarray as xr
 
+import discretisedfield as df
+
 
 class HvplotField:
     """Holoviews-based plotting methods."""
@@ -22,8 +24,7 @@ class HvplotField:
 
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
-        # vector_kw.setdefault("use_color", False)
-        # vector_kw.setdefault("colorbar", False)
+        scalar_kw.setdefault("filter_field", self.field.norm)
 
         if self.field.dim == 1:
             return self.field.hvplot.scalar(slider, **scalar_kw)
@@ -35,7 +36,7 @@ class HvplotField:
             vector = self.field.hvplot.vector(slider, **vector_kw)
             return scalar * vector
 
-    def scalar(self, slider, **kwargs):
+    def scalar(self, slider, filter_field=None, **kwargs):
         """Plot the scalar field on a plane."""
         if self.field.dim > 1:
             raise ValueError(f"Cannot plot {self.field.dim=} field.")
@@ -46,9 +47,12 @@ class HvplotField:
 
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
+        self._filter_values(filter_field, self.xrfield)
         return self.xrfield.hvplot(x=x, y=y, groupby=slider, **kwargs)
 
-    def vector(self, slider, use_color=False, color_field=None, **kwargs):
+    def vector(
+        self, slider, filter_field=None, use_color=False, color_field=None, **kwargs
+    ):
         """Plot the vector field on a plane."""
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
@@ -59,12 +63,15 @@ class HvplotField:
             use_color = False
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
+
+        filter_values = self.field.norm.to_xarray()
+        self._filter_values(filter_field, filter_values)
         ip_vector = xr.Dataset(
             {
                 "angle": np.arctan2(
                     self.xrfield.sel(comp=y),
                     self.xrfield.sel(comp=x),
-                    where=self.field.norm.array.squeeze() != 0,
+                    where=np.logical_and(filter_values != 0, ~np.isnan(filter_values)),
                     out=np.full(self.field.mesh.n, np.nan),
                 ),
                 "mag": np.sqrt(
@@ -94,7 +101,7 @@ class HvplotField:
 
         return vectors
 
-    def contour(self, slider, **kwargs):
+    def contour(self, slider, filter_field=None, **kwargs):
         """Plot the scalar field on a plane."""
         if self.field.dim > 1:
             raise ValueError(f"Cannot plot {self.field.dim=} field.")
@@ -105,4 +112,22 @@ class HvplotField:
 
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
+        self._filter_values(filter_field, self.xrfield)
         return self.xrfield.hvplot.contour(x=x, y=y, groupby=slider, **kwargs)
+
+    def _filter_values(self, filter_field, values):
+        if filter_field is None:
+            return values
+
+        if filter_field.dim != 1:
+            raise ValueError(f"Cannot use {filter_field.dim=}.")
+
+        if self.field.mesh.region not in filter_field.mesh.region:
+            raise ValueError(
+                "The filter_field region does not contain the field;"
+                f" {filter_field.mesh.region=}, {self.field.mesh.region=}."
+            )
+
+        if not filter_field.mesh | self.field.mesh:
+            filter_field = df.Field(self.field.mesh, dim=1, value=filter_field)
+        values.data[filter_field.to_xarray().data == 0] = np.nan
