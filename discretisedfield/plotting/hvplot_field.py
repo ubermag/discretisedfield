@@ -1,6 +1,5 @@
 """Holoviews-based plotting."""
 import holoviews as hv
-import hvplot.xarray  # noqa: F401
 import numpy as np
 import xarray as xr
 
@@ -11,6 +10,8 @@ class HvplotField:
     """Holoviews-based plotting methods."""
 
     def __init__(self, field):
+        import hvplot.xarray  # noqa, delayed import because it creates (empty) output
+
         if field.dim > 3:
             raise ValueError(
                 f"hvplot does only support fields with dim=1, 2, 3; got {field.dim=}."
