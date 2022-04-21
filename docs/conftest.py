@@ -3,4 +3,5 @@ def pytest_collectstart(collector):
         collector.skip_compare += (
             "application/javascript",
             "application/vnd.holoviews_load.v0+json",
+            "text/html",
         )
