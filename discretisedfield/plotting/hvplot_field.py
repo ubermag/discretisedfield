@@ -93,3 +93,16 @@ class HvplotField:
                 )
 
         return vectors
+
+    def contour(self, slider, **kwargs):
+        """Plot the scalar field on a plane."""
+        if self.field.dim > 1:
+            raise ValueError(f"Cannot plot {self.field.dim=} field.")
+        if slider not in "xyz":
+            raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
+        x = min("xyz".replace(slider, ""))
+        y = max("xyz".replace(slider, ""))
+
+        kwargs.setdefault("data_aspect", 1)
+        kwargs.setdefault("colorbar", True)
+        return self.xrfield.hvplot.contour(x=x, y=y, groupby=slider, **kwargs)
