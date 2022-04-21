@@ -1,4 +1,5 @@
 """Holoviews-based plotting."""
+import holoviews as hv
 import hvplot.xarray  # noqa: F401
 import numpy as np
 import xarray as xr
@@ -50,16 +51,13 @@ class HvplotField:
         return self.xrfield.hvplot(x=x, y=y, groupby=groupby, **kwargs)
 
     def vector(
-        self, slider, filter_field=None, use_color=False, color_field=None, **kwargs
+        self, slider, filter_field=None, use_color=True, color_field=None, **kwargs
     ):
         """Plot the vector field on a plane."""
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
         if self.field.dim == 1:
             raise ValueError(f"Cannot plot {self.field.dim=} field.")
-        if use_color:
-            print("Use_color and color_field are not yet supported.")
-            use_color = False
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
 
@@ -78,27 +76,31 @@ class HvplotField:
                 ),
             }
         )
-        plot_kw = dict(x=x, y=y, angle="angle", mag="mag")
-        if use_color:
-            plot_kw["color"] = "color_comp"
-            kwargs.setdefault("colorbar", True)
+        vdims = ["angle", "mag"]
         kwargs.setdefault("data_aspect", 1)
-        vectors = ip_vector.hvplot.vectorfield(**plot_kw, **kwargs).opts(
-            magnitude="mag"
-        )
 
-        if use_color:  # TODO adding the color component does not work
-            cfield = (
-                color_field.to_xarray()
-                if color_field
-                else self.xrfield.sel(comp=slider)
+        if use_color:
+            vdims.append("color_comp")
+            kwargs.setdefault("colorbar", True)
+            if color_field:
+                ip_vector["color_comp"] = color_field.to_xarray()
+            else:
+                ip_vector["color_comp"] = self.xrfield.sel(comp=slider)
+
+        def _vectorplot(val):
+            plot = hv.VectorField(
+                data=ip_vector.sel(**{slider: val, "method": "nearest"}),
+                kdims=[x, y],
+                vdims=vdims,
             )
-            for key, val in vectors.data.items():
-                vectors.data[key] = val.add_dimension(
-                    "color_comp", -1, cfield, vdim=True
-                )
+            plot.opts(magnitude="mag", **kwargs)
+            if use_color:
+                plot.opts(color="color_comp")
+            return plot
 
-        return vectors
+        return hv.DynamicMap(_vectorplot, kdims=slider).redim.values(
+            **{slider: getattr(self.field.mesh.midpoints, slider)}
+        )
 
     def contour(self, slider, filter_field=None, **kwargs):
         """Plot the scalar field on a plane."""
