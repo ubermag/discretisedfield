@@ -3409,7 +3409,34 @@ class Field:
 
     @property
     def hvplot(self):
-        """Plot interface, holoviews/hvplot based."""
+        """Plot interface, holoviews/hvplot based.
+
+        This property provides access to the different plotting methods. It is
+        also callable to quickly generate plots. For more details and the
+        available methods refer to the documentation linked below.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.HvplotVector.__call__`
+            :py:func:`~discretisedfield.plotting.HvplotVector.scalar`
+            :py:func:`~discretisedfield.plotting.HvplotVector.vector`
+            :py:func:`~discretisedfield.plotting.HvplotVector.contour`
+
+        Examples
+        --------
+
+        1. Visualising the field using ``hvplot``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> field.hvplot(slider='z')
+
+        """
         return dfp.HvplotField(self)
 
     @property
