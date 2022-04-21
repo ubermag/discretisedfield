@@ -3435,7 +3435,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
         >>> field.hvplot(slider='z')
-        ...
+        :DynamicMap...
 
         """
         return dfp.HvplotField(self)
