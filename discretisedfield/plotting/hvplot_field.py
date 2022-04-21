@@ -97,6 +97,7 @@ class HvplotField:
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
         >>> field.hvplot(slider='z')
+        ...
 
         """
         if slider not in "xyz":
@@ -181,6 +182,7 @@ class HvplotField:
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
         >>> field.hvplot.scalar(slider='z')
+        ...
 
         """
         if slider not in "xyz":
@@ -274,6 +276,7 @@ class HvplotField:
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
         >>> field.hvplot.vector(slider='z')
+        ...
 
         """
         if slider not in "xyz":
@@ -389,6 +392,7 @@ class HvplotField:
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
         >>> field.hvplot.contour(slider='z')
+        ...
 
         """
         if slider not in "xyz":
