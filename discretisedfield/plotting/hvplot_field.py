@@ -83,8 +83,8 @@ class HvplotField:
             A ``holoviews.DynamicMap`` that "creates" a combined plot for each slider
             value.
 
-        Example
-        -------
+        Examples
+        --------
 
         1. Simple combined scalar and vector plot with ``hvplot``.
 
@@ -167,8 +167,8 @@ class HvplotField:
 
             If ``slider`` is not ``'x'``, ``'y'``, or ``'z'``.
 
-        Example
-        -------
+        Examples
+        --------
 
         1. Simple scalar plot with ``hvplot``.
 
@@ -260,8 +260,8 @@ class HvplotField:
             If ``slider`` is not ``'x'``, ``'y'``, or ``'z'`` or if the field is scalar
             or has dim > 3.
 
-        Example
-        -------
+        Examples
+        --------
 
         1. Simple vector plot with ``hvplot``.
 
@@ -375,8 +375,8 @@ class HvplotField:
 
             If ``slider`` is not ``'x'``, ``'y'``, or ``'z'``.
 
-        Example
-        -------
+        Examples
+        --------
 
         1. Simple contour-line plot with ``hvplot``.
 
