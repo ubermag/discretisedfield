@@ -38,17 +38,16 @@ class HvplotField:
 
     def scalar(self, slider, filter_field=None, **kwargs):
         """Plot the scalar field on a plane."""
-        if self.field.dim > 1:
-            raise ValueError(f"Cannot plot {self.field.dim=} field.")
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
+        groupby = [slider] if self.field.dim == 1 else [slider, "comp"]
 
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
         self._filter_values(filter_field, self.xrfield)
-        return self.xrfield.hvplot(x=x, y=y, groupby=slider, **kwargs)
+        return self.xrfield.hvplot(x=x, y=y, groupby=groupby, **kwargs)
 
     def vector(
         self, slider, filter_field=None, use_color=False, color_field=None, **kwargs
@@ -103,17 +102,16 @@ class HvplotField:
 
     def contour(self, slider, filter_field=None, **kwargs):
         """Plot the scalar field on a plane."""
-        if self.field.dim > 1:
-            raise ValueError(f"Cannot plot {self.field.dim=} field.")
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
+        groupby = [slider] if self.field.dim == 1 else [slider, "comp"]
 
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
         self._filter_values(filter_field, self.xrfield)
-        return self.xrfield.hvplot.contour(x=x, y=y, groupby=slider, **kwargs)
+        return self.xrfield.hvplot.contour(x=x, y=y, groupby=groupby, **kwargs)
 
     def _filter_values(self, filter_field, values):
         if filter_field is None:
