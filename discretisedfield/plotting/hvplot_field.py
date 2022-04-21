@@ -35,23 +35,28 @@ class HvplotField:
             vector = self.field.hvplot.vector(slider, **vector_kw)
             return scalar * vector
 
-    def scalar(self, slider, comp=None, **kwargs):
+    def scalar(self, slider, **kwargs):
         """Plot the scalar field on a plane."""
+        if self.field.dim > 1:
+            raise ValueError(f"Cannot plot {self.field.dim=} field.")
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
 
-        field = self.xrfield if comp is None else self.xrfield.sel(comp=comp)
-        return field.hvplot(x=x, y=y, groupby=slider, **kwargs)
+        kwargs.setdefault("data_aspect", 1)
+        kwargs.setdefault("colorbar", True)
+        return self.xrfield.hvplot(x=x, y=y, groupby=slider, **kwargs)
 
     def vector(self, slider, use_color=False, color_field=None, **kwargs):
         """Plot the vector field on a plane."""
+        if slider not in "xyz":
+            raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
+        if self.field.dim == 1:
+            raise ValueError(f"Cannot plot {self.field.dim=} field.")
         if use_color:
             print("Use_color and color_field are not yet supported.")
             use_color = False
-        if slider not in "xyz":
-            raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
         ip_vector = xr.Dataset(
@@ -70,6 +75,8 @@ class HvplotField:
         plot_kw = dict(x=x, y=y, angle="angle", mag="mag")
         if use_color:
             plot_kw["color"] = "color_comp"
+            kwargs.setdefault("colorbar", True)
+        kwargs.setdefault("data_aspect", 1)
         vectors = ip_vector.hvplot.vectorfield(**plot_kw, **kwargs).opts(
             magnitude="mag"
         )
