@@ -2047,6 +2047,60 @@ class TestField:
 
         plt.close("all")
 
+    def test_hvplot_scalar(self):
+        for slider in "xyz":
+            self.pf.hvplot.scalar(slider=slider)
+            self.pf.hvplot.scalar(slider=slider, filter_field=self.pf.norm)
+
+            # additional kwargs
+            self.pf.hvplot.scalar(slider=slider, clim=(-1, 1))
+
+            for c in self.pf.components:
+                getattr(self.pf, c).hvplot.scalar(slider=slider)
+
+        with pytest.raises(ValueError):
+            self.pf.hvplot.scalar(slider="wrong_name")
+
+    def test_hvplot_vector(self):
+        for slider in "xyz":
+            self.pf.hvplot.vector(slider=slider)
+            self.pf.hvplot.vector(slider=slider, filter_field=self.pf.norm)
+
+            # additional kwargs
+            self.pf.hvplot.vector(slider=slider, use_color=False, color="blue")
+
+            for comp in self.pf.components:
+                self.pf.hvplot.vector(slider=slider, color_field=getattr(self.pf, comp))
+
+        with pytest.raises(ValueError):
+            self.pf.hvplot.scalar(slider="wrong_name")
+
+    def test_hvplot_contour(self):
+        for slider in "xyz":
+            self.pf.hvplot.contour(slider=slider)
+            self.pf.hvplot.contour(slider=slider, filter_field=self.pf.norm)
+
+            # additional kwargs
+            self.pf.hvplot.contour(slider=slider, clim=(-1, 1))
+
+            for c in self.pf.components:
+                getattr(self.pf, c).hvplot.contour(slider=slider)
+
+        with pytest.raises(ValueError):
+            self.pf.hvplot.contour(slider="wrong_name")
+
+    def test_hvplot(self):
+        for slider in "xyz":
+            self.pf.hvplot.contour(slider=slider)
+            self.pf.hvplot.contour(slider=slider, filter_field=self.pf.norm)
+
+            # additional kwargs
+            self.pf.hvplot.contour(
+                slider=slider,
+                scalar_kw={"clim": (-1, 1)},
+                vector_kw={"cmap": "cividis"},
+            )
+
     def test_k3d_nonzero(self):
         # Default
         self.pf.norm.k3d.nonzero()
