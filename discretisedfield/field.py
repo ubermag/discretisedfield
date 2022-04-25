@@ -26,6 +26,7 @@ from .mesh import Mesh
 @ts.typesystem(
     mesh=ts.Typed(expected_type=Mesh, const=True),
     dim=ts.Scalar(expected_type=int, positive=True, const=True),
+    unit=ts.Typed(excpected_type=str, const=True),
 )
 class Field:
     """Finite-difference field.
@@ -70,6 +71,10 @@ class Field:
         type is automatically determined if ``value`` is  array_like, for
         callable and dict ``value`` the numpy default (currently
         ``float64``) is used. Defaults to ``None``.
+
+    unit : str, optional
+
+        Physical unit of the field.
 
     Examples
     --------
@@ -128,10 +133,13 @@ class Field:
 
     """
 
-    def __init__(self, mesh, dim, value=0.0, norm=None, components=None, dtype=None):
+    def __init__(
+        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, unit=None
+    ):
         self.mesh = mesh
         self.dim = dim
         self.dtype = dtype
+        self.unit = unit
 
         self.value = value
         self.norm = norm
@@ -3230,10 +3238,16 @@ class Field:
         r_tuple = (*reversed(mesh.n), header["valuedim"])
         t_tuple = (2, 1, 0, 3)
 
+        components = header["valuelabels"].split()
+        if components[0].startswith["Magnetization_"]:
+            components = [c[len("Magnetization_") :] for c in components]
+
         return cls(
             mesh,
             dim=header["valuedim"],
             value=array.reshape(r_tuple).transpose(t_tuple),
+            components=components,
+            unit=header["valueunits"].split()[0],
         )
 
     @classmethod
