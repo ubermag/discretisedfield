@@ -3265,6 +3265,8 @@ class Field:
         components = header["valuelabels"].split()
         if components[0].startswith("Magnetization_"):
             components = [c[len("Magnetization_") :] for c in components]
+        if len(components) != len(set(components)):  # components are not unique
+            components = None
 
         try:
             unit = header["valueunits"].split()[0]
