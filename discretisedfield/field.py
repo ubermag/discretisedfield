@@ -446,7 +446,7 @@ class Field:
         else:
             res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
 
-        return self.__class__(self.mesh, dim=1, value=res)
+        return self.__class__(self.mesh, dim=1, value=res, unit=self.unit)
 
     @norm.setter
     def norm(self, val):
@@ -526,7 +526,7 @@ class Field:
 
         """
         return self.__class__(
-            self.mesh, dim=self.dim, value=0, components=self.components
+            self.mesh, dim=self.dim, value=0, components=self.components, unit=self.unit
         )
 
     @property
@@ -770,7 +770,9 @@ class Field:
         """
         if self.components is not None and attr in self.components:
             attr_array = self.array[..., self.components.index(attr), np.newaxis]
-            return self.__class__(mesh=self.mesh, dim=1, value=attr_array)
+            return self.__class__(
+                mesh=self.mesh, dim=1, value=attr_array, unit=self.unit
+            )
         else:
             msg = f"Object has no attribute {attr}."
             raise AttributeError(msg)
@@ -1131,6 +1133,7 @@ class Field:
             dim=1,
             value=np.power(self.array, other),
             components=self.components,
+            unit=self.unit,
         )
 
     def __add__(self, other):
@@ -1214,6 +1217,7 @@ class Field:
             dim=self.dim,
             value=self.array + other.array,
             components=self.components,
+            unit=self.unit(),
         )
 
     def __radd__(self, other):
@@ -1374,7 +1378,11 @@ class Field:
         res_array = np.multiply(self.array, other.array)
         components = self.components if self.dim == res_array.shape[-1] else None
         return self.__class__(
-            self.mesh, dim=res_array.shape[-1], value=res_array, components=components
+            self.mesh,
+            dim=res_array.shape[-1],
+            value=res_array,
+            components=components,
+            unit=self.unit,
         )
 
     def __rmul__(self, other):
@@ -1511,7 +1519,9 @@ class Field:
             raise TypeError(msg)
 
         res_array = np.einsum("ijkl,ijkl->ijk", self.array, other.array)
-        return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
+        return df.Field(
+            self.mesh, dim=1, value=res_array[..., np.newaxis], unit=self.unit
+        )
 
     def __rmatmul__(self, other):
         return self @ other
@@ -1578,7 +1588,11 @@ class Field:
 
         res_array = np.cross(self.array, other.array)
         return self.__class__(
-            self.mesh, dim=3, value=res_array, components=self.components
+            self.mesh,
+            dim=3,
+            value=res_array,
+            components=self.components,
+            unit=self.unit,
         )
 
     def __rand__(self, other):
@@ -1671,6 +1685,7 @@ class Field:
             dim=len(array_list),
             value=np.stack(array_list, axis=3),
             components=components,
+            unit=self.unit,
         )
 
     def __rlshift__(self, other):
@@ -1746,7 +1761,11 @@ class Field:
         padded_mesh = self.mesh.pad(pad_width)
 
         return self.__class__(
-            padded_mesh, dim=self.dim, value=padded_array, components=self.components
+            padded_mesh,
+            dim=self.dim,
+            value=padded_array,
+            components=self.components,
+            unit=self.unit,
         )
 
     def derivative(self, direction, n=1):
@@ -2456,7 +2475,11 @@ class Field:
             )
             value = self.array[slices]
         return self.__class__(
-            plane_mesh, dim=self.dim, value=value, components=self.components
+            plane_mesh,
+            dim=self.dim,
+            value=value,
+            components=self.components,
+            unit=self.unit,
         )
 
     def __getitem__(self, item):
@@ -2539,6 +2562,7 @@ class Field:
             dim=self.dim,
             value=self.array[tuple(slices)],
             components=self.components,
+            unit=self.unit,
         )
 
     def project(self, direction):
@@ -2786,7 +2810,7 @@ class Field:
 
         """
         write_dim = 3 if extend_scalar and self.dim == 1 else self.dim
-        valueunits = " ".join(["None"] * write_dim)
+        valueunits = " ".join([str(self.unit)] * write_dim)
         if write_dim == 1:
             valuelabels = "field_x"
         elif extend_scalar:
@@ -3239,7 +3263,7 @@ class Field:
         t_tuple = (2, 1, 0, 3)
 
         components = header["valuelabels"].split()
-        if components[0].startswith["Magnetization_"]:
+        if components[0].startswith("Magnetization_"):
             components = [c[len("Magnetization_") :] for c in components]
 
         return cls(
@@ -3443,6 +3467,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
+            unit=self.unit,
         )
 
     @property
@@ -3467,6 +3492,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
+            unit=self.unit,
         )
 
     @property
@@ -3491,6 +3517,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
+            unit=self.unit,
         )
 
     @property
@@ -3519,6 +3546,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
+            unit=self.unit,
         )
 
     def _fft_mesh(self, rfft=False):
@@ -3567,14 +3595,22 @@ class Field:
     def real(self):
         """Real part of complex field."""
         return self.__class__(
-            self.mesh, dim=self.dim, value=self.array.real, components=self.components
+            self.mesh,
+            dim=self.dim,
+            value=self.array.real,
+            components=self.components,
+            unit=self.unit,
         )
 
     @property
     def imag(self):
         """Imaginary part of complex field."""
         return self.__class__(
-            self.mesh, dim=self.dim, value=self.array.imag, components=self.components
+            self.mesh,
+            dim=self.dim,
+            value=self.array.imag,
+            components=self.components,
+            unit=self.unit,
         )
 
     @property
@@ -3595,6 +3631,7 @@ class Field:
             dim=self.dim,
             value=self.array.conjugate(),
             components=self.components,
+            unit=self.unit,
         )
 
     # TODO check and write tests
@@ -3621,14 +3658,24 @@ class Field:
             if len(result) != len(mesh):
                 raise ValueError("wrong number of Field objects")
             return tuple(
-                self.__class__(m, dim=x.shape[-1], value=x, components=self.components)
+                self.__class__(
+                    m,
+                    dim=x.shape[-1],
+                    value=x,
+                    components=self.components,
+                    unit=self.unit,
+                )
                 for x, m in zip(result, mesh)
             )
         elif method == "at":
             return None
         else:
             return self.__class__(
-                mesh[0], dim=result.shape[-1], value=result, components=self.components
+                mesh[0],
+                dim=result.shape[-1],
+                value=result,
+                components=self.components,
+                unit=self.unit,
             )
 
     def to_xarray(self, name="field", units=None):
