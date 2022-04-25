@@ -26,7 +26,7 @@ from .mesh import Mesh
 @ts.typesystem(
     mesh=ts.Typed(expected_type=Mesh, const=True),
     dim=ts.Scalar(expected_type=int, positive=True, const=True),
-    unit=ts.Typed(excpected_type=str, const=True),
+    unit=ts.Typed(expected_type=str, const=True),
 )
 class Field:
     """Finite-difference field.
@@ -134,7 +134,7 @@ class Field:
     """
 
     def __init__(
-        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, unit=None
+        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, unit=""
     ):
         self.mesh = mesh
         self.dim = dim
