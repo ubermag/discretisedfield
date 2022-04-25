@@ -13,7 +13,7 @@ class HvplotField:
     """Holoviews-based plotting methods.
 
     Plotting with holoviews can be created without prior slicing. Instead, a slider
-    is created for the out-of-plane dinection. This class should not be accessed
+    is created for the out-of-plane direction. This class should not be accessed
     directly. Use ``field.hvplot`` to use the different plotting methods.
 
     Parameters
@@ -73,7 +73,7 @@ class HvplotField:
             Additional keyword arguments that are
             ``discretisedfield.plotting.HvplotField.scalar``
 
-        scalar_kw : dict
+        vector_kw : dict
 
             Additional keyword arguments that are
             ``discretisedfield.plotting.HvplotField.vector``
