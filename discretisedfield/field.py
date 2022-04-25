@@ -3262,11 +3262,15 @@ class Field:
         r_tuple = (*reversed(mesh.n), header["valuedim"])
         t_tuple = (2, 1, 0, 3)
 
-        components = header["valuelabels"].split()
-        if components[0].startswith("Magnetization_"):
-            components = [c[len("Magnetization_") :] for c in components]
-        if len(components) != len(set(components)):  # components are not unique
+        try:
+            components = header["valuelabels"].split()
+        except KeyError:
             components = None
+        else:
+            if components[0].startswith("Magnetization_"):
+                components = [c[len("Magnetization_") :] for c in components]
+            if len(components) != len(set(components)):  # components are not unique
+                components = None
 
         try:
             unit = header["valueunits"].split()[0]
