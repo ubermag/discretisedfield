@@ -1,9 +1,12 @@
 """Holoviews-based plotting."""
+import warnings
+
 import holoviews as hv
 import numpy as np
 import xarray as xr
 
 import discretisedfield as df
+import discretisedfield.util as dfu
 
 
 class HvplotField:
@@ -113,7 +116,9 @@ class HvplotField:
             return self.field.hvplot.vector(slider, **vector_kw)
         elif self.field.dim == 3:
             vector_kw.setdefault("use_color", False)
-            scalar = getattr(self.field, slider).hvplot.scalar(slider, **scalar_kw)
+            scalar = getattr(
+                self.field, self.field.components[dfu.axesdict[slider]]
+            ).hvplot.scalar(slider, **scalar_kw)
             vector = self.field.hvplot.vector(slider, **vector_kw)
             return scalar * vector
 
@@ -281,7 +286,7 @@ class HvplotField:
         """
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
-        if self.field.dim == 1 or self.field.dim > 3:
+        if self.field.dim != 3:
             raise ValueError(f"Cannot plot {self.field.dim=} field.")
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
@@ -291,13 +296,14 @@ class HvplotField:
         ip_vector = xr.Dataset(
             {
                 "angle": np.arctan2(
-                    self.xrfield.sel(comp=y),
-                    self.xrfield.sel(comp=x),
+                    self.xrfield.isel(comp=dfu.axesdict[y]),
+                    self.xrfield.isel(comp=dfu.axesdict[x]),
                     where=np.logical_and(filter_values != 0, ~np.isnan(filter_values)),
                     out=np.full(self.field.mesh.n, np.nan),
                 ),
                 "mag": np.sqrt(
-                    self.xrfield.sel(comp=x) ** 2 + self.xrfield.sel(comp=y) ** 2
+                    self.xrfield.isel(comp=dfu.axesdict[x]) ** 2
+                    + self.xrfield.isel(comp=dfu.axesdict[y]) ** 2
                 ),
             }
         )
@@ -310,7 +316,16 @@ class HvplotField:
             if color_field:
                 ip_vector["color_comp"] = color_field.to_xarray()
             else:
-                ip_vector["color_comp"] = self.xrfield.sel(comp=slider)
+                if self.field.dim == 2:
+                    warnings.warn(
+                        "Automatic coloring is only supported for 3d"
+                        f' fields. Ignoring "{use_color=}".'
+                    )
+                    use_color = False
+                else:
+                    ip_vector["color_comp"] = self.xrfield.isel(
+                        comp=dfu.axesdict[slider]
+                    )
 
         def _vectorplot(val):
             plot = hv.VectorField(
