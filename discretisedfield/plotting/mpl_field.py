@@ -42,7 +42,7 @@ class MplField(Mpl):
 
         self.field = field
 
-        self.planeaxis = dfu.raxesdict[field.mesh.attributes["planeaxis"]]
+        self.planeaxis = field.mesh.attributes["planeaxis"]
         self.planeaxis_point = {
             dfu.raxesdict[
                 self.field.mesh.attributes["planeaxis"]
@@ -149,8 +149,10 @@ class MplField(Mpl):
 
         else:
             vector_field = self.field
-            scalar_field = getattr(self.field, self.planeaxis)
-            scalar_kw.setdefault("colorbar_label", f"{self.planeaxis}-component")
+            scalar_field = getattr(self.field, self.field.components[self.planeaxis])
+            scalar_kw.setdefault(
+                "colorbar_label", f"{dfu.raxesdict[self.planeaxis]}-component"
+            )
 
         scalar_kw.setdefault("filter_field", self.field.norm)
 
@@ -398,7 +400,9 @@ class MplField(Mpl):
             )
         elif self.field.dim == 3:
             if lightness_field is None:
-                lightness_field = getattr(self.field, self.planeaxis)
+                lightness_field = getattr(
+                    self.field, self.field.components[self.planeaxis]
+                )
             if filter_field is None:
                 filter_field = self.field.norm
             return self.field.angle.mpl.lightness(
@@ -618,7 +622,9 @@ class MplField(Mpl):
                     )
                     use_color = False
                 else:
-                    color_field = getattr(self.field, self.planeaxis)
+                    color_field = getattr(
+                        self.field, self.field.components[self.planeaxis]
+                    )
             if use_color:
                 color_plane = color_field.plane(**self.planeaxis_point)
                 if color_plane.mesh != self.field.mesh:
