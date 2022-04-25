@@ -3266,12 +3266,17 @@ class Field:
         if components[0].startswith("Magnetization_"):
             components = [c[len("Magnetization_") :] for c in components]
 
+        try:
+            unit = header["valueunits"].split()[0]
+        except (KeyError, IndexError):
+            unit = ""
+
         return cls(
             mesh,
             dim=header["valuedim"],
             value=array.reshape(r_tuple).transpose(t_tuple),
             components=components,
-            unit=header["valueunits"].split()[0],
+            unit=unit,
         )
 
     @classmethod
