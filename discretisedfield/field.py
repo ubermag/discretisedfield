@@ -1217,7 +1217,7 @@ class Field:
             dim=self.dim,
             value=self.array + other.array,
             components=self.components,
-            unit=self.unit(),
+            unit=self.unit,
         )
 
     def __radd__(self, other):
