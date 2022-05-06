@@ -2807,7 +2807,7 @@ class Field:
 
         """
         write_dim = 3 if extend_scalar and self.dim == 1 else self.dim
-        valueunits = " ".join([str(self.unit)] * write_dim)
+        valueunits = " ".join([str(self.units)] * write_dim) if self.units else ""
         if write_dim == 1:
             valuelabels = "field_x"
         elif extend_scalar:
@@ -3270,16 +3270,28 @@ class Field:
                 components = None
 
         try:
-            unit = header["valueunits"].split()[0]
-        except (KeyError, IndexError):
-            unit = ""
+            unit_list = header["valueunits"].split()
+        except KeyError:
+            units = None
+        else:
+            if len(unit_list) == 1:
+                units = None  # no unit in the file
+            elif len(set(unit_list)) != 1:
+                warnings.warn(
+                    f"File {filename} contains multiple units for the individual"
+                    f" components: {unit_list=}. This is not supported by"
+                    " discretisedfield. Units are set to None."
+                )
+                units = None
+            else:
+                units = unit_list[0]
 
         return cls(
             mesh,
             dim=header["valuedim"],
             value=array.reshape(r_tuple).transpose(t_tuple),
             components=components,
-            unit=unit,
+            units=units,
         )
 
     @classmethod
