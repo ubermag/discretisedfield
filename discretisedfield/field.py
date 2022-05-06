@@ -3274,7 +3274,7 @@ class Field:
         except KeyError:
             units = None
         else:
-            if len(unit_list) == 1:
+            if len(unit_list) == 0:
                 units = None  # no unit in the file
             elif len(set(unit_list)) != 1:
                 warnings.warn(
