@@ -26,7 +26,7 @@ from .mesh import Mesh
 @ts.typesystem(
     mesh=ts.Typed(expected_type=Mesh, const=True),
     dim=ts.Scalar(expected_type=int, positive=True, const=True),
-    unit=ts.Typed(expected_type=str, const=True),
+    unit=ts.Typed(expected_type=str, allow_none=True),
 )
 class Field:
     """Finite-difference field.
@@ -134,7 +134,7 @@ class Field:
     """
 
     def __init__(
-        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, unit=""
+        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, unit=None
     ):
         self.mesh = mesh
         self.dim = dim
@@ -1133,7 +1133,6 @@ class Field:
             dim=1,
             value=np.power(self.array, other),
             components=self.components,
-            unit=self.unit,
         )
 
     def __add__(self, other):
@@ -1217,7 +1216,6 @@ class Field:
             dim=self.dim,
             value=self.array + other.array,
             components=self.components,
-            unit=self.unit,
         )
 
     def __radd__(self, other):
@@ -1382,7 +1380,6 @@ class Field:
             dim=res_array.shape[-1],
             value=res_array,
             components=components,
-            unit=self.unit,
         )
 
     def __rmul__(self, other):
@@ -1519,9 +1516,7 @@ class Field:
             raise TypeError(msg)
 
         res_array = np.einsum("ijkl,ijkl->ijk", self.array, other.array)
-        return df.Field(
-            self.mesh, dim=1, value=res_array[..., np.newaxis], unit=self.unit
-        )
+        return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
 
     def __rmatmul__(self, other):
         return self @ other
@@ -1592,7 +1587,6 @@ class Field:
             dim=3,
             value=res_array,
             components=self.components,
-            unit=self.unit,
         )
 
     def __rand__(self, other):
@@ -1685,7 +1679,6 @@ class Field:
             dim=len(array_list),
             value=np.stack(array_list, axis=3),
             components=components,
-            unit=self.unit,
         )
 
     def __rlshift__(self, other):
@@ -3674,7 +3667,6 @@ class Field:
                     dim=x.shape[-1],
                     value=x,
                     components=self.components,
-                    unit=self.unit,
                 )
                 for x, m in zip(result, mesh)
             )
@@ -3686,7 +3678,6 @@ class Field:
                 dim=result.shape[-1],
                 value=result,
                 components=self.components,
-                unit=self.unit,
             )
 
     def to_xarray(self, name="field", units=None):
