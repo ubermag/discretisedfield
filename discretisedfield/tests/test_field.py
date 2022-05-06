@@ -22,7 +22,7 @@ html_re = (
     rf"<li>{mesh_html_re}</li>\s*"
     r"<li>dim = \d+</li>\s*"
     r"(<li>components:\s*<ul>(<li>.*</li>\s*)+</ul>\s*</li>)?\s*"
-    r"(<li>unit = .+</li>)?\s*"
+    r"(<li>units = .+</li>)?\s*"
     r"</ul>"
 )
 
