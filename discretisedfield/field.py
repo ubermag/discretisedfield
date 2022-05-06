@@ -26,7 +26,7 @@ from .mesh import Mesh
 @ts.typesystem(
     mesh=ts.Typed(expected_type=Mesh, const=True),
     dim=ts.Scalar(expected_type=int, positive=True, const=True),
-    unit=ts.Typed(expected_type=str, allow_none=True),
+    units=ts.Typed(expected_type=str, allow_none=True),
 )
 class Field:
     """Finite-difference field.
@@ -72,7 +72,7 @@ class Field:
         callable and dict ``value`` the numpy default (currently
         ``float64``) is used. Defaults to ``None``.
 
-    unit : str, optional
+    units : str, optional
 
         Physical unit of the field.
 
@@ -134,12 +134,12 @@ class Field:
     """
 
     def __init__(
-        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, unit=None
+        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, units=None
     ):
         self.mesh = mesh
         self.dim = dim
         self.dtype = dtype
-        self.unit = unit
+        self.units = units
 
         self.value = value
         self.norm = norm
@@ -446,7 +446,7 @@ class Field:
         else:
             res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
 
-        return self.__class__(self.mesh, dim=1, value=res, unit=self.unit)
+        return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
     def norm(self, val):
@@ -526,7 +526,11 @@ class Field:
 
         """
         return self.__class__(
-            self.mesh, dim=self.dim, value=0, components=self.components, unit=self.unit
+            self.mesh,
+            dim=self.dim,
+            value=0,
+            components=self.components,
+            units=self.units,
         )
 
     @property
@@ -771,7 +775,7 @@ class Field:
         if self.components is not None and attr in self.components:
             attr_array = self.array[..., self.components.index(attr), np.newaxis]
             return self.__class__(
-                mesh=self.mesh, dim=1, value=attr_array, unit=self.unit
+                mesh=self.mesh, dim=1, value=attr_array, units=self.units
             )
         else:
             msg = f"Object has no attribute {attr}."
@@ -1758,7 +1762,7 @@ class Field:
             dim=self.dim,
             value=padded_array,
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     def derivative(self, direction, n=1):
@@ -2472,7 +2476,7 @@ class Field:
             dim=self.dim,
             value=value,
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     def __getitem__(self, item):
@@ -2555,7 +2559,7 @@ class Field:
             dim=self.dim,
             value=self.array[tuple(slices)],
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     def project(self, direction):
@@ -3471,7 +3475,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     @property
@@ -3496,7 +3500,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     @property
@@ -3521,7 +3525,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     @property
@@ -3550,7 +3554,7 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     def _fft_mesh(self, rfft=False):
@@ -3603,7 +3607,7 @@ class Field:
             dim=self.dim,
             value=self.array.real,
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     @property
@@ -3614,7 +3618,7 @@ class Field:
             dim=self.dim,
             value=self.array.imag,
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     @property
@@ -3635,7 +3639,7 @@ class Field:
             dim=self.dim,
             value=self.array.conjugate(),
             components=self.components,
-            unit=self.unit,
+            units=self.units,
         )
 
     # TODO check and write tests
