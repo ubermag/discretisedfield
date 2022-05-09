@@ -195,7 +195,13 @@ class HvplotField:
         return self.xrfield.hvplot(x=x, y=y, groupby=groupby, **kwargs)
 
     def vector(
-        self, slider, filter_field=None, use_color=True, color_field=None, **kwargs
+        self,
+        slider,
+        vdims=None,
+        filter_field=None,
+        use_color=True,
+        color_field=None,
+        **kwargs,
     ):
         """Plot the vector field on a plane.
 
@@ -221,6 +227,14 @@ class HvplotField:
 
             Spatial direction for which a slider is created. Can be one of ``'x'``,
             ``'y'``, or ``'z'``.
+
+        vdims : List[str], optional
+
+            Names of the components to be used for the x and y component of the plotted
+            arrows. This information is used to identify field components and spatial
+            directions. Optionally, one of the list elements can be ``None`` if the
+            field has no component in that direction. ``vdims`` is required for 2d
+            vector fields.
 
         filter_field : df.Field, optional
 
@@ -275,24 +289,39 @@ class HvplotField:
         """
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
-        if self.field.dim != 3:
+        if self.field.dim == 1:
             raise ValueError(f"Cannot plot {self.field.dim=} field.")
+        if self.field.dim != 3 and vdims is None:
+            raise ValueError(f"vdims are required for {self.field.dim=} field.")
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
+
+        if vdims is None:
+            arrow_x = self.field.components[dfu.axesdict[x]]
+            arrow_y = self.field.components[dfu.axesdict[y]]
+        else:
+            if len(vdims) != 2:
+                raise ValueError(f"{vdims=} must contain two elements.")
+            arrow_x, arrow_y = vdims
+            if arrow_x is None and arrow_y is None:
+                raise ValueError(f"At least one element of {vdims=} must be not None.")
 
         filter_values = self.field.norm.to_xarray()
         self._filter_values(filter_field, filter_values)
         ip_vector = xr.Dataset(
             {
                 "angle": np.arctan2(
-                    self.xrfield.isel(comp=dfu.axesdict[y]),
-                    self.xrfield.isel(comp=dfu.axesdict[x]),
+                    self.xrfield.sel(comp=arrow_y) if arrow_y else 0,
+                    self.xrfield.sel(comp=arrow_x) if arrow_x else 0,
                     where=np.logical_and(filter_values != 0, ~np.isnan(filter_values)),
                     out=np.full(self.field.mesh.n, np.nan),
                 ),
                 "mag": np.sqrt(
-                    self.xrfield.isel(comp=dfu.axesdict[x]) ** 2
-                    + self.xrfield.isel(comp=dfu.axesdict[y]) ** 2
+                    self.xrfield.sel(comp=arrow_x) ** 2
+                    if arrow_x
+                    else 0 + self.xrfield.sel(comp=arrow_y) ** 2
+                    if arrow_y
+                    else 0
                 ),
             }
         )
@@ -305,7 +334,7 @@ class HvplotField:
             if color_field:
                 ip_vector["color_comp"] = color_field.to_xarray()
             else:
-                if self.field.dim == 2:
+                if self.field.dim != 3:
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
                         f' fields. Ignoring "{use_color=}".'
