@@ -62,7 +62,6 @@ class HvplotField:
 
         Parameters
         ----------
-
         slider : str
 
             Spatial direction for which a slider is created. Can be one of ``'x'``,
@@ -80,7 +79,6 @@ class HvplotField:
 
         Returns
         -------
-
         holoviews.DynamicMap
 
             A ``holoviews.DynamicMap`` that "creates" a combined plot for each slider
@@ -88,7 +86,6 @@ class HvplotField:
 
         Examples
         --------
-
         1. Simple combined scalar and vector plot with ``hvplot``.
 
         >>> import discretisedfield as df
@@ -143,7 +140,6 @@ class HvplotField:
 
         Parameters
         ----------
-
         slider : str
 
             Spatial direction for which a slider is created. Can be one of ``'x'``,
@@ -160,7 +156,6 @@ class HvplotField:
 
         Returns
         -------
-
         holoviews.DynamicMap
 
             A ``holoviews.DynamicMap`` that "creates" a ``holoviews.Image`` for each
@@ -168,14 +163,12 @@ class HvplotField:
 
         Raises
         ------
-
         ValueError
 
             If ``slider`` is not ``'x'``, ``'y'``, or ``'z'``.
 
         Examples
         --------
-
         1. Simple scalar plot with ``hvplot``.
 
         >>> import discretisedfield as df
@@ -224,7 +217,6 @@ class HvplotField:
 
         Parameters
         ----------
-
         slider : str
 
             Spatial direction for which a slider is created. Can be one of ``'x'``,
@@ -253,7 +245,6 @@ class HvplotField:
 
         Returns
         -------
-
         holoviews.DynamicMap
 
             A ``holoviews.DynamicMap`` that "creates" a ``holoviews.Image`` for each
@@ -261,7 +252,6 @@ class HvplotField:
 
         Raises
         ------
-
         ValueError
 
             If ``slider`` is not ``'x'``, ``'y'``, or ``'z'`` or if the field is scalar
@@ -269,7 +259,6 @@ class HvplotField:
 
         Examples
         --------
-
         1. Simple vector plot with ``hvplot``.
 
         >>> import discretisedfield as df
@@ -363,7 +352,6 @@ class HvplotField:
 
         Parameters
         ----------
-
         slider : str
 
             Spatial direction for which a slider is created. Can be one of ``'x'``,
@@ -380,7 +368,6 @@ class HvplotField:
 
         Returns
         -------
-
         holoviews.DynamicMap
 
             A ``holoviews.DynamicMap`` that "creates" a ``holoviews.Image`` for each
@@ -388,14 +375,12 @@ class HvplotField:
 
         Raises
         ------
-
         ValueError
 
             If ``slider`` is not ``'x'``, ``'y'``, or ``'z'``.
 
         Examples
         --------
-
         1. Simple contour-line plot with ``hvplot``.
 
         >>> import discretisedfield as df
