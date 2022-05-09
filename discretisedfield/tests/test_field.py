@@ -390,7 +390,7 @@ class TestField:
         field.units = None
         assert field.units is None
 
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             df.Field(mesh, dim=1, units=1)
 
     def test_value(self):
