@@ -77,6 +77,7 @@ def check_field(field):
     assert field - (-field) == field + field
     assert 1 * field == field
     assert -1 * field == -field
+    assert field.units is None or isinstance(field.units, str)
 
     if field.dim == 1:
         grad = field.grad
@@ -374,6 +375,23 @@ class TestField:
             fab = fa << fb
             check_field(fab)
             assert fab.components == ["a", "b"]
+
+    def test_units(self):
+        assert self.pf.units is None
+        mesh = self.pf.mesh
+        field = df.Field(mesh, dim=3, value=(1, 2, 3), units="A/m")
+        check_field(field)
+        assert field.units == "A/m"
+        field.units = "mT"
+        assert field.units == "mT"
+        with pytest.raises(ValueError):
+            field.units = 3
+        assert field.units == "mT"
+        field.units = None
+        assert field.units is None
+
+        with pytest.raises(ValueError):
+            df.Field(mesh, dim=1, units=1)
 
     def test_value(self):
         p1 = (0, 0, 0)
@@ -1684,7 +1702,7 @@ class TestField:
             (2, lambda point: (point[0], point[1] + point[2])),
             (3, lambda point: (point[0], point[1], point[2])),
         ]:
-            f = df.Field(mesh, dim=dim, value=value)
+            f = df.Field(mesh, dim=dim, value=value, units="A/m")
             for rep in representations:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     tmpfilename = os.path.join(tmpdir, filename)
@@ -1692,6 +1710,7 @@ class TestField:
                     f_read = df.Field.fromfile(tmpfilename)
 
                     assert f.allclose(f_read)
+                    assert f_read.units == "A/m"
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
