@@ -384,7 +384,7 @@ class TestField:
         assert field.units == "A/m"
         field.units = "mT"
         assert field.units == "mT"
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             field.units = 3
         assert field.units == "mT"
         field.units = None
