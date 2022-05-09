@@ -44,6 +44,8 @@ def check_field(field):
     pattern = r"^Field\(Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), .+\)," r" dim=\d+\)$"
     if field.components:
         pattern = pattern[:-3] + r", components: \(.+\)\)$"
+    if field.units is not None:
+        pattern = pattern[:-3] + r", units = .+\)$"
     assert re.search(pattern, rstr)
 
     assert isinstance(field._repr_html_(), str)
