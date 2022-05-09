@@ -3264,8 +3264,8 @@ class Field:
         except KeyError:
             components = None
         else:
-            if components[0].startswith("Magnetization_"):
-                components = [c[len("Magnetization_") :] for c in components]
+            if "_" in components[0]:  # OOMMF writes: Magnetization_x
+                components = [c.split("_")[1] for c in components]
             if len(components) != len(set(components)):  # components are not unique
                 components = None
 
