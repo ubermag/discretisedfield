@@ -231,7 +231,7 @@ class HvplotField:
         vdims : List[str], optional
 
             Names of the components to be used for the x and y component of the plotted
-            arrows. This information is used to identify field components and spatial
+            arrows. This information is used to associate field components and spatial
             directions. Optionally, one of the list elements can be ``None`` if the
             field has no component in that direction. ``vdims`` is required for 2d
             vector fields.
@@ -329,8 +329,6 @@ class HvplotField:
         kwargs.setdefault("data_aspect", 1)
 
         if use_color:
-            vdims.append("color_comp")
-            kwargs.setdefault("colorbar", True)
             if color_field:
                 ip_vector["color_comp"] = color_field.to_xarray()
             else:
@@ -344,6 +342,9 @@ class HvplotField:
                     ip_vector["color_comp"] = self.xrfield.isel(
                         comp=dfu.axesdict[slider]
                     )
+        if use_color:  # can be disabled at this point for 2d fields
+            vdims.append("color_comp")
+            kwargs.setdefault("colorbar", True)
 
         def _vectorplot(val):
             plot = hv.VectorField(

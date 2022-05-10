@@ -2081,6 +2081,14 @@ class TestField:
             with pytest.raises(ValueError):
                 (self.pf.a << self.pf.b).hvplot.vector(slider=slider)
 
+            field_2d = self.pf.a << self.pf.b
+            field_2d.components = ["a", "b"]
+            field_2d.hvplot.vector(slider=slider, vdims=["a", "b"])
+            field_2d.hvplot.vector(slider=slider, vdims=[None, "b"])
+            field_2d.hvplot.vector(slider=slider, vdims=["a", None])
+            with pytest.raises(ValueError):
+                field_2d.hvplot.vector(slider=slider, vdims=[None, None])
+
         with pytest.raises(ValueError):
             self.pf.hvplot.scalar(slider="wrong_name")
 
@@ -2103,8 +2111,7 @@ class TestField:
             self.pf.hvplot(slider=slider)
 
             self.pf.a.hvplot(slider=slider)
-            with pytest.raises(ValueError):
-                (self.pf.b << self.pf.c).hvplot(slider=slider)
+            (self.pf.b << self.pf.c).hvplot(slider=slider, vdims=["x", "y"])
 
             # additional kwargs
             self.pf.hvplot(
