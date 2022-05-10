@@ -2122,7 +2122,9 @@ class TestField:
             self.pf.hvplot(slider=slider)
 
             self.pf.a.hvplot(slider=slider)
-            (self.pf.b << self.pf.c).hvplot(slider=slider, vdims=["x", "y"])
+            (self.pf.b << self.pf.c).hvplot(
+                slider=slider, vector_kw={"vdims": ["x", "y"]}
+            )
 
             # additional kwargs
             self.pf.hvplot(
