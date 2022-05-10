@@ -1962,6 +1962,17 @@ class TestField:
             clim=(-1, 1),
         )
 
+        # 2d vector field
+        plane_2d = self.pf.plane("z").a << self.pf.plane("z").b
+        plane_2d.components = ["a", "b"]
+        with pytest.raises(ValueError):
+            plane_2d.mpl.vector()
+        plane_2d.mpl.vector(vdims=["a", "b"])
+        plane_2d.mpl.vector(vdims=["a", None])
+        plane_2d.mpl.vector(vdims=[None, "b"])
+        with pytest.raises(ValueError):
+            plane_2d.mpl.vector(vdims=[None, None])
+
         # Saving plot
         filename = "testfigure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:

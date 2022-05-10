@@ -479,6 +479,7 @@ class MplField(Mpl):
         ax=None,
         figsize=None,
         multiplier=None,
+        vdims=None,
         use_color=True,
         color_field=None,
         colorbar=True,
@@ -537,6 +538,14 @@ class MplField(Mpl):
             The size of a created figure if ``ax`` is not passed. defaults to
             ``None``.
 
+        vdims : List[str], optional
+
+            Names of the components to be used for the x and y component of the plotted
+            arrows. This information is used to associate field components and spatial
+            directions. Optionally, one of the list elements can be ``None`` if the
+            field has no component in that direction. ``vdims`` is required for 2d
+            vector fields.
+
         color_field : discretisedfield.field, optional
 
             A scalar field used for colouring the vectors. defaults to ``None``
@@ -592,10 +601,8 @@ class MplField(Mpl):
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
         """
-        if self.field.dim not in [2, 3]:
-            msg = f"cannot plot dim={self.field.dim} field."
-            raise ValueError(msg)
-
+        if self.field.dim != 3 and vdims is None:
+            raise ValueError(f"vdims are required for {self.field.dim=} field.")
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
@@ -606,11 +613,30 @@ class MplField(Mpl):
         values = self.field.array.copy().reshape(self.n + (self.field.dim,))
         self._filter_values(self.field.norm, values)
 
+        if vdims is None:
+            arrow_x = self.axis1
+            arrow_y = self.axis2
+        else:
+            if len(vdims) != 2:
+                raise ValueError(f"{vdims=} must contain two elements.")
+            arrow_x = self.field.components.index(vdims[0]) if vdims[0] else None
+            arrow_y = self.field.components.index(vdims[1]) if vdims[1] else None
+            if arrow_x is None and arrow_y is None:
+                raise ValueError(f"At least one element of {vdims=} must be not None.")
+
         quiver_args = [
             points1,
             points2,
-            np.transpose(values[..., self.axis1]),
-            np.transpose(values[..., self.axis2]),
+            np.transpose(
+                values[..., arrow_x]
+                if arrow_x is not None
+                else np.zeros_like(values[..., 0])
+            ),
+            np.transpose(
+                values[..., arrow_y]
+                if arrow_y is not None
+                else np.zeros_like(values[..., 0])
+            ),
         ]
 
         if use_color:

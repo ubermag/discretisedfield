@@ -289,8 +289,6 @@ class HvplotField:
         """
         if slider not in "xyz":
             raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
-        if self.field.dim == 1:
-            raise ValueError(f"Cannot plot {self.field.dim=} field.")
         if self.field.dim != 3 and vdims is None:
             raise ValueError(f"vdims are required for {self.field.dim=} field.")
         x = min("xyz".replace(slider, ""))
