@@ -1718,6 +1718,16 @@ class TestField:
             with pytest.raises(ValueError):
                 f._writeovf("fname.ovf", representation="bin5")
 
+        # multiple different units (not supported by discretisedfield)
+        f = df.Field(mesh, dim=3, value=(1, 1, 1), units="m s kg")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            f.write(tmpfilename, representation=rep)
+            f_read = df.Field.fromfile(tmpfilename)
+
+            assert f.allclose(f_read)
+            assert f_read.units is None
+
         # Extend scalar
         for rep in representations:
             f = df.Field(
