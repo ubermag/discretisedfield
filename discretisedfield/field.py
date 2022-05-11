@@ -3791,7 +3791,7 @@ class Field:
             coords=data_array_coords,
             name=name,
             attrs=dict(
-                units=units,
+                units=units or self.units,
                 cell=self.mesh.cell,
                 p1=self.mesh.region.p1,
                 p2=self.mesh.region.p2,
