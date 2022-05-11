@@ -56,7 +56,7 @@ class HvplotField:
         ``discretisedfield.plotting.HvplotField.scalar`` and
         ``discretisedfield.plotting.HvplotField.vector`` documentation. Filtering of the
         scalar component is applied by default (using the norm for vector fields,
-        absolute values for scalar fields). To turn of filtering add ``{'filter_field':
+        absolute values for scalar fields). To turn off filtering add ``{'filter_field':
         None}`` to ``scalar_kw``.
 
 
