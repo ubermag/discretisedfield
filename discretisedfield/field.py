@@ -2807,7 +2807,7 @@ class Field:
 
         """
         write_dim = 3 if extend_scalar and self.dim == 1 else self.dim
-        valueunits = " ".join([str(self.units)] * write_dim) if self.units else ""
+        valueunits = " ".join([str(self.units) if self.units else "None"] * write_dim)
         if write_dim == 1:
             valuelabels = "field_x"
         elif extend_scalar:
