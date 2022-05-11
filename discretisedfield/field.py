@@ -3487,7 +3487,6 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            units=self.units,
         )
 
     @property
@@ -3512,7 +3511,6 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            units=self.units,
         )
 
     @property
@@ -3537,7 +3535,6 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            units=self.units,
         )
 
     @property
@@ -3566,7 +3563,6 @@ class Field:
             dim=len(values),
             value=np.stack(values, axis=3),
             components=self.components,
-            units=self.units,
         )
 
     def _fft_mesh(self, rfft=False):
