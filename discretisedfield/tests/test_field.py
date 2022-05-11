@@ -513,8 +513,8 @@ class TestField:
                 return (3, 0, 4)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-        assert f.orientation((-1.5e-9, 3e-9, 0)) == (0, 0, 0)
-        assert f.orientation((1.5e-9, 3e-9, 0)) == (0.6, 0, 0.8)
+        assert np.allclose(f.orientation((-1.5e-9, 3e-9, 0)), (0, 0, 0))
+        assert np.allclose(f.orientation((1.5e-9, 3e-9, 0)), (0.6, 0, 0.8))
 
         f = df.Field(mesh, dim=1, value=0)
         with pytest.raises(ValueError):
