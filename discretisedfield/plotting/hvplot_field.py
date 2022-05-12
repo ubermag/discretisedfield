@@ -116,9 +116,10 @@ class HvplotField:
         elif self.field.dim == 2:
             return self.field.hvplot.vector(slider, **vector_kw)
         elif self.field.dim == 3:
-            scalar = getattr(
-                self.field, self.field.components[dfu.axesdict[slider]]
-            ).hvplot.scalar(slider, **scalar_kw)
+            scalar_comp = self.field.components[dfu.axesdict[slider]]
+            scalar = getattr(self.field, scalar_comp).hvplot.scalar(
+                slider, clabel=f"{scalar_comp}-component", **scalar_kw
+            )
             vector = self.field.hvplot.vector(slider, **vector_kw)
             return scalar * vector
 
@@ -332,6 +333,10 @@ class HvplotField:
         filter_values = self.field.norm.to_xarray()
         self._filter_values(filter_field, filter_values)
         self.xrfield = dfu.rescale_xarray(self.xrfield, multiplier)
+        mag = np.sqrt(
+            (self.xrfield.sel(comp=arrow_x) ** 2 if arrow_x else 0)
+            + (self.xrfield.sel(comp=arrow_y) ** 2 if arrow_y else 0)
+        )
         ip_vector = xr.Dataset(
             {
                 "angle": np.arctan2(
@@ -340,13 +345,7 @@ class HvplotField:
                     where=np.logical_and(filter_values != 0, ~np.isnan(filter_values)),
                     out=np.full(self.field.mesh.n, np.nan),
                 ),
-                "mag": np.sqrt(
-                    self.xrfield.sel(comp=arrow_x) ** 2
-                    if arrow_x
-                    else 0 + self.xrfield.sel(comp=arrow_y) ** 2
-                    if arrow_y
-                    else 0
-                ),
+                "mag": mag / np.max(np.abs(mag)),
             }
         )
         vdims = ["angle", "mag"]
@@ -380,7 +379,10 @@ class HvplotField:
             )
             plot.opts(magnitude="mag", **kwargs)
             if use_color:
-                plot.opts(color="color_comp")
+                plot.opts(
+                    color="color_comp",
+                    clabel=f"{self.field.components[dfu.axesdict[slider]]}-component",
+                )
             for dim in plot.dimensions():
                 if dim.name in "xyz":
                     try:
