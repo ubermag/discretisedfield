@@ -11,4 +11,5 @@ from .util import (
     plot_box,
     plot_line,
     raxesdict,
+    rescale_xarray,
 )

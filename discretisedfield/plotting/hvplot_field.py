@@ -34,7 +34,7 @@ class HvplotField:
         self.field = field
         self.xrfield = field.to_xarray()
 
-    def __call__(self, slider, scalar_kw=None, vector_kw=None):
+    def __call__(self, slider, multiplier=None, scalar_kw=None, vector_kw=None):
         """Plot scalar and vector components on a plane.
 
         This is a convenience method for quick plotting. It combines
@@ -107,19 +107,22 @@ class HvplotField:
         vector_kw = {} if vector_kw is None else vector_kw.copy()
         scalar_kw.setdefault("filter_field", self.field.norm)
 
+        scalar_kw["multiplier"] = multiplier
+        vector_kw["multiplier"] = multiplier
+        vector_kw.setdefault("use_color", False)
+
         if self.field.dim == 1:
             return self.field.hvplot.scalar(slider, **scalar_kw)
         elif self.field.dim == 2:
             return self.field.hvplot.vector(slider, **vector_kw)
         elif self.field.dim == 3:
-            vector_kw.setdefault("use_color", False)
             scalar = getattr(
                 self.field, self.field.components[dfu.axesdict[slider]]
             ).hvplot.scalar(slider, **scalar_kw)
             vector = self.field.hvplot.vector(slider, **vector_kw)
             return scalar * vector
 
-    def scalar(self, slider, filter_field=None, **kwargs):
+    def scalar(self, slider, multiplier=None, filter_field=None, **kwargs):
         """Plot the scalar field on a plane.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -144,6 +147,15 @@ class HvplotField:
 
             Spatial direction for which a slider is created. Can be one of ``'x'``,
             ``'y'``, or ``'z'``.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to ``None``.
 
         filter_field : df.Field, optional
 
@@ -188,16 +200,19 @@ class HvplotField:
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
         groupby = [slider] if self.field.dim == 1 else [slider, "comp"]
+        multiplier = self._setup_multiplier(multiplier)
 
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
         self._filter_values(filter_field, self.xrfield)
+        self.xrfield = dfu.rescale_xarray(self.xrfield, multiplier)
         return self.xrfield.hvplot(x=x, y=y, groupby=groupby, **kwargs)
 
     def vector(
         self,
         slider,
         vdims=None,
+        multiplier=None,
         filter_field=None,
         use_color=True,
         color_field=None,
@@ -235,6 +250,15 @@ class HvplotField:
             directions. Optionally, one of the list elements can be ``None`` if the
             field has no component in that direction. ``vdims`` is required for 2d
             vector fields.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to ``None``.
 
         filter_field : df.Field, optional
 
@@ -293,6 +317,7 @@ class HvplotField:
             raise ValueError(f"vdims are required for {self.field.dim=} field.")
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
+        multiplier = self._setup_multiplier(multiplier)
 
         if vdims is None:
             arrow_x = self.field.components[dfu.axesdict[x]]
@@ -306,6 +331,7 @@ class HvplotField:
 
         filter_values = self.field.norm.to_xarray()
         self._filter_values(filter_field, filter_values)
+        self.xrfield = dfu.rescale_xarray(self.xrfield, multiplier)
         ip_vector = xr.Dataset(
             {
                 "angle": np.arctan2(
@@ -328,7 +354,9 @@ class HvplotField:
 
         if use_color:
             if color_field:
-                ip_vector["color_comp"] = color_field.to_xarray()
+                ip_vector["color_comp"] = dfu.rescale_xarray(
+                    color_field.to_xarray(), multiplier
+                )
             else:
                 if self.field.dim != 3:
                     warnings.warn(
@@ -353,13 +381,26 @@ class HvplotField:
             plot.opts(magnitude="mag", **kwargs)
             if use_color:
                 plot.opts(color="color_comp")
+            for dim in plot.dimensions():
+                if dim.name in "xyz":
+                    try:
+                        dim.unit = ip_vector[dim.name].units
+                    except AttributeError:
+                        pass
             return plot
 
-        return hv.DynamicMap(_vectorplot, kdims=slider).redim.values(
-            **{slider: getattr(self.field.mesh.midpoints, slider)}
+        dyn_map = hv.DynamicMap(_vectorplot, kdims=slider).redim.values(
+            **{slider: getattr(self.field.mesh.midpoints, slider) / multiplier}
         )
+        for dim in dyn_map.dimensions():
+            if dim.name == slider:
+                try:
+                    dim.unit = ip_vector[dim.name].units
+                except AttributeError:
+                    pass
+        return dyn_map
 
-    def contour(self, slider, filter_field=None, **kwargs):
+    def contour(self, slider, multiplier=None, filter_field=None, **kwargs):
         """Plot the scalar field on a plane.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -384,6 +425,15 @@ class HvplotField:
 
             Spatial direction for which a slider is created. Can be one of ``'x'``,
             ``'y'``, or ``'z'``.
+
+        multiplier : numbers.Real, optional
+
+            ``multiplier`` can be passed as :math:`10^{n}`, where :math:`n` is
+            a multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that
+            value, the axes will be scaled and appropriate units shown. For
+            instance, if ``multiplier=1e-9`` is passed, the mesh points will be
+            divided by :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will
+            be used as axis labels. Defaults to ``None``.
 
         filter_field : df.Field, optional
 
@@ -428,10 +478,12 @@ class HvplotField:
         x = min("xyz".replace(slider, ""))
         y = max("xyz".replace(slider, ""))
         groupby = [slider] if self.field.dim == 1 else [slider, "comp"]
+        multiplier = self._setup_multiplier(multiplier)
 
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
         self._filter_values(filter_field, self.xrfield)
+        self.xrfield = dfu.rescale_xarray(self.xrfield, multiplier)
         return self.xrfield.hvplot.contour(x=x, y=y, groupby=groupby, **kwargs)
 
     def _filter_values(self, filter_field, values):
@@ -450,3 +502,6 @@ class HvplotField:
         if not filter_field.mesh | self.field.mesh:
             filter_field = df.Field(self.field.mesh, dim=1, value=filter_field)
         values.data[filter_field.to_xarray().data == 0] = np.nan
+
+    def _setup_multiplier(self, multiplier):
+        return self.field.mesh.region.multiplier if multiplier is None else multiplier

@@ -3,6 +3,7 @@ import collections
 import colorsys
 
 import numpy as np
+import ubermagutil.units as uu
 
 import discretisedfield as df
 
@@ -178,3 +179,19 @@ def fromvtk_legacy(filename):
             field.array[i] = list(map(float, line.split()))
 
     return field
+
+
+def rescale_xarray(array, multiplier):
+    """Rescale xarray dimensions."""
+    if multiplier == 1:
+        return array
+    prefix = uu.rsi_prefixes[multiplier]
+    try:
+        units = [array[i].units for i in "xyz"]
+    except AttributeError:
+        units = None
+    array = array.assign_coords({i: array[i] / multiplier for i in "xyz"})
+    if units:
+        for i, unit in zip("xyz", units):
+            array[i].attrs["units"] = prefix + unit
+    return array
