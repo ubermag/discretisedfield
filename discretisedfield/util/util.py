@@ -94,7 +94,9 @@ def normalise_to_range(values, to_range, from_range=None, int_round=True):
     values -= from_range[0] if from_range else values.min()  # min value is 0
     # For uniform fields, avoid division by zero.
     if from_range or values.max() != 0:
-        values /= (from_range[1]-from_range[0]) if from_range else values.max()  # all values in (0, 1)
+        values /= (
+            (from_range[1] - from_range[0]) if from_range else values.max()
+        )  # all values in (0, 1)
     values *= to_range[1] - to_range[0]  # all values in (0, r[1]-r[0])
     values += to_range[0]  # all values is range (r[0], r[1])
     if int_round:
@@ -105,7 +107,7 @@ def normalise_to_range(values, to_range, from_range=None, int_round=True):
 
 
 def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
-    hue = normalise_to_range(hue, (0, 1), (0, 2*np.pi), int_round=False)
+    hue = normalise_to_range(hue, (0, 1), (0, 2 * np.pi), int_round=False)
     if lightness is not None:
         if lightness_clim is None:
             lightness_clim = (0, 1)
