@@ -22,6 +22,7 @@ html_re = (
     rf"<li>{mesh_html_re}</li>\s*"
     r"<li>dim = \d+</li>\s*"
     r"(<li>components:\s*<ul>(<li>.*</li>\s*)+</ul>\s*</li>)?\s*"
+    r"(<li>units = .+</li>)?\s*"
     r"</ul>"
 )
 
@@ -43,6 +44,8 @@ def check_field(field):
     pattern = r"^Field\(Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), .+\)," r" dim=\d+\)$"
     if field.components:
         pattern = pattern[:-3] + r", components: \(.+\)\)$"
+    if field.units is not None:
+        pattern = pattern[:-3] + r", units=.+\)$"
     assert re.search(pattern, rstr)
 
     assert isinstance(field._repr_html_(), str)
@@ -76,6 +79,7 @@ def check_field(field):
     assert field - (-field) == field + field
     assert 1 * field == field
     assert -1 * field == -field
+    assert field.units is None or isinstance(field.units, str)
 
     if field.dim == 1:
         grad = field.grad
@@ -374,6 +378,23 @@ class TestField:
             check_field(fab)
             assert fab.components == ["a", "b"]
 
+    def test_units(self):
+        assert self.pf.units is None
+        mesh = self.pf.mesh
+        field = df.Field(mesh, dim=3, value=(1, 2, 3), units="A/m")
+        check_field(field)
+        assert field.units == "A/m"
+        field.units = "mT"
+        assert field.units == "mT"
+        with pytest.raises(TypeError):
+            field.units = 3
+        assert field.units == "mT"
+        field.units = None
+        assert field.units is None
+
+        with pytest.raises(TypeError):
+            df.Field(mesh, dim=1, units=1)
+
     def test_value(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
@@ -492,8 +513,8 @@ class TestField:
                 return (3, 0, 4)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-        assert f.orientation((-1.5e-9, 3e-9, 0)) == (0, 0, 0)
-        assert f.orientation((1.5e-9, 3e-9, 0)) == (0.6, 0, 0.8)
+        assert np.allclose(f.orientation((-1.5e-9, 3e-9, 0)), (0, 0, 0))
+        assert np.allclose(f.orientation((1.5e-9, 3e-9, 0)), (0.6, 0, 0.8))
 
         f = df.Field(mesh, dim=1, value=0)
         with pytest.raises(ValueError):
@@ -1683,7 +1704,7 @@ class TestField:
             (2, lambda point: (point[0], point[1] + point[2])),
             (3, lambda point: (point[0], point[1], point[2])),
         ]:
-            f = df.Field(mesh, dim=dim, value=value)
+            f = df.Field(mesh, dim=dim, value=value, units="A/m")
             for rep in representations:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     tmpfilename = os.path.join(tmpdir, filename)
@@ -1691,10 +1712,21 @@ class TestField:
                     f_read = df.Field.fromfile(tmpfilename)
 
                     assert f.allclose(f_read)
+                    assert f_read.units == "A/m"
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
                 f._writeovf("fname.ovf", representation="bin5")
+
+        # multiple different units (not supported by discretisedfield)
+        f = df.Field(mesh, dim=3, value=(1, 1, 1), units="m s kg")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            f.write(tmpfilename, representation=rep)
+            f_read = df.Field.fromfile(tmpfilename)
+
+            assert f.allclose(f_read)
+            assert f_read.units is None
 
         # Extend scalar
         for rep in representations:

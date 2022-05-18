@@ -12,4 +12,7 @@
       </ul>
     </li>
   {% endif -%}
+  {% if field.units is not none -%}
+    <li>units = {{ field.units }}</li>
+  {% endif -%}
 </ul>
