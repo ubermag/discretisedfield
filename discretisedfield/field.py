@@ -2,6 +2,7 @@ import collections
 import functools
 import math
 import numbers
+import re
 import struct
 import warnings
 
@@ -3315,12 +3316,21 @@ class Field:
         t_tuple = (2, 1, 0, 3)
 
         try:
-            components = header["valuelabels"].split()
+            # multi-word components are surrounded by {}
+            components = re.findall(r"(\w+|{[\w ]+})", header["valuelabels"])
         except KeyError:
             components = None
         else:
-            if "_" in components[0]:  # OOMMF writes: Magnetization_x
-                components = [c.split("_")[1] for c in components]
+
+            def convert(comp):
+                # Magnetization_x -> x
+                # {Total field_x} -> x
+                # {Total energy density} -> Total_energy_density
+                comp = comp.split("_")[1] if "_" in comp else comp
+                comp = comp.replace("{", "").replace("}", "")
+                return "_".join(comp.split())
+
+            components = [convert(c) for c in components]
             if len(components) != len(set(components)):  # components are not unique
                 components = None
 

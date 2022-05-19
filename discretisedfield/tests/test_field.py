@@ -1772,6 +1772,18 @@ class TestField:
                 # The norm of magnetisation is known.
                 assert abs(f_read.norm.average - 1261566.2610100) < 1e-3
 
+        # Read component names (single-word and multi-word with and without hyphen)
+        # from OOMMF files
+        assert df.Field.fromfile(
+            os.path.join(dirname, "oommf-ovf2-bin8.omf")
+        ).components == ["x", "y", "z"]
+        assert df.Field.fromfile(
+            os.path.join(dirname, "oommf-ovf2-bin8.ohf")
+        ).components == ["x", "y", "z"]
+        assert df.Field.fromfile(
+            os.path.join(dirname, "oommf-ovf2-bin8.oef")
+        ).components == ["Total_energy_density"]
+
         # Read different mumax3 bin4 files (made on linux and windows)
         filenames = ["mumax-bin4-linux.ovf", "mumax-bin4-windows.ovf"]
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")

@@ -1,0 +1,41 @@
+# OOMMF OVF 2.0
+#
+# Segment count: 1
+#
+# Begin: Segment
+# Begin: Header
+#
+# Title: Oxs_RungeKuttaEvolve:evolver:Total energy density
+# Desc: Oxs scalar field output
+# Desc:  MIF source file: /home/martin/tmp/macrospin/compute-0/macrospin/compute-2/macrospin.mif
+# Desc:  Iteration: 0, State id: 12
+# Desc:  Stage: 0, Stage iteration: 0
+# Desc:  Stage simulation time: 0 s
+# Desc:  Total simulation time: 0 s
+# meshunit: m
+# meshtype: rectangular
+# xbase: 5.0000000000000003e-10
+# ybase: 5.0000000000000003e-10
+# zbase: 5.0000000000000003e-10
+# xnodes: 1
+# ynodes: 1
+# znodes: 1
+# xstepsize: 1.0000000000000001e-09
+# ystepsize: 1.0000000000000001e-09
+# zstepsize: 1.0000000000000001e-09
+# xmin: 0
+# ymin: 0
+# zmin: 0
+# xmax: 1.0000000000000001e-09
+# ymax: 1.0000000000000001e-09
+# zmax: 1.0000000000000001e-09
+# valuedim: 1
+# valuelabels: {Total energy density}
+# valueunits: J/m^3
+#
+# End: Header
+#
+# Begin: Data Binary 8
+@Þwƒ!ÜBÞ,+Á
+# End: Data Binary 8
+# End: Segment
