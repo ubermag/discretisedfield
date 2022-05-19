@@ -147,6 +147,61 @@ class Field:
         self._components = None  # required in here for correct initialisation
         self.components = components
 
+    @classmethod
+    def coordinate_field(cls, mesh):
+        """Create a field whose values are the mesh coordinates.
+
+        This method can be used to create a 3d vector field with values equal to the
+        coordinates of the cell midpoints. The result is equivalent to a mesh created
+        with the following code:
+
+        .. code-block::
+
+            mesh = df.Mesh(...)
+            df.Field(mesh, dim=3, value=lambda point: point)
+
+        This class method should be preferred over the manual creation with a callable
+        because it provides much better performance.
+
+        Parameters
+        ----------
+        mesh : discretisedfield.Mesh
+
+            Finite-difference rectangular mesh.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Field with coordinates as values.
+
+        Examples
+        --------
+        1. Create a coordinate field.
+        >>> import discretisedfield as df
+        ...
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(4, 2, 1))
+        >>> cfield = df.Field.coordinate_field(mesh)
+        >>> cfield
+        Field(...)
+
+        2. Extract its value at position (0.5, 0.5, 0.5)
+        >>> cfield((0.5, 0.5, 0.5))
+        (0.5, 0.5, 0.5)
+
+        3. Compare with manually created coordinate field
+        >>> manually = df.Field(mesh, dim=3, value=lambda point: point)
+        >>> cfield.allclose(manually)
+        True
+
+        """
+        nx, ny, nz = mesh.n
+        field = cls(mesh, dim=3)
+        field.array[..., 0] = mesh.midpoints.x.reshape((nx, 1, 1))
+        field.array[..., 1] = mesh.midpoints.y.reshape((1, ny, 1))
+        field.array[..., 2] = mesh.midpoints.z.reshape((1, 1, nz))
+        return field
+
     @property
     def value(self):
         """Field value representation.

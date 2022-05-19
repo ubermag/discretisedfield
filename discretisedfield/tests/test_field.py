@@ -316,6 +316,16 @@ class TestField:
             with pytest.raises(ValueError):
                 df.Field(mesh, dim=3, value=5 + 5j)
 
+    def test_coordinate_field(self):
+        for mesh in self.meshes:
+            cfield = df.Field.coordinate_field(mesh)
+            check_field(cfield)
+            manually = df.Field(mesh, dim=3, value=lambda p: p)
+            assert cfield.allclose(manually)
+            assert np.allclose(cfield.array[:, 0, 0, 0], mesh.midpoints.x)
+            assert np.allclose(cfield.array[0, :, 0, 1], mesh.midpoints.y)
+            assert np.allclose(cfield.array[0, 0, :, 2], mesh.midpoints.z)
+
     def test_components(self):
         for mesh in self.meshes:
             valid_components = ["a", "b", "c", "d", "e", "f"]
