@@ -180,7 +180,7 @@ class Field:
         1. Create a coordinate field.
         >>> import discretisedfield as df
         ...
-        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(4, 2, 1))
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(4, 2, 1), cell=(1, 1, 1))
         >>> cfield = df.Field.coordinate_field(mesh)
         >>> cfield
         Field(...)
