@@ -3561,7 +3561,7 @@ class Field:
         :DynamicMap...
 
         """
-        return dfp.HvplotField(self)
+        return dfp.HvplotField(self.to_xarray())
 
     @property
     def fftn(self):
