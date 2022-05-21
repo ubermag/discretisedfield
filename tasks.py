@@ -52,9 +52,12 @@ def ipynb(c):
     raise Exit(code=result)
 
 
-@task(unittest, docs, ipynb)
+@task
 def all(c):
     """Run all tests."""
+    unittest(c)
+    docs(c)
+    ipynb(c)
 
 
 test_collection.add_task(unittest)
