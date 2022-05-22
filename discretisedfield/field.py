@@ -179,6 +179,7 @@ class Field:
         Examples
         --------
         1. Create a coordinate field.
+
         >>> import discretisedfield as df
         ...
         >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(4, 2, 1), cell=(1, 1, 1))
@@ -187,10 +188,12 @@ class Field:
         Field(...)
 
         2. Extract its value at position (0.5, 0.5, 0.5)
+
         >>> cfield((0.5, 0.5, 0.5))
         (0.5, 0.5, 0.5)
 
         3. Compare with manually created coordinate field
+
         >>> manually = df.Field(mesh, dim=3, value=lambda point: point)
         >>> cfield.allclose(manually)
         True
