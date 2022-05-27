@@ -284,7 +284,10 @@ class Hv:
                 " vector component called 'comp'."
             )
         if self.array.ndim != 4 and vdims is None:
-            raise ValueError(f'`vdims` are required for arrays with {self.array.ndim - 1} spatial dimensions.')
+            raise ValueError(
+                f"`vdims` are required for arrays with {self.array.ndim - 1} spatial"
+                " dimensions."
+            )
 
         if vdims is None:
             arrow_x = self.array.coords["comp"].values[dfu.axesdict[x]]
@@ -465,9 +468,11 @@ class Hv:
 
         for kdim in kdims:
             if kdim not in roi.dims:
-                raise KeyError(f'Missing dim {kdim} in the filter.')
-            if len(self.array[kdim].data) != len(roi[kdim].data) or not np.allclose(self.array[kdim].data, roi[kdim].data):
-                raise ValueError(f'Coordinates for dim {kdim} do not match.')
+                raise KeyError(f"Missing dim {kdim} in the filter.")
+            if len(self.array[kdim].data) != len(roi[kdim].data) or not np.allclose(
+                self.array[kdim].data, roi[kdim].data
+            ):
+                raise ValueError(f"Coordinates for dim {kdim} do not match.")
 
         return values.where(roi != 0)
 
