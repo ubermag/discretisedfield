@@ -3531,7 +3531,7 @@ class Field:
         return dfp.K3dField(self)
 
     @property
-    def hvplot(self):
+    def hv(self):
         """Plot interface, holoviews/hvplot based.
 
         This property provides access to the different plotting methods. It is
@@ -3540,15 +3540,15 @@ class Field:
 
         .. seealso::
 
-            :py:func:`~discretisedfield.plotting.HvplotVector.__call__`
-            :py:func:`~discretisedfield.plotting.HvplotVector.scalar`
-            :py:func:`~discretisedfield.plotting.HvplotVector.vector`
-            :py:func:`~discretisedfield.plotting.HvplotVector.contour`
+            :py:func:`~discretisedfield.plotting.Hv.__call__`
+            :py:func:`~discretisedfield.plotting.Hv.scalar`
+            :py:func:`~discretisedfield.plotting.Hv.vector`
+            :py:func:`~discretisedfield.plotting.Hv.contour`
 
         Examples
         --------
 
-        1. Visualising the field using ``hvplot``.
+        1. Visualising the field using ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -3557,11 +3557,11 @@ class Field:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> field.hvplot(slider='z')
+        >>> field.hv(slider='z')
         :DynamicMap...
 
         """
-        return dfp.HvplotField(self.to_xarray())
+        return dfp.Hv(self.to_xarray())
 
     @property
     def fftn(self):

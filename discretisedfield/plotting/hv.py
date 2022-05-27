@@ -9,12 +9,12 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
-class HvplotField:
+class Hv:
     """Holoviews-based plotting methods.
 
     Plotting with holoviews can be created without prior slicing. Instead, a slider
     is created for the out-of-plane direction. This class should not be accessed
-    directly. Use ``field.hvplot`` to use the different plotting methods.
+    directly. Use ``field.hv`` to use the different plotting methods.
 
     Parameters
     ----------
@@ -33,12 +33,12 @@ class HvplotField:
         """Plot scalar and vector components on a plane.
 
         This is a convenience method for quick plotting. It combines
-         ``Field.hvplot.scalar`` and ``Field.hvplot.vector``. Depending on the
+         ``Field.hv.scalar`` and ``Field.hv.vector``. Depending on the
          dimensionality of the field's value, it automatically determines what plot is
          going to be shown. For a scalar field, only
-         ``discretisedfield.plotting.HvplotField.scalar`` is used, whereas for a vector
-         field, both ``discretisedfield.plotting.HvplotField.scalar`` and
-         ``discretisedfield.plotting.HvplotField.vector`` plots are shown so that vector
+         ``discretisedfield.plotting.Hv.scalar`` is used, whereas for a vector
+         field, both ``discretisedfield.plotting.Hv.scalar`` and
+         ``discretisedfield.plotting.Hv.vector`` plots are shown so that vector
          plot visualises the in-plane components of the vector and scalar plot encodes
          the out-of-plane component. The field is shown on a plane normal to the
          ``slider`` direction.
@@ -48,8 +48,8 @@ class HvplotField:
 
         Therefore, to understand the meaning of the keyword arguments which can be
         passed to this method, please refer to
-        ``discretisedfield.plotting.HvplotField.scalar`` and
-        ``discretisedfield.plotting.HvplotField.vector`` documentation. Filtering of the
+        ``discretisedfield.plotting.Hv.scalar`` and
+        ``discretisedfield.plotting.Hv.vector`` documentation. Filtering of the
         scalar component is applied by default (using the norm for vector fields,
         absolute values for scalar fields). To turn off filtering add ``{'filter_field':
         None}`` to ``scalar_kw``.
@@ -65,12 +65,12 @@ class HvplotField:
         scalar_kw : dict
 
             Additional keyword arguments that are
-            ``discretisedfield.plotting.HvplotField.scalar``
+            ``discretisedfield.plotting.Hv.scalar``
 
         vector_kw : dict
 
             Additional keyword arguments that are
-            ``discretisedfield.plotting.HvplotField.vector``
+            ``discretisedfield.plotting.Hv.vector``
 
         Returns
         -------
@@ -81,7 +81,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple combined scalar and vector plot with ``hvplot``.
+        1. Simple combined scalar and vector plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -91,7 +91,7 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hvplot(slider='z')
+        >>> field.hv(slider='z')
         :DynamicMap...
 
         """
@@ -105,18 +105,18 @@ class HvplotField:
         vector_kw.setdefault("use_color", False)
 
         if self.field.dim == 1:
-            return self.field.hvplot.scalar(slider, **scalar_kw)
+            return self.field.hv.scalar(slider, **scalar_kw)
         elif self.field.dim == 2:
-            return self.field.hvplot.vector(slider, **vector_kw)
+            return self.field.hv.vector(slider, **vector_kw)
         elif self.field.dim == 3:
             scalar_comp = self.field.components[dfu.axesdict[slider]]
-            scalar = getattr(self.field, scalar_comp).hvplot.scalar(
+            scalar = getattr(self.field, scalar_comp).hv.scalar(
                 slider, clabel=f"{scalar_comp}-component", **scalar_kw
             )
-            vector = self.field.hvplot.vector(slider, **vector_kw)
+            vector = self.field.hv.vector(slider, **vector_kw)
             return scalar * vector
 
-    def scalar(self, kdims, filter_field=None, **kwargs):
+    def scalar(self, kdims, roi=None, **kwargs):
         """Plot the scalar field on a plane.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -165,7 +165,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple scalar plot with ``hvplot``.
+        1. Simple scalar plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -175,20 +175,20 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hvplot.scalar(slider='z')
+        >>> field.hv.scalar(slider='z')
         :DynamicMap...
 
         """
-        x, y, kwargs = self._prepare_scalar_plot(kdims, filter_field, kwargs)
+        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, kwargs)
         return self.array.hvplot(x=x, y=y, **kwargs)
 
     def vector(
         self,
         kdims,
         vdims=None,
-        filter_field=None,
+        cdim=None,
+        roi=None,
         use_color=True,
-        color_field=None,
         colorbar_label=None,
         **kwargs,
     ):
@@ -262,7 +262,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple vector plot with ``hvplot``.
+        1. Simple vector plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -272,7 +272,7 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
         ...
-        >>> field.hvplot.vector(slider='z')
+        >>> field.hv.vector(slider='z')
         :DynamicMap...
 
         """
@@ -289,6 +289,7 @@ class HvplotField:
         if vdims is None:
             arrow_x = self.array.coords["comp"].values[dfu.axesdict[x]]
             arrow_y = self.array.coords["comp"].values[dfu.axesdict[y]]
+            vdims = [arrow_x, arrow_y]
         else:
             if len(vdims) != 2:
                 raise ValueError(f"{vdims=} must contain two elements.")
@@ -300,7 +301,7 @@ class HvplotField:
         filter_values = xr.apply_ufunc(
             np.linalg.norm, self.array, input_core_dims=[["comp"]], kwargs={"axis": -1}
         )
-        self._filter_values(filter_field, filter_values)
+        self._filter_values(roi, filter_values)
         mag = np.sqrt(
             (self.array.sel(comp=arrow_x) ** 2 if arrow_x else 0)
             + (self.array.sel(comp=arrow_y) ** 2 if arrow_y else 0)
@@ -325,20 +326,34 @@ class HvplotField:
         kwargs.setdefault("data_aspect", 1)
 
         if use_color:
-            if color_field:
-                if not isinstance(color_field, xr.DataArray):
+            if cdim:
+                if isinstance(cdim, str):
+                    color_field = self.array.sel(comp=cdim)
+                    if colorbar_label is None:
+                        colorbar_label = cdim
+                elif isinstance(color_field, xr.DataArray):
+                    color_field = cdim
+                else:
                     color_field = color_field.to_xarray()
+
+                if colorbar_label is None:
+                    try:
+                        colorbar_label = color_field.name
+                    except AttributeError:
+                        pass
                 ip_vector["color_comp"] = color_field
             else:
-                if self.array.ndim != 4:  # 3 spatial components + vector 'comp'
+                if len(self.array.comp) != 3:  # 3 spatial components + vector 'comp'
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
-                        f' arrays. Ignoring "{use_color=}".'
+                        f' vector arrays. Ignoring "{use_color=}".'
                     )
                     use_color = False
                 else:
-                    c_comp = (set(self.array.dims) - set(kdims + ["comp"])).pop()
-                    ip_vector["color_comp"] = self.array.isel(comp=dfu.axesdict[c_comp])
+                    c_comp = (set(self.array.comp.to_numpy()) - set(vdims)).pop()
+                    if colorbar_label is None:
+                        colorbar_label = c_comp
+                    ip_vector["color_comp"] = self.array.sel(comp=c_comp)
         if use_color:  # can be disabled at this point for 2d arrays
             vdims.append("color_comp")
             kwargs.setdefault("colorbar", True)
@@ -424,7 +439,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple contour-line plot with ``hvplot``.
+        1. Simple contour-line plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -434,7 +449,7 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hvplot.contour(slider='z')
+        >>> field.hv.contour(slider='z')
         :DynamicMap...
 
         """

@@ -1,5 +1,5 @@
 """Matplotlib based plotting."""
-from discretisedfield.plotting.hvplot_field import HvplotField
+from discretisedfield.plotting.hv import Hv
 from discretisedfield.plotting.k3d_field import K3dField
 from discretisedfield.plotting.k3d_region import K3dRegion
 from discretisedfield.plotting.mpl import add_colorwheel
