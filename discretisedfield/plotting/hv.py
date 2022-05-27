@@ -9,12 +9,12 @@ import discretisedfield as df
 import discretisedfield.util as dfu
 
 
-class HvplotField:
+class Hv:
     """Holoviews-based plotting methods.
 
     Plotting with holoviews can be created without prior slicing. Instead, a slider
     is created for the out-of-plane direction. This class should not be accessed
-    directly. Use ``field.hvplot`` to use the different plotting methods.
+    directly. Use ``field.hv`` to use the different plotting methods.
 
     Parameters
     ----------
@@ -33,12 +33,12 @@ class HvplotField:
         """Plot scalar and vector components on a plane.
 
         This is a convenience method for quick plotting. It combines
-         ``Field.hvplot.scalar`` and ``Field.hvplot.vector``. Depending on the
+         ``Field.hv.scalar`` and ``Field.hv.vector``. Depending on the
          dimensionality of the field's value, it automatically determines what plot is
          going to be shown. For a scalar field, only
-         ``discretisedfield.plotting.HvplotField.scalar`` is used, whereas for a vector
-         field, both ``discretisedfield.plotting.HvplotField.scalar`` and
-         ``discretisedfield.plotting.HvplotField.vector`` plots are shown so that vector
+         ``discretisedfield.plotting.Hv.scalar`` is used, whereas for a vector
+         field, both ``discretisedfield.plotting.Hv.scalar`` and
+         ``discretisedfield.plotting.Hv.vector`` plots are shown so that vector
          plot visualises the in-plane components of the vector and scalar plot encodes
          the out-of-plane component. The field is shown on a plane normal to the
          ``slider`` direction.
@@ -48,8 +48,8 @@ class HvplotField:
 
         Therefore, to understand the meaning of the keyword arguments which can be
         passed to this method, please refer to
-        ``discretisedfield.plotting.HvplotField.scalar`` and
-        ``discretisedfield.plotting.HvplotField.vector`` documentation. Filtering of the
+        ``discretisedfield.plotting.Hv.scalar`` and
+        ``discretisedfield.plotting.Hv.vector`` documentation. Filtering of the
         scalar component is applied by default (using the norm for vector fields,
         absolute values for scalar fields). To turn off filtering add ``{'filter_field':
         None}`` to ``scalar_kw``.
@@ -65,12 +65,12 @@ class HvplotField:
         scalar_kw : dict
 
             Additional keyword arguments that are
-            ``discretisedfield.plotting.HvplotField.scalar``
+            ``discretisedfield.plotting.Hv.scalar``
 
         vector_kw : dict
 
             Additional keyword arguments that are
-            ``discretisedfield.plotting.HvplotField.vector``
+            ``discretisedfield.plotting.Hv.vector``
 
         Returns
         -------
@@ -81,7 +81,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple combined scalar and vector plot with ``hvplot``.
+        1. Simple combined scalar and vector plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -91,7 +91,7 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hvplot(slider='z')
+        >>> field.hv(slider='z')
         :DynamicMap...
 
         """
@@ -105,15 +105,15 @@ class HvplotField:
         vector_kw.setdefault("use_color", False)
 
         if self.field.dim == 1:
-            return self.field.hvplot.scalar(slider, **scalar_kw)
+            return self.field.hv.scalar(slider, **scalar_kw)
         elif self.field.dim == 2:
-            return self.field.hvplot.vector(slider, **vector_kw)
+            return self.field.hv.vector(slider, **vector_kw)
         elif self.field.dim == 3:
             scalar_comp = self.field.components[dfu.axesdict[slider]]
-            scalar = getattr(self.field, scalar_comp).hvplot.scalar(
+            scalar = getattr(self.field, scalar_comp).hv.scalar(
                 slider, clabel=f"{scalar_comp}-component", **scalar_kw
             )
-            vector = self.field.hvplot.vector(slider, **vector_kw)
+            vector = self.field.hv.vector(slider, **vector_kw)
             return scalar * vector
 
     def scalar(self, kdims, filter_field=None, **kwargs):
@@ -165,7 +165,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple scalar plot with ``hvplot``.
+        1. Simple scalar plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -175,7 +175,7 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hvplot.scalar(slider='z')
+        >>> field.hv.scalar(slider='z')
         :DynamicMap...
 
         """
@@ -262,7 +262,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple vector plot with ``hvplot``.
+        1. Simple vector plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -272,7 +272,7 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
         ...
-        >>> field.hvplot.vector(slider='z')
+        >>> field.hv.vector(slider='z')
         :DynamicMap...
 
         """
@@ -422,7 +422,7 @@ class HvplotField:
 
         Examples
         --------
-        1. Simple contour-line plot with ``hvplot``.
+        1. Simple contour-line plot with ``hv``.
 
         >>> import discretisedfield as df
         ...
@@ -432,7 +432,7 @@ class HvplotField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hvplot.contour(slider='z')
+        >>> field.hv.contour(slider='z')
         :DynamicMap...
 
         """
