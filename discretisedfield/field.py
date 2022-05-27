@@ -3827,7 +3827,7 @@ class Field:
         ...
 
         """
-        if not isinstance(name, str):
+        if name is not None and not isinstance(name, str):
             msg = "Name argument must be a string."
             raise TypeError(msg)
 
