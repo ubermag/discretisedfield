@@ -391,7 +391,7 @@ class Hv:
                 pass
         return dyn_map
 
-    def contour(self, kdims, filter_field=None, **kwargs):
+    def contour(self, kdims, roi=None, **kwargs):
         """Plot the scalar field on a plane.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -455,7 +455,7 @@ class Hv:
         :DynamicMap...
 
         """
-        x, y, kwargs = self._prepare_scalar_plot(kdims, filter_field, kwargs)
+        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, kwargs)
         return self.array.hvplot.contour(x=x, y=y, **kwargs)
 
     def _filter_values(self, values, roi, kdims):
