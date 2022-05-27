@@ -283,6 +283,8 @@ class HvplotField:
                 "The vector plot method can only operate on DataArrays which have a"
                 " vector component called 'comp'."
             )
+        if self.array.ndim != 4 and vdims is None:
+            raise ValueError(f'`vdims` are required for arrays with {self.array.ndim - 1} spatial dimensions.')
 
         if vdims is None:
             arrow_x = self.array.coords["comp"].values[dfu.axesdict[x]]
@@ -439,23 +441,31 @@ class HvplotField:
         x, y, kwargs = self._prepare_scalar_plot(kdims, filter_field, kwargs)
         return self.array.hvplot.contour(x=x, y=y, **kwargs)
 
-    def _filter_values(self, filter_field, values):
-        # TODO this needs to be fixed
-        if filter_field is None:
+    def _filter_values(self, values, roi, kdims):
+        if roi is None:
             return values
 
-        if filter_field.dim != 1:
-            raise ValueError(f"Cannot use {filter_field.dim=}.")
+        if not isinstance(roi, xr.DataArray):
+            roi = roi.to_xarray()
 
-        if self.field.mesh.region not in filter_field.mesh.region:
-            raise ValueError(
-                "The filter_field region does not contain the field;"
-                f" {filter_field.mesh.region=}, {self.field.mesh.region=}."
-            )
+        for kdim in kdims:
+            if kdim not in roi.dims:
+                raise KeyError(f'Missing dim {kdim} in the filter.')
+        #roi = roi.sel(**{dim: self.array[dim].data for dim in kdims}, method="nearest")
+        #roi.reset_dimensions
+        #return roi
+        # TODO this needs to be fixed
+        # if self.field.mesh.region not in filter_field.mesh.region:
+        #     raise ValueError(
+        #         "The filter_field region does not contain the field;"
+        #         f" {filter_field.mesh.region=}, {self.field.mesh.region=}."
+        #     )
 
-        if not filter_field.mesh | self.field.mesh:
-            filter_field = df.Field(self.field.mesh, dim=1, value=filter_field)
-        values.data[filter_field.to_xarray().data == 0] = np.nan
+        # if not filter_field.mesh | self.field.mesh:
+        #     filter_field = df.Field(self.field.mesh, dim=1, value=filter_field)
+        # values.data[filter_field.to_xarray().data == 0] = np.nan
+        return values.where(roi != 0)
+
 
     def _check_kdims(self, kdims):
         if len(kdims) != 2:
@@ -471,5 +481,5 @@ class HvplotField:
         x, y = kdims
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
-        self._filter_values(filter_field, self.array)
+        self.array = self._filter_values(self.array, filter_field, kdims)
         return x, y, kwargs
