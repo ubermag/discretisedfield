@@ -301,7 +301,7 @@ class Hv:
         filter_values = xr.apply_ufunc(
             np.linalg.norm, self.array, input_core_dims=[["comp"]], kwargs={"axis": -1}
         )
-        self._filter_values(roi, filter_values)
+        filter_values = self._filter_values(filter_values, roi, kdims)
         mag = np.sqrt(
             (self.array.sel(comp=arrow_x) ** 2 if arrow_x else 0)
             + (self.array.sel(comp=arrow_y) ** 2 if arrow_y else 0)
@@ -326,22 +326,22 @@ class Hv:
         kwargs.setdefault("data_aspect", 1)
 
         if use_color:
-            if cdim:
+            if cdim is not None:
                 if isinstance(cdim, str):
-                    color_field = self.array.sel(comp=cdim)
+                    color_comp = self.array.sel(comp=cdim)
                     if colorbar_label is None:
                         colorbar_label = cdim
-                elif isinstance(color_field, xr.DataArray):
-                    color_field = cdim
+                elif isinstance(cdim, xr.DataArray):
+                    color_comp = cdim
                 else:
-                    color_field = color_field.to_xarray()
+                    color_comp = cdim.to_xarray()
 
                 if colorbar_label is None:
                     try:
-                        colorbar_label = color_field.name
+                        colorbar_label = color_comp.name
                     except AttributeError:
                         pass
-                ip_vector["color_comp"] = color_field
+                ip_vector["color_comp"] = color_comp
             else:
                 if len(self.array.comp) != 3:  # 3 spatial components + vector 'comp'
                     warnings.warn(
@@ -466,21 +466,10 @@ class Hv:
         for kdim in kdims:
             if kdim not in roi.dims:
                 raise KeyError(f'Missing dim {kdim} in the filter.')
-        #roi = roi.sel(**{dim: self.array[dim].data for dim in kdims}, method="nearest")
-        #roi.reset_dimensions
-        #return roi
-        # TODO this needs to be fixed
-        # if self.field.mesh.region not in filter_field.mesh.region:
-        #     raise ValueError(
-        #         "The filter_field region does not contain the field;"
-        #         f" {filter_field.mesh.region=}, {self.field.mesh.region=}."
-        #     )
+            if len(self.array[kdim].data) != len(roi[kdim].data) or not np.allclose(self.array[kdim].data, roi[kdim].data):
+                raise ValueError(f'Coordinates for dim {kdim} do not match.')
 
-        # if not filter_field.mesh | self.field.mesh:
-        #     filter_field = df.Field(self.field.mesh, dim=1, value=filter_field)
-        # values.data[filter_field.to_xarray().data == 0] = np.nan
         return values.where(roi != 0)
-
 
     def _check_kdims(self, kdims):
         if len(kdims) != 2:
