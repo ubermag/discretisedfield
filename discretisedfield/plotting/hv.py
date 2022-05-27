@@ -5,7 +5,6 @@ import holoviews as hv
 import numpy as np
 import xarray as xr
 
-import discretisedfield as df
 import discretisedfield.util as dfu
 
 
