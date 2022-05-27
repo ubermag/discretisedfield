@@ -116,7 +116,7 @@ class Hv:
             vector = self.field.hv.vector(slider, **vector_kw)
             return scalar * vector
 
-    def scalar(self, kdims, filter_field=None, **kwargs):
+    def scalar(self, kdims, roi=None, **kwargs):
         """Plot the scalar field on a plane.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -179,16 +179,16 @@ class Hv:
         :DynamicMap...
 
         """
-        x, y, kwargs = self._prepare_scalar_plot(kdims, filter_field, kwargs)
+        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, kwargs)
         return self.array.hvplot(x=x, y=y, **kwargs)
 
     def vector(
         self,
         kdims,
         vdims=None,
-        filter_field=None,
+        cdim=None,
+        roi=None,
         use_color=True,
-        color_field=None,
         colorbar_label=None,
         **kwargs,
     ):
@@ -287,6 +287,7 @@ class Hv:
         if vdims is None:
             arrow_x = self.array.coords["comp"].values[dfu.axesdict[x]]
             arrow_y = self.array.coords["comp"].values[dfu.axesdict[y]]
+            vdims = [arrow_x, arrow_y]
         else:
             if len(vdims) != 2:
                 raise ValueError(f"{vdims=} must contain two elements.")
@@ -298,7 +299,7 @@ class Hv:
         filter_values = xr.apply_ufunc(
             np.linalg.norm, self.array, input_core_dims=[["comp"]], kwargs={"axis": -1}
         )
-        self._filter_values(filter_field, filter_values)
+        self._filter_values(roi, filter_values)
         mag = np.sqrt(
             (self.array.sel(comp=arrow_x) ** 2 if arrow_x else 0)
             + (self.array.sel(comp=arrow_y) ** 2 if arrow_y else 0)
@@ -323,20 +324,34 @@ class Hv:
         kwargs.setdefault("data_aspect", 1)
 
         if use_color:
-            if color_field:
-                if not isinstance(color_field, xr.DataArray):
+            if cdim:
+                if isinstance(cdim, str):
+                    color_field = self.array.sel(comp=cdim)
+                    if colorbar_label is None:
+                        colorbar_label = cdim
+                elif isinstance(color_field, xr.DataArray):
+                    color_field = cdim
+                else:
                     color_field = color_field.to_xarray()
+
+                if colorbar_label is None:
+                    try:
+                        colorbar_label = color_field.name
+                    except AttributeError:
+                        pass
                 ip_vector["color_comp"] = color_field
             else:
-                if self.array.ndim != 4:  # 3 spatial components + vector 'comp'
+                if len(self.array.comp) != 3:  # 3 spatial components + vector 'comp'
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
-                        f' arrays. Ignoring "{use_color=}".'
+                        f' vector arrays. Ignoring "{use_color=}".'
                     )
                     use_color = False
                 else:
-                    c_comp = (set(self.array.dims) - set(kdims + ["comp"])).pop()
-                    ip_vector["color_comp"] = self.array.isel(comp=dfu.axesdict[c_comp])
+                    c_comp = (set(self.array.comp.to_numpy()) - set(vdims)).pop()
+                    if colorbar_label is None:
+                        colorbar_label = c_comp
+                    ip_vector["color_comp"] = self.array.sel(comp=c_comp)
         if use_color:  # can be disabled at this point for 2d arrays
             vdims.append("color_comp")
             kwargs.setdefault("colorbar", True)
