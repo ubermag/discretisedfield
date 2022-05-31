@@ -91,7 +91,7 @@ class Hv:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hv(slider='z')
+        >>> field.hv(kdims=['x', 'y'])
         :DynamicMap...
 
         """
@@ -206,7 +206,7 @@ class Hv:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hv.scalar(slider='z')
+        >>> field.hv.scalar(kdims=['x', 'z'])
         :DynamicMap...
 
         """
@@ -303,7 +303,7 @@ class Hv:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
         ...
-        >>> field.hv.vector(slider='z')
+        >>> field.hv.vector(kdims=['x', 'y'])
         :DynamicMap...
 
         """
@@ -483,7 +483,7 @@ class Hv:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=1, value=2)
         ...
-        >>> field.hv.contour(slider='z')
+        >>> field.hv.contour(kdims=['y', 'z'])
         :DynamicMap...
 
         """
