@@ -1,4 +1,5 @@
 """Holoviews-based plotting."""
+import contextlib
 import warnings
 
 import holoviews as hv
@@ -28,7 +29,7 @@ class Hv:
 
         self.array = array
 
-    def __call__(self, slider, scalar_kw=None, vector_kw=None):
+    def __call__(self, kdims, vdims=None, scalar_kw=None, vector_kw=None):
         """Plot scalar and vector components on a plane.
 
         This is a convenience method for quick plotting. It combines
@@ -94,26 +95,56 @@ class Hv:
         :DynamicMap...
 
         """
-        if slider not in "xyz":
-            raise ValueError(f"Unknown value {slider=}; must be 'x', 'y', or 'z'.")
-
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
-        scalar_kw.setdefault("filter_field", self.field.norm)
 
+        if "comp" not in self.array.dims:
+            roi = np.abs(self.array)
+        else:
+            roi = xr.apply_ufunc(
+                np.linalg.norm,
+                self.array,
+                input_core_dims=[["comp"]],
+                kwargs={"axis": -1},
+            )
+        scalar_kw.setdefault("roi", roi)
         vector_kw.setdefault("use_color", False)
 
-        if self.field.dim == 1:
-            return self.field.hv.scalar(slider, **scalar_kw)
-        elif self.field.dim == 2:
-            return self.field.hv.vector(slider, **vector_kw)
-        elif self.field.dim == 3:
-            scalar_comp = self.field.components[dfu.axesdict[slider]]
-            scalar = getattr(self.field, scalar_comp).hv.scalar(
-                slider, clabel=f"{scalar_comp}-component", **scalar_kw
+        if "comp" not in self.array.dims:
+            return self.scalar(kdims=kdims, **scalar_kw)
+        elif vdims:
+            scalar_dims = list(set(self.array.comp.to_numpy()) - set(vdims))
+            with contextlib.suppress(KeyError):
+                vector_kw.pop("vdims")
+            vector = self.vector(kdims=kdims, vdims=vdims, **vector_kw)
+            if len(scalar_dims) == 0:
+                return vector
+            else:
+                scalar = self.__class__(self.array.sel(comp=scalar_dims)).scalar(
+                    kdims=kdims, **scalar_kw
+                )
+                return scalar * vector
+        elif len(self.array.comp) == 3 and self.array.ndim == 4:
+            # map spatial coordinates x, y, z and vector comp names
+            mapping = dict(zip(self.array.dims, range(4)))
+            mapping.pop("comp")
+            vdims = [
+                self.array.comp.to_numpy()[mapping.pop(kdims[i])] for i in range(2)
+            ]
+            scalar_dim = self.array.comp.to_numpy()[mapping.popitem()[1]]
+            scalar = self.__class__(self.array.sel(comp=scalar_dim)).scalar(
+                kdims=kdims, **scalar_kw
             )
-            vector = self.field.hv.vector(slider, **vector_kw)
+            vector_kw.setdefault("vdims", vdims)
+            vector = self.__class__(self.array).vector(kdims=kdims, **vector_kw)
             return scalar * vector
+        else:
+            warnings.warn(
+                "Automatic detection of vector components not possible for array with"
+                f" ndim={self.array.ndim} and comp={list(self.array.comp.to_numpy())}."
+                " To get a combined scalar and vector plot pass `vdims`."
+            )
+            return self.scalar(kdims=kdims, **scalar_kw)
 
     def scalar(self, kdims, roi=None, **kwargs):
         """Plot the scalar field on a plane.
