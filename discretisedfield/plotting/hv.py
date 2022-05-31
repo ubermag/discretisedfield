@@ -29,7 +29,7 @@ class Hv:
 
         self.array = array
 
-    def __call__(self, kdims, vdims=None, scalar_kw=None, vector_kw=None):
+    def __call__(self, kdims, vdims=None, roi=None, scalar_kw=None, vector_kw=None):
         """Plot scalar and vector components on a plane.
 
         This is a convenience method for quick plotting. It combines
@@ -98,9 +98,9 @@ class Hv:
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
 
-        if "comp" not in self.array.dims:
+        if roi is None and "comp" not in self.array.dims:
             roi = np.abs(self.array)
-        else:
+        elif roi is None:
             roi = xr.apply_ufunc(
                 np.linalg.norm,
                 self.array,
@@ -108,6 +108,7 @@ class Hv:
                 kwargs={"axis": -1},
             )
         scalar_kw.setdefault("roi", roi)
+        vector_kw.setdefault("roi", roi)
         vector_kw.setdefault("use_color", False)
 
         if "comp" not in self.array.dims:
