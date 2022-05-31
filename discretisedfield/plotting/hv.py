@@ -12,9 +12,15 @@ import discretisedfield.util as dfu
 class Hv:
     """Holoviews-based plotting methods.
 
-    Plotting with holoviews can be created without prior slicing. Instead, a slider
-    is created for the out-of-plane direction. This class should not be accessed
+    Plots based on Holoviews can be created without prior slicing. Instead, a slider is
+    created for the directions not shown in the plot. This class should not be accessed
     directly. Use ``field.hv`` to use the different plotting methods.
+
+    Hv has a class property ``norm_filtering`` that controls the default behaviour of
+    ``Hv.__call__``, the convenience plotting method that is typically available as
+    ``field.hv()``. By default ``norm_filtering=True`` and plots created with ``hv()``
+    use automatic filtering based on the norm of the field. To disable automatic
+    filtering globally use ``discretisedfield.plotting.Hv.norm_filtering = False``.
 
     Parameters
     ----------
@@ -24,43 +30,90 @@ class Hv:
 
     """
 
+    norm_filtering = True
+
     def __init__(self, array):
         import hvplot.xarray  # noqa, delayed import because it creates (empty) output
 
         self.array = array
 
-    def __call__(self, kdims, vdims=None, roi=None, scalar_kw=None, vector_kw=None):
-        """Plot scalar and vector components on a plane.
+    def __call__(
+        self,
+        kdims,
+        vdims=None,
+        roi=None,
+        norm_filtering=None,
+        scalar_kw=None,
+        vector_kw=None,
+    ):
+        """Create an optimal plot combining ``hv.scalar`` and ``hv.vector``.
 
-        This is a convenience method for quick plotting. It combines
-         ``Field.hv.scalar`` and ``Field.hv.vector``. Depending on the
-         dimensionality of the field's value, it automatically determines what plot is
-         going to be shown. For a scalar field, only
-         ``discretisedfield.plotting.Hv.scalar`` is used, whereas for a vector
-         field, both ``discretisedfield.plotting.Hv.scalar`` and
-         ``discretisedfield.plotting.Hv.vector`` plots are shown so that vector
-         plot visualises the in-plane components of the vector and scalar plot encodes
-         the out-of-plane component. The field is shown on a plane normal to the
-         ``slider`` direction.
+        This is a convenience method for quick plotting. It combines ``hv.scalar`` and
+         ``hv.vector``. Depending on the dimensionality of the object, it automatically
+         determines the typo of plot in the following order:
 
-        All the default values can be changed by passing dictionaries to
-        ``scalar_kw`` and ``vector_kw``, which are then used in subplots.
+        1. For scalar objects (no dimension with name ``'comp'``) only
+           ``discretisedfield.plotting.Hv.scalar`` is used.
+
+        2. When ``vdims`` is specified a vector plot (without coloring) is created for
+           the "in-plane" part of the vector field (defined via ``vdims``). If the field
+           has vector dimensionality larger than two an additional scalar plot is
+           created for all remaining vector components (with a drop-down selection).
+
+        3. If the field is a 3d vector field and defined in 3d space the in-plane and
+           out-of-plane vector components are determined (guessed) automatically. A
+           scalar plot is created for the out-of-plane component and overlayed with a
+           vector plot for the in-plane components (without coloring).
+
+        4. For all other vector fields a scalar plot with a drop-down selection for the
+           individual vector components is created.
+
+        Based on the norm of the object (absolute values for scalar fields) automatic
+        filtering is applied, i.e. all cells where the norm is zero are excluded from
+        the plot. To manually filter out parts of the plot (e.g. areas where the norm of
+        the field is zero) an additional ``roi`` can be passed. It can take an
+        ``xarray.DataArray`` or a ``discretisedfield.Field`` and hides all points where
+        ``roi`` is 0. It relies on ``xarray``s broadcasting and the object passed to
+        ``roi`` must only have the same dimensions as the ones specified as ``kdims``.
+
+        To disable filtering pass ``norm_filtering=False``. To disable filtering for all
+        plots globally set ``discretisedfield.plotting.Hv.norm_filtering = False``. If
+        norm filtering has been disabled globally use ``norm_filtering=True`` to enable
+        it for a single plot.
+
+        All default values of ``hv.scalar`` and ``hv.vector`` can be changed by passing
+        dictionaries to ``scalar_kw`` and ``vector_kw``, which are then used in
+        subplots.
 
         Therefore, to understand the meaning of the keyword arguments which can be
         passed to this method, please refer to
         ``discretisedfield.plotting.Hv.scalar`` and
-        ``discretisedfield.plotting.Hv.vector`` documentation. Filtering of the
-        scalar component is applied by default (using the norm for vector fields,
-        absolute values for scalar fields). To turn off filtering add ``{'filter_field':
-        None}`` to ``scalar_kw``.
-
+        ``discretisedfield.plotting.Hv.vector`` documentation.
 
         Parameters
         ----------
-        slider : str
+        kdims : List[str]
 
-            Spatial direction for which a slider is created. Can be one of ``'x'``,
-            ``'y'``, or ``'z'``.
+            Array coordinates plotted in plot x and plot y directon.
+
+        vdims : List[str], optional
+
+            Names of the components to be used for the x and y component of the plotted
+            arrows. This information is used to associate field components and spatial
+            directions. Optionally, one of the list elements can be ``None`` if the
+            field has no component in that direction. ``vdims`` is required for non-3d
+            vector fields and for fields that do not have 3 spatial coordinates.
+
+        roi : xarray.DataArray, discretisedfield.Field, optional
+
+            Field to filter out certain areas in the plot. Only cells where the
+            roi is non-zero are included in the output.
+
+        norm_filtering : bool, optional
+
+            If ``True`` use a default roi based on the norm of the field, if ``False``
+            do not filter automatically. If not specified the value of
+            ``Hv.norm_filtering`` is used. This allows globally disabling the filtering.
 
         scalar_kw : dict
 
@@ -98,17 +151,18 @@ class Hv:
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
 
-        if roi is None and "comp" not in self.array.dims:
-            roi = np.abs(self.array)
-        elif roi is None:
-            roi = xr.apply_ufunc(
-                np.linalg.norm,
-                self.array,
-                input_core_dims=[["comp"]],
-                kwargs={"axis": -1},
-            )
-        scalar_kw.setdefault("roi", roi)
-        vector_kw.setdefault("roi", roi)
+        if norm_filtering or (norm_filtering is None and self.norm_filtering):
+            if roi is None and "comp" not in self.array.dims:
+                roi = np.abs(self.array)
+            elif roi is None:
+                roi = xr.apply_ufunc(
+                    np.linalg.norm,
+                    self.array,
+                    input_core_dims=[["comp"]],
+                    kwargs={"axis": -1},
+                )
+            scalar_kw.setdefault("roi", roi)
+            vector_kw.setdefault("roi", roi)
         vector_kw.setdefault("use_color", False)
 
         if "comp" not in self.array.dims:
@@ -148,20 +202,23 @@ class Hv:
             return self.scalar(kdims=kdims, **scalar_kw)
 
     def scalar(self, kdims, roi=None, **kwargs):
-        """Plot the scalar field on a plane.
+        """Create an image plot for scalar data or individual components.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
-        ``holoviews.Image`` objects. The field is shown on a plane normal to the
-        ``slider`` direction. If the field dimension is greater than 1 an additional
-        ``panel.Select`` widget for the field components is created automatically.
-        It is not necessary to create a cut-plane first.
+        ``holoviews.Image`` objects. The plot shows the plane defined with the two
+        spatial directions passed to ``kdims``. If a vector field is passed (that means
+        the field dimension is greater than 1) an additional ``panel.Select`` widget for
+        the field components is created automatically. It is not necessary to create a
+        cut-plane first.
 
-        To filter out parts of the field (e.g. areas where the norm of the field is
-        zero) an additional ``filter_field`` can be passed. No automatic filtering is
+        To filter out parts of the plot (e.g. areas where the norm of the field is zero)
+        an additional ``roi`` can be passed. It can take an ``xarray.DataArray`` or a
+        ``discretisedfield.Field`` and hides all points where ``roi`` is 0. It relies on
+        ``xarray``s broadcasting and the object passed to ``roi`` must only have the
+        same dimensions as the ones specified as ``kdims``. No automatic filtering is
         applied.
 
-        The method internally creates an ``xarray`` of the field and uses
-        ``xarray.hvplot``. Additional keyword arguments are directly forwarded to this
+        Additional keyword arguments are directly forwarded to the ``xarray.hvplot``
         method. Please refer to the documentation of ``hvplot`` (and ``holoviews``) for
         available options and additional documentation on how to modify the plot after
         creation.
@@ -172,10 +229,10 @@ class Hv:
 
             Array coordinates plotted in plot x and plot y directon.
 
-        filter_field : df.Field, optional
+        roi : xarray.DataArray, discretisedfield.Field, optional
 
             Field to filter out certain areas in the plot. Only cells where the
-            filter_field is non-zero are included in the output.
+            roi is non-zero are included in the output.
 
         kwargs
 
@@ -192,7 +249,9 @@ class Hv:
         ------
         ValueError
 
-            If ``slider`` is not ``'x'``, ``'y'``, or ``'z'``.
+            If ``kdims`` has not length 2 or contains strings that are not part of the
+            objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
+            discretisedfield.Field objects).
 
         Examples
         --------
@@ -223,43 +282,64 @@ class Hv:
         colorbar_label=None,
         **kwargs,
     ):
-        """Plot the vector field on a plane.
+        """Create a vector plot.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
-        ``holoviews.VectorField`` objects. The field is shown on a plane normal to the
-        ``slider`` direction. The length of the arrows corresponds to the norm of the
-        in-plane component of the field, the color to the out-of-plane component. It is
-        not necessary to create a cut-plane first.
+        ``holoviews.VectorField`` objects. The plot shows the plane defined with the two
+        spatial directions passed to ``kdims``. The length of the arrows corresponds to
+        the norm of the in-plane component of the field. It is not necessary to create a
+        cut-plane first.
 
-        To filter out parts of the field (e.g. areas where the norm of the field is
-        zero) an additional ``filter_field`` can be passed. Parts of the field where the
-        norm is zero are not shown by default.
+        ``vdims`` defines the components of the plotted object shown in the plot x and
+        plot y direction (defined with ``kdims``). If the object has three vector
+        components and three spatial dimensions ``vdims`` can be omitted and the vector
+        components and spatial directions are combined based on their order.
 
-        The method internally creates an ``xarray`` of the field and uses
-        ``holoviews.VectorPlot``. Additional keyword arguments are directly forwarded to
-        the ``.opts()`` method of this object. Please refer to the documentation of
-        ``holoviews`` for available options and additional documentation on how to
-        modify the plot after creation.
+        For 3d vector fields the color by default encodes the out-of-plane component.
+        Other fields cannot be colored automatically. To assign a non-uniform color
+        manually use ``cdim``. It either accepts a string to select one of the field
+        vector components or a scalar ``discretisedfield.Field`` or
+        ``xarray.DataArray``. Coloring can be disabled with ``use_color``.
+
+        To filter out parts of the plot (e.g. areas where the norm of the field is zero)
+        an additional ``roi`` can be passed. It can take an ``xarray.DataArray`` or a
+        ``discretisedfield.Field`` and hides all points where ``roi`` is 0. It relies on
+        ``xarray``s broadcasting and the object passed to ``roi`` must only have the
+        same dimensions as the ones specified as ``kdims``. No automatic filtering is
+        applied.
+
+        This method is based on ``holoviews.VectorPlot``. Additional keyword arguments
+        are directly forwarded to the ``.opts()`` method of the resulting object. Please
+        refer to the documentation of ``holoviews`` for available options and additional
+        documentation on how to modify the plot after creation.
 
         Parameters
         ----------
-        slider : str
+        kdims : List[str]
 
-            Spatial direction for which a slider is created. Can be one of ``'x'``,
-            ``'y'``, or ``'z'``.
+            Array coordinates plotted in plot x and plot y directon.
 
         vdims : List[str], optional
 
             Names of the components to be used for the x and y component of the plotted
             arrows. This information is used to associate field components and spatial
             directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction. ``vdims`` is required for 2d
-            vector fields.
+            field has no component in that direction. ``vdims`` is required for non-3d
+            vector fields and for fields that do not have 3 spatial coordinates.
 
-        filter_field : df.Field, optional
+        cdim : str, xarray.DataArray, discretisedfield.Field, optional
+
+            A string can be used to select one of the vector components of the field. To
+            color according to different data scalar ``discretisedfield.Field`` or
+            ``xarray.DataArray`` can be used to color the arrows. This option has no
+            effect when ``use_color=False``. If not passed the out-of-plane component is
+            used for 3d vector fields defined in 3d space. Otherwise, a warning is show
+            and automatic coloring is disabled.
+
+        roi : xarray.DataArray, discretisedfield.Field, optional
 
             Field to filter out certain areas in the plot. Only cells where the
-            filter_field is non-zero are included in the output.
+            roi is non-zero are included in the output.
 
         use_color : bool, optional
 
@@ -267,10 +347,9 @@ class Hv:
             ``False`` all arrows have a uniform color, by default black. To change the
             uniform color pass e.g.``color= 'blue'``. Defaults to ``True``.
 
-        color_field : df.Field, optional
+        colorbar_label : str, optional
 
-            Scalar field that is used to color the arrows when ``use_color=True``. If
-            not passed the out-of-plane component is used for coloring.
+            Label to show on the colorbar.
 
         kwargs
 
@@ -288,8 +367,14 @@ class Hv:
         ------
         ValueError
 
-            If ``slider`` is not ``'x'``, ``'y'``, or ``'z'`` or if the field is scalar
-            or has dim > 3.
+            If ``kdims`` has not length 2 or contains strings that are not part of the
+            objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
+            discretisedfield.Field objects).
+
+            If the object has no dimension ``comp`` that defines the vector components.
+
+            If a plot cannot be created without specifying ``vdims`` or if the ``vdims``
+            are not correct.
 
         Examples
         --------
@@ -371,10 +456,8 @@ class Hv:
                     color_comp = cdim.to_xarray()
 
                 if colorbar_label is None:
-                    try:
+                    with contextlib.suppress(AttributeError):
                         colorbar_label = color_comp.name
-                    except AttributeError:
-                        pass
                 ip_vector["color_comp"] = color_comp
             else:
                 if len(self.array.comp) != 3:  # 3 spatial components + vector 'comp'
@@ -405,58 +488,57 @@ class Hv:
                     plot.opts(clabel=colorbar_label)
             for dim in plot.dimensions():
                 if dim.name in "xyz":
-                    try:
+                    with contextlib.suppress(AttributeError):
                         dim.unit = ip_vector[dim.name].units
-                    except AttributeError:
-                        pass
             return plot
 
         dyn_kdims = [dim for dim in self.array.dims if dim not in kdims + ["comp"]]
         dyn_map = hv.DynamicMap(_vectorplot, kdims=dyn_kdims).redim.values(
             **{dim: self.array[dim].data for dim in dyn_kdims}  # data / multiplier
         )
-        # redim does not work with xarrays
+        # redim does not work with xarray DataArrays
         for dim in dyn_map.dimensions():
-            try:
+            with contextlib.suppress(AttributeError):
                 dim.unit = self.array[dim.name].units
-            except AttributeError:
-                pass
         return dyn_map
 
     def contour(self, kdims, roi=None, **kwargs):
-        """Plot the scalar field on a plane.
+        """Plot contour lines of scalar fields or vector components.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
-        ``holoviews.Contours`` objects. The field is shown on a plane normal to the
-        ``slider`` direction. If the field dimension is greater than 1 an additional
-        ``panel.Select`` widget for the field components is created automatically.
-        It is not necessary to create a cut-plane first.
+        ``holoviews.Contours``. The plot shows the plane defined with the two spatial
+        directions passed to ``kdims``. If a vector field is passed (that means the
+        field dimension is greater than 1) an additional ``panel.Select`` widget for the
+        field components is created automatically. It is not necessary to create a
+        cut-plane first.
 
-        To filter out parts of the field (e.g. areas where the norm of the field is
-        zero) an additional ``filter_field`` can be passed. No automatic filtering is
+        To filter out parts of the plot (e.g. areas where the norm of the field is zero)
+        an additional ``roi`` can be passed. It can take an ``xarray.DataArray`` or a
+        ``discretisedfield.Field`` and hides all points where ``roi`` is 0. It relies on
+        ``xarray``s broadcasting and the object passed to ``roi`` must only have the
+        same dimensions as the ones specified as ``kdims``. No automatic filtering is
         applied.
 
-        The method internally creates an ``xarray`` of the field and uses
-        ``xarray.hvplot.contour``. Additional keyword arguments are directly forwarded
-        to this method. Please refer to the documentation of ``hvplot`` (and
-        ``holoviews``) for available options and additional documentation on how to
-        modify the plot after creation.
+        Additional keyword arguments are directly forwarded to
+         ``harray.hvplot.contour``. Please refer to the documentation of ``hvplot`` (and
+         ``holoviews``) for available options and additional documentation on how to
+         modify the plot after creation.
 
         Parameters
         ----------
-        slider : str
+        kdims : List[str]
 
-            Spatial direction for which a slider is created. Can be one of ``'x'``,
-            ``'y'``, or ``'z'``.
+            Array coordinates plotted in plot x and plot y directon.
 
-        filter_field : df.Field, optional
+        roi : xarray.DataArray, discretisedfield.Field, optional
 
             Field to filter out certain areas in the plot. Only cells where the
-            filter_field is non-zero are included in the output.
+            roi is non-zero are included in the output.
 
         kwargs
 
-            Additional keyword arguments that are forwarded to ``xarray.hvplot``.
+            Additional keyword arguments that are forwarded to
+            ``xarray.hvplot.contour``.
 
         Returns
         -------
@@ -469,7 +551,9 @@ class Hv:
         ------
         ValueError
 
-            If ``slider`` is not ``'x'``, ``'y'``, or ``'z'``.
+            If ``kdims`` has not length 2 or contains strings that are not part of the
+            objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
+            discretisedfield.Field objects).
 
         Examples
         --------
