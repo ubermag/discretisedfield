@@ -3532,7 +3532,7 @@ class Field:
 
     @property
     def hv(self):
-        """Plot interface, holoviews/hvplot based.
+        """Plot interface, Holoviews/hvplot based.
 
         This property provides access to the different plotting methods. It is
         also callable to quickly generate plots. For more details and the
@@ -3557,7 +3557,7 @@ class Field:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
-        >>> field.hv(slider='z')
+        >>> field.hv(kdims=['x', 'y'])
         :DynamicMap...
 
         """
