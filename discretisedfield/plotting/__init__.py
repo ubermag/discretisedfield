@@ -17,6 +17,11 @@ class _Defaults:
         """Reset values to their defaults."""
         self.norm_filter = True
 
+    def __repr__(self):
+        summary = "plotting defaults\n"
+        summary += f"  norm_filter: {self.norm_filter}"
+        return summary
+
     @property
     def norm_filter(self):
         """Apply automatic norm-based filtering in convenience plotting methods."""
