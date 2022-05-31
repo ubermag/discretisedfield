@@ -20,7 +20,7 @@ class Hv:
     ``Hv.__call__``, the convenience plotting method that is typically available as
     ``field.hv()``. By default ``norm_filter=True`` and plots created with ``hv()`` use
     automatic filtering based on the norm of the field. To disable automatic filtering
-    globally use ``discretisedfield.plotting.Hv.norm_filter = False``.
+    globally use ``discretisedfield.plotting.defaults.norm_filter = False``.
 
     Parameters
     ----------
@@ -30,7 +30,7 @@ class Hv:
 
     """
 
-    norm_filter = True
+    _norm_filter = True
 
     def __init__(self, array):
         import hvplot.xarray  # noqa, delayed import because it creates (empty) output
@@ -77,9 +77,9 @@ class Hv:
         ``roi`` must only have the same dimensions as the ones specified as ``kdims``.
 
         To disable filtering pass ``norm_filter=False``. To disable filtering for all
-        plots globally set ``discretisedfield.plotting.Hv.norm_filter = False``. If norm
-        filtering has been disabled globally use ``norm_filter=True`` to enable it for a
-        single plot.
+        plots globally set ``discretisedfield.plotting.defaults.norm_filter = False``.
+        If norm filtering has been disabled globally use ``norm_filter=True`` to enable
+        it for a single plot.
 
         All default values of ``hv.scalar`` and ``hv.vector`` can be changed by passing
         dictionaries to ``scalar_kw`` and ``vector_kw``, which are then used in
@@ -113,7 +113,8 @@ class Hv:
 
             If ``True`` use a default roi based on the norm of the field, if ``False``
             do not filter automatically. If not specified the value of
-            ``Hv.norm_filtering`` is used. This allows globally disabling the filtering.
+            ``discretisedfield.plotting.defaults.norm_filter`` is used. This allows
+            globally disabling the filtering.
 
         scalar_kw : dict
 
@@ -151,7 +152,7 @@ class Hv:
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
 
-        if norm_filter or (norm_filter is None and self.norm_filter):
+        if norm_filter or (norm_filter is None and self._norm_filter):
             if roi is None and "comp" not in self.array.dims:
                 roi = np.abs(self.array)
             elif roi is None:
