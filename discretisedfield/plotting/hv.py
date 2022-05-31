@@ -314,10 +314,10 @@ class Hv:
                 "The vector plot method can only operate on DataArrays which have a"
                 " vector component called 'comp'."
             )
-        if self.array.ndim != 4 and vdims is None:
+        if (self.array.ndim != 4 or len(self.array.comp) != 3) and vdims is None:
             raise ValueError(
                 f"`vdims` are required for arrays with {self.array.ndim - 1} spatial"
-                " dimensions."
+                " dimensions and {len(self.array.comp)} components."
             )
 
         if vdims is None:
