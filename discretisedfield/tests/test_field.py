@@ -2117,75 +2117,103 @@ class TestField:
 
         plt.close("all")
 
-    def test_hvplot_scalar(self):
-        for slider in "xyz":
-            self.pf.hvplot.scalar(slider=slider)
-            self.pf.hvplot.scalar(slider=slider, filter_field=self.pf.norm)
+    def test_hv_scalar(self):
+        for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
+            self.pf.hv.scalar(kdims=kdims)
+            self.pf.hv.scalar(kdims=kdims, roi=self.pf.norm)
 
             # additional kwargs
-            self.pf.hvplot.scalar(slider=slider, clim=(-1, 1))
+            self.pf.hv.scalar(kdims=kdims, clim=(-1, 1))
 
             for c in self.pf.components:
-                getattr(self.pf, c).hvplot.scalar(slider=slider)
+                getattr(self.pf, c).hv.scalar(kdims=kdims)
 
         with pytest.raises(ValueError):
-            self.pf.hvplot.scalar(slider="wrong_name")
+            self.pf.hv.contour(kdims=["wrong_name", "x"])
 
-    def test_hvplot_vector(self):
-        for slider in "xyz":
-            self.pf.hvplot.vector(slider=slider)
-            self.pf.hvplot.vector(slider=slider, filter_field=self.pf.norm)
+    def test_hv_vector(self):
+        for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
+            self.pf.hv.vector(kdims=kdims)
+            self.pf.hv.vector(kdims=kdims, roi=self.pf.norm)
 
             # additional kwargs
-            self.pf.hvplot.vector(slider=slider, use_color=False, color="blue")
+            self.pf.hv.vector(kdims=kdims, use_color=False, color="blue")
 
             for comp in self.pf.components:
-                self.pf.hvplot.vector(slider=slider, color_field=getattr(self.pf, comp))
+                self.pf.hv.vector(kdims=kdims, cdim=getattr(self.pf, comp))
+                self.pf.hv.vector(kdims=kdims, cdim=comp)
+            self.pf.hv.vector(kdims=kdims, cdim=self.pf.norm)
+
+            with pytest.raises(KeyError):
+                self.pf.hv.vector(kdims=kdims, cdim="wrong")
 
             # 2d field
             with pytest.raises(ValueError):
-                (self.pf.a << self.pf.b).hvplot.vector(slider=slider)
+                (self.pf.a << self.pf.b).hv.vector(kdims=kdims)
 
             field_2d = self.pf.a << self.pf.b
             field_2d.components = ["a", "b"]
-            field_2d.hvplot.vector(slider=slider, vdims=["a", "b"])
-            field_2d.hvplot.vector(slider=slider, vdims=[None, "b"])
-            field_2d.hvplot.vector(slider=slider, vdims=["a", None])
+            field_2d.hv.vector(kdims=kdims, vdims=["a", "b"])
+            field_2d.hv.vector(kdims=kdims, vdims=[None, "b"])
+            field_2d.hv.vector(kdims=kdims, vdims=["a", None])
             with pytest.raises(ValueError):
-                field_2d.hvplot.vector(slider=slider, vdims=[None, None])
+                field_2d.hv.vector(kdims=kdims, vdims=[None, None])
+
+            # 4d field
+            field_4d = self.pf.a << self.pf.b << self.pf.a << self.pf.b
+            field_4d.components = ["a", "b", "c", "d"]
+            with pytest.raises(ValueError):
+                field_4d.hv.vector(kdims=kdims)
+            field_4d.hv.vector(kdims=kdims, vdims=["c", "d"])
+            field_4d.hv.vector(kdims=kdims, vdims=["c", "d"])
+            field_4d.hv.vector(kdims=kdims, vdims=[None, "b"])
 
         with pytest.raises(ValueError):
-            self.pf.hvplot.scalar(slider="wrong_name")
+            self.pf.hv.contour(kdims=["wrong_name", "x"])
 
-    def test_hvplot_contour(self):
-        for slider in "xyz":
-            self.pf.hvplot.contour(slider=slider)
-            self.pf.hvplot.contour(slider=slider, filter_field=self.pf.norm)
+    def test_hv_contour(self):
+        for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
+            self.pf.hv.contour(kdims=kdims)
+            self.pf.hv.contour(kdims=kdims, roi=self.pf.norm)
 
             # additional kwargs
-            self.pf.hvplot.contour(slider=slider, clim=(-1, 1))
+            self.pf.hv.contour(kdims=kdims, clim=(-1, 1))
 
             for c in self.pf.components:
-                getattr(self.pf, c).hvplot.contour(slider=slider)
+                getattr(self.pf, c).hv.contour(kdims=kdims)
 
         with pytest.raises(ValueError):
-            self.pf.hvplot.contour(slider="wrong_name")
+            self.pf.hv.contour(kdims=["wrong_name", "x"])
 
-    def test_hvplot(self):
-        for slider in "xyz":
-            self.pf.hvplot(slider=slider)
+    def test_hv(self):
+        for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
+            # 1d field
+            self.pf.a.hv(kdims=kdims)
 
-            self.pf.a.hvplot(slider=slider)
-            (self.pf.b << self.pf.c).hvplot(
-                slider=slider, vector_kw={"vdims": ["x", "y"]}
-            )
+            # 2d field
+            field_2d = self.pf.b << self.pf.c
+            with pytest.warns(UserWarning):
+                field_2d.hv(kdims=kdims)
+            field_2d.hv(kdims=kdims, vdims=["x", "y"])
+
+            # 3d field
+            self.pf.hv(kdims=kdims)
+            self.pf.hv(kdims=kdims, vdims=["a", "b"])
 
             # additional kwargs
-            self.pf.hvplot(
-                slider=slider,
+            self.pf.hv(
+                kdims=kdims,
                 scalar_kw={"clim": (-1, 1)},
                 vector_kw={"cmap": "cividis"},
             )
+
+            # 4d field
+            field_4d = self.pf.b << self.pf.c << self.pf.a << self.pf.a
+            field_4d.components = ["v1", "v2", "v3", "v4"]
+            with pytest.warns(UserWarning):
+                field_4d.hv(kdims=kdims)
+            field_4d.hv(kdims=kdims, vdims=["v2", "v1"])
+            field_4d.hv(kdims=kdims, vdims=["v2", "v1"], vector_kw={"cdim": "v4"})
 
     def test_k3d_nonzero(self):
         # Default
