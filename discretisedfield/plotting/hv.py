@@ -16,11 +16,11 @@ class Hv:
     created for the directions not shown in the plot. This class should not be accessed
     directly. Use ``field.hv`` to use the different plotting methods.
 
-    Hv has a class property ``norm_filtering`` that controls the default behaviour of
+    Hv has a class property ``norm_filter`` that controls the default behaviour of
     ``Hv.__call__``, the convenience plotting method that is typically available as
-    ``field.hv()``. By default ``norm_filtering=True`` and plots created with ``hv()``
-    use automatic filtering based on the norm of the field. To disable automatic
-    filtering globally use ``discretisedfield.plotting.Hv.norm_filtering = False``.
+    ``field.hv()``. By default ``norm_filter=True`` and plots created with ``hv()`` use
+    automatic filtering based on the norm of the field. To disable automatic filtering
+    globally use ``discretisedfield.plotting.Hv.norm_filter = False``.
 
     Parameters
     ----------
@@ -30,7 +30,7 @@ class Hv:
 
     """
 
-    norm_filtering = True
+    norm_filter = True
 
     def __init__(self, array):
         import hvplot.xarray  # noqa, delayed import because it creates (empty) output
@@ -42,7 +42,7 @@ class Hv:
         kdims,
         vdims=None,
         roi=None,
-        norm_filtering=None,
+        norm_filter=None,
         scalar_kw=None,
         vector_kw=None,
     ):
@@ -76,10 +76,10 @@ class Hv:
         ``roi`` is 0. It relies on ``xarray``s broadcasting and the object passed to
         ``roi`` must only have the same dimensions as the ones specified as ``kdims``.
 
-        To disable filtering pass ``norm_filtering=False``. To disable filtering for all
-        plots globally set ``discretisedfield.plotting.Hv.norm_filtering = False``. If
-        norm filtering has been disabled globally use ``norm_filtering=True`` to enable
-        it for a single plot.
+        To disable filtering pass ``norm_filter=False``. To disable filtering for all
+        plots globally set ``discretisedfield.plotting.Hv.norm_filter = False``. If norm
+        filtering has been disabled globally use ``norm_filter=True`` to enable it for a
+        single plot.
 
         All default values of ``hv.scalar`` and ``hv.vector`` can be changed by passing
         dictionaries to ``scalar_kw`` and ``vector_kw``, which are then used in
@@ -151,7 +151,7 @@ class Hv:
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
 
-        if norm_filtering or (norm_filtering is None and self.norm_filtering):
+        if norm_filter or (norm_filter is None and self.norm_filter):
             if roi is None and "comp" not in self.array.dims:
                 roi = np.abs(self.array)
             elif roi is None:
