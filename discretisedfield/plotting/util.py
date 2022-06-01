@@ -11,8 +11,8 @@ class Defaults:
 
     def reset(self):
         """Reset values to their defaults."""
-        for key, value in self._defaults.items():
-            setattr(self, key, value)
+        for setting in self:
+            setattr(self, setting, self._defaults[setting])
 
     def __repr__(self):
         summary = "plotting defaults\n"
@@ -21,18 +21,21 @@ class Defaults:
         return summary
 
     def __getattr__(self, attr):
-        if attr not in self._defaults:
+        if attr not in self:
             raise AttributeError(
                 f"{self.__class__.__name__!r} object has no attribute {attr!r}."
             )
         return getattr(self, f"_{attr}")
 
     def __setattr__(self, attr, value):
-        if attr in self._defaults:
+        if attr in self:
             attr = f"_{attr}"
             for class_ in self._classes:
                 setattr(class_, attr, value)
         super().__setattr__(attr, value)
 
+    def __iter__(self):
+        yield from self._defaults
+
     def __dir__(self):
-        return dir(self.__class__) + list(self._defaults)
+        return dir(self.__class__) + list(self)
