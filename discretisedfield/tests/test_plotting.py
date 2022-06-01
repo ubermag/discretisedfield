@@ -7,7 +7,7 @@ def test_defaults():
     # default settings
     assert df.plotting.defaults.norm_filter
     assert df.plotting.Hv._norm_filter
-    assert repr(df.plotting.defaults) == "plotting defaults\n  norm_filter: True"
+    assert repr(df.plotting.defaults) == "plotting defaults\n  norm_filter: True\n"
 
     assert list(df.plotting.defaults) == ["norm_filter"]
     assert all(key in dir(df.plotting.defaults) for key in df.plotting.defaults)
