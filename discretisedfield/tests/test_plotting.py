@@ -17,6 +17,7 @@ def test_defaults():
 
     # disable norm filtering
     df.plotting.defaults.norm_filter = False
+    assert not df.plotting.defaults.norm_filter
     assert not df.plotting.Hv._norm_filter
 
     # enable norm filtering
