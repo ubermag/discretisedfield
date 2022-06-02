@@ -52,9 +52,16 @@ def ipynb(c):
     raise Exit(code=result)
 
 
-@task(unittest, docs, ipynb)
+@task
 def all(c):
     """Run all tests."""
+    for cmd in (unittest, docs, ipynb):
+        try:
+            cmd(c)
+        except Exit as e:
+            if e.code != pytest.ExitCode.OK:
+                raise e
+    raise Exit(code=pytest.ExitCode.OK)
 
 
 test_collection.add_task(unittest)
@@ -99,7 +106,11 @@ def release(c):
         raise Exit("Working tree is not clean. Aborting.")
 
     # run all tests
-    all(c)
+    try:
+        all(c)
+    except Exit as e:
+        if e.code != pytest.ExitCode.OK:
+            raise e
 
     version = iniconfig.IniConfig("setup.cfg").get("metadata", "version")
     # sanity checks while we have two places containing the version.
