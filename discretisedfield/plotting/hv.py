@@ -42,6 +42,7 @@ class Hv:
         kdims,
         vdims=None,
         roi=None,
+        n=None,
         norm_filter=None,
         scalar_kw=None,
         vector_kw=None,
@@ -164,6 +165,9 @@ class Hv:
                 )
             scalar_kw.setdefault("roi", roi)
             vector_kw.setdefault("roi", roi)
+
+        scalar_kw.setdefault("n", n)
+        vector_kw.setdefault("n", n)
         vector_kw.setdefault("use_color", False)
 
         if "comp" not in self.array.dims:
@@ -202,7 +206,7 @@ class Hv:
             )
             return self.scalar(kdims=kdims, **scalar_kw)
 
-    def scalar(self, kdims, roi=None, **kwargs):
+    def scalar(self, kdims, roi=None, n=None, **kwargs):
         """Create an image plot for scalar data or individual components.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -270,7 +274,7 @@ class Hv:
         :DynamicMap...
 
         """
-        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, kwargs)
+        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
         return self.array.hvplot(x=x, y=y, **kwargs)
 
     def vector(
@@ -279,6 +283,7 @@ class Hv:
         vdims=None,
         cdim=None,
         roi=None,
+        n=None,
         use_color=True,
         colorbar_label=None,
         **kwargs,
@@ -476,6 +481,8 @@ class Hv:
             vdims.append("color_comp")
             kwargs.setdefault("colorbar", True)
 
+        ip_vector = self._resample(ip_vector, kdims, n)
+
         def _vectorplot(*values):
             plot = hv.VectorField(
                 data=ip_vector.sel(**dict(zip(dyn_kdims, values)), method="nearest"),
@@ -495,7 +502,7 @@ class Hv:
 
         dyn_kdims = [dim for dim in self.array.dims if dim not in kdims + ["comp"]]
         dyn_map = hv.DynamicMap(_vectorplot, kdims=dyn_kdims).redim.values(
-            **{dim: self.array[dim].data for dim in dyn_kdims}  # data / multiplier
+            **{dim: ip_vector[dim].data for dim in dyn_kdims}  # data / multiplier
         )
         # redim does not work with xarray DataArrays
         for dim in dyn_map.dimensions():
@@ -503,7 +510,7 @@ class Hv:
                 dim.unit = self.array[dim.name].units
         return dyn_map
 
-    def contour(self, kdims, roi=None, **kwargs):
+    def contour(self, kdims, roi=None, n=None, **kwargs):
         """Plot contour lines of scalar fields or vector components.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -572,7 +579,7 @@ class Hv:
         :DynamicMap...
 
         """
-        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, kwargs)
+        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
         return self.array.hvplot.contour(x=x, y=y, **kwargs)
 
     def _filter_values(self, values, roi, kdims):
@@ -601,10 +608,37 @@ class Hv:
                     f"Unknown dimension {dim=} in kdims; must be in {self.array.dims}."
                 )
 
-    def _prepare_scalar_plot(self, kdims, filter_field, kwargs):
+    def _prepare_scalar_plot(self, kdims, roi, n, kwargs):
         self._check_kdims(kdims)
         x, y = kdims
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
-        self.array = self._filter_values(self.array, filter_field, kdims)
+        self.array = self._filter_values(self.array, roi, kdims)
+        self.array = self._resample(self.array, kdims, n)
         return x, y, kwargs
+
+    def _resample(self, array, kdims, n):
+        if n is None:
+            return array
+        elif isinstance(n, tuple):
+            if len(n) != 2:
+                raise ValueError(f"{len(n)=} must be 2 if a tuple is passed.")
+            vals = {
+                dim: np.linspace(array[dim].min(), array[dim].max(), ni)
+                for dim, ni in zip(kdims, n)
+            }
+        elif isinstance(n, dict):
+            vals = {
+                dim: np.linspace(array[dim].min(), array[dim].max(), ni)
+                for dim, ni in n.items()
+            }
+        else:
+            raise TypeError(
+                f"Invalid type {type(n)} for parameter n. Must be tuple or dict."
+            )
+        resampled = array.sel(**vals, method="nearest")
+        resampled = resampled.assign_coords(vals)
+        for dim in vals.keys():
+            with contextlib.suppress(AttributeError):
+                resampled[dim]["units"] = array[dim].units
+        return resampled
