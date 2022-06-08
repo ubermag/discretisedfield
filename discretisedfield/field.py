@@ -10,8 +10,8 @@ import h5py
 import numpy as np
 import pandas as pd
 import ubermagutil.typesystem as ts
-import vtkmodules.util.numpy_support as vns
 import xarray as xr
+from vtkmodules.util import numpy_support as vns
 from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 from vtkmodules.vtkIOLegacy import vtkRectilinearGridReader, vtkRectilinearGridWriter
 from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader, vtkXMLRectilinearGridWriter
