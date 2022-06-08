@@ -10,9 +10,11 @@ import h5py
 import numpy as np
 import pandas as pd
 import ubermagutil.typesystem as ts
-import vtk
-import vtk.util.numpy_support as vns
+import vtkmodules.util.numpy_support as vns
 import xarray as xr
+from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
+from vtkmodules.vtkIOLegacy import vtkRectilinearGridReader, vtkRectilinearGridWriter
+from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader, vtkXMLRectilinearGridWriter
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
@@ -3001,7 +3003,7 @@ class Field:
             raise AttributeError(
                 "Field components must be assigned before converting to vtk."
             )
-        rgrid = vtk.vtkRectilinearGrid()
+        rgrid = vtkRectilinearGrid()
         rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
 
         rgrid.SetXCoordinates(
@@ -3084,11 +3086,11 @@ class Field:
 
         """
         if representation == "xml":
-            writer = vtk.vtkXMLRectilinearGridWriter()
+            writer = vtkXMLRectilinearGridWriter()
         elif representation in ["bin", "bin8", "txt"]:
             # Allow bin8 for convenience as this is the default for omf.
             # This does not affect the actual datatype used in vtk files.
-            writer = vtk.vtkRectilinearGridWriter()
+            writer = vtkRectilinearGridWriter()
         else:
             raise ValueError(f"Unknown {representation=}.")
 
@@ -3405,9 +3407,9 @@ class Field:
         with open(filename, "rb") as f:
             xml = "xml" in f.readline().decode("utf8")
         if xml:
-            reader = vtk.vtkXMLRectilinearGridReader()
+            reader = vtkXMLRectilinearGridReader()
         else:
-            reader = vtk.vtkRectilinearGridReader()
+            reader = vtkRectilinearGridReader()
             reader.ReadAllVectorsOn()
             reader.ReadAllScalarsOn()
         reader.SetFileName(filename)
