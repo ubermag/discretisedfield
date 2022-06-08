@@ -86,6 +86,19 @@ class Hv:
         dictionaries to ``scalar_kw`` and ``vector_kw``, which are then used in
         subplots.
 
+        To reduce the number of points in the plot a simple re-sampling is available.
+        The parameter ``n`` can be used to specify the number of points in different
+        directions. A tuple of length 2 can be used to specify the number of points in
+        the two ``kdims``. A dictionary can be used to specify the number of points in
+        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
+        Dimensions that are not specified are not modified. Note, that the re-sampling
+        method is very basic and does not do any sort of interpolation (it just picks
+        the nearest point). The extreme points in each direction are always kept.
+        Equidistant points are picked in between. The re-sampling is applied to both,
+        scalar and vector parts of higher-dimensional plots. To only affect one of the
+        parts specify ``n`` in ``scalar_kw`` or ``vector_kw``. A key ``'n'`` specified
+        in ``scalar_kw`` or ``vector_kw`` takes precedence over ``n``.
+
         Therefore, to understand the meaning of the keyword arguments which can be
         passed to this method, please refer to
         ``discretisedfield.plotting.Hv.scalar`` and
@@ -109,6 +122,13 @@ class Hv:
 
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
+
+        n : array_like, dict, optional
+
+            Re-sampling of the array with the given number of points. If an array-like
+            is passed it must have length 2 and the values are used for the two kdims.
+            If a dictionary is passed its keys must correspond to (some of) the
+            dimensions of the array. If not specified no re-sampling is done.
 
         norm_filtering : bool, optional
 
@@ -223,6 +243,16 @@ class Hv:
         same dimensions as the ones specified as ``kdims``. No automatic filtering is
         applied.
 
+        To reduce the number of points in the plot a simple re-sampling is available.
+        The parameter ``n`` can be used to specify the number of points in different
+        directions. A tuple of length 2 can be used to specify the number of points in
+        the two ``kdims``. A dictionary can be used to specify the number of points in
+        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
+        Dimensions that are not specified are not modified. Note, that the re-sampling
+        method is very basic and does not do any sort of interpolation (it just picks
+        the nearest point). The extreme points in each direction are always kept.
+        Equidistant points are picked in between.
+
         Additional keyword arguments are directly forwarded to the ``xarray.hvplot``
         method. Please refer to the documentation of ``hvplot`` (and ``holoviews``) for
         available options and additional documentation on how to modify the plot after
@@ -238,6 +268,13 @@ class Hv:
 
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
+
+        n : array_like, dict, optional
+
+            Re-sampling of the array with the given number of points. If an array-like
+            is passed it must have length 2 and the values are used for the two kdims.
+            If a dictionary is passed its keys must correspond to (some of) the
+            dimensions of the array. If not specified no re-sampling is done.
 
         kwargs
 
@@ -314,6 +351,16 @@ class Hv:
         same dimensions as the ones specified as ``kdims``. No automatic filtering is
         applied.
 
+        To reduce the number of points in the plot a simple re-sampling is available.
+        The parameter ``n`` can be used to specify the number of points in different
+        directions. A tuple of length 2 can be used to specify the number of points in
+        the two ``kdims``. A dictionary can be used to specify the number of points in
+        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
+        Dimensions that are not specified are not modified. Note, that the re-sampling
+        method is very basic and does not do any sort of interpolation (it just picks
+        the nearest point). The extreme points in each direction are always kept.
+        Equidistant points are picked in between.
+
         This method is based on ``holoviews.VectorPlot``. Additional keyword arguments
         are directly forwarded to the ``.opts()`` method of the resulting object. Please
         refer to the documentation of ``holoviews`` for available options and additional
@@ -346,6 +393,13 @@ class Hv:
 
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
+
+        n : array_like, dict, optional
+
+            Re-sampling of the array with the given number of points. If an array-like
+            is passed it must have length 2 and the values are used for the two kdims.
+            If a dictionary is passed its keys must correspond to (some of) the
+            dimensions of the array. If not specified no re-sampling is done.
 
         use_color : bool, optional
 
@@ -527,6 +581,16 @@ class Hv:
         same dimensions as the ones specified as ``kdims``. No automatic filtering is
         applied.
 
+        To reduce the number of points in the plot a simple re-sampling is available.
+        The parameter ``n`` can be used to specify the number of points in different
+        directions. A tuple of length 2 can be used to specify the number of points in
+        the two ``kdims``. A dictionary can be used to specify the number of points in
+        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
+        Dimensions that are not specified are not modified. Note, that the re-sampling
+        method is very basic and does not do any sort of interpolation (it just picks
+        the nearest point). The extreme points in each direction are always kept.
+        Equidistant points are picked in between.
+
         Additional keyword arguments are directly forwarded to
          ``harray.hvplot.contour``. Please refer to the documentation of ``hvplot`` (and
          ``holoviews``) for available options and additional documentation on how to
@@ -542,6 +606,13 @@ class Hv:
 
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
+
+        n : array_like, dict, optional
+
+            Re-sampling of the array with the given number of points. If an array-like
+            is passed it must have length 2 and the values are used for the two kdims.
+            If a dictionary is passed its keys must correspond to (some of) the
+            dimensions of the array. If not specified no re-sampling is done.
 
         kwargs
 
