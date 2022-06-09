@@ -2189,16 +2189,19 @@ class TestField:
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             # 1d field
             self.pf.a.hv(kdims=kdims)
+            self.pf.a.plane("y").hv(kdims=kdims)
 
             # 2d field
             field_2d = self.pf.b << self.pf.c
             with pytest.warns(UserWarning):
                 field_2d.hv(kdims=kdims)
             field_2d.hv(kdims=kdims, vdims=["x", "y"])
+            field_2d.plane("y").hv(kdims=kdims)
 
             # 3d field
             self.pf.hv(kdims=kdims)
             self.pf.hv(kdims=kdims, vdims=["a", "b"])
+            self.pf.plane("z").hv(kdims=kdims)
 
             # additional kwargs
             self.pf.hv(
@@ -2214,6 +2217,7 @@ class TestField:
                 field_4d.hv(kdims=kdims)
             field_4d.hv(kdims=kdims, vdims=["v2", "v1"])
             field_4d.hv(kdims=kdims, vdims=["v2", "v1"], vector_kw={"cdim": "v4"})
+            field_4d.plane("z").hv(kdims=kdims)
 
     def test_k3d_nonzero(self):
         # Default
