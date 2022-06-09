@@ -562,7 +562,7 @@ class Hv:
             if dim not in kdims + ["comp"] and len(ip_vector[dim]) > 1
         ]
         dyn_map = hv.DynamicMap(_vectorplot, kdims=dyn_kdims).redim.values(
-            **{dim: ip_vector[dim].data for dim in dyn_kdims}  # data / multiplier
+            **{dim: ip_vector[dim].data for dim in dyn_kdims}
         )
         # redim does not work with xarray DataArrays
         for dim in dyn_map.dimensions():
