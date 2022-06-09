@@ -539,7 +539,9 @@ class Hv:
 
         def _vectorplot(*values):
             plot = hv.VectorField(
-                data=ip_vector.sel(**dict(zip(dyn_kdims, values)), method="nearest"),
+                data=ip_vector.sel(
+                    **dict(zip(dyn_kdims, values)), method="nearest"
+                ).squeeze(),
                 kdims=kdims,
                 vdims=vdims,
             )
@@ -554,7 +556,11 @@ class Hv:
                         dim.unit = ip_vector[dim.name].units
             return plot
 
-        dyn_kdims = [dim for dim in self.array.dims if dim not in kdims + ["comp"]]
+        dyn_kdims = [
+            dim
+            for dim in self.array.dims
+            if dim not in kdims + ["comp"] and len(ip_vector[dim]) > 1
+        ]
         dyn_map = hv.DynamicMap(_vectorplot, kdims=dyn_kdims).redim.values(
             **{dim: ip_vector[dim].data for dim in dyn_kdims}  # data / multiplier
         )
@@ -685,7 +691,7 @@ class Hv:
         kwargs.setdefault("data_aspect", 1)
         kwargs.setdefault("colorbar", True)
         self.array = self._filter_values(self.array, roi, kdims)
-        self.array = self._resample(self.array, kdims, n)
+        self.array = self._resample(self.array, kdims, n).squeeze()
         return x, y, kwargs
 
     def _resample(self, array, kdims, n):
