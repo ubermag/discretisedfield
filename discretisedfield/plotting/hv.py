@@ -42,7 +42,6 @@ class Hv:
         kdims,
         vdims=None,
         roi=None,
-        n=None,
         norm_filter=None,
         scalar_kw=None,
         vector_kw=None,
@@ -87,17 +86,15 @@ class Hv:
         subplots.
 
         To reduce the number of points in the plot a simple re-sampling is available.
-        The parameter ``n`` can be used to specify the number of points in different
-        directions. A tuple of length 2 can be used to specify the number of points in
-        the two ``kdims``. A dictionary can be used to specify the number of points in
-        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
-        Dimensions that are not specified are not modified. Note, that the re-sampling
-        method is very basic and does not do any sort of interpolation (it just picks
-        the nearest point). The extreme points in each direction are always kept.
-        Equidistant points are picked in between. The re-sampling is applied to both,
-        scalar and vector parts of higher-dimensional plots. To only affect one of the
-        parts specify ``n`` in ``scalar_kw`` or ``vector_kw``. A key ``'n'`` specified
-        in ``scalar_kw`` or ``vector_kw`` takes precedence over ``n``.
+        The parameter ``n`` in ``scalar_kw`` or ``vector_kw``. can be used to specify
+        the number of points in different directions. A tuple of length 2 can be used to
+        specify the number of points in the two ``kdims``. A dictionary can be used to
+        specify the number of points in arbitrary dimensions. Keys of the dictionary
+        must be dimensions of the array. Dimensions that are not specified are not
+        modified. Note, that the re-sampling method is very basic and does not do any
+        sort of interpolation (it just picks the nearest point). The extreme points in
+        each direction are always kept. Equidistant points are picked in between. The
+        same resampling has to be used for all slider dimensions.
 
         Therefore, to understand the meaning of the keyword arguments which can be
         passed to this method, please refer to
@@ -122,13 +119,6 @@ class Hv:
 
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
-
-        n : array_like, dict, optional
-
-            Re-sampling of the array with the given number of points. If an array-like
-            is passed it must have length 2 and the values are used for the two kdims.
-            If a dictionary is passed its keys must correspond to (some of) the
-            dimensions of the array. If not specified no re-sampling is done.
 
         norm_filtering : bool, optional
 
@@ -186,8 +176,6 @@ class Hv:
             scalar_kw.setdefault("roi", roi)
             vector_kw.setdefault("roi", roi)
 
-        scalar_kw.setdefault("n", n)
-        vector_kw.setdefault("n", n)
         vector_kw.setdefault("use_color", False)
 
         if "comp" not in self.array.dims:
