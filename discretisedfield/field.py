@@ -490,14 +490,14 @@ class Field:
         >>> field.value = (1, 0, 0)
         >>> field.norm.average
         1.0
-        >>> # An attempt to set the norm for a zero field.
+
+        Set the norm for a zero field.
         >>> field.value = 0
         >>> field.average
         (0.0, 0.0, 0.0)
         >>> field.norm = 1
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
+        >>> field.average
+        (0.0, 0.0, 0.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
 
@@ -516,11 +516,12 @@ class Field:
                 msg = f"Cannot set norm for field with dim={self.dim}."
                 raise ValueError(msg)
 
-            if not np.all(self.norm.array):
-                msg = "Cannot normalise field with zero values."
-                raise ValueError(msg)
-
-            self.array /= self.norm.array  # normalise to 1
+            self.array = np.divide(
+                self.array,
+                self.norm.array,
+                out=np.zeros_like(self.array),
+                where=self.norm.array != 0.0,
+            )
             self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
