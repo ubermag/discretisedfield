@@ -474,15 +474,15 @@ class TestField:
         assert np.all(f.norm.value != 1)
         assert np.all(f.norm.array == 2)
 
-    def test_norm_zero_field_exception(self):
+    def test_norm_zero_field(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 10e-9, 10e-9)
         n = (5, 5, 5)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
         f = df.Field(mesh, dim=3, value=(0, 0, 0))
-        with pytest.raises(ValueError):
-            f.norm = 1
+        f.norm = 1  # Does not change the norm of zero field
+        assert np.all(f.norm.array == 0)
 
     def test_zero(self):
         p1 = (0, 0, 0)
