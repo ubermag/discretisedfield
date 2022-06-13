@@ -1046,7 +1046,7 @@ class Mesh:
             )
 
         if item not in self.region:
-            msg = "Subregion is outside the mesh region."
+            msg = f"Subregion '{item}' is outside the mesh region '{self.region}'."
             raise ValueError(msg)
 
         hc = np.divide(self.cell, 2)  # half-cell
