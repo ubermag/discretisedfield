@@ -629,7 +629,7 @@ class Mesh:
 
         """
         if point not in self.region:
-            msg = f"Point {point=} is outside the mesh region."
+            msg = f"Point {point} is outside the mesh region {self.region}."
             raise ValueError(msg)
 
         index = (
