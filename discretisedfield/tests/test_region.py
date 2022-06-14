@@ -196,9 +196,9 @@ class TestRegion:
         assert (0, -tol_in, 0) in region
         assert (0, 0, -tol_in) in region
         assert (10e-9, 10e-9, 20e-9) in region
-        assert (10e-9 + tol_in, 10e-9, 20e-9) in region
-        assert (10e-9, 10e-9 + tol_in, 20e-9) in region
-        assert (10e-9, 10e-9, 20e-9 + tol_in) in region
+        assert (10e-9 + tol_in, 10e-9, 10e-9) in region
+        assert (10e-9, 10e-9 + tol_in, 10e-9) in region
+        assert (1e-9, 3e-9, 20e-9 + tol_in) in region
 
         assert (-tol_out, 0, 0) not in region
         assert (0, -tol_out, 0) not in region
@@ -215,9 +215,9 @@ class TestRegion:
         assert (-tol_in, 0, 0) in region
         assert (0, -tol_in, 0) in region
         assert (0, 0, -tol_in) in region
-        assert (10e-9, 10e-9, 10e-9) in region
-        assert (10e-9 + tol_in, 10e-9, 10e-9) in region
-        assert (10e-9, 10e-9 + tol_in, 10e-9) in region
+        assert (10e-9, 10e-9, 20e-9) in region
+        assert (10e-9 + tol_in, 10e-9, 20e-9) in region
+        assert (10e-9, 10e-9 + tol_in, 20e-9) in region
         assert (10e-9, 10e-9, 20e-9 + tol_in) in region
 
         assert (-tol_out, 0, 0) not in region
