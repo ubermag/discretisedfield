@@ -2,9 +2,12 @@ name: workflow
 
 on:
   push:
+    branches:
+      - master
   pull_request:
   schedule:
     - cron: '0 0 * * 1'  # run every Monday
+  workflow_dispatch:
 
 jobs:
   workflow:
