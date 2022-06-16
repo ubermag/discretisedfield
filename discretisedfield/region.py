@@ -429,9 +429,9 @@ class Region:
             return np.all(
                 np.logical_and(
                     np.less_equal(self.pmin, other)
-                    | np.allclose(self.pmin, other, rtol=tol, atol=tol),
+                    | np.isclose(self.pmin, other, rtol=tol, atol=tol),
                     np.greater_equal(self.pmax, other)
-                    | np.allclose(self.pmax, other, rtol=tol, atol=tol),
+                    | np.isclose(self.pmax, other, rtol=tol, atol=tol),
                 )
             )
         if isinstance(other, self.__class__):
