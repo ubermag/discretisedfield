@@ -60,7 +60,7 @@ def add_colorwheel(ax, width=1, height=1, loc="lower right", **kwargs):
     y = np.linspace(-1, 1, n)
     X, Y = np.meshgrid(x, y)
 
-    theta = np.arctan2(Y, X)
+    theta = np.arctan2(Y, X) + np.pi
     r = np.sqrt(X**2 + Y**2)
 
     rgb = dfu.hls2rgb(hue=theta, lightness=r, lightness_clim=[0, 1 / np.sqrt(2)])

@@ -3,6 +3,7 @@ import collections
 import colorsys
 
 import numpy as np
+import ubermagutil.units as uu
 
 import discretisedfield as df
 
@@ -87,15 +88,17 @@ def plot_box(ax, pmin, pmax, *args, **kwargs):
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
 
 
-def normalise_to_range(values, value_range, int_round=True):
+def normalise_to_range(values, to_range, from_range=None, int_round=True):
     values = np.asarray(values)
 
-    values -= values.min()  # min value is 0
+    values -= from_range[0] if from_range else values.min()  # min value is 0
     # For uniform fields, avoid division by zero.
-    if values.max() != 0:
-        values /= values.max()  # all values in (0, 1)
-    values *= value_range[1] - value_range[0]  # all values in (0, r[1]-r[0])
-    values += value_range[0]  # all values is range (r[0], r[1])
+    if from_range or values.max() != 0:
+        values /= (
+            (from_range[1] - from_range[0]) if from_range else values.max()
+        )  # all values in (0, 1)
+    values *= to_range[1] - to_range[0]  # all values in (0, r[1]-r[0])
+    values += to_range[0]  # all values is range (r[0], r[1])
     if int_round:
         values = values.round()
         values = values.astype(int)
@@ -104,7 +107,7 @@ def normalise_to_range(values, value_range, int_round=True):
 
 
 def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
-    hue = normalise_to_range(hue, (0, 1), int_round=False)
+    hue = normalise_to_range(hue, (0, 1), (0, 2 * np.pi), int_round=False)
     if lightness is not None:
         if lightness_clim is None:
             lightness_clim = (0, 1)
@@ -178,3 +181,19 @@ def fromvtk_legacy(filename):
             field.array[i] = list(map(float, line.split()))
 
     return field
+
+
+def rescale_xarray(array, multiplier):
+    """Rescale xarray dimensions."""
+    if multiplier == 1:
+        return array
+    prefix = uu.rsi_prefixes[multiplier]
+    try:
+        units = [array[i].units for i in "xyz"]
+    except AttributeError:
+        units = None
+    array = array.assign_coords({i: array[i] / multiplier for i in "xyz"})
+    if units:
+        for i, unit in zip("xyz", units):
+            array[i].attrs["units"] = prefix + unit
+    return array
