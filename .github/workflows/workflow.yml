@@ -9,6 +9,9 @@ on:
     - cron: '0 0 * * 1'  # run every Monday
   workflow_dispatch:
 
+env:
+  PYTEST_ADOPTS: "--color=yes"
+
 jobs:
   workflow:
     runs-on: ${{ matrix.os }}
@@ -35,7 +38,6 @@ jobs:
 
     - name: Unit tests
       run: invoke test.unittest
-      if: matrix.os != 'ubuntu-latest'
 
     - name: Unit tests with coverage
       run: invoke test.coverage
