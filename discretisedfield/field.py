@@ -3316,7 +3316,11 @@ class Field:
                     skipinitialspace=True,
                     nrows=nodes,
                     comment="#",
-                ).to_numpy()
+                )
+                if len(array.columns) == header["valuedim"] + 1:
+                    # mumax3 writes trailing whitespace -> one extra column
+                    array.drop(array.columns[-1], axis=1, inplace=True)
+                array = array.to_numpy()
 
         r_tuple = (*reversed(mesh.n), header["valuedim"])
         t_tuple = (2, 1, 0, 3)
