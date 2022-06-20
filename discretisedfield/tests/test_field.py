@@ -1786,8 +1786,12 @@ class TestField:
             os.path.join(dirname, "oommf-ovf2-bin8.oef")
         ).components == ["Total_energy_density"]
 
-        # Read different mumax3 bin4 files (made on linux and windows)
-        filenames = ["mumax-bin4-linux.ovf", "mumax-bin4-windows.ovf"]
+        # Read different mumax3 bin4 and txt files (made on linux and windows)
+        filenames = [
+            "mumax-bin4-linux.ovf",
+            "mumax-bin4-windows.ovf",
+            "mumax-txt-linux.ovf",
+        ]
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         for filename in filenames:
             omffilename = os.path.join(dirname, filename)
