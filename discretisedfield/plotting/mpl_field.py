@@ -100,13 +100,12 @@ class MplField(Mpl):
                 plt.savefig(filename, bbox_inches='tight', pad_inches=0.02)
             ```
 
-            Therefore, to understand the meaning of the keyword arguments which
-            can be passed to this method, please refer to
-            ``discretisedfield.plotting.Mpl.scalar`` and
-            ``discretisedfield.plotting.Mpl.vector`` documentation. Filtering
-            of the scalar component is applied by default (using the norm for
-            vector fields, absolute values for scalar fields). To turn of
-            filtering add ``{'filter_field': None}`` to ``scalar_kw``.
+        Therefore, to understand the meaning of the keyword arguments which can be
+        passed to this method, please refer to ``discretisedfield.plotting.Mpl.scalar``
+        and ``discretisedfield.plotting.Mpl.vector`` documentation. Filtering of the
+        scalar component is applied by default (using the norm for vector fields,
+        absolute values for scalar fields). To turn of filtering add ``{'filter_field':
+        None}`` to ``scalar_kw``.
 
         Example
         -------
@@ -336,6 +335,8 @@ class MplField(Mpl):
         using ``kwargs``. Instead of having a colorbar a ``colorwheel`` is
         displayed by default.
 
+        Parameters
+        ----------
         lightness_field : discretisedfield.Field, optional
 
             A scalar field used for adding lightness to the color. Field values
@@ -361,8 +362,8 @@ class MplField(Mpl):
             For details see ``discretisedfield.plotting.Mpl.colorwheel`` and
             ``mpl_toolkits.axes_grid1.inset_locator.inset_axes``.
 
-        Example
-        -------
+        Examples
+        --------
         .. plot::
             :context: close-figs
 
