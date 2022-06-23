@@ -489,8 +489,6 @@ class Hv:
                 "mag": mag / np.max(np.abs(mag)),
             }
         )
-        vdims = ["angle", "mag"]
-        kwargs.setdefault("data_aspect", 1)
 
         if use_color:
             if cdim is not None:
@@ -519,6 +517,9 @@ class Hv:
                     if colorbar_label is None:
                         colorbar_label = c_comp
                     ip_vector["color_comp"] = self.array.sel(comp=c_comp)
+
+        vdims = ["angle", "mag"]
+        kwargs.setdefault("data_aspect", 1)
         if use_color:  # can be disabled at this point for 2d arrays
             vdims.append("color_comp")
             kwargs.setdefault("colorbar", True)
