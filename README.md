@@ -1,6 +1,6 @@
 # discretisedfield
 
-[Marijan Beg](https://github.com/marijanbeg)<sup>1,2</sup>, [Martin Lang](https://github.com/lang-m)<sup>2</sup>, [Samuel Holt](https://github.com/samjrholt)<sup>2,3</sup>, [Swapneel Amit Pathak](https://github.com/swapneelap)<sup>4</sup>, [Ryan A. Pepper](https://github.com/rpep)<sup>5</sup>, and [Hans Fangohr](https://github.com/fangohr)<sup>2,4,6</sup>
+[Marijan Beg](https://github.com/marijanbeg)<sup>1,2</sup>, [Martin Lang](https://github.com/lang-m)<sup>2</sup>, [Samuel Holt](https://github.com/samjrholt)<sup>2,3</sup>, [Swapneel Amit Pathak](https://github.com/swapneelap)<sup>2,4</sup>, [Ryan A. Pepper](https://github.com/rpep)<sup>5</sup>, and [Hans Fangohr](https://github.com/fangohr)<sup>2,4,6</sup>
 
 <sup>1</sup> *Department of Earth Science and Engineering, Imperial College London, London SW7 2AZ, UK*  
 <sup>2</sup> *Faculty of Engineering and Physical Sciences, University of Southampton, Southampton SO17 1BJ, UK*  
@@ -25,7 +25,7 @@
 | Platforms | [![Platforms](https://anaconda.org/conda-forge/discretisedfield/badges/platforms.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | Downloads | [![Downloads](https://anaconda.org/conda-forge/discretisedfield/badges/downloads.svg)](https://anaconda.org/conda-forge/discretisedfield) |
 | License | [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
-| DOI | [![DOI](https://zenodo.org/badge/67028400.svg)](https://zenodo.org/badge/latestdoi/67028400) |
+| DOI | [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3539461.svg)](https://doi.org/10.5281/zenodo.3539461) |
 
 ## About
 

@@ -1,6 +1,5 @@
 [build-system]
-# 40.8.0 is the first version compatible with PEP 517
-requires = ["setuptools>=40.8.0", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -68,8 +67,17 @@ repository = "https://github.com/ubermag/discretisedfield"
 [project.scripts]
 ovf2vtk = "discretisedfield.ovf2vtk:main"
 
+[tool.black]
+experimental-string-processing = true
+
+[tool.coverage.run]
+omit = ["discretisedfield/tests/*"]
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true  # ignores files listed in .gitignore
+
 # to define additional information we use a custom table
-# we need to own the entry for tool.NAME on PyPI
 # see: https://www.python.org/dev/peps/pep-0518/#tool-table
 [tool.ubermag]
 doi = "10.5281/zenodo.3539461"
@@ -91,13 +99,3 @@ about = """
 - manipulation of different file types (OVF, VTK, and HDF5).
 
 """
-
-[tool.coverage.run]
-omit = ["discretisedfield/tests/*"]
-
-[tool.isort]
-profile = "black"
-skip_gitignore = true  # ignores files listed in .gitignore
-
-[tool.black]
-experimental-string-processing = true
