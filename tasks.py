@@ -25,24 +25,29 @@ def unittest(c):
 @task
 def coverage(c):
     """Run unittests with coverage."""
-    result = pytest.main(["-v", "--cov", "discretisedfield",
-                          "--cov-report", "xml"])
+    result = pytest.main(["-v", "--cov", "discretisedfield", "--cov-report", "xml"])
     raise Exit(code=result)
 
 
 @task
 def docs(c):
     """Run doctests."""
-    result = pytest.main(["-v", "--doctest-modules", "--ignore",
-                          "discretisedfield/tests", "discretisedfield"])
+    result = pytest.main(
+        [
+            "-v",
+            "--doctest-modules",
+            "--ignore",
+            "discretisedfield/tests",
+            "discretisedfield",
+        ]
+    )
     raise Exit(code=result)
 
 
 @task
 def ipynb(c):
     """Test notebooks."""
-    result = pytest.main(["-v", "--nbval", "--sanitize-with", "nbval.cfg",
-                          "docs"])
+    result = pytest.main(["-v", "--nbval", "--sanitize-with", "nbval.cfg", "docs"])
     raise Exit(code=result)
 
 
