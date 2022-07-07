@@ -12,4 +12,5 @@ from .util import (
     plot_line,
     raxesdict,
     rescale_xarray,
+    strip_extension,
 )

@@ -183,6 +183,11 @@ def fromvtk_legacy(filename):
     return field
 
 
+def strip_extension(filename):
+    """Strip the file extension from a file name (which can be a full path)."""
+    return "".join(filename.split(".")[:-1])
+
+
 def rescale_xarray(array, multiplier):
     """Rescale xarray dimensions."""
     if multiplier == 1:

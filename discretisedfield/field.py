@@ -1,4 +1,5 @@
 import collections
+import contextlib
 import functools
 import math
 import numbers
@@ -2722,7 +2723,9 @@ class Field:
 
         return self.__class__(self.mesh, dim=1, value=angle_array[..., np.newaxis])
 
-    def write(self, filename, representation="bin8", extend_scalar=False):
+    def write(
+        self, filename, representation="bin8", extend_scalar=False, save_subregions=True
+    ):
         """Write the field to OVF, HDF5, or VTK file.
 
         If the extension of ``filename`` is ``.vtk``, a VTK file is written
@@ -2817,7 +2820,9 @@ class Field:
             )
             raise ValueError(msg)
 
-    def _writeovf(self, filename, representation="bin8", extend_scalar=False):
+    def _writeovf(
+        self, filename, representation="bin8", extend_scalar=False, save_subregions=True
+    ):
         """Write the field to an OVF2.0 file.
 
         Data representation (``'bin4'``, ``'bin8'``, or ``'txt'``) is passed
@@ -2933,6 +2938,11 @@ class Field:
 
         bin_rep = {"bin4": ("<f", 1234567.0), "bin8": ("<d", 123456789012345.0)}
 
+        if save_subregions and self.mesh.subregions:
+            self.mesh.save_subregions(
+                f"{dfu.strip_extension(filename)}_subregions.json"
+            )
+
         with open(filename, "wb") as f:
             f.write(bheader)
 
@@ -3044,7 +3054,7 @@ class Field:
             cell_data.SetActiveScalars("field")
         return rgrid
 
-    def _writevtk(self, filename, representation="bin"):
+    def _writevtk(self, filename, representation="bin", save_subregions=True):
         """Write the field to a VTK file.
 
         The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
@@ -3101,11 +3111,16 @@ class Field:
             writer.SetFileTypeToBinary()
         # xml has no distinction between ascii and binary
 
+        if save_subregions and self.mesh.subregions:
+            self.mesh.save_subregions(
+                f"{dfu.strip_extension(filename)}_subregions.json"
+            )
+
         writer.SetFileName(filename)
         writer.SetInputData(self.to_vtk())
         writer.Write()
 
-    def _writehdf5(self, filename):
+    def _writehdf5(self, filename, save_subregions=True):
         """Write the field to an HDF5 file.
 
         Parameters
@@ -3140,6 +3155,11 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
 
         """
+        if save_subregions and self.mesh.subregions:
+            self.mesh.save_subregions(
+                f"{dfu.strip_extension(filename)}_subregions.json"
+            )
+
         with h5py.File(filename, "w") as f:
             # Set up the file structure
             gfield = f.create_group("field")
@@ -3322,6 +3342,9 @@ class Field:
                     array.drop(array.columns[-1], axis=1, inplace=True)
                 array = array.to_numpy()
 
+        with contextlib.suppress(FileNotFoundError):
+            mesh.load_subregions(f"{dfu.strip_expension(filename)}_subregions.json")
+
         r_tuple = (*reversed(mesh.n), header["valuedim"])
         t_tuple = (2, 1, 0, 3)
 
@@ -3448,6 +3471,9 @@ class Field:
         value = value.transpose((2, 1, 0, 3))
 
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        with contextlib.suppress(FileNotFoundError):
+            mesh.load_subregions(f"{dfu.strip_expension(filename)}_subregions.json")
+
         return cls(mesh, dim=dim, value=value, components=components)
 
     @classmethod
@@ -3497,9 +3523,12 @@ class Field:
             dim = np.array(f["field/dim"]).tolist()
             array = f["field/array"]
 
-            # Create field.
-            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-            return cls(mesh, dim=dim, value=array[:])
+        # Create field.
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
+        with contextlib.suppress(FileNotFoundError):
+            mesh.load_subregions(f"{dfu.strip_expension(filename)}_subregions.json")
+
+        return cls(mesh, dim=dim, value=array[:])
 
     @property
     def mpl(self):

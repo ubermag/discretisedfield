@@ -1,5 +1,6 @@
 import collections
 import functools
+import json
 import numbers
 
 import numpy as np
@@ -615,3 +616,23 @@ class Region:
     @property
     def k3d(self):
         return dfp.K3dRegion(self)
+
+    def to_dict(self):
+        """Convert region object to dict with items p1, p2, unit, tolerance_factor."""
+        return {
+            "p1": self.p1,
+            "p2": self.p2,
+            "unit": self.unit,
+            "tolerance_factor": self.tolerance_factor,
+        }
+
+    class _JSONEncoder(json.JSONEncoder):
+        def default(self, o):
+            if isinstance(o, Region):
+                return o.to_dict()
+            elif isinstance(o, np.int64):
+                return int(o)
+            elif isinstance(o, np.float64):
+                return float(o)
+            else:
+                super().default(o)
