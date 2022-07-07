@@ -16,7 +16,7 @@ import ubermagutil.units as uu
 import discretisedfield as df
 import discretisedfield.util as dfu
 
-from . import html
+from . import html, io
 from .region import Region
 
 
@@ -1245,7 +1245,7 @@ class Mesh:
     def save_subregions(self, filename):
         """Save subregions to json file."""
         with pathlib.Path(filename).open(mode="wt", encoding="utf-8") as f:
-            json.dump(self.subregions, f, cls=Region._JSONEncoder)
+            json.dump(self.subregions, f, cls=io.RegionJSONEncoder)
 
     def load_subregions(self, filename):
         """Load subregions from json file."""

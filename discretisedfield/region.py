@@ -1,6 +1,5 @@
 import collections
 import functools
-import json
 import numbers
 
 import numpy as np
@@ -625,14 +624,3 @@ class Region:
             "unit": self.unit,
             "tolerance_factor": self.tolerance_factor,
         }
-
-    class _JSONEncoder(json.JSONEncoder):
-        def default(self, o):
-            if isinstance(o, Region):
-                return o.to_dict()
-            elif isinstance(o, np.int64):
-                return int(o)
-            elif isinstance(o, np.float64):
-                return float(o)
-            else:
-                super().default(o)

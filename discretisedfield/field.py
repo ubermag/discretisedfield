@@ -1,27 +1,19 @@
 import collections
-import contextlib
 import functools
-import math
 import numbers
-import re
-import struct
 import warnings
 
-import h5py
 import numpy as np
-import pandas as pd
 import ubermagutil.typesystem as ts
 import xarray as xr
 from vtkmodules.util import numpy_support as vns
 from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
-from vtkmodules.vtkIOLegacy import vtkRectilinearGridReader, vtkRectilinearGridWriter
-from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader, vtkXMLRectilinearGridWriter
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 
-from . import html
+from . import html, io
 from .mesh import Mesh
 
 # TODO: tutorials, line operations
@@ -2723,6 +2715,85 @@ class Field:
 
         return self.__class__(self.mesh, dim=1, value=angle_array[..., np.newaxis])
 
+    def to_vtk(self):
+        """Convert field to vtk rectilinear grid.
+
+        This method convers at `discretisedfield.Field` into a
+        `vtk.vtkRectilinearGrid`. The field data (``field.array``) is stored as
+        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Scalar fields (``dim=1``)
+        contain one VTK array called ``field``. Vector fields (``dim>1``)
+        contain one VTK array called ``field`` containing vector data and
+        scalar VTK arrays for each field component (called
+        ``<component-name>-component``).
+
+        Returns
+        -------
+        vtk.vtkRectilinearGrid
+
+            VTK representation of the field.
+
+        Raises
+        ------
+        AttributeError
+
+            If the field has ``dim>1`` and component labels are missing.
+
+        Examples
+        --------
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> f_vtk = f.to_vtk()
+        >>> print(f_vtk)
+        vtkRectilinearGrid (...)
+        ...
+        >>> f_vtk.GetNumberOfCells()
+        1000
+
+        """
+        if self.dim > 1 and self.components is None:
+            raise AttributeError(
+                "Field components must be assigned before converting to vtk."
+            )
+        rgrid = vtkRectilinearGrid()
+        rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
+
+        rgrid.SetXCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.x, float))
+        )
+        rgrid.SetYCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.y, float))
+        )
+        rgrid.SetZCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.z, float))
+        )
+
+        cell_data = rgrid.GetCellData()
+        field_norm = vns.numpy_to_vtk(
+            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1)
+        )
+        field_norm.SetName("norm")
+        cell_data.AddArray(field_norm)
+        if self.dim > 1:
+            # For some visualisation packages it is an advantage to have direct
+            # access to the individual field components, e.g. for colouring.
+            for comp in self.components:
+                component_array = vns.numpy_to_vtk(
+                    getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
+                )
+                component_array.SetName(f"{comp}-component")
+                cell_data.AddArray(component_array)
+        field_array = vns.numpy_to_vtk(
+            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim))
+        )
+        field_array.SetName("field")
+        cell_data.AddArray(field_array)
+
+        if self.dim == 3:
+            cell_data.SetActiveVectors("field")
+        elif self.dim == 1:
+            cell_data.SetActiveScalars("field")
+        return rgrid
+
     def write(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
@@ -2807,371 +2878,20 @@ class Field:
 
         """
         if filename.endswith((".omf", ".ovf", ".ohf")):
-            self._writeovf(
-                filename, representation=representation, extend_scalar=extend_scalar
+            io.field_to_ovf(
+                self,
+                filename,
+                representation=representation,
+                extend_scalar=extend_scalar,
             )
         elif filename.endswith((".hdf5", ".h5")):
-            self._writehdf5(filename)
+            io.field_to_hdf5(self, filename)
         elif filename.endswith(".vtk"):
-            self._writevtk(filename, representation=representation)
+            io.field_to_vtk(self, filename, representation=representation)
         else:
-            msg = (
+            raise ValueError(
                 f'Writing file with extension {filename.split(".")[-1]} not supported.'
             )
-            raise ValueError(msg)
-
-    def _writeovf(
-        self, filename, representation="bin8", extend_scalar=False, save_subregions=True
-    ):
-        """Write the field to an OVF2.0 file.
-
-        Data representation (``'bin4'``, ``'bin8'``, or ``'txt'``) is passed
-        using ``representation`` argument. If ``extend_scalar=True``, a scalar
-        field will be saved as a vector field. More precisely, if the value at
-        a cell is X, that cell will be saved as (X, 0, 0).
-
-        Parameters
-        ----------
-        filename : str
-
-            Name with an extension of the file written.
-
-        representation : str, optional
-
-            Representation; ``'bin4'``, ``'bin8'``, or ``'txt'``. Defaults to
-            ``'bin8'``.
-
-        extend_scalar : bool, optional
-
-            If ``True``, a scalar field will be saved as a vector field. More
-            precisely, if the value at a cell is 3, that cell will be saved as
-            (3, 0, 0). Defaults to ``False``.
-
-        Example
-        -------
-        1. Write field to the OVF file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10e-9, 5e-9, 3e-9)
-        >>> n = (10, 5, 3)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> value_fun = lambda point: (point[0], point[1], point[2])
-        >>> field = df.Field(mesh, dim=3, value=value_fun)
-        ...
-        >>> filename = 'mytestfile.ohf'
-        >>> field._writeovf(filename, representation='bin8')  # write the file
-        >>> os.path.isfile(filename)
-        True
-        >>> field_read = df.Field.fromfile(filename)  # read the file
-        >>> field_read == field
-        True
-        >>> os.remove(filename)  # delete the file
-
-        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
-
-        """
-        write_dim = 3 if extend_scalar and self.dim == 1 else self.dim
-        valueunits = " ".join([str(self.units) if self.units else "None"] * write_dim)
-        if write_dim == 1:
-            valuelabels = "field_x"
-        elif extend_scalar:
-            valuelabels = " ".join(["field_x"] * write_dim)
-        else:
-            valuelabels = " ".join(f"field_{c}" for c in self.components)
-
-        if representation == "bin4":
-            repr_string = "Binary 4"
-        elif representation == "bin8":
-            repr_string = "Binary 8"
-        elif representation == "txt":
-            repr_string = "Text"
-        else:
-            raise ValueError(f"Unknown {representation=}.")
-
-        bheader = "".join(
-            f"# {line}\n"
-            for line in [
-                "OOMMF OVF 2.0",
-                "",
-                "Segment count: 1",
-                "",
-                "Begin: Segment",
-                "Begin: Header",
-                "",
-                "Title: Field",
-                "Desc: File generated by Field class",
-                f'meshunit: {self.mesh.attributes["unit"]}',
-                "meshtype: rectangular",
-                f"xbase: {self.mesh.region.pmin[0] + self.mesh.cell[0]/2}",
-                f"ybase: {self.mesh.region.pmin[1] + self.mesh.cell[1]/2}",
-                f"zbase: {self.mesh.region.pmin[2] + self.mesh.cell[2]/2}",
-                f"xnodes: {self.mesh.n[0]}",
-                f"ynodes: {self.mesh.n[1]}",
-                f"znodes: {self.mesh.n[2]}",
-                f"xstepsize: {self.mesh.cell[0]}",
-                f"ystepsize: {self.mesh.cell[1]}",
-                f"zstepsize: {self.mesh.cell[2]}",
-                f"xmin: {self.mesh.region.pmin[0]}",
-                f"ymin: {self.mesh.region.pmin[1]}",
-                f"zmin: {self.mesh.region.pmin[2]}",
-                f"xmax: {self.mesh.region.pmax[0]}",
-                f"ymax: {self.mesh.region.pmax[1]}",
-                f"zmax: {self.mesh.region.pmax[2]}",
-                f"valuedim: {write_dim}",
-                f"valuelabels: {valuelabels}",
-                f"valueunits: {valueunits}",
-                "",
-                "End: Header",
-                "",
-                f"Begin: Data {repr_string}",
-            ]
-        ).encode("utf-8")
-
-        bfooter = "".join(
-            f"# {line}\n" for line in [f"End: Data {repr_string}", "End: Segment"]
-        ).encode("utf-8")
-
-        reordered = self.array.transpose((2, 1, 0, 3))  # ovf ordering
-
-        bin_rep = {"bin4": ("<f", 1234567.0), "bin8": ("<d", 123456789012345.0)}
-
-        if save_subregions and self.mesh.subregions:
-            self.mesh.save_subregions(
-                f"{dfu.strip_extension(filename)}_subregions.json"
-            )
-
-        with open(filename, "wb") as f:
-            f.write(bheader)
-
-            if representation in bin_rep:
-                # Add the binary checksum.
-                f.write(struct.pack(*bin_rep[representation]))
-
-                if extend_scalar:
-                    # remove scalar vector dimension
-                    reordered = reordered.reshape(list(reversed(self.mesh.n)))
-                    reordered = np.stack(
-                        (reordered, np.zeros_like(reordered), np.zeros_like(reordered)),
-                        axis=-1,
-                    )
-
-                # ndarray.tofile seems to be ~20% slower
-                f.write(
-                    np.asarray(reordered, dtype=bin_rep[representation][0]).tobytes()
-                )
-                f.write(b"\n")
-            else:
-                data = pd.DataFrame(reordered.reshape((-1, self.dim)))
-                data.insert(loc=0, column="leading_space", value="")
-
-                if extend_scalar:
-                    data.insert(loc=2, column="y", value=0.0)
-                    data.insert(loc=3, column="z", value=0.0)
-
-                data.to_csv(f, sep=" ", header=False, index=False)
-
-            f.write(bfooter)
-
-    def to_vtk(self):
-        """Convert field to vtk rectilinear grid.
-
-        This method convers at `discretisedfield.Field` into a
-        `vtk.vtkRectilinearGrid`. The field data (``field.array``) is stored as
-        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Scalar fields (``dim=1``)
-        contain one VTK array called ``field``. Vector fields (``dim>1``)
-        contain one VTK array called ``field`` containing vector data and
-        scalar VTK arrays for each field component (called
-        ``<component-name>-component``).
-
-        Returns
-        -------
-        vtk.vtkRectilinearGrid
-
-            VTK representation of the field.
-
-        Raises
-        ------
-        AttributeError
-
-            If the field has ``dim>1`` and component labels are missing.
-
-        Examples
-        --------
-        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
-        >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
-        >>> f_vtk = f.to_vtk()
-        >>> print(f_vtk)
-        vtkRectilinearGrid (...)
-        ...
-        >>> f_vtk.GetNumberOfCells()
-        1000
-
-        """
-        if self.dim > 1 and self.components is None:
-            raise AttributeError(
-                "Field components must be assigned before converting to vtk."
-            )
-        rgrid = vtkRectilinearGrid()
-        rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
-
-        rgrid.SetXCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.x, float))
-        )
-        rgrid.SetYCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.y, float))
-        )
-        rgrid.SetZCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.z, float))
-        )
-
-        cell_data = rgrid.GetCellData()
-        field_norm = vns.numpy_to_vtk(
-            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1)
-        )
-        field_norm.SetName("norm")
-        cell_data.AddArray(field_norm)
-        if self.dim > 1:
-            # For some visualisation packages it is an advantage to have direct
-            # access to the individual field components, e.g. for colouring.
-            for comp in self.components:
-                component_array = vns.numpy_to_vtk(
-                    getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
-                )
-                component_array.SetName(f"{comp}-component")
-                cell_data.AddArray(component_array)
-        field_array = vns.numpy_to_vtk(
-            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim))
-        )
-        field_array.SetName("field")
-        cell_data.AddArray(field_array)
-
-        if self.dim == 3:
-            cell_data.SetActiveVectors("field")
-        elif self.dim == 1:
-            cell_data.SetActiveScalars("field")
-        return rgrid
-
-    def _writevtk(self, filename, representation="bin", save_subregions=True):
-        """Write the field to a VTK file.
-
-        The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
-        (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
-        (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
-        three components to enable easy colouring of vectors in some
-        visualisation packages. The data is stored as ``CELL_DATA``.
-
-        The saved VTK file can be opened with `Paraview
-        <https://www.paraview.org/>`_ or `Mayavi
-        <https://docs.enthought.com/mayavi/mayavi/>`_. To show contour lines in
-        Paraview one has to first convert Cell Data to Point Data using a
-        filter.
-
-        Parameters
-        ----------
-        filename : str
-
-            File name with an extension.
-
-        Example
-        -------
-        1. Write field to a VTK file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10e-9, 5e-9, 3e-9)
-        >>> n = (10, 5, 3)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> value_fun = lambda point: (point[0], point[1], point[2])
-        >>> field = df.Field(mesh, dim=3, value=value_fun)
-        ...
-        >>> filename = 'mytestfile.vtk'
-        >>> field._writevtk(filename)  # write the file
-        >>> os.path.isfile(filename)
-        True
-        >>> os.remove(filename)  # delete the file
-
-        """
-        if representation == "xml":
-            writer = vtkXMLRectilinearGridWriter()
-        elif representation in ["bin", "bin8", "txt"]:
-            # Allow bin8 for convenience as this is the default for omf.
-            # This does not affect the actual datatype used in vtk files.
-            writer = vtkRectilinearGridWriter()
-        else:
-            raise ValueError(f"Unknown {representation=}.")
-
-        if representation == "txt":
-            writer.SetFileTypeToASCII()
-        elif representation in ["bin", "bin8"]:
-            writer.SetFileTypeToBinary()
-        # xml has no distinction between ascii and binary
-
-        if save_subregions and self.mesh.subregions:
-            self.mesh.save_subregions(
-                f"{dfu.strip_extension(filename)}_subregions.json"
-            )
-
-        writer.SetFileName(filename)
-        writer.SetInputData(self.to_vtk())
-        writer.Write()
-
-    def _writehdf5(self, filename, save_subregions=True):
-        """Write the field to an HDF5 file.
-
-        Parameters
-        ----------
-        filename : str
-
-            Name with an extension of the file written.
-
-        Example
-        -------
-        1. Write field to an HDF5 file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (10e-9, 5e-9, 3e-9)
-        >>> n = (10, 5, 3)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> value_fun = lambda point: (point[0], point[1], point[2])
-        >>> field = df.Field(mesh, dim=3, value=value_fun)
-        ...
-        >>> filename = 'mytestfile.h5'
-        >>> field._writehdf5(filename)  # write the file
-        >>> os.path.isfile(filename)
-        True
-        >>> field_read = df.Field.fromfile(filename)  # read the file
-        >>> field_read == field
-        True
-        >>> os.remove(filename)  # delete the file
-
-        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
-
-        """
-        if save_subregions and self.mesh.subregions:
-            self.mesh.save_subregions(
-                f"{dfu.strip_extension(filename)}_subregions.json"
-            )
-
-        with h5py.File(filename, "w") as f:
-            # Set up the file structure
-            gfield = f.create_group("field")
-            gmesh = gfield.create_group("mesh")
-            gregion = gmesh.create_group("region")
-
-            # Save everything as datasets
-            gregion.create_dataset("p1", data=self.mesh.region.p1)
-            gregion.create_dataset("p2", data=self.mesh.region.p2)
-            gmesh.create_dataset("n", dtype="i4", data=self.mesh.n)
-            gfield.create_dataset("dim", dtype="i4", data=self.dim)
-            gfield.create_dataset("array", data=self.array)
 
     @classmethod
     def fromfile(cls, filename):
@@ -3232,303 +2952,15 @@ class Field:
 
         """
         if filename.endswith((".omf", ".ovf", ".ohf", ".oef")):
-            return cls._fromovf(filename)
+            return io.field_from_ovf(filename)
         elif filename.endswith(".vtk"):
-            return cls._fromvtk(filename)
+            return io.field_from_vtk(filename)
         elif filename.endswith((".hdf5", ".h5")):
-            return cls._fromhdf5(filename)
+            return io.field_from_hdf5(filename)
         else:
-            msg = (
+            raise ValueError(
                 f'Reading file with extension {filename.split(".")[-1]} not supported.'
             )
-            raise ValueError(msg)
-
-    @classmethod
-    def _fromovf(cls, filename):
-        """Read the field from an OVF file.
-
-        Data representation (``txt``, ``bin4``, or ``bin8``) as well as the OVF
-        version (OVF1.0 or OVF2.0) are extracted from the file itself.
-
-        This is a ``classmethod`` and should be called as, for instance,
-        ``discretisedfield.Field._fromovf('myfile.omf')``.
-
-        Parameters
-        ----------
-        filename : str
-
-            Name of the file to be read.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Field read from the file.
-
-        Example
-        -------
-        1. Read a field from the OVF file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> dirname = os.path.join(os.path.dirname(__file__),
-        ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'oommf-ovf2-bin8.omf')
-        >>> field = df.Field._fromovf(filename)
-        >>> field
-        Field(...)
-
-        .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
-
-        """
-        header = {}
-        with open(filename, "rb") as f:
-            # >>> READ HEADER <<<
-            ovf_v2 = b"2.0" in next(f)
-            for line in f:
-                line = line.decode("utf-8")
-                if line.startswith("# Begin: Data"):
-                    mode = line.split()[3]
-                    if mode == "Binary":
-                        nbytes = int(line.split()[-1])
-                    break
-                information = line[1:].split(":")  # remove leading `#`
-                if len(information) > 1:
-                    key = information[0].strip()
-                    header[key] = information[1].strip()
-
-            # valuedim is fixed to 3 and not in the header for OVF 1.0
-            header["valuedim"] = int(header["valuedim"]) if ovf_v2 else 3
-
-            # >>> MESH <<<
-            p1 = (float(header[f"{key}min"]) for key in "xyz")
-            p2 = (float(header[f"{key}max"]) for key in "xyz")
-            cell = (float(header[f"{key}stepsize"]) for key in "xyz")
-            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-
-            nodes = math.prod(int(header[f"{key}nodes"]) for key in "xyz")
-
-            # >>> READ DATA <<<
-            if mode == "Binary":
-                # OVF2 uses little-endian and OVF1 uses big-endian
-                format = f'{"<" if ovf_v2 else ">"}{"d" if nbytes == 8 else "f"}'
-
-                test_value = struct.unpack(format, f.read(nbytes))[0]
-                check = {4: 1234567.0, 8: 123456789012345.0}
-                if nbytes not in (4, 8) or test_value != check[nbytes]:
-                    raise ValueError(  # pragma: no cover
-                        f"Cannot read file {filename}. The file seems to be in"
-                        f" binary format ({nbytes} bytes) but the check value"
-                        f" is not correct: Expected {check[nbytes]}, got"
-                        f" {test_value}."
-                    )
-
-                array = np.fromfile(
-                    f, count=int(nodes * header["valuedim"]), dtype=format
-                ).reshape((-1, header["valuedim"]))
-            else:
-                array = pd.read_csv(
-                    f,
-                    sep=" ",
-                    header=None,
-                    dtype=np.float64,
-                    skipinitialspace=True,
-                    nrows=nodes,
-                    comment="#",
-                )
-                if len(array.columns) == header["valuedim"] + 1:
-                    # mumax3 writes trailing whitespace -> one extra column
-                    array.drop(array.columns[-1], axis=1, inplace=True)
-                array = array.to_numpy()
-
-        with contextlib.suppress(FileNotFoundError):
-            mesh.load_subregions(f"{dfu.strip_expension(filename)}_subregions.json")
-
-        r_tuple = (*reversed(mesh.n), header["valuedim"])
-        t_tuple = (2, 1, 0, 3)
-
-        try:
-            # multi-word components are surrounded by {}
-            components = re.findall(r"(\w+|{[\w ]+})", header["valuelabels"])
-        except KeyError:
-            components = None
-        else:
-
-            def convert(comp):
-                # Magnetization_x -> x
-                # {Total field_x} -> x
-                # {Total energy density} -> Total_energy_density
-                comp = comp.split("_")[1] if "_" in comp else comp
-                comp = comp.replace("{", "").replace("}", "")
-                return "_".join(comp.split())
-
-            components = [convert(c) for c in components]
-            if len(components) != len(set(components)):  # components are not unique
-                components = None
-
-        try:
-            unit_list = header["valueunits"].split()
-        except KeyError:
-            units = None
-        else:
-            if len(unit_list) == 0:
-                units = None  # no unit in the file
-            elif len(set(unit_list)) != 1:
-                warnings.warn(
-                    f"File {filename} contains multiple units for the individual"
-                    f" components: {unit_list=}. This is not supported by"
-                    " discretisedfield. Units are set to None."
-                )
-                units = None
-            else:
-                units = unit_list[0]
-
-        return cls(
-            mesh,
-            dim=header["valuedim"],
-            value=array.reshape(r_tuple).transpose(t_tuple),
-            components=components,
-            units=units,
-        )
-
-    @classmethod
-    def _fromvtk(cls, filename):
-        """Read the field from a VTK file.
-
-        This method reads the field from a VTK file defined on RECTILINEAR GRID
-        written by ``discretisedfield._writevtk``. It expects the data do be
-        specified as cell data and one (vector) field with the name ``field``.
-        A vector field should also contain data for the individual components.
-        The individual component names are used as ``components`` for the new
-        field. They must appear in the form ``<componentname>-component``.
-
-        Parameters
-        ----------
-        filename : str
-
-            Name of the file to be read.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Field read from the file.
-
-        Example
-        -------
-        1. Read a field from the VTK file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> dirname = os.path.join(os.path.dirname(__file__),
-        ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'vtk-file.vtk')
-        >>> field = df.Field._fromvtk(filename)
-        >>> field
-        Field(...)
-
-        .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
-
-        """
-        with open(filename, "rb") as f:
-            xml = "xml" in f.readline().decode("utf8")
-        if xml:
-            reader = vtkXMLRectilinearGridReader()
-        else:
-            reader = vtkRectilinearGridReader()
-            reader.ReadAllVectorsOn()
-            reader.ReadAllScalarsOn()
-        reader.SetFileName(filename)
-        reader.Update()
-
-        output = reader.GetOutput()
-        p1 = output.GetBounds()[::2]
-        p2 = output.GetBounds()[1::2]
-        n = [i - 1 for i in output.GetDimensions()]
-
-        cell_data = output.GetCellData()
-
-        if cell_data.GetNumberOfArrays() == 0:
-            # Old writing routine did write to points instead of cells.
-            return dfu.fromvtk_legacy(filename)
-
-        components = []
-        for i in range(cell_data.GetNumberOfArrays()):
-            name = cell_data.GetArrayName(i)
-            if name == "field":
-                field_idx = i
-            elif name.endswith("-component"):
-                components.append(name[: -len("-component")])
-        array = cell_data.GetArray(field_idx)
-        dim = array.GetNumberOfComponents()
-
-        if len(components) != dim:
-            components = None
-
-        value = vns.vtk_to_numpy(array).reshape(*reversed(n), dim)
-        value = value.transpose((2, 1, 0, 3))
-
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        with contextlib.suppress(FileNotFoundError):
-            mesh.load_subregions(f"{dfu.strip_expension(filename)}_subregions.json")
-
-        return cls(mesh, dim=dim, value=value, components=components)
-
-    @classmethod
-    def _fromhdf5(cls, filename):
-        """Read the field from an HDF5 file.
-
-        This method reads the field from an HDF5 file defined on written by
-        ``discretisedfield._writevtk``.
-
-        This is a ``classmethod`` and should be called as, for instance,
-        ``discretisedfield.Field._fromhdf5('myfile.h5')``.
-
-        Parameters
-        ----------
-        filename : str
-
-            Name of the file to be read.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Field read from the file.
-
-        Example
-        -------
-        1. Read a field from the HDF5 file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> dirname = os.path.join(os.path.dirname(__file__),
-        ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
-        >>> field = df.Field._fromhdf5(filename)
-        >>> field
-        Field(...)
-
-        .. seealso:: :py:func:`~discretisedfield.Field._writehdf5`
-
-        """
-        with h5py.File(filename, "r") as f:
-            # Read data from the file.
-            p1 = f["field/mesh/region/p1"]
-            p2 = f["field/mesh/region/p2"]
-            n = np.array(f["field/mesh/n"]).tolist()
-            dim = np.array(f["field/dim"]).tolist()
-            array = f["field/array"]
-
-        # Create field.
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-        with contextlib.suppress(FileNotFoundError):
-            mesh.load_subregions(f"{dfu.strip_expension(filename)}_subregions.json")
-
-        return cls(mesh, dim=dim, value=array[:])
 
     @property
     def mpl(self):
