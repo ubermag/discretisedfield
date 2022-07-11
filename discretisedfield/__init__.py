@@ -12,6 +12,7 @@ from .line import Line
 from .mesh import Mesh
 from .operators import DValue, dS, dV, dx, dy, dz, integral
 from .region import Region
+from . import tools
 
 # Enable default plotting style.
 dirname = os.path.abspath(os.path.dirname(__file__))
