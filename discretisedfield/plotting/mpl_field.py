@@ -2,9 +2,9 @@
 import warnings
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import ubermagutil.units as uu
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import discretisedfield as df
 import discretisedfield.util as dfu
