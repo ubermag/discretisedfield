@@ -2,6 +2,7 @@
 import warnings
 
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 import ubermagutil.units as uu
 
@@ -302,7 +303,9 @@ class MplField(Mpl):
         cp = ax.imshow(np.transpose(values), origin="lower", extent=extent, **kwargs)
 
         if colorbar:
-            cbar = plt.colorbar(cp, ax=ax)
+            divider = make_axes_locatable(ax)
+            cax = divider.append_axes("right", size="5%", pad=0.05)
+            cbar = plt.colorbar(cp, cax=cax)
             if colorbar_label is not None:
                 cbar.ax.set_ylabel(colorbar_label)
 
