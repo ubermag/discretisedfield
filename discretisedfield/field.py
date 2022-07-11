@@ -2715,85 +2715,6 @@ class Field:
 
         return self.__class__(self.mesh, dim=1, value=angle_array[..., np.newaxis])
 
-    def to_vtk(self):
-        """Convert field to vtk rectilinear grid.
-
-        This method convers at `discretisedfield.Field` into a
-        `vtk.vtkRectilinearGrid`. The field data (``field.array``) is stored as
-        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Scalar fields (``dim=1``)
-        contain one VTK array called ``field``. Vector fields (``dim>1``)
-        contain one VTK array called ``field`` containing vector data and
-        scalar VTK arrays for each field component (called
-        ``<component-name>-component``).
-
-        Returns
-        -------
-        vtk.vtkRectilinearGrid
-
-            VTK representation of the field.
-
-        Raises
-        ------
-        AttributeError
-
-            If the field has ``dim>1`` and component labels are missing.
-
-        Examples
-        --------
-        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
-        >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
-        >>> f_vtk = f.to_vtk()
-        >>> print(f_vtk)
-        vtkRectilinearGrid (...)
-        ...
-        >>> f_vtk.GetNumberOfCells()
-        1000
-
-        """
-        if self.dim > 1 and self.components is None:
-            raise AttributeError(
-                "Field components must be assigned before converting to vtk."
-            )
-        rgrid = vtkRectilinearGrid()
-        rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
-
-        rgrid.SetXCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.x, float))
-        )
-        rgrid.SetYCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.y, float))
-        )
-        rgrid.SetZCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.z, float))
-        )
-
-        cell_data = rgrid.GetCellData()
-        field_norm = vns.numpy_to_vtk(
-            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1)
-        )
-        field_norm.SetName("norm")
-        cell_data.AddArray(field_norm)
-        if self.dim > 1:
-            # For some visualisation packages it is an advantage to have direct
-            # access to the individual field components, e.g. for colouring.
-            for comp in self.components:
-                component_array = vns.numpy_to_vtk(
-                    getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
-                )
-                component_array.SetName(f"{comp}-component")
-                cell_data.AddArray(component_array)
-        field_array = vns.numpy_to_vtk(
-            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim))
-        )
-        field_array.SetName("field")
-        cell_data.AddArray(field_array)
-
-        if self.dim == 3:
-            cell_data.SetActiveVectors("field")
-        elif self.dim == 1:
-            cell_data.SetActiveScalars("field")
-        return rgrid
-
     def write(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
@@ -2892,6 +2813,85 @@ class Field:
             raise ValueError(
                 f'Writing file with extension {filename.split(".")[-1]} not supported.'
             )
+
+    def to_vtk(self):
+        """Convert field to vtk rectilinear grid.
+
+        This method convers at `discretisedfield.Field` into a
+        `vtk.vtkRectilinearGrid`. The field data (``field.array``) is stored as
+        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Scalar fields (``dim=1``)
+        contain one VTK array called ``field``. Vector fields (``dim>1``)
+        contain one VTK array called ``field`` containing vector data and
+        scalar VTK arrays for each field component (called
+        ``<component-name>-component``).
+
+        Returns
+        -------
+        vtk.vtkRectilinearGrid
+
+            VTK representation of the field.
+
+        Raises
+        ------
+        AttributeError
+
+            If the field has ``dim>1`` and component labels are missing.
+
+        Examples
+        --------
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
+        >>> f = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> f_vtk = f.to_vtk()
+        >>> print(f_vtk)
+        vtkRectilinearGrid (...)
+        ...
+        >>> f_vtk.GetNumberOfCells()
+        1000
+
+        """
+        if self.dim > 1 and self.components is None:
+            raise AttributeError(
+                "Field components must be assigned before converting to vtk."
+            )
+        rgrid = vtkRectilinearGrid()
+        rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
+
+        rgrid.SetXCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.x, float))
+        )
+        rgrid.SetYCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.y, float))
+        )
+        rgrid.SetZCoordinates(
+            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.z, float))
+        )
+
+        cell_data = rgrid.GetCellData()
+        field_norm = vns.numpy_to_vtk(
+            self.norm.array.transpose((2, 1, 0, 3)).reshape(-1)
+        )
+        field_norm.SetName("norm")
+        cell_data.AddArray(field_norm)
+        if self.dim > 1:
+            # For some visualisation packages it is an advantage to have direct
+            # access to the individual field components, e.g. for colouring.
+            for comp in self.components:
+                component_array = vns.numpy_to_vtk(
+                    getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
+                )
+                component_array.SetName(f"{comp}-component")
+                cell_data.AddArray(component_array)
+        field_array = vns.numpy_to_vtk(
+            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim))
+        )
+        field_array.SetName("field")
+        cell_data.AddArray(field_array)
+
+        if self.dim == 3:
+            cell_data.SetActiveVectors("field")
+        elif self.dim == 1:
+            cell_data.SetActiveScalars("field")
+        return rgrid
 
     @classmethod
     def fromfile(cls, filename):
