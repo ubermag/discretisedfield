@@ -32,7 +32,7 @@ def field_to_hdf5(field, filename, save_subregions=True):
     >>> field = df.Field(mesh, dim=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.h5'
-    >>> field._writehdf5(filename)  # write the file
+    >>> field.write(filename)  # write the file
     >>> os.path.isfile(filename)
     True
     >>> field_read = df.Field.fromfile(filename)  # read the file
@@ -40,7 +40,10 @@ def field_to_hdf5(field, filename, save_subregions=True):
     True
     >>> os.remove(filename)  # delete the file
 
-    .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
+    See also
+    --------
+    ~discretisedfield.Field.write
+    field_from_hdf5
 
     """
     if save_subregions and field.mesh.subregions:
@@ -64,10 +67,7 @@ def field_from_hdf5(filename):
     """Read the field from an HDF5 file.
 
     This method reads the field from an HDF5 file defined on written by
-    ``discretisedfield._writevtk``.
-
-    This is a ``classmethod`` and should be called as, for instance,
-    ``discretisedfield.Field._fromhdf5('myfile.h5')``.
+    ``discretisedfield.io.field_to_hdf5``.
 
     Parameters
     ----------
@@ -91,11 +91,14 @@ def field_from_hdf5(filename):
     >>> dirname = os.path.join(os.path.dirname(__file__),
     ...                        'tests', 'test_sample')
     >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
-    >>> field = df.Field._fromhdf5(filename)
+    >>> field = df.Field.fromfile(filename)
     >>> field
     Field(...)
 
-    .. seealso:: :py:func:`~discretisedfield.Field._writehdf5`
+    See also
+    --------
+    ~discretisedfield.Field.fromfile
+    field_to_hdf5
 
     """
     with h5py.File(filename, "r") as f:

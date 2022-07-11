@@ -54,7 +54,7 @@ def field_to_ovf(
     >>> field = df.Field(mesh, dim=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.ohf'
-    >>> field._writeovf(filename, representation='bin8')  # write the file
+    >>> field.write(filename, representation='bin8')  # write the file
     >>> os.path.isfile(filename)
     True
     >>> field_read = df.Field.fromfile(filename)  # read the file
@@ -62,7 +62,10 @@ def field_to_ovf(
     True
     >>> os.remove(filename)  # delete the file
 
-    .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
+    See also
+    --------
+    ~discretisedfield.Field.write
+    field_from_ovf
 
     """
     write_dim = 3 if extend_scalar and field.dim == 1 else field.dim
@@ -168,10 +171,7 @@ def field_from_ovf(filename):
     """Read the field from an OVF file.
 
     Data representation (``txt``, ``bin4``, or ``bin8``) as well as the OVF
-    version (OVF1.0 or OVF2.0) are extracted from the file itfield.
-
-    This is a ``classmethod`` and should be called as, for instance,
-    ``discretisedfield.Field._fromovf('myfile.omf')``.
+    version (OVF1.0 or OVF2.0) are extracted from the file itself.
 
     Parameters
     ----------
@@ -195,11 +195,14 @@ def field_from_ovf(filename):
     >>> dirname = os.path.join(os.path.dirname(__file__),
     ...                        'tests', 'test_sample')
     >>> filename = os.path.join(dirname, 'oommf-ovf2-bin8.omf')
-    >>> field = df.Field._fromovf(filename)
+    >>> field = df.Field.fromfile(filename)
     >>> field
     Field(...)
 
-    .. seealso:: :py:func:`~discretisedfield.Field._writeovf`
+    See also
+    --------
+    ~discretisedfield.Field.fromfile
+    field_to_ovf
 
     """
     header = {}

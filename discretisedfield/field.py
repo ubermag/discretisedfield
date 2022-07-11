@@ -2721,17 +2721,17 @@ class Field:
         """Write the field to OVF, HDF5, or VTK file.
 
         If the extension of ``filename`` is ``.vtk``, a VTK file is written
-        (:py:func:`~discretisedfield.Field._writevtk`).
+        (:py:func:`~discretisedfield.io.field_to_evtk`).
 
         For ``.ovf``, ``.omf``, or ``.ohf`` extensions, the field is saved to
-        OVF file (:py:func:`~discretisedfield.Field._writeovf`). In that case,
+        OVF file (:py:func:`~discretisedfield.io.field_to_ovf`). In that case,
         the representation of data (``'bin4'``, ``'bin8'``, or ``'txt'``) is
         passed as ``representation`` and if ``extend_scalar=True``, a scalar
         field will be saved as a vector field. More precisely, if the value at
         a cell is X, that cell will be saved as (X, 0, 0).
 
         Finally, if the extension of ``filename`` is ``.hdf5``, HDF5 file will
-        be written (:py:func:`~discretisedfield.Field._writehdf5`).
+        be written (:py:func:`~discretisedfield.io.field_to_hdf5`).
 
         Parameters
         ----------
@@ -2795,7 +2795,12 @@ class Field:
         True
         >>> os.remove(filename)  # delete the file
 
-        .. seealso:: :py:func:`~discretisedfield.Field.fromfile`
+        See also
+        --------
+        ~discretisedfield.Field.fromfile
+        ~discretisedfield.io.field_to_ovf
+        ~discretisedfield.io.field_to_vtk
+        ~discretisedfield.io.field_to_hdf5
 
         """
         if filename.endswith((".omf", ".ovf", ".ohf")):
@@ -2902,8 +2907,8 @@ class Field:
             - VTK (``.vtk``), or
             - HDF5 (``.hdf5`` or ``.h5``).
 
-        This is a ``classmethod`` and should be called as, for instance,
-        ``discretisedfield.Field.fromfile('myfile.omf')``.
+        This method automatically determines the file type based on the file name
+        extension.
 
         Parameters
         ----------
@@ -2945,10 +2950,12 @@ class Field:
         >>> field
         Field(...)
 
-        .. seealso:: :py:func:`~discretisedfield.Field._fromovf`
-        .. seealso:: :py:func:`~discretisedfield.Field._fromhdf5`
-        .. seealso:: :py:func:`~discretisedfield.Field._fromhdf5`
-        .. seealso:: :py:func:`~discretisedfield.Field.write`
+        See also
+        --------
+        ~discretisedfield.Field.write
+        ~discretisedfield.io.field_from_ovf
+        ~discretisedfield.io.field_from_vtk
+        ~discretisedfield.io.field_from_hdf5
 
         """
         if filename.endswith((".omf", ".ovf", ".ohf", ".oef")):

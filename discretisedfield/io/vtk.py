@@ -46,10 +46,15 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     >>> field = df.Field(mesh, dim=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.vtk'
-    >>> field._writevtk(filename)  # write the file
+    >>> field.write(filename)  # write the file
     >>> os.path.isfile(filename)
     True
     >>> os.remove(filename)  # delete the file
+
+    See also
+    --------
+    ~discretisedfield.Field.write
+    field_from_vtk
 
     """
     if representation == "xml":
@@ -79,11 +84,15 @@ def field_from_vtk(filename):
     """Read the field from a VTK file.
 
     This method reads the field from a VTK file defined on RECTILINEAR GRID
-    written by ``discretisedfield._writevtk``. It expects the data do be
+    written by ``discretisedfield.io.field_to_vtk``. It expects the data do be
     specified as cell data and one (vector) field with the name ``field``.
     A vector field should also contain data for the individual components.
     The individual component names are used as ``components`` for the new
     field. They must appear in the form ``<componentname>-component``.
+
+    Older versions of discretisedfield did write the data as point data instead of cell
+    data. This function can load new and old files and automatically extracts the
+    correct data without additional user input.
 
     Parameters
     ----------
@@ -107,11 +116,14 @@ def field_from_vtk(filename):
     >>> dirname = os.path.join(os.path.dirname(__file__),
     ...                        'tests', 'test_sample')
     >>> filename = os.path.join(dirname, 'vtk-file.vtk')
-    >>> field = df.Field._fromvtk(filename)
+    >>> field = df.Field.fromfile(filename)
     >>> field
     Field(...)
 
-    .. seealso:: :py:func:`~discretisedfield.Field._writevtk`
+    See also
+    --------
+    ~discretisedfield.Field.fromfile
+    field_to_vtk
 
     """
     with open(filename, "rb") as f:
