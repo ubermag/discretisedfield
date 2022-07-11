@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pkg_resources
 import pytest
 
+from . import tools
 from .field import Field
 from .field_rotator import FieldRotator
 from .interact import interact
@@ -12,7 +13,6 @@ from .line import Line
 from .mesh import Mesh
 from .operators import DValue, dS, dV, dx, dy, dz, integral
 from .region import Region
-from . import tools
 
 # Enable default plotting style.
 dirname = os.path.abspath(os.path.dirname(__file__))
