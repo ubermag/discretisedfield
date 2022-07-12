@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pkg_resources
 import pytest
 
+from . import tools
 from .field import Field
 from .field_rotator import FieldRotator
 from .interact import interact
