@@ -1728,7 +1728,7 @@ class TestField:
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
-                f._writeovf("fname.ovf", representation="bin5")
+                df.io.field_to_ovf(f, "fname.ovf", representation="bin5")
 
         # multiple different units (not supported by discretisedfield)
         f = df.Field(mesh, dim=3, value=(1, 1, 1), units="m s kg")
