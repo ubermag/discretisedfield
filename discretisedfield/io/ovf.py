@@ -1,5 +1,6 @@
 import contextlib
 import math
+import pathlib
 import re
 import struct
 import warnings
@@ -24,7 +25,7 @@ def field_to_ovf(
 
     Parameters
     ----------
-    filename : str
+    filename : pathlib.Path, str
 
         Name with an extension of the file written.
 
@@ -68,6 +69,7 @@ def field_to_ovf(
     field_from_ovf
 
     """
+    filename = pathlib.Path(filename)
     write_dim = 3 if extend_scalar and field.dim == 1 else field.dim
     valueunits = " ".join([str(field.units) if field.units else "None"] * write_dim)
     if write_dim == 1:
@@ -183,7 +185,7 @@ def field_from_ovf(filename):
 
     Parameters
     ----------
-    filename : str
+    filename : pathlib.Path, str
 
         Name of the file to be read.
 
@@ -197,13 +199,12 @@ def field_from_ovf(filename):
     -------
     1. Read a field from the OVF file.
 
-    >>> import os
+    >>> import pathlib
     >>> import discretisedfield as df
     ...
-    >>> dirname = os.path.join(os.path.dirname(__file__),
-    ...                        'tests', 'test_sample')
-    >>> filename = os.path.join(dirname, 'oommf-ovf2-bin8.omf')
-    >>> field = df.Field.fromfile(filename)
+    >>> current_path = pathlib.Path(__file__).absolute().parent
+    >>> filepath = current_path / '..' / 'tests' / 'test_sample' / 'oommf-ovf2-bin8.omf'
+    >>> field = df.Field.fromfile(filepath)
     >>> field
     Field(...)
 
@@ -213,6 +214,7 @@ def field_from_ovf(filename):
     field_to_ovf
 
     """
+    filename = pathlib.Path(filename)
     header = {}
     with open(filename, "rb") as f:
         # >>> READ HEADER <<<

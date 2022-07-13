@@ -1,6 +1,7 @@
 import collections
 import functools
 import numbers
+import pathlib
 import warnings
 
 import numpy as np
@@ -2803,20 +2804,21 @@ class Field:
         ~discretisedfield.io.field_to_hdf5
 
         """
-        if filename.endswith((".omf", ".ovf", ".ohf")):
+        filename = pathlib.Path(filename)
+        if filename.suffix in [".omf", ".ovf", ".ohf"]:
             io.field_to_ovf(
                 self,
                 filename,
                 representation=representation,
                 extend_scalar=extend_scalar,
             )
-        elif filename.endswith((".hdf5", ".h5")):
+        elif filename.suffix in [".hdf5", ".h5"]:
             io.field_to_hdf5(self, filename)
-        elif filename.endswith(".vtk"):
+        elif filename.suffix == ".vtk":
             io.field_to_vtk(self, filename, representation=representation)
         else:
             raise ValueError(
-                f'Writing file with extension {filename.split(".")[-1]} not supported.'
+                f"Writing file with extension {filename.suffix} not supported."
             )
 
     def to_vtk(self):
@@ -2958,15 +2960,16 @@ class Field:
         ~discretisedfield.io.field_from_hdf5
 
         """
-        if filename.endswith((".omf", ".ovf", ".ohf", ".oef")):
+        filename = pathlib.Path(filename)
+        if filename.suffix in [".omf", ".ovf", ".ohf", ".oef"]:
             return io.field_from_ovf(filename)
-        elif filename.endswith(".vtk"):
+        elif filename.suffix == ".vtk":
             return io.field_from_vtk(filename)
-        elif filename.endswith((".hdf5", ".h5")):
+        elif filename.suffix in [".hdf5", ".h5"]:
             return io.field_from_hdf5(filename)
         else:
             raise ValueError(
-                f'Reading file with extension {filename.split(".")[-1]} not supported.'
+                f"Reading file with extension {filename.suffix} not supported."
             )
 
     @property

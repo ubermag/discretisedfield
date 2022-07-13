@@ -1,4 +1,5 @@
 import contextlib
+import pathlib
 
 import numpy as np
 from vtkmodules.util import numpy_support as vns
@@ -27,7 +28,7 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
 
     Parameters
     ----------
-    filename : str
+    filename : pathlib.Path, str
 
         File name with an extension.
 
@@ -57,6 +58,7 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     field_from_vtk
 
     """
+    filename = pathlib.Path(filename)
     if representation == "xml":
         writer = vtkXMLRectilinearGridWriter()
     elif representation in ["bin", "bin8", "txt"]:
@@ -75,7 +77,7 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     if save_subregions and field.mesh.subregions:
         field.mesh.save_subregions(f"{strip_extension(filename)}_subregions.json")
 
-    writer.SetFileName(filename)
+    writer.SetFileName(str(filename))
     writer.SetInputData(field.to_vtk())
     writer.Write()
 
@@ -96,7 +98,7 @@ def field_from_vtk(filename):
 
     Parameters
     ----------
-    filename : str
+    filename : pathlib.Path, str
 
         Name of the file to be read.
 
@@ -110,13 +112,12 @@ def field_from_vtk(filename):
     -------
     1. Read a field from the VTK file.
 
-    >>> import os
+    >>> import pathlib
     >>> import discretisedfield as df
     ...
-    >>> dirname = os.path.join(os.path.dirname(__file__),
-    ...                        'tests', 'test_sample')
-    >>> filename = os.path.join(dirname, 'vtk-file.vtk')
-    >>> field = df.Field.fromfile(filename)
+    >>> current_path = pathlib.Path(__file__).absolute().parent
+    >>> filepath = current_path / '..' / 'tests' / 'test_sample' / 'vtk-file.vtk'
+    >>> field = df.Field.fromfile(filepath)
     >>> field
     Field(...)
 
@@ -126,7 +127,8 @@ def field_from_vtk(filename):
     field_to_vtk
 
     """
-    with open(filename, "rb") as f:
+    filename = pathlib.Path(filename)
+    with filename.open("rb") as f:
         xml = "xml" in f.readline().decode("utf8")
     if xml:
         reader = vtkXMLRectilinearGridReader()
@@ -134,7 +136,7 @@ def field_from_vtk(filename):
         reader = vtkRectilinearGridReader()
         reader.ReadAllVectorsOn()
         reader.ReadAllScalarsOn()
-    reader.SetFileName(filename)
+    reader.SetFileName(str(filename))
     reader.Update()
 
     output = reader.GetOutput()

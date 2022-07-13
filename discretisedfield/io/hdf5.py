@@ -1,4 +1,5 @@
 import contextlib
+import pathlib
 
 import h5py
 import numpy as np
@@ -13,7 +14,7 @@ def field_to_hdf5(field, filename, save_subregions=True):
 
     Parameters
     ----------
-    filename : str
+    filename : pathlib.Path, str
 
         Name with an extension of the file written.
 
@@ -46,6 +47,7 @@ def field_to_hdf5(field, filename, save_subregions=True):
     field_from_hdf5
 
     """
+    filename = pathlib.Path(filename)
     if save_subregions and field.mesh.subregions:
         field.mesh.save_subregions(f"{strip_extension(filename)}_subregions.json")
 
@@ -71,7 +73,7 @@ def field_from_hdf5(filename):
 
     Parameters
     ----------
-    filename : str
+    filename : pathlib.Path, str
 
         Name of the file to be read.
 
@@ -85,13 +87,12 @@ def field_from_hdf5(filename):
     -------
     1. Read a field from the HDF5 file.
 
-    >>> import os
+    >>> import pathlib
     >>> import discretisedfield as df
     ...
-    >>> dirname = os.path.join(os.path.dirname(__file__),
-    ...                        'tests', 'test_sample')
-    >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
-    >>> field = df.Field.fromfile(filename)
+    >>> current_path = pathlib.Path(__file__).absolute().parent
+    >>> filepath = current_path / '..' / 'tests' / 'test_sample' / 'hdf5-file.hdf5'
+    >>> field = df.Field.fromfile(filepath)
     >>> field
     Field(...)
 
@@ -101,6 +102,7 @@ def field_from_hdf5(filename):
     field_to_hdf5
 
     """
+    filename = pathlib.Path(filename)
     with h5py.File(filename, "r") as f:
         # Read data from the file.
         p1 = f["field/mesh/region/p1"]
