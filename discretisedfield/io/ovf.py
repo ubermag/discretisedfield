@@ -151,8 +151,16 @@ def field_to_ovf(
                     axis=-1,
                 )
 
-            # ndarray.tofile seems to be ~20% slower
-            f.write(np.asarray(reordered, dtype=bin_rep[representation][0]).tobytes())
+            # processing in chuncks to reduce memory consumption
+            chunksize = 100_000
+            n_chunks = math.ceil(len(field.array.flat) / chunksize)
+            for i in range(n_chunks):
+                f.write(
+                    np.asarray(
+                        reordered.flat[i * chunksize : (i + 1) * chunksize],
+                        dtype=bin_rep[representation][0],
+                    ).tobytes()
+                )
             f.write(b"\n")
         else:
             data = pd.DataFrame(reordered.reshape((-1, field.dim)))
