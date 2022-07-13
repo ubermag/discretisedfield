@@ -109,9 +109,9 @@ def field_from_hdf5(filename):
         dim = np.array(f["field/dim"]).tolist()
         array = f["field/array"]
 
-    # Create field.
-    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-    with contextlib.suppress(FileNotFoundError):
-        mesh.load_subregions(f"{strip_extension(filename)}_subregions.json")
+        # Create field.
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
+        with contextlib.suppress(FileNotFoundError):
+            mesh.load_subregions(f"{strip_extension(filename)}_subregions.json")
 
-    return df.Field(mesh, dim=dim, value=array[:])
+        return df.Field(mesh, dim=dim, value=array[:])
