@@ -6,7 +6,7 @@ import numpy as np
 import discretisedfield as df
 
 
-class RegionJSONEncoder(json.JSONEncoder):
+class _RegionJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, df.Region):
             return o.to_dict()

@@ -1245,7 +1245,7 @@ class Mesh:
     def save_subregions(self, filename):
         """Save subregions to json file."""
         with pathlib.Path(filename).open(mode="wt", encoding="utf-8") as f:
-            json.dump(self.subregions, f, cls=io.RegionJSONEncoder)
+            json.dump(self.subregions, f, cls=io._RegionJSONEncoder)
 
     def load_subregions(self, filename):
         """Load subregions from json file."""
