@@ -4,6 +4,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 import ubermagutil.units as uu
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import discretisedfield as df
 import discretisedfield.util as dfu
@@ -302,9 +303,7 @@ class MplField(Mpl):
         cp = ax.imshow(np.transpose(values), origin="lower", extent=extent, **kwargs)
 
         if colorbar:
-            cbar = plt.colorbar(cp, ax=ax)
-            if colorbar_label is not None:
-                cbar.ax.set_ylabel(colorbar_label)
+            self._add_colorbar(ax, cp, colorbar_label)
 
         self._axis_labels(ax, multiplier)
 
@@ -662,9 +661,7 @@ class MplField(Mpl):
 
         ax.set_aspect("equal")
         if colorbar and use_color:
-            cbar = plt.colorbar(cp, ax=ax)
-            if colorbar_label is not None:
-                cbar.ax.set_ylabel(colorbar_label)
+            self._add_colorbar(ax, cp, colorbar_label)
 
         self._axis_labels(ax, multiplier)
 
@@ -797,9 +794,7 @@ class MplField(Mpl):
         ax.set_aspect("equal")
 
         if colorbar:
-            cbar = plt.colorbar(cp, ax=ax)
-            if colorbar_label is not None:
-                cbar.ax.set_ylabel(colorbar_label)
+            self._add_colorbar(ax, cp, colorbar_label)
 
         self._axis_labels(ax, multiplier)
 
@@ -849,3 +844,10 @@ class MplField(Mpl):
             dirlist.remove(attr)
 
         return dirlist
+
+    def _add_colorbar(self, ax, cp, colorbar_label):
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+        cbar = plt.colorbar(cp, cax=cax)
+        if colorbar_label is not None:
+            cbar.ax.set_ylabel(colorbar_label)
