@@ -869,3 +869,21 @@ class TestMesh:
 
         with pytest.raises(ValueError):
             axis_widget = mesh.axis_selector(widget="something")
+
+    def test_save_load_subregions(self, tmp_path):
+        p1 = (0, 0, 0)
+        p2 = (100, 50, 10)
+        cell = (10, 10, 10)
+        subregions = {
+            "r1": df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
+            "r2": df.Region(p1=(50, 0, 0), p2=(100, 50, 10)),
+        }
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+        check_mesh(mesh)
+
+        mesh.save_subregions(str(tmp_path / "mesh.json"))
+
+        mesh2 = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert mesh2.subregions == {}
+        mesh2.load_subregions(str(tmp_path / "mesh.json"))
+        assert mesh2.subregions == subregions
