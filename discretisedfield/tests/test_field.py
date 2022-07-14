@@ -1708,7 +1708,11 @@ class TestField:
         p1 = (0, 0, 0)
         p2 = (8e-9, 5e-9, 3e-9)
         cell = (1e-9, 1e-9, 1e-9)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        subregions = {
+            "sr1": df.Region(p1=p1, p2=(2e-9, 2e-9, 1e-9)),
+            "sr2": df.Region(p1=(3e-9, 0, 0), p2=p2),
+        }
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
         # Write/read
         for dim, value in [
@@ -1725,6 +1729,7 @@ class TestField:
 
                     assert f.allclose(f_read)
                     assert f_read.units == "A/m"
+                    assert f.mesh.subregions == f_read.mesh.subregions
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
@@ -1807,7 +1812,11 @@ class TestField:
         p1 = (0, 0, 0)
         p2 = (5e-9, 2e-9, 1e-9)
         cell = (1e-9, 1e-9, 1e-9)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        subregions = {
+            "sr1": df.Region(p1=p1, p2=(2e-9, 2e-9, 1e-9)),
+            "sr2": df.Region(p1=(3e-9, 0, 0), p2=p2),
+        }
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
         for dim, value, components in zip(
             [1, 2, 3, 4],
@@ -1826,6 +1835,7 @@ class TestField:
                 assert np.allclose(f.mesh.cell, f_read.mesh.cell)
                 assert f.mesh.n == f_read.mesh.n
                 assert f.components == f_read.components
+                assert f.mesh.subregions == f_read.mesh.subregions
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
@@ -1863,7 +1873,11 @@ class TestField:
         p1 = (0, 0, 0)
         p2 = (10e-12, 5e-12, 5e-12)
         cell = (1e-12, 1e-12, 1e-12)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        subregions = {
+            "sr1": df.Region(p1=p1, p2=(2e-12, 2e-12, 1e-12)),
+            "sr2": df.Region(p1=(3e-12, 0, 0), p2=p2),
+        }
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
         for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]:
             f = df.Field(mesh, dim=dim, value=value)
