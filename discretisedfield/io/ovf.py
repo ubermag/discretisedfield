@@ -41,6 +41,11 @@ def field_to_ovf(
         precisely, if the value at a cell is 3, that cell will be saved as
         (3, 0, 0). Defaults to ``False``.
 
+    save_subregions : bool, optional
+
+       If ``True`` and subregions are defined for the mesh the subregions will be saved
+       to a json file. Defaults to ``True``.
+
     Example
     -------
     1. Write field to the OVF file.

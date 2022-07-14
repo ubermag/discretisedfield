@@ -18,6 +18,11 @@ def field_to_hdf5(field, filename, save_subregions=True):
 
         Name with an extension of the file written.
 
+    save_subregions : bool, optional
+
+       If ``True`` and subregions are defined for the mesh the subregions will be saved
+       to a json file. Defaults to ``True``.
+
     Example
     -------
     1. Write field to an HDF5 file.

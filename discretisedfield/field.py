@@ -2757,6 +2757,11 @@ class Field:
             (3, 0, 0). This is valid only for the OVF file formats. Defaults to
             ``False``.
 
+        save_subregions : bool, optional
+
+            If ``True`` and subregions are defined for the mesh the subregions will be
+            saved to a json file. Defaults to ``True``.
+
         Example
         -------
         1. Write field to the OVF file.

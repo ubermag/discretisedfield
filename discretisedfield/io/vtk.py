@@ -37,6 +37,11 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
         Representation; ``'bin'`` [``'bin8'`` as equivalent], ``'txt'``, ``'xml'``;
         defaults to ``'bin'``.
 
+    save_subregions : bool, optional
+
+       If ``True`` and subregions are defined for the mesh the subregions will be saved
+       to a json file. Defaults to ``True``.
+
     Example
     -------
     1. Write field to a VTK file.
