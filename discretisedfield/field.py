@@ -2722,7 +2722,9 @@ class Field:
         """Write the field to OVF, HDF5, or VTK file.
 
         If the extension of ``filename`` is ``.vtk``, a VTK file is written
-        (:py:func:`~discretisedfield.io.field_to_vtk`).
+        (:py:func:`~discretisedfield.io.field_to_vtk`). The representation of the data
+        (``'bin'`` [``'bin8'`` as equivalent], ``'txt'``, or ``'xml'``) is passed as
+        ``'representation'``.
 
         For ``.ovf``, ``.omf``, or ``.ohf`` extensions, the field is saved to
         OVF file (:py:func:`~discretisedfield.io.field_to_ovf`). In that case,

@@ -32,6 +32,11 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
 
         File name with an extension.
 
+    representation : str, optional
+
+        Representation; ``'bin'`` [``'bin8'`` as equivalent], ``'txt'``, ``'xml'``;
+        defaults to ``'bin'``.
+
     Example
     -------
     1. Write field to a VTK file.
