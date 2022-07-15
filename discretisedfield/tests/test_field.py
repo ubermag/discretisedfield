@@ -1702,7 +1702,7 @@ class TestField:
         with pytest.raises(ValueError):
             f.angle  # the field is not sliced
 
-    def test_write_read_ovf(self):
+    def test_write_read_ovf(self, tmp_path):
         representations = ["txt", "bin4", "bin8"]
         filename = "testfile.ovf"
         p1 = (0, 0, 0)
@@ -1722,14 +1722,21 @@ class TestField:
         ]:
             f = df.Field(mesh, dim=dim, value=value, units="A/m")
             for rep in representations:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    tmpfilename = os.path.join(tmpdir, filename)
-                    f.write(tmpfilename, representation=rep)
-                    f_read = df.Field.fromfile(tmpfilename)
+                tmpfilename = tmp_path / filename
+                f.write(tmpfilename, representation=rep)
+                f_read = df.Field.fromfile(tmpfilename)
 
-                    assert f.allclose(f_read)
-                    assert f_read.units == "A/m"
-                    assert f.mesh.subregions == f_read.mesh.subregions
+                assert f.allclose(f_read)
+                assert f_read.units == "A/m"
+                assert f.mesh.subregions == f_read.mesh.subregions
+
+                tmpfilename = tmp_path / f"no_sr_{filename}"
+                f.write(tmpfilename, representation=rep, save_subregions=False)
+                f_read = df.Field.fromfile(tmpfilename)
+
+                assert f.allclose(f_read)
+                assert f_read.units == "A/m"
+                assert f_read.mesh.subregions == {}
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
@@ -1737,25 +1744,23 @@ class TestField:
 
         # multiple different units (not supported by discretisedfield)
         f = df.Field(mesh, dim=3, value=(1, 1, 1), units="m s kg")
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpfilename = os.path.join(tmpdir, filename)
-            f.write(tmpfilename, representation=rep)
-            f_read = df.Field.fromfile(tmpfilename)
+        tmpfilename = str(tmp_path / filename)
+        f.write(tmpfilename, representation=rep)
+        f_read = df.Field.fromfile(tmpfilename)
 
-            assert f.allclose(f_read)
-            assert f_read.units is None
+        assert f.allclose(f_read)
+        assert f_read.units is None
 
         # Extend scalar
         for rep in representations:
             f = df.Field(
                 mesh, dim=1, value=lambda point: point[0] + point[1] + point[2]
             )
-            with tempfile.TemporaryDirectory() as tmpdir:
-                tmpfilename = os.path.join(tmpdir, filename)
-                f.write(tmpfilename, representation=rep, extend_scalar=True)
-                f_read = df.Field.fromfile(tmpfilename)
+            tmpfilename = tmp_path / filename
+            f.write(tmpfilename, representation=rep, extend_scalar=True)
+            f_read = df.Field.fromfile(tmpfilename)
 
-                assert f.allclose(f_read.x)
+            assert f.allclose(f_read.x)
 
         # Read different OOMMF representations
         # (OVF1, OVF2) x (txt, bin4, bin8)
@@ -1823,10 +1828,10 @@ class TestField:
             [1.2, (1, 2.5), (1e-3, -5e6, 5e6), np.random.random(4)],
             [None, ("m_mag", "m_phase"), None, "abcd"],
         ):
-            for representation in ["txt", "bin", "xml"]:
+            for repr in ["txt", "bin", "xml"]:
                 f = df.Field(mesh, dim=dim, value=value, components=components)
-                tmpfilename = str(tmp_path / filename)
-                f.write(tmpfilename, representation=representation)
+                tmpfilename = tmp_path / filename
+                f.write(tmpfilename, representation=repr)
                 f_read = df.Field.fromfile(tmpfilename)
 
                 assert np.allclose(f.array, f_read.array)
@@ -1836,6 +1841,13 @@ class TestField:
                 assert f.mesh.n == f_read.mesh.n
                 assert f.components == f_read.components
                 assert f.mesh.subregions == f_read.mesh.subregions
+
+                tmpfilename = tmp_path / f"no_sr_{filename}"
+                f.write(tmpfilename, representation=repr, save_subregions=False)
+                f_read = df.Field.fromfile(tmpfilename)
+
+                assert f.allclose(f_read)
+                assert f_read.mesh.subregions == {}
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
@@ -1867,7 +1879,7 @@ class TestField:
         with pytest.raises(AttributeError):
             f.write(str(tmp_path / filename))
 
-    def test_write_read_hdf5(self):
+    def test_write_read_hdf5(self, tmp_path):
         filenames = ["testfile.hdf5", "testfile.h5"]
 
         p1 = (0, 0, 0)
@@ -1882,12 +1894,16 @@ class TestField:
         for dim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]:
             f = df.Field(mesh, dim=dim, value=value)
             for filename in filenames:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    tmpfilename = os.path.join(tmpdir, filename)
-                    f.write(tmpfilename)
-                    f_read = df.Field.fromfile(tmpfilename)
+                tmpfilename = tmp_path / filename
+                f.write(tmpfilename)
+                f_read = df.Field.fromfile(tmpfilename)
 
-                    assert f == f_read
+                assert f == f_read
+
+                tmpfilename = tmp_path / f"no_sr_{filename}"
+                f.write(tmpfilename, save_subregions=False)
+                f_read = df.Field.fromfile(tmpfilename)
+                assert f == f_read
 
     def test_read_write_invalid_extension(self):
         filename = "testfile.jpg"
