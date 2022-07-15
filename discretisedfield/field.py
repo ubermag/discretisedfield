@@ -2818,11 +2818,17 @@ class Field:
                 filename,
                 representation=representation,
                 extend_scalar=extend_scalar,
+                save_subregions=save_subregions,
             )
         elif filename.suffix in [".hdf5", ".h5"]:
-            io.field_to_hdf5(self, filename)
+            io.field_to_hdf5(self, filename, save_subregions=save_subregions)
         elif filename.suffix == ".vtk":
-            io.field_to_vtk(self, filename, representation=representation)
+            io.field_to_vtk(
+                self,
+                filename,
+                representation=representation,
+                save_subregions=save_subregions,
+            )
         else:
             raise ValueError(
                 f"Writing file with extension {filename.suffix} not supported."
