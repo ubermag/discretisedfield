@@ -823,17 +823,17 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
         # matplotlib tests
-        mesh.mpl_subregions(box_aspect=(1, 1, 1), show_region=True)
+        mesh.mpl.subregions(box_aspect=(1, 1, 1), show_region=True)
 
         filename = "figure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            mesh.mpl_subregions(filename=tmpfilename)
+            mesh.mpl.subregions(filename=tmpfilename)
 
         plt.close("all")
 
         # k3d tests
-        mesh.k3d_subregions()
+        mesh.k3d.subregions()
 
     def test_slider(self):
         p1 = (-10e-9, -5e-9, 10e-9)

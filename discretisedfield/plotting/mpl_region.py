@@ -33,7 +33,7 @@ class MplRegion(Mpl):
         multiple of 3 (..., -6, -3, 0, 3, 6,...). According to that value, the
         axes will be scaled and appropriate units shown. For instance, if
         ``multiplier=1e-9`` is passed, all axes will be divided by
-        :math:`1\\,\\text{nm}` and :math:`\\text{nm}` units will be used as
+        :math:`1\,\text{nm}` and :math:`\text{nm}` units will be used as
         axis labels. If ``multiplier`` is not passed, the best one is
         calculated internally.
 
