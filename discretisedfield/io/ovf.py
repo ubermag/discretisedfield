@@ -142,7 +142,7 @@ def field_to_ovf(
     bin_rep = {"bin4": ("<f", 1234567.0), "bin8": ("<d", 123456789012345.0)}
 
     if save_subregions and field.mesh.subregions:
-        field.mesh.save_subregions(f"{str(filename)}.subregions.json")
+        field.mesh.save_subregions(filename)
 
     with open(filename, "wb") as f:
         f.write(bheader)
@@ -282,7 +282,7 @@ def field_from_ovf(filename):
             array = array.to_numpy()
 
     with contextlib.suppress(FileNotFoundError):
-        mesh.load_subregions(f"{str(filename)}.subregions.json")
+        mesh.load_subregions(filename)
 
     r_tuple = (*reversed(mesh.n), header["valuedim"])
     t_tuple = (2, 1, 0, 3)

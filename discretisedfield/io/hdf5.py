@@ -52,7 +52,7 @@ def field_to_hdf5(field, filename, save_subregions=True):
     """
     filename = pathlib.Path(filename)
     if save_subregions and field.mesh.subregions:
-        field.mesh.save_subregions(f"{str(filename)}.subregions.json")
+        field.mesh.save_subregions(filename)
 
     with h5py.File(filename, "w") as f:
         # Set up the file structure
@@ -117,6 +117,6 @@ def field_from_hdf5(filename):
         # Create field.
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
         with contextlib.suppress(FileNotFoundError):
-            mesh.load_subregions(f"{str(filename)}.subregions.json")
+            mesh.load_subregions(filename)
 
         return df.Field(mesh, dim=dim, value=array[:])
