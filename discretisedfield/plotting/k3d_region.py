@@ -2,6 +2,7 @@ import k3d
 import numpy as np
 import ubermagutil.units as uu
 
+import discretisedfield.plotting.util as plot_util
 import discretisedfield.util as dfu
 
 
@@ -9,7 +10,9 @@ class K3dRegion:
     def __init__(self, region):
         self.region = region
 
-    def __call__(self, *, plot=None, color=dfu.cp_int[0], multiplier=None, **kwargs):
+    def __call__(
+        self, *, plot=None, color=plot_util.cp_int[0], multiplier=None, **kwargs
+    ):
         """``k3d`` plot.
 
         If ``plot`` is not passed, ``k3d.Plot`` object is created

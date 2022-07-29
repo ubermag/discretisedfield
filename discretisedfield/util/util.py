@@ -7,21 +7,6 @@ import ubermagutil.units as uu
 axesdict = collections.OrderedDict(x=0, y=1, z=2)
 raxesdict = {value: key for key, value in axesdict.items()}
 
-# Color pallete as hex and int.
-cp_hex = [
-    "#4c72b0",
-    "#dd8452",
-    "#55a868",
-    "#c44e52",
-    "#8172b3",
-    "#937860",
-    "#da8bc3",
-    "#8c8c8c",
-    "#ccb974",
-    "#64b5cd",
-]
-cp_int = [int(color[1:], 16) for color in cp_hex]
-
 
 def array2tuple(array):
     return array.item() if array.size == 1 else tuple(array.tolist())
@@ -59,30 +44,6 @@ def assemble_index(value, n, dictionary):
         index[key] = value
 
     return tuple(index)
-
-
-def plot_line(ax, p1, p2, *args, **kwargs):
-    ax.plot(*zip(p1, p2), *args, **kwargs)
-
-
-def plot_box(ax, pmin, pmax, *args, **kwargs):
-    x1, y1, z1 = pmin
-    x2, y2, z2 = pmax
-
-    plot_line(ax, (x1, y1, z1), (x2, y1, z1), *args, **kwargs)
-    plot_line(ax, (x1, y2, z1), (x2, y2, z1), *args, **kwargs)
-    plot_line(ax, (x1, y1, z2), (x2, y1, z2), *args, **kwargs)
-    plot_line(ax, (x1, y2, z2), (x2, y2, z2), *args, **kwargs)
-
-    plot_line(ax, (x1, y1, z1), (x1, y2, z1), *args, **kwargs)
-    plot_line(ax, (x2, y1, z1), (x2, y2, z1), *args, **kwargs)
-    plot_line(ax, (x1, y1, z2), (x1, y2, z2), *args, **kwargs)
-    plot_line(ax, (x2, y1, z2), (x2, y2, z2), *args, **kwargs)
-
-    plot_line(ax, (x1, y1, z1), (x1, y1, z2), *args, **kwargs)
-    plot_line(ax, (x2, y1, z1), (x2, y1, z2), *args, **kwargs)
-    plot_line(ax, (x1, y2, z1), (x1, y2, z2), *args, **kwargs)
-    plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
 
 
 def rescale_xarray(array, multiplier):

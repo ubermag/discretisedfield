@@ -17,7 +17,7 @@ class K3dField:
     def nonzero(
         self,
         plot=None,
-        color=dfu.cp_int[0],
+        color=plot_util.cp_int[0],
         multiplier=None,
         interactive_field=None,
         **kwargs,
@@ -482,7 +482,7 @@ class K3dField:
                 colors.append(2 * (cmap_int[cval],))
         else:
             # Uniform colour.
-            colors = len(vectors) * ([2 * (dfu.cp_int[1],)])
+            colors = len(vectors) * ([2 * (plot_util.cp_int[1],)])
 
         coordinates = np.array(coordinates)
         vectors = np.array(vectors)
@@ -512,7 +512,9 @@ class K3dField:
                 # cell dimension.
                 point_size = np.divide(self.data.mesh.cell, multiplier).min() / 4
 
-            plot += k3d.points(coordinates, color=dfu.cp_int[0], point_size=point_size)
+            plot += k3d.points(
+                coordinates, color=plot_util.cp_int[0], point_size=point_size
+            )
 
         plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
 

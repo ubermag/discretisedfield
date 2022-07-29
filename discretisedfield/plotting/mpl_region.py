@@ -1,6 +1,6 @@
 import ubermagutil.units as uu
 
-import discretisedfield.util as dfu
+import discretisedfield.plotting.util as plot_util
 from discretisedfield.plotting.mpl import Mpl
 
 
@@ -14,7 +14,7 @@ class MplRegion(Mpl):
         ax=None,
         figsize=None,
         multiplier=None,
-        color=dfu.cp_hex[0],
+        color=plot_util.cp_hex[0],
         box_aspect="auto",
         filename=None,
         **kwargs,
@@ -98,7 +98,7 @@ class MplRegion(Mpl):
         elif box_aspect is not None:
             ax.set_box_aspect(box_aspect)
 
-        dfu.plot_box(
+        plot_util.plot_box(
             ax=ax, pmin=rescaled_region.pmin, pmax=rescaled_region.pmax, **kwargs
         )
 

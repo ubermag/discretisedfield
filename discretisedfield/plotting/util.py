@@ -46,6 +46,46 @@ class Defaults:
         return dir(self.__class__) + list(self)
 
 
+# Color pallete as hex and int.
+cp_hex = [
+    "#4c72b0",
+    "#dd8452",
+    "#55a868",
+    "#c44e52",
+    "#8172b3",
+    "#937860",
+    "#da8bc3",
+    "#8c8c8c",
+    "#ccb974",
+    "#64b5cd",
+]
+cp_int = [int(color[1:], 16) for color in cp_hex]
+
+
+def plot_line(ax, p1, p2, *args, **kwargs):
+    ax.plot(*zip(p1, p2), *args, **kwargs)
+
+
+def plot_box(ax, pmin, pmax, *args, **kwargs):
+    x1, y1, z1 = pmin
+    x2, y2, z2 = pmax
+
+    plot_line(ax, (x1, y1, z1), (x2, y1, z1), *args, **kwargs)
+    plot_line(ax, (x1, y2, z1), (x2, y2, z1), *args, **kwargs)
+    plot_line(ax, (x1, y1, z2), (x2, y1, z2), *args, **kwargs)
+    plot_line(ax, (x1, y2, z2), (x2, y2, z2), *args, **kwargs)
+
+    plot_line(ax, (x1, y1, z1), (x1, y2, z1), *args, **kwargs)
+    plot_line(ax, (x2, y1, z1), (x2, y2, z1), *args, **kwargs)
+    plot_line(ax, (x1, y1, z2), (x1, y2, z2), *args, **kwargs)
+    plot_line(ax, (x2, y1, z2), (x2, y2, z2), *args, **kwargs)
+
+    plot_line(ax, (x1, y1, z1), (x1, y1, z2), *args, **kwargs)
+    plot_line(ax, (x2, y1, z1), (x2, y1, z2), *args, **kwargs)
+    plot_line(ax, (x1, y2, z1), (x1, y2, z2), *args, **kwargs)
+    plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
+
+
 def normalise_to_range(values, to_range, from_range=None, int_round=True):
     """Normalise values.
 
