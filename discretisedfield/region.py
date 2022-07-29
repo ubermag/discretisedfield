@@ -615,3 +615,12 @@ class Region:
     @property
     def k3d(self):
         return dfp.K3dRegion(self)
+
+    def to_dict(self):
+        """Convert region object to dict with items p1, p2, unit, tolerance_factor."""
+        return {
+            "p1": self.p1,
+            "p2": self.p2,
+            "unit": self.unit,
+            "tolerance_factor": self.tolerance_factor,
+        }

@@ -22,12 +22,12 @@ def test_ovf2vtk(tmp_path, capfd):
     # Output filename provided.
     omffilename_1 = str(tmp_path / "test-ovf2vtk1.omf")
     vtkfilename_1 = str(tmp_path / "test-ovf2vtk1.vtk")
-    f._writeovf(omffilename_1)
+    f.write(omffilename_1)
 
     cmd = [
         sys.executable,
         "-m",
-        "discretisedfield.ovf2vtk",
+        "discretisedfield.io.ovf2vtk",
         "--input",
         omffilename_1,
         "--output",
@@ -42,9 +42,9 @@ def test_ovf2vtk(tmp_path, capfd):
     # Output filename not provided.
     omffilename_2 = str(tmp_path / "test-ovf2vtk2.omf")
     vtkfilename_2 = str(tmp_path / "test-ovf2vtk2.vtk")
-    f._writeovf(omffilename_2, representation="bin4")
+    f.write(omffilename_2, representation="bin4")
 
-    cmd = [sys.executable, "-m", "discretisedfield.ovf2vtk", "-i", omffilename_2]
+    cmd = [sys.executable, "-m", "discretisedfield.io.ovf2vtk", "-i", omffilename_2]
     proc_return = subprocess.run(cmd)
     assert proc_return.returncode == 0
 
@@ -55,7 +55,7 @@ def test_ovf2vtk(tmp_path, capfd):
     cmd = [
         sys.executable,
         "-m",
-        "discretisedfield.ovf2vtk",
+        "discretisedfield.io.ovf2vtk",
         "-i",
         omffilename_1,
         omffilename_2,
@@ -72,7 +72,7 @@ def test_ovf2vtk(tmp_path, capfd):
     cmd = [
         sys.executable,
         "-m",
-        "discretisedfield.ovf2vtk",
+        "discretisedfield.io.ovf2vtk",
         "-i",
         "file1.omf",
         "-o",
