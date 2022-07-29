@@ -1241,16 +1241,24 @@ class Mesh:
         dn = dfu.assemble_index(0, 3, {self.attributes["planeaxis"]: 1})
         return df.Field(self, dim=3, value=dn, norm=norm)
 
-    def save_subregions(self, filename):
+    def save_subregions(self, field_filename):
         """Save subregions to json file."""
-        with pathlib.Path(filename).open(mode="wt", encoding="utf-8") as f:
+        with pathlib.Path(self._subregion_filename(field_filename)).open(
+            mode="wt", encoding="utf-8"
+        ) as f:
             json.dump(self.subregions, f, cls=io._RegionJSONEncoder)
 
-    def load_subregions(self, filename):
+    def load_subregions(self, field_filename):
         """Load subregions from json file."""
-        with pathlib.Path(filename).open(mode="rt", encoding="utf-8") as f:
+        with pathlib.Path(self._subregion_filename(field_filename)).open(
+            mode="rt", encoding="utf-8"
+        ) as f:
             subregions = json.load(f)
         self.subregions = {key: Region(**val) for key, val in subregions.items()}
+
+    @staticmethod
+    def _subregion_filename(filename):
+        return f"{str(filename)}.subregions.json"
 
     @property
     def mpl(self):
