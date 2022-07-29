@@ -1,5 +1,6 @@
 """Finite-difference fields."""
 import os
+import pathlib
 
 import matplotlib.pyplot as plt
 import pkg_resources
@@ -15,9 +16,7 @@ from .operators import DValue, dS, dV, dx, dy, dz, integral
 from .region import Region
 
 # Enable default plotting style.
-dirname = os.path.abspath(os.path.dirname(__file__))
-path = os.path.join(dirname, "./util/plotting-style.mplstyle")
-plt.style.use(path)
+plt.style.use(pathlib.Path(__file__).parent / "plotting" / "plotting-style.mplstyle")
 
 __version__ = pkg_resources.get_distribution(__name__).version
 
