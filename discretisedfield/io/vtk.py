@@ -83,7 +83,7 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     # xml has no distinction between ascii and binary
 
     if save_subregions and field.mesh.subregions:
-        field.mesh.save_subregions(f"{str(filename)}.subregions.json")
+        field.mesh.save_subregions(filename)
 
     writer.SetFileName(str(filename))
     writer.SetInputData(field.to_vtk())
@@ -176,7 +176,7 @@ def field_from_vtk(filename):
 
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     with contextlib.suppress(FileNotFoundError):
-        mesh.load_subregions(f"{str(filename)}.subregions.json")
+        mesh.load_subregions(filename)
 
     return df.Field(mesh, dim=dim, value=value, components=components)
 
@@ -223,7 +223,7 @@ def fromvtk_legacy(filename):
     p2 = np.add(p1, np.multiply(n, cell))
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
     with contextlib.suppress(FileNotFoundError):
-        mesh.load_subregions(f"{str(filename)}.subregions.json")
+        mesh.load_subregions(filename)
     field = df.Field(mesh, dim=dim)
 
     # Find where data starts.
