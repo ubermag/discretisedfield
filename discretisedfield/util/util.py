@@ -1,6 +1,5 @@
 import cmath
 import collections
-import colorsys
 
 import numpy as np
 import ubermagutil.units as uu
@@ -84,44 +83,6 @@ def plot_box(ax, pmin, pmax, *args, **kwargs):
     plot_line(ax, (x2, y1, z1), (x2, y1, z2), *args, **kwargs)
     plot_line(ax, (x1, y2, z1), (x1, y2, z2), *args, **kwargs)
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
-
-
-def normalise_to_range(values, to_range, from_range=None, int_round=True):
-    values = np.asarray(values)
-
-    values -= from_range[0] if from_range else values.min()  # min value is 0
-    # For uniform fields, avoid division by zero.
-    if from_range or values.max() != 0:
-        values /= (
-            (from_range[1] - from_range[0]) if from_range else values.max()
-        )  # all values in (0, 1)
-    values *= to_range[1] - to_range[0]  # all values in (0, r[1]-r[0])
-    values += to_range[0]  # all values is range (r[0], r[1])
-    if int_round:
-        values = values.round()
-        values = values.astype(int)
-
-    return values
-
-
-def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
-    hue = normalise_to_range(hue, (0, 1), (0, 2 * np.pi), int_round=False)
-    if lightness is not None:
-        if lightness_clim is None:
-            lightness_clim = (0, 1)
-        lightness = normalise_to_range(lightness, lightness_clim, int_round=False)
-    else:
-        lightness = np.ones_like(hue)
-    if saturation is not None:
-        saturation = normalise_to_range(saturation, (0, 1), int_round=False)
-    else:
-        saturation = np.ones_like(hue)
-
-    rgb = np.apply_along_axis(
-        lambda x: colorsys.hls_to_rgb(*x), -1, np.dstack((hue, lightness, saturation))
-    )
-
-    return rgb.squeeze()
 
 
 def rescale_xarray(array, multiplier):

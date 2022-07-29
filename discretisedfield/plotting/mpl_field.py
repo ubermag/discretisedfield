@@ -7,6 +7,7 @@ import ubermagutil.units as uu
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import discretisedfield as df
+import discretisedfield.plotting.util as plot_util
 import discretisedfield.util as dfu
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
@@ -442,7 +443,7 @@ class MplField(Mpl):
             lightness_plane = df.Field(self.field.mesh, dim=1, value=lightness_plane)
         lightness = lightness_plane.array.reshape(self.n)
 
-        rgb = dfu.hls2rgb(
+        rgb = plot_util.hls2rgb(
             hue=values, lightness=lightness, saturation=None, lightness_clim=clim
         ).squeeze()
         self._filter_values(filter_field, rgb)

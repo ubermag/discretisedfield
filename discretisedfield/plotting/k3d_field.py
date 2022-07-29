@@ -4,6 +4,7 @@ import matplotlib
 import numpy as np
 import ubermagutil.units as uu
 
+import discretisedfield.plotting.util as plot_util
 import discretisedfield.util as dfu
 
 
@@ -279,7 +280,7 @@ class K3dField:
         # All values must be in (1, 255) -> (1, n-1), for n=256 range, with
         # maximum n=256. This is the limitation of k3d.voxels(). Voxels where
         # values are zero, are invisible.
-        plot_array = dfu.normalise_to_range(plot_array, (1, 255))
+        plot_array = plot_util.normalise_to_range(plot_array, (1, 255))
         # Remove voxels where filter_field = 0.
         if filter_field is not None:
             for i in self.data.mesh.indices:
@@ -467,7 +468,7 @@ class K3dField:
                     color_values.append(color_field(point))
 
         if color_field is not None:
-            color_values = dfu.normalise_to_range(color_values, (0, 255))
+            color_values = plot_util.normalise_to_range(color_values, (0, 255))
 
             # Generate double pairs (body, head) for colouring vectors.
             cmap = matplotlib.cm.get_cmap(cmap, 256)

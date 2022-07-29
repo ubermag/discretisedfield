@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import mpl_toolkits.axes_grid1.inset_locator
 import numpy as np
 
-import discretisedfield.util as dfu
+import discretisedfield.plotting.util as plot_util
 
 
 class Mpl(metaclass=abc.ABCMeta):
@@ -63,7 +63,7 @@ def add_colorwheel(ax, width=1, height=1, loc="lower right", **kwargs):
     theta = np.arctan2(Y, X) + np.pi
     r = np.sqrt(X**2 + Y**2)
 
-    rgb = dfu.hls2rgb(hue=theta, lightness=r, lightness_clim=[0, 1 / np.sqrt(2)])
+    rgb = plot_util.hls2rgb(hue=theta, lightness=r, lightness_clim=[0, 1 / np.sqrt(2)])
 
     theta = theta.reshape((n, n, 1))
 
