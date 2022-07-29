@@ -1,5 +1,4 @@
 import json
-import pathlib
 
 import numpy as np
 
@@ -16,8 +15,3 @@ class _RegionJSONEncoder(json.JSONEncoder):
             return float(o)
         else:
             super().default(o)
-
-
-def strip_extension(filename: pathlib.Path):
-    """Strip the file extension from a file name (which can be a full path)."""
-    return str(filename)[: -len(filename.suffix)]

@@ -8,8 +8,6 @@ from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader, vtkXMLRectilinearGr
 
 import discretisedfield as df
 
-from .util import strip_extension
-
 
 def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     """Write the field to a VTK file.
@@ -85,7 +83,7 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     # xml has no distinction between ascii and binary
 
     if save_subregions and field.mesh.subregions:
-        field.mesh.save_subregions(f"{strip_extension(filename)}_subregions.json")
+        field.mesh.save_subregions(f"{str(filename)}.subregions.json")
 
     writer.SetFileName(str(filename))
     writer.SetInputData(field.to_vtk())
@@ -178,7 +176,7 @@ def field_from_vtk(filename):
 
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     with contextlib.suppress(FileNotFoundError):
-        mesh.load_subregions(f"{strip_extension(filename)}_subregions.json")
+        mesh.load_subregions(f"{str(filename)}.subregions.json")
 
     return df.Field(mesh, dim=dim, value=value, components=components)
 
@@ -224,6 +222,8 @@ def fromvtk_legacy(filename):
     p1 = np.subtract(origin, np.multiply(cell, 0.5))
     p2 = np.add(p1, np.multiply(n, cell))
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
+    with contextlib.suppress(FileNotFoundError):
+        mesh.load_subregions(f"{str(filename)}.subregions.json")
     field = df.Field(mesh, dim=dim)
 
     # Find where data starts.
