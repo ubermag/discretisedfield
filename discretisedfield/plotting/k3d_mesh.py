@@ -54,6 +54,7 @@ class K3dMesh:
         --------
         1. Visualising the mesh using ``k3d``.
 
+        >>> import discretisedfield as df
         >>> p1 = (0, 0, 0)
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
@@ -131,6 +132,7 @@ class K3dMesh:
         --------
         1. Visualising subregions using ``k3d``.
 
+        >>> import discretisedfield as df
         >>> p1 = (0, 0, 0)
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
