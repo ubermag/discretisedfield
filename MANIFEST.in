@@ -1,5 +1,5 @@
 include README.md
 include LICENSE
-include discretisedfield/util/plotting-style.mplstyle
+include discretisedfield/plotting/plotting-style.mplstyle
 recursive-include discretisedfield/tests/test_sample *
 include discretisedfield/html/templates/*.jinja2

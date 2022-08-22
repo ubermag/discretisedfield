@@ -4,6 +4,7 @@ import matplotlib
 import numpy as np
 import ubermagutil.units as uu
 
+import discretisedfield.plotting.util as plot_util
 import discretisedfield.util as dfu
 
 
@@ -16,7 +17,7 @@ class K3dField:
     def nonzero(
         self,
         plot=None,
-        color=dfu.cp_int[0],
+        color=plot_util.cp_int[0],
         multiplier=None,
         interactive_field=None,
         **kwargs,
@@ -279,7 +280,7 @@ class K3dField:
         # All values must be in (1, 255) -> (1, n-1), for n=256 range, with
         # maximum n=256. This is the limitation of k3d.voxels(). Voxels where
         # values are zero, are invisible.
-        plot_array = dfu.normalise_to_range(plot_array, (1, 255))
+        plot_array = plot_util.normalise_to_range(plot_array, (1, 255))
         # Remove voxels where filter_field = 0.
         if filter_field is not None:
             for i in self.data.mesh.indices:
@@ -467,7 +468,7 @@ class K3dField:
                     color_values.append(color_field(point))
 
         if color_field is not None:
-            color_values = dfu.normalise_to_range(color_values, (0, 255))
+            color_values = plot_util.normalise_to_range(color_values, (0, 255))
 
             # Generate double pairs (body, head) for colouring vectors.
             cmap = matplotlib.cm.get_cmap(cmap, 256)
@@ -481,7 +482,7 @@ class K3dField:
                 colors.append(2 * (cmap_int[cval],))
         else:
             # Uniform colour.
-            colors = len(vectors) * ([2 * (dfu.cp_int[1],)])
+            colors = len(vectors) * ([2 * (plot_util.cp_int[1],)])
 
         coordinates = np.array(coordinates)
         vectors = np.array(vectors)
@@ -511,7 +512,9 @@ class K3dField:
                 # cell dimension.
                 point_size = np.divide(self.data.mesh.cell, multiplier).min() / 4
 
-            plot += k3d.points(coordinates, color=dfu.cp_int[0], point_size=point_size)
+            plot += k3d.points(
+                coordinates, color=plot_util.cp_int[0], point_size=point_size
+            )
 
         plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
 
