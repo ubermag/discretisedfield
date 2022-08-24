@@ -1,10 +1,8 @@
 import collections
-import functools
 import numbers
 
 import numpy as np
 import ubermagutil.typesystem as ts
-import ubermagutil.units as uu
 
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
@@ -13,9 +11,7 @@ from . import html
 
 
 @ts.typesystem(
-    p1=ts.Vector(size=3, const=True),
-    p2=ts.Vector(size=3, const=True),
-    unit=ts.Name(const=True),
+    # units=ts.Name(const=True),  # TODO
     tolerance_factor=ts.Scalar(expected_type=float, positive=True),
 )
 class Region:
@@ -28,15 +24,15 @@ class Region:
 
     Parameters
     ----------
-    p1 / p2 : (3,) array_like
+    p1 / p2 : array_like
 
         Diagonally-opposite corner points of the region :math:`\mathbf{p}_i =
         (p_x, p_y, p_z)`.
 
-    unit : str, optional
+    units : list[str], optional
 
-        Physical unit of the region. This is mainly used for labelling plots.
-        Defaults to ``m``.
+        Physical units of the region. This is mainly used for labelling plots.
+        Defaults to ``m`` in all directions.
 
     tolerance_factor : float, optional
 
@@ -77,17 +73,27 @@ class Region:
 
     """
 
-    def __init__(self, p1, p2, unit="m", tolerance_factor=1e-12):
-        self.p1 = tuple(p1)
-        self.p2 = tuple(p2)
-        self.unit = unit
+    def __init__(self, p1, p2, units=None, tolerance_factor=1e-12):
+        if len(p1) != len(p2):
+            raise ValueError("p1 and p2 must have the same length.")
+        self.pmin = np.minimum(p1, p2)
+        self.pmax = np.maximum(p1, p2)
+
+        if units is None:
+            self.units = ["m"] * len(p1)
+        else:
+            if len(units) != len(p1):
+                raise ValueError(
+                    "The number of units is different from the length of p1 and p2."
+                )
+            self.units = units
         self.tolerance_factor = tolerance_factor
 
         if not np.all(self.edges):
             msg = f"One of the region's edge lengths is zero: {self.edges=}."
             raise ValueError(msg)
 
-    @functools.cached_property
+    @property
     def pmin(self):
         r"""Point with minimum coordinates in the region.
 
@@ -118,9 +124,13 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return dfu.array2tuple(np.minimum(self.p1, self.p2))
+        return self._pmin
 
-    @functools.cached_property
+    @pmin.setter
+    def pmin(self, pmin):
+        self._pmin = pmin
+
+    @property
     def pmax(self):
         r"""Point with maximum coordinates in the region.
 
@@ -151,9 +161,18 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        return dfu.array2tuple(np.maximum(self.p1, self.p2))
+        return self._pmax
 
-    @functools.cached_property
+    @pmax.setter
+    def pmax(self, pmax):
+        self._pmax = pmax
+
+    @property
+    def dim(self):
+        """TODO"""  # names for dim and vector dim
+        return len(self.pmin)
+
+    @property
     def edges(self):
         r"""Region's edge lengths.
 
@@ -184,29 +203,29 @@ class Region:
         (5, 15, 20)
 
         """
-        return dfu.array2tuple(np.abs(np.subtract(self.p1, self.p2)))
+        return np.abs(self.pmax - self.pmin)
 
-    @functools.cached_property
-    def centre(self):
-        r"""Centre point.
+    @property
+    def center(self):
+        r"""Center point.
 
-        Centre point is computed as the middle point between region's points
+        Center point is computed as the middle point between region's points
         with minimum and maximum coordinates:
 
         .. math::
 
-            \mathbf{p}_\text{centre} = \frac{1}{2} (\mathbf{p}_\text{min}
+            \mathbf{p}_\text{center} = \frac{1}{2} (\mathbf{p}_\text{min}
             + \mathbf{p}_\text{max}).
 
         Returns
         -------
-        tuple (3,)
+        np.ndarray  TODO
 
-            Centre point :math:`(p_c^x, p_c^y, p_c^z)`.
+            Center point :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
-        1. Getting the centre point.
+        1. Getting the center point.
 
         >>> import discretisedfield as df
         ...
@@ -214,13 +233,13 @@ class Region:
         >>> p2 = (5, 15, 20)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> region.centre
+        >>> region.center
         (2.5, 7.5, 10.0)
 
         """
-        return dfu.array2tuple(0.5 * np.add(self.pmin, self.pmax))
+        return 0.5 * np.add(self.pmin, self.pmax)
 
-    @functools.cached_property
+    @property
     def volume(self):
         r"""Region's volume.
 
@@ -250,43 +269,7 @@ class Region:
         100.0
 
         """
-        return dfu.array2tuple(np.prod(self.edges))
-
-    def random_point(self):
-        r"""Regions random point.
-
-        The use of this function is mostly for writing tests. This method is
-        not a property and it is called as
-        ``discretisedfield.Region.random_point()``.
-
-        Returns
-        -------
-        tuple (3,)
-
-            Random point coordinates :math:`\mathbf{p}_\text{r} =
-            (p_x^\text{r}, p_y^\text{r}, p_z^\text{r})`.
-
-        Examples
-        --------
-        1. Generating a random point in the region.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (200e-9, 200e-9, 1e-9)
-        >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> region.random_point()
-        (...)
-
-        .. note::
-
-           In this example, ellipsis is used instead of an exact tuple because
-           the result differs each time
-           ``discretisedfield.Region.random_point()`` method is called.
-
-        """
-        return dfu.array2tuple(np.random.random(3) * self.edges + self.pmin)
+        return np.prod(self.edges)
 
     def __repr__(self):
         r"""Representation string.
@@ -360,6 +343,7 @@ class Region:
         True
 
         """
+        # TODO rtol, atol ?
         if isinstance(other, self.__class__):
             return np.allclose(self.pmin, other.pmin, atol=0) and np.allclose(
                 self.pmax, other.pmax, atol=0
@@ -439,6 +423,7 @@ class Region:
 
         return False
 
+    # TODO rename
     def __or__(self, other):
         """Facing surface.
 
@@ -496,13 +481,8 @@ class Region:
             msg = "Cannot find facing surface."
             raise ValueError(msg)
 
-    @functools.cached_property
-    def multiplier(self):
-        """Compute multiplier for the region."""
-        return uu.si_max_multiplier(self.edges)
-
     def __mul__(self, other):
-        """Binary ``*`` operator.
+        """Binary ``*`` operator.  TODO this summary line does not provide relevant information
 
         It can be applied only between ``discretisedfield.Region`` and
         ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
@@ -546,23 +526,24 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
 
         """
+        # TODO can we omit this check and let numpy test it?
         if not isinstance(other, numbers.Real):
-            msg = (
+            raise TypeError(
                 f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
             )
-            raise TypeError(msg)
 
         return self.__class__(
             p1=np.multiply(self.pmin, other),
             p2=np.multiply(self.pmax, other),
-            unit=self.unit,
+            units=self.units,
+            tolerance_factor=self.tolerance_factor,
         )
 
     def __rmul__(self, other):
         return self * other
 
     def __truediv__(self, other):
-        """Binary ``/`` operator.
+        """Binary ``/`` operator.  TODO: Scale region.
 
         It can be applied only between ``discretisedfield.Region`` and
         ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
@@ -606,7 +587,48 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
 
         """
+        # TODO new implementation ?
         return self * other ** (-1)
+
+    def __add__(self, other):
+        """Move region.
+
+        TODO
+        """
+        # TODO checks (?)
+        return self.__class__(
+            p1=self.pmin + other,
+            p2=self.pmax + other,
+            units=self.units,
+            tolerance_factor=self.tolerance_factor,
+        )
+
+    def __radd__(self, other):
+        self.pmin += other
+        self.pmax += other
+        return self
+
+    def __sub__(self, other):
+        """Move region.
+
+        TODO
+        """
+        # TODO checks (?)
+        return self.__class__(
+            p1=self.pmin - other,
+            p2=self.pmax - other,
+            units=self.units,
+            tolerance_factor=self.tolerance_factor,
+        )
+
+    def __rsub__(self, other):
+        """Move subregion.
+
+        TODO
+        """
+        self.pmin -= other
+        self.pmax -= other
+        return self
 
     @property
     def mpl(self):
@@ -725,8 +747,8 @@ class Region:
     def to_dict(self):
         """Convert region object to dict with items p1, p2, unit, tolerance_factor."""
         return {
-            "p1": self.p1,
-            "p2": self.p2,
-            "unit": self.unit,
+            "pmin": list(self.pmin),  # TODO list on ndarray ?
+            "pmax": list(self.pmax),  # TODO
+            "units": self.units,
             "tolerance_factor": self.tolerance_factor,
         }
