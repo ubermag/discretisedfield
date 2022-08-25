@@ -3359,9 +3359,13 @@ class Field:
             msg = "Units argument must be a string."
             raise TypeError(msg)
 
+        # TODO change this, axes could be in range x0, ... xn
+        # axes =  self.mesh.midpoints._asdict().keys()
+        # data_array_coords = self.mesh.midpoints._asdict()
         axes = ["x", "y", "z"]
 
         data_array_coords = {axis: getattr(self.mesh.midpoints, axis) for axis in axes}
+
 
         if "unit" in self.mesh.attributes:
             geo_units_dict = dict.fromkeys(axes, self.mesh.attributes["unit"])

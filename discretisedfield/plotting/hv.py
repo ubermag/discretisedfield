@@ -192,13 +192,17 @@ class Hv:
                     kdims=kdims, **scalar_kw
                 )
                 return scalar * vector
+            # TODO: probably change the numbers to ndim = array comp + 1?
+            # not really sure if I understood the meaning of this elif case
         elif len(self.array.comp) == 3 and self.array.ndim == 4:
+            # TODO change this comment (delete x, y, z bit)
             # map spatial coordinates x, y, z and vector comp names
             mapping = dict(zip(self.array.dims, range(4)))
             mapping.pop("comp")
             vdims = [
                 self.array.comp.to_numpy()[mapping.pop(kdims[i])] for i in range(2)
             ]
+            # TODO if generalize to n dimensions there will be more than one scalar dim
             scalar_dim = self.array.comp.to_numpy()[mapping.popitem()[1]]
             scalar = self.__class__(self.array.sel(comp=scalar_dim)).scalar(
                 kdims=kdims, **scalar_kw
@@ -450,7 +454,7 @@ class Hv:
         if (self.array.ndim != 4 or len(self.array.comp) != 3) and vdims is None:
             raise ValueError(
                 f"`vdims` are required for arrays with {self.array.ndim - 1} spatial"
-                " dimensions and {len(self.array.comp)} components."
+                f" dimensions and {len(self.array.comp)} components."
             )
 
         if vdims is None:
