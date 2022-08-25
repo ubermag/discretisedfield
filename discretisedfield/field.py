@@ -1120,13 +1120,11 @@ class Field:
     def __pow__(self, other):
         """Unary ``**`` operator.
 
-        This method defines the ``**`` operator for scalar (``dim=1``) fields
-        only. This operator is not defined for vector (``dim>1``) fields, and
-        ``ValueError`` is raised.
+        This method defines the ``**`` operator for fields.
 
         Parameters
         ----------
-        other : numbers.Real
+        other : numbers.Complex
 
             Value to which the field is raised.
 
@@ -1138,7 +1136,7 @@ class Field:
 
         Raises
         ------
-        ValueError, TypeError
+        TypeError
 
             If the operator cannot be applied.
 
@@ -1175,16 +1173,12 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
         >>> f = df.Field(mesh, dim=3, value=(0, -1, -3))
-        >>> f**2
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
+        >>> res = f**2
+        >>> res.mean()
+        array([0., 1., 9.])
 
         """
-        if self.dim != 1:
-            msg = f"Cannot apply ** operator on {self.dim=} field."
-            raise ValueError(msg)
-        if not isinstance(other, numbers.Real):
+        if not isinstance(other, numbers.Complex):
             msg = (
                 f"Unsupported operand type(s) for **: {type(self)=} and {type(other)=}."
             )
@@ -1192,7 +1186,7 @@ class Field:
 
         return self.__class__(
             self.mesh,
-            dim=1,
+            dim=self.dim,
             value=np.power(self.array, other),
             components=self.components,
         )
