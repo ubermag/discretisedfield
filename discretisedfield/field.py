@@ -634,23 +634,31 @@ class Field:
             self.mesh, dim=self.dim, value=orientation_array, components=self.components
         )
 
-    @property
-    def average(self):
-        """Field average.
 
-        It computes the average of the field over the entire volume of the
-        mesh. It returns a tuple with the length same as the dimension
-        (``dim``) of the field.
+    def mean(self, axis=None):
+        """Field mean.
+
+        It computes the arithmetic mean along the specified axis of the field
+        over the entire volume of the mesh. It returns a numpy array
+        containing the mean values.
+
+        Parameters
+        ----------
+        axis : None or int or tuple of ints, optional
+
+            Axis or axes along which the means are computed. The default is to
+            compute the mean of the entire volume and return an array of the
+            averaged vector components.
 
         Returns
         -------
-        tuple
+        np.array
 
-            Field average tuple, whose length equals to the field's dimension.
+            Field mean array, along specified axis.
 
         Examples
         --------
-        1. Computing the vector field average.
+        1. Computing the vector field mean.
 
         >>> import discretisedfield as df
         ...
@@ -660,17 +668,18 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
-        >>> field.average
-        (0.0, 0.0, 1.0)
+        >>> field.mean()
+        array([0., 0., 1.])
 
         2. Computing the scalar field average.
 
         >>> field = df.Field(mesh=mesh, dim=1, value=55)
-        >>> field.average
-        55.0
+        >>> field.mean()
+        array([55.])
 
         """
-        return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
+        # The implementation is faster than other options we tried
+        return np.stack([self.array[..., i].mean(axis=axis) for i in range(self.dim)], axis=-1)
 
     def __repr__(self):
         """Representation string.
