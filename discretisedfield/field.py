@@ -496,7 +496,6 @@ class Field:
 
         """
         res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
-
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
@@ -541,7 +540,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
 
         """
-        return self.norm
+        res = np.abs(self.array)
+        return self.__class__(self.mesh, dim=self.dim, value=res, units=self.units)
 
     @property
     def zero(self):
