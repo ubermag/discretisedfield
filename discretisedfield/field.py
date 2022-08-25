@@ -1524,11 +1524,11 @@ class Field:
     def __rtruediv__(self, other):
         return self ** (-1) * other
 
-    def __matmul__(self, other):
-        """Binary ``@`` operator, defined as dot product.
+    def dot(self, other):
+        """Dot product.
 
         This method computes the dot product between two fields. Both fields
-        must be three-dimensional (``dim=3``) and defined on the same mesh.
+        must have the same number of vector dimentions and defined on the same mesh.
 
         Parameters
         ----------
@@ -1561,34 +1561,29 @@ class Field:
         ...
         >>> f1 = df.Field(mesh, dim=3, value=(1, 3, 6))
         >>> f2 = df.Field(mesh, dim=3, value=(-1, -2, 2))
-        >>> (f1@f2).average
-        5.0
+        >>> f1.dot(f2).mean()
+        array([5.])
 
         """
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
-                msg = "Cannot apply operator @ on fields defined on different meshes."
+                msg = "Cannot apply the dot product on fields defined on different meshes."
                 raise ValueError(msg)
-            if self.dim != 3 or other.dim != 3:
-                msg = f"Cannot apply operator @ on {self.dim=} and {other.dim=} fields."
+            if self.dim != other.dim:
+                msg = f"Cannot apply the dot product on {self.dim=} and {other.dim=} fields."
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self @ self.__class__(
-                self.mesh, dim=3, value=other, components=self.components
-            )
-        elif isinstance(other, df.DValue):
-            return self @ other(self)
+            return self.dot(self.__class__(
+                self.mesh, dim=self.dim, value=other, components=self.components
+            ))
         else:
             msg = (
-                f"Unsupported operand type(s) for @: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for the dot product: {type(self)=} and {type(other)=}."
             )
             raise TypeError(msg)
 
-        res_array = np.einsum("ijkl,ijkl->ijk", self.array, other.array)
+        res_array = np.einsum("...l,...l->...", self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
-
-    def __rmatmul__(self, other):
-        return self @ other
 
     def __and__(self, other):
         """Binary ``&`` operator, defined as cross product.
