@@ -627,13 +627,14 @@ class Field:
             raise ValueError(msg)
 
         orientation_array = np.divide(
-            self.array, self.norm.array, where=(np.isclose(self.norm.array, 0) == False),
-            out=np.zeros_like(self.array)
+            self.array,
+            self.norm.array,
+            where=(np.isclose(self.norm.array, 0) == False),
+            out=np.zeros_like(self.array),
         )
         return self.__class__(
             self.mesh, dim=self.dim, value=orientation_array, components=self.components
         )
-
 
     def mean(self, axis=None):
         """Field mean.
@@ -679,7 +680,9 @@ class Field:
 
         """
         # The implementation is faster than other options we tried
-        return np.stack([self.array[..., i].mean(axis=axis) for i in range(self.dim)], axis=-1)
+        return np.stack(
+            [self.array[..., i].mean(axis=axis) for i in range(self.dim)], axis=-1
+        )
 
     def __repr__(self):
         """Representation string.
@@ -1407,9 +1410,12 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            if (not (self.dim == 1 or other.dim == 1)):
-                if (self.dim != other.dim):
-                    msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
+            if not (self.dim == 1 or other.dim == 1):
+                if self.dim != other.dim:
+                    msg = (
+                        f"Cannot apply operator * on {self.dim=} and"
+                        f" {other.dim=} fields."
+                    )
                     raise ValueError(msg)
             if self.mesh != other.mesh:
                 msg = "Cannot apply operator * on fields defined on different meshes."
@@ -1417,9 +1423,7 @@ class Field:
         elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(
-                self.mesh, dim=self.dim, value=other
-            )
+            return self * self.__class__(self.mesh, dim=self.dim, value=other)
         else:
             msg = (
                 f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
@@ -1501,9 +1505,12 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            if (not (self.dim == 1 or other.dim == 1)):
-                if (self.dim != other.dim):
-                    msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
+            if not (self.dim == 1 or other.dim == 1):
+                if self.dim != other.dim:
+                    msg = (
+                        f"Cannot apply operator * on {self.dim=} and"
+                        f" {other.dim=} fields."
+                    )
                     raise ValueError(msg)
             if self.mesh != other.mesh:
                 msg = "Cannot apply operator * on fields defined on different meshes."
@@ -1511,9 +1518,7 @@ class Field:
         elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other) ** (-1)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(
-                self.mesh, dim=self.dim, value=other
-            ) ** (-1)
+            return self * self.__class__(self.mesh, dim=self.dim, value=other) ** (-1)
         else:
             msg = (
                 f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
@@ -1567,18 +1572,27 @@ class Field:
         """
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
-                msg = "Cannot apply the dot product on fields defined on different meshes."
+                msg = (
+                    "Cannot apply the dot product on fields defined on different"
+                    " meshes."
+                )
                 raise ValueError(msg)
             if self.dim != other.dim:
-                msg = f"Cannot apply the dot product on {self.dim=} and {other.dim=} fields."
+                msg = (
+                    f"Cannot apply the dot product on {self.dim=} and"
+                    f" {other.dim=} fields."
+                )
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self.dot(self.__class__(
-                self.mesh, dim=self.dim, value=other, components=self.components
-            ))
+            return self.dot(
+                self.__class__(
+                    self.mesh, dim=self.dim, value=other, components=self.components
+                )
+            )
         else:
             msg = (
-                f"Unsupported operand type(s) for the dot product: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for the dot product: {type(self)=} and"
+                f" {type(other)=}."
             )
             raise TypeError(msg)
 
@@ -1636,9 +1650,11 @@ class Field:
                 msg = f"Cannot apply operator & on {self.dim=} and {other.dim=} fields."
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self.cross(self.__class__(
-                self.mesh, dim=3, value=other, components=self.components
-            ))
+            return self.cross(
+                self.__class__(
+                    self.mesh, dim=3, value=other, components=self.components
+                )
+            )
         else:
             msg = (
                 f"Unsupported operand type(s) for &: {type(self)=} and {type(other)=}."
@@ -2726,11 +2742,12 @@ class Field:
             other = self.__class__(self.mesh, dim=self.dim, value=other)
         else:
             msg = (
-                f"Unsupported operand type(s) for angle: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for angle: {type(self)=} and"
+                f" {type(other)=}."
             )
             raise TypeError(msg)
 
-        angle_array = np.arccos((self.dot(other)/(self.norm*other.norm)).array)
+        angle_array = np.arccos((self.dot(other) / (self.norm * other.norm)).array)
 
         # Place all values in [0, 2pi] range
         angle_array[angle_array < 0] += 2 * np.pi
