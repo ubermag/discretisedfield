@@ -439,8 +439,8 @@ class Field:
         can be called for obtaining the norm of the field.
 
         The field norm can be set by passing ``numbers.Real``,
-        ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
-        contains zero values, norm cannot be set and ``ValueError`` is raised.
+        ``numpy.ndarray``, or callable. If the field has contains zero values,
+        norm cannot be set and ``ValueError`` is raised.
 
         Parameters
         ----------
@@ -452,15 +452,14 @@ class Field:
         -------
         discretisedfield.Field
 
-            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+            Norm of the field.
 
         Raises
         ------
         ValueError
 
             If the norm is set with wrong type, shape, or value. In addition,
-            if the field is scalar (``dim=1``) or the field contains zero
-            values.
+            the field contains zero values.
 
         Examples
         --------
