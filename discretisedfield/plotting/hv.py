@@ -62,7 +62,7 @@ class Hv:
 
         3. If the field is a 3d vector field and defined in 3d space the in-plane and
            out-of-plane vector components are determined (guessed) automatically. A
-           scalar plot is created for the out-of-plane component and overlayed with a
+           scalar plot is created for the out-of-plane component and overlaied with a
            vector plot for the in-plane components (without coloring).
 
         4. For all other vector fields a scalar plot with a drop-down selection for the
@@ -105,7 +105,7 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Array coordinates plotted in plot x and plot y direction.
 
         vdims : List[str], optional
 
@@ -250,7 +250,7 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Array coordinates plotted in plot x and plot y direction.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
@@ -358,7 +358,7 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Array coordinates plotted in plot x and plot y direction.
 
         vdims : List[str], optional
 
@@ -595,7 +595,7 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Array coordinates plotted in plot x and plot y direction.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
