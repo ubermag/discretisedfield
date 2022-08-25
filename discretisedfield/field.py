@@ -496,20 +496,13 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
 
         """
-        if self.dim == 1:
-            res = abs(self.value)
-        else:
-            res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
+        res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
 
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
     def norm(self, val):
         if val is not None:
-            if self.dim == 1:
-                msg = f"Cannot set norm for field with dim={self.dim}."
-                raise ValueError(msg)
-
             self.array = np.divide(
                 self.array,
                 self.norm.array,
