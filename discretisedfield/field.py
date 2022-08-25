@@ -1409,20 +1409,19 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            if self.dim == 3 and other.dim == 3:
-                msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
-                raise ValueError(msg)
+            if (not (self.dim == 1 or other.dim == 1)):
+                if (self.dim != other.dim):
+                    msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
+                    raise ValueError(msg)
             if self.mesh != other.mesh:
                 msg = "Cannot apply operator * on fields defined on different meshes."
                 raise ValueError(msg)
         elif isinstance(other, numbers.Complex):
             return self * self.__class__(self.mesh, dim=1, value=other)
-        elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
+        elif isinstance(other, (tuple, list, np.ndarray)):
             return self * self.__class__(
-                self.mesh, dim=np.array(other).shape[-1], value=other
+                self.mesh, dim=self.dim, value=other
             )
-        elif isinstance(other, df.DValue):
-            return self * other(self)
         else:
             msg = (
                 f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
@@ -1430,10 +1429,10 @@ class Field:
             raise TypeError(msg)
 
         res_array = np.multiply(self.array, other.array)
-        components = self.components if self.dim == res_array.shape[-1] else None
+        components = self.components
         return self.__class__(
             self.mesh,
-            dim=res_array.shape[-1],
+            dim=self.dim,
             value=res_array,
             components=components,
         )
