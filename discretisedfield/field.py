@@ -3366,7 +3366,6 @@ class Field:
 
         data_array_coords = {axis: getattr(self.mesh.midpoints, axis) for axis in axes}
 
-
         if "unit" in self.mesh.attributes:
             geo_units_dict = dict.fromkeys(axes, self.mesh.attributes["unit"])
         else:
