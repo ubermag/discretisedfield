@@ -7,7 +7,7 @@ import pkg_resources
 import pytest
 
 from . import tools
-from .field import Field
+from .field_new import Field
 from .field_rotator import FieldRotator
 from .interact import interact
 from .line import Line
