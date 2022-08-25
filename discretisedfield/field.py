@@ -1259,7 +1259,7 @@ class Field:
                 raise ValueError(msg)
         elif self.dim == 1 and isinstance(other, numbers.Complex):
             return self + self.__class__(self.mesh, dim=self.dim, value=other)
-        elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
+        elif self.dim != 1 and isinstance(other, (tuple, list, np.ndarray)):
             return self + self.__class__(self.mesh, dim=self.dim, value=other)
         else:
             msg = (
