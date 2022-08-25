@@ -1445,7 +1445,7 @@ class Field:
 
         1. Two scalar (``dim=1``) fields,
 
-        2. A field of any dimension and ``numbers.Real``, or
+        2. A field of any dimension and ``numbers.Complex``, or
 
         3. A field of any dimension and a scalar (``dim=1``) field.
 
@@ -1454,7 +1454,7 @@ class Field:
 
         Parameters
         ----------
-        other : discretisedfield.Field, numbers.Real
+        other : discretisedfield.Field, numbers.Complex
 
             Second operand.
 
@@ -1491,18 +1491,34 @@ class Field:
 
         2. Divide vector field by a scalar.
 
-        >>> f1 = df.Field(mesh, dim=3, value=(0, 10, 5))
+        >>> f1 = df.Field(mesh, dim=3, value=(1, 10, 5))
         >>> res = f1 / 5  # discretisedfield.Field.__mul__ is called
-        >>> res.average
-        (0.0, 2.0, 1.0)
-        >>> 10 / f1  # division by a vector is not allowed
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
+        >>> res2 =10 / f1
+        >>> res2.mean()
+        array([10.,  1.,  2.])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
         """
+        if isinstance(other, self.__class__):
+            if (not (self.dim == 1 or other.dim == 1)):
+                if (self.dim != other.dim):
+                    msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
+                    raise ValueError(msg)
+            if self.mesh != other.mesh:
+                msg = "Cannot apply operator * on fields defined on different meshes."
+                raise ValueError(msg)
+        elif isinstance(other, numbers.Complex):
+            return self * self.__class__(self.mesh, dim=1, value=other) ** (-1)
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            return self * self.__class__(
+                self.mesh, dim=self.dim, value=other
+            ) ** (-1)
+        else:
+            msg = (
+                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
+            )
+            raise TypeError(msg)
         return self * other ** (-1)
 
     def __rtruediv__(self, other):
