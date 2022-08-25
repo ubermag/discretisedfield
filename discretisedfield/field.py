@@ -521,7 +521,7 @@ class Field:
         -------
         discretisedfield.Field
 
-            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+            Norm of the field.
 
         Examples
         --------
