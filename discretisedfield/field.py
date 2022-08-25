@@ -2664,15 +2664,25 @@ class Field:
         n_cells = self.mesh.n[dfu.axesdict[direction]]
         return self.integral(direction=direction) / n_cells
 
-    @property
-    def angle(self):
-        r"""In-plane angle of the vector field.
+    def angle(self, other):
+        r"""Angle between two vectors.
 
-        This method can be applied only on sliced fields, when a plane is
-        defined. This method then returns a scalar field which is an angle
-        between the in-plane compoenent of the vector field and the horizontal
-        axis. The angle is computed in radians and all values are in :math:`(0,
+        It can be applied between two ``discretisedfield.Field`` objects.
+        For a vector field, the second operand can be a vector in the form of
+        an iterable, such as ``tuple``, ``list``,
+        or ``numpy.ndarray``. If the second operand
+        is a ``discretisedfield.Field`` object, both must be defined on the
+        same mesh and have the same dimensions.
+        This method then returns a scalar field which is an angle
+        between the component of the vector field and a vector.
+        The angle is computed in radians and all values are in :math:`(0,
         2\\pi)` range.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field, numbers.Real, tuple, list, np.ndarray
+
+            Second operand.
 
         Returns
         -------
@@ -2682,13 +2692,13 @@ class Field:
 
         Raises
         ------
-        ValueError
+        ValueError, TypeError
 
-            If the field is not sliced.
+            If the operator cannot be applied.
 
         Example
         -------
-        1. Computing the angle of the field in yz-plane.
+        1. Computing the angle of the field relative to the x axis.
 
         >>> import discretisedfield as df
         >>> import numpy as np
@@ -2699,23 +2709,33 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
         ...
-        >>> abs(field.plane('z').angle.average - np.pi/2) < 1e-3
-        True
+        >>> field.angle((1, 0, 0)).mean()
+        array([1.57079633])
 
         """
-        if not self.mesh.attributes["isplane"]:
-            msg = "The field must be sliced before angle can be computed."
-            raise ValueError(msg)
+        if isinstance(other, self.__class__):
+            if self.dim != other.dim:
+                msg = f"Cannot apply operator + on {self.dim=} and {other.dim=} fields."
+                raise ValueError(msg)
+            if self.mesh != other.mesh:
+                msg = "Cannot apply operator + on fields defined on different meshes."
+                raise ValueError(msg)
+        elif self.dim == 1 and isinstance(other, numbers.Complex):
+            other = self.__class__(self.mesh, dim=self.dim, value=other)
+        elif self.dim != 1 and isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.dim, value=other)
+        else:
+            msg = (
+                f"Unsupported operand type(s) for angle: {type(self)=} and {type(other)=}."
+            )
+            raise TypeError(msg)
 
-        angle_array = np.arctan2(
-            self.array[..., self.mesh.attributes["axis2"]],
-            self.array[..., self.mesh.attributes["axis1"]],
-        )
+        angle_array = np.arccos((self.dot(other)/(self.norm*other.norm)).array)
 
         # Place all values in [0, 2pi] range
         angle_array[angle_array < 0] += 2 * np.pi
 
-        return self.__class__(self.mesh, dim=1, value=angle_array[..., np.newaxis])
+        return self.__class__(self.mesh, dim=1, value=angle_array)
 
     def write(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
