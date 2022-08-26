@@ -322,7 +322,7 @@ class Field:
         return self
 
     def __neg__(self):
-        raise NotImplementedError()
+        return -1 * self
 
     def __add__(self, other):
         if isinstance(other, self.__class__):
