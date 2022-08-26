@@ -40,6 +40,12 @@ class Field:
         else:
             vdims = [f"v{i}" for i in range(vdim)]
 
+        if units:
+            if isinstance(units, str):
+                units = [units] * vdim
+        else:
+            units = ["A/m"] * vdim
+
         cell = (pmax - pmin) / n
         coords = {
             dim: np.linspace(pmin_i + cell_i / 2, pmax_i - cell_i / 2, n_i)
@@ -55,6 +61,9 @@ class Field:
             coords=coords,
             name="field",
         )
+
+        self.units = units
+        self._mesh = mesh
 
         for dim in dims:
             if dim != "vdims":
@@ -132,17 +141,11 @@ class Field:
     @property
     def vdims(self):
         """Labels of the value dimensions."""
-        return self.data.vdims if "vdims" in self.data.dims else None
+        return tuple(self.data.vdims.data) if "vdims" in self.data.dims else None
 
     @property
     def mesh(self):
-        self.mesh = df.Mesh(
-            p1=self.pmin,
-            p2=self.pmax,
-            n=self.n,
-            subregions=self._subregions,
-            bc=self._bc,
-        )
+        return self._mesh
 
     @property
     def norm(self):
@@ -158,7 +161,18 @@ class Field:
 
     @property
     def units(self):
-        raise NotImplementedError()
+        return self._units
+
+    @units.setter
+    def units(self, units):
+        if not isinstance(units, list):
+            units = list(units)
+        if len(units) != self.nvdims:
+            raise ValueError("Wrong number of units provided")
+        for unit in units:
+            if not isinstance(unit, str):
+                raise TypeError(f"Wrong type for {unit=}; must be of type str.")
+        self._units = units
 
     def check_same_mesh(self, other):
         """Check if two Field objects are defined on the same mesh."""
@@ -173,25 +187,27 @@ class Field:
         raise NotImplementedError()
 
     def translate(self, point):
-        # TODO test
+        # TODO write tests
+        if self.mesh.subregions:
+            raise NotImplementedError("Translate does not yet support subregions.")
         return self.__class__(
-            pmin=self.pmin + point,
-            pmax=self.pmax + point,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            mesh=df.Mesh(p1=self.pmin, p2=self.pmax, n=self.n, bc=self.mesh.bc),
+            dim=self.nvdims,
+            value=self.data,
+            components=self.vdims,
         )
 
     def scale(self, factor):
-        # TODO test
+        # TODO write tests
+        if self.mesh.subregions:
+            raise NotImplementedError("Scale does not yet support subregions.")
         return self.__class__(
-            pmin=self.pmin * factor,
-            pmax=self.pmax * factor,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            mesh=df.Mesh(
+                p1=self.pmin * factor, p2=self.pmax * factor, n=self.n, bc=self.mesh.bc
+            ),
+            dim=self.vdims,
+            value=self.data,
+            components=self.vdims,
         )
 
     @property
@@ -371,8 +387,15 @@ class Field:
     def __call__(self):
         raise NotImplementedError()
 
-    def __getattr__(self):
-        raise NotImplementedError()
+    def __getattr__(self, attr):
+        if self.nvdims > 1 and attr in self.vdims:
+            attr_array = self.data[..., self.vdims.index(attr)]
+            attr_units = self.units[self.vdims.index(attr)]
+            return self.__class__(
+                mesh=self.mesh, dim=1, value=attr_array, units=attr_units
+            )
+        msg = f"Object has no attribute {attr}."
+        raise AttributeError(msg)
 
     def __getitem__(self):
         raise NotImplementedError()
