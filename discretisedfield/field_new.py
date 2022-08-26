@@ -27,8 +27,6 @@ class Field:
         else:
             dims = [f"x{i}" for i in range(len(pmin))]
 
-        data = value  # TODO fix this
-
         # TODO fix this
         # vdim = 1 if len(data.shape) == len(pmin) else data.shape[-1]
         vdim = dim
@@ -50,7 +48,7 @@ class Field:
             dims += ["vdims"]
 
         self._data = xr.DataArray(
-            _as_array(data, mesh, vdim, dtype),
+            _as_array(value, mesh, vdim, dtype),
             dims=dims,
             coords=coords,
             name="field",
@@ -59,11 +57,14 @@ class Field:
         self._mesh = mesh
         self.units = units
 
+        self.norm = norm
+
         for dim in dims:
             if dim != "vdims":
                 self.data[dim].attrs["units"] = "m"
         self.data.attrs["cell"] = cell
         self._cell = cell
+
         # self._subregions = subregions or {}  # TODO fix this
         # self._bc = bc  # TODO fix this
 
@@ -95,8 +96,11 @@ class Field:
             " `update_field_values` method."
         )
 
-    def update_field_values(self, values):
-        self._data.data = _as_array(values, self.mesh, self.vdim, self.dtype)
+    def update_field_values(self, values, dtype=None):
+        print(f"Updating with {values=}")
+        self._data.data = _as_array(
+            values, self.mesh, self.nvdims, dtype or self.data.data.dtype
+        )
 
     @property
     def pmin(self):
@@ -230,8 +234,22 @@ class Field:
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
-    def norm(self, norm):
-        raise NotImplementedError()
+    def norm(self, val):
+        if val is not None:
+            if self.nvdims == 1:
+                raise ValueError(f"Cannot set norm for scalar field. ({self.nvdims=})")
+
+            # normalise field to 1.0
+            self.data.data = np.divide(  # should we use self.__truediv__ instead?
+                self.data.data,
+                self.norm.data.data[..., np.newaxis],
+                out=np.zeros_like(self.data.data),
+                where=self.norm.data.data[..., np.newaxis] != 0.0,
+            )
+
+            # multiply field with val
+            val_array = _as_array(val, self.mesh, dim=1, dtype=None)
+            self.data.data *= val_array[..., np.newaxis]
 
     @property
     def orientation(self):
