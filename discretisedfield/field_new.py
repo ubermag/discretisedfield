@@ -158,7 +158,7 @@ class Field:
 
     @units.setter
     def units(self, units):
-        if not isinstance(units, str):
+        if units is not None and not isinstance(units, str):
             raise TypeError(f"Wrong type for {units=}; must be of type str.")
         self._units = units
 
