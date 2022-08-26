@@ -452,29 +452,46 @@ class Field:
     def ifftn(self):
         # TODO: I actually think in the last version you were already correcting the
         #  shift, so we should inclue true_amplitude, true_phase = True
-        return xrft.ifft(self.data, dim=[*self.dims])
+        ift_xarray = xrft.ifft(
+            self.data, dim=[*self.dims], true_amplitude=True, true_phase=True
+        )
+        return self.from_xarray(ift_xarray)
 
     @property
     def rfftn(self):
         # TODO: I actually think in the last version you were already correcting the
         #  shift, so we should inclue true_amplitude, true_phase = True
-        return xrft.fft(self.data, dim=[*self.dims], real_dim=[*self.dims])
+        rft_xarray = xrft.fft(
+            self.data,
+            dim=[*self.dims],
+            real_dim=[*self.dims],
+            true_amplitude=True,
+            true_phase=True,
+        )
+        return self.from_xarray(rft_xarray)
 
     @property
     def irfftn(self):
         # TODO: I actually think in the last version you were already correcting the
         #  shift, so we should inclue true_amplitude, true_phase = True
-        return xrft.ifft(self.data, dim=[*self.dims], real_dim=[*self.dims])
+        irft_xarray = xrft.ifft(
+            self.data,
+            dim=[*self.dims],
+            real_dim=[*self.dims],
+            true_amplitude=True,
+            true_phase=True,
+        )
+        return self.from_xarray(irft_xarray)
 
     # complex values
 
     @property
     def real(self):
-        raise NotImplementedError()
+        return self.from_xarray(self.data.real)
 
     @property
     def imag(self):
-        raise NotImplementedError()
+        return self.from_xarray(self.data.imag)
 
     @property
     def phase(self):
@@ -519,8 +536,17 @@ class Field:
     def __lshift__(self):  # -> concat
         raise NotImplementedError()
 
-    def allclose(self):
-        raise NotImplementedError()
+    def allclose(self, other, rtol=1e-5, atol=1e-8):
+        if not isinstance(other, self.__class__):
+            msg = (
+                "Cannot apply allclose method between "
+                f"{type(self)=} and {type(other)=} objects."
+            )
+            raise TypeError(msg)
+        if self.check_same_mesh(other) and self.vdims == other.vdims:
+            return np.allclose(self.data.data, other.data.data, rtol=rtol, atol=atol)
+        else:
+            return False
 
     def line(self):
         raise NotImplementedError()
