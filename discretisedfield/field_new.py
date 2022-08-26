@@ -1,3 +1,7 @@
+import collections
+import functools
+import numbers
+
 import numpy as np
 import xarray as xr
 
@@ -45,8 +49,12 @@ class Field:
             coords["vdims"] = vdims
 
         self.data = xr.DataArray(
-            data, dims=dims + ["vdims"], coords=coords, name="field"
+            _as_array(val=data, mesh=mesh, dim=vdim, dtype=dtype),
+            dims=dims + ["vdims"],
+            coords=coords,
+            name="field",
         )
+
         for dim in dims:
             if dim != "vdims":
                 self.data[dim].attrs["units"] = "m"
@@ -414,3 +422,91 @@ class Field:
 
     def _repr_html_(self):
         return self.data._repr_html_()
+
+
+@functools.singledispatch
+def _as_array(val, mesh, dim, dtype):
+    raise TypeError("Unsupported type {type(val)}.")
+
+
+# to avoid str being interpreted as iterable
+@_as_array.register(str)
+def _(val, mesh, dim, dtype):
+    raise TypeError("Unsupported type {type(val)}.")
+
+
+@_as_array.register(numbers.Complex)
+@_as_array.register(collections.abc.Iterable)
+def _(val, mesh, dim, dtype):
+    if isinstance(val, numbers.Complex) and dim > 1 and val != 0:
+        raise ValueError(
+            f"Wrong dimension 1 provided for value; expected dimension is {dim}"
+        )
+    dtype = dtype or max(np.asarray(val).dtype, np.float64)
+    return np.full((*mesh.n, dim), val, dtype=dtype)
+
+
+@_as_array.register(collections.abc.Callable)
+def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
+    array = np.empty((*mesh.n, dim), dtype=dtype)
+    for index, point in zip(mesh.indices, mesh):
+        array[index] = val(point)
+    return array
+
+
+@_as_array.register(Field)
+def _(val, mesh, dim, dtype):
+    if mesh.region not in val.mesh.region:
+        raise ValueError(
+            f"{val.mesh.region} of the provided field does not "
+            f"contain {mesh.region} of the field that is being "
+            "created."
+        )
+    value = (
+        val.to_xarray()
+        .sel(
+            x=mesh.midpoints.x, y=mesh.midpoints.y, z=mesh.midpoints.z, method="nearest"
+        )
+        .data
+    )
+    if dim == 1:
+        # xarray dataarrays for scalar data are three dimensional
+        return value.reshape(mesh.n + (-1,))
+    return value
+
+
+@_as_array.register(dict)
+def _(val, mesh, dim, dtype):
+    # will only be called on user input
+    # dtype must be specified by the user for complex values
+    dtype = dtype or np.float64
+    fill_value = (
+        val["default"] if "default" in val and not callable(val["default"]) else np.nan
+    )
+    array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
+
+    for subregion in reversed(mesh.subregions.keys()):
+        # subregions can overlap, first subregion takes precedence
+        try:
+            submesh = mesh[subregion]
+            subval = val[subregion]
+        except KeyError:
+            continue
+        else:
+            slices = mesh.region2slices(submesh.region)
+            array[slices] = _as_array(subval, submesh, dim, dtype)
+
+    if np.any(np.isnan(array)):
+        # not all subregion keys specified and 'default' is missing or callable
+        if "default" not in val:
+            raise KeyError(
+                "Key 'default' required if not all subregion keys are specified."
+            )
+        subval = val["default"]
+        for ix, iy, iz in np.argwhere(np.isnan(array[..., 0])):
+            # only spatial indices required -> array[..., 0]
+            array[ix, iy, iz] = subval(mesh.index2point((ix, iy, iz)))
+
+    return array
