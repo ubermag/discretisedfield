@@ -73,8 +73,59 @@ class Field:
     #    self._subregions = subregions
 
     @classmethod
-    def from_xarray(cls):  # -> still required (?)
-        raise NotImplementedError()
+    def from_xarray(cls, xa: xr.DataArray):
+
+        if not isinstance(xa, xr.DataArray):
+            raise TypeError("Argument must be a xr.DataArray.")
+
+        if len(xa.coords) != xa.data.ndim:
+            raise AttributeError(
+                "The xr.DataArray must have the same number of coordinates as"
+                " the axes of underlying data array."
+            )
+
+        for i in xa.coords.dims[:-1]:
+            if xa[i].data.size > 1 and not np.allclose(
+                np.diff(xa[i].data), np.diff(xa[i].data).mean()
+            ):
+                raise ValueError(f"Coordinates of {i} must be equally spaced.")
+
+        try:
+            cell = xa.attrs["cell"]
+        except KeyError:
+            if any(len_ == 1 for len_ in xa.data.shape[:-1]):
+                raise KeyError(
+                    "DataArray must have a 'cell' attribute if any "
+                    "of the geometric directions has a single cell."
+                ) from None
+            cell = [np.diff(xa[i].data).mean() for i in xa.coords.dims[:-1]]
+
+        p1 = (
+            xa.attrs["p1"]
+            if "p1" in xa.attrs
+            else [xa[i].values[0] - c / 2 for i, c in zip(xa.coords.dims[:-1], cell)]
+        )
+        p2 = (
+            xa.attrs["p2"]
+            if "p2" in xa.attrs
+            else [xa[i].values[-1] + c / 2 for i, c in zip(xa.coords.dims[:-1], cell)]
+        )
+
+        # if any("units" not in xa[i].attrs for i in xa.coords.dims[:-1]):
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)  # TODO: Check for units!
+        # else:
+        #     mesh = df.Mesh(
+        #         p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
+        #     )
+
+        comp = (
+            getattr(xa, xa.coords.dims[-1]).data
+            if len(getattr(xa, xa.coords.dims[-1]).data) == xa.data.shape[-1]
+            else None
+        )
+        val = xa.data
+        dim = val.shape[-1]
+        return cls(mesh=mesh, dim=dim, value=val, components=comp, dtype=xa.data.dtype)
 
     @classmethod
     def coordinate_field(cls):
