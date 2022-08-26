@@ -425,18 +425,18 @@ class TestField:
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
 
-        assert np.all(f.norm.value == 2 * np.sqrt(3))
-        assert np.all(f.norm.array == 2 * np.sqrt(3))
-        assert np.all(f.array == 2)
+        assert np.all(f.norm.data == 2 * np.sqrt(3))
+        assert np.all(f.norm.data.data == 2 * np.sqrt(3))
+        assert np.all(f.data == 2)
 
         f.norm = 1
-        assert np.all(f.norm.value == 1)
-        assert np.all(f.norm.array == 1)
-        assert np.all(f.array == 1 / np.sqrt(3))
+        assert np.all(f.norm.data == 1)
+        assert np.all(f.norm.data.data == 1)
+        assert np.all(f.data == 1 / np.sqrt(3))
 
-        f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.norm.value, np.ndarray)
-        assert not np.all(f.norm.value == 1)
+        f.data[0, 0, 0, 0] = 3
+        assert isinstance(f.norm.data, np.ndarray)
+        assert not np.all(f.norm.data == 1)
 
         for mesh in self.meshes:
             for value, dtype in self.iters + self.vfuncs:
