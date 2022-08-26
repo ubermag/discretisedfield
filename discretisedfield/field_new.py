@@ -389,34 +389,41 @@ class Field:
                 f" {type(other)=}."
             )
             raise TypeError(msg)
-        return self.__class__(
-            self.mesh,
-            dim=1,
-            value=np.einsum("...l,...l->...", self.data, self.data)[..., np.newaxis],
-        )
+        if self.nvdims == 1:
+            return self.__class__(
+                self.mesh,
+                dim=1,
+                value=self.data * other.data,
+            )
+        else:
+            return self.__class__(
+                self.mesh,
+                dim=1,
+                value=np.einsum("...l,...l->...", self.data, other.data),
+            )
 
     def cross(self, other):  # -> cross
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
                 msg = (
-                    "Cannot apply the dot product on fields defined on different"
+                    "Cannot apply the cross product on fields defined on different"
                     " meshes."
                 )
                 raise ValueError(msg)
             if self.nvdims != other.nvdims:
                 msg = (
-                    f"Cannot apply the dot product on {self.nvdims=} and"
+                    f"Cannot apply the cross product on {self.nvdims=} and"
                     f" {other.nvdims=} fields."
                 )
                 raise ValueError(msg)
             other = other.data
-        elif isinstance(other, xr.core.dataarray.DataArray):
+        elif isinstance(other, xr.DataArray):
             other = other
         elif isinstance(other, (tuple, list, np.ndarray)):
             other = self.__class__(self.mesh, dim=self.nvdims, value=other).data
         else:
             msg = (
-                f"Unsupported operand type(s) for the dot product: {type(self)=} and"
+                f"Unsupported operand type(s) for the cross product: {type(self)=} and"
                 f" {type(other)=}."
             )
             raise TypeError(msg)
