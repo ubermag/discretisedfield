@@ -529,12 +529,40 @@ class Field:
     def integral(self):
         raise NotImplementedError()
 
-    @property
-    def angle(self):  # -> method angle(vector)
-        raise NotImplementedError()
+    def angle(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+        elif self.nvdims == 1 and isinstance(other, numbers.Complex):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other)
+        elif self.nvdims != 1 and isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other)
+        else:
+            msg = (
+                f"Unsupported operand type(s) for angle: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
 
+        angle_array = np.arccos((self.dot(other) / (self.norm * other.norm)).data)
+
+        # Place all values in [0, 2pi] range
+        angle_array[angle_array < 0] += 2 * np.pi
+
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=angle_array,
+            units=self.units,
+        )
+
+    @property
     def average(self):  # -> mean
-        raise NotImplementedError()
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.mean(dim=self.dims),
+            units=self.units,
+        )
 
     # other methods
 
