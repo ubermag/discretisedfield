@@ -233,28 +233,25 @@ class Field:
             raise TypeError(f"Wrong type for {units=}; must be of type str.")
         self._units = units
 
-    def check_same_mesh(self, other):
+    def is_same_mesh(self, other, tolerance_factor=1e-5):
         """Check if two Field objects are defined on the same mesh."""
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
         if self.dims != other.dims:
             return False
         for dim in self.dims:
-            print(dim)
-            print(self.data[dim].data)
-            print(other.data[dim].data)
             if len(self.data[dim]) != len(other.data[dim]):
                 # change absolute tolerance to a tolerance relative to the cell size
                 # to take into account the overall scale
                 if not np.allclose(
                     self.data[dim],
                     other.data[dim],
-                    atol=self.cell[self.dims.index(dim)] * 1e-5,
+                    atol=self.cell[self.dims.index(dim)] * tolerance_factor,
                 ):
                     return False
         return True
 
-    def check_same_vectorspace(self, other):
+    def is_same_vectorspace(self, other):
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
         return self.vdims == other.vdims
