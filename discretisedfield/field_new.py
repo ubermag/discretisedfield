@@ -540,17 +540,14 @@ def _(val, mesh, dim, dtype):
             f"Wrong dimension 1 provided for value; expected dimension is {dim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    if dim > 1:
-        return np.full((*mesh.n, dim), val, dtype=dtype)
-    else:
-        return np.full(mesh.n, val, dtype=dtype)
+    return np.full(mesh.n if dim == 1 else (*mesh.n, dim), val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
 def _(val, mesh, dim, dtype):
     # will only be called on user input
     # dtype must be specified by the user for complex values
-    array = np.empty((*mesh.n, dim), dtype=dtype)
+    array = np.empty(mesh.n if dim == 1 else (*mesh.n, dim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
         array[index] = val(point)
     return array
@@ -564,16 +561,9 @@ def _(val, mesh, dim, dtype):
             f"contain {mesh.region} of the field that is being "
             "created."
         )
-    value = (
-        val.to_xarray()
-        .sel(
-            x=mesh.midpoints.x, y=mesh.midpoints.y, z=mesh.midpoints.z, method="nearest"
-        )
-        .data
-    )
-    if dim == 1:
-        # xarray dataarrays for scalar data are three dimensional
-        return value.reshape(mesh.n + (-1,))
+    value = val.data.sel(
+        x=mesh.midpoints.x, y=mesh.midpoints.y, z=mesh.midpoints.z, method="nearest"
+    ).data
     return value
 
 
@@ -585,7 +575,7 @@ def _(val, mesh, dim, dtype):
     fill_value = (
         val["default"] if "default" in val and not callable(val["default"]) else np.nan
     )
-    array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
+    array = np.full(mesh.n if dim == 1 else (*mesh.n, dim), fill_value, dtype=dtype)
 
     for subregion in reversed(mesh.subregions.keys()):
         # subregions can overlap, first subregion takes precedence
