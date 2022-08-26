@@ -132,8 +132,16 @@ class Field:
         return cls(mesh=mesh, dim=dim, value=val, components=comp, dtype=xa.data.dtype)
 
     @classmethod
-    def coordinate_field(cls):
-        raise NotImplementedError()
+    def coordinate_field(cls, mesh):
+        field = cls(mesh, dim=mesh.dim)
+        dim_midpoints_list = [
+            getattr(mesh.midpoints, mesh_dim) for mesh_dim in mesh.dimensions
+        ]
+        dim_points_list = np.meshgrid(*dim_midpoints_list, indexing="ij")
+        for i in range(mesh.dim):
+            field.data.data[..., i] = dim_points_list[i]
+
+        return field
 
     @property
     def pmin(self):
