@@ -424,10 +424,11 @@ class Field:
                     " meshes."
                 )
                 raise ValueError(msg)
-            if self.nvdims != other.nvdims:
+            if self.nvdims != 3 or other.nvdims != 3:
                 msg = (
                     f"Cannot apply the cross product on {self.nvdims=} and"
-                    f" {other.nvdims=} fields."
+                    f" {other.nvdims=} fields. The cross product is only supported on"
+                    " field with 3 vector dimentions."
                 )
                 raise ValueError(msg)
             other = other.data
@@ -445,7 +446,7 @@ class Field:
         return self.__class__(
             self.mesh,
             dim=self.nvdims,
-            value=xr.cross(self.data, other, dim="vdims"),
+            value=np.cross(self.data.data, other.data),
             units=self.units,
         )
 
