@@ -47,13 +47,17 @@ class Field:
 
         if vdim > 1:
             coords["vdims"] = vdims
+            dims += ["vdims"]
 
         self.data = xr.DataArray(
             _as_array(data, mesh, vdim, dtype),
-            dims=dims + ["vdims"],
+            dims=dims,
             coords=coords,
             name="field",
         )
+
+        self._mesh = mesh
+        self.units = units
 
         for dim in dims:
             if dim != "vdims":
@@ -182,21 +186,85 @@ class Field:
     @property
     def vdims(self):
         """Labels of the value dimensions."""
-        return self.data.vdims if "vdims" in self.data.dims else None
+        return tuple(self.data.vdims.data) if "vdims" in self.data.dims else None
 
     @property
     def mesh(self):
-        self.mesh = df.Mesh(
-            p1=self.pmin,
-            p2=self.pmax,
-            n=self.n,
-            subregions=self._subregions,
-            bc=self._bc,
-        )
+        return self._mesh
 
     @property
     def norm(self):
-        raise NotImplementedError()
+        """Norm of the field.
+
+        Computes the norm of the field and returns ``discretisedfield.Field``
+        with ``dim=1``. Norm of a scalar field is interpreted as an absolute
+        value of the field. Alternatively, ``discretisedfield.Field.__abs__``
+        can be called for obtaining the norm of the field. TODO
+
+        The field norm can be set by passing ``numbers.Real``,
+        ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
+        contains zero values, norm cannot be set and ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        numbers.Real, numpy.ndarray, callable
+
+            Norm value.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+
+        Raises
+        ------
+        ValueError
+
+            If the norm is set with wrong type, shape, or value. In addition,
+            if the field is scalar (``dim=1``) or the field contains zero
+            values.
+
+        Examples
+        --------
+        1. Manipulating the field norm.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (1, 1, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
+        >>> field.norm
+        Field(...)
+        >>> field.norm.average
+        1.0
+        >>> field.norm = 2
+        >>> field.average
+        (0.0, 0.0, 2.0)
+        >>> field.value = (1, 0, 0)
+        >>> field.norm.average
+        1.0
+
+        Set the norm for a zero field.
+        >>> field.value = 0
+        >>> field.average
+        (0.0, 0.0, 0.0)
+        >>> field.norm = 1
+        >>> field.average
+        (0.0, 0.0, 0.0)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
+
+        """
+        if self.nvdims == 1:
+            res = abs(self.data)
+        else:
+            res = np.linalg.norm(self.data, axis=-1)
+
+        return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
     def norm(self, norm):
@@ -208,7 +276,13 @@ class Field:
 
     @property
     def units(self):
-        raise NotImplementedError()
+        return self._units
+
+    @units.setter
+    def units(self, units):
+        if units is not None and not isinstance(units, str):
+            raise TypeError(f"Wrong type for {units=}; must be of type str.")
+        self._units = units
 
     def check_same_mesh(self, other):
         """Check if two Field objects are defined on the same mesh."""
@@ -223,25 +297,27 @@ class Field:
         raise NotImplementedError()
 
     def translate(self, point):
-        # TODO test
+        # TODO write tests
+        if self.mesh.subregions:
+            raise NotImplementedError("Translate does not yet support subregions.")
         return self.__class__(
-            pmin=self.pmin + point,
-            pmax=self.pmax + point,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            mesh=df.Mesh(p1=self.pmin, p2=self.pmax, n=self.n, bc=self.mesh.bc),
+            dim=self.nvdims,
+            value=self.data,
+            components=self.vdims,
         )
 
     def scale(self, factor):
-        # TODO test
+        # TODO write tests
+        if self.mesh.subregions:
+            raise NotImplementedError("Scale does not yet support subregions.")
         return self.__class__(
-            pmin=self.pmin * factor,
-            pmax=self.pmax * factor,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            mesh=df.Mesh(
+                p1=self.pmin * factor, p2=self.pmax * factor, n=self.n, bc=self.mesh.bc
+            ),
+            dim=self.vdims,
+            value=self.data,
+            components=self.vdims,
         )
 
     @property
@@ -413,8 +489,14 @@ class Field:
     def __call__(self):
         raise NotImplementedError()
 
-    def __getattr__(self):
-        raise NotImplementedError()
+    def __getattr__(self, attr):
+        if self.nvdims > 1 and attr in self.vdims:
+            attr_array = self.data[..., self.vdims.index(attr)]
+            return self.__class__(
+                mesh=self.mesh, dim=1, value=attr_array, units=self.units
+            )
+        msg = f"Object has no attribute {attr}."
+        raise AttributeError(msg)
 
     def __getitem__(self):
         raise NotImplementedError()
@@ -494,7 +576,10 @@ def _(val, mesh, dim, dtype):
             f"Wrong dimension 1 provided for value; expected dimension is {dim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    return np.full((*mesh.n, dim), val, dtype=dtype)
+    if dim > 1:
+        return np.full((*mesh.n, dim), val, dtype=dtype)
+    else:
+        return np.full(mesh.n, val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
