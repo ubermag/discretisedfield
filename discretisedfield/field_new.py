@@ -557,12 +557,7 @@ class Field:
 
     @property
     def average(self):  # -> mean
-        return self.__class__(
-            self.mesh,
-            dim=self.nvdims,
-            value=self.data.mean(dim=self.dims),
-            units=self.units,
-        )
+        return self.data.mean(dim=self.dims).data
 
     # other methods
 
