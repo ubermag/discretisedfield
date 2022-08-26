@@ -5,8 +5,6 @@ import numbers
 import numpy as np
 import xarray as xr
 
-import discretisedfield as df
-
 
 class Field:
     def __init__(
@@ -62,6 +60,7 @@ class Field:
         )
 
         self.units = units
+        self._mesh = mesh
 
         for dim in dims:
             if dim != "vdims":
@@ -143,13 +142,7 @@ class Field:
 
     @property
     def mesh(self):
-        self.mesh = df.Mesh(
-            p1=self.pmin,
-            p2=self.pmax,
-            n=self.n,
-            subregions=self._subregions,
-            bc=self._bc,
-        )
+        return self._mesh
 
     @property
     def norm(self):
