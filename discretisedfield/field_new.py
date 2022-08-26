@@ -309,8 +309,31 @@ class Field:
             self.mesh, dim=self.nvdims, value=self.data**other, units=self.units
         )
 
-    def __matmul__(self):  # -> dot
-        raise NotImplementedError()
+    def dot(self, other):  # -> dot
+        if isinstance(other, self.__class__):
+            if self.mesh != other.mesh:
+                msg = (
+                    "Cannot apply the dot product on fields defined on different"
+                    " meshes."
+                )
+                raise ValueError(msg)
+            if self.nvdims != other.nvdims:
+                msg = (
+                    f"Cannot apply the dot product on {self.nvdims=} and"
+                    f" {other.nvdims=} fields."
+                )
+                raise ValueError(msg)
+        else:
+            msg = (
+                f"Unsupported operand type(s) for the dot product: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+        return self.__class__(
+            self.mesh,
+            dim=1,
+            value=np.einsum("...l,...l->...", self.data, self.data)[..., np.newaxis],
+        )
 
     def __and__(self):  # -> cross
         raise NotImplementedError()
