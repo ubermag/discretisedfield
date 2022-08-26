@@ -20,7 +20,7 @@ class Field:
 
         dims = None  # TODO remove this
 
-        if dims:
+        if dims is not None:
             assert len(pmin) == len(dims)
         elif len(pmin) == 3:  # TODO remove this
             dims = ["x", "y", "z"]
@@ -34,7 +34,7 @@ class Field:
         vdim = dim
 
         vdims = components  # TODO fix this
-        if vdims:
+        if vdims is not None:
             assert len(vdims) == vdim
         else:
             vdims = [f"v{i}" for i in range(vdim)]
