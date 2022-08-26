@@ -41,9 +41,9 @@ class Field:
 
         if units:
             if isinstance(units, str):
-                units = [units] * len(dims)
+                units = [units] * vdim
         else:
-            units = ["A/m"] * len(vdim)
+            units = ["A/m"] * vdim
 
         cell = (pmax - pmin) / n
         coords = {
