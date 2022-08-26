@@ -49,7 +49,7 @@ class Field:
             coords["vdims"] = vdims
 
         self.data = xr.DataArray(
-            _as_array(val=data, mesh=mesh, dim=vdim, dtype=dtype),
+            _as_array(data, mesh, vdim, dtype),
             dims=dims + ["vdims"],
             coords=coords,
             name="field",
