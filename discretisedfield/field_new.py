@@ -333,8 +333,14 @@ class Field:
             self.mesh, dim=self.nvdims, value=self.data + other, units=self.units
         )
 
-    def __sub__(self):
-        raise NotImplementedError()
+    def __sub__(self, other):
+        if isinstance(other, self.__class__):
+            other = other.data
+        # TODO Could have nicer error mesasges for vdims and mesh checking
+
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data - other, units=self.units
+        )
 
     def __mul__(self, other):
         if isinstance(other, self.__class__):
