@@ -41,10 +41,8 @@ class Field:
                 self.data[dim].attrs["units"] = "m"
         self.data.attrs["cell"] = cell
         self._cell = cell
-        # self.subregions = subregions or {}
-        self.mesh = df.Mesh(
-            p1=self.pmin, p2=self.pmax, n=self.n, subregions=subregions, bc=bc
-        )
+        self._subregions = subregions or {}
+        self._bc = bc
 
     # @property
     # def subregions(self):
@@ -54,6 +52,10 @@ class Field:
     # def subregions(self, subregions):
     #    # checks
     #    self._subregions = subregions
+
+    @classmethod
+    def from_xarray(cls):  # -> still required (?)
+        raise NotImplementedError()
 
     @classmethod
     def coordinate_field(cls):
@@ -110,18 +112,24 @@ class Field:
     @property
     def vdims(self):
         """Labels of the value dimensions."""
-        return len(self.data.vdims) if "vdims" in self.data.dims else None
-
-    @property
-    def components(self):  # -> delete (?)
-        raise NotImplementedError()
+        return self.data.vdims if "vdims" in self.data.dims else None
 
     @property
     def mesh(self):
-        raise NotImplementedError()
+        self.mesh = df.Mesh(
+            p1=self.pmin,
+            p2=self.pmax,
+            n=self.n,
+            subregions=self._subregions,
+            bc=self._bc,
+        )
 
     @property
     def norm(self):
+        raise NotImplementedError()
+
+    @norm.setter
+    def norm(self, norm):
         raise NotImplementedError()
 
     @property
@@ -145,6 +153,7 @@ class Field:
         raise NotImplementedError()
 
     def translate(self, point):
+        # TODO test
         return self.__class__(
             pmin=self.pmin + point,
             pmax=self.pmax + point,
@@ -155,6 +164,7 @@ class Field:
         )
 
     def scale(self, factor):
+        # TODO test
         return self.__class__(
             pmin=self.pmin * factor,
             pmax=self.pmax * factor,
@@ -325,16 +335,12 @@ class Field:
     def angle(self):  # -> method angle(vector)
         raise NotImplementedError()
 
-    @property
     def average(self):  # -> mean
         raise NotImplementedError()
 
     # other methods
 
     def __call__(self):
-        raise NotImplementedError()
-
-    def __eq__(self):
         raise NotImplementedError()
 
     def __getattr__(self):
@@ -352,23 +358,16 @@ class Field:
     def allclose(self):
         raise NotImplementedError()
 
-    @classmethod
-    def from_xarray(cls):  # -> still required (?)
-        raise NotImplementedError()
-
     def line(self):
         raise NotImplementedError()
 
     def pad(self):
         raise NotImplementedError()
 
-    def plane(self):  # -> delete
-        raise NotImplementedError()
-
-    def project(self):  # -> delete
-        raise NotImplementedError()
-
     def to_xarray(self):  # -> still required (?)
+        raise NotImplementedError()
+
+    def plane(self):
         raise NotImplementedError()
 
     # io and external data structures
@@ -376,10 +375,10 @@ class Field:
     def to_vtk(self):
         raise NotImplementedError()
 
-    def fromfile(self):  # -> from_file
+    def from_file(self):
         raise NotImplementedError()
 
-    def write(self):  # -> to_file
+    def to_file(self):  # the old write method
         raise NotImplementedError()
 
     # plotting
@@ -396,16 +395,11 @@ class Field:
     def k3d(self):
         raise NotImplementedError()
 
-    @property
-    def value(self):  # -> delete this method
-        raise NotImplementedError()
-
-    @property
-    def zero(self):  # -> delete this method
+    def to_numpy(self):
         raise NotImplementedError()
 
     def __repr__(self):
-        return repr(self.data) + "\ncell:" + str(self.cell)
+        return repr(self.data)
 
     def _repr_html_(self):
         return self.data._repr_html_()
