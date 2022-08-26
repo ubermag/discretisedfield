@@ -327,6 +327,9 @@ class Field:
     # mathematical operations
 
     def __abs__(self):
+        return self.__class__(
+            self.mesh, dim=self.dim, value=np.abs(self.data), units=self.units
+        )
         raise NotImplementedError()
 
     def __pos__(self):
