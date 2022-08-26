@@ -259,7 +259,7 @@ class Field:
         )
 
     def __pos__(self):
-        raise NotImplementedError()
+        return self
 
     def __neg__(self):
         raise NotImplementedError()
