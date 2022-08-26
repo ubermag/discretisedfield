@@ -143,7 +143,77 @@ class Field:
 
     @property
     def norm(self):
-        raise NotImplementedError()
+        """Norm of the field.
+
+        Computes the norm of the field and returns ``discretisedfield.Field``
+        with ``dim=1``. Norm of a scalar field is interpreted as an absolute
+        value of the field. Alternatively, ``discretisedfield.Field.__abs__``
+        can be called for obtaining the norm of the field. TODO
+
+        The field norm can be set by passing ``numbers.Real``,
+        ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
+        contains zero values, norm cannot be set and ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        numbers.Real, numpy.ndarray, callable
+
+            Norm value.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+
+        Raises
+        ------
+        ValueError
+
+            If the norm is set with wrong type, shape, or value. In addition,
+            if the field is scalar (``dim=1``) or the field contains zero
+            values.
+
+        Examples
+        --------
+        1. Manipulating the field norm.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (1, 1, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
+        >>> field.norm
+        Field(...)
+        >>> field.norm.average
+        1.0
+        >>> field.norm = 2
+        >>> field.average
+        (0.0, 0.0, 2.0)
+        >>> field.value = (1, 0, 0)
+        >>> field.norm.average
+        1.0
+
+        Set the norm for a zero field.
+        >>> field.value = 0
+        >>> field.average
+        (0.0, 0.0, 0.0)
+        >>> field.norm = 1
+        >>> field.average
+        (0.0, 0.0, 0.0)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
+
+        """
+        if self.nvdims == 1:
+            res = abs(self.data)
+        else:
+            res = np.linalg.norm(self.data, axis=-1)
+
+        return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
     def norm(self, norm):
