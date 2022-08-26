@@ -435,24 +435,30 @@ class TestField:
         assert np.all(f.data == 1 / np.sqrt(3))
 
         f.data[0, 0, 0, 0] = 3
-        assert isinstance(f.norm.data, np.ndarray)
+        assert isinstance(f.norm.data.data, np.ndarray)
+        assert isinstance(f.norm.data, xr.DataArray)
         assert not np.all(f.norm.data == 1)
 
         for mesh in self.meshes:
             for value, dtype in self.iters + self.vfuncs:
+                print(f"Testing for {value=} and {dtype=}")
                 for norm_value in [1, 2.1, 50, 1e-3, np.pi]:
+                    print(f"Testing for norm_value={norm_value}")
                     f = df.Field(mesh, dim=3, value=value, norm=norm_value, dtype=dtype)
 
-                    # TODO: Why is this included?
-                    # Compute norm.
-                    norm = f.array[..., 0] ** 2
-                    norm += f.array[..., 1] ** 2
-                    norm += f.array[..., 2] ** 2
-                    norm = np.sqrt(norm)
+                    # # TODO: Why is this included?
+                    # # Compute norm.
+                    # norm = f.data[..., 0] ** 2
+                    # norm += f.data[..., 1] ** 2
+                    # norm += f.data[..., 2] ** 2
+                    # norm = np.sqrt(norm)
 
-                    assert norm.shape == f.mesh.n
-                    assert f.norm.array.shape == (*f.mesh.n, 1)
-                    assert np.all(abs(f.norm.array - norm_value) < 1e-12)
+                    # assert norm.shape == f.mesh.n
+                    assert f.norm.data.shape == f.mesh.n
+                    print(
+                        f"max deviation is {float(abs(f.norm.data - norm_value).max())}"
+                    )
+                    assert np.all(abs(f.norm.data - norm_value) < 1e-12)
 
         # Exception
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
@@ -468,13 +474,13 @@ class TestField:
 
         f = df.Field(mesh, dim=3)
 
-        f.value = (0, 3, 0)
+        f.update_field_values = (0, 3, 0)
         f.norm = 1
-        assert np.all(f.norm.array == 1)
+        assert np.all(f.norm.data == 1)
 
         f.value = (0, 2, 0)
         assert np.all(f.norm.value != 1)
-        assert np.all(f.norm.array == 2)
+        assert np.all(f.norm.data == 2)
 
     def test_norm_zero_field(self):
         p1 = (0, 0, 0)
@@ -484,7 +490,7 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=(0, 0, 0))
         f.norm = 1  # Does not change the norm of zero field
-        assert np.all(f.norm.array == 0)
+        assert np.all(f.norm.data == 0)
 
     def test_zero(self):
         p1 = (0, 0, 0)
@@ -497,14 +503,14 @@ class TestField:
 
         assert f.mesh == zf.mesh
         assert f.dim == zf.dim
-        assert not np.any(zf.array)
+        assert not np.any(zf.data)
 
         f = df.Field(mesh, dim=3, value=(5, -7, 1e3))
         zf = f.zero
 
         assert f.mesh == zf.mesh
         assert f.dim == zf.dim
-        assert not np.any(zf.array)
+        assert not np.any(zf.data)
 
     def test_orientation(self):
         p1 = (-5e-9, -5e-9, -5e-9)
@@ -1059,7 +1065,7 @@ class TestField:
             + 1 / f2.z**2
             + f2 @ f2
         )
-        assert np.all(res.array == 21)
+        assert np.all(res.data == 21)
 
         res = 1 + f1 + 0 * f2.x - 3 * f2.y / 3
         assert res.average == 3
@@ -1072,7 +1078,7 @@ class TestField:
         field = df.Field(mesh, dim=1, value=1)
 
         pf = field.pad({"x": (1, 1)}, mode="constant")  # zeros padded
-        assert pf.array.shape == (12, 8, 2, 1)
+        assert pf.data.shape == (12, 8, 2, 1)
 
     def test_derivative(self):
         p1 = (0, 0, 0)
@@ -1627,7 +1633,7 @@ class TestField:
         # Meshes are not aligned
         subregion = df.Region(p1=(1.1, 0, 0), p2=(9.9, 15, 5))
 
-        assert f[subregion].array.shape == (2, 3, 1, 3)
+        assert f[subregion].data.shape == (2, 3, 1, 3)
 
     def test_project(self):
         p1 = (-5, -5, -5)
@@ -1638,15 +1644,15 @@ class TestField:
         # Constant scalar field
         f = df.Field(mesh, dim=1, value=5)
         check_field(f)
-        assert f.project("x").array.shape == (1, 10, 10, 1)
-        assert f.project("y").array.shape == (10, 1, 10, 1)
-        assert f.project("z").array.shape == (10, 10, 1, 1)
+        assert f.project("x").data.shape == (1, 10, 10, 1)
+        assert f.project("y").data.shape == (10, 1, 10, 1)
+        assert f.project("z").data.shape == (10, 10, 1, 1)
 
         # Constant vector field
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        assert f.project("x").array.shape == (1, 10, 10, 3)
-        assert f.project("y").array.shape == (10, 1, 10, 3)
-        assert f.project("z").array.shape == (10, 10, 1, 3)
+        assert f.project("x").data.shape == (1, 10, 10, 3)
+        assert f.project("y").data.shape == (10, 1, 10, 3)
+        assert f.project("z").data.shape == (10, 10, 1, 3)
 
         # Spatially varying scalar field
         def value_fun(point):
@@ -1658,7 +1664,7 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
         sf = f.project("z")
-        assert sf.array.shape == (10, 10, 1, 1)
+        assert sf.data.shape == (10, 10, 1, 1)
         assert sf.average == 0
 
         # Spatially varying vector field
@@ -1671,7 +1677,7 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
         sf = f.project("z")
-        assert sf.array.shape == (10, 10, 1, 3)
+        assert sf.data.shape == (10, 10, 1, 3)
         assert sf.average == (3, 2, 0)
 
     def test_angle(self):
@@ -1834,7 +1840,7 @@ class TestField:
                 f.write(tmpfilename, representation=repr)
                 f_read = df.Field.fromfile(tmpfilename)
 
-                assert np.allclose(f.array, f_read.array)
+                assert np.allclose(f.data, f_read.data)
                 assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
                 assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
                 assert np.allclose(f.mesh.cell, f_read.mesh.cell)
@@ -1853,7 +1859,7 @@ class TestField:
         f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
         check_field(f)
         assert f.mesh.n == (5, 1, 2)
-        assert f.array.shape == (5, 1, 2, 3)
+        assert f.data.shape == (5, 1, 2, 3)
         assert f.dim == 3
 
         # test reading legacy vtk file (written with discretisedfield<=0.61.0)
@@ -1861,14 +1867,14 @@ class TestField:
         f = df.Field.fromfile(os.path.join(dirname, "vtk-vector-legacy.vtk"))
         check_field(f)
         assert f.mesh.n == (8, 1, 1)
-        assert f.array.shape == (8, 1, 1, 3)
+        assert f.data.shape == (8, 1, 1, 3)
         assert f.dim == 3
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
         check_field(f)
         assert f.mesh.n == (5, 1, 2)
-        assert f.array.shape == (5, 1, 2, 1)
+        assert f.data.shape == (5, 1, 2, 1)
         assert f.dim == 1
 
         # test invalid arguments
@@ -2464,7 +2470,7 @@ class TestField:
         assert df.Field(mesh, dim=1, value=np.pi / 4).allclose(field.phase)
 
     def test_numpy_ufunc(self):
-        assert np.allclose(np.sin(self.pf).array, np.sin(self.pf.array))
+        assert np.allclose(np.sin(self.pf).data, np.sin(self.pf.data))
         assert np.sum([self.pf, self.pf]).allclose(self.pf + self.pf)
         assert np.multiply(self.pf.a, self.pf.b).allclose(self.pf.a * self.pf.b)
         assert np.power(self.pf.c, 2).allclose(self.pf.c**2)
@@ -2474,7 +2480,7 @@ class TestField:
             self.pf.mesh, dim=3, value=lambda _: np.random.random(3) * 2 - 1
         )
         assert np.allclose(
-            np.exp(field.orientation).array, np.exp(field.orientation.array)
+            np.exp(field.orientation).data, np.exp(field.orientation.data)
         )
 
     def test_to_xarray_valid_args(self):
@@ -2489,10 +2495,10 @@ class TestField:
                 assert fxa.attrs["p1"] == f.mesh.region.p1
                 assert fxa.attrs["p2"] == f.mesh.region.p2
                 for i in "xyz":
-                    assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
+                    assert np.data_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
                 assert all(fxa["comp"].values == f.components)
-                assert np.array_equal(f.array, fxa.values)
+                assert np.data_equal(f.data, fxa.values)
 
             for value, dtype in self.sfuncs:
                 f = df.Field(mesh, dim=1, value=value, dtype=dtype)
@@ -2503,10 +2509,10 @@ class TestField:
                 assert fxa.attrs["p1"] == f.mesh.region.p1
                 assert fxa.attrs["p2"] == f.mesh.region.p2
                 for i in "xyz":
-                    assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
+                    assert np.data_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
                 assert "comp" not in fxa.dims
-                assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
+                assert np.data_equal(f.data.squeeze(axis=-1), fxa.values)
 
         f6d = self.pf << self.pf
         f6d_xa = f6d.to_xarray()
