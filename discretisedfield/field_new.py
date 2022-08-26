@@ -565,7 +565,7 @@ class Field:
         raise NotImplementedError()
 
     def to_xarray(self):  # -> still required (?)
-        raise NotImplementedError()
+        return self.data
 
     def plane(self):
         raise NotImplementedError()
