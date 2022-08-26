@@ -347,8 +347,8 @@ class Field:
             self.mesh, dim=self.nvdims, value=np.abs(self.data.data), units=self.units
         )
 
-    # def __pos__(self): -> remove and see if tests pass using default behaviour
-    #    return self
+    def __pos__(self):
+        return self
 
     def __neg__(self):
         return -1 * self
@@ -380,6 +380,9 @@ class Field:
             self.mesh, dim=self.nvdims, value=self.data * other, units=self.units
         )
 
+    def __rmul__(self, other):
+        return self * other
+
     def __truediv__(self, other):
         if isinstance(other, self.__class__):
             self.is_same_mesh_field(other)
@@ -387,6 +390,15 @@ class Field:
 
         return self.__class__(
             self.mesh, dim=self.nvdims, value=self.data / other, units=self.units
+        )
+
+    def __rtruediv__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
+
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=other / self.data, units=self.units
         )
 
     def __pow__(self, other):
