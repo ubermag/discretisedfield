@@ -131,7 +131,7 @@ class Field:
     @property
     def vdims(self):
         """Labels of the value dimensions."""
-        return self.data.vdims if "vdims" in self.data.dims else None
+        return tuple(self.data.vdims.data) if "vdims" in self.data.dims else None
 
     @property
     def mesh(self):
