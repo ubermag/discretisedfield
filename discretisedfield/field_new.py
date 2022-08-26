@@ -6,7 +6,7 @@ import discretisedfield as df
 
 class Field:
     def __init__(
-        self, mesh, dims, value=0.0, norm=None, components=None, dtype=None, units=None
+        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, units=None
     ):
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
@@ -25,7 +25,10 @@ class Field:
 
         data = value  # TODO fix this
 
-        vdim = 1 if len(data.shape) == len(pmin) else data.shape[-1]
+        # TODO fix this
+        # vdim = 1 if len(data.shape) == len(pmin) else data.shape[-1]
+        vdim = dim
+
         vdims = components  # TODO fix this
         if vdims:
             assert len(vdims) == vdim
