@@ -454,7 +454,10 @@ def _(val, mesh, dim, dtype):
             f"Wrong dimension 1 provided for value; expected dimension is {dim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    return np.full((*mesh.n, dim), val, dtype=dtype)
+    if dim > 1:
+        return np.full((*mesh.n, dim), val, dtype=dtype)
+    else:
+        return np.full(mesh.n, val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
