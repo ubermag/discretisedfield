@@ -340,13 +340,10 @@ class Field:
     def __add__(self, other):
         if isinstance(other, self.__class__):
             other = other.data
+        # TODO Could have nicer error mesasges for vdims and mesh checking
+
         return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data + other,
-            dims=self.dims,
-            vdims=self.vdims,
+            self.mesh, dim=self.nvdims, value=self.data + other, units=self.units
         )
 
     def __sub__(self):
