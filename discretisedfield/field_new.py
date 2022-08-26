@@ -412,8 +412,46 @@ class Field:
     def __and__(self):  # -> cross
         raise NotImplementedError()
 
-    def __array_ufunc__(self):
-        raise NotImplementedError()
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        """Field class support for numpy ``ufuncs``."""
+        # See reference implementation at:
+        # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
+        for x in inputs:
+            if not isinstance(x, (Field, np.ndarray, numbers.Number)):
+                return NotImplemented
+        out = kwargs.get("out", ())
+        if out:
+            for x in out:
+                if not isinstance(x, Field):
+                    return NotImplemented
+
+        mesh = [x.mesh for x in inputs if isinstance(x, Field)]
+        inputs = tuple(x.data if isinstance(x, Field) else x for x in inputs)
+        if out:
+            kwargs["out"] = tuple(x.data for x in out)
+
+        result = getattr(ufunc, method)(*inputs, **kwargs)
+        if isinstance(result, tuple):
+            if len(result) != len(mesh):
+                raise ValueError("wrong number of Field objects")
+            return tuple(
+                self.__class__(
+                    m,
+                    dim=x.shape[-1],
+                    value=x,
+                    components=self.components,
+                )
+                for x, m in zip(result, mesh)
+            )
+        elif method == "at":
+            return None
+        else:
+            return self.__class__(
+                mesh[0],
+                dim=result.shape[-1],
+                value=result,
+                components=self.components,
+            )
 
     # derivative-related
 
