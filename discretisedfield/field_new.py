@@ -328,7 +328,7 @@ class Field:
 
     def __abs__(self):
         return self.__class__(
-            self.mesh, dim=self.dim, value=np.abs(self.data), units=self.units
+            self.mesh, dim=self.nvdims, value=np.abs(self.data.data), units=self.units
         )
         raise NotImplementedError()
 
