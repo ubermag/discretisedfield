@@ -402,6 +402,7 @@ class Field:
                 f" {type(other)=}."
             )
             raise TypeError(msg)
+
         if self.nvdims == 1:
             return self.__class__(
                 self.mesh,
