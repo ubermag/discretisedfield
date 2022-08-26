@@ -21,7 +21,7 @@ class Field:
 
         dims = None  # TODO remove this
 
-        if dims:
+        if dims is not None:
             assert len(pmin) == len(dims)
         elif len(pmin) == 3:  # TODO remove this
             dims = ["x", "y", "z"]
@@ -35,16 +35,10 @@ class Field:
         vdim = dim
 
         vdims = components  # TODO fix this
-        if vdims:
+        if vdims is not None:
             assert len(vdims) == vdim
         else:
             vdims = [f"v{i}" for i in range(vdim)]
-
-        if units:
-            if isinstance(units, str):
-                units = [units] * vdim
-        else:
-            units = ["A/m"] * vdim
 
         cell = (pmax - pmin) / n
         coords = {
@@ -54,16 +48,17 @@ class Field:
 
         if vdim > 1:
             coords["vdims"] = vdims
+            dims += ["vdims"]
 
         self.data = xr.DataArray(
             _as_array(data, mesh, vdim, dtype),
-            dims=dims + ["vdims"],
+            dims=dims,
             coords=coords,
             name="field",
         )
 
-        self.units = units
         self._mesh = mesh
+        self.units = units
 
         for dim in dims:
             if dim != "vdims":
@@ -200,7 +195,77 @@ class Field:
 
     @property
     def norm(self):
-        raise NotImplementedError()
+        """Norm of the field.
+
+        Computes the norm of the field and returns ``discretisedfield.Field``
+        with ``dim=1``. Norm of a scalar field is interpreted as an absolute
+        value of the field. Alternatively, ``discretisedfield.Field.__abs__``
+        can be called for obtaining the norm of the field. TODO
+
+        The field norm can be set by passing ``numbers.Real``,
+        ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
+        contains zero values, norm cannot be set and ``ValueError`` is raised.
+
+        Parameters
+        ----------
+        numbers.Real, numpy.ndarray, callable
+
+            Norm value.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+
+        Raises
+        ------
+        ValueError
+
+            If the norm is set with wrong type, shape, or value. In addition,
+            if the field is scalar (``dim=1``) or the field contains zero
+            values.
+
+        Examples
+        --------
+        1. Manipulating the field norm.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (1, 1, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
+        >>> field.norm
+        Field(...)
+        >>> field.norm.average
+        1.0
+        >>> field.norm = 2
+        >>> field.average
+        (0.0, 0.0, 2.0)
+        >>> field.value = (1, 0, 0)
+        >>> field.norm.average
+        1.0
+
+        Set the norm for a zero field.
+        >>> field.value = 0
+        >>> field.average
+        (0.0, 0.0, 0.0)
+        >>> field.norm = 1
+        >>> field.average
+        (0.0, 0.0, 0.0)
+
+        .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
+
+        """
+        if self.nvdims == 1:
+            res = abs(self.data)
+        else:
+            res = np.linalg.norm(self.data, axis=-1)
+
+        return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
     def norm(self, norm):
@@ -216,13 +281,8 @@ class Field:
 
     @units.setter
     def units(self, units):
-        if not isinstance(units, list):
-            units = list(units)
-        if len(units) != self.nvdims:
-            raise ValueError("Wrong number of units provided")
-        for unit in units:
-            if not isinstance(unit, str):
-                raise TypeError(f"Wrong type for {unit=}; must be of type str.")
+        if units is not None and not isinstance(units, str):
+            raise TypeError(f"Wrong type for {units=}; must be of type str.")
         self._units = units
 
     def check_same_mesh(self, other):
@@ -444,9 +504,8 @@ class Field:
     def __getattr__(self, attr):
         if self.nvdims > 1 and attr in self.vdims:
             attr_array = self.data[..., self.vdims.index(attr)]
-            attr_units = self.units[self.vdims.index(attr)]
             return self.__class__(
-                mesh=self.mesh, dim=1, value=attr_array, units=attr_units
+                mesh=self.mesh, dim=1, value=attr_array, units=self.units
             )
         msg = f"Object has no attribute {attr}."
         raise AttributeError(msg)
@@ -529,7 +588,10 @@ def _(val, mesh, dim, dtype):
             f"Wrong dimension 1 provided for value; expected dimension is {dim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    return np.full((*mesh.n, dim), val, dtype=dtype)
+    if dim > 1:
+        return np.full((*mesh.n, dim), val, dtype=dtype)
+    else:
+        return np.full(mesh.n, val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
