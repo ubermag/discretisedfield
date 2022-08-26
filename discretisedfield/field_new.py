@@ -343,52 +343,118 @@ class Field:
     # mathematical operations
 
     def __abs__(self):
-        raise NotImplementedError()
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=np.abs(self.data.data), units=self.units
+        )
 
-    def __pos__(self):
-        raise NotImplementedError()
+    # def __pos__(self): -> remove and see if tests pass using default behaviour
+    #    return self
 
     def __neg__(self):
-        raise NotImplementedError()
+        return -1 * self
 
     def __add__(self, other):
         if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
             other = other.data
+
         return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data + other,
-            dims=self.dims,
-            vdims=self.vdims,
+            self.mesh, dim=self.nvdims, value=self.data + other, units=self.units
         )
 
-    def __sub__(self):
-        raise NotImplementedError()
+    def __sub__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
+
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data - other, units=self.units
+        )
 
     def __mul__(self, other):
         if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
             other = other.data
+
         return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data * other,
-            dims=self.dims,
-            vdims=self.vdims,
+            self.mesh, dim=self.nvdims, value=self.data * other, units=self.units
         )
 
-    def __truediv__(self):
-        raise NotImplementedError()
+    def __truediv__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
 
-    def __pow__(self):
-        raise NotImplementedError()
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data / other, units=self.units
+        )
 
-    def __matmul__(self):  # -> dot
-        raise NotImplementedError()
+    def __pow__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
 
-    def __and__(self):  # -> cross
-        raise NotImplementedError()
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data**other, units=self.units
+        )
+
+    def dot(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
+        elif isinstance(other, xr.DataArray):
+            other = other
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other).data
+        else:
+            msg = (
+                f"Unsupported operand type(s) for the cross product: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+
+        if self.nvdims == 1:
+            return self.__class__(
+                self.mesh,
+                dim=1,
+                value=self.data * other.data,
+            )
+        else:
+            return self.__class__(
+                self.mesh,
+                dim=1,
+                value=np.einsum("...l,...l->...", self.data, other.data),
+            )
+
+    def cross(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+
+            if self.nvdims != 3 or other.nvdims != 3:
+                msg = (
+                    f"Cannot apply the cross product on {self.nvdims=} and"
+                    f" {other.nvdims=} fields. The cross product is only supported on"
+                    " field with 3 vector dimentions."
+                )
+                raise ValueError(msg)
+            other = other.data
+        elif isinstance(other, xr.DataArray):
+            other = other
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other).data
+        else:
+            msg = (
+                f"Unsupported operand type(s) for the cross product: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=np.cross(self.data.data, other.data),
+            units=self.units,
+        )
 
     def __array_ufunc__(self):
         raise NotImplementedError()
@@ -436,31 +502,78 @@ class Field:
 
     @property
     def real(self):
-        raise NotImplementedError()
+        """Real part of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.real,
+            units=self.units,
+        )
 
     @property
     def imag(self):
-        raise NotImplementedError()
+        """Imaginary part of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.imag,
+            units=self.units,
+        )
 
     @property
     def phase(self):
-        raise NotImplementedError()
+        """Phase of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=np.angle(self.data),
+            units=self.units,
+        )
 
     @property
     def conjugate(self):
-        raise NotImplementedError()
+        """Complex conjugate of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.conjugate(),
+            units=self.units,
+        )
 
     # other mathematical operations
 
     def integral(self):
         raise NotImplementedError()
 
-    @property
-    def angle(self):  # -> method angle(vector)
-        raise NotImplementedError()
+    def angle(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+        elif self.nvdims == 1 and isinstance(other, numbers.Complex):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other)
+        elif self.nvdims != 1 and isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other)
+        else:
+            msg = (
+                f"Unsupported operand type(s) for angle: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
 
+        angle_array = np.arccos((self.dot(other) / (self.norm * other.norm)).data)
+
+        # Place all values in [0, 2pi] range
+        angle_array[angle_array < 0] += 2 * np.pi
+
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=angle_array,
+            units=self.units,
+        )
+
+    @property
     def average(self):  # -> mean
-        raise NotImplementedError()
+        return self.data.mean(dim=self.dims).data
 
     # other methods
 
@@ -533,6 +646,19 @@ class Field:
 
     def _repr_html_(self):
         return self.data._repr_html_()
+
+    def is_same_mesh_field(self, other):  # TODO move to utils
+        if not self.is_same_mesh(other):
+            raise ValueError(
+                "To perform this operation both fields must have the same mesh."
+            )
+
+        if self.is_vectorfield and other.is_vectorfield:
+            if not self.is_same_vectorspace(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same"
+                    " vector components."
+                )
 
 
 @functools.singledispatch
