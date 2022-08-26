@@ -556,7 +556,7 @@ class Field:
                 f"{type(self)=} and {type(other)=} objects."
             )
             raise TypeError(msg)
-        if self.check_same_mesh(other) and self.vdims == other.vdims:
+        if self.is_same_mesh(other) and self.vdims == other.vdims:
             return np.allclose(self.data.data, other.data.data, rtol=rtol, atol=atol)
         else:
             return False
