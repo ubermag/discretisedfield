@@ -5,8 +5,6 @@ import numbers
 import numpy as np
 import xarray as xr
 
-import discretisedfield as df
-
 
 class Field:
     def __init__(
@@ -39,6 +37,12 @@ class Field:
         else:
             vdims = [f"v{i}" for i in range(vdim)]
 
+        if units:
+            if isinstance(units, str):
+                units = [units] * len(dims)
+        else:
+            units = ["A/m"] * len(dims)
+
         cell = (pmax - pmin) / n
         coords = {
             dim: np.linspace(pmin_i + cell_i / 2, pmax_i - cell_i / 2, n_i)
@@ -54,6 +58,9 @@ class Field:
             coords=coords,
             name="field",
         )
+
+        self.units = units
+        self._mesh = mesh
 
         for dim in dims:
             if dim != "vdims":
@@ -135,13 +142,7 @@ class Field:
 
     @property
     def mesh(self):
-        self.mesh = df.Mesh(
-            p1=self.pmin,
-            p2=self.pmax,
-            n=self.n,
-            subregions=self._subregions,
-            bc=self._bc,
-        )
+        return self._mesh
 
     @property
     def norm(self):
@@ -157,7 +158,18 @@ class Field:
 
     @property
     def units(self):
-        raise NotImplementedError()
+        return self._units
+
+    @units.setter
+    def units(self, units):
+        if not isinstance(units, list):
+            units = list(units)
+        if len(units) != self.nvdims:
+            raise ValueError("Wrong number of units provided")
+        for unit in units:
+            if not isinstance(unit, str):
+                raise TypeError(f"Wrong type for {unit=}; must be of type str.")
+        self._units = units
 
     def check_same_mesh(self, other):
         """Check if two Field objects are defined on the same mesh."""
@@ -365,8 +377,15 @@ class Field:
     def __call__(self):
         raise NotImplementedError()
 
-    def __getattr__(self):
-        raise NotImplementedError()
+    def __getattr__(self, attr):
+        if self.nvdims > 1 and attr in self.vdims:
+            attr_array = self.data[..., self.vdims.index(attr)]
+            attr_units = self.units[self.vdims.index(attr)]
+            return self.__class__(
+                mesh=self.mesh, dim=1, value=attr_array, units=attr_units
+            )
+        msg = f"Object has no attribute {attr}."
+        raise AttributeError(msg)
 
     def __getitem__(self):
         raise NotImplementedError()
