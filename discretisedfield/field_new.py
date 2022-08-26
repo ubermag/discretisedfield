@@ -47,10 +47,11 @@ class Field:
 
         if vdim > 1:
             coords["vdims"] = vdims
+            dims += ["vdims"]
 
         self.data = xr.DataArray(
             _as_array(data, mesh, vdim, dtype),
-            dims=dims + ["vdims"],
+            dims=dims,
             coords=coords,
             name="field",
         )
