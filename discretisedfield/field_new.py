@@ -49,7 +49,7 @@ class Field:
             coords["vdims"] = vdims
             dims += ["vdims"]
 
-        self.data = xr.DataArray(
+        self._data = xr.DataArray(
             _as_array(data, mesh, vdim, dtype),
             dims=dims,
             coords=coords,
@@ -83,6 +83,20 @@ class Field:
     @classmethod
     def coordinate_field(cls):
         raise NotImplementedError()
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        raise RuntimeError(
+            "The `.data` attribute is read-only. To update the data use the"
+            " `update_field_values` method."
+        )
+
+    def update_field_values(self, values):
+        self._data.data = _as_array(values, self.mesh, self.vdim, self.dtype)
 
     @property
     def pmin(self):
