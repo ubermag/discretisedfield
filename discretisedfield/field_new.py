@@ -408,8 +408,38 @@ class Field:
             value=np.einsum("...l,...l->...", self.data, self.data)[..., np.newaxis],
         )
 
-    def __and__(self):  # -> cross
-        raise NotImplementedError()
+    def cross(self, other):  # -> cross
+        if isinstance(other, self.__class__):
+            if self.mesh != other.mesh:
+                msg = (
+                    "Cannot apply the dot product on fields defined on different"
+                    " meshes."
+                )
+                raise ValueError(msg)
+            if self.nvdims != other.nvdims:
+                msg = (
+                    f"Cannot apply the dot product on {self.nvdims=} and"
+                    f" {other.nvdims=} fields."
+                )
+                raise ValueError(msg)
+            other = other.data
+        elif isinstance(other, xr.core.dataarray.DataArray):
+            other = other
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other).data
+        else:
+            msg = (
+                f"Unsupported operand type(s) for the dot product: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=xr.cross(self.data, other, dim="vdims"),
+            units=self.units,
+        )
 
     def __array_ufunc__(self):
         raise NotImplementedError()
