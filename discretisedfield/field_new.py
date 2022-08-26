@@ -628,8 +628,16 @@ class Field:
     def __lshift__(self):  # -> concat
         raise NotImplementedError()
 
-    def allclose(self):
-        raise NotImplementedError()
+    def allclose(self, other, rtol=1e-5, atol=1e-8):
+        if not isinstance(other, self.__class__):
+            raise TypeError(
+                "Cannot apply allclose method between "
+                f"{type(self)=} and {type(other)=} objects."
+            )
+        if self.is_same_mesh(other) and self.is_same_vectorspace(other):
+            return np.allclose(self.data.data, other.data.data, rtol=rtol, atol=atol)
+        else:
+            return False
 
     def line(self):
         raise NotImplementedError()
