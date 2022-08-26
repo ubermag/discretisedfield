@@ -607,8 +607,11 @@ class Field:
 
     # other methods
 
-    def __call__(self):
-        raise NotImplementedError()
+    def __call__(self, point):
+        data = self.data
+        for dim, p, cell_i in zip(self.dims, point, self.cell):
+            data = data.sel(**{dim: p}, method="nearest", tolerance=cell_i / 2)
+        return data.data
 
     def __getattr__(self, attr):
         if self.nvdims > 1 and attr in self.vdims:
