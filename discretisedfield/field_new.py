@@ -291,8 +291,14 @@ class Field:
             self.mesh, dim=self.nvdims, value=self.data * other, units=self.units
         )
 
-    def __truediv__(self):
-        raise NotImplementedError()
+    def __truediv__(self, other):
+        if isinstance(other, self.__class__):
+            other = other.data
+        # TODO Could have nicer error mesasges for vdims and mesh checking
+
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data / other, units=self.units
+        )
 
     def __pow__(self):
         raise NotImplementedError()
