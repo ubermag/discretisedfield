@@ -383,9 +383,10 @@ class Field:
     def fftn(self):
         # TODO: I actually think in the last version you were already correcting the
         #  shift, so we should inclue true_amplitude, true_phase = True
-        return xrft.fft(
+        ft_xarray = xrft.fft(
             self.data, dim=[*self.dims], true_amplitude=True, true_phase=True
         )
+        return self.from_xarray(ft_xarray)
 
     @property
     def ifftn(self):
