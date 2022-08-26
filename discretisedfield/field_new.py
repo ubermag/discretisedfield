@@ -257,7 +257,6 @@ class Field:
         return self.__class__(
             self.mesh, dim=self.nvdims, value=np.abs(self.data.data), units=self.units
         )
-        raise NotImplementedError()
 
     def __pos__(self):
         raise NotImplementedError()
