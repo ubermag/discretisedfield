@@ -241,6 +241,8 @@ class Field:
             return False
         for dim in self.dims:
             if len(self.data[dim]) != len(other.data[dim]):
+                return False
+            else:
                 # change absolute tolerance to a tolerance relative to the cell size
                 # to take into account the overall scale
                 if not np.allclose(
