@@ -331,26 +331,15 @@ class Field:
             self.mesh, dim=self.nvdims, value=np.abs(self.data.data), units=self.units
         )
 
-    def __pos__(self):
-        return self
+    # def __pos__(self): -> remove and see if tests pass using default behaviour
+    #    return self
 
     def __neg__(self):
         return -1 * self
 
     def __add__(self, other):
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same mesh."
-                )
-
-            if self.is_vectorfield and other.is_vectorfield:
-                if not self.is_same_vectorspace(other):
-                    raise ValueError(
-                        "To perform this operation both fields must have the same"
-                        " vector components."
-                    )
-
+            self.is_same_mesh_field(other)
             other = other.data
 
         return self.__class__(
@@ -359,18 +348,7 @@ class Field:
 
     def __sub__(self, other):
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same mesh."
-                )
-
-            if self.is_vectorfield and other.is_vectorfield:
-                if not self.is_same_vectorspace(other):
-                    raise ValueError(
-                        "To perform this operation both fields must have the same"
-                        " vector components."
-                    )
-
+            self.is_same_mesh_field(other)
             other = other.data
 
         return self.__class__(
@@ -379,18 +357,7 @@ class Field:
 
     def __mul__(self, other):
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same mesh."
-                )
-
-            if self.is_vectorfield and other.is_vectorfield:
-                if not self.is_same_vectorspace(other):
-                    raise ValueError(
-                        "To perform this operation both fields must have the same"
-                        " vector components."
-                    )
-
+            self.is_same_mesh_field(other)
             other = other.data
 
         return self.__class__(
@@ -399,18 +366,7 @@ class Field:
 
     def __truediv__(self, other):
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same mesh."
-                )
-
-            if self.is_vectorfield and other.is_vectorfield:
-                if not self.is_same_vectorspace(other):
-                    raise ValueError(
-                        "To perform this operation both fields must have the same"
-                        " vector components."
-                    )
-
+            self.is_same_mesh_field(other)
             other = other.data
 
         return self.__class__(
@@ -419,18 +375,7 @@ class Field:
 
     def __pow__(self, other):
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same mesh."
-                )
-
-            if self.is_vectorfield and other.is_vectorfield:
-                if not self.is_same_vectorspace(other):
-                    raise ValueError(
-                        "To perform this operation both fields must have the same"
-                        " vector components."
-                    )
-
+            self.is_same_mesh_field(other)
             other = other.data
 
         return self.__class__(
@@ -439,17 +384,8 @@ class Field:
 
     def dot(self, other):
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same mesh."
-                )
-
-            if self.is_vectorfield and other.is_vectorfield:
-                if not self.is_same_vectorspace(other):
-                    raise ValueError(
-                        "To perform this operation both fields must have the same"
-                        " vector components."
-                    )
+            self.is_same_mesh_field(other)
+            other = other.data
         elif isinstance(other, xr.DataArray):
             other = other
         elif isinstance(other, (tuple, list, np.ndarray)):
@@ -460,7 +396,6 @@ class Field:
                 f" {type(other)=}."
             )
             raise TypeError(msg)
-            other = other.data
 
         if self.nvdims == 1:
             return self.__class__(
@@ -477,16 +412,7 @@ class Field:
 
     def cross(self, other):
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same mesh."
-                )
-
-            if not self.is_same_vectorspace(other):
-                raise ValueError(
-                    "To perform this operation both fields must have the same vector"
-                    " components."
-                )
+            self.is_same_mesh_field(other)
 
             if self.nvdims != 3 or other.nvdims != 3:
                 msg = (
@@ -681,6 +607,19 @@ class Field:
 
     def _repr_html_(self):
         return self.data._repr_html_()
+
+    def is_same_mesh_field(self, other):  # TODO move to utils
+        if not self.is_same_mesh(other):
+            raise ValueError(
+                "To perform this operation both fields must have the same mesh."
+            )
+
+        if self.is_vectorfield and other.is_vectorfield:
+            if not self.is_same_vectorspace(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same"
+                    " vector components."
+                )
 
 
 @functools.singledispatch
