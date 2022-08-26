@@ -339,8 +339,19 @@ class Field:
 
     def __add__(self, other):
         if isinstance(other, self.__class__):
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same mesh."
+                )
+
+            if self.is_vectorfield and other.is_vectorfield:
+                if not self.is_same_vectorspace(other):
+                    raise ValueError(
+                        "To perform this operation both fields must have the same"
+                        " vector components."
+                    )
+
             other = other.data
-        # TODO Could have nicer error mesasges for vdims and mesh checking
 
         return self.__class__(
             self.mesh, dim=self.nvdims, value=self.data + other, units=self.units
@@ -348,8 +359,19 @@ class Field:
 
     def __sub__(self, other):
         if isinstance(other, self.__class__):
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same mesh."
+                )
+
+            if self.is_vectorfield and other.is_vectorfield:
+                if not self.is_same_vectorspace(other):
+                    raise ValueError(
+                        "To perform this operation both fields must have the same"
+                        " vector components."
+                    )
+
             other = other.data
-        # TODO Could have nicer error mesasges for vdims and mesh checking
 
         return self.__class__(
             self.mesh, dim=self.nvdims, value=self.data - other, units=self.units
@@ -357,8 +379,19 @@ class Field:
 
     def __mul__(self, other):
         if isinstance(other, self.__class__):
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same mesh."
+                )
+
+            if self.is_vectorfield and other.is_vectorfield:
+                if not self.is_same_vectorspace(other):
+                    raise ValueError(
+                        "To perform this operation both fields must have the same"
+                        " vector components."
+                    )
+
             other = other.data
-        # TODO Could have nicer error mesasges for vdims and mesh checking
 
         return self.__class__(
             self.mesh, dim=self.nvdims, value=self.data * other, units=self.units
@@ -366,8 +399,19 @@ class Field:
 
     def __truediv__(self, other):
         if isinstance(other, self.__class__):
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same mesh."
+                )
+
+            if self.is_vectorfield and other.is_vectorfield:
+                if not self.is_same_vectorspace(other):
+                    raise ValueError(
+                        "To perform this operation both fields must have the same"
+                        " vector components."
+                    )
+
             other = other.data
-        # TODO Could have nicer error mesasges for vdims and mesh checking
 
         return self.__class__(
             self.mesh, dim=self.nvdims, value=self.data / other, units=self.units
@@ -375,34 +419,47 @@ class Field:
 
     def __pow__(self, other):
         if isinstance(other, self.__class__):
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same mesh."
+                )
+
+            if self.is_vectorfield and other.is_vectorfield:
+                if not self.is_same_vectorspace(other):
+                    raise ValueError(
+                        "To perform this operation both fields must have the same"
+                        " vector components."
+                    )
+
             other = other.data
-        # TODO Could have nicer error mesasges for vdims and mesh checking
 
         return self.__class__(
             self.mesh, dim=self.nvdims, value=self.data**other, units=self.units
         )
 
-    def dot(self, other):  # -> dot
+    def dot(self, other):
         if isinstance(other, self.__class__):
-            if self.mesh != other.mesh:
-                msg = (
-                    "Cannot apply the dot product on fields defined on different"
-                    " meshes."
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same mesh."
                 )
-                raise ValueError(msg)
-            if self.nvdims != other.nvdims:
-                msg = (
-                    f"Cannot apply the dot product on {self.nvdims=} and"
-                    f" {other.nvdims=} fields."
-                )
-                raise ValueError(msg)
+
+            if self.is_vectorfield and other.is_vectorfield:
+                if not self.is_same_vectorspace(other):
+                    raise ValueError(
+                        "To perform this operation both fields must have the same"
+                        " vector components."
+                    )
+        elif isinstance(other, xr.DataArray):
+            other = other
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other).data
         else:
             msg = (
-                f"Unsupported operand type(s) for the dot product: {type(self)=} and"
+                f"Unsupported operand type(s) for the cross product: {type(self)=} and"
                 f" {type(other)=}."
             )
             raise TypeError(msg)
-
         if self.nvdims == 1:
             return self.__class__(
                 self.mesh,
@@ -416,14 +473,19 @@ class Field:
                 value=np.einsum("...l,...l->...", self.data, other.data),
             )
 
-    def cross(self, other):  # -> cross
+    def cross(self, other):
         if isinstance(other, self.__class__):
-            if self.mesh != other.mesh:
-                msg = (
-                    "Cannot apply the cross product on fields defined on different"
-                    " meshes."
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same mesh."
                 )
-                raise ValueError(msg)
+
+            if not self.is_same_vectorspace(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same vector"
+                    " components."
+                )
+
             if self.nvdims != 3 or other.nvdims != 3:
                 msg = (
                     f"Cannot apply the cross product on {self.nvdims=} and"
