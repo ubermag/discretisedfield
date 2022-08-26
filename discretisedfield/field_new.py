@@ -100,7 +100,7 @@ class Field:
             if any(len_ == 1 for len_ in xa.data.shape[:-1]):
                 raise KeyError(
                     "DataArray must have a 'cell' attribute if any "
-                    "of the geometric directions has a single cell."
+                    "of the spatial directions has a single cell."
                 ) from None
             cell = [np.diff(xa[i].data).mean() for i in xa.coords.dims[:-1]]
 
@@ -122,14 +122,16 @@ class Field:
         #         p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
         #     )
 
-        comp = (
+        components = (
             getattr(xa, xa.coords.dims[-1]).data
             if len(getattr(xa, xa.coords.dims[-1]).data) == xa.data.shape[-1]
             else None
         )
         val = xa.data
         dim = val.shape[-1]
-        return cls(mesh=mesh, dim=dim, value=val, components=comp, dtype=xa.data.dtype)
+        return cls(
+            mesh=mesh, dim=dim, value=val, components=components, dtype=xa.data.dtype
+        )
 
     @classmethod
     def coordinate_field(cls, mesh):
@@ -425,16 +427,16 @@ class Field:
         # See reference implementation at:
         # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
         for x in inputs:
-            if not isinstance(x, (Field, np.ndarray, numbers.Number)):
+            if not isinstance(x, (self.__class__, np.ndarray, numbers.Number)):
                 return NotImplemented
         out = kwargs.get("out", ())
         if out:
             for x in out:
-                if not isinstance(x, Field):
+                if not isinstance(x, self.__class__):
                     return NotImplemented
 
-        mesh = [x.mesh for x in inputs if isinstance(x, Field)]
-        inputs = tuple(x.data if isinstance(x, Field) else x for x in inputs)
+        mesh = [x.mesh for x in inputs if isinstance(x, self.__class__)]
+        inputs = tuple(x.data if isinstance(x, self.__class__) else x for x in inputs)
         if out:
             kwargs["out"] = tuple(x.data for x in out)
 
