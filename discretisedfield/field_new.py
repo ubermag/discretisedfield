@@ -4,6 +4,7 @@ import numbers
 
 import numpy as np
 import xarray as xr
+import xrft
 
 import discretisedfield as df
 
@@ -313,19 +314,27 @@ class Field:
 
     @property
     def fftn(self):
-        raise NotImplementedError()
+        # TODO: I actually think in the last version you were already correcting the
+        #  shift, so we should inclue true_amplitude, true_phase = True
+        return xrft.fft(self.data, dim=[*self.dims])
 
     @property
     def ifftn(self):
-        raise NotImplementedError()
+        # TODO: I actually think in the last version you were already correcting the
+        #  shift, so we should inclue true_amplitude, true_phase = True
+        return xrft.ifft(self.data, dim=[*self.dims])
 
     @property
     def rfftn(self):
-        raise NotImplementedError()
+        # TODO: I actually think in the last version you were already correcting the
+        #  shift, so we should inclue true_amplitude, true_phase = True
+        return xrft.fft(self.data, dim=[*self.dims], real_dim=[*self.dims])
 
     @property
     def irfftn(self):
-        raise NotImplementedError()
+        # TODO: I actually think in the last version you were already correcting the
+        #  shift, so we should inclue true_amplitude, true_phase = True
+        return xrft.ifft(self.data, dim=[*self.dims], real_dim=[*self.dims])
 
     # complex values
 
