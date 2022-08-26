@@ -5,6 +5,8 @@ import numbers
 import numpy as np
 import xarray as xr
 
+import discretisedfield as df
+
 
 class Field:
     def __init__(
@@ -184,25 +186,27 @@ class Field:
         raise NotImplementedError()
 
     def translate(self, point):
-        # TODO test
+        # TODO write tests
+        if self.mesh.subregions:
+            raise NotImplementedError("Translate does not yet support subregions.")
         return self.__class__(
-            pmin=self.pmin + point,
-            pmax=self.pmax + point,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            mesh=df.Mesh(p1=self.pmin, p2=self.pmax, n=self.n, bc=self.mesh.bc),
+            dim=self.nvdims,
+            value=self.data,
+            components=self.vdims,
         )
 
     def scale(self, factor):
-        # TODO test
+        # TODO write tests
+        if self.mesh.subregions:
+            raise NotImplementedError("Scale does not yet support subregions.")
         return self.__class__(
-            pmin=self.pmin * factor,
-            pmax=self.pmax * factor,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            mesh=df.Mesh(
+                p1=self.pmin * factor, p2=self.pmax * factor, n=self.n, bc=self.mesh.bc
+            ),
+            dim=self.vdims,
+            value=self.data,
+            components=self.vdims,
         )
 
     @property
