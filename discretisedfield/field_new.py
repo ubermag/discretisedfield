@@ -41,11 +41,7 @@ class Field:
                 self.data[dim].attrs["units"] = "m"
         self.data.attrs["cell"] = cell
         self._cell = cell
-        self._vdims = vdims
-        self._dims = dims
-        self.vdims = vdims
-        self.dims = dims
-        self.subregions = subregions or {}
+        # self.subregions = subregions or {}
         self.mesh = df.Mesh(
             p1=self.pmin, p2=self.pmax, n=self.n, subregions=subregions, bc=bc
         )
@@ -58,6 +54,10 @@ class Field:
     # def subregions(self, subregions):
     #    # checks
     #    self._subregions = subregions
+
+    @classmethod
+    def coordinate_field(cls):
+        raise NotImplementedError()
 
     @property
     def pmin(self):
@@ -91,29 +91,58 @@ class Field:
     def cell(self):
         return self._cell
 
-    def __add__(self, other):
-        if isinstance(other, self.__class__):
-            other = other.data
-        return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data + other,
-            dims=self._dims,
-            vdims=self._vdims,
-        )
+    @property
+    def ndims(self):
+        """Number of spatial dimensions."""
+        return len(self.dims)
 
-    def __mul__(self, other):
-        if isinstance(other, self.__class__):
-            other = other.data
-        return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data * other,
-            dims=self._dims,
-            vdims=self._vdims,
-        )
+    @property
+    def dims(self):
+        """Labels of the spatial dimensions."""
+        xr_dims = self.data.dims
+        return xr_dims[:-1] if "vdims" in xr_dims else xr_dims
+
+    @property
+    def nvdims(self):
+        """Number of value dimensions."""
+        return len(self.vdims) if self.vdims else 1
+
+    @property
+    def vdims(self):
+        """Labels of the value dimensions."""
+        return len(self.data.vdims) if "vdims" in self.data.dims else None
+
+    @property
+    def components(self):  # -> delete (?)
+        raise NotImplementedError()
+
+    @property
+    def mesh(self):
+        raise NotImplementedError()
+
+    @property
+    def norm(self):
+        raise NotImplementedError()
+
+    @property
+    def orientation(self):
+        raise NotImplementedError()
+
+    @property
+    def units(self):
+        raise NotImplementedError()
+
+    def check_same_mesh(self, other):
+        """Check if two Field objects are defined on the same mesh."""
+        if not isinstance(other, self.__class__):
+            raise TypeError("Object of type {type(other)} not supported.")
+        if self.ndims != other.ndims or self.nvdims != other.nvdims:
+            return False
+        if self.dims != other.dims or self.vdims != other.vdims:
+            return False
+        # for dim is self.dims:
+        #    pass
+        raise NotImplementedError()
 
     def translate(self, point):
         return self.__class__(
@@ -121,8 +150,8 @@ class Field:
             pmax=self.pmax + point,
             n=self.n,
             data=self.data,
-            dims=self._dims,
-            vdims=self._vdims,
+            dims=self.dims,
+            vdims=self.vdims,
         )
 
     def scale(self, factor):
@@ -131,8 +160,8 @@ class Field:
             pmax=self.pmax * factor,
             n=self.n,
             data=self.data,
-            dims=self._dims,
-            vdims=self._vdims,
+            dims=self.dims,
+            vdims=self.vdims,
         )
 
     @property
@@ -173,18 +202,134 @@ class Field:
             pmax=self.pmax,
             n=self.n,
             data=self.data,
-            dims=self._dims,
-            vdims=self._vdims,
+            dims=self.dims,
+            vdims=self.vdims,
         )
+
+    # mathematical operations
 
     def __abs__(self):
         raise NotImplementedError()
 
-    def __and__(self):
+    def __pos__(self):
+        raise NotImplementedError()
+
+    def __neg__(self):
+        raise NotImplementedError()
+
+    def __add__(self, other):
+        if isinstance(other, self.__class__):
+            other = other.data
+        return self.__class__(
+            pmin=self.pmin,
+            pmax=self.pmax,
+            n=self.n,
+            data=self.data + other,
+            dims=self.dims,
+            vdims=self.vdims,
+        )
+
+    def __sub__(self):
+        raise NotImplementedError()
+
+    def __mul__(self, other):
+        if isinstance(other, self.__class__):
+            other = other.data
+        return self.__class__(
+            pmin=self.pmin,
+            pmax=self.pmax,
+            n=self.n,
+            data=self.data * other,
+            dims=self.dims,
+            vdims=self.vdims,
+        )
+
+    def __truediv__(self):
+        raise NotImplementedError()
+
+    def __pow__(self):
+        raise NotImplementedError()
+
+    def __matmul__(self):  # -> dot
+        raise NotImplementedError()
+
+    def __and__(self):  # -> cross
         raise NotImplementedError()
 
     def __array_ufunc__(self):
         raise NotImplementedError()
+
+    # derivative-related
+
+    def derivative(self):
+        raise NotImplementedError()
+
+    @property
+    def grad(self):
+        raise NotImplementedError()
+
+    @property
+    def div(self):
+        raise NotImplementedError()
+
+    @property
+    def curl(self):
+        raise NotImplementedError()
+
+    @property
+    def laplace(self):
+        raise NotImplementedError()
+
+    # FFT
+
+    @property
+    def fftn(self):
+        raise NotImplementedError()
+
+    @property
+    def ifftn(self):
+        raise NotImplementedError()
+
+    @property
+    def rfftn(self):
+        raise NotImplementedError()
+
+    @property
+    def irfftn(self):
+        raise NotImplementedError()
+
+    # complex values
+
+    @property
+    def real(self):
+        raise NotImplementedError()
+
+    @property
+    def imag(self):
+        raise NotImplementedError()
+
+    @property
+    def phase(self):
+        raise NotImplementedError()
+
+    @property
+    def conjugate(self):
+        raise NotImplementedError()
+
+    # other mathematical operations
+
+    def integral(self):
+        raise NotImplementedError()
+
+    @property
+    def angle(self):  # -> method angle(vector)
+        raise NotImplementedError()
+
+    @property
+    def average(self):  # -> mean
+        raise NotImplementedError()
+
+    # other methods
 
     def __call__(self):
         raise NotImplementedError()
@@ -204,97 +349,43 @@ class Field:
     def __lshift__(self):  # -> concat
         raise NotImplementedError()
 
-    def __matmul__(self):  # -> dot
-        raise NotImplementedError()
-
-    def __neg__(self):
-        raise NotImplementedError()
-
-    def __pos__(self):
-        raise NotImplementedError()
-
-    def __pow__(self):
-        raise NotImplementedError()
-
-    def __sub__(self):
-        raise NotImplementedError()
-
-    def __truediv__(self):
-        raise NotImplementedError()
-
     def allclose(self):
         raise NotImplementedError()
 
-    def coordinate_field(self):
-        raise NotImplementedError()
-
-    def derivative(self):
-        raise NotImplementedError()
-
-    def from_xarray(self):
-        raise NotImplementedError()
-
-    def fromfile(self):  # -> from_file
-        raise NotImplementedError()
-
-    def integral(self):
+    @classmethod
+    def from_xarray(cls):  # -> still required (?)
         raise NotImplementedError()
 
     def line(self):
         raise NotImplementedError()
 
-    def plat(self):
+    def pad(self):
         raise NotImplementedError()
 
-    def plane(self):
+    def plane(self):  # -> delete
         raise NotImplementedError()
 
-    def project(self):
+    def project(self):  # -> delete
         raise NotImplementedError()
+
+    def to_xarray(self):  # -> still required (?)
+        raise NotImplementedError()
+
+    # io and external data structures
 
     def to_vtk(self):
         raise NotImplementedError()
 
-    def to_xarray(self):
+    def fromfile(self):  # -> from_file
         raise NotImplementedError()
 
     def write(self):  # -> to_file
         raise NotImplementedError()
 
-    @property
-    def angle(self):  # -> method angle(vector)
-        raise NotImplementedError()
+    # plotting
 
     @property
-    def average(self):  # -> mean
-        raise NotImplementedError()
-
-    @property
-    def components(self):
-        raise NotImplementedError()
-
-    @property
-    def conjugate(self):
-        raise NotImplementedError()
-
-    @property
-    def curl(self):
-        raise NotImplementedError()
-
-    @property
-    def dim(self):
-        raise NotImplementedError()
-
-    @property
-    def div(self):
-        raise NotImplementedError()
-
-    @property
-    def fftn(self):
-        raise NotImplementedError()
-
-    @property
-    def grad(self):
+    def mpl(self):
         raise NotImplementedError()
 
     @property
@@ -302,59 +393,11 @@ class Field:
         raise NotImplementedError()
 
     @property
-    def ifftn(self):
-        raise NotImplementedError()
-
-    @property
-    def imag(self):
-        raise NotImplementedError()
-
-    @property
-    def irfftn(self):
-        raise NotImplementedError()
-
-    @property
     def k3d(self):
         raise NotImplementedError()
 
     @property
-    def laplace(self):
-        raise NotImplementedError()
-
-    @property
-    def mesh(self):
-        raise NotImplementedError()
-
-    @property
-    def mpl(self):
-        raise NotImplementedError()
-
-    @property
-    def norm(self):
-        raise NotImplementedError()
-
-    @property
-    def orientation(self):
-        raise NotImplementedError()
-
-    @property
-    def phase(self):
-        raise NotImplementedError()
-
-    @property
-    def real(self):
-        raise NotImplementedError()
-
-    @property
-    def rfftn(self):
-        raise NotImplementedError()
-
-    @property
-    def units(self):
-        raise NotImplementedError()
-
-    @property
-    def value(self):
+    def value(self):  # -> delete this method
         raise NotImplementedError()
 
     @property
