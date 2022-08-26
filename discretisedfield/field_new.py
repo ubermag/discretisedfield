@@ -526,7 +526,7 @@ class Field:
         raise NotImplementedError()
 
     def to_numpy(self):
-        raise NotImplementedError()
+        return self.data.data
 
     def __repr__(self):
         return repr(self.data)
