@@ -6,19 +6,27 @@ import discretisedfield as df
 
 class Field:
     def __init__(
-        self, pmin, pmax, n, data, dims=None, vdims=None, subregions=None, bc=""
+        self, mesh, dims, value=0.0, norm=None, components=None, dtype=None, units=None
     ):
-        pmin = np.array(pmin)
-        pmax = np.array(pmax)
-        n = np.array(n)
+        pmin = np.array(mesh.region.pmin)
+        pmax = np.array(mesh.region.pmax)
+        n = np.array(mesh.n)
         assert len(pmin) == len(pmax)
         assert len(pmin) == len(n)
+
+        dims = None  # TODO remove this
+
         if dims:
             assert len(pmin) == len(dims)
+        elif len(pmin) == 3:  # TODO remove this
+            dims = ["x", "y", "z"]
         else:
             dims = [f"x{i}" for i in range(len(pmin))]
 
+        data = value  # TODO fix this
+
         vdim = 1 if len(data.shape) == len(pmin) else data.shape[-1]
+        vdims = components  # TODO fix this
         if vdims:
             assert len(vdims) == vdim
         else:
@@ -41,8 +49,8 @@ class Field:
                 self.data[dim].attrs["units"] = "m"
         self.data.attrs["cell"] = cell
         self._cell = cell
-        self._subregions = subregions or {}
-        self._bc = bc
+        # self._subregions = subregions or {}  # TODO fix this
+        # self._bc = bc  # TODO fix this
 
     # @property
     # def subregions(self):
