@@ -560,19 +560,43 @@ class Field:
 
     @property
     def real(self):
-        raise NotImplementedError()
+        """Real part of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.real,
+            units=self.units,
+        )
 
     @property
     def imag(self):
-        raise NotImplementedError()
+        """Imaginary part of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.imag,
+            units=self.units,
+        )
 
     @property
     def phase(self):
-        raise NotImplementedError()
+        """Phase of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=np.angle(self.data),
+            units=self.units,
+        )
 
     @property
     def conjugate(self):
-        raise NotImplementedError()
+        """Complex conjugate of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.conjugate(),
+            units=self.units,
+        )
 
     # other mathematical operations
 
