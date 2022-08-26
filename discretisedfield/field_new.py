@@ -236,14 +236,28 @@ class Field:
     def check_same_mesh(self, other):
         """Check if two Field objects are defined on the same mesh."""
         if not isinstance(other, self.__class__):
-            raise TypeError("Object of type {type(other)} not supported.")
-        if self.ndims != other.ndims or self.nvdims != other.nvdims:
+            raise TypeError(f"Object of type {type(other)} not supported.")
+        if self.dims != other.dims:
             return False
-        if self.dims != other.dims or self.vdims != other.vdims:
-            return False
-        # for dim is self.dims:
-        #    pass
-        raise NotImplementedError()
+        for dim in self.dims:
+            print(dim)
+            print(self.data[dim].data)
+            print(other.data[dim].data)
+            if len(self.data[dim]) != len(other.data[dim]):
+                # change absolute tolerance to a tolerance relative to the cell size
+                # to take into account the overall scale
+                if not np.allclose(
+                    self.data[dim],
+                    other.data[dim],
+                    atol=self.cell[self.dims.index(dim)] * 1e-5,
+                ):
+                    return False
+        return True
+
+    def check_same_vectorspace(self, other):
+        if not isinstance(other, self.__class__):
+            raise TypeError(f"Object of type {type(other)} not supported.")
+        return self.vdims == other.vdims
 
     def translate(self, point):
         # TODO write tests
@@ -275,20 +289,24 @@ class Field:
 
     def sel(self, *args, **kwargs):
         """Select a submesh."""
+        if self.mesh.subregions:
+            raise ValueError(
+                "Selections are not yet supported for fields with subregions."
+            )
         kwargs = kwargs or {}
         if args:
             for arg in args:
                 if not isinstance(arg, str):
                     raise TypeError("Positional arguments must be strings")
                 if arg in kwargs:
-                    raise ValueError("Dimension {arg} is specified twice.")
+                    raise ValueError(f"Dimension {arg} is specified twice.")
                 else:
-                    kwargs[arg] = self.edges[self._dims.index(arg)] / 2
+                    kwargs[arg] = self.edges[self.ndims.index(arg)] / 2
 
-        self.data.sel(**kwargs)
         pmin = []
         pmax = []
         dims = []
+        n = []
         for dim, sel in kwargs:
             if isinstance(sel, tuple) or isinstance(sel, list):
                 sel = slice(*sel)
@@ -296,19 +314,17 @@ class Field:
                 center_min = self.data[dim].sel(**{dim: sel.start}, method="nearest")
                 center_max = self.data[dim].sel(**{dim: sel.stop}, method="nearest")
 
-                pmin.append(center_min - self._cell[self.data.dims.index(dim)] / 2)
-                pmax.append(center_max + self._cell[self.data.dims.index(dim)] / 2)
+                pmin.append(center_min - self._cell[self.dims.index(dim)] / 2)
+                pmax.append(center_max + self._cell[self.dims.index(dim)] / 2)
                 dims.append(dim)
-            else:
-                # cutplane
-                pass
+                kwargs[dim] = slice(pmin[-1], pmax[-1])
+                n.append(self.n[self.dims.index(dim)])
+
         return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            df.Mesh(p1=pmin, p2=pmax, n=..., bc=self.bc),
+            dim=self.nvdims,
+            data=self.data.sel(**kwargs),
+            units=self.units,
         )
 
     # mathematical operations
