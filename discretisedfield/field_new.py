@@ -694,10 +694,10 @@ class Field:
             return None
         else:
             return self.__class__(
-                # mesh[0],
-                # dim=result.shape[-1],
+                mesh[0],
+                dim=result.shape[-1],
                 value=result,
-                # components=self.components,
+                components=self.components,
             )
 
     # derivative-related
