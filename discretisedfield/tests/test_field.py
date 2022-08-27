@@ -1684,32 +1684,48 @@ class TestField:
         assert sf.average == (3, 2, 0)
 
     def test_angle(self):
-        p1 = (0, 0, 0)
-        p2 = (8e-9, 2e-9, 2e-9)
-        cell = (2e-9, 2e-9, 2e-9)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+        p1 = (-50, -50, -50)
+        p2 = (50, 50, 50)
+        cell = (2, 2, 2)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        def value_fun(point):
-            x, y, z = point
-            if x < 2e-9:
-                return (1, 1, 1)
-            elif 2e-9 <= x < 4e-9:
-                return (1, -1, 0)
-            elif 4e-9 <= x < 6e-9:
-                return (-1, -1, 0)
-            elif 6e-9 <= x < 8e-9:
-                return (-1, 1, 0)
+        scalar_real_field_p = df.Field(mesh, dim=1, value=3)
+        scalar_real_field_n = df.Field(mesh, dim=1, value=-3)
+        # scalar_complex_field = df.Field(mesh, dim=1, value=(1 - 4j))
+        vector_field_x = df.Field(mesh, dim=3, value=(1, 0, 0))
+        vector_field_y = df.Field(mesh, dim=3, value=(0, 1, 0))
+        vector_field_z = df.Field(mesh, dim=3, value=(0, 0, 1))
+        vector_field_5d = df.Field(mesh, dim=5, value=np.arange(5))
 
-        f = df.Field(mesh, dim=3, value=value_fun)
-
-        assert abs(f.plane("z").angle((1e-9, 2e-9, 2e-9)) - np.pi / 4) < 1e-3
-        assert abs(f.plane("z").angle((3e-9, 2e-9, 2e-9)) - 7 * np.pi / 4) < 1e-3
-        assert abs(f.plane("z").angle((5e-9, 2e-9, 2e-9)) - 5 * np.pi / 4) < 1e-3
-        assert abs(f.plane("z").angle((7e-9, 2e-9, 2e-9)) - 3 * np.pi / 4) < 1e-3
-
+        # tests various combinations of real and complex scalar field angles
+        assert vector_field_x.angle((1, 0, 0)).allclose(
+            df.Field(mesh, dim=1, value=0)
+        )  # x.x=0 tuple
+        assert vector_field_x.angle([1, 0, 0]).allclose(
+            df.Field(mesh, dim=1, value=0)
+        )  # x.x=0 list
+        assert vector_field_x.angle(vector_field_y).allclose(
+            df.Field(mesh, dim=1, value=np.pi / 2)
+        )  # x.y=pi/2 vector field
+        assert (
+            vector_field_x.cross(vector_field_y)
+            .angle(vector_field_z)
+            .allclose(df.Field(mesh, dim=1, value=0))
+        )  # (x.y).z=0
+        assert scalar_real_field_p.angle(scalar_real_field_n).allclose(
+            df.Field(mesh, dim=1, value=np.pi)
+        )  # scalar positive  angle  scalar negative =pi
+        assert scalar_real_field_p.angle(scalar_real_field_p).allclose(
+            df.Field(mesh, dim=1, value=0)
+        )  # scalar positive  angle  scalar positive = 0
+        assert vector_field_5d.angle(-vector_field_5d).allclose(
+            df.Field(mesh, dim=1, value=np.pi)
+        )  # vector positive  angle  vector negative =pi
         # Exception
         with pytest.raises(ValueError):
-            f.angle  # the field is not sliced
+            scalar_real_field_p.angle(vector_field_x)  # wrong dimension
+        with pytest.raises(TypeError):
+            scalar_real_field_p.angle("my mesh")  # wrong type
 
     def test_write_read_ovf(self, tmp_path):
         representations = ["txt", "bin4", "bin8"]
