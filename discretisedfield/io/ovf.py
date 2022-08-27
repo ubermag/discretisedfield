@@ -74,14 +74,14 @@ def field_to_ovf(
 
     """
     filename = pathlib.Path(filename)
-    write_dim = 3 if extend_scalar and field.dim == 1 else field.dim
+    write_dim = 3 if extend_scalar and field.nvdims == 1 else field.nvdims
     valueunits = " ".join([str(field.units) if field.units else "None"] * write_dim)
     if write_dim == 1:
         valuelabels = "field_x"
     elif extend_scalar:
         valuelabels = " ".join(["field_x"] * write_dim)
     else:
-        valuelabels = " ".join(f"field_{c}" for c in field.components)
+        valuelabels = " ".join(f"field_{c}" for c in field.vdims)
 
     if representation == "bin4":
         repr_string = "Binary 4"
@@ -137,7 +137,16 @@ def field_to_ovf(
         """
     ).encode("utf-8")
 
-    reordered = field.array.transpose((2, 1, 0, 3))  # ovf ordering
+    if field.nvdims == 1:
+        # if the field is a scalar field, there is no 4th index dimension in the
+        # array for the field data.
+        # We need to add that 4th-dimension for the following to work.
+        assert len(field.data.data.shape) == 3  # sanity check only
+        data_4d = field.data.data[..., np.newaxis]
+    else:
+        data_4d = field.data.data
+
+    reordered = data_4d.transpose((2, 1, 0, 3))  # ovf ordering
 
     bin_rep = {"bin4": ("<f", 1234567.0), "bin8": ("<d", 123456789012345.0)}
 
@@ -161,7 +170,7 @@ def field_to_ovf(
 
             # processing in chuncks to reduce memory consumption
             chunksize = 100_000
-            n_chunks = math.ceil(len(field.array.flat) / chunksize)
+            n_chunks = math.ceil(len(field.data.data.flat) / chunksize)
             for i in range(n_chunks):
                 f.write(
                     np.asarray(
@@ -171,7 +180,7 @@ def field_to_ovf(
                 )
             f.write(b"\n")
         else:
-            data = pd.DataFrame(reordered.reshape((-1, field.dim)))
+            data = pd.DataFrame(reordered.reshape((-1, field.nvdims)))
             data.insert(loc=0, column="leading_space", value="")
 
             if extend_scalar:
