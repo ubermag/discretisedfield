@@ -523,7 +523,7 @@ class TestField:
 
         # No zero-norm cells
         f = df.Field(mesh, dim=3, value=(2, 0, 0))
-        assert f.orientation.average == (1, 0, 0)
+        assert (f.orientation.average == (1, 0, 0)).all()
 
         # With zero-norm cells
         def value_fun(point):
