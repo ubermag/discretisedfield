@@ -332,10 +332,30 @@ def field_from_ovf(filename):
         else:
             units = unit_list[0]
 
+    numpy_array = array.reshape(r_tuple).transpose(t_tuple)
+
+    # just a more convenient variable name
+    valuedim = header["valuedim"]
+
+    # if the field is scalar,
+    if valuedim == 1:
+        # we need to an array with 3 indices, but have 4
+        assert len(numpy_array.shape) == 4  # sanity check
+        # last index holds our scalar field
+        numpy_array = numpy_array[..., 0]
+    elif valuedim == 3:
+        pass
+    elif valuedim == 2:
+        pass
+    else:
+        raise NotImplementedError(
+            f"can only deal with valuedim=1 or valuedim=3, but found {valuedim=}"
+        )
+
     return df.Field(
         mesh,
-        dim=header["valuedim"],
-        value=array.reshape(r_tuple).transpose(t_tuple),
+        dim=valuedim,
+        value=numpy_array,
         components=components,
         units=units,
     )
