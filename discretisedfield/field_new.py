@@ -834,9 +834,7 @@ class Field:
     def __getattr__(self, attr):
         if self.nvdims > 1 and attr in self.vdims:
             attr_array = self.data[..., self.vdims.index(attr)]
-            return self.__class__(
-                mesh=self.mesh, dim=1, value=attr_array, units=self.units
-            )
+            return self.__class__(value=attr_array)
         msg = f"Object has no attribute {attr}."
         raise AttributeError(msg)
 
