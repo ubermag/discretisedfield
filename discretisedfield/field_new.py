@@ -220,7 +220,7 @@ class Field:
     @property
     def dims(self):
         """Labels of the spatial dimensions."""
-        xr_dims = self.data.dims
+        xr_dims = list(self.data.dims)
         return xr_dims[:-1] if "vdims" in xr_dims else xr_dims
 
     @property
@@ -231,7 +231,7 @@ class Field:
     @property
     def vdims(self):
         """Labels of the value dimensions."""
-        return tuple(self.data.vdims.data) if "vdims" in self.data.dims else None
+        return list(self.data.vdims.data) if "vdims" in self.data.dims else None
 
     @property
     def mesh(self):
