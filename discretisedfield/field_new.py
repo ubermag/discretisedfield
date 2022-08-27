@@ -104,6 +104,19 @@ class Field:
             " `update_field_values` method."
         )
 
+    @property
+    def value(self):
+        raise RuntimeError(
+            " Attribute `value` has been removed. Use `data` instead to read data."
+        )
+
+    @value.setter
+    def value(self, data):
+        raise RuntimeError(
+            "The `value` attribute has been removed. Use the "
+            " `update_field_values([])` method to update data."
+        )
+
     def update_field_values(self, values, dtype=None):
         print(f"Updating with {values=}")
         self._data.data = _as_array(
