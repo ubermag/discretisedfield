@@ -71,16 +71,16 @@ class Field:
             for dim, pmin_i, pmax_i, n_i, cell_i in zip(dims, pmin, pmax, n, cell)
         }
 
+        if vdim > 1:
+            coords["vdims"] = vdims
+            dims += ["vdims"]
+
         self._data = xr.DataArray(
             _as_array(value, mesh, vdim, dtype),
             dims=dims,
             coords=coords,
             name="field",
         )
-
-        if vdim > 1:
-            coords["vdims"] = vdims
-            dims += ["vdims"]
 
         for dim in dims:
             if dim != "vdims":
@@ -128,7 +128,7 @@ class Field:
         )
 
         # if any("units" not in xa[i].attrs for i in xa.coords.dims[:-1]):
-        self.mesh = df.Mesh(p1=p1, p2=p2, cell=cell)  # TODO: Check for units!
+        self._mesh = df.Mesh(p1=p1, p2=p2, cell=cell)  # TODO: Check for units!
         # else:
         #     mesh = df.Mesh(
         #         p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
