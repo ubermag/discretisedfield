@@ -11,8 +11,8 @@ import discretisedfield as df
 class Field:
     def __init__(
         self,
-        mesh,
-        dim,
+        mesh=None,
+        dim=None,
         value=0.0,
         norm=None,
         components=None,
@@ -20,6 +20,37 @@ class Field:
         units=None,
         dims=None,
     ):
+        # self._subregions = subregions or {}  # TODO fix this
+        # self._bc = bc  # TODO fix this
+
+        # @property
+        # def subregions(self):
+        #    return self._subregions
+
+        # @subregions.setter
+        # def subregions(self, subregions):
+        #    # checks
+        #    self._subregions = subregions
+        if isinstance(value, xr.DataArray):
+            if any(
+                arg is not None for arg in (mesh, dim, components, dtype, units, dims)
+            ):
+                raise ValueError(
+                    "No extra arguments are allowed if value is xr.DataArray."
+                )
+            else:
+                self._init_from_xarray(value)
+        else:
+            self._init_from_others(mesh, dim, value, components, dtype, units, dims)
+
+        self.units = units
+        self.norm = norm
+
+    def _init_from_others(self, mesh, dim, value, components, dtype, units, dims):
+        if any(arg is None for arg in (mesh, dim, components, dtype, units, dims)):
+            raise TypeError("Missing arguments.")
+
+        self._mesh = mesh
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
         n = np.array(mesh.n)
@@ -51,10 +82,6 @@ class Field:
             for dim, pmin_i, pmax_i, n_i, cell_i in zip(dims, pmin, pmax, n, cell)
         }
 
-        if vdim > 1:
-            coords["vdims"] = vdims
-            dims += ["vdims"]
-
         self._data = xr.DataArray(
             _as_array(value, mesh, vdim, dtype),
             dims=dims,
@@ -62,85 +89,64 @@ class Field:
             name="field",
         )
 
-        self._mesh = mesh
-        self.units = units
-
-        self.norm = norm
+        if vdim > 1:
+            coords["vdims"] = vdims
+            dims += ["vdims"]
 
         for dim in dims:
             if dim != "vdims":
-                self.data[dim].attrs["units"] = "m"
-        self.data.attrs["cell"] = cell
+                self._data[dim].attrs["units"] = "m"
+        self._data.attrs["cell"] = cell
         self._cell = cell
 
-        # self._subregions = subregions or {}  # TODO fix this
-        # self._bc = bc  # TODO fix this
+    def _init_from_xarray(self, value):
 
-    # @property
-    # def subregions(self):
-    #    return self._subregions
-
-    # @subregions.setter
-    # def subregions(self, subregions):
-    #    # checks
-    #    self._subregions = subregions
-
-    @classmethod
-    def from_xarray(cls, xa: xr.DataArray):
-
-        if not isinstance(xa, xr.DataArray):
-            raise TypeError("Argument must be a xr.DataArray.")
-
-        if len(xa.coords) != xa.data.ndim:
+        if len(value.coords) != value.data.ndim:
             raise AttributeError(
                 "The xr.DataArray must have the same number of coordinates as"
                 " the axes of underlying data array."
             )
 
-        for i in xa.coords.dims[:-1]:
-            if xa[i].data.size > 1 and not np.allclose(
-                np.diff(xa[i].data), np.diff(xa[i].data).mean()
+        for i in value.coords.dims[:-1]:
+            if value[i].data.size > 1 and not np.allclose(
+                np.diff(value[i].data), np.diff(value[i].data).mean()
             ):
                 raise ValueError(f"Coordinates of {i} must be equally spaced.")
 
         try:
-            cell = xa.attrs["cell"]
+            cell = value.attrs["cell"]
         except KeyError:
-            if any(len_ == 1 for len_ in xa.data.shape[:-1]):
+            if any(len_ == 1 for len_ in value.data.shape[:-1]):
                 raise KeyError(
                     "DataArray must have a 'cell' attribute if any "
                     "of the spatial directions has a single cell."
                 ) from None
-            cell = [np.diff(xa[i].data).mean() for i in xa.coords.dims[:-1]]
+            cell = [np.diff(value[i].data).mean() for i in value.coords.dims[:-1]]
 
         p1 = (
-            xa.attrs["p1"]
-            if "p1" in xa.attrs
-            else [xa[i].values[0] - c / 2 for i, c in zip(xa.coords.dims[:-1], cell)]
+            value.attrs["p1"]
+            if "p1" in value.attrs
+            else [
+                value[i].data[0] - c / 2 for i, c in zip(value.coords.dims[:-1], cell)
+            ]
         )
         p2 = (
-            xa.attrs["p2"]
-            if "p2" in xa.attrs
-            else [xa[i].values[-1] + c / 2 for i, c in zip(xa.coords.dims[:-1], cell)]
+            value.attrs["p2"]
+            if "p2" in value.attrs
+            else [
+                value[i].data[-1] + c / 2 for i, c in zip(value.coords.dims[:-1], cell)
+            ]
         )
 
         # if any("units" not in xa[i].attrs for i in xa.coords.dims[:-1]):
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)  # TODO: Check for units!
+        self.mesh = df.Mesh(p1=p1, p2=p2, cell=cell)  # TODO: Check for units!
         # else:
         #     mesh = df.Mesh(
         #         p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
         #     )
 
-        components = (
-            getattr(xa, xa.coords.dims[-1]).data
-            if len(getattr(xa, xa.coords.dims[-1]).data) == xa.data.shape[-1]
-            else None
-        )
-        val = xa.data
-        dim = val.shape[-1]
-        return cls(
-            mesh=mesh, dim=dim, value=val, components=components, dtype=xa.data.dtype
-        )
+        self._cell = cell
+        self._data = value
 
     @classmethod
     def coordinate_field(cls, mesh):
