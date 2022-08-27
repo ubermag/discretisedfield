@@ -20,11 +20,11 @@ class Field:
         units=None,
         dims=None,
     ):
+        if not isinstance(mesh, df.Mesh):
+            raise TypeError(f"Wrong type for mesh: {type(mesh)} not supported.")
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
         n = np.array(mesh.n)
-        assert len(pmin) == len(pmax)
-        assert len(pmin) == len(n)
 
         if dims is not None:
             assert len(pmin) == len(dims)
