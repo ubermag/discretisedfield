@@ -4,7 +4,6 @@ import numbers
 
 import numpy as np
 import xarray as xr
-import xrft
 
 import discretisedfield as df
 
@@ -570,49 +569,145 @@ class Field:
 
     # FFT
 
+    def _fft_mesh(f, rfft=False):
+        """FFT can be one of fftfreq, rfftfreq."""
+        p1 = []
+        p2 = []
+        n = []
+        for i in range(f.ndims):
+            if f.mesh.n[i] == 1:
+                p1.append(0)
+                p2.append(1 / f.mesh.cell[i])
+                n.append(1)
+            else:
+                freqs = np.fft.fftshift(np.fft.fftfreq(f.mesh.n[i], f.mesh.cell[i]))
+                # Shift the region boundaries to get the correct coordinates of
+                # mesh cells.
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+                n.append(len(freqs))
+
+        if rfft:
+            # last frequency is different for rfft
+            for i in reversed(range(f.ndims)):
+                if f.mesh.n[i] > 1:
+                    freqs = np.fft.rfftfreq(f.mesh.n[i], f.mesh.cell[i])
+                    dfreq = (freqs[1] - freqs[0]) / 2
+                    p1[i] = min(freqs) - dfreq
+                    p2[i] = max(freqs) + dfreq
+                    n[i] = len(freqs)
+                    break
+
+        # TODO: Using PlaneMesh will simplify the code a lot here.
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        return mesh
+
+    def _ifft_mesh(f, rfft=False):
+        """FFT can be one of fftfreq, rfftfreq."""
+        p1 = []
+        p2 = []
+        n = []
+        for i in range(f.ndims):
+            if f.mesh.n[i] == 1:
+                p1.append(0)
+                p2.append(1 / f.mesh.cell[i])
+                n.append(1)
+            else:
+                freqs = np.fft.ifftshift(np.fft.fftfreq(f.mesh.n[i], f.mesh.cell[i]))
+                # Shift the region boundaries to get the correct coordinates of
+                # mesh cells.
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+                n.append(len(freqs))
+
+        if rfft:
+            # last frequency is different for rfft
+            for i in reversed(range(f.ndims)):
+                if f.mesh.n[i] > 1:
+                    freqs = np.fft.rfftfreq(f.mesh.n[i], f.mesh.cell[i])
+                    dfreq = (freqs[1] - freqs[0]) / 2
+                    p1[i] = min(freqs) - dfreq
+                    p2[i] = max(freqs) + dfreq
+                    n[i] = len(freqs)
+                    break
+
+        # TODO: Using PlaneMesh will simplify the code a lot here.
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        return mesh
+
     @property
     def fftn(self):
-        # TODO: I actually think in the last version you were already correcting the
-        #  shift, so we should inclue true_amplitude, true_phase = True
-        ft_xarray = xrft.fft(
-            self.data, dim=[*self.dims], true_amplitude=True, true_phase=True
+        mesh = self._fft_mesh()
+
+        values = []
+        for idx in range(self.nvdims):
+            ft = np.fft.fftshift(np.fft.fftn(self.data.data[..., idx].squeeze()))
+            values.append(ft.reshape(mesh.n))
+
+        ft_array = np.stack(values, axis=self.ndims)
+        return self.__class__(
+            mesh,
+            dim=self.nvdims,
+            value=ft_array,
+            units=self.units,
         )
-        return self.from_xarray(ft_xarray)
 
     @property
     def ifftn(self):
-        # TODO: I actually think in the last version you were already correcting the
-        #  shift, so we should inclue true_amplitude, true_phase = True
-        ift_xarray = xrft.ifft(
-            self.data, dim=[*self.dims], true_amplitude=True, true_phase=True
+        mesh = self._ifft_mesh()
+        values = []
+        for idx in range(self.nvdims):
+            ift = np.fft.ifftn(np.fft.ifftshift(self.data.data[..., idx].squeeze()))
+            values.append(ift.reshape(mesh.n))
+
+        ift_array = np.stack(values, axis=self.ndims)
+        return self.__class__(
+            mesh,
+            dim=self.nvdims,
+            value=ift_array,
+            units=self.units,
         )
-        return self.from_xarray(ift_xarray)
 
     @property
     def rfftn(self):
-        # TODO: I actually think in the last version you were already correcting the
-        #  shift, so we should inclue true_amplitude, true_phase = True
-        rft_xarray = xrft.fft(
-            self.data,
-            dim=[*self.dims],
-            real_dim=[*self.dims],
-            true_amplitude=True,
-            true_phase=True,
+        mesh = self._fft_mesh(rfft=True)
+
+        values = []
+        for idx in range(self.dim):
+            array = self.data.data[..., idx].squeeze()
+            # no shifting for the last axis
+            ft = np.fft.fftshift(np.fft.rfftn(array), axes=range(len(array.shape) - 1))
+            values.append(ft.reshape(mesh.n))
+
+        ft_array = np.stack(values, axis=self.ndims)
+        return self.__class__(
+            mesh,
+            dim=self.nvdims,
+            value=ft_array,
+            units=self.units,
         )
-        return self.from_xarray(rft_xarray)
 
     @property
     def irfftn(self):
-        # TODO: I actually think in the last version you were already correcting the
-        #  shift, so we should inclue true_amplitude, true_phase = True
-        irft_xarray = xrft.ifft(
-            self.data,
-            dim=[*self.dims],
-            real_dim=[*self.dims],
-            true_amplitude=True,
-            true_phase=True,
+        mesh = self._ifft_mesh()
+        values = []
+        for idx in range(self.dim):
+            array = self.data.data[..., idx].squeeze()
+            ft = np.fft.irfftn(
+                np.fft.ifftshift(array, axes=range(len(array.shape) - 1)),
+                s=[i for i in mesh.n if i > 1],
+            )
+            values.append(ft.reshape(mesh.n))
+
+        ift_array = np.stack(values, axis=self.ndims)
+        return self.__class__(
+            mesh,
+            dim=self.nvdims,
+            value=ift_array,
+            units=self.units,
         )
-        return self.from_xarray(irft_xarray)
 
     # complex values
 
