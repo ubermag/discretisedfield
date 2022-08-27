@@ -20,17 +20,6 @@ class Field:
         units=None,
         dims=None,
     ):
-        # self._subregions = subregions or {}  # TODO fix this
-        # self._bc = bc  # TODO fix this
-
-        # @property
-        # def subregions(self):
-        #    return self._subregions
-
-        # @subregions.setter
-        # def subregions(self, subregions):
-        #    # checks
-        #    self._subregions = subregions
         if isinstance(value, xr.DataArray):
             if any(
                 arg is not None for arg in (mesh, dim, components, dtype, units, dims)
