@@ -1,4 +1,5 @@
 import collections
+import copy
 import functools
 import numbers
 
@@ -335,7 +336,36 @@ class Field:
 
     @property
     def orientation(self):
-        raise NotImplementedError()
+        """Orientation field.
+
+        This method computes the orientation (direction) of a vector field and
+        returns ``discretisedfield.Field`` with the same dimension. More
+        precisely, at every mesh discretisation cell, the vector is divided by
+        its norm, so that a unit vector is obtained. However, if the vector at
+        a discretisation cell is a zero-vector, it remains unchanged. In the
+        case of a scalar (``dim=1``) field, ``ValueError`` is raised.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Orientation field.
+
+        Raises
+        ------
+        ValueError
+
+            If the field is has ``dim=1``.
+        """
+        if self.nvdims == 1:
+            raise ValueError(
+                f"Cannot compute orientation for scalar field. ({self.nvdims=})"
+            )
+        fieldCopy = self.__class__(value=copy.deepcopy(self.data))
+        fieldCopy.update_field_values(0)
+        norm = self.norm.data.data[..., np.newaxis]
+        np.divide(self.data.data, norm, out=fieldCopy.data.data, where=norm != 0.0)
+        return fieldCopy
 
     @property
     def units(self):
