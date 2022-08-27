@@ -496,12 +496,12 @@ class TestField:
 
         f = df.Field(mesh, dim=3)
 
-        f.update_field_values = (0, 3, 0)
+        f.update_field_values([0, 3, 0])
         f.norm = 1
         assert np.all(f.norm.data == 1)
 
-        f.value = (0, 2, 0)
-        assert np.all(f.norm.value != 1)
+        f.update_field_values([0, 2, 0])
+        assert np.all(f.norm.data != 1)
         assert np.all(f.norm.data == 2)
 
     def test_norm_zero_field(self):
