@@ -97,6 +97,9 @@ class Field:
                 " the axes of underlying data array."
             )
 
+        # We are assuming that the last dimension label of the DataArray
+        # is "vdims" if it is a vector field. Otherwise it is considered
+        # a scalar field.
         if value.data.coords.dims[-1] == "vdims":
             dims = value.coords.dims[:-1]
         else:
@@ -116,21 +119,17 @@ class Field:
                     "DataArray must have a 'cell' attribute if any "
                     "of the spatial directions has a single cell."
                 ) from None
-            cell = [np.diff(value[i].data).mean() for i in value.coords.dims[:-1]]
+            cell = [np.diff(value[i].data).mean() for i in dims]
 
         p1 = (
             value.attrs["p1"]
             if "p1" in value.attrs
-            else [
-                value[i].data[0] - c / 2 for i, c in zip(value.coords.dims[:-1], cell)
-            ]
+            else [value[i].data[0] - c / 2 for i, c in zip(dims, cell)]
         )
         p2 = (
             value.attrs["p2"]
             if "p2" in value.attrs
-            else [
-                value[i].data[-1] + c / 2 for i, c in zip(value.coords.dims[:-1], cell)
-            ]
+            else [value[i].data[-1] + c / 2 for i, c in zip(dims, cell)]
         )
 
         # if any("units" not in xa[i].attrs for i in xa.coords.dims[:-1]):
