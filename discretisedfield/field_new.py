@@ -106,13 +106,13 @@ class Field:
 
     @property
     def value(self):
-        raise RuntimeError(
+        raise AttributeError(
             " Attribute `value` has been removed. Use `data` instead to read data."
         )
 
     @value.setter
     def value(self, data):
-        raise RuntimeError(
+        raise AttributeError(
             "The `value` attribute has been removed. Use the "
             " `update_field_values([])` method to update data."
         )
