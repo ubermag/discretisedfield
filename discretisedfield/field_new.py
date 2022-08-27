@@ -11,8 +11,8 @@ import discretisedfield as df
 class Field:
     def __init__(
         self,
-        mesh,
-        dim,
+        mesh=None,
+        dim=None,
         value=0.0,
         norm=None,
         components=None,
@@ -20,8 +20,29 @@ class Field:
         units=None,
         dims=None,
     ):
+        if isinstance(value, xr.DataArray):
+            if any(
+                arg is not None for arg in (mesh, dim, components, dtype, units, dims)
+            ):
+                raise ValueError(
+                    "No extra arguments are allowed if value is xr.DataArray."
+                )
+            else:
+                self._init_from_xarray(value)
+        else:
+            self._init_from_others(mesh, dim, value, components, dtype, units, dims)
+
+        self.units = units
+        self.norm = norm
+
+    def _init_from_others(self, mesh, dim, value, components, dtype, units, dims):
+        if any(arg is None for arg in (mesh, dim)):
+            raise TypeError("Missing arguments mesh or dim.")
+
         if not isinstance(mesh, df.Mesh):
             raise TypeError(f"Wrong type for mesh: {type(mesh)} not supported.")
+
+        self._mesh = mesh
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
         n = np.array(mesh.n)
@@ -62,36 +83,72 @@ class Field:
             name="field",
         )
 
-        self._mesh = mesh
-        self.units = units
-
-        self.norm = norm
-
         for dim in dims:
             if dim != "vdims":
-                self.data[dim].attrs["units"] = "m"
-        self.data.attrs["cell"] = cell
+                self._data[dim].attrs["units"] = "m"
+        self._data.attrs["cell"] = cell
         self._cell = cell
 
-        # self._subregions = subregions or {}  # TODO fix this
-        # self._bc = bc  # TODO fix this
+    def _init_from_xarray(self, value):
 
-    # @property
-    # def subregions(self):
-    #    return self._subregions
+        if len(value.coords) != value.data.ndim:
+            raise AttributeError(
+                "The xr.DataArray must have the same number of coordinates as"
+                " the axes of underlying data array."
+            )
 
-    # @subregions.setter
-    # def subregions(self, subregions):
-    #    # checks
-    #    self._subregions = subregions
+        for i in value.coords.dims[:-1]:
+            if value[i].data.size > 1 and not np.allclose(
+                np.diff(value[i].data), np.diff(value[i].data).mean()
+            ):
+                raise ValueError(f"Coordinates of {i} must be equally spaced.")
+
+        try:
+            cell = value.attrs["cell"]
+        except KeyError:
+            if any(len_ == 1 for len_ in value.data.shape[:-1]):
+                raise KeyError(
+                    "DataArray must have a 'cell' attribute if any "
+                    "of the spatial directions has a single cell."
+                ) from None
+            cell = [np.diff(value[i].data).mean() for i in value.coords.dims[:-1]]
+
+        p1 = (
+            value.attrs["p1"]
+            if "p1" in value.attrs
+            else [
+                value[i].data[0] - c / 2 for i, c in zip(value.coords.dims[:-1], cell)
+            ]
+        )
+        p2 = (
+            value.attrs["p2"]
+            if "p2" in value.attrs
+            else [
+                value[i].data[-1] + c / 2 for i, c in zip(value.coords.dims[:-1], cell)
+            ]
+        )
+
+        # if any("units" not in xa[i].attrs for i in xa.coords.dims[:-1]):
+        self._mesh = df.Mesh(p1=p1, p2=p2, cell=cell)  # TODO: Check for units!
+        # else:
+        #     mesh = df.Mesh(
+        #         p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
+        #     )
+
+        self._cell = cell
+        self._data = value
 
     @classmethod
-    def from_xarray(cls):  # -> still required (?)
-        raise NotImplementedError()
+    def coordinate_field(cls, mesh):
+        field = cls(mesh, dim=mesh.dim)
+        dim_midpoints_list = [
+            field.data[coord].data for coord in field.data.coords[:-1]
+        ]
+        dim_points_list = np.meshgrid(*dim_midpoints_list, indexing="ij")
+        for i in range(mesh.dim):
+            field.data.data[..., i] = dim_points_list[i]
 
-    @classmethod
-    def coordinate_field(cls):
-        raise NotImplementedError()
+        return field
 
     @property
     def data(self):
@@ -572,8 +629,46 @@ class Field:
             units=self.units,
         )
 
-    def __array_ufunc__(self):
-        raise NotImplementedError()
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        """Field class support for numpy ``ufuncs``."""
+        # See reference implementation at:
+        # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
+        for x in inputs:
+            if not isinstance(x, (self.__class__, np.ndarray, numbers.Number)):
+                return NotImplemented
+        out = kwargs.get("out", ())
+        if out:
+            for x in out:
+                if not isinstance(x, self.__class__):
+                    return NotImplemented
+
+        mesh = [x.mesh for x in inputs if isinstance(x, self.__class__)]
+        inputs = tuple(x.data if isinstance(x, self.__class__) else x for x in inputs)
+        if out:
+            kwargs["out"] = tuple(x.data for x in out)
+
+        result = getattr(ufunc, method)(*inputs, **kwargs)
+        if isinstance(result, tuple):
+            if len(result) != len(mesh):
+                raise ValueError("wrong number of Field objects")
+            return tuple(
+                self.__class__(
+                    m,
+                    dim=x.shape[-1],
+                    value=x,
+                    components=self.components,
+                )
+                for x, m in zip(result, mesh)
+            )
+        elif method == "at":
+            return None
+        else:
+            return self.__class__(
+                mesh[0],
+                dim=result.shape[-1],
+                value=result,
+                components=self.components,
+            )
 
     # derivative-related
 
@@ -730,8 +825,8 @@ class Field:
     def pad(self):
         raise NotImplementedError()
 
-    def to_xarray(self):  # -> still required (?)
-        raise NotImplementedError()
+    def to_xarray(self):
+        return self.data
 
     def plane(self):
         raise NotImplementedError()
