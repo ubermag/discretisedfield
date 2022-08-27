@@ -183,7 +183,6 @@ class Field:
         )
 
     def update_field_values(self, values, dtype=None):
-        print(f"Updating with {values=}")
         self._data.data = _as_array(
             values, self.mesh, self.nvdims, dtype or self.data.data.dtype
         )
