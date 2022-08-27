@@ -36,8 +36,8 @@ class Field:
         self.norm = norm
 
     def _init_from_others(self, mesh, dim, value, components, dtype, units, dims):
-        if any(arg is None for arg in (mesh, dim, components, dtype, units, dims)):
-            raise TypeError("Missing arguments.")
+        if any(arg is None for arg in (mesh, dim)):
+            raise TypeError("Missing arguments mesh or dim.")
 
         if not isinstance(mesh, df.Mesh):
             raise TypeError(f"Wrong type for mesh: {type(mesh)} not supported.")
@@ -142,7 +142,7 @@ class Field:
     def coordinate_field(cls, mesh):
         field = cls(mesh, dim=mesh.dim)
         dim_midpoints_list = [
-            getattr(mesh.midpoints, mesh_dim) for mesh_dim in mesh.dimensions
+            field.data[coord].data for coord in field.data.coords[:-1]
         ]
         dim_points_list = np.meshgrid(*dim_midpoints_list, indexing="ij")
         for i in range(mesh.dim):
@@ -825,7 +825,7 @@ class Field:
     def pad(self):
         raise NotImplementedError()
 
-    def to_xarray(self):  # -> still required (?)
+    def to_xarray(self):
         return self.data
 
     def plane(self):
