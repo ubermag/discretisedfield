@@ -101,7 +101,7 @@ class Field:
         # We are assuming that the last dimension label of the DataArray
         # is "vdims" if it is a vector field. Otherwise it is considered
         # a scalar field.
-        if value.data.coords.dims[-1] == "vdims":
+        if value.coords.dims[-1] == "vdims":
             dims = value.coords.dims[:-1]
         else:
             dims = value.coords.dims
