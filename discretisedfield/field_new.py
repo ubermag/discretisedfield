@@ -97,7 +97,12 @@ class Field:
                 " the axes of underlying data array."
             )
 
-        for i in value.coords.dims[:-1]:
+        if value.data.coords.dims[-1] == "vdims":
+            dims = value.coords.dims[:-1]
+        else:
+            dims = value.coords.dims
+
+        for i in dims:
             if value[i].data.size > 1 and not np.allclose(
                 np.diff(value[i].data), np.diff(value[i].data).mean()
             ):
