@@ -259,19 +259,21 @@ class TestField:
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
             f = df.Field(mesh, dim=3)
-            f.value = np.ones(
-                (
-                    *f.mesh.n,
-                    f.nvdims,
+            f.update_field_values(
+                np.ones(
+                    (
+                        *f.mesh.n,
+                        f.nvdims,
+                    )
                 )
             )
 
             check_field(f)
-            assert isinstance(f.value, np.ndarray)
-            assert f.average == (1, 1, 1)
+            assert isinstance(f.data, xr.DataArray)
+            assert np.all(f.average == (1, 1, 1))
 
             with pytest.raises(ValueError):
-                f.value = np.ones((2, 2))
+                f.update_field_values(np.ones((2, 2)))
 
     def test_set_with_callable(self):
         for mesh in self.meshes:
@@ -320,7 +322,7 @@ class TestField:
         assert np.all(field((8e-9, 2e-9, 9e-9)) == (1, 1, 1))
 
         field = df.Field(mesh, dim=3, value={"default": (1, 1, 1)})
-        assert np.all(field.array == (1, 1, 1))
+        assert np.all(field.data == (1, 1, 1))
 
         # dtype has to be specified for isinstance(value, dict)
         field = df.Field(
