@@ -1943,9 +1943,11 @@ class TestField:
         # assert f.allclose(f.fftn.ifftn.real)
         assert np.allclose(f.data.data, f.fftn.ifftn.real.data)
 
-        assert df.Field(mesh, dim=3).allclose(f.fftn.ifftn.imag)
+        # assert df.Field(mesh, dim=3).allclose(f.fftn.ifftn.imag)
+        assert np.allclose(df.Field(mesh, dim=3).data.data, f.fftn.ifftn.imag.data)
 
-        assert f.allclose(f.rfftn.irfftn)
+        # assert f.allclose(f.rfftn.irfftn)
+        assert np.allclose(f.data.data, f.rfftn.irfftn.data)
 
         # 2d fft
         for i in ["x", "y", "z"]:
