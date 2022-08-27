@@ -341,7 +341,7 @@ class Field:
                 if arg in kwargs:
                     raise ValueError(f"Dimension {arg} is specified twice.")
                 else:
-                    kwargs[arg] = self.edges[self.ndims.index(arg)] / 2
+                    kwargs[arg] = self.edges[self.dims.index(arg)] / 2
 
         pmin = []
         pmax = []
@@ -350,7 +350,7 @@ class Field:
         for dim in self.dims:
             if dim in kwargs:
                 sel = kwargs[dim]
-                if isinstance(sel, tuple) or isinstance(sel, list):
+                if isinstance(sel, collections.abc.Iterable):
                     sel = slice(*sel)
                 if isinstance(sel, slice):
                     cell_i = self._cell[self.dims.index(dim)]
@@ -381,7 +381,6 @@ class Field:
 
         # TODO use the next line and remove the remaining lines of this method
         # return self.__class__.from_xarray(self.data.sel(**kwargs))
-        return self.data.sel(**kwargs)
 
         class Region:
             def __init__(self, p1, p2):
