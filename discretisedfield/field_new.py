@@ -20,11 +20,11 @@ class Field:
         units=None,
         dims=None,
     ):
+        if not isinstance(mesh, df.Mesh):
+            raise TypeError(f"Wrong type for mesh: {type(mesh)} not supported.")
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
         n = np.array(mesh.n)
-        assert len(pmin) == len(pmax)
-        assert len(pmin) == len(n)
 
         if dims is not None:
             assert len(pmin) == len(dims)
@@ -310,6 +310,30 @@ class Field:
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
         return self.vdims == other.vdims
+
+    def __eq__(self, other):
+        """Check equality based on all attributes.
+
+        Takes into account
+
+        - vector units
+        - number and names of spatial dimensions
+        - number and names of value dimensions
+        - coordinates of the spatial dimensions
+        - data
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        if self.units != other.units:
+            return False
+        if self.dims != other.dims:
+            return False
+        if self.vdims != other.vdims:
+            return False
+        for dim in self.dims:
+            if np.any(self.data[dim].data != other.data[dim].data):
+                return False
+        return np.all(self.data.data == other.data.data)
 
     def translate(self, point):
         # TODO write tests
