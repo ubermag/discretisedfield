@@ -908,9 +908,6 @@ class Field:
     def to_vtk(self):
         raise NotImplementedError()
 
-    def from_file(self):
-        raise NotImplementedError()
-
     def to_file(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
@@ -1031,6 +1028,81 @@ class Field:
 
     # keep `write` as the legacy name for now
     write = to_file
+
+    @classmethod
+    def from_file(cls, filename):
+        """Read the field from an OVF (1.0 or 2.0), VTK, or HDF5 file.
+
+        The extension of the ``filename`` should correspond to either:
+            - OVF (``.ovf``, ``.omf``, ``.ohf``, ``.oef``)
+            - VTK (``.vtk``), or
+            - HDF5 (``.hdf5`` or ``.h5``).
+
+        This method automatically determines the file type based on the file name
+        extension.
+
+        Parameters
+        ----------
+        filename : str
+
+            Name of the file to be read.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Field read from the file.
+
+        Example
+        -------
+        1. Read the field from an OVF file.
+
+        >>> import os
+        >>> import discretisedfield as df
+        ...
+        >>> dirname = os.path.join(os.path.dirname(__file__),
+        ...                        'tests', 'test_sample')
+        >>> filename = os.path.join(dirname, 'oommf-ovf2-bin4.omf')
+        >>> field = df.Field.fromfile(filename)
+        >>> field
+        Field(...)
+
+        2. Read a field from the VTK file.
+
+        >>> filename = os.path.join(dirname, 'vtk-file.vtk')
+        >>> field = df.Field.fromfile(filename)
+        >>> field
+        Field(...)
+
+        3. Read a field from the HDF5 file.
+
+        >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
+        >>> field = df.Field.fromfile(filename)
+        >>> field
+        Field(...)
+
+        See also
+        --------
+        ~discretisedfield.Field.write
+        ~discretisedfield.io.field_from_ovf
+        ~discretisedfield.io.field_from_vtk
+        ~discretisedfield.io.field_from_hdf5
+
+        """
+        filename = pathlib.Path(filename)
+        if filename.suffix in [".omf", ".ovf", ".ohf", ".oef"]:
+            return io.field_from_ovf(filename)
+        elif filename.suffix == ".vtk":
+            return io.field_from_vtk(filename)
+        elif filename.suffix in [".hdf5", ".h5"]:
+            return io.field_from_hdf5(filename)
+        else:
+            raise ValueError(
+                f"Reading file with extension {filename.suffix} not supported."
+            )
+
+    # keep `write` as the legacy name for now
+    fromfile = from_file
 
     # plotting
 
