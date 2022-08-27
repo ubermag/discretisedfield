@@ -1785,7 +1785,15 @@ class TestField:
             f.write(tmpfilename, representation=rep, extend_scalar=True)
             f_read = df.Field.fromfile(tmpfilename)
 
-            assert f.allclose(f_read.x)
+            # original syntax refering to the first vdim (but not working
+            # anymore due to interface changes):
+            # assert f.allclose(f_read.x)
+
+            # Work around to test the functionality
+            assert np.allclose(f_read.to_numpy()[..., 0], f.to_numpy())
+            # Note that we do not test that the coordinates are identical
+            # in the line above, but this is tested before
+            # (with extend_scalar==False) already
 
         # Read different OOMMF representations
         # (OVF1, OVF2) x (txt, bin4, bin8)
