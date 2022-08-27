@@ -274,7 +274,15 @@ class Field:
 
     @property
     def orientation(self):
-        raise NotImplementedError()
+        if self.nvdims == 1:
+            msg = f"Cannot compute orientation for scalar field. ({self.nvdims=})"
+            raise ValueError(msg)
+        norm = self.norm.to_numpy()[..., np.newaxis]
+        vectorField = self.to_numpy()
+        res = np.divide(
+            vectorField, norm, out=np.zeros_like(vectorField), where=norm != 0.0
+        )
+        return self.__class__(self.mesh, dim=self.ndims, value=res, units=self.units)
 
     @property
     def units(self):
