@@ -298,6 +298,30 @@ class Field:
             raise TypeError(f"Object of type {type(other)} not supported.")
         return self.vdims == other.vdims
 
+    def __eq__(self, other):
+        """Check equality based on all attributes.
+
+        Takes into account
+
+        - vector units
+        - number and names of spatial dimensions
+        - number and names of value dimensions
+        - coordinates of the spatial dimensions
+        - data
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        if self.units != other.units:
+            return False
+        if self.dims != other.dims:
+            return False
+        if self.vdims != other.vdims:
+            return False
+        for dim in self.dims:
+            if np.any(self.data[dim].data != other.data[dim].data):
+                return False
+        return np.all(self.data.data == other.data.data)
+
     def translate(self, point):
         # TODO write tests
         if self.mesh.subregions:
