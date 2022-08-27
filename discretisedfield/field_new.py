@@ -10,15 +10,21 @@ import discretisedfield as df
 
 class Field:
     def __init__(
-        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, units=None
+        self,
+        mesh,
+        dim,
+        value=0.0,
+        norm=None,
+        components=None,
+        dtype=None,
+        units=None,
+        dims=None,
     ):
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
         n = np.array(mesh.n)
         assert len(pmin) == len(pmax)
         assert len(pmin) == len(n)
-
-        dims = None  # TODO remove this
 
         if dims is not None:
             assert len(pmin) == len(dims)
@@ -34,6 +40,8 @@ class Field:
         vdims = components  # TODO fix this
         if vdims is not None:
             assert len(vdims) == vdim
+            if isinstance(vdims, tuple):
+                vdims = np.ndarray(vdims)
         else:
             vdims = [f"v{i}" for i in range(vdim)]
 
@@ -318,6 +326,7 @@ class Field:
     def edges(self):
         return self.pmax - self.pmin
 
+    # TODO proper testing requires n-dimension mesh and region
     def sel(self, *args, **kwargs):
         """Select a submesh."""
         if self.mesh.subregions:
@@ -332,30 +341,64 @@ class Field:
                 if arg in kwargs:
                     raise ValueError(f"Dimension {arg} is specified twice.")
                 else:
-                    kwargs[arg] = self.edges[self.ndims.index(arg)] / 2
+                    kwargs[arg] = self.edges[self.dims.index(arg)] / 2
 
         pmin = []
         pmax = []
         dims = []
         n = []
-        for dim, sel in kwargs:
-            if isinstance(sel, tuple) or isinstance(sel, list):
-                sel = slice(*sel)
-            if isinstance(sel, slice):
-                center_min = self.data[dim].sel(**{dim: sel.start}, method="nearest")
-                center_max = self.data[dim].sel(**{dim: sel.stop}, method="nearest")
-
-                pmin.append(center_min - self._cell[self.dims.index(dim)] / 2)
-                pmax.append(center_max + self._cell[self.dims.index(dim)] / 2)
-                dims.append(dim)
-                kwargs[dim] = slice(pmin[-1], pmax[-1])
+        for dim in self.dims:
+            if dim in kwargs:
+                sel = kwargs[dim]
+                if isinstance(sel, collections.abc.Iterable):
+                    sel = slice(*sel)
+                if isinstance(sel, slice):
+                    cell_i = self._cell[self.dims.index(dim)]
+                    center_min = self.data[dim].sel(
+                        **{dim: sel.start}, method="nearest", tolerance=cell_i / 2
+                    )
+                    center_max = self.data[dim].sel(
+                        **{dim: sel.stop}, method="nearest", tolerance=cell_i / 2
+                    )
+                    pmin.append(center_min - cell_i / 2)
+                    pmax.append(center_max + cell_i / 2)
+                    dims.append(dim)
+                    kwargs[dim] = slice(pmin[-1], pmax[-1])
+                    # n.append(self.n[self.dims.index(dim)])
+                    n.append(int(np.round((pmax[-1] - pmin[-1]) / cell_i)))
+                else:
+                    cell_i = self._cell[self.dims.index(dim)]
+                    kwargs[dim] = (
+                        self.data[dim]
+                        .sel(**{dim: sel}, method="nearest", tolerance=cell_i / 2)
+                        .data.tolist()
+                    )
+            else:
+                pmin.append(self.pmin[self.dims.index(dim)])
+                pmax.append(self.pmax[self.dims.index(dim)])
                 n.append(self.n[self.dims.index(dim)])
+                dims.append(dim)
+
+        # TODO use the next line and remove the remaining lines of this method
+        # return self.__class__.from_xarray(self.data.sel(**kwargs))
+
+        class Region:
+            def __init__(self, p1, p2):
+                self.pmin = p1
+                self.pmax = p2
+
+        class Mesh:
+            def __init__(self, p1, p2, n, bc):
+                self.region = Region(p1, p2)
+                self.n = n
+                self.bc = bc
 
         return self.__class__(
-            df.Mesh(p1=pmin, p2=pmax, n=..., bc=self.bc),
+            Mesh(p1=pmin, p2=pmax, n=n, bc=self.mesh.bc),
             dim=self.nvdims,
-            data=self.data.sel(**kwargs),
+            value=self.data.sel(**kwargs),
             units=self.units,
+            dims=dims,
         )
 
     # mathematical operations
