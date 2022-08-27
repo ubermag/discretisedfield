@@ -141,10 +141,10 @@ def field_to_ovf(
         # if the field is a scalar field, there is no 4th index dimension in the
         # array for the field data.
         # We need to add that 4th-dimension for the following to work.
-        assert len(field.data.data.shape) == 3  # sanity check only
-        data_4d = field.data.data[..., np.newaxis]
+        assert len(field.to_numpy().shape) == 3  # sanity check only
+        data_4d = field.to_numpy()[..., np.newaxis]
     else:
-        data_4d = field.data.data
+        data_4d = field.to_numpy()
 
     reordered = data_4d.transpose((2, 1, 0, 3))  # ovf ordering
 
@@ -170,7 +170,7 @@ def field_to_ovf(
 
             # processing in chuncks to reduce memory consumption
             chunksize = 100_000
-            n_chunks = math.ceil(len(field.data.data.flat) / chunksize)
+            n_chunks = math.ceil(len(field.to_numpy().flat) / chunksize)
             for i in range(n_chunks):
                 f.write(
                     np.asarray(
