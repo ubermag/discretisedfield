@@ -1785,7 +1785,15 @@ class TestField:
             f.write(tmpfilename, representation=rep, extend_scalar=True)
             f_read = df.Field.fromfile(tmpfilename)
 
-            assert f.allclose(f_read.x)
+            # original syntax refering to the first vdim (but not working
+            # anymore due to interface changes):
+            # assert f.allclose(f_read.x)
+
+            # Work around to test the functionality
+            assert np.allclose(f_read.to_numpy()[..., 0], f.to_numpy())
+            # Note that we do not test that the coordinates are identical
+            # in the line above, but this is tested before
+            # (with extend_scalar==False) already
 
         # Read different OOMMF representations
         # (OVF1, OVF2) x (txt, bin4, bin8)
@@ -1804,7 +1812,12 @@ class TestField:
 
             if "ovf2" in filename:
                 # The magnetisation is in the x-direction in OVF2 files.
-                assert abs(f_read.orientation.x.average - 1) < 1e-2
+                # assert (
+                #    abs(f_read.orientation.x.average - 1) < 1e-2
+                # )  # needs .x to work to pass
+                # use the following instead:
+                assert abs(f_read.orientation.average[0] - 1) < 1e-2
+
             else:
                 # The norm of magnetisation is known.
                 assert abs(f_read.norm.average - 1261566.2610100) < 1e-3
@@ -1813,13 +1826,13 @@ class TestField:
         # from OOMMF files
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.omf")
-        ).components == ["x", "y", "z"]
+        ).vdims == ["x", "y", "z"]
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.ohf")
-        ).components == ["x", "y", "z"]
+        ).vdims == ["x", "y", "z"]
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.oef")
-        ).components == ["Total_energy_density"]
+        ).vdims == ["Total_energy_density"]
 
         # Read different mumax3 bin4 and txt files (made on linux and windows)
         filenames = [
