@@ -676,13 +676,9 @@ class Field:
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(other) / (self.norm * other.norm)).data)
-
-        # Place all values in [0, 2pi] range
-        angle_array[angle_array < 0] += 2 * np.pi
-
         return self.__class__(
             self.mesh,
-            dim=self.nvdims,
+            dim=1,
             value=angle_array,
             units=self.units,
         )
