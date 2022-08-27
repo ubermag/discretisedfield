@@ -39,12 +39,13 @@ class Field:
         if any(arg is None for arg in (mesh, dim, components, dtype, units, dims)):
             raise TypeError("Missing arguments.")
 
+        if not isinstance(mesh, df.Mesh):
+            raise TypeError(f"Wrong type for mesh: {type(mesh)} not supported.")
+
         self._mesh = mesh
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
         n = np.array(mesh.n)
-        assert len(pmin) == len(pmax)
-        assert len(pmin) == len(n)
 
         if dims is not None:
             assert len(pmin) == len(dims)
@@ -158,6 +159,19 @@ class Field:
         raise RuntimeError(
             "The `.data` attribute is read-only. To update the data use the"
             " `update_field_values` method."
+        )
+
+    @property
+    def value(self):
+        raise AttributeError(
+            " Attribute `value` has been removed. Use `data` instead to read data."
+        )
+
+    @value.setter
+    def value(self, data):
+        raise AttributeError(
+            "The `value` attribute has been removed. Use the "
+            " `update_field_values([])` method to update data."
         )
 
     def update_field_values(self, values, dtype=None):
@@ -353,6 +367,30 @@ class Field:
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
         return self.vdims == other.vdims
+
+    def __eq__(self, other):
+        """Check equality based on all attributes.
+
+        Takes into account
+
+        - vector units
+        - number and names of spatial dimensions
+        - number and names of value dimensions
+        - coordinates of the spatial dimensions
+        - data
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        if self.units != other.units:
+            return False
+        if self.dims != other.dims:
+            return False
+        if self.vdims != other.vdims:
+            return False
+        for dim in self.dims:
+            if np.any(self.data[dim].data != other.data[dim].data):
+                return False
+        return np.all(self.data.data == other.data.data)
 
     def translate(self, point):
         # TODO write tests
@@ -733,13 +771,9 @@ class Field:
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(other) / (self.norm * other.norm)).data)
-
-        # Place all values in [0, 2pi] range
-        angle_array[angle_array < 0] += 2 * np.pi
-
         return self.__class__(
             self.mesh,
-            dim=self.nvdims,
+            dim=1,
             value=angle_array,
             units=self.units,
         )
