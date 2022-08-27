@@ -155,6 +155,11 @@ class Field:
 
         return field
 
+    def zeros_like(self):
+        res = self.__class__(value=copy.deepcopy(self.data))
+        res.update_field_values(0.0)
+        return res
+
     @property
     def data(self):
         return self._data
