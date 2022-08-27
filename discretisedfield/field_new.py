@@ -805,8 +805,43 @@ class Field:
     def __iter__(self):
         raise NotImplementedError()
 
-    def __lshift__(self):  # -> concat
-        raise NotImplementedError()
+    def concat(self, other, vdims=None):
+        if isinstance(other, self.__class__):
+            if not self.is_same_mesh(other):
+                raise ValueError(
+                    "Cannot concatenate fields defined on different meshes."
+                )
+        elif isinstance(other, numbers.Complex):
+            return self.concat(self.__class__(self.mesh, dim=1, value=other))
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            return self.concat(self.__class__(self.mesh, dim=len(other), value=other))
+        else:
+            raise TypeError(f"Unsupported type {type(other)} passed.")
+
+        if self.nvdims == 1 and other.nvdims == 1:
+            data = np.stack([self.to_numpy(), other.to_numpy()], axis=-1)
+        elif self.nvdims == 1:
+            data = np.concatenate(
+                [self.to_numpy()[..., np.newaxis], other.to_numpy()], axis=-1
+            )
+        elif other.nvdims == 1:
+            data = np.concatenate(
+                [self.to_numpy(), other.to_numpy()[..., np.newaxis]], axis=-1
+            )
+        else:
+            data = np.concatenate([self.to_numpy(), other.to_numpy()], axis=-1)
+
+        dims = [*self.dims, "vdims"]
+        coords = {dim: self.data[dim] for dim in self.dims}
+        if vdims is not None and len(vdims) != data.shape[-1]:
+            raise ValueError("Wrong number of vdims provided.")
+        coords["vdims"] = vdims or [f"v{i}" for i in range(data.shape[-1])]
+        xr_data = xr.DataArray(data, dims=dims, coords=coords)
+        xr_data.attrs["cell"] = self.cell
+
+        for dim in self.dims:
+            xr_data[dim].attrs["units"] = self.data[dim].units
+        return self.__class__(value=xr_data)
 
     def allclose(self, other, rtol=1e-5, atol=1e-8):
         if not isinstance(other, self.__class__):
