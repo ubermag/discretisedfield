@@ -4,6 +4,7 @@ import numbers
 
 import numpy as np
 import xarray as xr
+import xrft
 
 import discretisedfield as df
 
@@ -695,35 +696,60 @@ class Field:
 
     @property
     def fftn(self):
-        raise NotImplementedError()
+        ft_xarray = xrft.fft(
+            self.data, dim=self.dims, true_amplitude=True, true_phase=True
+        )
+        return df.Field(value=ft_xarray)
 
     @property
     def ifftn(self):
-        raise NotImplementedError()
+        ift_xarray = xrft.ifft(
+            self.data, dim=self.dims, true_amplitude=True, true_phase=True
+        )
+        return df.Field(value=ift_xarray)
 
     @property
     def rfftn(self):
-        raise NotImplementedError()
+        ft_xarray = xrft.fft(
+            self.data,
+            dim=self.dims,
+            real_dim=self.dims[-1],
+            true_amplitude=True,
+            true_phase=True,
+        )
+        return df.Field(value=ft_xarray)
 
     @property
     def irfftn(self):
-        raise NotImplementedError()
+        ift_xarray = xrft.ifft(
+            self.data,
+            dim=self.dims,
+            real_dim=self.dims[-1],
+            true_amplitude=True,
+            true_phase=True,
+        )
+        return df.Field(value=ift_xarray)
 
     # complex values
 
     @property
     def real(self):
         """Real part of complex field."""
-        return self.__class__(
-            self.mesh,
-            dim=self.nvdims,
-            value=self.data.real,
-            units=self.units,
-        )
+        if isinstance(self.data, xr.DataArray):
+            return self.__class__(value=self.data.real)
+        else:
+            return self.__class__(
+                self.mesh,
+                dim=self.nvdims,
+                value=self.data.real,
+                units=self.units,
+            )
 
     @property
     def imag(self):
         """Imaginary part of complex field."""
+        if isinstance(self.data, xr.DataArray):
+            return self.__class__(value=self.data.imag)
         return self.__class__(
             self.mesh,
             dim=self.nvdims,
