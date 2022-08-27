@@ -10,15 +10,21 @@ import discretisedfield as df
 
 class Field:
     def __init__(
-        self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, units=None
+        self,
+        mesh,
+        dim,
+        value=0.0,
+        norm=None,
+        components=None,
+        dtype=None,
+        units=None,
+        dims=None,
     ):
         pmin = np.array(mesh.region.pmin)
         pmax = np.array(mesh.region.pmax)
         n = np.array(mesh.n)
         assert len(pmin) == len(pmax)
         assert len(pmin) == len(n)
-
-        dims = None  # TODO remove this
 
         if dims is not None:
             assert len(pmin) == len(dims)
@@ -27,8 +33,6 @@ class Field:
         else:
             dims = [f"x{i}" for i in range(len(pmin))]
 
-        data = value  # TODO fix this
-
         # TODO fix this
         # vdim = 1 if len(data.shape) == len(pmin) else data.shape[-1]
         vdim = dim
@@ -36,6 +40,8 @@ class Field:
         vdims = components  # TODO fix this
         if vdims is not None:
             assert len(vdims) == vdim
+            if isinstance(vdims, tuple):
+                vdims = np.ndarray(vdims)
         else:
             vdims = [f"v{i}" for i in range(vdim)]
 
@@ -49,8 +55,8 @@ class Field:
             coords["vdims"] = vdims
             dims += ["vdims"]
 
-        self.data = xr.DataArray(
-            _as_array(data, mesh, vdim, dtype),
+        self._data = xr.DataArray(
+            _as_array(value, mesh, vdim, dtype),
             dims=dims,
             coords=coords,
             name="field",
@@ -59,11 +65,14 @@ class Field:
         self._mesh = mesh
         self.units = units
 
+        self.norm = norm
+
         for dim in dims:
             if dim != "vdims":
                 self.data[dim].attrs["units"] = "m"
         self.data.attrs["cell"] = cell
         self._cell = cell
+
         # self._subregions = subregions or {}  # TODO fix this
         # self._bc = bc  # TODO fix this
 
@@ -144,6 +153,23 @@ class Field:
             field.data.data[..., i] = dim_points_list[i]
 
         return field
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, data):
+        raise RuntimeError(
+            "The `.data` attribute is read-only. To update the data use the"
+            " `update_field_values` method."
+        )
+
+    def update_field_values(self, values, dtype=None):
+        print(f"Updating with {values=}")
+        self._data.data = _as_array(
+            values, self.mesh, self.nvdims, dtype or self.data.data.dtype
+        )
 
     @property
     def pmin(self):
@@ -277,8 +303,22 @@ class Field:
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
-    def norm(self, norm):
-        raise NotImplementedError()
+    def norm(self, val):
+        if val is not None:
+            if self.nvdims == 1:
+                raise ValueError(f"Cannot set norm for scalar field. ({self.nvdims=})")
+
+            # normalise field to 1.0
+            self.data.data = np.divide(  # should we use self.__truediv__ instead?
+                self.data.data,
+                self.norm.data.data[..., np.newaxis],
+                out=np.zeros_like(self.data.data),
+                where=self.norm.data.data[..., np.newaxis] != 0.0,
+            )
+
+            # multiply field with val
+            val_array = _as_array(val, self.mesh, dim=1, dtype=None)
+            self.data.data *= val_array[..., np.newaxis]
 
     @property
     def orientation(self):
@@ -294,17 +334,30 @@ class Field:
             raise TypeError(f"Wrong type for {units=}; must be of type str.")
         self._units = units
 
-    def check_same_mesh(self, other):
+    def is_same_mesh(self, other, tolerance_factor=1e-5):
         """Check if two Field objects are defined on the same mesh."""
         if not isinstance(other, self.__class__):
-            raise TypeError("Object of type {type(other)} not supported.")
-        if self.ndims != other.ndims or self.nvdims != other.nvdims:
+            raise TypeError(f"Object of type {type(other)} not supported.")
+        if self.dims != other.dims:
             return False
-        if self.dims != other.dims or self.vdims != other.vdims:
-            return False
-        # for dim is self.dims:
-        #    pass
-        raise NotImplementedError()
+        for dim in self.dims:
+            if len(self.data[dim]) != len(other.data[dim]):
+                return False
+            else:
+                # change absolute tolerance to a tolerance relative to the cell size
+                # to take into account the overall scale
+                if not np.allclose(
+                    self.data[dim],
+                    other.data[dim],
+                    atol=self.cell[self.dims.index(dim)] * tolerance_factor,
+                ):
+                    return False
+        return True
+
+    def is_same_vectorspace(self, other):
+        if not isinstance(other, self.__class__):
+            raise TypeError(f"Object of type {type(other)} not supported.")
+        return self.vdims == other.vdims
 
     def translate(self, point):
         # TODO write tests
@@ -334,93 +387,214 @@ class Field:
     def edges(self):
         return self.pmax - self.pmin
 
+    # TODO proper testing requires n-dimension mesh and region
     def sel(self, *args, **kwargs):
         """Select a submesh."""
+        if self.mesh.subregions:
+            raise ValueError(
+                "Selections are not yet supported for fields with subregions."
+            )
         kwargs = kwargs or {}
         if args:
             for arg in args:
                 if not isinstance(arg, str):
                     raise TypeError("Positional arguments must be strings")
                 if arg in kwargs:
-                    raise ValueError("Dimension {arg} is specified twice.")
+                    raise ValueError(f"Dimension {arg} is specified twice.")
                 else:
-                    kwargs[arg] = self.edges[self._dims.index(arg)] / 2
+                    kwargs[arg] = self.edges[self.dims.index(arg)] / 2
 
-        self.data.sel(**kwargs)
         pmin = []
         pmax = []
         dims = []
-        for dim, sel in kwargs:
-            if isinstance(sel, tuple) or isinstance(sel, list):
-                sel = slice(*sel)
-            if isinstance(sel, slice):
-                center_min = self.data[dim].sel(**{dim: sel.start}, method="nearest")
-                center_max = self.data[dim].sel(**{dim: sel.stop}, method="nearest")
-
-                pmin.append(center_min - self._cell[self.data.dims.index(dim)] / 2)
-                pmax.append(center_max + self._cell[self.data.dims.index(dim)] / 2)
-                dims.append(dim)
+        n = []
+        for dim in self.dims:
+            if dim in kwargs:
+                sel = kwargs[dim]
+                if isinstance(sel, collections.abc.Iterable):
+                    sel = slice(*sel)
+                if isinstance(sel, slice):
+                    cell_i = self._cell[self.dims.index(dim)]
+                    center_min = self.data[dim].sel(
+                        **{dim: sel.start}, method="nearest", tolerance=cell_i / 2
+                    )
+                    center_max = self.data[dim].sel(
+                        **{dim: sel.stop}, method="nearest", tolerance=cell_i / 2
+                    )
+                    pmin.append(center_min - cell_i / 2)
+                    pmax.append(center_max + cell_i / 2)
+                    dims.append(dim)
+                    kwargs[dim] = slice(pmin[-1], pmax[-1])
+                    # n.append(self.n[self.dims.index(dim)])
+                    n.append(int(np.round((pmax[-1] - pmin[-1]) / cell_i)))
+                else:
+                    cell_i = self._cell[self.dims.index(dim)]
+                    kwargs[dim] = (
+                        self.data[dim]
+                        .sel(**{dim: sel}, method="nearest", tolerance=cell_i / 2)
+                        .data.tolist()
+                    )
             else:
-                # cutplane
-                pass
+                pmin.append(self.pmin[self.dims.index(dim)])
+                pmax.append(self.pmax[self.dims.index(dim)])
+                n.append(self.n[self.dims.index(dim)])
+                dims.append(dim)
+
+        # TODO use the next line and remove the remaining lines of this method
+        # return self.__class__.from_xarray(self.data.sel(**kwargs))
+
+        class Region:
+            def __init__(self, p1, p2):
+                self.pmin = p1
+                self.pmax = p2
+
+        class Mesh:
+            def __init__(self, p1, p2, n, bc):
+                self.region = Region(p1, p2)
+                self.n = n
+                self.bc = bc
+
         return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data,
-            dims=self.dims,
-            vdims=self.vdims,
+            Mesh(p1=pmin, p2=pmax, n=n, bc=self.mesh.bc),
+            dim=self.nvdims,
+            value=self.data.sel(**kwargs),
+            units=self.units,
+            dims=dims,
         )
 
     # mathematical operations
 
     def __abs__(self):
-        raise NotImplementedError()
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=np.abs(self.data.data), units=self.units
+        )
 
     def __pos__(self):
-        raise NotImplementedError()
+        return self
 
     def __neg__(self):
-        raise NotImplementedError()
+        return -1 * self
 
     def __add__(self, other):
         if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
             other = other.data
+
         return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data + other,
-            dims=self.dims,
-            vdims=self.vdims,
+            self.mesh, dim=self.nvdims, value=self.data + other, units=self.units
         )
 
-    def __sub__(self):
-        raise NotImplementedError()
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
+
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data - other, units=self.units
+        )
+
+    def __rsub__(self, other):
+        return -self + other
 
     def __mul__(self, other):
         if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
             other = other.data
+
         return self.__class__(
-            pmin=self.pmin,
-            pmax=self.pmax,
-            n=self.n,
-            data=self.data * other,
-            dims=self.dims,
-            vdims=self.vdims,
+            self.mesh, dim=self.nvdims, value=self.data * other, units=self.units
         )
 
-    def __truediv__(self):
-        raise NotImplementedError()
+    def __rmul__(self, other):
+        return self * other
 
-    def __pow__(self):
-        raise NotImplementedError()
+    def __truediv__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
 
-    def __matmul__(self):  # -> dot
-        raise NotImplementedError()
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data / other, units=self.units
+        )
 
-    def __and__(self):  # -> cross
-        raise NotImplementedError()
+    def __rtruediv__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
+
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=other / self.data, units=self.units
+        )
+
+    def __pow__(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
+
+        return self.__class__(
+            self.mesh, dim=self.nvdims, value=self.data**other, units=self.units
+        )
+
+    def dot(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+            other = other.data
+        elif isinstance(other, xr.DataArray):
+            other = other
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other).data
+        else:
+            msg = (
+                f"Unsupported operand type(s) for the cross product: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+
+        if self.nvdims == 1:
+            return self.__class__(
+                self.mesh,
+                dim=1,
+                value=self.data * other.data,
+            )
+        else:
+            return self.__class__(
+                self.mesh,
+                dim=1,
+                value=np.einsum("...l,...l->...", self.data, other.data),
+            )
+
+    def cross(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+
+            if self.nvdims != 3 or other.nvdims != 3:
+                msg = (
+                    f"Cannot apply the cross product on {self.nvdims=} and"
+                    f" {other.nvdims=} fields. The cross product is only supported on"
+                    " field with 3 vector dimentions."
+                )
+                raise ValueError(msg)
+            other = other.data
+        elif isinstance(other, xr.DataArray):
+            other = other
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other).data
+        else:
+            msg = (
+                f"Unsupported operand type(s) for the cross product: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=np.cross(self.data.data, other.data),
+            units=self.units,
+        )
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         """Field class support for numpy ``ufuncs``."""
@@ -506,36 +680,86 @@ class Field:
 
     @property
     def real(self):
-        raise NotImplementedError()
+        """Real part of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.real,
+            units=self.units,
+        )
 
     @property
     def imag(self):
-        raise NotImplementedError()
+        """Imaginary part of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.imag,
+            units=self.units,
+        )
 
     @property
     def phase(self):
-        raise NotImplementedError()
+        """Phase of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=np.angle(self.data),
+            units=self.units,
+        )
 
     @property
     def conjugate(self):
-        raise NotImplementedError()
+        """Complex conjugate of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=self.data.conjugate(),
+            units=self.units,
+        )
 
     # other mathematical operations
 
     def integral(self):
         raise NotImplementedError()
 
-    @property
-    def angle(self):  # -> method angle(vector)
-        raise NotImplementedError()
+    def angle(self, other):
+        if isinstance(other, self.__class__):
+            self.is_same_mesh_field(other)
+        elif self.nvdims == 1 and isinstance(other, numbers.Complex):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other)
+        elif self.nvdims != 1 and isinstance(other, (tuple, list, np.ndarray)):
+            other = self.__class__(self.mesh, dim=self.nvdims, value=other)
+        else:
+            msg = (
+                f"Unsupported operand type(s) for angle: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
 
+        angle_array = np.arccos((self.dot(other) / (self.norm * other.norm)).data)
+
+        # Place all values in [0, 2pi] range
+        angle_array[angle_array < 0] += 2 * np.pi
+
+        return self.__class__(
+            self.mesh,
+            dim=self.nvdims,
+            value=angle_array,
+            units=self.units,
+        )
+
+    @property
     def average(self):  # -> mean
-        raise NotImplementedError()
+        return self.data.mean(dim=self.dims).data
 
     # other methods
 
-    def __call__(self):
-        raise NotImplementedError()
+    def __call__(self, point):
+        data = self.data
+        for dim, p, cell_i in zip(self.dims, point, self.cell):
+            data = data.sel(**{dim: p}, method="nearest", tolerance=cell_i / 2)
+        return data.data
 
     def __getattr__(self, attr):
         if self.nvdims > 1 and attr in self.vdims:
@@ -555,8 +779,16 @@ class Field:
     def __lshift__(self):  # -> concat
         raise NotImplementedError()
 
-    def allclose(self):
-        raise NotImplementedError()
+    def allclose(self, other, rtol=1e-5, atol=1e-8):
+        if not isinstance(other, self.__class__):
+            raise TypeError(
+                "Cannot apply allclose method between "
+                f"{type(self)=} and {type(other)=} objects."
+            )
+        if self.is_same_mesh(other) and self.is_same_vectorspace(other):
+            return np.allclose(self.data.data, other.data.data, rtol=rtol, atol=atol)
+        else:
+            return False
 
     def line(self):
         raise NotImplementedError()
@@ -596,13 +828,26 @@ class Field:
         raise NotImplementedError()
 
     def to_numpy(self):
-        raise NotImplementedError()
+        return self.data.data
 
     def __repr__(self):
         return repr(self.data)
 
     def _repr_html_(self):
         return self.data._repr_html_()
+
+    def is_same_mesh_field(self, other):  # TODO move to utils
+        if not self.is_same_mesh(other):
+            raise ValueError(
+                "To perform this operation both fields must have the same mesh."
+            )
+
+        if self.is_vectorfield and other.is_vectorfield:
+            if not self.is_same_vectorspace(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same"
+                    " vector components."
+                )
 
 
 @functools.singledispatch
@@ -624,17 +869,14 @@ def _(val, mesh, dim, dtype):
             f"Wrong dimension 1 provided for value; expected dimension is {dim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    if dim > 1:
-        return np.full((*mesh.n, dim), val, dtype=dtype)
-    else:
-        return np.full(mesh.n, val, dtype=dtype)
+    return np.full(mesh.n if dim == 1 else (*mesh.n, dim), val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
 def _(val, mesh, dim, dtype):
     # will only be called on user input
     # dtype must be specified by the user for complex values
-    array = np.empty((*mesh.n, dim), dtype=dtype)
+    array = np.empty(mesh.n if dim == 1 else (*mesh.n, dim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
         array[index] = val(point)
     return array
@@ -648,16 +890,9 @@ def _(val, mesh, dim, dtype):
             f"contain {mesh.region} of the field that is being "
             "created."
         )
-    value = (
-        val.to_xarray()
-        .sel(
-            x=mesh.midpoints.x, y=mesh.midpoints.y, z=mesh.midpoints.z, method="nearest"
-        )
-        .data
-    )
-    if dim == 1:
-        # xarray dataarrays for scalar data are three dimensional
-        return value.reshape(mesh.n + (-1,))
+    value = val.data.sel(
+        x=mesh.midpoints.x, y=mesh.midpoints.y, z=mesh.midpoints.z, method="nearest"
+    ).data
     return value
 
 
@@ -669,7 +904,7 @@ def _(val, mesh, dim, dtype):
     fill_value = (
         val["default"] if "default" in val and not callable(val["default"]) else np.nan
     )
-    array = np.full((*mesh.n, dim), fill_value, dtype=dtype)
+    array = np.full(mesh.n if dim == 1 else (*mesh.n, dim), fill_value, dtype=dtype)
 
     for subregion in reversed(mesh.subregions.keys()):
         # subregions can overlap, first subregion takes precedence
