@@ -1812,9 +1812,12 @@ class TestField:
 
             if "ovf2" in filename:
                 # The magnetisation is in the x-direction in OVF2 files.
-                assert (
-                    abs(f_read.orientation.x.average - 1) < 1e-2
-                )  # needs .x to work to pass
+                # assert (
+                #    abs(f_read.orientation.x.average - 1) < 1e-2
+                # )  # needs .x to work to pass
+                # use the following instead:
+                assert abs(f_read.orientation.average[0] - 1) < 1e-2
+
             else:
                 # The norm of magnetisation is known.
                 assert abs(f_read.norm.average - 1261566.2610100) < 1e-3
@@ -1823,13 +1826,13 @@ class TestField:
         # from OOMMF files
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.omf")
-        ).components == ["x", "y", "z"]
+        ).vdims == ["x", "y", "z"]
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.ohf")
-        ).components == ["x", "y", "z"]
+        ).vdims == ["x", "y", "z"]
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.oef")
-        ).components == ["Total_energy_density"]
+        ).vdims == ["Total_energy_density"]
 
         # Read different mumax3 bin4 and txt files (made on linux and windows)
         filenames = [
