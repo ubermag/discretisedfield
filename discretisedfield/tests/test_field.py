@@ -28,6 +28,7 @@ html_re = (
 
 
 def check_field(field):
+    assert isinstance(field, df.Field)
     assert isinstance(field.mesh, df.Mesh)
 
     assert isinstance(field.ndims, int)
@@ -38,13 +39,14 @@ def check_field(field):
     assert field == field
     assert not field != field
 
-    assert field.allclose(field)
-    assert field.allclose(-(-field))
-    assert (field + field).allclose(2 * field)
-    assert (field - (-field)).allclose(field + field)
-    assert (1 * field).allclose(field)
-    assert (-1 * field).allclose(-field)
-    assert field.units is None or isinstance(field.units, str)
+    # TODO move to individual test methods
+    # assert field.allclose(field)
+    # assert field.allclose(-(-field))
+    # assert (field + field).allclose(2 * field)
+    # assert (field - (-field)).allclose(field + field)
+    # assert (1 * field).allclose(field)
+    # assert (-1 * field).allclose(-field)
+    # assert field.units is None or isinstance(field.units, str)
 
 
 def old_check_field(field):
