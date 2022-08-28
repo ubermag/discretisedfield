@@ -1520,6 +1520,21 @@ class TestField:
         with pytest.raises(ValueError):
             f.integral(direction="xy", improper=True)
 
+    def test_abs(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        cell = (1, 1, 1)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+        f = df.Field(mesh, dim=1, value=-1)
+        abs(f).average == 1
+
+        f = df.Field(mesh, dim=3, value=(-1, -1, -1))
+        abs(f).average == (1, 1, 1)
+
+        f = df.Field(mesh, dim=1, value=-1j)
+        abs(f).average == 1
+
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
