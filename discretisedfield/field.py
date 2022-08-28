@@ -435,12 +435,11 @@ class Field:
 
         Computes the norm of the field and returns ``discretisedfield.Field``
         with ``dim=1``. Norm of a scalar field is interpreted as an absolute
-        value of the field. Alternatively, ``discretisedfield.Field.__abs__``
-        can be called for obtaining the norm of the field.
+        value of the field.
 
         The field norm can be set by passing ``numbers.Real``,
-        ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
-        contains zero values, norm cannot be set and ``ValueError`` is raised.
+        ``numpy.ndarray``, or callable. If the field contains zero values, norm
+        cannot be set and ``ValueError`` is raised.
 
         Parameters
         ----------
@@ -452,15 +451,14 @@ class Field:
         -------
         discretisedfield.Field
 
-            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+            Norm of the field.
 
         Raises
         ------
         ValueError
 
             If the norm is set with wrong type, shape, or value. In addition,
-            if the field is scalar (``dim=1``) or the field contains zero
-            values.
+            if the field contains zero values.
 
         Examples
         --------
@@ -496,20 +494,13 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
 
         """
-        if self.dim == 1:
-            res = abs(self.value)
-        else:
-            res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
+        res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
 
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
     def norm(self, val):
         if val is not None:
-            if self.dim == 1:
-                msg = f"Cannot set norm for field with dim={self.dim}."
-                raise ValueError(msg)
-
             self.array = np.divide(
                 self.array,
                 self.norm.array,
