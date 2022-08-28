@@ -121,7 +121,7 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+            >>> field = df.Field(mesh, nvdims=3, value=(1, 2, 0))
             >>> field.plane(z=50, n=(5, 5)).mpl()
 
         .. seealso::
@@ -140,11 +140,11 @@ class MplField(Mpl):
         vector_kw.setdefault("colorbar", False)
 
         # Set up default scalar and vector fields.
-        if self.field.dim == 1:
+        if self.field.nvdims == 1:
             scalar_field = self.field
             vector_field = None
 
-        elif self.field.dim == 2:
+        elif self.field.nvdims == 2:
             scalar_field = None
             vector_field = self.field
 
@@ -182,7 +182,7 @@ class MplField(Mpl):
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a scalar field
-        (``dim=1``). Otherwise, ``ValueError`` is raised. ``mpl.scalar`` adds
+        (``nvdims=1``). Otherwise, ``ValueError`` is raised. ``mpl.scalar`` adds
         the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
         ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
@@ -276,15 +276,15 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=1, value=2)
+            >>> field = df.Field(mesh, nvdims=1, value=2)
             ...
             >>> field.plane('y').mpl.scalar()
 
         .. seealso:: :py:func:`~discretisedfield.plotting.Mpl.vector`
 
         """
-        if self.field.dim > 1:
-            msg = f"Cannot plot {self.field.dim=} field."
+        if self.field.nvdims > 1:
+            msg = f"Cannot plot {self.field.nvdims=} field."
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
@@ -375,12 +375,12 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+            >>> field = df.Field(mesh, nvdims=3, value=(1, 2, 3))
             ...
             >>> field.plane('z').mpl.lightness()
 
         """
-        if self.field.dim == 2:
+        if self.field.nvdims == 2:
             if lightness_field is None:
                 lightness_field = self.field.norm
             if filter_field is None:
@@ -399,7 +399,7 @@ class MplField(Mpl):
                 filename=filename,
                 **kwargs,
             )
-        elif self.field.dim == 3:
+        elif self.field.nvdims == 3:
             if lightness_field is None:
                 lightness_field = getattr(
                     self.field, self.field.components[self.planeaxis]
@@ -432,15 +432,15 @@ class MplField(Mpl):
         if lightness_field is None:
             lightness_field = self.field.norm
         else:
-            if lightness_field.dim != 1:
-                msg = f"Cannot use {lightness_field.dim=} lightness_field."
+            if lightness_field.nvdims != 1:
+                msg = f"Cannot use {lightness_field.nvdims=} lightness_field."
                 raise ValueError(msg)
 
         values = self.field.array.copy().reshape(self.n)
 
         lightness_plane = lightness_field.plane(**self.planeaxis_point)
         if lightness_plane.mesh != self.field.mesh:
-            lightness_plane = df.Field(self.field.mesh, dim=1, value=lightness_plane)
+            lightness_plane = df.Field(self.field.mesh, nvdims=1, value=lightness_plane)
         lightness = lightness_plane.array.reshape(self.n)
 
         rgb = plot_util.hls2rgb(
@@ -492,14 +492,14 @@ class MplField(Mpl):
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a vector field
-        (``dim=2`` or ``dim=3``). Otherwise, ``ValueError`` is raised.
+        (``nvdims=2`` or ``nvdims=3``). Otherwise, ``ValueError`` is raised.
         ``mpl.vector`` adds the plot to ``matplotlib.axes.axes`` passed via
         ``ax`` argument. If ``ax`` is not passed, ``matplotlib.axes.axes``
         object is created automatically and the size of a figure can be
         specified using ``figsize``. By default, plotted vectors are coloured
         according to the out-of-plane component of the vectors if the field has
-        ``dim=3``. This can be changed by passing ``color_field`` with
-        ``dim=1``. To disable colouring of the plot, ``use_color=False`` can be
+        ``nvdims=3``. This can be changed by passing ``color_field`` with
+        ``nvdims=1``. To disable colouring of the plot, ``use_color=False`` can be
         passed. A uniform vector colour can be obtained by specifying
         ``use_color=false`` and ``color=color`` which is passed to matplotlib.
         Colorbar is shown by default and it can be removed from the plot by
@@ -595,15 +595,15 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1.1, 2.1, 3.1))
+            >>> field = df.Field(mesh, nvdims=3, value=(1.1, 2.1, 3.1))
             ...
             >>> field.plane('y').mpl.vector()
 
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
         """
-        if self.field.dim != 3 and vdims is None:
-            raise ValueError(f"vdims are required for {self.field.dim=} field.")
+        if self.field.nvdims != 3 and vdims is None:
+            raise ValueError(f"vdims are required for {self.field.nvdims=} field.")
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
@@ -611,7 +611,7 @@ class MplField(Mpl):
         points1 = self.field.mesh.midpoints[self.axis1] / multiplier
         points2 = self.field.mesh.midpoints[self.axis2] / multiplier
 
-        values = self.field.array.copy().reshape(self.n + (self.field.dim,))
+        values = self.field.array.copy().reshape(self.n + (self.field.nvdims,))
         self._filter_values(self.field.norm, values)
 
         if vdims is None:
@@ -642,7 +642,7 @@ class MplField(Mpl):
 
         if use_color:
             if color_field is None:
-                if self.field.dim == 2:
+                if self.field.nvdims == 2:
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
                         f' fields. Ignoring "{use_color=}".'
@@ -655,7 +655,7 @@ class MplField(Mpl):
             if use_color:
                 color_plane = color_field.plane(**self.planeaxis_point)
                 if color_plane.mesh != self.field.mesh:
-                    color_plane = df.Field(self.field.mesh, dim=1, value=color_plane)
+                    color_plane = df.Field(self.field.mesh, nvdims=1, value=color_plane)
                 quiver_args.append(color_plane.array.reshape(self.n).transpose())
 
         cp = ax.quiver(*quiver_args, pivot="mid", **kwargs)
@@ -683,7 +683,7 @@ class MplField(Mpl):
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
         ``field.plane('z')``). In addition, field must be a scalar field
-        (``dim=1``). Otherwise, ``ValueError`` is raised. ``mpl.contour`` adds
+        (``nvdims=1``). Otherwise, ``ValueError`` is raised. ``mpl.contour`` adds
         the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
         ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
@@ -773,12 +773,12 @@ class MplField(Mpl):
             >>> def init_value(point):
             ...     x, y, z = point
             ...     return math.sin(x) + math.sin(y)
-            >>> field = df.Field(mesh, dim=1, value=init_value)
+            >>> field = df.Field(mesh, nvdims=1, value=init_value)
             >>> field.plane('z').mpl.contour()
 
         """
-        if self.field.dim != 1:
-            msg = f"Cannot plot dim={self.field.dim} field."
+        if self.field.nvdims != 1:
+            msg = f"Cannot plot nvdims={self.field.nvdims} field."
             raise ValueError(msg)
 
         ax = self._setup_axes(ax, figsize)
@@ -808,13 +808,13 @@ class MplField(Mpl):
         if filter_field is None:
             return values
 
-        if filter_field.dim != 1:
-            msg = f"Cannot use {filter_field.dim=}."
+        if filter_field.nvdims != 1:
+            msg = f"Cannot use {filter_field.nvdims=}."
             raise ValueError(msg)
 
         filter_plane = filter_field.plane(**self.planeaxis_point)
         if filter_plane.mesh != self.field.mesh:
-            filter_plane = df.Field(self.field.mesh, dim=1, value=filter_plane)
+            filter_plane = df.Field(self.field.mesh, nvdims=1, value=filter_plane)
 
         values[filter_plane.array.reshape(self.n) == 0] = np.nan
 
@@ -841,7 +841,7 @@ class MplField(Mpl):
     def __dir__(self):
         dirlist = dir(self.__class__)
 
-        for attr in ["vector"] if self.field.dim == 1 else ["scalar", "contour"]:
+        for attr in ["vector"] if self.field.nvdims == 1 else ["scalar", "contour"]:
             dirlist.remove(attr)
 
         return dirlist

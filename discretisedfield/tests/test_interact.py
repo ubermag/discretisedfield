@@ -6,7 +6,7 @@ def test_interact():
     p2 = (50e9, 50e9, 50e9)
     n = (10, 10, 10)
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-    field = df.Field(mesh, dim=3, value=(1, 2, 0))
+    field = df.Field(mesh, nvdims=3, value=(1, 2, 0))
 
     # Only test whether it runs.
     @df.interact(x=field.mesh.slider("x"))

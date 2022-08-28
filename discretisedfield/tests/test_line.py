@@ -17,13 +17,13 @@ def check_line(line):
 
     assert isinstance(line.n, int)
     assert line.n > 0
-    assert isinstance(line.dim, int)
-    assert line.dim > 0
+    assert isinstance(line.nvdims, int)
+    assert line.nvdims > 0
 
     assert isinstance(line.point_columns, list)
     assert len(line.point_columns) == 3
     assert isinstance(line.value_columns, list)
-    assert len(line.value_columns) == line.dim
+    assert len(line.value_columns) == line.nvdims
 
     assert isinstance(line.length, numbers.Real)
     assert line.length > 0
@@ -44,7 +44,7 @@ class TestLine:
 
         assert line.length == 2
         assert line.n == 3
-        assert line.dim == 1
+        assert line.nvdims == 1
 
         # Vector values
         points = [(0, 0, 0), (1, 1, 1)]
@@ -55,7 +55,7 @@ class TestLine:
 
         assert abs(line.length - np.sqrt(3)) < 1e-12
         assert line.n == 2
-        assert line.dim == 3
+        assert line.nvdims == 3
 
         # Setting the point and value columns.
         points = [(0, 0, 0), (1, 1, 1)]
@@ -73,26 +73,26 @@ class TestLine:
 
         assert abs(line.length - np.sqrt(3)) < 1e-12
         assert line.n == 2
-        assert line.dim == 3
+        assert line.nvdims == 3
 
         # From field
         p1 = (0, 0, 0)
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdims=3, value=(1, 1, 1))
 
         line = f.line(p1=p1, p2=(10e-9, 15e-9, 1e-9), n=200)
         check_line(line)
 
         assert line.n == 200
-        assert line.dim == 3
+        assert line.nvdims == 3
 
         line = f.y.line(p1=p1, p2=(10e-9, 15e-9, 1e-9), n=100)
         check_line(line)
 
         assert line.n == 100
-        assert line.dim == 1
+        assert line.nvdims == 1
 
         # Exceptions
         points = [(0, 0, 0), (1, 0, 0)]
@@ -142,7 +142,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdims=3, value=(1, 1, 1))
 
         line = f.line(p1=(1e-9, 1e-9, 0.1e-9), p2=(4e-9, 5e-9, 1e-9), n=20)
 
@@ -182,7 +182,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdims=3, value=(1, 1, 1))
 
         line = f.line(p1=(1e-9, 1e-9, 0.1e-9), p2=(4e-9, 5e-9, 1e-9), n=20)
 

@@ -56,7 +56,7 @@ def field_to_ovf(
     >>> n = (10, 5, 3)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> value_fun = lambda point: (point[0], point[1], point[2])
-    >>> field = df.Field(mesh, dim=3, value=value_fun)
+    >>> field = df.Field(mesh, nvdims=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.ohf'
     >>> field.write(filename, representation='bin8')  # write the file
@@ -74,12 +74,12 @@ def field_to_ovf(
 
     """
     filename = pathlib.Path(filename)
-    write_dim = 3 if extend_scalar and field.dim == 1 else field.dim
-    valueunits = " ".join([str(field.units) if field.units else "None"] * write_dim)
-    if write_dim == 1:
+    write_nvdims = 3 if extend_scalar and field.nvdims == 1 else field.nvdims
+    valueunits = " ".join([str(field.units) if field.units else "None"] * write_nvdims)
+    if write_nvdims == 1:
         valuelabels = "field_x"
     elif extend_scalar:
-        valuelabels = " ".join(["field_x"] * write_dim)
+        valuelabels = " ".join(["field_x"] * write_nvdims)
     else:
         valuelabels = " ".join(f"field_{c}" for c in field.components)
 
@@ -120,7 +120,7 @@ def field_to_ovf(
         # xmax: {field.mesh.region.pmax[0]}
         # ymax: {field.mesh.region.pmax[1]}
         # zmax: {field.mesh.region.pmax[2]}
-        # valuedim: {write_dim}
+        # valuedim: {write_nvdims}
         # valuelabels: {valuelabels}
         # valueunits: {valueunits}
         #
@@ -171,7 +171,7 @@ def field_to_ovf(
                 )
             f.write(b"\n")
         else:
-            data = pd.DataFrame(reordered.reshape((-1, field.dim)))
+            data = pd.DataFrame(reordered.reshape((-1, field.nvdims)))
             data.insert(loc=0, column="leading_space", value="")
 
             if extend_scalar:
@@ -325,7 +325,7 @@ def field_from_ovf(filename):
 
     return df.Field(
         mesh,
-        dim=header["valuedim"],
+        nvdims=header["valuedim"],
         value=array.reshape(r_tuple).transpose(t_tuple),
         components=components,
         units=units,

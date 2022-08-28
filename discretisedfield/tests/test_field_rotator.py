@@ -36,8 +36,8 @@ class TestFieldRotator:
         def scalar(p):
             return np.random.random(1) * 2 - 1
 
-        scalar_field = df.Field(self.mesh, dim=1, value=scalar)
-        vector_field = df.Field(self.mesh, dim=3, value=vector, norm=1)
+        scalar_field = df.Field(self.mesh, nvdims=1, value=scalar)
+        vector_field = df.Field(self.mesh, nvdims=3, value=vector, norm=1)
         self.fields = [scalar_field, vector_field]
 
     def test_valid_rotation(self):
@@ -96,7 +96,7 @@ class TestFieldRotator:
     def test_scalar_cube(self):
         # multiples of 90 degree rotations should return the same array
         mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
-        field = df.Field(mesh, dim=1, value=1)
+        field = df.Field(mesh, nvdims=1, value=1)
         fr = df.FieldRotator(field)
         for s in ["x", "y", "z"]:
             for pref in range(1, 5):
@@ -110,7 +110,7 @@ class TestFieldRotator:
 
     def test_macrospin_rotation(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), n=(1, 1, 1))
-        field = df.Field(mesh, dim=3, value=(0, 0, 1))
+        field = df.Field(mesh, nvdims=3, value=(0, 0, 1))
 
         fr = df.FieldRotator(field)
 
@@ -133,7 +133,7 @@ class TestFieldRotator:
         )
 
     def test_invalid_field(self):
-        field = df.Field(self.mesh, dim=2, value=(1, 1))
+        field = df.Field(self.mesh, nvdims=2, value=(1, 1))
         with pytest.raises(ValueError):
             df.FieldRotator(field)
 
