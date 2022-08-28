@@ -457,8 +457,7 @@ class TestField:
         # Exception
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
         f = df.Field(mesh, dim=1, value=-5)
-        with pytest.raises(ValueError):
-            f.norm = 5
+        f.norm = 5
 
     def test_norm_is_not_preserved(self):
         p1 = (0, 0, 0)
