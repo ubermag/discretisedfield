@@ -36,8 +36,8 @@ def check_field(field):
     assert isinstance(field.array, np.ndarray)
     assert field.array.shape == (*field.mesh.n, field.dim)
 
-    average = field.average
-    assert isinstance(average, (tuple, numbers.Complex))
+    average = field.mean()
+    assert isinstance(average, (np.ndarray, numbers.Complex))
 
     rstr = repr(field)
     assert isinstance(rstr, str)
@@ -205,7 +205,7 @@ class TestField:
 
             check_field(f)
             assert isinstance(f.value, np.ndarray)
-            assert f.average == (1, 1, 1)
+            assert np.allclose(f.mean(), (1, 1, 1))
 
             with pytest.raises(ValueError):
                 f.value = np.ones((2, 2))
@@ -472,7 +472,7 @@ class TestField:
 
         # No zero-norm cells
         f = df.Field(mesh, dim=3, value=(2, 0, 0))
-        assert f.orientation.average == (1, 0, 0)
+        assert np.allclose(f.orientation.mean(), (1, 0, 0))
 
         # With zero-norm cells
         def value_fun(point):
@@ -499,10 +499,10 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=2)
-        assert abs(f.average - 2) < tol
+        assert abs(f.mean() - 2) < tol
 
         f = df.Field(mesh, dim=3, value=(0, 1, 2))
-        assert np.allclose(f.average, (0, 1, 2))
+        assert np.allclose(f.mean(), (0, 1, 2))
 
     def test_field_component(self):
         for mesh in self.meshes:
@@ -591,7 +591,7 @@ class TestField:
         f = df.Field(mesh, dim=1, value=3)
         res = -f
         check_field(res)
-        assert res.average == -3
+        assert res.mean() == -3
         assert f == +f
         assert f == -(-f)
         assert f == +(-(-f))
@@ -600,7 +600,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(1, 2, -3))
         res = -f
         check_field(res)
-        assert res.average == (-1, -2, 3)
+        assert np.allclose(res.mean(), (-1, -2, 3))
         assert f == +f
         assert f == -(-f)
         assert f == +(-(-f))
@@ -614,9 +614,9 @@ class TestField:
         # Scalar field
         f = df.Field(mesh, dim=1, value=2)
         res = f**2
-        assert res.average == 4
+        assert res.mean() == 4
         res = f ** (-1)
-        assert res.average == 0.5
+        assert res.mean() == 0.5
 
         # Attempt vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -2))
@@ -640,25 +640,25 @@ class TestField:
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=1, value=-0.2)
         res = f1 + f2
-        assert res.average == 1
+        assert res.mean() == 1
         res = f1 - f2
-        assert res.average == 1.4
+        assert res.mean() == 1.4
         f1 += f2
-        assert f1.average == 1
+        assert f1.mean() == 1
         f1 -= f2
-        assert f1.average == 1.2
+        assert f1.mean() == 1.2
 
         # Vector fields
         f1 = df.Field(mesh, dim=3, value=(1, 2, 3))
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
         res = f1 + f2
-        assert res.average == (0, -1, -2)
+        assert np.allclose(res.mean(), (0, -1, -2))
         res = f1 - f2
-        assert res.average == (2, 5, 8)
+        assert np.allclose(res.mean(), (2, 5, 8))
         f1 += f2
-        assert f1.average == (0, -1, -2)
+        assert np.allclose(f1.mean(), (0, -1, -2))
         f1 -= f2
-        assert f1.average == (1, 2, 3)
+        assert np.allclose(f1.mean(), (1, 2, 3))
 
         # Artithmetic checks
         assert f1 + f2 + (1, 1, 1) == (1, 1, 1) + f2 + f1
@@ -671,21 +671,21 @@ class TestField:
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
         res = f1 + 2
-        assert res.average == 3.2
+        assert res.mean() == 3.2
         res = f1 - 1.2
-        assert res.average == 0
+        assert res.mean() == 0
         f1 += 2.5
-        assert f1.average == 3.7
+        assert f1.mean() == 3.7
         f1 -= 3.7
-        assert f1.average == 0
+        assert f1.mean() == 0
         res = f2 + (1, 3, 5)
-        assert res.average == (0, 0, 0)
+        assert np.allclose(res.mean(), (0, 0, 0))
         res = f2 - (1, 2, 3)
-        assert res.average == (-2, -5, -8)
+        assert np.allclose(res.mean(), (-2, -5, -8))
         f2 += (1, 1, 1)
-        assert f2.average == (0, -2, -4)
+        assert np.allclose(f2.mean(), (0, -2, -4))
         f2 -= (-1, -2, 3)
-        assert f2.average == (1, 0, -7)
+        assert np.allclose(f2.mean(), (1, 0, -7))
 
         # Exceptions
         with pytest.raises(TypeError):
@@ -717,63 +717,63 @@ class TestField:
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=1, value=-2)
         res = f1 * f2
-        assert res.average == -2.4
+        assert res.mean() == -2.4
         res = f1 / f2
-        assert res.average == -0.6
+        assert res.mean() == -0.6
         f1 *= f2
-        assert f1.average == -2.4
+        assert f1.mean() == -2.4
         f1 /= f2
-        assert f1.average == 1.2
+        assert f1.mean() == 1.2
 
         # Scalar field with a constant
         f = df.Field(mesh, dim=1, value=5)
         res = f * 2
-        assert res.average == 10
+        assert res.mean() == 10
         res = 3 * f
-        assert res.average == 15
+        assert res.mean() == 15
         res = f * (1, 2, 3)
-        assert res.average == (5, 10, 15)
+        assert np.allclose(res.mean(), (5, 10, 15))
         res = (1, 2, 3) * f
-        assert res.average == (5, 10, 15)
+        assert np.allclose(res.mean(), (5, 10, 15))
         res = f / 2
-        assert res.average == 2.5
+        assert res.mean() == 2.5
         res = 10 / f
-        assert res.average == 2
+        assert res.mean() == 2
         res = (5, 10, 15) / f
-        assert res.average == (1, 2, 3)
+        assert np.allclose(res.mean(), (1, 2, 3))
         f *= 10
-        assert f.average == 50
+        assert f.mean() == 50
         f /= 10
-        assert f.average == 5
+        assert f.mean() == 5
 
         # Scalar field with a vector field
         f1 = df.Field(mesh, dim=1, value=2)
         f2 = df.Field(mesh, dim=3, value=(-1, -3, 5))
         res = f1 * f2  # __mul__
-        assert res.average == (-2, -6, 10)
+        assert np.allclose(res.mean(), (-2, -6, 10))
         res = f2 * f1  # __rmul__
-        assert res.average == (-2, -6, 10)
+        assert np.allclose(res.mean(), (-2, -6, 10))
         res = f2 / f1  # __truediv__
-        assert res.average == (-0.5, -1.5, 2.5)
+        assert np.allclose(res.mean(), (-0.5, -1.5, 2.5))
         f2 *= f1  # __imul__
-        assert f2.average == (-2, -6, 10)
+        assert np.allclose(f2.mean(), (-2, -6, 10))
         f2 /= f1  # __truediv__
-        assert f2.average == (-1, -3, 5)
+        assert np.allclose(f2.mean(), (-1, -3, 5))
         with pytest.raises(ValueError):
             res = f1 / f2  # __rtruediv__
 
         # Vector field with a scalar
         f = df.Field(mesh, dim=3, value=(1, 2, 0))
         res = f * 2
-        assert res.average == (2, 4, 0)
+        assert np.allclose(res.mean(), (2, 4, 0))
         res = 5 * f
-        assert res.average == (5, 10, 0)
+        assert np.allclose(res.mean(), (5, 10, 0))
         res = f / 2
-        assert res.average == (0.5, 1, 0)
+        assert np.allclose(res.mean(), (0.5, 1, 0))
         f *= 2
-        assert f.average == (2, 4, 0)
+        assert np.allclose(f.mean(), (2, 4, 0))
         f /= 2
-        assert f.average == (1, 2, 0)
+        assert np.allclose(f.mean(), (1, 2, 0))
         with pytest.raises(ValueError):
             res = 10 / f
 
@@ -833,18 +833,18 @@ class TestField:
         f1 = df.Field(mesh, dim=3, value=(0, 0, 0))
         res = f1 @ f1
         assert res.dim == 1
-        assert res.average == 0
+        assert res.mean() == 0
 
         # Orthogonal vectors
         f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
         f3 = df.Field(mesh, dim=3, value=(0, 0, 1))
-        assert (f1 @ f2).average == 0
-        assert (f1 @ f3).average == 0
-        assert (f2 @ f3).average == 0
-        assert (f1 @ f1).average == 1
-        assert (f2 @ f2).average == 1
-        assert (f3 @ f3).average == 1
+        assert (f1 @ f2).mean() == 0
+        assert (f1 @ f3).mean() == 0
+        assert (f2 @ f3).mean() == 0
+        assert (f1 @ f1).mean() == 1
+        assert (f2 @ f2).mean() == 1
+        assert (f3 @ f3).mean() == 1
 
         # Check if commutative
         assert f1 @ f2 == f2 @ f1
@@ -853,9 +853,9 @@ class TestField:
         # Vector field with a constant
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
         res = (1, 1, 1) @ f
-        assert res.average == 6
+        assert res.mean() == 6
         res = f @ [1, 1, 1]
-        assert res.average == 6
+        assert res.mean() == 6
 
         # Spatially varying vectors
         def value_fun1(point):
@@ -908,22 +908,22 @@ class TestField:
         f1 = df.Field(mesh, dim=3, value=(0, 0, 0))
         res = f1 & f1
         assert res.dim == 3
-        assert res.average == (0, 0, 0)
+        assert np.allclose(res.mean(), (0, 0, 0))
 
         # Orthogonal vectors
         f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
         f3 = df.Field(mesh, dim=3, value=(0, 0, 1))
-        assert (f1 & f2).average == (0, 0, 1)
-        assert (f1 & f3).average == (0, -1, 0)
-        assert (f2 & f3).average == (1, 0, 0)
-        assert (f1 & f1).average == (0, 0, 0)
-        assert (f2 & f2).average == (0, 0, 0)
-        assert (f3 & f3).average == (0, 0, 0)
+        assert np.allclose((f1 & f2).mean(), (0, 0, 1))
+        assert np.allclose((f1 & f3).mean(), (0, -1, 0))
+        assert np.allclose((f2 & f3).mean(), (1, 0, 0))
+        assert np.allclose((f1 & f1).mean(), (0, 0, 0))
+        assert np.allclose((f2 & f2).mean(), (0, 0, 0))
+        assert np.allclose((f3 & f3).mean(), (0, 0, 0))
 
         # Constants
-        assert (f1 & (0, 1, 0)).average == (0, 0, 1)
-        assert ((0, 1, 0) & f1).average == (0, 0, 1)
+        assert np.allclose((f1 & (0, 1, 0)).mean(), (0, 0, 1))
+        assert np.allclose(((0, 1, 0) & f1).mean(), (0, 0, 1))
 
         # Check if not comutative
         assert f1 & f2 == -(f2 & f1)
@@ -935,10 +935,10 @@ class TestField:
 
         # The cross product should be
         # (y**2-x*z, z**2-x*y, x**2-y*z)
-        assert (f1 & f2)((1, 1, 1)) == (0, 0, 0)
-        assert (f1 & f2)((3, 1, 1)) == (-2, -2, 8)
-        assert (f2 & f1)((3, 1, 1)) == (2, 2, -8)
-        assert (f1 & f2)((5, 7, 1)) == (44, -34, 18)
+        assert np.allclose((f1 & f2)((1, 1, 1)), (0, 0, 0))
+        assert np.allclose((f1 & f2)((3, 1, 1)), (-2, -2, 8))
+        assert np.allclose((f2 & f1)((3, 1, 1)), (2, 2, -8))
+        assert np.allclose((f1 & f2)((5, 7, 1)), (44, -34, 18))
 
         # Exceptions
         f1 = df.Field(mesh, dim=1, value=1.2)
@@ -968,26 +968,26 @@ class TestField:
 
         res = f1 << f2 << f3
         assert res.dim == 3
-        assert res.average == (1, -3, 5)
+        assert np.allclose(res.mean(), (1, -3, 5))
 
         # Different dimensions
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=2, value=(-1, -3))
         res = f1 << f2
-        assert res.average == (1.2, -1, -3)
+        assert np.allclose(res.mean(), (1.2, -1, -3))
         res = f2 << f1
-        assert res.average == (-1, -3, 1.2)
+        assert np.allclose(res.mean(), (-1, -3, 1.2))
 
         # Constants
         f1 = df.Field(mesh, dim=1, value=1.2)
         res = f1 << 2
-        assert res.average == (1.2, 2)
+        assert np.allclose(res.mean(), (1.2, 2))
         res = f1 << (1, -1)
-        assert res.average == (1.2, 1, -1)
+        assert np.allclose(res.mean(), (1.2, 1, -1))
         res = 3 << f1
-        assert res.average == (3, 1.2)
+        assert np.allclose(res.mean(), (3, 1.2))
         res = (1.2, 3) << f1 << 3
-        assert res.average == (1.2, 3, 1.2, 3)
+        assert np.allclose(res.mean(), (1.2, 3, 1.2, 3))
 
         # Exceptions
         with pytest.raises(TypeError):
@@ -1020,7 +1020,7 @@ class TestField:
         assert np.all(res.array == 21)
 
         res = 1 + f1 + 0 * f2.x - 3 * f2.y / 3
-        assert res.average == 3
+        assert res.mean() == 3
 
     def test_pad(self):
         p1 = (0, 0, 0)
@@ -1043,12 +1043,12 @@ class TestField:
         f = df.Field(mesh, dim=1, value=0)
 
         check_field(f.derivative("x"))
-        assert f.derivative("x", n=1).average == 0
-        assert f.derivative("y", n=1).average == 0
-        assert f.derivative("z", n=1).average == 0
-        assert f.derivative("x", n=2).average == 0
-        assert f.derivative("y", n=2).average == 0
-        assert f.derivative("z", n=2).average == 0
+        assert f.derivative("x", n=1).mean() == 0
+        assert f.derivative("y", n=1).mean() == 0
+        assert f.derivative("z", n=1).mean() == 0
+        assert f.derivative("x", n=2).mean() == 0
+        assert f.derivative("y", n=2).mean() == 0
+        assert f.derivative("z", n=2).mean() == 0
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
         # No BC
@@ -1060,12 +1060,12 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative("x", n=1).average == 1
-        assert f.derivative("y", n=1).average == 1
-        assert f.derivative("z", n=1).average == 1
-        assert f.derivative("x", n=2).average == 0
-        assert f.derivative("y", n=2).average == 0
-        assert f.derivative("z", n=2).average == 0
+        assert f.derivative("x", n=1).mean() == 1
+        assert f.derivative("y", n=1).mean() == 1
+        assert f.derivative("z", n=1).mean() == 1
+        assert f.derivative("x", n=2).mean() == 0
+        assert f.derivative("y", n=2).mean() == 0
+        assert f.derivative("z", n=2).mean() == 0
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
@@ -1094,9 +1094,9 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(0, 0, 0))
 
         check_field(f.derivative("y"))
-        assert f.derivative("x").average == (0, 0, 0)
-        assert f.derivative("y").average == (0, 0, 0)
-        assert f.derivative("z").average == (0, 0, 0)
+        assert np.allclose(f.derivative("x").mean(), (0, 0, 0))
+        assert np.allclose(f.derivative("y").mean(), (0, 0, 0))
+        assert np.allclose(f.derivative("z").mean(), (0, 0, 0))
 
         # f(x, y, z) = (x,  y,  z)
         # -> dfdx = (1, 0, 0)
@@ -1108,9 +1108,9 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.derivative("x").average == (1, 0, 0)
-        assert f.derivative("y").average == (0, 1, 0)
-        assert f.derivative("z").average == (0, 0, 1)
+        assert np.allclose(f.derivative("x").mean(), (1, 0, 0))
+        assert np.allclose(f.derivative("y").mean(), (0, 1, 0))
+        assert np.allclose(f.derivative("z").mean(), (0, 0, 1))
 
         # f(x, y, z) = (x*y, y*z, x*y*z)
         # -> dfdx = (y, 0, y*z)
@@ -1151,9 +1151,9 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative("x", n=2).average == 4
-        assert f.derivative("y", n=2).average == 4
-        assert f.derivative("z", n=2).average == 6
+        assert f.derivative("x", n=2).mean() == 4
+        assert f.derivative("y", n=2).mean() == 4
+        assert f.derivative("z", n=2).mean() == 6
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
         def value_fun(point):
@@ -1162,9 +1162,9 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.derivative("x", n=2).average == (4, 0, 0)
-        assert f.derivative("y", n=2).average == (0, 4, 0)
-        assert f.derivative("z", n=2).average == (0, 0, 6)
+        assert np.allclose(f.derivative("x", n=2).mean(), (4, 0, 0))
+        assert np.allclose(f.derivative("y", n=2).mean(), (0, 4, 0))
+        assert np.allclose(f.derivative("z", n=2).mean(), (0, 0, 6))
 
         with pytest.raises(NotImplementedError):
             f.derivative("x", n=3)
@@ -1249,9 +1249,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=value_fun)
 
         # only one cell in the z-direction
-        assert f.plane("x").derivative("x").average == 0
-        assert f.plane("y").derivative("y").average == 0
-        assert f.derivative("z").average == 0
+        assert f.plane("x").derivative("x").mean() == 0
+        assert f.plane("y").derivative("y").mean() == 0
+        assert f.derivative("z").mean() == 0
 
         # Vector field: f(x, y, z) = (x, y, z)
         # -> grad(f) = (1, 1, 1)
@@ -1262,9 +1262,9 @@ class TestField:
         f = df.Field(mesh, dim=3, value=value_fun)
 
         # only one cell in the z-direction
-        assert f.plane("x").derivative("x").average == (0, 0, 0)
-        assert f.plane("y").derivative("y").average == (0, 0, 0)
-        assert f.derivative("z").average == (0, 0, 0)
+        assert np.allclose(f.plane("x").derivative("x").mean(), (0, 0, 0))
+        assert np.allclose(f.plane("y").derivative("y").mean(), (0, 0, 0))
+        assert np.allclose(f.derivative("z").mean(), (0, 0, 0))
 
     def test_grad(self):
         p1 = (0, 0, 0)
@@ -1276,7 +1276,7 @@ class TestField:
         f = df.Field(mesh, dim=1, value=0)
 
         check_field(f.grad)
-        assert f.grad.average == (0, 0, 0)
+        assert np.allclose(f.grad.mean(), (0, 0, 0))
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
         def value_fun(point):
@@ -1285,7 +1285,7 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.grad.average == (1, 1, 1)
+        assert np.allclose(f.grad.mean(), (1, 1, 1))
 
         # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
         def value_fun(point):
@@ -1329,11 +1329,11 @@ class TestField:
 
         check_field(f.div)
         assert f.div.dim == 1
-        assert f.div.average == 0
+        assert f.div.mean() == 0
 
         check_field(f.curl)
         assert f.curl.dim == 3
-        assert f.curl.average == (0, 0, 0)
+        assert np.allclose(f.curl.mean(), (0, 0, 0))
 
         # f(x, y, z) = (x, y, z)
         # -> div(f) = 3
@@ -1344,8 +1344,8 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.div.average == 3
-        assert f.curl.average == (0, 0, 0)
+        assert f.div.mean() == 3
+        assert np.allclose(f.curl.mean(), (0, 0, 0))
 
         # f(x, y, z) = (x*y, y*z, x*y*z)
         # -> div(f) = y + z + x*y
@@ -1394,7 +1394,7 @@ class TestField:
 
         check_field(f.laplace)
         assert f.laplace.dim == 3
-        assert f.laplace.average == (0, 0, 0)
+        assert np.allclose(f.laplace.mean(), (0, 0, 0))
 
         # f(x, y, z) = x + y + z
         # -> laplace(f) = 0
@@ -1404,7 +1404,7 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
         check_field(f.laplace)
-        assert f.laplace.average == 0
+        assert f.laplace.mean() == 0
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> laplace(f) = 4 + 4 + 6 = 14
@@ -1414,7 +1414,7 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.laplace.average == 14
+        assert f.laplace.mean() == 14
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
         # -> laplace(f) = (4, 4, 6)
@@ -1424,7 +1424,7 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.laplace.average == (4, 4, 6)
+        assert np.allclose(f.laplace.mean(), (4, 4, 6))
 
     def test_integral(self):
         # Volume integral.
@@ -1442,8 +1442,8 @@ class TestField:
         assert (f * df.dx * df.dy * df.dz).integral() == 2000
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert (f * df.dV).integral() == (-1000, 0, 3000)
-        assert (f * df.dx * df.dy * df.dz).integral() == (-1000, 0, 3000)
+        assert np.allclose((f * df.dV).integral(), (-1000, 0, 3000))
+        assert np.allclose((f * df.dx * df.dy * df.dz).integral(), (-1000, 0, 3000))
 
         def value_fun(point):
             x, y, z = point
@@ -1453,8 +1453,8 @@ class TestField:
                 return (1, 2, 3)
 
         f = df.Field(mesh, dim=3, value=value_fun)
-        assert (f * df.dV).integral() == (0, 0, 0)
-        assert (f * df.dx * df.dy * df.dz).integral() == (0, 0, 0)
+        assert np.allclose((f * df.dV).integral(), (0, 0, 0))
+        assert np.allclose((f * df.dx * df.dy * df.dz).integral(), (0, 0, 0))
 
         # Surface integral.
         p1 = (0, 0, 0)
@@ -1486,20 +1486,22 @@ class TestField:
         assert isinstance(f, df.Field)
         assert f.dim == 3
         assert f.mesh.n == (1, 10, 10)
-        assert f.average == (10, 10, 10)
+        assert np.allclose(f.mean(), (10, 10, 10))
 
         f = f.integral(direction="x").integral(direction="y")
         assert isinstance(f, df.Field)
         assert f.dim == 3
         assert f.mesh.n == (1, 1, 10)
-        assert f.average == (100, 100, 100)
+        assert np.allclose(f.mean(), (100, 100, 100))
 
         f = f.integral("x").integral("y").integral("z")
         assert f.dim == 3
         assert f.mesh.n == (1, 1, 1)
-        assert f.average == (1000, 1000, 1000)
+        assert np.allclose(f.mean(), (1000, 1000, 1000))
 
-        assert f.integral("x").integral("y").integral("z").average == f.integral()
+        assert np.allclose(
+            f.integral("x").integral("y").integral("z").mean(), f.integral()
+        )
 
         # Improper integral
         p1 = (0, 0, 0)
@@ -1512,7 +1514,7 @@ class TestField:
         assert isinstance(f, df.Field)
         assert f.dim == 3
         assert f.mesh.n == (10, 10, 10)
-        assert f.average == (5.5, 5.5, 5.5)
+        assert np.allclose(f.mean(), (5.5, 5.5, 5.5))
         assert f((0, 0, 0)) == (1, 1, 1)
         assert f((10, 10, 10)) == (10, 10, 10)
 
@@ -1527,13 +1529,13 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=-1)
-        abs(f).average == 1
+        abs(f).mean() == 1
 
         f = df.Field(mesh, dim=3, value=(-1, -1, -1))
-        abs(f).average == (1, 1, 1)
+        np.allclose(abs(f).mean(), (1, 1, 1))
 
         f = df.Field(mesh, dim=1, value=-1j)
-        abs(f).average == 1
+        abs(f).mean() == 1
 
     def test_line(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
@@ -1581,10 +1583,10 @@ class TestField:
         check_field(f[subregions["r1"]])
         check_field(f[subregions["r2"]])
 
-        assert f["r1"].average == (-1, -2, -3)
-        assert f["r2"].average == (0, 0, 0)
-        assert f[subregions["r1"]].average == (-1, -2, -3)
-        assert f[subregions["r2"]].average == (0, 0, 0)
+        assert np.allclose(f["r1"].mean(), (-1, -2, -3))
+        assert np.allclose(f["r2"].mean(), (0, 0, 0))
+        assert np.allclose(f[subregions["r1"]].mean(), (-1, -2, -3))
+        assert np.allclose(f[subregions["r2"]].mean(), (0, 0, 0))
 
         assert len(f["r1"].mesh) + len(f["r2"].mesh) == len(f.mesh)
 
@@ -1623,7 +1625,7 @@ class TestField:
         f = df.Field(mesh, dim=1, value=value_fun)
         sf = f.project("z")
         assert sf.array.shape == (10, 10, 1, 1)
-        assert sf.average == 0
+        assert sf.mean() == 0
 
         # Spatially varying vector field
         def value_fun(point):
@@ -1636,7 +1638,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=value_fun)
         sf = f.project("z")
         assert sf.array.shape == (10, 10, 1, 3)
-        assert sf.average == (3, 2, 0)
+        assert np.allclose(sf.mean(), (3, 2, 0))
 
     def test_angle(self):
         p1 = (0, 0, 0)
@@ -1743,10 +1745,10 @@ class TestField:
 
             if "ovf2" in filename:
                 # The magnetisation is in the x-direction in OVF2 files.
-                assert abs(f_read.orientation.x.average - 1) < 1e-2
+                assert abs(f_read.orientation.x.mean() - 1) < 1e-2
             else:
                 # The norm of magnetisation is known.
-                assert abs(f_read.norm.average - 1261566.2610100) < 1e-3
+                assert abs(f_read.norm.mean() - 1261566.2610100) < 1e-3
 
         # Read component names (single-word and multi-word with and without hyphen)
         # from OOMMF files

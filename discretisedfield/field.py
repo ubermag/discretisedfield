@@ -90,7 +90,7 @@ class Field:
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
     Field(...)
-    >>> field.average
+    >>> field.mean()
     (0.0, 0.0, 1.0)
 
     2. Defining a scalar field.
@@ -105,7 +105,7 @@ class Field:
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
     Field(...)
-    >>> field.average
+    >>> field.mean()
     3.14
 
     3. Defining a uniform three-dimensional normalised vector field.
@@ -123,7 +123,7 @@ class Field:
     >>> field = df.Field(mesh=mesh, dim=dim, value=value, norm=norm)
     >>> field
     Field(...)
-    >>> field.average
+    >>> field.mean()
     (0.0, 0.0, 1.0)
 
     .. seealso:: :py:func:`~discretisedfield.Mesh`
@@ -410,14 +410,14 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=value)
         >>> field.array
         array(...)
-        >>> field.average
+        >>> field.mean()
         (0.0, 0.0, 1.0)
         >>> field.array.shape
         (2, 1, 1, 3)
         >>> field.array = np.ones_like(field.array)
         >>> field.array
         array(...)
-        >>> field.average
+        >>> field.mean()
         (1.0, 1.0, 1.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.value`
@@ -474,21 +474,21 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.norm
         Field(...)
-        >>> field.norm.average
+        >>> field.norm.mean()
         1.0
         >>> field.norm = 2
-        >>> field.average
+        >>> field.mean()
         (0.0, 0.0, 2.0)
         >>> field.value = (1, 0, 0)
-        >>> field.norm.average
+        >>> field.norm.mean()
         1.0
 
         Set the norm for a zero field.
         >>> field.value = 0
-        >>> field.average
+        >>> field.mean()
         (0.0, 0.0, 0.0)
         >>> field.norm = 1
-        >>> field.average
+        >>> field.mean()
         (0.0, 0.0, 0.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
@@ -533,7 +533,7 @@ class Field:
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, dim=1, value=-5)
-        >>> abs(field).average
+        >>> abs(field).mean()
         5.0
 
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
@@ -569,7 +569,7 @@ class Field:
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(3, -1, 1))
         >>> zero_field = field.zero
-        >>> zero_field.average
+        >>> zero_field.mean()
         (0.0, 0.0, 0.0)
 
         """
@@ -618,7 +618,7 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=(6, 0, 8))
         >>> field.orientation
         Field(...)
-        >>> field.orientation.norm.average
+        >>> field.orientation.norm.mean()
         1.0
 
         """
@@ -636,13 +636,21 @@ class Field:
             self.mesh, dim=self.dim, value=orientation_array, components=self.components
         )
 
-    @property
-    def average(self):
-        """Field average.
+    def mean(self, axis=None):
+        """Field mean.
 
-        It computes the average of the field over the entire volume of the
-        mesh. It returns a tuple with the length same as the dimension
-        (``dim``) of the field.
+        It computes the arithmetic mean along the specified axis of the field
+        over the entire volume of the mesh. It returns a numpy array
+        containing the mean values.
+
+
+        Parameters
+        ----------
+        axis : None or int or tuple of ints, optional. Axis or axes along which
+               the means are computed. The default is to
+               compute the mean of the entire volume and return an array of the
+               averaged vector components.
+
 
         Returns
         -------
@@ -662,17 +670,19 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
-        >>> field.average
+        >>> field.mean()
         (0.0, 0.0, 1.0)
 
         2. Computing the scalar field average.
 
         >>> field = df.Field(mesh=mesh, dim=1, value=55)
-        >>> field.average
+        >>> field.mean()
         55.0
 
         """
-        return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
+        return np.stack(
+            [self.array[..., i].mean(axis=axis) for i in range(self.dim)], axis=-1
+        )
 
     def __repr__(self):
         """Representation string.
@@ -783,15 +793,15 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.x
         Field(...)
-        >>> field.x.average
+        >>> field.x.mean()
         0.0
         >>> field.y
         Field(...)
-        >>> field.y.average
+        >>> field.y.mean()
         0.0
         >>> field.z
         Field(...)
-        >>> field.z.average
+        >>> field.z.mean()
         1.0
         >>> field.z.dim
         1
@@ -809,15 +819,15 @@ class Field:
         ...                  components=['mx', 'my', 'mz'])
         >>> field.mx
         Field(...)
-        >>> field.mx.average
+        >>> field.mx.mean()
         0.0
         >>> field.my
         Field(...)
-        >>> field.my.average
+        >>> field.my.mean()
         0.0
         >>> field.mz
         Field(...)
-        >>> field.mz.average
+        >>> field.mz.mean()
         1.0
         >>> field.mz.dim
         1
@@ -1056,7 +1066,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, dim=3, value=(0, -1000, -3))
         >>> res = +f
-        >>> res.average
+        >>> res.mean()
         (0.0, -1000.0, -3.0)
         >>> res == f
         True
@@ -1095,7 +1105,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, dim=1, value=3.1)
         >>> res = -f
-        >>> res.average
+        >>> res.mean()
         -3.1
         >>> f == -(-f)
         True
@@ -1104,7 +1114,7 @@ class Field:
 
         >>> f = df.Field(mesh, dim=3, value=(0, -1000, -3))
         >>> res = -f
-        >>> res.average
+        >>> res.mean()
         (0.0, 1000.0, 3.0)
 
         """
@@ -1150,10 +1160,10 @@ class Field:
         >>> res = f**(-1)
         >>> res
         Field(...)
-        >>> res.average
+        >>> res.mean()
         0.5
         >>> res = f**2
-        >>> res.average
+        >>> res.mean()
         4.0
         >>> f**f  # the power must be numbers.Real
         Traceback (most recent call last):
@@ -1234,12 +1244,12 @@ class Field:
         >>> f1 = df.Field(mesh, dim=3, value=(0, -1, -3.1))
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3.1))
         >>> res = f1 + f2
-        >>> res.average
+        >>> res.mean()
         (0.0, 0.0, 0.0)
         >>> f1 + f2 == f2 + f1
         True
         >>> res = f1 + (1, 2, 3.1)
-        >>> res.average
+        >>> res.mean()
         (1.0, 1.0, 0.0)
         >>> f1 + 5
         Traceback (most recent call last):
@@ -1320,12 +1330,12 @@ class Field:
         >>> f1 = df.Field(mesh, dim=3, value=(0, 1, 6))
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3))
         >>> res = f1 - f2
-        >>> res.average
+        >>> res.mean()
         (0.0, 0.0, 3.0)
         >>> f1 - f2 == -(f2 - f1)
         True
         >>> res = f1 - (0, 1, 0)
-        >>> res.average
+        >>> res.mean()
         (0.0, 0.0, 6.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
@@ -1388,7 +1398,7 @@ class Field:
         >>> f1 = df.Field(mesh, dim=1, value=5)
         >>> f2 = df.Field(mesh, dim=1, value=9)
         >>> res = f1 * f2
-        >>> res.average
+        >>> res.mean()
         45.0
         >>> f1 * f2 == f2 * f1
         True
@@ -1398,10 +1408,10 @@ class Field:
         >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
         ...
         >>> res = f1 * 5  # discretisedfield.Field.__mul__ is called
-        >>> res.average
+        >>> res.mean()
         (0.0, 10.0, 25.0)
         >>> res = 10 * f1  # discretisedfield.Field.__rmul__ is called
-        >>> res.average
+        >>> res.mean()
         (0.0, 20.0, 50.0)
 
         .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
@@ -1486,7 +1496,7 @@ class Field:
         >>> f1 = df.Field(mesh, dim=1, value=100)
         >>> f2 = df.Field(mesh, dim=1, value=20)
         >>> res = f1 / f2
-        >>> res.average
+        >>> res.mean()
         5.0
         >>> f1 / f2 == (f2 / f1)**(-1)
         True
@@ -1495,7 +1505,7 @@ class Field:
 
         >>> f1 = df.Field(mesh, dim=3, value=(0, 10, 5))
         >>> res = f1 / 5  # discretisedfield.Field.__mul__ is called
-        >>> res.average
+        >>> res.mean()
         (0.0, 2.0, 1.0)
         >>> 10 / f1  # division by a vector is not allowed
         Traceback (most recent call last):
@@ -1547,7 +1557,7 @@ class Field:
         ...
         >>> f1 = df.Field(mesh, dim=3, value=(1, 3, 6))
         >>> f2 = df.Field(mesh, dim=3, value=(-1, -2, 2))
-        >>> (f1@f2).average
+        >>> (f1@f2).mean()
         5.0
 
         """
@@ -1613,9 +1623,9 @@ class Field:
         ...
         >>> f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
-        >>> (f1 & f2).average
+        >>> (f1 & f2).mean()
         (0.0, 0.0, 1.0)
-        >>> (f1 & (0, 0, 1)).average
+        >>> (f1 & (0, 0, 1)).mean()
         (0.0, -1.0, 0.0)
 
         """
@@ -1691,7 +1701,7 @@ class Field:
         >>> f3 = df.Field(mesh, dim=1, value=-3)
         ...
         >>> f = f1 << f2 << f3
-        >>> f.average
+        >>> f.mean()
         (1.0, 5.0, -3.0)
         >>> f.dim
         3
@@ -1796,7 +1806,7 @@ class Field:
         ...
         >>> # Two cells with value 1
         >>> pf = field.pad({'x': (1, 1)}, mode='constant')  # zeros padded
-        >>> pf.average
+        >>> pf.mean()
         0.5
 
         """
@@ -1880,7 +1890,7 @@ class Field:
         ...     return 2*x + 3*y + -5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
-        >>> f.derivative('y').average  # first-order derivative by default
+        >>> f.derivative('y').mean()  # first-order derivative by default
         3.0
 
         2. Try to compute the second-order directional derivative of the vector
@@ -1897,11 +1907,11 @@ class Field:
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
-        >>> f.derivative('x', n=1).average
+        >>> f.derivative('x', n=1).mean()
         (2.0, 0.0, 0.0)
-        >>> f.derivative('y', n=1).average
+        >>> f.derivative('y', n=1).mean()
         (0.0, 3.0, 0.0)
-        >>> f.derivative('z', n=1).average  # derivative cannot be calculated
+        >>> f.derivative('z', n=1).mean()  # derivative cannot be calculated
         (0.0, 0.0, 0.0)
         >>> # second-order derivatives
 
@@ -2013,7 +2023,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> f.grad.average
+        >>> f.grad.mean()
         (0.0, 0.0, 0.0)
 
         2. Compute gradient of a spatially varying field. For a field we choose
@@ -2025,7 +2035,7 @@ class Field:
         ...     return 2*x + 3*y - 5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
-        >>> f.grad.average
+        >>> f.grad.mean()
         (2.0, 3.0, -5.0)
 
         3. Attempt to compute the gradient of a vector field.
@@ -2093,7 +2103,7 @@ class Field:
         ...     return (2*x, -2*y, 5*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
-        >>> f.div.average
+        >>> f.div.mean()
         5.0
 
         2. Attempt to compute the divergence of a scalar field.
@@ -2236,7 +2246,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> f.laplace.average
+        >>> f.laplace.mean()
         0.0
 
         2. Compute Laplacian of a spatially varying field. For a field we
@@ -2249,7 +2259,7 @@ class Field:
         ...     return 2*x**2 + 3*y - 5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
-        >>> assert abs(f.laplace.average - 4) < 1e-3
+        >>> assert abs(f.laplace.mean() - 4) < 1e-3
 
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
@@ -2367,7 +2377,7 @@ class Field:
 
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane * df.dx).integral(direction='x').average
+        >>> (f_plane * df.dx).integral(direction='x').mean()
         (10.0, 20.0, 30.0)
 
         6. Improper integral along x-direction.
@@ -2573,13 +2583,13 @@ class Field:
         ...         return (-1, -2, -3)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
-        >>> f.average
+        >>> f.mean()
         (0.0, 0.0, 0.0)
         >>> f['r1']
         Field(...)
-        >>> f['r1'].average
+        >>> f['r1'].mean()
         (1.0, 2.0, 3.0)
-        >>> f['r2'].average
+        >>> f['r2'].mean()
         (-1.0, -2.0, -3.0)
 
         2. Extracting a subfield by passing a region.
@@ -2649,7 +2659,7 @@ class Field:
         ...
         >>> field.project('z')
         Field(...)
-        >>> field.project('z').average
+        >>> field.project('z').mean()
         (1.0, 2.0, 3.0)
         >>> field.project('z').array.shape
         (2, 2, 1, 3)
@@ -2693,7 +2703,7 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
         ...
-        >>> abs(field.plane('z').angle.average - np.pi/2) < 1e-3
+        >>> abs(field.plane('z').angle.mean() - np.pi/2) < 1e-3
         True
 
         """
@@ -3470,7 +3480,7 @@ class Field:
         >>> field = df.Field.from_xarray(xa)
         >>> field
         Field(...)
-        >>> field.average
+        >>> field.mean()
         (1.0, 1.0, 1.0)
 
         """
