@@ -81,47 +81,6 @@ def check_field(field):
     assert -1 * field == -field
     assert field.units is None or isinstance(field.units, str)
 
-    if field.dim == 1:
-        grad = field.grad
-        assert isinstance(grad, df.Field)
-        assert grad.dim == 3
-
-        assert all(i not in dir(field) for i in "xyz")
-
-        assert isinstance((field * df.dx).integral(), numbers.Complex)
-        assert isinstance((field * df.dy).integral(), numbers.Complex)
-        assert isinstance((field * df.dz).integral(), numbers.Complex)
-        assert isinstance((field * df.dV).integral(), numbers.Complex)
-        assert isinstance((field.plane("z") * df.dS).integral(), tuple)
-        assert isinstance((field.plane("z") * abs(df.dS)).integral(), numbers.Complex)
-
-    if field.dim == 3:
-        norm = field.norm
-        assert isinstance(norm, df.Field)
-        assert norm == abs(field)
-        assert norm.dim == 1
-
-        div = field.div
-        assert isinstance(div, df.Field)
-        assert div.dim == 1
-
-        curl = field.curl
-        assert isinstance(curl, df.Field)
-        assert curl.dim == 3
-
-        field.plane("z")
-
-        assert isinstance((field * df.dx).integral(), tuple)
-        assert isinstance((field * df.dy).integral(), tuple)
-        assert isinstance((field * df.dz).integral(), tuple)
-        assert isinstance((field * df.dV).integral(), tuple)
-        assert isinstance((field.plane("z") @ df.dS).integral(), numbers.Complex)
-        assert isinstance((field.plane("z") * abs(df.dS)).integral(), tuple)
-
-        orientation = field.orientation
-        assert isinstance(orientation, df.Field)
-        assert orientation.dim == 3
-
     if field.dim > 1 and field.components is not None:
         for comp in field.components:
             assert isinstance(getattr(field, comp), df.Field)
@@ -1504,21 +1463,12 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, dim=1, value=0)
-        assert (f.plane("x") * abs(df.dS)).integral() == 0
         assert (f.plane("x") * df.dy * df.dz).integral() == 0
 
         f = df.Field(mesh, dim=1, value=2)
-        assert (f.plane("x") * abs(df.dS)).integral() == 30
         assert (f.plane("x") * df.dy * df.dz).integral() == 30
-        assert (f.plane("y") * abs(df.dS)).integral() == 60
         assert (f.plane("y") * df.dx * df.dz).integral() == 60
-        assert (f.plane("z") * abs(df.dS)).integral() == 100
         assert (f.plane("z") * df.dx * df.dy).integral() == 100
-
-        f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert (f.plane("x") * abs(df.dS)).integral() == (-15, 0, 45)
-        assert (f.plane("y") * abs(df.dS)).integral() == (-30, 0, 90)
-        assert (f.plane("z") * abs(df.dS)).integral() == (-50, 0, 150)
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
         assert df.integral(f.plane("x") @ df.dS) == -15

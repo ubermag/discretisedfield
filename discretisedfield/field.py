@@ -513,14 +513,13 @@ class Field:
         """Field norm.
 
         This is a convenience operator and it returns
-        ``discretisedfield.Field.norm``. For details, please refer to
-        ``discretisedfield.Field.norm``.
+        absolute value of the field.
 
         Returns
         -------
         discretisedfield.Field
 
-            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+            Absolute value of the field.
 
         Examples
         --------
@@ -540,7 +539,9 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
 
         """
-        return self.norm
+        return self.__class__(
+            self.mesh, dim=self.dim, value=np.abs(self.array), units=self.units
+        )
 
     @property
     def zero(self):
