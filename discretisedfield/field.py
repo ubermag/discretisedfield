@@ -629,7 +629,7 @@ class Field:
         orientation_array = np.divide(
             self.array,
             self.norm.array,
-            where=(np.isclose(self.norm.array, 0) is False),
+            where=(np.invert(np.isclose(self.norm.array, 0))),
             out=np.zeros_like(self.array),
         )
         return self.__class__(
