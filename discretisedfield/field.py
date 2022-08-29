@@ -2669,6 +2669,15 @@ class Field:
         return self.integral(direction=direction) / n_cells
 
     @property
+    def average(self):
+        warnings.warn(
+            "The average property is deprecated. Please use the mean function.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.mean()
+
+    @property
     def angle(self):
         r"""In-plane angle of the vector field.
 

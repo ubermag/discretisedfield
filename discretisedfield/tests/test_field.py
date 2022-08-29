@@ -380,6 +380,12 @@ class TestField:
         f.array[0, 0, 0, 0] = 3
         assert isinstance(f.value, np.ndarray)
 
+    def test_average(self):
+        mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
+        f = df.Field(mesh, dim=3, value=(2, 2, 2))
+        with pytest.warns(DeprecationWarning):
+            f.average
+
     def test_norm(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
         f = df.Field(mesh, dim=3, value=(2, 2, 2))
@@ -490,7 +496,7 @@ class TestField:
         with pytest.raises(ValueError):
             f.orientation
 
-    def test_average(self):
+    def test_mean(self):
         tol = 1e-12
 
         p1 = (-5e-9, -5e-9, -5e-9)
