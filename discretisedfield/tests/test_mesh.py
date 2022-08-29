@@ -779,9 +779,9 @@ class TestMesh:
         cell = (1, 2, 2.5)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert mesh.plane("x").dS.average == (5, 0, 0)
-        assert mesh.plane("y").dS.average == (0, 2.5, 0)
-        assert mesh.plane("z").dS.average == (0, 0, 2)
+        assert np.allclose(mesh.plane("x").dS.mean(), (5, 0, 0))
+        assert np.allclose(mesh.plane("y").dS.mean(), (0, 2.5, 0))
+        assert np.allclose(mesh.plane("z").dS.mean(), (0, 0, 2))
 
         # Exception
         with pytest.raises(ValueError):

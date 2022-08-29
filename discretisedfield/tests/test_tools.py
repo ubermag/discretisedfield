@@ -21,7 +21,7 @@ def test_topological_charge():
         q = dft.topological_charge_density(f.plane("z"), method=method)
 
         assert q.dim == 1
-        assert q.average == 0
+        assert q.mean() == 0
         for absolute in [True, False]:
             assert (
                 dft.topological_charge(f.plane("z"), method=method, absolute=absolute)
@@ -38,7 +38,7 @@ def test_topological_charge():
         q = dft.topological_charge_density(f.plane("z"), method=method)
 
         assert q.dim == 1
-        assert q.average > 0
+        assert q.mean() > 0
         for absolute in [True, False]:
             Q = dft.topological_charge(f.plane("z"), method=method, absolute=absolute)
             assert abs(Q) < 1 and abs(Q - 1) < 0.15
@@ -75,7 +75,7 @@ def test_emergent_magnetic_field():
     f = df.Field(mesh, dim=3, value=(0, 0, 0))
 
     assert dft.emergent_magnetic_field(f).dim == 3
-    assert dft.emergent_magnetic_field(f).average == (0, 0, 0)
+    assert np.allclose(dft.emergent_magnetic_field(f).mean(), (0, 0, 0))
 
     with pytest.raises(ValueError):
         dft.emergent_magnetic_field(f.x)
@@ -91,7 +91,7 @@ def test_neigbouring_cell_angle():
     for direction in "xyz":
         for units in ["rad", "deg"]:
             sa = dft.neigbouring_cell_angle(field, direction=direction, units=units)
-            assert sa.average == 0
+            assert sa.mean() == 0
 
     # Exceptions
     scalar_field = df.Field(mesh, dim=1, value=5)
@@ -113,7 +113,7 @@ def test_max_neigbouring_cell_angle():
     field = df.Field(mesh, dim=3, value=(0, 1, 0))
 
     for units in ["rad", "deg"]:
-        assert dft.max_neigbouring_cell_angle(field, units=units).average == 0
+        assert dft.max_neigbouring_cell_angle(field, units=units).mean() == 0
 
 
 def test_count_lange_cell_angle_regions():
