@@ -1037,6 +1037,33 @@ class Field:
         else:
             return False
 
+    def is_same_mesh(self, other, tolerance_factor=1e-5):
+        """Check if two Field objects are defined on the same mesh."""
+        if not isinstance(other, self.__class__):
+            raise TypeError(f"Object of type {type(other)} not supported.")
+        if self.mesh == other.mesh:
+            return True
+        else:
+            return False
+
+    def is_same_vectorspace(self, other):
+        if not isinstance(other, self.__class__):
+            raise TypeError(f"Object of type {type(other)} not supported.")
+        return self.nvdims == other.nvdims
+
+    def is_same_mesh_field(self, other):  # TODO move to utils
+        if not self.is_same_mesh(other):
+            raise ValueError(
+                "To perform this operation both fields must have the same mesh."
+            )
+
+        if self.is_vectorfield and other.is_vectorfield:
+            if not self.is_same_vectorspace(other):
+                raise ValueError(
+                    "To perform this operation both fields must have the same"
+                    " vector components."
+                )
+
     def __pos__(self):
         """Unary ``+`` operator.
 
