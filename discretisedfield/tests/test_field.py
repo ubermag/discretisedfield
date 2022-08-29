@@ -633,8 +633,8 @@ class TestField:
         f = df.Field(mesh, dim=1, value=2)
         with pytest.raises(TypeError):
             res = f ** "a"
-        with pytest.raises(TypeError):
-            res = f**f
+        res = f**f
+        assert res.mean() == 4
 
     def test_add_subtract(self):
         p1 = (0, 0, 0)
