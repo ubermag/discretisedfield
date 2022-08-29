@@ -32,7 +32,7 @@ class DValue:
     >>> cell = (5, 5, 5)
     >>> region = df.Region(p1=p1, p2=p2)
     >>> mesh = df.Mesh(region=region, cell=cell)
-    >>> field = df.Field(mesh, nvdims=1, value=3.14)
+    >>> field = df.Field(mesh, dim=1, value=3.14)
     ...
     >>> dV(field)
     125
@@ -70,7 +70,7 @@ class DValue:
         >>> cell = (5, 5, 5)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region=region, cell=cell)
-        >>> field = df.Field(mesh, nvdims=1, value=3.14)
+        >>> field = df.Field(mesh, dim=1, value=3.14)
         ...
         >>> dx(field)
         5
@@ -102,7 +102,7 @@ class DValue:
         >>> cell = (5, 5, 5)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region=region, cell=cell)
-        >>> field = df.Field(mesh, nvdims=3, value=(1, -9, 2))
+        >>> field = df.Field(mesh, dim=3, value=(1, -9, 2))
         ...
         >>> abs(dS)(field.plane('z')).average
         25.0
@@ -155,7 +155,7 @@ class DValue:
         >>> cell = (5, 5, 5)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region=region, cell=cell)
-        >>> field = df.Field(mesh, nvdims=3, value=(1, -9, 2))
+        >>> field = df.Field(mesh, dim=3, value=(1, -9, 2))
         ...
         >>> # DValue multiplication
         >>> dxdydz = dx * dy * dz
@@ -224,7 +224,7 @@ class DValue:
         >>> cell = (5, 5, 5)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> mesh = df.Mesh(region=region, cell=cell)
-        >>> field = df.Field(mesh, nvdims=3, value=(1, -9, 2))
+        >>> field = df.Field(mesh, dim=3, value=(1, -9, 2))
         ...
         >>> # DValue dot product
         >>> dS2 = dS * dS

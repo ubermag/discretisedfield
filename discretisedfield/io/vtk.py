@@ -13,8 +13,8 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     """Write the field to a VTK file.
 
     The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
-    (``nvdims=1``) is saved as ``SCALARS``. On the other hand, vector field
-    (``nvdims=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
+    (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
+    (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
     three components to enable easy colouring of vectors in some
     visualisation packages. The data is stored as ``CELL_DATA``.
 
@@ -52,7 +52,7 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     >>> n = (10, 5, 3)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> value_fun = lambda point: (point[0], point[1], point[2])
-    >>> field = df.Field(mesh, nvdims=3, value=value_fun)
+    >>> field = df.Field(mesh, dim=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.vtk'
     >>> field.write(filename)  # write the file
@@ -166,19 +166,19 @@ def field_from_vtk(filename):
         elif name.endswith("-component"):
             components.append(name[: -len("-component")])
     array = cell_data.GetArray(field_idx)
-    nvdims = array.GetNumberOfComponents()
+    dim = array.GetNumberOfComponents()
 
-    if len(components) != nvdims:
+    if len(components) != dim:
         components = None
 
-    value = vns.vtk_to_numpy(array).reshape(*reversed(n), nvdims)
+    value = vns.vtk_to_numpy(array).reshape(*reversed(n), dim)
     value = value.transpose((2, 1, 0, 3))
 
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     with contextlib.suppress(FileNotFoundError):
         mesh.load_subregions(filename)
 
-    return df.Field(mesh, nvdims=nvdims, value=value, components=components)
+    return df.Field(mesh, dim=dim, value=value, components=components)
 
 
 def fromvtk_legacy(filename):
@@ -193,11 +193,11 @@ def fromvtk_legacy(filename):
 
     # Determine the dimension of the field.
     if "VECTORS" in content:
-        nvdims = 3
+        dim = 3
         data_marker = "VECTORS"
         skip = 0  # after how many lines data starts after marker
     else:
-        nvdims = 1
+        dim = 1
         data_marker = "SCALARS"
         skip = 1
 
@@ -224,7 +224,7 @@ def fromvtk_legacy(filename):
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
     with contextlib.suppress(FileNotFoundError):
         mesh.load_subregions(filename)
-    field = df.Field(mesh, nvdims=nvdims)
+    field = df.Field(mesh, dim=dim)
 
     # Find where data starts.
     for i, line in enumerate(lines):

@@ -85,7 +85,7 @@ class K3dField:
         >>> p2 = (50e-9, 50e-9, 50e-9)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-        >>> field = df.Field(mesh, nvdims=3, value=(1, 2, 0))
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
         >>> def normfun(point):
         ...     x, y, z = point
         ...     if x**2 + y**2 < 30**2:
@@ -100,8 +100,8 @@ class K3dField:
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.voxels`
 
         """
-        if self.data.nvdims != 1:
-            msg = f"Cannot plot nvdims={self.data.nvdims} field."
+        if self.data.dim != 1:
+            msg = f"Cannot plot dim={self.data.dim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -232,15 +232,15 @@ class K3dField:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
-        >>> field = df.Field(mesh, nvdims=1, value=5)
+        >>> field = df.Field(mesh, dim=1, value=5)
         >>> field.k3d.scalar()
         Plot(...)
 
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.vector`
 
         """
-        if self.data.nvdims != 1:
-            msg = f"Cannot plot nvdims={self.data.nvdims} field."
+        if self.data.dim != 1:
+            msg = f"Cannot plot dim={self.data.dim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -248,8 +248,8 @@ class K3dField:
             plot.display()
 
         if filter_field is not None:
-            if filter_field.nvdims != 1:
-                msg = f"Cannot use nvdims={self.data.nvdims} filter_field."
+            if filter_field.dim != 1:
+                msg = f"Cannot use dim={self.data.dim} filter_field."
                 raise ValueError(msg)
 
         if multiplier is None:
@@ -417,14 +417,14 @@ class K3dField:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, nvdims=3, value=(0, 0, 1))
+        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
         ...
         >>> field.k3d.vector()
         Plot(...)
 
         """
-        if self.data.nvdims != 3:
-            msg = f"Cannot plot nvdims={self.data.nvdims} field."
+        if self.data.dim != 3:
+            msg = f"Cannot plot dim={self.data.dim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -432,8 +432,8 @@ class K3dField:
             plot.display()
 
         if color_field is not None:
-            if color_field.nvdims != 1:
-                msg = f"Cannot use nvdims={self.data.nvdims} color_field."
+            if color_field.dim != 1:
+                msg = f"Cannot use dim={self.data.dim} color_field."
                 raise ValueError(msg)
 
         if multiplier is None:
@@ -520,7 +520,7 @@ class K3dField:
 
     def __dir__(self):
         dirlist = dir(self.__class__)
-        if self.data.nvdims == 1:
+        if self.data.dim == 1:
             need_removing = ["k3d_vector"]
         else:
             need_removing = ["k3d_scalar", "k3d_nonzero"]

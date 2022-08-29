@@ -11,7 +11,7 @@ import discretisedfield.util as dfu
 
 
 @ts.typesystem(
-    nvdims=ts.Scalar(expected_type=int, positive=True, const=True),
+    dim=ts.Scalar(expected_type=int, positive=True, const=True),
     n=ts.Scalar(expected_type=int, positive=True, const=True),
 )
 class Line:
@@ -37,7 +37,7 @@ class Line:
 
     The number of points can be retrieved as ``discretisedfield.Line.n`` and
     the dimension of the value can be retrieved using
-    ``discretisedfield.Line.nvdims``.
+    ``discretisedfield.Line.dim``.
 
     Data in the form of ``pandas.DataFrame`` can be exposed as ``line.data``.
 
@@ -76,7 +76,7 @@ class Line:
     >>> line = df.Line(points=points, values=values)
     >>> line.n  # the number of points
     3
-    >>> line.nvdims
+    >>> line.dim
     1
 
     2. Defining ``Line`` for vector values.
@@ -86,7 +86,7 @@ class Line:
     >>> line = df.Line(points=points, values=values)
     >>> line.n  # the number of points
     4
-    >>> line.nvdims
+    >>> line.dim
     3
 
     """
@@ -101,9 +101,9 @@ class Line:
 
         # Set the dimension (const descriptor).
         if isinstance(values[0], numbers.Complex):
-            self.nvdims = 1
+            self.dim = 1
         else:
-            self.nvdims = len(values[0])
+            self.dim = len(values[0])
 
         # Set the number of values (const descriptor).
         self.n = len(points)
@@ -224,16 +224,16 @@ class Line:
 
         """
         if not hasattr(self, "_value_columns"):
-            if self.nvdims == 1:
+            if self.dim == 1:
                 return ["v"]
             else:
-                return [f"v{i}" for i in list(dfu.axesdict.keys())[: self.nvdims]]
+                return [f"v{i}" for i in list(dfu.axesdict.keys())[: self.dim]]
         else:
             return self._value_columns
 
     @value_columns.setter
     def value_columns(self, val):
-        if len(val) != self.nvdims:
+        if len(val) != self.dim:
             msg = f"Cannot change column names with a list of lenght {len(val)}."
             raise ValueError(msg)
 

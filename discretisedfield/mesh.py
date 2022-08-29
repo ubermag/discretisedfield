@@ -1239,7 +1239,7 @@ class Mesh:
 
         norm = self.cell[self.attributes["axis1"]] * self.cell[self.attributes["axis2"]]
         dn = dfu.assemble_index(0, 3, {self.attributes["planeaxis"]: 1})
-        return df.Field(self, nvdims=3, value=dn, norm=norm)
+        return df.Field(self, dim=3, value=dn, norm=norm)
 
     def save_subregions(self, field_filename):
         """Save subregions to json file."""

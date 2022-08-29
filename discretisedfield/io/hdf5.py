@@ -33,7 +33,7 @@ def field_to_hdf5(field, filename, save_subregions=True):
     >>> n = (10, 5, 3)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> value_fun = lambda point: (point[0], point[1], point[2])
-    >>> field = df.Field(mesh, nvdims=3, value=value_fun)
+    >>> field = df.Field(mesh, dim=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.h5'
     >>> field.write(filename)  # write the file
@@ -64,7 +64,7 @@ def field_to_hdf5(field, filename, save_subregions=True):
         gregion.create_dataset("p1", data=field.mesh.region.p1)
         gregion.create_dataset("p2", data=field.mesh.region.p2)
         gmesh.create_dataset("n", dtype="i4", data=field.mesh.n)
-        gfield.create_dataset("nvdims", dtype="i4", data=field.nvdims)
+        gfield.create_dataset("dim", dtype="i4", data=field.dim)
         gfield.create_dataset("array", data=field.array)
 
 
@@ -111,7 +111,7 @@ def field_from_hdf5(filename):
         p1 = f["field/mesh/region/p1"]
         p2 = f["field/mesh/region/p2"]
         n = np.array(f["field/mesh/n"]).tolist()
-        nvdims = np.array(f["field/nvdims"]).tolist()
+        dim = np.array(f["field/dim"]).tolist()
         array = f["field/array"]
 
         # Create field.
@@ -119,4 +119,4 @@ def field_from_hdf5(filename):
         with contextlib.suppress(FileNotFoundError):
             mesh.load_subregions(filename)
 
-        return df.Field(mesh, nvdims=nvdims, value=array[:])
+        return df.Field(mesh, dim=dim, value=array[:])

@@ -9,7 +9,7 @@ def test_instances():
     cell = (1, 2, 3)
     region = df.Region(p1=p1, p2=p2)
     mesh = df.Mesh(region=region, cell=cell)
-    field = df.Field(mesh, nvdims=3, value=(1, 2, 3))
+    field = df.Field(mesh, dim=3, value=(1, 2, 3))
 
     assert df.dx(field) == 1
     assert df.dy(field) == 2
@@ -24,7 +24,7 @@ def test_integral():
     cell = (1, 1, 1)
     region = df.Region(p1=p1, p2=p2)
     mesh = df.Mesh(region=region, cell=cell)
-    field = df.Field(mesh, nvdims=3, value=(1, -2, 3))
+    field = df.Field(mesh, dim=3, value=(1, -2, 3))
 
     for attr in ["dx", "dy", "dz", "dV"]:
         assert df.integral(field * getattr(df, attr)) == (1000, -2000, 3000)
