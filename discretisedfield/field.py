@@ -4,6 +4,7 @@ import numbers
 import pathlib
 import warnings
 
+import numba as nb
 import numpy as np
 import ubermagutil.typesystem as ts
 import xarray as xr
@@ -335,6 +336,9 @@ class Field:
 
     @value.setter
     def value(self, val):
+        if callable(val):
+            nb_value_fun = nb.guvectorize("(n)->(n)", nopython=True)(val)
+            val = nb_value_fun(self.coordinate_field(self.mesh).array)
         self._value = val
         self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
@@ -499,7 +503,7 @@ class Field:
         if self.dim == 1:
             res = abs(self.value)
         else:
-            res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
+            res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
@@ -516,6 +520,13 @@ class Field:
                 out=np.zeros_like(self.array),
                 where=self.norm.array != 0.0,
             )
+
+            if callable(val):
+                nb_norm_fun = nb.guvectorize("(n)->()", nopython=True)(val)
+                val = nb_norm_fun(self.coordinate_field(self.mesh).array)[
+                    ..., np.newaxis
+                ]
+
             self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
