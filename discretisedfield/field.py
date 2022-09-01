@@ -337,7 +337,9 @@ class Field:
     @value.setter
     def value(self, val):
         if callable(val):
-            nb_value_fun = nb.guvectorize("(n)->(n)", nopython=True)(val)
+            nb_value_fun = nb.guvectorize(
+                [(nb.float64[:], nb.float64[:])], "(n)->(n)", nopython=True
+            )(val)
             val = nb_value_fun(self.coordinate_field(self.mesh).array)
         self._value = val
         self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
@@ -522,7 +524,9 @@ class Field:
             )
 
             if callable(val):
-                nb_norm_fun = nb.guvectorize("(n)->()", nopython=True)(val)
+                nb_norm_fun = nb.guvectorize(
+                    [(nb.float64[:], nb.float64)], "(n)->()", nopython=True
+                )(val)
                 val = nb_norm_fun(self.coordinate_field(self.mesh).array)[
                     ..., np.newaxis
                 ]
