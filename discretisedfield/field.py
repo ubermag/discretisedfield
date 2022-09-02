@@ -340,9 +340,12 @@ class Field:
             nb_value_fun = nb.guvectorize(
                 [(nb.float64[:], nb.float64[:])], "(n)->(n)", nopython=True
             )(val)
-            val = nb_value_fun(self.coordinate_field(self.mesh).array)
-        self._value = val
-        self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
+            nb_value_array = nb_value_fun(self.coordinate_field(self.mesh).array)
+            self._value = nb_value_array
+            self.array = nb_value_array
+        else:
+            self._value = val
+            self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def components(self):
@@ -527,11 +530,13 @@ class Field:
                 nb_norm_fun = nb.guvectorize(
                     [(nb.float64[:], nb.float64)], "(n)->()", nopython=True
                 )(val)
-                val = nb_norm_fun(self.coordinate_field(self.mesh).array)[
+                nb_norm_array = nb_norm_fun(self.coordinate_field(self.mesh).array)[
                     ..., np.newaxis
                 ]
 
-            self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
+                self.array *= nb_norm_array
+            else:
+                self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
         """Field norm.
