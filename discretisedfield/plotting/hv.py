@@ -33,8 +33,8 @@ class Hv:
     _norm_filter = True
 
     def __init__(self, array):
-        import hvplot.xarray  # noqa, delayed import because it creates (empty) output
-
+        hv.extension("bokeh", logo=False)
+        assert isinstance(array, xr.DataArray)
         self.array = array
 
     def __call__(
@@ -300,7 +300,7 @@ class Hv:
 
         """
         x, y, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
-        return self.array.hvplot(x=x, y=y, **kwargs)
+        return hv.Dataset(self.array).to(hv.Image, [x, y], dynamic=True).opts(**kwargs)
 
     def vector(
         self,
@@ -450,7 +450,7 @@ class Hv:
         if (self.array.ndim != 4 or len(self.array.comp) != 3) and vdims is None:
             raise ValueError(
                 f"`vdims` are required for arrays with {self.array.ndim - 1} spatial"
-                " dimensions and {len(self.array.comp)} components."
+                f" dimensions and {len(self.array.comp)} components."
             )
 
         if vdims is None:
@@ -646,7 +646,7 @@ class Hv:
 
         """
         x, y, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
-        return self.array.hvplot.contour(x=x, y=y, **kwargs)
+        return hv.Dataset(self.array).to(hv.Contours, kdims=[x, y]).opts(**kwargs)
 
     def _filter_values(self, values, roi, kdims):
         if roi is None:
