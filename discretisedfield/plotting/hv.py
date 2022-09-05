@@ -300,7 +300,8 @@ class Hv:
 
         """
         x, y, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
-        return hv.Dataset(self.array).to(hv.Image, [x, y], dynamic=True).opts(**kwargs)
+        hv_args = {"dynamic": True} if set(self.array.dims) - {x, y} else {}
+        return hv.Dataset(self.array).to(hv.Image, [x, y], **hv_args).opts(**kwargs)
 
     def vector(
         self,
@@ -646,7 +647,8 @@ class Hv:
 
         """
         x, y, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
-        return hv.Dataset(self.array).to(hv.Contours, kdims=[x, y]).opts(**kwargs)
+        hv_args = {"dynamic": True} if set(self.array.dims) - {x, y} else {}
+        return hv.Dataset(self.array).to(hv.Contours, [x, y], **hv_args).opts(**kwargs)
 
     def _filter_values(self, values, roi, kdims):
         if roi is None:
