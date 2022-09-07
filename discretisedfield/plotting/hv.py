@@ -33,8 +33,9 @@ class Hv:
     _norm_filter = True
 
     def __init__(self, array):
+        if not isinstance(array, xr.DataArray):
+            raise TypeError(f"Unsupported type {type(array)}.")
         hv.extension("bokeh", logo=False)
-        assert isinstance(array, xr.DataArray)
         self.array = array
 
     def __call__(
