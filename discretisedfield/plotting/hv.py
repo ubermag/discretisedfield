@@ -616,6 +616,10 @@ class Hv:
             If a dictionary is passed its keys must correspond to (some of) the
             dimensions of the array. If not specified no re-sampling is done.
 
+        levels : int, optional
+
+            The number of contour lines, defaults to 10.
+
         kwargs
 
             Additional keyword arguments that are forwarded to ``.opts`` of the
