@@ -35,7 +35,8 @@ class Hv:
     def __init__(self, array):
         if not isinstance(array, xr.DataArray):
             raise TypeError(f"Unsupported type {type(array)}.")
-        hv.extension("bokeh", logo=False)
+        if not hv.extension._loaded:
+            hv.extension("bokeh", logo=False)
         self.array = array
 
     def __call__(
