@@ -656,11 +656,8 @@ class Hv:
         :DynamicMap...
 
         """
-        kwargs.setdefault("data_aspect", 1)
-        kwargs.setdefault("colorbar", True)
-        return hv.operation.contours(self.scalar(kdims, roi, n), levels=levels).opts(
-            **kwargs
-        )
+        _, _, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
+        return hv.operation.contours(self.scalar(kdims), levels=levels).opts(**kwargs)
 
     def _filter_values(self, values, roi, kdims):
         if roi is None:
