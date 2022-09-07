@@ -85,8 +85,12 @@ class Hv:
         dictionaries to ``scalar_kw`` and ``vector_kw``, which are then used in
         subplots.
 
+        To understand the meaning of the keyword arguments which can be passed to this
+        method, please refer to ``discretisedfield.plotting.Hv.scalar`` and
+        ``discretisedfield.plotting.Hv.vector`` documentation.
+
         To reduce the number of points in the plot a simple re-sampling is available.
-        The parameter ``n`` in ``scalar_kw`` or ``vector_kw``. can be used to specify
+        The parameter ``n`` in ``scalar_kw`` or ``vector_kw`` can be used to specify
         the number of points in different directions. A tuple of length 2 can be used to
         specify the number of points in the two ``kdims``. A dictionary can be used to
         specify the number of points in arbitrary dimensions. Keys of the dictionary
@@ -95,11 +99,6 @@ class Hv:
         sort of interpolation (it just picks the nearest point). The extreme points in
         each direction are always kept. Equidistant points are picked in between. The
         same resampling has to be used for all slider dimensions.
-
-        Therefore, to understand the meaning of the keyword arguments which can be
-        passed to this method, please refer to
-        ``discretisedfield.plotting.Hv.scalar`` and
-        ``discretisedfield.plotting.Hv.vector`` documentation.
 
         Parameters
         ----------
@@ -120,7 +119,7 @@ class Hv:
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
 
-        norm_filtering : bool, optional
+        norm_filter : bool, optional
 
             If ``True`` use a default roi based on the norm of the field, if ``False``
             do not filter automatically. If not specified the value of
@@ -241,10 +240,10 @@ class Hv:
         the nearest point). The extreme points in each direction are always kept.
         Equidistant points are picked in between.
 
-        Additional keyword arguments are directly forwarded to the ``xarray.hvplot``
-        method. Please refer to the documentation of ``hvplot`` (and ``holoviews``) for
-        available options and additional documentation on how to modify the plot after
-        creation.
+        Additional keyword arguments are directly forwarded to the ``.opts`` method of
+        the resulting ``holoviews.dynamicMap``. Please refer to the documentation of
+        ```holoviews`` (in particular ``holoviews.Image``) for available options and
+        additional documentation on how to modify the plot after creation.
 
         Parameters
         ----------
@@ -266,7 +265,8 @@ class Hv:
 
         kwargs
 
-            Additional keyword arguments that are forwarded to ``xarray.hvplot``.
+            Additional keyword arguments that are forwarded to ``.opts`` of the
+            ``holoviews.DynamicMap`` object.
 
         Returns
         -------
@@ -279,8 +279,8 @@ class Hv:
         ------
         ValueError
 
-            If ``kdims`` has not length 2 or contains strings that are not part of the
-            objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
+            If ``kdims`` does not have length 2 or contains strings that are not part of
+            the objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
             discretisedfield.Field objects).
 
         Examples
@@ -331,7 +331,7 @@ class Hv:
         Other fields cannot be colored automatically. To assign a non-uniform color
         manually use ``cdim``. It either accepts a string to select one of the field
         vector components or a scalar ``discretisedfield.Field`` or
-        ``xarray.DataArray``. Coloring can be disabled with ``use_color``.
+        ``xarray.DataArray``. Coloring can be disabled with ``use_color=False``.
 
         To filter out parts of the plot (e.g. areas where the norm of the field is zero)
         an additional ``roi`` can be passed. It can take an ``xarray.DataArray`` or a
@@ -352,8 +352,9 @@ class Hv:
 
         This method is based on ``holoviews.VectorPlot``. Additional keyword arguments
         are directly forwarded to the ``.opts()`` method of the resulting object. Please
-        refer to the documentation of ``holoviews`` for available options and additional
-        documentation on how to modify the plot after creation.
+        refer to the documentation of ``holoviews`` (in particular
+        ``holoviews.VectorField``) for available options and additional documentation on
+        how to modify the plot after creation.
 
         Parameters
         ----------
@@ -405,12 +406,15 @@ class Hv:
             Additional keyword arguments that are forwarded to
             ``holoviews.VectorField.opts()``.
 
+            Additional keyword arguments that are forwarded to ``.opts`` of the
+            ``holoviews.DynamicMap`` object.
+
         Returns
         -------
         holoviews.DynamicMap
 
-            A ``holoviews.DynamicMap`` that "creates" a ``holoviews.Image`` for each
-            slider value.
+            A ``holoviews.DynamicMap`` that "creates" a ``holoviews.VectorField`` for
+            each slider value.
 
         Raises
         ------
@@ -587,10 +591,10 @@ class Hv:
         the nearest point). The extreme points in each direction are always kept.
         Equidistant points are picked in between.
 
-        Additional keyword arguments are directly forwarded to
-         ``harray.hvplot.contour``. Please refer to the documentation of ``hvplot`` (and
-         ``holoviews``) for available options and additional documentation on how to
-         modify the plot after creation.
+        Additional keyword arguments are directly forwarded to the ``.opts`` method of
+         the ``holoviews.DynamicMap``. Please refer to the documentation of
+         ``holoviews`` (in particular `holoviews.Contours``) for available options and
+         additional documentation on how to modify the plot after creation.
 
         Parameters
         ----------
@@ -612,15 +616,15 @@ class Hv:
 
         kwargs
 
-            Additional keyword arguments that are forwarded to
-            ``xarray.hvplot.contour``.
+            Additional keyword arguments that are forwarded to ``.opts`` of the
+            ``holoviews.DynamicMap`` object.
 
         Returns
         -------
         holoviews.DynamicMap
 
-            A ``holoviews.DynamicMap`` that "creates" a ``holoviews.Image`` for each
-            slider value.
+            A ``holoviews.DynamicMap`` that "creates" a ``holoviews.Contours`` object
+            for each slider value.
 
         Raises
         ------
