@@ -3068,12 +3068,12 @@ class Field:
     @property
     def _hv_key_dims(self):
         key_dims = {
-            dim: (coords, "m")
+            dim: {"data": coords, "unit": "m"}
             for dim in "xyz"
             if len(coords := getattr(self.mesh.midpoints, dim)) > 1
         }
         if self.dim > 1:
-            key_dims["comp"] = (self.components, "")
+            key_dims["comp"] = {"data": self.components, "unit": ""}
         return key_dims
 
     @property

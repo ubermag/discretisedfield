@@ -192,7 +192,7 @@ class Hv:
                     # a drop-down with one element (the out-of-plane component)
                     def callback(*args, **kwargs):
                         res = self.callback(*args, **kwargs)
-                        return res.sel(comp=scalar_comps["data"]).drop_vars(
+                        return res.sel(comp=scalar_comps[0]).drop_var(
                             "comp", errors="ignore"
                         )
 
