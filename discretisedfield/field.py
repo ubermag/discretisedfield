@@ -3055,7 +3055,26 @@ class Field:
         :DynamicMap...
 
         """
-        return dfp.Hv(self.to_xarray())
+        return dfp.Hv(self._hv_key_dims, self._hv_data_selection)
+
+    def _hv_data_selection(self, **kwargs):
+        """Select field part as specified by the input arguments."""
+        comp = kwargs.pop("comp") if "comp" in kwargs else None
+        res = self.to_xarray().sel(**kwargs, method="nearest")
+        if comp:
+            res = res.sel(comp=comp)
+        return res
+
+    @property
+    def _hv_key_dims(self):
+        key_dims = {
+            dim: (coords, "m")
+            for dim in "xyz"
+            if len(coords := getattr(self.mesh.midpoints, dim)) > 1
+        }
+        if self.dim > 1:
+            key_dims["comp"] = (self.components, "")
+        return key_dims
 
     @property
     def fftn(self):

@@ -1,12 +1,12 @@
 """Holoviews-based plotting."""
 import contextlib
+import copy
+import functools
 import warnings
 
 import holoviews as hv
 import numpy as np
 import xarray as xr
-
-import discretisedfield.util as dfu
 
 
 class Hv:
@@ -32,12 +32,13 @@ class Hv:
 
     _norm_filter = True
 
-    def __init__(self, array):
-        if not isinstance(array, xr.DataArray):
-            raise TypeError(f"Unsupported type {type(array)}.")
+    def __init__(self, key_dims, callback):
+        # if not isinstance(array, xr.DataArray):
+        #     raise TypeError(f"Unsupported type {type(array)}.")
         if not hv.extension._loaded:
             hv.extension("bokeh", logo=False)
-        self.array = array
+        self.key_dims = key_dims
+        self.callback = callback
 
     def __call__(
         self,
@@ -165,54 +166,58 @@ class Hv:
         vector_kw = {} if vector_kw is None else vector_kw.copy()
 
         if norm_filter or (norm_filter is None and self._norm_filter):
-            if roi is None and "comp" not in self.array.dims:
-                roi = np.abs(self.array)
-            elif roi is None:
-                roi = xr.apply_ufunc(
-                    np.linalg.norm,
-                    self.array,
-                    input_core_dims=[["comp"]],
-                    kwargs={"axis": -1},
-                )
+            if roi is None:
+                roi = self.callback
             scalar_kw.setdefault("roi", roi)
             vector_kw.setdefault("roi", roi)
 
         vector_kw.setdefault("use_color", False)
 
-        if "comp" not in self.array.dims:
+        if "comp" not in self.key_dims:
             return self.scalar(kdims=kdims, **scalar_kw)
         elif vdims:
-            scalar_dims = list(set(self.array.comp.to_numpy()) - set(vdims))
+            scalar_comps = list(set(self.key_dims["comp"]["data"]) - set(vdims))
             with contextlib.suppress(KeyError):
                 vector_kw.pop("vdims")
             vector = self.vector(kdims=kdims, vdims=vdims, **vector_kw)
-            if len(scalar_dims) == 0:
+            if len(scalar_comps) == 0:
                 return vector
             else:
-                scalar = self.__class__(self.array.sel(comp=scalar_dims)).scalar(
+                key_dims = copy.deepcopy(self.key_dims)
+                if len(scalar_comps) > 1:
+                    key_dims["comp"] = (scalar_comps, key_dims["comp"]["unit"])
+                    callback = self.callback
+                else:
+                    # manually remove component 'comp' from returned xarray to avoid
+                    # a drop-down with one element (the out-of-plane component)
+                    def callback(*args, **kwargs):
+                        res = self.callback(*args, **kwargs)
+                        return res.sel(comp=scalar_comps["data"]).drop_vars(
+                            "comp", errors="ignore"
+                        )
+
+                    key_dims.pop("comp")
+
+                scalar = self.__class__(key_dims, callback).scalar(
                     kdims=kdims, **scalar_kw
                 )
                 return scalar * vector
-        elif len(self.array.comp) == 3 and self.array.ndim == 4:
-            # map spatial coordinates x, y, z and vector comp names
-            mapping = dict(zip(self.array.dims, range(4)))
-            mapping.pop("comp")
-            vdims = [
-                self.array.comp.to_numpy()[mapping.pop(kdims[i])] for i in range(2)
-            ]
-            scalar_dim = self.array.comp.to_numpy()[mapping.popitem()[1]]
-            scalar = self.__class__(self.array.sel(comp=scalar_dim)).scalar(
-                kdims=kdims, **scalar_kw
-            )
-            vector_kw.setdefault("vdims", vdims)
-            vector = self.__class__(self.array).vector(kdims=kdims, **vector_kw)
-            return scalar * vector
+        # vdims are now always required
+        # elif len(self.array.comp) == 3 and self.array.ndim == 4:
+        #     # map spatial coordinates x, y, z and vector comp names
+        #     mapping = dict(zip(self.array.dims, range(4)))
+        #     mapping.pop("comp")
+        #     vdims = [
+        #         self.array.comp.to_numpy()[mapping.pop(kdims[i])] for i in range(2)
+        #     ]
+        #     scalar_dim = self.array.comp.to_numpy()[mapping.popitem()[1]]
+        #     scalar = self.__class__(self.array.sel(comp=scalar_dim)).scalar(
+        #         kdims=kdims, **scalar_kw
+        #     )
+        #     vector_kw.setdefault("vdims", vdims)
+        #     vector = self.__class__(self.array).vector(kdims=kdims, **vector_kw)
+        #     return scalar * vector
         else:
-            warnings.warn(
-                "Automatic detection of vector components not possible for array with"
-                f" ndim={self.array.ndim} and comp={list(self.array.comp.to_numpy())}."
-                " To get a combined scalar and vector plot pass `vdims`."
-            )
             return self.scalar(kdims=kdims, **scalar_kw)
 
     def scalar(self, kdims, roi=None, n=None, **kwargs):
@@ -301,19 +306,37 @@ class Hv:
         :DynamicMap...
 
         """
-        x, y, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
-        hv_args = {"dynamic": True} if set(self.array.dims) - {x, y} else {}
-        return hv.Dataset(self.array).to(hv.Image, [x, y], **hv_args).opts(**kwargs)
+        self._check_kdims(kdims)
+        kwargs.setdefault("data_aspect", 1)
+        kwargs.setdefault("colorbar", True)
+
+        dyn_kdims = [dim for dim in self.key_dims if dim not in kdims]
+
+        def _plot(*values):
+            data = self.callback(**dict(zip(dyn_kdims, values)))
+            data = self._filter_values(
+                data, roi, kdims, dyn_kdims=dict(zip(dyn_kdims, values))
+            )
+            data = self._resample(data, kdims, n)
+            return hv.Image(data=data, kdims=kdims).opts(**kwargs)
+
+        dyn_map = hv.DynamicMap(_plot, kdims=dyn_kdims).redim.values(
+            **{dim: self.key_dims[dim]["data"] for dim in dyn_kdims}
+        )
+        # TODO The next two lines have no effect
+        for dim in dyn_map.dimensions():
+            dim.unit = self.key_dims[dim.name]["unit"]
+
+        return dyn_map
 
     def vector(
         self,
         kdims,
-        vdims=None,
+        vdims,
         cdim=None,
         roi=None,
         n=None,
         use_color=True,
-        colorbar_label=None,
         **kwargs,
     ):
         """Create a vector plot.
@@ -337,7 +360,7 @@ class Hv:
 
         To filter out parts of the plot (e.g. areas where the norm of the field is zero)
         an additional ``roi`` can be passed. It can take an ``xarray.DataArray`` or a
-        ``discretisedfield.Field`` and hides all points where ``roi`` is 0. It relies on
+        ``discretisedfield.Field`` and hides all points where ``roi`` is . It relies on
         ``xarray``s broadcasting and the object passed to ``roi`` must only have the
         same dimensions as the ones specified as ``kdims``. No automatic filtering is
         applied.
@@ -449,121 +472,96 @@ class Hv:
         """
         self._check_kdims(kdims)
         x, y = kdims
-        if "comp" not in self.array.dims:
+        if "comp" not in self.key_dims:
             raise ValueError(
-                "The vector plot method can only operate on DataArrays which have a"
+                "The vector plot method can only operate on data with a"
                 " vector component called 'comp'."
             )
-        if (self.array.ndim != 4 or len(self.array.comp) != 3) and vdims is None:
+        if (
+            len(self.key_dims) != 4 or len(self.key_dims["comp"]) != 3
+        ) and vdims is None:
             raise ValueError(
-                f"`vdims` are required for arrays with {self.array.ndim - 1} spatial"
-                f" dimensions and {len(self.array.comp)} components."
+                f"`vdims` are required for data with {len(self.key_dims) - 1} spatial"
+                f" dimensions and {len(self.key_dims['comp'])} components."
             )
 
-        if vdims is None:
-            arrow_x = self.array.coords["comp"].values[dfu.axesdict[x]]
-            arrow_y = self.array.coords["comp"].values[dfu.axesdict[y]]
-            vdims = [arrow_x, arrow_y]
-        else:
-            if len(vdims) != 2:
-                raise ValueError(f"{vdims=} must contain two elements.")
-            arrow_x, arrow_y = vdims
-            if arrow_x is None and arrow_y is None:
-                raise ValueError(f"At least one element of {vdims=} must be not None.")
+        if cdim is not None and not isinstance(cdim, str):
+            raise TypeError("cdim must be of type str")
 
-        # vector field norm
-        filter_values = xr.apply_ufunc(
-            np.linalg.norm, self.array, input_core_dims=[["comp"]], kwargs={"axis": -1}
-        )
-        filter_values = self._filter_values(filter_values, roi, kdims)
-        mag = np.sqrt(
-            (self.array.sel(comp=arrow_x) ** 2 if arrow_x else 0)
-            + (self.array.sel(comp=arrow_y) ** 2 if arrow_y else 0)
-        )
-        ip_vector = xr.Dataset(
-            {
-                "angle": np.arctan2(
-                    self.array.sel(comp=arrow_y) if arrow_y else 0,
-                    self.array.sel(comp=arrow_x) if arrow_x else 0,
-                    where=np.logical_and(filter_values != 0, ~np.isnan(filter_values)),
-                    out=np.full(
-                        np.array(self.array.shape)[
-                            np.array(self.array.dims) != "comp"  # comp at any position
-                        ],
-                        np.nan,
-                    ),
-                ),
-                "mag": mag / np.max(np.abs(mag)),
-            }
-        )
+        if len(vdims) != 2:
+            raise ValueError(f"{vdims=} must contain two elements.")
+        arrow_x, arrow_y = vdims
+        if arrow_x is None and arrow_y is None:
+            raise ValueError(f"At least one element of {vdims=} must be not None.")
 
-        if use_color:
-            if cdim is not None:
-                if isinstance(cdim, str):
-                    color_comp = self.array.sel(comp=cdim)
-                    if colorbar_label is None:
-                        colorbar_label = cdim
-                elif isinstance(cdim, xr.DataArray):
-                    color_comp = cdim
+        kwargs.setdefault("data_aspect", 1)
+
+        def _plot(use_color, cdim, *values):
+            # use_color and cdim have to be defined in here; otherwise an
+            # UnboundLocalError is raised
+            # roi, n, kdims, dyn_kdims, arrow_x, arrow_y, and kwargs work fine
+            data = self.callback(**dict(zip(dyn_kdims, values)))
+            data = self._filter_values(
+                data, roi, kdims, dyn_kdims=dict(zip(dyn_kdims, values))
+            )
+            data = self._resample(data, kdims, n)
+
+            vector_norm = xr.apply_ufunc(
+                np.linalg.norm, data, input_core_dims=[["comp"]], kwargs={"axis": -1}
+            )
+            vector_vdims = ["angle", "mag"]
+            vector_data = {}
+            vector_data["mag"] = np.sqrt(
+                (data.sel(comp=arrow_x) ** 2 if arrow_x else 0)
+                + (data.sel(comp=arrow_y) ** 2 if arrow_y else 0)
+            )
+            vector_data["angle"] = np.arctan2(
+                data.sel(comp=arrow_y) if arrow_y else 0,
+                data.sel(comp=arrow_x) if arrow_x else 0,
+                where=np.logical_and(vector_norm != 0, ~np.isnan(vector_norm)),
+                out=np.full(vector_norm.shape, np.nan),
+            )
+
+            if use_color and cdim is None:
+                if len(data.comp) == 3:
+                    cdim = (set(data.comp.to_numpy()) - set(vdims)).pop()
                 else:
-                    color_comp = cdim.to_xarray()
-
-                if colorbar_label is None:
-                    with contextlib.suppress(AttributeError):
-                        colorbar_label = color_comp.name
-                ip_vector["color_comp"] = color_comp
-            else:
-                if len(self.array.comp) != 3:  # 3 spatial components + vector 'comp'
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
                         f' vector arrays. Ignoring "{use_color=}".'
                     )
                     use_color = False
-                else:
-                    c_comp = (set(self.array.comp.to_numpy()) - set(vdims)).pop()
-                    if colorbar_label is None:
-                        colorbar_label = c_comp
-                    ip_vector["color_comp"] = self.array.sel(comp=c_comp)
 
-        vdims = ["angle", "mag"]
-        kwargs.setdefault("data_aspect", 1)
-        if use_color:  # can be disabled at this point for 2d arrays
-            vdims.append("color_comp")
-            kwargs.setdefault("colorbar", True)
+            if use_color:
+                vector_vdims.append("color_comp")
+                kwargs["color"] = "color_comp"
+                vector_data["color_comp"] = data.sel(comp=cdim).drop_vars(
+                    "comp", errors="ignore"
+                )
+                kwargs.setdefault("clabel", cdim)
+                kwargs.setdefault("colorbar", True)
 
-        ip_vector = self._resample(ip_vector, kdims, n)
-
-        def _vectorplot(*values):
             plot = hv.VectorField(
-                data=ip_vector.sel(
-                    **dict(zip(dyn_kdims, values)), method="nearest"
-                ).squeeze(),
+                data=xr.Dataset(vector_data),
                 kdims=kdims,
-                vdims=vdims,
+                vdims=vector_vdims,
             )
             plot.opts(magnitude="mag", **kwargs)
-            if use_color:
-                plot.opts(color="color_comp")
-                if colorbar_label:
-                    plot.opts(clabel=colorbar_label)
+
             for dim in plot.dimensions():
                 if dim.name in "xyz":
                     with contextlib.suppress(AttributeError):
-                        dim.unit = ip_vector[dim.name].units
+                        dim.unit = self.key_dims[dim.name]["unit"]
             return plot
 
-        dyn_kdims = [
-            dim
-            for dim in self.array.dims
-            if dim not in kdims + ["comp"] and len(ip_vector[dim]) > 1
-        ]
-        dyn_map = hv.DynamicMap(_vectorplot, kdims=dyn_kdims).redim.values(
-            **{dim: ip_vector[dim].data for dim in dyn_kdims}
-        )
-        # redim does not work with xarray DataArrays
+        dyn_kdims = [dim for dim in self.key_dims if dim not in kdims + ["comp"]]
+
+        dyn_map = hv.DynamicMap(
+            functools.partial(_plot, use_color, cdim), kdims=dyn_kdims
+        ).redim.values(**{dim: self.key_dims[dim]["data"] for dim in dyn_kdims})
         for dim in dyn_map.dimensions():
             with contextlib.suppress(AttributeError):
-                dim.unit = self.array[dim.name].units
+                dim.unit = self.key_dims[dim.name]["unit"]
         return dyn_map
 
     def contour(self, kdims, roi=None, n=None, levels=10, **kwargs):
@@ -636,7 +634,7 @@ class Hv:
         ------
         ValueError
 
-            If ``kdims`` has not length 2 or contains strings that are not part of the
+            If ``kdims`` has not length 2 or containts strings that are not part of the
             objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
             discretisedfield.Field objects).
 
@@ -656,22 +654,52 @@ class Hv:
         :DynamicMap...
 
         """
-        _, _, kwargs = self._prepare_scalar_plot(kdims, roi, n, kwargs)
-        return hv.operation.contours(self.scalar(kdims), levels=levels).opts(**kwargs)
+        kwargs.setdefault("data_aspect", 1)
+        kwargs.setdefault("colorbar", True)
+        return hv.operation.contours(
+            self.scalar(kdims, roi, n, colorbar=False), levels=levels
+        ).opts(**kwargs)
 
-    def _filter_values(self, values, roi, kdims):
+    def _filter_values(self, values, roi, kdims, dyn_kdims):
         if roi is None:
             return values
-
-        if not isinstance(roi, xr.DataArray):
+        if callable(roi):
+            roi_selection = copy.deepcopy(dyn_kdims)
+            with contextlib.suppress(KeyError):
+                roi_selection.pop("comp")
+            roi = roi(**roi_selection)
+            roi = xr.apply_ufunc(
+                np.linalg.norm,
+                roi,
+                input_core_dims=[["comp"]],
+                kwargs={"axis": -1},
+            ).drop_vars("comp", errors="ignore")
+        elif not isinstance(roi, xr.DataArray):
             roi = roi.to_xarray()
+
+        if "comp" in roi.dims:
+            raise ValueError("Only scalar roi is supported.")
+
+        for dyn_kdim, dyn_val in dyn_kdims.items():
+            if dyn_kdim in roi.dims:
+                method = {} if isinstance(dyn_val, str) else {"method": "nearest"}
+                roi = roi.sel(**{dyn_kdim: dyn_val}, **method).drop_vars(dyn_kdim)
+        for dim in roi.dims:
+            if dim not in dyn_kdims and len(roi[dim]) == 1:
+                roi = roi.squeeze(dim=dim)
+
+        if len(roi.dims) != 2:
+            raise ValueError(
+                f"Additional dimension(s) {set(roi.dims) - set(kdims)} in roi are not"
+                " supported."
+            )
 
         for kdim in kdims:
             if kdim not in roi.dims:
                 raise KeyError(f"Missing dim {kdim} in the filter.")
-            if len(self.array[kdim].data) != len(roi[kdim].data) or not np.allclose(
-                self.array[kdim].data, roi[kdim].data
-            ):
+            if len(self.key_dims[kdim]["data"]) != len(
+                roi[kdim].data
+            ) or not np.allclose(self.key_dims[kdim]["data"], roi[kdim].data):
                 raise ValueError(f"Coordinates for dim {kdim} do not match.")
 
         return values.where(roi != 0)
@@ -680,38 +708,40 @@ class Hv:
         if len(kdims) != 2:
             raise ValueError(f"{kdims=} must have length 2.")
         for dim in kdims:
-            if dim not in self.array.dims:
+            if dim not in self.key_dims:
                 raise ValueError(
-                    f"Unknown dimension {dim=} in kdims; must be in {self.array.dims}."
+                    f"Unknown dimension {dim=} in kdims; must be in"
+                    f" {self.key_dims.keys()}."
                 )
 
-    def _prepare_scalar_plot(self, kdims, roi, n, kwargs):
-        self._check_kdims(kdims)
-        x, y = kdims
-        kwargs.setdefault("data_aspect", 1)
-        kwargs.setdefault("colorbar", True)
-        self.array = self._filter_values(self.array, roi, kdims)
-        self.array = self._resample(self.array, kdims, n).squeeze()
-        return x, y, kwargs
+    # def _prepare_scalar_plot(self, kdims, roi, n, kwargs):
+    #     self._check_kdims(kdims)
+    #     x, y = kdims
+    #     kwargs.setdefault("data_aspect", 1)
+    #     kwargs.setdefault("colorbar", True)
+    #     self.array = self._filter_values(self.array, roi, kdims)
+    #     self.array = self._resample(self.array, kdims, n).squeeze()
+    #     return x, y, kwargs
 
-    def _resample(self, array, kdims, n):
+    @staticmethod
+    def _resample(array, kdims, n):
         if n is None:
             return array
-        elif isinstance(n, tuple):
+        elif isinstance(n, (tuple, list)):
             if len(n) != 2:
                 raise ValueError(f"{len(n)=} must be 2 if a tuple is passed.")
             vals = {
                 dim: np.linspace(array[dim].min(), array[dim].max(), ni)
                 for dim, ni in zip(kdims, n)
             }
-        elif isinstance(n, dict):
-            vals = {
-                dim: np.linspace(array[dim].min(), array[dim].max(), ni)
-                for dim, ni in n.items()
-            }
+        # elif isinstance(n, dict):
+        #     vals = {
+        #         dim: np.linspace(array[dim].min(), array[dim].max(), ni)
+        #         for dim, ni in n.items()
+        #     }
         else:
             raise TypeError(
-                f"Invalid type {type(n)} for parameter n. Must be tuple or dict."
+                f"Invalid type {type(n)} for parameter n. Must be tuple or list."
             )
         resampled = array.sel(**vals, method="nearest")
         resampled = resampled.assign_coords(vals)
