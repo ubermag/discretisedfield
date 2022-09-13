@@ -8,6 +8,10 @@ import holoviews as hv
 import numpy as np
 import xarray as xr
 
+import discretisedfield as df
+
+from .util import hv_key_dim
+
 
 class Hv:
     """Holoviews-based plotting methods.
@@ -176,7 +180,7 @@ class Hv:
         if "comp" not in self.key_dims:
             return self.scalar(kdims=kdims, **scalar_kw)
         elif vdims:
-            scalar_comps = list(set(self.key_dims["comp"]["data"]) - set(vdims))
+            scalar_comps = list(set(self.key_dims["comp"].data) - set(vdims))
             with contextlib.suppress(KeyError):
                 vector_kw.pop("vdims")
             vector = self.vector(kdims=kdims, vdims=vdims, **vector_kw)
@@ -185,7 +189,7 @@ class Hv:
             else:
                 key_dims = copy.deepcopy(self.key_dims)
                 if len(scalar_comps) > 1:
-                    key_dims["comp"] = (scalar_comps, key_dims["comp"]["unit"])
+                    key_dims["comp"] = hv_key_dim(scalar_comps, key_dims["comp"].unit)
                     callback = self.callback
                 else:
                     # manually remove component 'comp' from returned xarray to avoid
@@ -318,14 +322,19 @@ class Hv:
                 data, roi, kdims, dyn_kdims=dict(zip(dyn_kdims, values))
             )
             data = self._resample(data, kdims, n)
-            return hv.Image(data=data, kdims=kdims).opts(**kwargs)
+            plot = hv.Image(data=data, kdims=kdims).opts(**kwargs)
+
+            for dim in plot.kdims:
+                dim.unit = self.key_dims[dim.name].unit
+
+            return plot
 
         dyn_map = hv.DynamicMap(_plot, kdims=dyn_kdims).redim.values(
-            **{dim: self.key_dims[dim]["data"] for dim in dyn_kdims}
+            **{dim: self.key_dims[dim].data for dim in dyn_kdims}
         )
         # TODO The next two lines have no effect
         for dim in dyn_map.dimensions():
-            dim.unit = self.key_dims[dim.name]["unit"]
+            dim.unit = self.key_dims[dim.name].unit
 
         return dyn_map
 
@@ -548,20 +557,19 @@ class Hv:
             )
             plot.opts(magnitude="mag", **kwargs)
 
-            for dim in plot.dimensions():
-                if dim.name in "xyz":
-                    with contextlib.suppress(AttributeError):
-                        dim.unit = self.key_dims[dim.name]["unit"]
+            for dim in plot.kdims:
+                dim.unit = self.key_dims[dim.name].unit
+
             return plot
 
         dyn_kdims = [dim for dim in self.key_dims if dim not in kdims + ["comp"]]
 
         dyn_map = hv.DynamicMap(
             functools.partial(_plot, use_color, cdim), kdims=dyn_kdims
-        ).redim.values(**{dim: self.key_dims[dim]["data"] for dim in dyn_kdims})
+        ).redim.values(**{dim: self.key_dims[dim].data for dim in dyn_kdims})
         for dim in dyn_map.dimensions():
             with contextlib.suppress(AttributeError):
-                dim.unit = self.key_dims[dim.name]["unit"]
+                dim.unit = self.key_dims[dim.name].unit
         return dyn_map
 
     def contour(self, kdims, roi=None, n=None, levels=10, **kwargs):
@@ -663,7 +671,10 @@ class Hv:
     def _filter_values(self, values, roi, kdims, dyn_kdims):
         if roi is None:
             return values
-        if callable(roi):
+
+        if isinstance(roi, df.Field):
+            roi = roi.to_xarray()
+        elif callable(roi):
             roi_selection = copy.deepcopy(dyn_kdims)
             with contextlib.suppress(KeyError):
                 roi_selection.pop("comp")
@@ -675,7 +686,7 @@ class Hv:
                 kwargs={"axis": -1},
             ).drop_vars("comp", errors="ignore")
         elif not isinstance(roi, xr.DataArray):
-            roi = roi.to_xarray()
+            raise TypeError(f"Unsupported type {type(roi)} for 'roi'.")
 
         if "comp" in roi.dims:
             raise ValueError("Only scalar roi is supported.")
@@ -697,9 +708,9 @@ class Hv:
         for kdim in kdims:
             if kdim not in roi.dims:
                 raise KeyError(f"Missing dim {kdim} in the filter.")
-            if len(self.key_dims[kdim]["data"]) != len(
-                roi[kdim].data
-            ) or not np.allclose(self.key_dims[kdim]["data"], roi[kdim].data):
+            if len(self.key_dims[kdim].data) != len(roi[kdim].data) or not np.allclose(
+                self.key_dims[kdim].data, roi[kdim].data
+            ):
                 raise ValueError(f"Coordinates for dim {kdim} do not match.")
 
         return values.where(roi != 0)

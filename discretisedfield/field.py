@@ -13,6 +13,7 @@ from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
+from discretisedfield.plotting.util import hv_key_dim
 
 from . import html, io
 from .mesh import Mesh
@@ -3068,12 +3069,12 @@ class Field:
     @property
     def _hv_key_dims(self):
         key_dims = {
-            dim: {"data": coords, "unit": "m"}
+            dim: hv_key_dim(coords, "m")
             for dim in "xyz"
             if len(coords := getattr(self.mesh.midpoints, dim)) > 1
         }
         if self.dim > 1:
-            key_dims["comp"] = {"data": self.components, "unit": ""}
+            key_dims["comp"] = hv_key_dim(self.components, "")
         return key_dims
 
     @property
