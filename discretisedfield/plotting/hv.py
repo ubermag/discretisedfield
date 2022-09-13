@@ -66,19 +66,15 @@ class Hv:
          determines the typo of plot in the following order:
 
         1. For scalar objects (no dimension with name ``'comp'``) only
-           ``discretisedfield.plotting.Hv.scalar`` is used.
+           ``discretisedfield.plotting.Hv.scalar`` is used. The parameter ``vdims`` is
+           ignored.
 
         2. When ``vdims`` is specified a vector plot (without coloring) is created for
            the "in-plane" part of the vector field (defined via ``vdims``). If the field
            has vector dimensionality larger than two an additional scalar plot is
            created for all remaining vector components (with a drop-down selection).
 
-        3. If the field is a 3d vector field and defined in 3d space the in-plane and
-           out-of-plane vector components are determined (guessed) automatically. A
-           scalar plot is created for the out-of-plane component and overlayed with a
-           vector plot for the in-plane components (without coloring).
-
-        4. For all other vector fields a scalar plot with a drop-down selection for the
+        3. For all other vector fields a scalar plot with a drop-down selection for the
            individual vector components is created.
 
         Based on the norm of the object (absolute values for scalar fields) automatic
@@ -97,21 +93,17 @@ class Hv:
         All default values of ``hv.scalar`` and ``hv.vector`` can be changed by passing
         dictionaries to ``scalar_kw`` and ``vector_kw``, which are then used in
         subplots.
-
         To understand the meaning of the keyword arguments which can be passed to this
         method, please refer to ``discretisedfield.plotting.Hv.scalar`` and
         ``discretisedfield.plotting.Hv.vector`` documentation.
 
         To reduce the number of points in the plot a simple re-sampling is available.
-        The parameter ``n`` in ``scalar_kw`` or ``vector_kw`` can be used to specify
-        the number of points in different directions. A tuple of length 2 can be used to
-        specify the number of points in the two ``kdims``. A dictionary can be used to
-        specify the number of points in arbitrary dimensions. Keys of the dictionary
-        must be dimensions of the array. Dimensions that are not specified are not
-        modified. Note, that the re-sampling method is very basic and does not do any
-        sort of interpolation (it just picks the nearest point). The extreme points in
-        each direction are always kept. Equidistant points are picked in between. The
-        same resampling has to be used for all slider dimensions.
+        The parameter ``n`` in ``scalar_kw`` or ``vector_kw`` can be used to specify the
+        number of points in different directions. A tuple of length 2 can be used to
+        specify the number of points in the two ``kdims``. Note, that the re-sampling
+        method is very basic and does not do any sort of interpolation (it just picks
+        the nearest point). The extreme points in each direction are always kept.
+        Equidistant points are picked in between.
 
         Parameters
         ----------
@@ -124,13 +116,13 @@ class Hv:
             Names of the components to be used for the x and y component of the plotted
             arrows. This information is used to associate field components and spatial
             directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction. ``vdims`` is required for non-3d
-            vector fields and for fields that do not have 3 spatial coordinates.
+            field has no component in that direction. ``vdims`` is required to create
+            vector plots.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
-            Field to filter out certain areas in the plot. Only cells where the
-            roi is non-zero are included in the output.
+            Filter out certain areas in the plot. Only cells where the roi is non-zero
+            are included in the output.
 
         norm_filter : bool, optional
 
@@ -141,12 +133,12 @@ class Hv:
 
         scalar_kw : dict
 
-            Additional keyword arguments that are
+            Additional keyword arguments that are passed to
             ``discretisedfield.plotting.Hv.scalar``
 
         vector_kw : dict
 
-            Additional keyword arguments that are
+            Additional keyword arguments that are passed to
             ``discretisedfield.plotting.Hv.vector``
 
         Returns
@@ -212,21 +204,6 @@ class Hv:
                     kdims=kdims, **scalar_kw
                 )
                 return scalar * vector
-        # vdims are now always required
-        # elif len(self.array.comp) == 3 and self.array.ndim == 4:
-        #     # map spatial coordinates x, y, z and vector comp names
-        #     mapping = dict(zip(self.array.dims, range(4)))
-        #     mapping.pop("comp")
-        #     vdims = [
-        #         self.array.comp.to_numpy()[mapping.pop(kdims[i])] for i in range(2)
-        #     ]
-        #     scalar_dim = self.array.comp.to_numpy()[mapping.popitem()[1]]
-        #     scalar = self.__class__(self.array.sel(comp=scalar_dim)).scalar(
-        #         kdims=kdims, **scalar_kw
-        #     )
-        #     vector_kw.setdefault("vdims", vdims)
-        #     vector = self.__class__(self.array).vector(kdims=kdims, **vector_kw)
-        #     return scalar * vector
         else:
             return self.scalar(kdims=kdims, **scalar_kw)
 
