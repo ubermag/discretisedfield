@@ -630,12 +630,15 @@ class Hv:
             with contextlib.suppress(KeyError):
                 roi_selection.pop("comp")
             roi = roi(**roi_selection)
-            roi = xr.apply_ufunc(
-                np.linalg.norm,
-                roi,
-                input_core_dims=[["comp"]],
-                kwargs={"axis": -1},
-            ).drop_vars("comp", errors="ignore")
+            if "comp" in roi.dims:
+                roi = xr.apply_ufunc(
+                    np.linalg.norm,
+                    roi,
+                    input_core_dims=[["comp"]],
+                    kwargs={"axis": -1},
+                ).drop_vars("comp", errors="ignore")
+            else:
+                roi = np.abs(roi)
         elif not isinstance(roi, xr.DataArray):
             raise TypeError(f"Unsupported type {type(roi)} for 'roi'.")
 
