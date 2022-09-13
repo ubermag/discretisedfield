@@ -28,17 +28,23 @@ class Hv:
 
     Parameters
     ----------
-    array : xarray.DataArray
+    key_dims : dict[df.plotting.util.hv_key_dim]
 
-        DataArray to plot.
+        Key dimensions of the plot (kdims and dynamic kdims) in a dictionary. The keys
+        are the names of the dimensions, values namedtuples containing the data and unit
+        (can be an empty string) of the dimensions.
+
+    callback : callable
+
+        Callback function to provide data. It must accept arbitrary keyword arguments
+        and will be called with all dynamic kdims and their current values.
 
     """
 
     _norm_filter = True
 
     def __init__(self, key_dims, callback):
-        # if not isinstance(array, xr.DataArray):
-        #     raise TypeError(f"Unsupported type {type(array)}.")
+        # no tests for key_dims and callback as it is not directly used by users
         if not hv.extension._loaded:
             hv.extension("bokeh", logo=False)
         self.key_dims = key_dims
@@ -230,9 +236,9 @@ class Hv:
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
         ``holoviews.Image`` objects. The plot shows the plane defined with the two
         spatial directions passed to ``kdims``. If a vector field is passed (that means
-        the field dimension is greater than 1) an additional ``panel.Select`` widget for
-        the field components is created automatically. It is not necessary to create a
-        cut-plane first.
+        the field dimension 'comp' is greater than 1) an additional ``panel.Select``
+        widget for the field components is created automatically. It is not necessary to
+        create a cut-plane first.
 
         To filter out parts of the plot (e.g. areas where the norm of the field is zero)
         an additional ``roi`` can be passed. It can take an ``xarray.DataArray`` or a
@@ -244,15 +250,13 @@ class Hv:
         To reduce the number of points in the plot a simple re-sampling is available.
         The parameter ``n`` can be used to specify the number of points in different
         directions. A tuple of length 2 can be used to specify the number of points in
-        the two ``kdims``. A dictionary can be used to specify the number of points in
-        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
-        Dimensions that are not specified are not modified. Note, that the re-sampling
-        method is very basic and does not do any sort of interpolation (it just picks
-        the nearest point). The extreme points in each direction are always kept.
-        Equidistant points are picked in between.
+        the two ``kdims``. Note, that the re-sampling method is very basic and does not
+        do any sort of interpolation (it just picks the nearest point). The extreme
+        points in each direction are always kept. Equidistant points are picked in
+        between.
 
         Additional keyword arguments are directly forwarded to the ``.opts`` method of
-        the resulting ``holoviews.dynamicMap``. Please refer to the documentation of
+        the resulting ``holoviews.Image``. Please refer to the documentation of
         ```holoviews`` (in particular ``holoviews.Image``) for available options and
         additional documentation on how to modify the plot after creation.
 
@@ -267,17 +271,15 @@ class Hv:
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
 
-        n : array_like, dict, optional
+        n : array_like(2), optional
 
-            Re-sampling of the array with the given number of points. If an array-like
-            is passed it must have length 2 and the values are used for the two kdims.
-            If a dictionary is passed its keys must correspond to (some of) the
-            dimensions of the array. If not specified no re-sampling is done.
+            Re-sampling of the array with the given number of points. If not specified
+            no re-sampling is done.
 
         kwargs
 
             Additional keyword arguments that are forwarded to ``.opts`` of the
-            ``holoviews.DynamicMap`` object.
+            ``holoviews.Image`` object.
 
         Returns
         -------
@@ -329,14 +331,9 @@ class Hv:
 
             return plot
 
-        dyn_map = hv.DynamicMap(_plot, kdims=dyn_kdims).redim.values(
+        return hv.DynamicMap(_plot, kdims=dyn_kdims).redim.values(
             **{dim: self.key_dims[dim].data for dim in dyn_kdims}
         )
-        # TODO The next two lines have no effect
-        for dim in dyn_map.dimensions():
-            dim.unit = self.key_dims[dim.name].unit
-
-        return dyn_map
 
     def vector(
         self,
@@ -357,9 +354,7 @@ class Hv:
         cut-plane first.
 
         ``vdims`` defines the components of the plotted object shown in the plot x and
-        plot y direction (defined with ``kdims``). If the object has three vector
-        components and three spatial dimensions ``vdims`` can be omitted and the vector
-        components and spatial directions are combined based on their order.
+        plot y direction (defined with ``kdims``).
 
         For 3d vector fields the color by default encodes the out-of-plane component.
         Other fields cannot be colored automatically. To assign a non-uniform color
@@ -369,24 +364,22 @@ class Hv:
 
         To filter out parts of the plot (e.g. areas where the norm of the field is zero)
         an additional ``roi`` can be passed. It can take an ``xarray.DataArray`` or a
-        ``discretisedfield.Field`` and hides all points where ``roi`` is . It relies on
-        ``xarray``s broadcasting and the object passed to ``roi`` must only have the
+        ``discretisedfield.Field`` and hides all points where ``roi`` is zero. It relies
+        on ``xarray``s broadcasting and the object passed to ``roi`` must only have the
         same dimensions as the ones specified as ``kdims``. No automatic filtering is
         applied.
 
         To reduce the number of points in the plot a simple re-sampling is available.
         The parameter ``n`` can be used to specify the number of points in different
         directions. A tuple of length 2 can be used to specify the number of points in
-        the two ``kdims``. A dictionary can be used to specify the number of points in
-        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
-        Dimensions that are not specified are not modified. Note, that the re-sampling
-        method is very basic and does not do any sort of interpolation (it just picks
-        the nearest point). The extreme points in each direction are always kept.
-        Equidistant points are picked in between.
+        the two ``kdims``. Note, that the re-sampling method is very basic and does not
+        do any sort of interpolation (it just picks the nearest point). The extreme
+        points in each direction are always kept. Equidistant points are picked in
+        between.
 
         This method is based on ``holoviews.VectorPlot``. Additional keyword arguments
-        are directly forwarded to the ``.opts()`` method of the resulting object. Please
-        refer to the documentation of ``holoviews`` (in particular
+        are directly forwarded to the ``.opts()`` method of the ``holoviews.Image``
+        object. Please refer to the documentation of ``holoviews`` (in particular
         ``holoviews.VectorField``) for available options and additional documentation on
         how to modify the plot after creation.
 
@@ -396,13 +389,12 @@ class Hv:
 
             Array coordinates plotted in plot x and plot y directon.
 
-        vdims : List[str], optional
+        vdims : List[str]
 
             Names of the components to be used for the x and y component of the plotted
             arrows. This information is used to associate field components and spatial
             directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction. ``vdims`` is required for non-3d
-            vector fields and for fields that do not have 3 spatial coordinates.
+            field has no component in that direction.
 
         cdim : str, xarray.DataArray, discretisedfield.Field, optional
 
@@ -410,20 +402,18 @@ class Hv:
             color according to different data scalar ``discretisedfield.Field`` or
             ``xarray.DataArray`` can be used to color the arrows. This option has no
             effect when ``use_color=False``. If not passed the out-of-plane component is
-            used for 3d vector fields defined in 3d space. Otherwise, a warning is show
-            and automatic coloring is disabled.
+            used for 3d vector fields. Otherwise, a warning is show and automatic
+            coloring is disabled.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
 
-        n : array_like, dict, optional
+        n : array_like, optional
 
-            Re-sampling of the array with the given number of points. If an array-like
-            is passed it must have length 2 and the values are used for the two kdims.
-            If a dictionary is passed its keys must correspond to (some of) the
-            dimensions of the array. If not specified no re-sampling is done.
+            Re-sampling of the array with the given number of points. If not specified
+            no re-sampling is done.
 
         use_color : bool, optional
 
@@ -431,17 +421,10 @@ class Hv:
             ``False`` all arrows have a uniform color, by default black. To change the
             uniform color pass e.g.``color= 'blue'``. Defaults to ``True``.
 
-        colorbar_label : str, optional
-
-            Label to show on the colorbar.
-
         kwargs
 
             Additional keyword arguments that are forwarded to
             ``holoviews.VectorField.opts()``.
-
-            Additional keyword arguments that are forwarded to ``.opts`` of the
-            ``holoviews.DynamicMap`` object.
 
         Returns
         -------
@@ -460,9 +443,6 @@ class Hv:
 
             If the object has no dimension ``comp`` that defines the vector components.
 
-            If a plot cannot be created without specifying ``vdims`` or if the ``vdims``
-            are not correct.
-
         Examples
         --------
         1. Simple vector plot with ``hv``.
@@ -475,33 +455,26 @@ class Hv:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
         ...
-        >>> field.hv.vector(kdims=['x', 'y'])
+        >>> field.hv.vector(kdims=['x', 'y'], vdims=['x', 'y'])
         :DynamicMap...
 
         """
         self._check_kdims(kdims)
-        x, y = kdims
         if "comp" not in self.key_dims:
             raise ValueError(
                 "The vector plot method can only operate on data with a"
                 " vector component called 'comp'."
             )
-        if (
-            len(self.key_dims) != 4 or len(self.key_dims["comp"]) != 3
-        ) and vdims is None:
-            raise ValueError(
-                f"`vdims` are required for data with {len(self.key_dims) - 1} spatial"
-                f" dimensions and {len(self.key_dims['comp'])} components."
-            )
-
         if cdim is not None and not isinstance(cdim, str):
             raise TypeError("cdim must be of type str")
-
         if len(vdims) != 2:
             raise ValueError(f"{vdims=} must contain two elements.")
+
         arrow_x, arrow_y = vdims
         if arrow_x is None and arrow_y is None:
             raise ValueError(f"At least one element of {vdims=} must be not None.")
+
+        dyn_kdims = [dim for dim in self.key_dims if dim not in kdims + ["comp"]]
 
         kwargs.setdefault("data_aspect", 1)
 
@@ -537,7 +510,7 @@ class Hv:
                 else:
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
-                        f' vector arrays. Ignoring "{use_color=}".'
+                        f' vector fields. Ignoring "{use_color=}".'
                     )
                     use_color = False
 
@@ -562,15 +535,9 @@ class Hv:
 
             return plot
 
-        dyn_kdims = [dim for dim in self.key_dims if dim not in kdims + ["comp"]]
-
-        dyn_map = hv.DynamicMap(
+        return hv.DynamicMap(
             functools.partial(_plot, use_color, cdim), kdims=dyn_kdims
         ).redim.values(**{dim: self.key_dims[dim].data for dim in dyn_kdims})
-        for dim in dyn_map.dimensions():
-            with contextlib.suppress(AttributeError):
-                dim.unit = self.key_dims[dim.name].unit
-        return dyn_map
 
     def contour(self, kdims, roi=None, n=None, levels=10, **kwargs):
         """Plot contour lines of scalar fields or vector components.
@@ -592,12 +559,10 @@ class Hv:
         To reduce the number of points in the plot a simple re-sampling is available.
         The parameter ``n`` can be used to specify the number of points in different
         directions. A tuple of length 2 can be used to specify the number of points in
-        the two ``kdims``. A dictionary can be used to specify the number of points in
-        arbitrary dimensions. Keys of the dictionary must be dimensions of the array.
-        Dimensions that are not specified are not modified. Note, that the re-sampling
-        method is very basic and does not do any sort of interpolation (it just picks
-        the nearest point). The extreme points in each direction are always kept.
-        Equidistant points are picked in between.
+        the two ``kdims``. Note, that the re-sampling method is very basic and does not
+        do any sort of interpolation (it just picks the nearest point). The extreme
+        points in each direction are always kept. Equidistant points are picked in
+        between.
 
         Additional keyword arguments are directly forwarded to the ``.opts`` method of
          the ``holoviews.DynamicMap``. Please refer to the documentation of
@@ -615,12 +580,11 @@ class Hv:
             Field to filter out certain areas in the plot. Only cells where the
             roi is non-zero are included in the output.
 
-        n : array_like, dict, optional
+        n : array_like(2), optional
 
             Re-sampling of the array with the given number of points. If an array-like
             is passed it must have length 2 and the values are used for the two kdims.
-            If a dictionary is passed its keys must correspond to (some of) the
-            dimensions of the array. If not specified no re-sampling is done.
+            If not specified no re-sampling is done.
 
         levels : int, optional
 
@@ -667,6 +631,16 @@ class Hv:
         return hv.operation.contours(
             self.scalar(kdims, roi, n, colorbar=False), levels=levels
         ).opts(**kwargs)
+
+    def _check_kdims(self, kdims):
+        if len(kdims) != 2:
+            raise ValueError(f"{kdims=} must have length 2.")
+        for dim in kdims:
+            if dim not in self.key_dims:
+                raise ValueError(
+                    f"Unknown dimension {dim=} in kdims; must be in"
+                    f" {self.key_dims.keys()}."
+                )
 
     def _filter_values(self, values, roi, kdims, dyn_kdims):
         if roi is None:
@@ -715,45 +689,21 @@ class Hv:
 
         return values.where(roi != 0)
 
-    def _check_kdims(self, kdims):
-        if len(kdims) != 2:
-            raise ValueError(f"{kdims=} must have length 2.")
-        for dim in kdims:
-            if dim not in self.key_dims:
-                raise ValueError(
-                    f"Unknown dimension {dim=} in kdims; must be in"
-                    f" {self.key_dims.keys()}."
-                )
-
-    # def _prepare_scalar_plot(self, kdims, roi, n, kwargs):
-    #     self._check_kdims(kdims)
-    #     x, y = kdims
-    #     kwargs.setdefault("data_aspect", 1)
-    #     kwargs.setdefault("colorbar", True)
-    #     self.array = self._filter_values(self.array, roi, kdims)
-    #     self.array = self._resample(self.array, kdims, n).squeeze()
-    #     return x, y, kwargs
-
     @staticmethod
     def _resample(array, kdims, n):
         if n is None:
             return array
-        elif isinstance(n, (tuple, list)):
-            if len(n) != 2:
-                raise ValueError(f"{len(n)=} must be 2 if a tuple is passed.")
-            vals = {
-                dim: np.linspace(array[dim].min(), array[dim].max(), ni)
-                for dim, ni in zip(kdims, n)
-            }
-        # elif isinstance(n, dict):
-        #     vals = {
-        #         dim: np.linspace(array[dim].min(), array[dim].max(), ni)
-        #         for dim, ni in n.items()
-        #     }
-        else:
+        elif not isinstance(n, (tuple, list, np.ndarray)):
             raise TypeError(
-                f"Invalid type {type(n)} for parameter n. Must be tuple or list."
+                f"Invalid type {type(n)} for parameter n. Must be array-like."
             )
+        elif len(n) != 2:
+            raise ValueError(f"{len(n)=} must be 2.")
+
+        vals = {
+            dim: np.linspace(array[dim].min(), array[dim].max(), ni)
+            for dim, ni in zip(kdims, n)
+        }
         resampled = array.sel(**vals, method="nearest")
         resampled = resampled.assign_coords(vals)
         for dim in vals.keys():
