@@ -636,7 +636,10 @@ class Field:
             raise ValueError(msg)
 
         orientation_array = np.divide(
-            self.array, self.norm.array, where=(self.norm.array != 0)
+            self.array,
+            self.norm.array,
+            where=(self.norm.array != 0),
+            out=np.zeros_like(self.array),
         )
         return self.__class__(
             self.mesh, dim=self.dim, value=orientation_array, components=self.components
