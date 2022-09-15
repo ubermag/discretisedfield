@@ -39,16 +39,23 @@ class Hv:
         Callback function to provide data. It must accept arbitrary keyword arguments
         and will be called with all dynamic kdims and their current values.
 
+    vdims_guess_callback : callable, optional
+
+       Callback function to provide (guess) vdims for the __call__ method if no vdims
+       are passed in. This method is required because the order of key_dims is not
+       defined.
+
     """
 
     _norm_filter = True
 
-    def __init__(self, key_dims, callback):
+    def __init__(self, key_dims, callback, vdim_guess_callback=None):
         # no tests for key_dims and callback as it is not directly used by users
         if not hv.extension._loaded:
             hv.extension("bokeh", logo=False)
         self.key_dims = key_dims
         self.callback = callback
+        self.vdim_guess_callback = vdim_guess_callback
 
     def __call__(
         self,
@@ -74,7 +81,12 @@ class Hv:
            has vector dimensionality larger than two an additional scalar plot is
            created for all remaining vector components (with a drop-down selection).
 
-        3. For all other vector fields a scalar plot with a drop-down selection for the
+        3. If ``vdims`` is not specified the method tries to guess the correct ``vdims``
+           from the ``kdims`` by matching spatial coordinates and vector components
+           based on the order they are defined in. This only works if both have the same
+           number of elements, e.g. a 3d vector field in 3d space.
+
+        4. For all other vector fields a scalar plot with a drop-down selection for the
            individual vector components is created.
 
         Based on the norm of the object (absolute values for scalar fields) automatic
@@ -116,8 +128,7 @@ class Hv:
             Names of the components to be used for the x and y component of the plotted
             arrows. This information is used to associate field components and spatial
             directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction. ``vdims`` is required to create
-            vector plots.
+            field has no component in that direction.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
@@ -177,7 +188,12 @@ class Hv:
 
         if "comp" not in self.key_dims:
             return self.scalar(kdims=kdims, **scalar_kw)
-        elif vdims:
+
+        # try to guess vdims if not passed
+        if vdims is None and self.vdim_guess_callback is not None:
+            vdims = self.vdim_guess_callback(kdims)
+
+        if vdims:
             scalar_comps = list(set(self.key_dims["comp"].data) - set(vdims))
             with contextlib.suppress(KeyError):
                 vector_kw.pop("vdims")
@@ -315,7 +331,7 @@ class Hv:
     def vector(
         self,
         kdims,
-        vdims,
+        vdims=None,
         cdim=None,
         roi=None,
         n=None,
@@ -331,7 +347,7 @@ class Hv:
         cut-plane first.
 
         ``vdims`` defines the components of the plotted object shown in the plot x and
-        plot y direction (defined with ``kdims``).
+        plot y direction (defined with ``kdims``). If not specified
 
         For 3d vector fields the color by default encodes the out-of-plane component.
         Other fields cannot be colored automatically. To assign a non-uniform color
@@ -366,12 +382,16 @@ class Hv:
 
             Array coordinates plotted in plot x and plot y directon.
 
-        vdims : List[str]
+        vdims : List[str], optional
 
             Names of the components to be used for the x and y component of the plotted
             arrows. This information is used to associate field components and spatial
             directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction.
+            field has no component in that direction. If ``vdims`` is not specified the
+            method tries to guess the correct ``vdims`` from the ``kdims`` by matching
+            spatial coordinates and vector components based on the order they are
+            defined in. This only works if both have the same number of elements, e.g. a
+            3d vector field in 3d space.
 
         cdim : str, xarray.DataArray, discretisedfield.Field, optional
 
@@ -444,7 +464,11 @@ class Hv:
             )
         if cdim is not None and not isinstance(cdim, str):
             raise TypeError("cdim must be of type str")
-        if len(vdims) != 2:
+
+        # try to guess vdims if not passed
+        if vdims is None and self.vdim_guess_callback is not None:
+            vdims = self.vdim_guess_callback(kdims)
+        if vdims is None or len(vdims) != 2:
             raise ValueError(f"{vdims=} must contain two elements.")
 
         arrow_x, arrow_y = vdims

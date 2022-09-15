@@ -3059,7 +3059,7 @@ class Field:
         :DynamicMap...
 
         """
-        return dfp.Hv(self._hv_key_dims, self._hv_data_selection)
+        return dfp.Hv(self._hv_key_dims, self._hv_data_selection, self._hv_vdims_guess)
 
     def _hv_data_selection(self, **kwargs):
         """Select field part as specified by the input arguments."""
@@ -3068,6 +3068,17 @@ class Field:
         if comp:
             res = res.sel(comp=comp)
         return res
+
+    def _hv_vdims_guess(self, kdims):
+        """Try to find vector components matching the given kdims."""
+        if len(self.mesh.n) != self.dim:
+            return None
+        vdims = []
+        for dim in kdims:
+            if dim not in "xyz":  # hard-coded names in Mesh
+                return None
+            vdims.append(self.components["xyz".index(dim)])
+        return vdims
 
     @property
     def _hv_key_dims(self):
