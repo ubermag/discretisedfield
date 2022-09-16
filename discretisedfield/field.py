@@ -3071,13 +3071,14 @@ class Field:
 
     def _hv_vdims_guess(self, kdims):
         """Try to find vector components matching the given kdims."""
-        if len(self.mesh.n) != self.dim:
+        mesh_dims = "xyz"
+        if len(mesh_dims) != self.dim:
             return None
         vdims = []
         for dim in kdims:
-            if dim not in "xyz":  # hard-coded names in Mesh
+            if dim not in mesh_dims:  # hard-coded names in Mesh
                 return None
-            vdims.append(self.components["xyz".index(dim)])
+            vdims.append(self.components[mesh_dims.index(dim)])
         return vdims
 
     @property
