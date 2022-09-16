@@ -6,6 +6,7 @@ import re
 import tempfile
 import types
 
+import holoviews as hv
 import k3d
 import matplotlib.pyplot as plt
 import numpy as np
@@ -2151,6 +2152,11 @@ class TestField:
 
         plt.close("all")
 
+    def hv_check(self, plot, types):
+        # generate the first plot output to have enough data in plot.nifo
+        hv.renderer("bokeh").get_plot(plot)
+        assert sorted(re.findall(r"(?<=:)\w+", str(plot))) == sorted(types)
+
     def test_hv_scalar(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             self.pf.hv.scalar(kdims=kdims)
@@ -2228,10 +2234,12 @@ class TestField:
 
             # 2d field
             field_2d = self.pf.b << self.pf.c
-            with pytest.warns(UserWarning):
-                field_2d.hv(kdims=kdims)
-            field_2d.hv(kdims=kdims, vdims=["x", "y"])
-            field_2d.plane(normal).hv(kdims=kdims)
+            self.hv_check(field_2d.hv(kdims=kdims), ["DynamicMap", "Image"])
+            self.hv_check(
+                field_2d.hv(kdims=kdims, vdims=["x", "y"]),
+                ["DynamicMap", "VectorField"],
+            )
+            self.hv_check(field_2d.plane(normal).hv(kdims=kdims), ["VectorField"])
 
             # 3d field
             self.pf.hv(kdims=kdims)
@@ -2248,9 +2256,16 @@ class TestField:
             # 4d field
             field_4d = self.pf.b << self.pf.c << self.pf.a << self.pf.a
             field_4d.components = ["v1", "v2", "v3", "v4"]
-            with pytest.warns(UserWarning):
-                field_4d.hv(kdims=kdims)
-            field_4d.hv(kdims=kdims, vdims=["v2", "v1"])
+            self.hv_check(
+                field_4d.hv(kdims=kdims),
+                ["DynamicMap", "Overlay", "Image", "VectorField"],
+            )
+
+            plot = field_4d.hv(kdims=kdims, vdims=["v2", "v1"])
+            hv.renderer("bokeh").get_plot(plot)
+            assert "Image" in plot.info
+            assert "VectorField" not in plot.info
+
             field_4d.hv(kdims=kdims, vdims=["v2", "v1"], vector_kw={"cdim": "v4"})
             field_4d.plane(normal).hv(kdims=kdims)
 
