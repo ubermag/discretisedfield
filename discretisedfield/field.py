@@ -1625,8 +1625,8 @@ class Field:
         res_array = np.einsum("...l,...l->...", self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
 
-    def __and__(self, other):
-        """Binary ``&`` operator, defined as cross product.
+    def cross(self, other):
+        """Cross product.
 
         This method computes the cross product between two fields. Both fields
         must be three-dimensional (``dim=3``) and defined on the same mesh.
@@ -1662,22 +1662,25 @@ class Field:
         ...
         >>> f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
-        >>> (f1 & f2).mean()
+        >>> (f1.cross(f2)).mean()
         (0.0, 0.0, 1.0)
-        >>> (f1 & (0, 0, 1)).mean()
+        >>> (f1.cross((0, 0, 1))).mean()
         (0.0, -1.0, 0.0)
 
         """
         if isinstance(other, self.__class__):
-            if self.mesh != other.mesh:
-                msg = "Cannot apply operator & on fields defined on different meshes."
-                raise ValueError(msg)
+            self.is_same_mesh_field(other)
             if self.dim != 3 or other.dim != 3:
-                msg = f"Cannot apply operator & on {self.dim=} and {other.dim=} fields."
+                msg = (
+                    f"Cannot apply cross product on {self.dim=} and"
+                    f" {other.dim=} fields."
+                )
                 raise ValueError(msg)
         elif isinstance(other, (tuple, list, np.ndarray)):
-            return self & self.__class__(
-                self.mesh, dim=3, value=other, components=self.components
+            return self.cross(
+                self.__class__(
+                    self.mesh, dim=3, value=other, components=self.components
+                )
             )
         else:
             msg = (
@@ -1692,9 +1695,6 @@ class Field:
             value=res_array,
             components=self.components,
         )
-
-    def __rand__(self, other):
-        return self & other
 
     def __lshift__(self, other):
         """Stacks multiple scalar fields in a single vector field.

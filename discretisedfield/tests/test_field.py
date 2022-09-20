@@ -901,7 +901,7 @@ class TestField:
 
         # Zero vectors
         f1 = df.Field(mesh, dim=3, value=(0, 0, 0))
-        res = f1 & f1
+        res = f1.cross(f1)
         assert res.dim == 3
         assert np.allclose(res.mean(), (0, 0, 0))
 
@@ -909,39 +909,38 @@ class TestField:
         f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
         f3 = df.Field(mesh, dim=3, value=(0, 0, 1))
-        assert np.allclose((f1 & f2).mean(), (0, 0, 1))
-        assert np.allclose((f1 & f3).mean(), (0, -1, 0))
-        assert np.allclose((f2 & f3).mean(), (1, 0, 0))
-        assert np.allclose((f1 & f1).mean(), (0, 0, 0))
-        assert np.allclose((f2 & f2).mean(), (0, 0, 0))
-        assert np.allclose((f3 & f3).mean(), (0, 0, 0))
+        assert np.allclose((f1.cross(f2)).mean(), (0, 0, 1))
+        assert np.allclose((f1.cross(f3)).mean(), (0, -1, 0))
+        assert np.allclose((f2.cross(f3)).mean(), (1, 0, 0))
+        assert np.allclose((f1.cross(f1)).mean(), (0, 0, 0))
+        assert np.allclose((f2.cross(f2)).mean(), (0, 0, 0))
+        assert np.allclose((f3.cross(f3)).mean(), (0, 0, 0))
 
         # Constants
-        assert np.allclose((f1 & (0, 1, 0)).mean(), (0, 0, 1))
-        assert np.allclose(((0, 1, 0) & f1).mean(), (0, 0, 1))
+        assert np.allclose((f1.cross((0, 1, 0))).mean(), (0, 0, 1))
 
         # Check if not comutative
-        assert f1 & f2 == -(f2 & f1)
-        assert f1 & f3 == -(f3 & f1)
-        assert f2 & f3 == -(f3 & f2)
+        assert f1.cross(f2) == -(f2.cross(f1))
+        assert f1.cross(f3) == -(f3.cross(f1))
+        assert f2.cross(f3) == -(f3.cross(f2))
 
         f1 = df.Field(mesh, dim=3, value=lambda point: (point[0], point[1], point[2]))
         f2 = df.Field(mesh, dim=3, value=lambda point: (point[2], point[0], point[1]))
 
         # The cross product should be
         # (y**2-x*z, z**2-x*y, x**2-y*z)
-        assert np.allclose((f1 & f2)((1, 1, 1)), (0, 0, 0))
-        assert np.allclose((f1 & f2)((3, 1, 1)), (-2, -2, 8))
-        assert np.allclose((f2 & f1)((3, 1, 1)), (2, 2, -8))
-        assert np.allclose((f1 & f2)((5, 7, 1)), (44, -34, 18))
+        assert np.allclose((f1.cross(f2))((1, 1, 1)), (0, 0, 0))
+        assert np.allclose((f1.cross(f2))((3, 1, 1)), (-2, -2, 8))
+        assert np.allclose((f2.cross(f1))((3, 1, 1)), (2, 2, -8))
+        assert np.allclose((f1.cross(f2))((5, 7, 1)), (44, -34, 18))
 
         # Exceptions
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
         with pytest.raises(TypeError):
-            res = f1 & 2
+            res = f1.cross(2)
         with pytest.raises(ValueError):
-            res = f1 & f2
+            res = f1.cross(f2)
 
         # Fields defined on different meshes
         mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
@@ -949,7 +948,7 @@ class TestField:
         f1 = df.Field(mesh1, dim=3, value=(1, 2, 3))
         f2 = df.Field(mesh2, dim=3, value=(3, 2, 1))
         with pytest.raises(ValueError):
-            res = f1 & f2
+            res = f1.cross(f2)
 
     def test_lshift(self):
         p1 = (0, 0, 0)
