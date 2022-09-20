@@ -1640,27 +1640,10 @@ class TestField:
         cell = (2e-9, 2e-9, 2e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        def value_fun(point):
-            x, y, z = point
-            if x < 2e-9:
-                return (1, 1, 1)
-            elif 2e-9 <= x < 4e-9:
-                return (1, -1, 0)
-            elif 4e-9 <= x < 6e-9:
-                return (-1, -1, 0)
-            elif 6e-9 <= x < 8e-9:
-                return (-1, 1, 0)
+        f = df.Field(mesh, dim=3, value=(1.0, 0.0, 0.0))
 
-        f = df.Field(mesh, dim=3, value=value_fun)
-
-        assert abs(f.plane("z").angle((1e-9, 2e-9, 2e-9)) - np.pi / 4) < 1e-3
-        assert abs(f.plane("z").angle((3e-9, 2e-9, 2e-9)) - 7 * np.pi / 4) < 1e-3
-        assert abs(f.plane("z").angle((5e-9, 2e-9, 2e-9)) - 5 * np.pi / 4) < 1e-3
-        assert abs(f.plane("z").angle((7e-9, 2e-9, 2e-9)) - 3 * np.pi / 4) < 1e-3
-
-        # Exception
-        with pytest.raises(ValueError):
-            f.angle  # the field is not sliced
+        assert np.isclose(f.angle((1.0, 0.0, 0.0)).mean(), 0.0)
+        assert np.isclose(f.angle((0.0, 1.0, 0.0)).mean(), np.pi / 2)
 
     def test_write_read_ovf(self, tmp_path):
         representations = ["txt", "bin4", "bin8"]

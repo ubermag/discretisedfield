@@ -385,7 +385,7 @@ class MplField(Mpl):
                 lightness_field = self.field.norm
             if filter_field is None:
                 filter_field = self.field.norm
-            return self.field.angle.mpl.lightness(
+            return self.field.angle((1.0, 0.0, 0.0)).mpl.lightness(
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
@@ -406,7 +406,7 @@ class MplField(Mpl):
                 )
             if filter_field is None:
                 filter_field = self.field.norm
-            return self.field.angle.mpl.lightness(
+            return self.field.angle((1.0, 0.0, 0.0)).mpl.lightness(
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
