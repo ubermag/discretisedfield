@@ -829,7 +829,7 @@ class TestField:
 
         # Zero vectors
         f1 = df.Field(mesh, dim=3, value=(0, 0, 0))
-        res = f1 @ f1
+        res = f1.dot(f1)
         assert res.dim == 1
         assert res.mean() == 0
 
@@ -837,22 +837,19 @@ class TestField:
         f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
         f3 = df.Field(mesh, dim=3, value=(0, 0, 1))
-        assert (f1 @ f2).mean() == 0
-        assert (f1 @ f3).mean() == 0
-        assert (f2 @ f3).mean() == 0
-        assert (f1 @ f1).mean() == 1
-        assert (f2 @ f2).mean() == 1
-        assert (f3 @ f3).mean() == 1
+        assert (f1.dot(f3)).mean() == 0
+        assert (f1.dot(f2)).mean() == 0
+        assert (f2.dot(f3)).mean() == 0
+        assert (f1.dot(f1)).mean() == 1
+        assert (f2.dot(f2)).mean() == 1
+        assert (f3.dot(f3)).mean() == 1
 
         # Check if commutative
-        assert f1 @ f2 == f2 @ f1
-        assert f1 @ (-1, 3, 2.2) == (-1, 3, 2.2) @ f1
+        assert f1.dot(f2) == f2.dot(f1)
 
         # Vector field with a constant
         f = df.Field(mesh, dim=3, value=(1, 2, 3))
-        res = (1, 1, 1) @ f
-        assert res.mean() == 6
-        res = f @ [1, 1, 1]
+        res = f.dot([1, 1, 1])
         assert res.mean() == 6
 
         # Spatially varying vectors
@@ -868,25 +865,25 @@ class TestField:
         f2 = df.Field(mesh, dim=3, value=value_fun2)
 
         # Check if commutative
-        assert f1 @ f2 == f2 @ f1
+        assert f1.dot(f2) == f2.dot(f1)
 
         # The dot product should be x*z + y*x + z*y
-        assert (f1 @ f2)((1, 1, 1)) == 3
-        assert (f1 @ f2)((3, 1, 1)) == 7
-        assert (f1 @ f2)((5, 7, 1)) == 47
+        assert (f1.dot(f2))((1, 1, 1)) == 3
+        assert (f1.dot(f2))((3, 1, 1)) == 7
+        assert (f1.dot(f2))((5, 7, 1)) == 47
 
         # Check norm computed using dot product
-        assert f1.norm == (f1 @ f1) ** (0.5)
+        assert f1.norm == (f1.dot(f1)) ** (0.5)
 
         # Exceptions
         f1 = df.Field(mesh, dim=1, value=1.2)
         f2 = df.Field(mesh, dim=3, value=(-1, -3, -5))
         with pytest.raises(ValueError):
-            res = f1 @ f2
+            res = f1.dot(f2)
         with pytest.raises(ValueError):
-            res = f1 @ f2
+            res = f1.dot(f2)
         with pytest.raises(TypeError):
-            res = f1 @ 3
+            res = f1.dot(3)
 
         # Fields defined on different meshes
         mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
@@ -894,7 +891,7 @@ class TestField:
         f1 = df.Field(mesh1, dim=3, value=(1, 2, 3))
         f2 = df.Field(mesh2, dim=3, value=(3, 2, 1))
         with pytest.raises(ValueError):
-            res = f1 @ f2
+            res = f1.dot(f2)
 
     def test_cross(self):
         p1 = (0, 0, 0)
@@ -1013,7 +1010,7 @@ class TestField:
             ((+f1 / 2 + f2.x) ** 2 - 2 * f1 * 3) / (-f2.z)
             - 2 * f2.y
             + 1 / f2.z**2
-            + f2 @ f2
+            + f2.dot(f2)
         )
         assert np.all(res.array == 21)
 
@@ -1469,9 +1466,9 @@ class TestField:
         assert (f.plane("z") * df.dx * df.dy).integral() == 100
 
         f = df.Field(mesh, dim=3, value=(-1, 0, 3))
-        assert df.integral(f.plane("x") @ df.dS) == -15
-        assert df.integral(f.plane("y") @ df.dS) == 0
-        assert df.integral(f.plane("z") @ df.dS) == 150
+        assert df.integral(f.plane("x").dot(df.dS)) == -15
+        assert df.integral(f.plane("y").dot(df.dS)) == 0
+        assert df.integral(f.plane("z").dot(df.dS)) == 150
 
         # Directional integral
         p1 = (0, 0, 0)
