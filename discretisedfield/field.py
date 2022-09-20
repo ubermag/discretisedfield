@@ -1398,9 +1398,9 @@ class Field:
 
         It can be applied between:
 
-        1. Two scalar (``dim=1``) fields,
+        1. Two fields with equal vector dimentions,
 
-        2. A field of any dimension and ``numbers.Real``,
+        2. A field of any dimension and ``numbers.Complex``,
 
         3. A field of any dimension and a scalar (``dim=1``) field, or
 
@@ -1498,14 +1498,14 @@ class Field:
 
         It can be applied between:
 
-        1. Two scalar (``dim=1``) fields,
+        1. Two fields with equal vector dimentions,
 
-        2. A field of any dimension and ``numbers.Real``, or
+        2. A field of any dimension and ``numbers.Complex``,
 
         3. A field of any dimension and a scalar (``dim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
-        defined on the same mesh.
+        defined on the same mesh.F
 
         Parameters
         ----------
