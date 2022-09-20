@@ -3305,6 +3305,16 @@ class Field:
         )
 
     @property
+    def abs(self):
+        """Absolute value of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.dim,
+            value=np.abs(self.array),
+            components=self.components,
+        )
+
+    @property
     def conjugate(self):
         """Complex conjugate of complex field."""
         return self.__class__(
