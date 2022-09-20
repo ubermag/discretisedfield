@@ -1625,9 +1625,6 @@ class Field:
         res_array = np.einsum("...l,...l->...", self.array, other.array)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
 
-    def __rmatmul__(self, other):
-        return self @ other
-
     def __and__(self, other):
         """Binary ``&`` operator, defined as cross product.
 
