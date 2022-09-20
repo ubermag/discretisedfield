@@ -1235,7 +1235,7 @@ class Field:
 
         return self.__class__(
             self.mesh,
-            dim=1,
+            dim=self.dim,
             value=np.power(self.array, other),
             components=self.components,
         )
@@ -1461,10 +1461,10 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            if self.dim == 3 and other.dim == 3:
+            if not (self.dim == other.dim or self.dim == 1 or other.dim == 1):
                 msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
                 raise ValueError(msg)
-            if self.mesh != other.mesh:
+            if not self.is_same_mesh(other):
                 msg = "Cannot apply operator * on fields defined on different meshes."
                 raise ValueError(msg)
         elif isinstance(other, numbers.Complex):

@@ -626,8 +626,8 @@ class TestField:
 
         # Attempt vector field
         f = df.Field(mesh, dim=3, value=(1, 2, -2))
-        with pytest.raises(ValueError):
-            res = f**2
+        res = f**2
+        assert np.allclose(res.mean(), (1, 4, 4))
 
         # Attempt to raise to non numbers.Real
         f = df.Field(mesh, dim=1, value=2)
@@ -765,8 +765,8 @@ class TestField:
         assert np.allclose(f2.mean(), (-2, -6, 10))
         f2 /= f1  # __truediv__
         assert np.allclose(f2.mean(), (-1, -3, 5))
-        with pytest.raises(ValueError):
-            res = f1 / f2  # __rtruediv__
+        res = f1 / f2  # __rtruediv__
+        assert np.allclose(res.mean(), (-2, -2 / 3, 2 / 5))
 
         # Vector field with a scalar
         f = df.Field(mesh, dim=3, value=(1, 2, 0))
@@ -780,8 +780,8 @@ class TestField:
         assert np.allclose(f.mean(), (2, 4, 0))
         f /= 2
         assert np.allclose(f.mean(), (1, 2, 0))
-        with pytest.raises(ValueError):
-            res = 10 / f
+        res = 10 / f
+        assert np.allclose(res.mean(), (10, 5, np.inf))
 
         # Further checks
         f1 = df.Field(mesh, dim=1, value=2)
@@ -792,6 +792,8 @@ class TestField:
         assert (1, 2.2, -1) * f1 == f1 * (1, 2.2, -1)
         assert f1 * (f1 * f2) == (f1 * f1) * f2
         assert f1 * f2 / f1 == f2
+        assert np.allclose((f2 * f2).mean(), (1, 9, 25))
+        assert np.allclose((f2 / f2).mean(), (1, 1, 1))
 
         # Exceptions
         f1 = df.Field(mesh, dim=1, value=1.2)
@@ -800,20 +802,10 @@ class TestField:
             res = f2 * "a"
         with pytest.raises(TypeError):
             res = "a" / f1
-        with pytest.raises(ValueError):
-            res = f2 * f2
-        with pytest.raises(ValueError):
-            res = f2 / f2
-        with pytest.raises(ValueError):
-            res = 1 / f2
-        with pytest.raises(ValueError):
-            res = f1 / f2
         with pytest.raises(TypeError):
             f2 *= "a"
         with pytest.raises(TypeError):
             f2 /= "a"
-        with pytest.raises(ValueError):
-            f1 /= f2
 
         # Fields defined on different meshes
         mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
