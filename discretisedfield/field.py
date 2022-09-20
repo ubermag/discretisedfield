@@ -1300,26 +1300,29 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            if self.dim != other.dim:
-                msg = f"Cannot apply operator + on {self.dim=} and {other.dim=} fields."
-                raise ValueError(msg)
-            if self.mesh != other.mesh:
-                msg = "Cannot apply operator + on fields defined on different meshes."
-                raise ValueError(msg)
+            self.is_same_mesh_field(other)
+            other = other.array
         elif self.dim == 1 and isinstance(other, numbers.Complex):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other)
-        elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other)
+            other = other
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            if self.dim != np.shape(other)[-1]:
+                msg = (
+                    f"Unsupported operand type(s) for **: {type(self)} with"
+                    f" {self.dim} components and {type(other)} with shape"
+                    f" {np.shape(other)}."
+                )
+                raise TypeError(msg)
+            other = other
         else:
             msg = (
-                f"Unsupported operand type(s) for +: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for **: {type(self)=} and {type(other)=}."
             )
             raise TypeError(msg)
 
         return self.__class__(
             self.mesh,
             dim=self.dim,
-            value=self.array + other.array,
+            value=self.array + other,
             components=self.components,
         )
 
