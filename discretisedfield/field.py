@@ -1063,6 +1063,18 @@ class Field:
                 " vector components."
             )
 
+    def is_same_mesh_field_or_1d(self, other):  # TODO move to utils
+        if not self.is_same_mesh(other):
+            raise ValueError(
+                "To perform this operation both fields must have the same mesh."
+            )
+
+        if not (self.is_same_vectorspace(other) or other.dim == 1):
+            raise ValueError(
+                "To perform this operation both fields must have the same"
+                " vector components."
+            )
+
     def __pos__(self):
         """Unary ``+`` operator.
 
@@ -1211,15 +1223,7 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            if not self.is_same_mesh(other):
-                msg = "Cannot apply ** operator on fields with different meshes."
-                raise ValueError(msg)
-            if not (self.is_same_vectorspace(other) or other.dim == 1):
-                msg = (
-                    f"Unsupported operand type(s) for dimentions: {self.dim} and"
-                    f" {other.dim}."
-                )
-                raise ValueError(msg)
+            self.is_same_mesh_field_or_1d(other)
             other = other.array
         elif isinstance(other, numbers.Complex):
             other = other
