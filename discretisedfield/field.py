@@ -2669,7 +2669,7 @@ class Field:
         n_cells = self.mesh.n[dfu.axesdict[direction]]
         return self.integral(direction=direction) / n_cells
 
-    def angle(self, other):
+    def angle(self, vector):
         r"""Angle between two vectors.
 
         It can be applied between two ``discretisedfield.Field`` objects.
@@ -2717,28 +2717,20 @@ class Field:
         array([1.57079633])
 
         """
-        if isinstance(other, self.__class__):
-            if self.dim != other.dim:
-                msg = f"Cannot apply operator + on {self.dim=} and {other.dim=} fields."
-                raise ValueError(msg)
-            if self.mesh != other.mesh:
-                msg = "Cannot apply operator + on fields defined on different meshes."
-                raise ValueError(msg)
-        elif self.dim == 1 and isinstance(other, numbers.Complex):
-            other = self.__class__(self.mesh, dim=self.dim, value=other)
-        elif self.dim != 1 and isinstance(other, (tuple, list, np.ndarray)):
-            other = self.__class__(self.mesh, dim=self.dim, value=other)
+        if isinstance(vector, self.__class__):
+            self._check_same_mesh_and_field_dim(vector)
+        elif self.dim == 1 and isinstance(vector, numbers.Complex):
+            vector = self.__class__(self.mesh, dim=self.dim, value=vector)
+        elif self.dim != 1 and isinstance(vector, (tuple, list, np.ndarray)):
+            vector = self.__class__(self.mesh, dim=self.dim, value=vector)
         else:
             msg = (
                 f"Unsupported operand type(s) for angle: {type(self)=} and"
-                f" {type(other)=}."
+                f" {type(vector)=}."
             )
             raise TypeError(msg)
 
-        angle_array = np.arccos((self.dot(other) / (self.norm * other.norm)).array)
-
-        # Place all values in [0, 2pi] range
-        angle_array[angle_array < 0] += 2 * np.pi
+        angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
 
         return self.__class__(self.mesh, dim=1, value=angle_array)
 
