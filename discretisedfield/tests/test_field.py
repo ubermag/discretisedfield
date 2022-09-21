@@ -698,8 +698,8 @@ class TestField:
             res = f1 + "2"
 
         # Fields with different dimensions
-        with pytest.raises(ValueError):
-            res = f1 + f2
+        res = f1 + f2
+        assert np.allclose(res.mean(), (1, 0, -7))
 
         # Fields defined on different meshes
         mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))

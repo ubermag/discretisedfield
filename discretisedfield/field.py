@@ -1074,6 +1074,39 @@ class Field:
                 " number of vector components."
             )
 
+    def _apply_operator(self, other, function, operator):
+        if isinstance(other, self.__class__):
+            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
+            other = other.array
+        elif isinstance(other, numbers.Complex):
+            pass
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            if not (
+                self.array.shape == np.shape(other)
+                or self.dim == len(other)
+                or self.dim == 1
+            ):
+                raise TypeError(
+                    f"Unsupported operand type(s) for {operator}: {type(self)} with"
+                    f" {self.dim} components and {type(other)} with shape"
+                    f" {np.shape(other)}."
+                )
+        else:
+            msg = (
+                f"Unsupported operand type(s) for {operator}: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+
+        res_array = function(self.array, other)
+        components = self.components if self.dim == res_array.shape[-1] else None
+        return self.__class__(
+            self.mesh,
+            dim=res_array.shape[-1],
+            value=res_array,
+            components=components,
+        )
+
     def __pos__(self):
         """Unary ``+`` operator.
 
@@ -1226,24 +1259,7 @@ class Field:
         ValueError: ...
 
         """
-        # TODO: Functionality for iterable
-        if isinstance(other, self.__class__):
-            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
-            other = other.array
-        elif isinstance(other, numbers.Complex):
-            other = other
-        else:
-            msg = (
-                f"Unsupported operand type(s) for **: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
-
-        return self.__class__(
-            self.mesh,
-            dim=self.dim,
-            value=np.power(self.array, other),
-            components=self.components,
-        )
+        return self._apply_operator(other, np.power, "**")
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -1304,30 +1320,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__sub__`
 
         """
-        if isinstance(other, self.__class__):
-            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
-            other = other.array
-        elif isinstance(other, numbers.Complex):
-            pass
-        elif isinstance(other, (tuple, list, np.ndarray)):
-            if not (self.array.shape == np.shape(other) or self.dim == len(other)):
-                raise TypeError(
-                    f"Unsupported operand type(s) for +: {type(self)} with"
-                    f" {self.dim} components and {type(other)} with shape"
-                    f" {np.shape(other)}."
-                )
-        else:
-            msg = (
-                f"Unsupported operand type(s) for +: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
-
-        return self.__class__(
-            self.mesh,
-            dim=self.dim,
-            value=self.array + other,
-            components=self.components,
-        )
+        return self._apply_operator(other, np.add, "+")
 
     def __radd__(self, other):
         return self + other
@@ -1387,11 +1380,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
         """
-        # Ensure unary '-' can be applied to other.
-        if isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        return self + (-other)
+        return self._apply_operator(other, np.subtract, "-")
 
     def __rsub__(self, other):
         return -self + other
@@ -1405,9 +1394,7 @@ class Field:
 
         2. A field of any dimension and ``numbers.Complex``,
 
-        3. A field of any dimension and a scalar (``dim=1``) field, or
-
-        4. A field and an "abstract" integration variable (e.g. ``df.dV``)
+        3. A field of any dimension and a scalar (``dim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
         defined on the same mesh.
@@ -1463,34 +1450,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
 
         """
-        if isinstance(other, self.__class__):
-            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
-            other = other.array
-        elif isinstance(other, numbers.Complex):
-            pass
-        elif isinstance(other, (tuple, list, np.ndarray)):
-            if not (self.array.shape == np.shape(other) or self.dim == len(other)):
-                raise TypeError(
-                    f"Unsupported operand type(s) for *: {type(self)} with"
-                    f" {self.dim} components and {type(other)} with shape"
-                    f" {np.shape(other)}."
-                )
-        elif isinstance(other, df.DValue):
-            return self * other(self)
-        else:
-            msg = (
-                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
-
-        res_array = np.multiply(self.array, other)
-        components = self.components if self.dim == res_array.shape[-1] else None
-        return self.__class__(
-            self.mesh,
-            dim=res_array.shape[-1],
-            value=res_array,
-            components=components,
-        )
+        return self._apply_operator(other, np.multiply, "*")
 
     def __rmul__(self, other):
         return self * other
@@ -1560,11 +1520,11 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
         """
-        # TODO: Make more efficient
-        return self * other ** (-1)
+        return self._apply_operator(other, np.divide, "/")
 
     def __rtruediv__(self, other):
-        return self ** (-1) * other
+        # TODO: Fix error messages - wrong order
+        return self._apply_operator(other, lambda x, y: np.divide(y, x), "/")
 
     def dot(self, other):
         """Dot product.
