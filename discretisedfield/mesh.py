@@ -1229,8 +1229,8 @@ class Mesh:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> dS = mesh.plane('z').dS
-        >>> dS.average
-        (0.0, 0.0, 2.0)
+        >>> dS.mean()
+        array([0., 0., 2.])
 
         """
         if not self.attributes["isplane"]:
