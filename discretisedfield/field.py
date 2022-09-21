@@ -494,7 +494,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
 
         """
-        res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
+        res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
@@ -510,7 +510,7 @@ class Field:
             self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
-        """Field norm.
+        """Absolute value of the field.
 
         This is a convenience operator and it returns
         absolute value of the field.
@@ -629,7 +629,7 @@ class Field:
         orientation_array = np.divide(
             self.array,
             self.norm.array,
-            where=(np.invert(np.isclose(self.norm.array, 0))),
+            where=np.invert(np.isclose(self.norm.array, 0)),
             out=np.zeros_like(self.array),
         )
         return self.__class__(
@@ -646,10 +646,12 @@ class Field:
 
         Parameters
         ----------
-        axis : None or int or tuple of ints, optional. Axis or axes along which
-               the means are computed. The default is to
-               compute the mean of the entire volume and return an array of the
-               averaged vector components.
+        axis
+
+            None or int or tuple of ints, optional. Axis or axes along which
+            the means are computed. The default is to
+            compute the mean of the entire volume and return an array of the
+            averaged vector components.
 
 
         Returns
@@ -680,9 +682,21 @@ class Field:
         55.0
 
         """
+        if axis is not None:
+            raise NotImplementedError()
+
         return np.stack(
             [self.array[..., i].mean(axis=axis) for i in range(self.dim)], axis=-1
         )
+
+    @property
+    def average(self):
+        warnings.warn(
+            "The average property is deprecated. Please use the mean function.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.mean()
 
     def __repr__(self):
         """Representation string.
@@ -1037,42 +1051,35 @@ class Field:
         else:
             return False
 
-    def is_same_mesh(self, other, tolerance_factor=1e-5):
+    def is_same_mesh(
+        self, other, tolerance_factor=1e-5
+    ):  # TODO move to mesh, allclose mesh
         """Check if two Field objects are defined on the same mesh."""
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
-        if self.mesh == other.mesh:
-            return True
-        else:
-            return False
+        return self.mesh == other.mesh
 
-    def is_same_vectorspace(self, other):
+    def is_same_vectorspace(self, other):  # TODO: check components
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
         return self.dim == other.dim
 
-    def is_same_mesh_field(self, other):  # TODO move to utils
-        if not self.is_same_mesh(other):
+    def _check_same_mesh_and_field_dim(self, other, ignore_scalar=False):
+        if not isinstance(other, self.__class__):
+            raise TypeError(f"Object of type {type(other)} not supported.")
+
+        if self.mesh != other.mesh:
             raise ValueError(
                 "To perform this operation both fields must have the same mesh."
             )
+
+        if ignore_scalar and (self.dim == 1 or other.dim == 1):
+            return
 
         if not self.is_same_vectorspace(other):
             raise ValueError(
                 "To perform this operation both fields must have the same"
-                " vector components."
-            )
-
-    def is_same_mesh_field_or_1d(self, other):  # TODO move to utils
-        if not self.is_same_mesh(other):
-            raise ValueError(
-                "To perform this operation both fields must have the same mesh."
-            )
-
-        if not (self.is_same_vectorspace(other) or other.dim == 1):
-            raise ValueError(
-                "To perform this operation both fields must have the same"
-                " vector components."
+                " number of vector components."
             )
 
     def __pos__(self):
@@ -1156,7 +1163,12 @@ class Field:
         (0.0, 1000.0, 3.0)
 
         """
-        return -1 * self
+        return self.__class__(
+            self.mesh,
+            dim=self.dim,
+            value=-self.array,
+            components=self.components,
+        )
 
     def __pow__(self, other):
         """Unary ``**`` operator.
@@ -1222,8 +1234,9 @@ class Field:
         ValueError: ...
 
         """
+        # TODO: Functionality for iterable
         if isinstance(other, self.__class__):
-            self.is_same_mesh_field_or_1d(other)
+            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
             other = other.array
         elif isinstance(other, numbers.Complex):
             other = other
@@ -1300,22 +1313,20 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            self.is_same_mesh_field(other)
+            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
             other = other.array
-        elif self.dim == 1 and isinstance(other, numbers.Complex):
-            other = other
+        elif isinstance(other, numbers.Complex):
+            pass
         elif isinstance(other, (tuple, list, np.ndarray)):
-            if self.dim != np.shape(other)[-1]:
-                msg = (
-                    f"Unsupported operand type(s) for **: {type(self)} with"
+            if not (self.array.shape == np.shape(other) or self.dim == len(other)):
+                raise TypeError(
+                    f"Unsupported operand type(s) for +: {type(self)} with"
                     f" {self.dim} components and {type(other)} with shape"
                     f" {np.shape(other)}."
                 )
-                raise TypeError(msg)
-            other = other
         else:
             msg = (
-                f"Unsupported operand type(s) for **: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for +: {type(self)=} and {type(other)=}."
             )
             raise TypeError(msg)
 
@@ -1461,18 +1472,17 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            if not (self.dim == other.dim or self.dim == 1 or other.dim == 1):
-                msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
-                raise ValueError(msg)
-            if not self.is_same_mesh(other):
-                msg = "Cannot apply operator * on fields defined on different meshes."
-                raise ValueError(msg)
+            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
+            other = other.array
         elif isinstance(other, numbers.Complex):
-            return self * self.__class__(self.mesh, dim=1, value=other)
-        elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(
-                self.mesh, dim=np.array(other).shape[-1], value=other
-            )
+            pass
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            if not (self.array.shape == np.shape(other) or self.dim == len(other)):
+                raise TypeError(
+                    f"Unsupported operand type(s) for *: {type(self)} with"
+                    f" {self.dim} components and {type(other)} with shape"
+                    f" {np.shape(other)}."
+                )
         elif isinstance(other, df.DValue):
             return self * other(self)
         else:
@@ -1481,7 +1491,7 @@ class Field:
             )
             raise TypeError(msg)
 
-        res_array = np.multiply(self.array, other.array)
+        res_array = np.multiply(self.array, other)
         components = self.components if self.dim == res_array.shape[-1] else None
         return self.__class__(
             self.mesh,
@@ -1605,7 +1615,7 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            self.is_same_mesh_field(other)
+            self._check_same_mesh_and_field_dim(other)
         elif isinstance(other, (tuple, list, np.ndarray)):
             return self.dot(
                 self.__class__(
@@ -1669,7 +1679,7 @@ class Field:
 
         """
         if isinstance(other, self.__class__):
-            self.is_same_mesh_field(other)
+            self._check_same_mesh_and_field_dim(other)
             if self.dim != 3 or other.dim != 3:
                 msg = (
                     f"Cannot apply cross product on {self.dim=} and"
@@ -2706,15 +2716,6 @@ class Field:
         """
         n_cells = self.mesh.n[dfu.axesdict[direction]]
         return self.integral(direction=direction) / n_cells
-
-    @property
-    def average(self):
-        warnings.warn(
-            "The average property is deprecated. Please use the mean function.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mean()
 
     def angle(self, other):
         r"""Angle between two vectors.
