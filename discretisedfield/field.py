@@ -1569,24 +1569,22 @@ class Field:
         """
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
-        elif isinstance(other, (tuple, list, np.ndarray)):
-            return self.dot(
-                self.__class__(
-                    self.mesh,
-                    dim=np.shape(other)[-1],
-                    value=other,
-                    components=self.components,
-                )
-            )
-        else:
+            other = other.array
+        elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
                 f"Unsupported operand type(s) for dot product: {type(self)=} and"
                 f" {type(other)=}."
             )
             raise TypeError(msg)
 
-        res_array = np.einsum("...l,...l->...", self.array, other.array)
+        res_array = np.einsum("...l,...l->...", self.array, other)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
+
+    def __matmul__(self, other):
+        return self.dot(other)
+
+    def __rmatmul__(self, other):
+        return self.dot(other)
 
     def cross(self, other):
         """Cross product.
@@ -1639,25 +1637,26 @@ class Field:
                     f" {other.dim=} fields."
                 )
                 raise ValueError(msg)
-        elif isinstance(other, (tuple, list, np.ndarray)):
-            return self.cross(
-                self.__class__(
-                    self.mesh, dim=3, value=other, components=self.components
-                )
-            )
-        else:
+            other = other.array
+        elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
-                f"Unsupported operand type(s) for &: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for cross product: {type(self)=} and"
+                f" {type(other)=}."
             )
             raise TypeError(msg)
 
-        res_array = np.cross(self.array, other.array)
         return self.__class__(
             self.mesh,
             dim=3,
-            value=res_array,
+            value=np.cross(self.array, other),
             components=self.components,
         )
+
+    def __and__(self, other):
+        return self.cross(other)
+
+    def __rand__(self, other):
+        return -self.cross(other)
 
     def __lshift__(self, other):
         """Stacks multiple scalar fields in a single vector field.
