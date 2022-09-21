@@ -1051,14 +1051,6 @@ class Field:
         else:
             return False
 
-    def is_same_mesh(
-        self, other, tolerance_factor=1e-5
-    ):  # TODO move to mesh, allclose mesh
-        """Check if two Field objects are defined on the same mesh."""
-        if not isinstance(other, self.__class__):
-            raise TypeError(f"Object of type {type(other)} not supported.")
-        return self.mesh == other.mesh
-
     def is_same_vectorspace(self, other):  # TODO: check components
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
@@ -1568,6 +1560,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
         """
+        # TODO: Make more efficient
         return self * other ** (-1)
 
     def __rtruediv__(self, other):
