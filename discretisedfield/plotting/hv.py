@@ -462,8 +462,11 @@ class Hv:
                 "The vector plot method can only operate on data with a"
                 " vector component called 'comp'."
             )
-        if cdim is not None and not isinstance(cdim, str):
-            raise TypeError("cdim must be of type str")
+        if cdim is not None:
+            if not isinstance(cdim, str):
+                raise TypeError("cdim must be of type str")
+            elif cdim not in self.key_dims["comp"].data:
+                raise ValueError(f"The vector dimension {cdim} does not exist.")
 
         # try to guess vdims if not passed
         if vdims is None and self.vdim_guess_callback is not None:
