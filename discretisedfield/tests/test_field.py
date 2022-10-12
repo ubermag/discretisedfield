@@ -2191,23 +2191,32 @@ class TestField:
                 )
 
         with pytest.raises(ValueError):
-            self.pf.hv.scalar(kdims=["wrong_name", "x"])
+            check_hv(self.pf.hv.scalar(kdims=["wrong_name", "x"]), ...)
 
         with pytest.raises(ValueError):
-            self.pf.hv.scalar(kdims=["x", "y", "z"])
+            check_hv(self.pf.hv.scalar(kdims=["x", "y", "z"]), ...)
 
         with pytest.raises(TypeError):
-            self.pf.hv.scalar(kdims=["x", "y"], roi="z")
+            check_hv(self.pf.hv.scalar(kdims=["x", "y"], roi="z"), ...)
 
         with pytest.raises(ValueError):
-            self.pf.hv.scalar(kdims=["x", "y"], roi=self.pf)
+            check_hv(self.pf.hv.scalar(kdims=["x", "y"], roi=self.pf), ...)
 
         with pytest.raises(ValueError):
-            self.pf.plane("z").hv.scalar(kdims=["x", "y"], roi=self.pf.norm)
+            check_hv(
+                self.pf.plane("z").hv.scalar(kdims=["x", "y"], roi=self.pf.norm), ...
+            )
 
+    @pytest.mark.xfail(
+        reason="The error is raised from the DynamicMap and converted into a warning."
+    )
+    def test_hv_scalar_wrong_roi(self):
         with pytest.raises(ValueError):
-            self.pf.plane(z=-4e-9).hv.scalar(
-                kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)
+            check_hv(
+                self.pf.plane(z=-4e-9).hv.scalar(
+                    kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)
+                ),
+                ["DynamicMap [comp]", "Image [x,y]"],
             )
 
     def test_hv_vector(self):
@@ -2227,7 +2236,7 @@ class TestField:
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
             check_hv(
-                self.pf.hv.vector(kdims=kdims, resample=(10, 10)),
+                self.pf.hv.vector(kdims=kdims, n=(10, 10)),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
 
@@ -2244,17 +2253,17 @@ class TestField:
                 )
 
             with pytest.raises(ValueError):
-                self.pf.hv.vector(kdims=kdims, cdim="wrong")
+                check_hv(self.pf.hv.vector(kdims=kdims, cdim="wrong"), ...)
 
             with pytest.raises(TypeError):
-                self.pf.hv.vector(kdims=kdims, cdim=self.pf.norm)
+                check_hv(self.pf.hv.vector(kdims=kdims, cdim=self.pf.norm), ...)
 
             with pytest.raises(ValueError):
-                self.pf.hv.vector(kdims=kdims, vdims=["a", "b", "c"])
+                check_hv(self.pf.hv.vector(kdims=kdims, vdims=["a", "b", "c"]), ...)
 
             # 2d field
             with pytest.raises(ValueError):
-                (self.pf.a << self.pf.b).hv.vector(kdims=kdims)
+                check_hv((self.pf.a << self.pf.b).hv.vector(kdims=kdims), ...)
 
             field_2d = self.pf.a << self.pf.b
             field_2d.components = ["a", "b"]
@@ -2271,13 +2280,13 @@ class TestField:
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
             with pytest.raises(ValueError):
-                field_2d.hv.vector(kdims=kdims, vdims=[None, None])
+                check_hv(field_2d.hv.vector(kdims=kdims, vdims=[None, None]), ...)
 
             # 4d field
             field_4d = self.pf.a << self.pf.b << self.pf.a << self.pf.b
             field_4d.components = ["a", "b", "c", "d"]
             with pytest.raises(ValueError):
-                field_4d.hv.vector(kdims=kdims)
+                check_hv(field_4d.hv.vector(kdims=kdims), ...)
             check_hv(
                 field_4d.hv.vector(kdims=kdims, vdims=["c", "d"]),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
@@ -2292,14 +2301,14 @@ class TestField:
             )
 
         with pytest.raises(ValueError):
-            self.pf.hv.contour(kdims=["wrong_name", "x"])
+            check_hv(self.pf.hv.contour(kdims=["wrong_name", "x"]), ...)
 
         with pytest.raises(ValueError):
-            self.pf.hv.vector(kdims=["x", "y"], resample=(10, 10, 10)),
+            check_hv(self.pf.hv.vector(kdims=["x", "y"], n=(10, 10, 10)), ...)
 
         # scalar field
         with pytest.raises(ValueError):
-            field_2d.a.hv.vector(kdims=["x", "y"])
+            check_hv(field_2d.a.hv.vector(kdims=["x", "y"]), ...)
 
     def test_hv_contour(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
@@ -2336,7 +2345,7 @@ class TestField:
                 )
 
         with pytest.raises(ValueError):
-            self.pf.hv.contour(kdims=["wrong_name", "x"])
+            check_hv(self.pf.hv.contour(kdims=["wrong_name", "x"]), ...)
 
     def test_hv(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
