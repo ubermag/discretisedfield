@@ -2207,15 +2207,11 @@ class TestField:
                 self.pf.plane("z").hv.scalar(kdims=["x", "y"], roi=self.pf.norm), ...
             )
 
-    @pytest.mark.xfail(
-        reason="The error is raised from the DynamicMap and converted into a warning."
-    )
-    def test_hv_scalar_wrong_roi(self):
         with pytest.raises(ValueError):
             check_hv(
-                self.pf.plane(z=-4e-9).hv.scalar(
-                    kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)
-                ),
+                self.pf[
+                    df.Region(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, -1e-9))
+                ].hv.scalar(kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)),
                 ["DynamicMap [comp]", "Image [x,y]"],
             )
 
