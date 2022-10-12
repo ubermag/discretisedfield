@@ -2212,7 +2212,7 @@ class TestField:
                 self.pf[
                     df.Region(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, -1e-9))
                 ].hv.scalar(kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)),
-                ["DynamicMap [comp]", "Image [x,y]"],
+                ...,
             )
 
     def test_hv_vector(self):
