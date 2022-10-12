@@ -312,6 +312,9 @@ class Hv:
 
         dyn_kdims = [dim for dim in self.key_dims if dim not in kdims]
 
+        roi = self._setup_roi(roi, kdims)
+        self._check_n(n)
+
         def _plot(*values):
             data = self.callback(**dict(zip(dyn_kdims, values)))
             data = self._filter_values(
@@ -478,6 +481,9 @@ class Hv:
         arrow_x, arrow_y = vdims
         if arrow_x is None and arrow_y is None:
             raise ValueError(f"At least one element of {vdims=} must be not None.")
+
+        roi = self._setup_roi(roi, kdims)
+        self._check_n(n)
 
         dyn_kdims = [dim for dim in self.key_dims if dim not in kdims + ["comp"]]
 
@@ -647,13 +653,50 @@ class Hv:
                     f" {self.key_dims.keys()}."
                 )
 
-    def _filter_values(self, values, roi, kdims, dyn_kdims):
+    def _setup_roi(self, roi, kdims):
+        if roi is None:
+            return None
+        elif isinstance(roi, df.Field):
+            roi = roi.to_xarray()
+        elif callable(roi):
+            # this has to come after the Field check because Field is callable
+            return roi  # no checks can be performed without knowing slider values
+        elif not isinstance(roi, xr.DataArray):
+            raise TypeError(f"Unsupported type {type(roi)} for 'roi'.")
+
+        if "comp" in roi.dims:
+            raise ValueError("Only scalar roi is supported.")
+
+        for kdim in kdims:
+            if kdim not in roi.dims:
+                raise KeyError(f"Missing dim {kdim} in the filter.")
+            if len(self.key_dims[kdim].data) != len(roi[kdim].data) or not np.allclose(
+                self.key_dims[kdim].data, roi[kdim].data
+            ):
+                raise ValueError(f"Coordinates for dim {kdim} do not match.")
+
+        extra_roi_dims = set(roi.dims) - set(self.key_dims)
+        if len(extra_roi_dims) > 0:
+            raise ValueError(
+                f"Additional dimension(s) {extra_roi_dims} in roi are not supported."
+            )
+
+        for kdim in roi.dims:
+            if kdim in kdims:
+                continue
+            if len(self.key_dims[kdim].data) != len(roi[kdim].data) or not np.allclose(
+                self.key_dims[kdim].data, roi[kdim].data
+            ):
+                raise ValueError(f"Coordinates for dim {kdim} do not match.")
+
+        return roi
+
+    @staticmethod
+    def _filter_values(values, roi, kdims, dyn_kdims):
         if roi is None:
             return values
 
-        if isinstance(roi, df.Field):
-            roi = roi.to_xarray()
-        elif callable(roi):
+        if callable(roi):
             roi_selection = copy.deepcopy(dyn_kdims)
             with contextlib.suppress(KeyError):
                 roi_selection.pop("comp")
@@ -667,46 +710,38 @@ class Hv:
                 ).drop_vars("comp", errors="ignore")
             else:
                 roi = np.abs(roi)
-        elif not isinstance(roi, xr.DataArray):
-            raise TypeError(f"Unsupported type {type(roi)} for 'roi'.")
-
-        if "comp" in roi.dims:
-            raise ValueError("Only scalar roi is supported.")
 
         for dyn_kdim, dyn_val in dyn_kdims.items():
             if dyn_kdim in roi.dims:
+                # TODO add cell accuracy to method: nearest
                 method = {} if isinstance(dyn_val, str) else {"method": "nearest"}
                 roi = roi.sel(**{dyn_kdim: dyn_val}, **method).drop_vars(dyn_kdim)
         for dim in roi.dims:
             if dim not in dyn_kdims and len(roi[dim]) == 1:
                 roi = roi.squeeze(dim=dim)
 
-        if len(roi.dims) != 2:
-            raise ValueError(
-                f"Additional dimension(s) {set(roi.dims) - set(kdims)} in roi are not"
-                " supported."
-            )
-
-        for kdim in kdims:
-            if kdim not in roi.dims:
-                raise KeyError(f"Missing dim {kdim} in the filter.")
-            if len(self.key_dims[kdim].data) != len(roi[kdim].data) or not np.allclose(
-                self.key_dims[kdim].data, roi[kdim].data
-            ):
-                raise ValueError(f"Coordinates for dim {kdim} do not match.")
+        assert len(roi.dims) == 2, (
+            f"Additional dimension(s) {set(roi.dims) - set(kdims)} in roi are not"
+            " supported."
+        )
 
         return values.where(roi != 0)
 
     @staticmethod
-    def _resample(array, kdims, n):
+    def _check_n(n):
         if n is None:
-            return array
+            return
         elif not isinstance(n, (tuple, list, np.ndarray)):
             raise TypeError(
                 f"Invalid type {type(n)} for parameter n. Must be array-like."
             )
         elif len(n) != 2:
             raise ValueError(f"{len(n)=} must be 2.")
+
+    @staticmethod
+    def _resample(array, kdims, n):
+        if n is None:
+            return array
 
         vals = {
             dim: np.linspace(array[dim].min(), array[dim].max(), ni)
