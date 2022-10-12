@@ -2193,6 +2193,23 @@ class TestField:
         with pytest.raises(ValueError):
             self.pf.hv.scalar(kdims=["wrong_name", "x"])
 
+        with pytest.raises(ValueError):
+            self.pf.hv.scalar(kdims=["x", "y", "z"])
+
+        with pytest.raises(TypeError):
+            self.pf.hv.scalar(kdims=["x", "y"], roi="z")
+
+        with pytest.raises(ValueError):
+            self.pf.hv.scalar(kdims=["x", "y"], roi=self.pf)
+
+        with pytest.raises(ValueError):
+            self.pf.plane("z").hv.scalar(kdims=["x", "y"], roi=self.pf.norm)
+
+        with pytest.raises(ValueError):
+            self.pf.plane(z=-4e-9).hv.scalar(
+                kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)
+            )
+
     def test_hv_vector(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             normal = (set("xyz") - set(kdims)).pop()
@@ -2207,6 +2224,10 @@ class TestField:
             )
             check_hv(
                 self.pf.hv.vector(kdims=kdims, roi=self.pf.norm),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                self.pf.hv.vector(kdims=kdims, resample=(10, 10)),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
 
@@ -2224,6 +2245,12 @@ class TestField:
 
             with pytest.raises(ValueError):
                 self.pf.hv.vector(kdims=kdims, cdim="wrong")
+
+            with pytest.raises(TypeError):
+                self.pf.hv.vector(kdims=kdims, cdim=self.pf.norm)
+
+            with pytest.raises(ValueError):
+                self.pf.hv.vector(kdims=kdims, vdims=["a", "b", "c"])
 
             # 2d field
             with pytest.raises(ValueError):
@@ -2266,6 +2293,13 @@ class TestField:
 
         with pytest.raises(ValueError):
             self.pf.hv.contour(kdims=["wrong_name", "x"])
+
+        with pytest.raises(ValueError):
+            self.pf.hv.vector(kdims=["x", "y"], resample=(10, 10, 10)),
+
+        # scalar field
+        with pytest.raises(ValueError):
+            field_2d.a.hv.vector(kdims=["x", "y"])
 
     def test_hv_contour(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
