@@ -30,9 +30,10 @@ class Hv:
     ----------
     key_dims : dict[df.plotting.util.hv_key_dim]
 
-        Key dimensions of the plot (kdims and dynamic kdims) in a dictionary. The keys
-        are the names of the dimensions, values namedtuples containing the data and unit
-        (can be an empty string) of the dimensions.
+        Key dimensions of the plot (kdims and dynamic kdims [for which holoviews will
+        create widgets]) in a dictionary. The keys are the names of the dimensions,
+        values namedtuples containing the data and unit (can be an empty string) of the
+        dimensions.
 
     callback : callable
 
@@ -70,7 +71,7 @@ class Hv:
 
         This is a convenience method for quick plotting. It combines ``hv.scalar`` and
          ``hv.vector``. Depending on the dimensionality of the object, it automatically
-         determines the typo of plot in the following order:
+         determines the type of plot in the following order:
 
         1. For scalar objects (no dimension with name ``'comp'``) only
            ``discretisedfield.plotting.Hv.scalar`` is used. The parameter ``vdims`` is

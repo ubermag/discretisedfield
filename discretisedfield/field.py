@@ -3083,9 +3083,18 @@ class Field:
 
     @property
     def _hv_key_dims(self):
+        """Dict of key dimensions of the field.
+
+        Keys are the field dimensions (domain and vector space, e.g. x, y, z, comp) that
+        have length > 1. Values are named_tuples ``hv_key_dim(data, unit)`` that contain
+        the data (which has to fulfill len(data) > 1, typically as a numpy array or
+        list) and the unit of a string (empty string if there is no unit).
+
+        """
+        mesh_dims = "xyz"
         key_dims = {
             dim: hv_key_dim(coords, "m")
-            for dim in "xyz"
+            for dim in mesh_dims
             if len(coords := getattr(self.mesh.midpoints, dim)) > 1
         }
         if self.dim > 1:
