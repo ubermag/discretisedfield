@@ -132,7 +132,8 @@ def check_field(field):
 def check_hv(plot, types):
     # generate the first plot output to have enough data in plot.info
     hv.renderer("bokeh").get_plot(plot)
-    # assert str(plot) == ''
+    # find strings like "    :DynamicMap [comp,z]" or "    :Image    [x,y]"
+    # the number of spaces can vary
     assert sorted(
         re.findall(r"(?<=:)\w+ \[[^]]+\]", re.sub(r"\s+", " ", str(plot)))
     ) == sorted(types)
