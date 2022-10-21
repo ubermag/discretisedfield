@@ -1,5 +1,4 @@
 import itertools
-import numbers
 import os
 import random
 import re
@@ -29,16 +28,11 @@ html_re = (
 
 
 def check_field(field):
-    assert isinstance(field.mesh, df.Mesh)
-
+    # TODO add explicit tests for the remaining checks in here and remove
+    # this function
     assert isinstance(field.dim, int)
-    assert field.dim > 0
 
-    assert isinstance(field.array, np.ndarray)
     assert field.array.shape == (*field.mesh.n, field.dim)
-
-    average = field.average
-    assert isinstance(average, (tuple, numbers.Complex))
 
     rstr = repr(field)
     assert isinstance(rstr, str)
@@ -54,79 +48,6 @@ def check_field(field):
 
     assert isinstance(field.__iter__(), types.GeneratorType)
     assert len(list(field)) == len(field.mesh)
-
-    line = field.line(p1=field.mesh.region.pmin, p2=field.mesh.region.pmax, n=5)
-    assert isinstance(line, df.Line)
-    assert line.n == 5
-
-    plane = field.plane("z", n=(2, 2))
-    assert isinstance(plane, df.Field)
-    assert len(plane.mesh) == 4
-    assert plane.mesh.n == (2, 2, 1)
-
-    project = field.project("z")
-    assert isinstance(project, df.Field)
-    assert project.mesh.n[2] == 1
-
-    assert isinstance(field(field.mesh.region.centre), (tuple, numbers.Complex))
-    assert isinstance(field(field.mesh.region.random_point()), (tuple, numbers.Complex))
-
-    assert field == field
-    assert not field != field
-
-    assert +field == field
-    assert -(-field) == field
-    assert field + field == 2 * field
-    assert field - (-field) == field + field
-    assert 1 * field == field
-    assert -1 * field == -field
-    assert field.units is None or isinstance(field.units, str)
-
-    if field.dim == 1:
-        grad = field.grad
-        assert isinstance(grad, df.Field)
-        assert grad.dim == 3
-
-        assert all(i not in dir(field) for i in "xyz")
-
-        assert isinstance((field * df.dx).integral(), numbers.Complex)
-        assert isinstance((field * df.dy).integral(), numbers.Complex)
-        assert isinstance((field * df.dz).integral(), numbers.Complex)
-        assert isinstance((field * df.dV).integral(), numbers.Complex)
-        assert isinstance((field.plane("z") * df.dS).integral(), tuple)
-        assert isinstance((field.plane("z") * abs(df.dS)).integral(), numbers.Complex)
-
-    if field.dim == 3:
-        norm = field.norm
-        assert isinstance(norm, df.Field)
-        assert norm == abs(field)
-        assert norm.dim == 1
-
-        div = field.div
-        assert isinstance(div, df.Field)
-        assert div.dim == 1
-
-        curl = field.curl
-        assert isinstance(curl, df.Field)
-        assert curl.dim == 3
-
-        field.plane("z")
-
-        assert isinstance((field * df.dx).integral(), tuple)
-        assert isinstance((field * df.dy).integral(), tuple)
-        assert isinstance((field * df.dz).integral(), tuple)
-        assert isinstance((field * df.dV).integral(), tuple)
-        assert isinstance((field.plane("z") @ df.dS).integral(), numbers.Complex)
-        assert isinstance((field.plane("z") * abs(df.dS)).integral(), tuple)
-
-        orientation = field.orientation
-        assert isinstance(orientation, df.Field)
-        assert orientation.dim == 3
-
-    if field.dim > 1 and field.components is not None:
-        for comp in field.components:
-            assert isinstance(getattr(field, comp), df.Field)
-            assert getattr(field, comp).dim == 1
 
 
 def check_hv(plot, types):
@@ -220,9 +141,17 @@ class TestField:
                 f = df.Field(mesh, dim=1, value=value, dtype=dtype)
                 check_field(f)
 
+                assert isinstance(f.mesh, df.Mesh)
+                assert f.dim == 1
+                assert isinstance(f.array, np.ndarray)
+
             for value, dtype in self.iters + self.vfuncs:
                 f = df.Field(mesh, dim=3, value=value, dtype=dtype)
                 check_field(f)
+
+                assert isinstance(f.mesh, df.Mesh)
+                assert f.dim == 3
+                assert isinstance(f.array, np.ndarray)
 
     def test_init_invalid_args(self):
         with pytest.raises(TypeError):
@@ -525,6 +454,7 @@ class TestField:
 
         # No zero-norm cells
         f = df.Field(mesh, dim=3, value=(2, 0, 0))
+        assert isinstance(f.orientation, df.Field)
         assert f.orientation.average == (1, 0, 0)
 
         # With zero-norm cells
@@ -542,6 +472,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=0)
         with pytest.raises(ValueError):
             f.orientation
+
+    def test_call(self):
+        raise NotImplementedError
 
     def test_average(self):
         tol = 1e-12
