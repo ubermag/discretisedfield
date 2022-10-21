@@ -67,6 +67,7 @@ class TestMesh:
             mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
             assert isinstance(mesh1, df.Mesh)
 
+            assert isinstance(mesh1.region, df.Region)
             assert mesh1.region.p1 == p1
             assert mesh1.region.p2 == p2
             if n is not None:
@@ -80,6 +81,7 @@ class TestMesh:
             mesh2 = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             assert isinstance(mesh2, df.Mesh)
 
+            assert isinstance(mesh2.region, df.Region)
             assert mesh2.region.p1 == p1
             assert mesh2.region.p2 == p2
             if n is not None:
