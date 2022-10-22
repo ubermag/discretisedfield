@@ -392,15 +392,15 @@ class TestMesh:
         assert np.allclose(mesh.axis_points("y"), [1.0, 3.0, 5.0])
         assert np.allclose(mesh.axis_points("z"), [1.0, 3.0, 5.0, 7.0])
 
-    def test_midpoints(self):
+    def test_points(self):
         p1 = (0, 0, 4)
         p2 = (10, 6, 0)
         cell = (2, 2, 1)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert np.allclose(mesh.midpoints.x, [1.0, 3.0, 5.0, 7.0, 9.0])
-        assert np.allclose(mesh.midpoints.y, [1.0, 3.0, 5.0])
-        assert np.allclose(mesh.midpoints.z, [0.5, 1.5, 2.5, 3.5])
+        assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0])
+        assert np.allclose(mesh.points.y, [1.0, 3.0, 5.0])
+        assert np.allclose(mesh.points.z, [0.5, 1.5, 2.5, 3.5])
 
     def test_vertices(self):
         p1 = (0, 1, 0)
