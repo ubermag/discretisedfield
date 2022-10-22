@@ -650,7 +650,8 @@ class TestMesh:
             "r2": df.Region(p1=(50, 0, 0), p2=(100, 50, 10)),
         }
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-        assert isinstance(mesh, df.Mesh)
+        # NOTE: Why do we need to check mesh type here?
+        # assert isinstance(mesh, df.Mesh)
 
         submesh1 = mesh["r1"]
         assert isinstance(submesh1, df.Mesh)
@@ -671,7 +672,7 @@ class TestMesh:
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh, df.Mesh)
+        # assert isinstance(mesh, df.Mesh)
 
         submesh = mesh[df.Region(p1=(0.1, 2.2, 4.01), p2=(4.9, 3.8, 5.7))]
         assert isinstance(submesh, df.Mesh)
@@ -685,7 +686,7 @@ class TestMesh:
         p2 = (-25e-9, 100e-9, -5e-9)
         cell = (5e-9, 5e-9, 5e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh, df.Mesh)
+        # assert isinstance(mesh, df.Mesh)
 
         submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9), p2=(-9e-9, 79e-9, 14e-9))]
         assert isinstance(submesh, df.Mesh)
