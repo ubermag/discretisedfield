@@ -587,10 +587,11 @@ class TestMesh:
         cell = (2.5e-9, 2.5e-9, 2.5e-9)
         mesh4 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert mesh1 | mesh2 is True
-        assert mesh1 | mesh3 is False
-        assert mesh1 | mesh4 is False
-        assert mesh1 | mesh1 is True
+        with pytest.deprecated_call():  # ensures DeprecationWarning
+            assert mesh1 | mesh2 is True
+            assert mesh1 | mesh3 is False
+            assert mesh1 | mesh4 is False
+            assert mesh1 | mesh1 is True
 
     def test_getitem(self):
         # Subregions disctionary
