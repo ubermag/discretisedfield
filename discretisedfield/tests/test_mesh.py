@@ -230,11 +230,12 @@ class TestMesh:
     def test_eq(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
-        mesh1 = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh1, df.Mesh)
-        mesh2 = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh2, df.Mesh)
+        n = (1, 1, 1)
+        mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
+        # NOTE: Why do we need to test mesh1 type here?
+        # assert isinstance(mesh1, df.Mesh)
+        mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
+        # assert isinstance(mesh2, df.Mesh)
 
         assert mesh1 == mesh2
         assert not mesh1 != mesh2
@@ -242,10 +243,10 @@ class TestMesh:
         assert not mesh2 == "mesh2"
 
         p1 = (0, 0, 0)
-        p2 = (10e-9, 5e-9, 3e-9)
-        cell = (1e-9, 2.5e-9, 0.5e-9)
-        mesh3 = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh3, df.Mesh)
+        p2 = (10 + 1e-12, 10 + 2e-13, 10 + 3e-12)
+        n = (1, 1, 1)
+        mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
+        # assert isinstance(mesh3, df.Mesh)
 
         assert not mesh1 == mesh3
         assert not mesh2 == mesh3
