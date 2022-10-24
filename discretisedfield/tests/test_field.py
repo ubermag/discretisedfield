@@ -566,7 +566,7 @@ class TestField:
         assert f1.allclose(f2)
         assert not f1.allclose(f3)
         assert not f1.allclose(f5)
-        assert f4.allclose(f5
+        assert f4.allclose(f5)
         assert not f4.allclose(f6)
 
         with pytest.raises(TypeError):
