@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 import discretisedfield as df
@@ -14,7 +15,7 @@ def test_instances():
     assert df.dx(field) == 1
     assert df.dy(field) == 2
     assert df.dz(field) == 3
-    assert df.dS(field.plane("z")).average == (0, 0, 2)
+    assert np.allclose(df.dS(field.plane("z")).mean(), (0, 0, 2))
     assert df.dV(field) == 6
 
 
@@ -39,8 +40,8 @@ def test_integral():
 
     assert df.integral(field.plane("z") * (df.dS @ df.dS)) == (100, -200, 300)
 
-    assert (field.plane("z") * (df.dS @ (0, 0, 1))).average == (1, -2, 3)
-    assert (field.plane("z") * ((0, 0, 1) @ df.dS)).average == (1, -2, 3)
+    assert np.allclose((field.plane("z") * (df.dS @ (0, 0, 1))).mean(), (1, -2, 3))
+    assert np.allclose((field.plane("z") * ((0, 0, 1) @ df.dS)).mean(), (1, -2, 3))
 
     dV = df.dx * df.dy * df.dz
     assert df.integral(field * dV) == df.integral(field * df.dV)

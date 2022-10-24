@@ -91,8 +91,8 @@ class Field:
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
     Field(...)
-    >>> field.average
-    (0.0, 0.0, 1.0)
+    >>> field.mean()
+    array([0., 0., 1.])
 
     2. Defining a scalar field.
 
@@ -106,8 +106,8 @@ class Field:
     >>> field = df.Field(mesh=mesh, dim=dim, value=value)
     >>> field
     Field(...)
-    >>> field.average
-    3.14
+    >>> field.mean()
+    array([3.14])
 
     3. Defining a uniform three-dimensional normalised vector field.
 
@@ -124,8 +124,8 @@ class Field:
     >>> field = df.Field(mesh=mesh, dim=dim, value=value, norm=norm)
     >>> field
     Field(...)
-    >>> field.average
-    (0.0, 0.0, 1.0)
+    >>> field.mean()
+    array([0., 0., 1.])
 
     .. seealso:: :py:func:`~discretisedfield.Mesh`
 
@@ -411,15 +411,15 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=value)
         >>> field.array
         array(...)
-        >>> field.average
-        (0.0, 0.0, 1.0)
+        >>> field.mean()
+        array([0., 0., 1.])
         >>> field.array.shape
         (2, 1, 1, 3)
         >>> field.array = np.ones_like(field.array)
         >>> field.array
         array(...)
-        >>> field.average
-        (1.0, 1.0, 1.0)
+        >>> field.mean()
+        array([1., 1., 1.])
 
         .. seealso:: :py:func:`~discretisedfield.Field.value`
 
@@ -436,12 +436,11 @@ class Field:
 
         Computes the norm of the field and returns ``discretisedfield.Field``
         with ``dim=1``. Norm of a scalar field is interpreted as an absolute
-        value of the field. Alternatively, ``discretisedfield.Field.__abs__``
-        can be called for obtaining the norm of the field.
+        value of the field.
 
         The field norm can be set by passing ``numbers.Real``,
-        ``numpy.ndarray``, or callable. If the field has ``dim=1`` or it
-        contains zero values, norm cannot be set and ``ValueError`` is raised.
+        ``numpy.ndarray``, or callable. If the field contains zero values, norm
+        cannot be set and ``ValueError`` is raised.
 
         Parameters
         ----------
@@ -453,15 +452,14 @@ class Field:
         -------
         discretisedfield.Field
 
-            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+            Norm of the field.
 
         Raises
         ------
         ValueError
 
             If the norm is set with wrong type, shape, or value. In addition,
-            if the field is scalar (``dim=1``) or the field contains zero
-            values.
+            if the field contains zero values.
 
         Examples
         --------
@@ -477,40 +475,33 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.norm
         Field(...)
-        >>> field.norm.average
-        1.0
+        >>> field.norm.mean()
+        array([1.])
         >>> field.norm = 2
-        >>> field.average
-        (0.0, 0.0, 2.0)
+        >>> field.mean()
+        array([0., 0., 2.])
         >>> field.value = (1, 0, 0)
-        >>> field.norm.average
-        1.0
+        >>> field.norm.mean()
+        array([1.])
 
         Set the norm for a zero field.
         >>> field.value = 0
-        >>> field.average
-        (0.0, 0.0, 0.0)
+        >>> field.mean()
+        array([0., 0., 0.])
         >>> field.norm = 1
-        >>> field.average
-        (0.0, 0.0, 0.0)
+        >>> field.mean()
+        array([0., 0., 0.])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__abs__`
 
         """
-        if self.dim == 1:
-            res = abs(self.value)
-        else:
-            res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
+        res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
     @norm.setter
     def norm(self, val):
         if val is not None:
-            if self.dim == 1:
-                msg = f"Cannot set norm for field with dim={self.dim}."
-                raise ValueError(msg)
-
             self.array = np.divide(
                 self.array,
                 self.norm.array,
@@ -520,17 +511,16 @@ class Field:
             self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
-        """Field norm.
+        """Absolute value of the field.
 
         This is a convenience operator and it returns
-        ``discretisedfield.Field.norm``. For details, please refer to
-        ``discretisedfield.Field.norm``.
+        absolute value of the field.
 
         Returns
         -------
         discretisedfield.Field
 
-            Norm of the field if ``dim>1`` or absolute value for ``dim=1``.
+            Absolute value of the field.
 
         Examples
         --------
@@ -544,13 +534,15 @@ class Field:
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, dim=1, value=-5)
-        >>> abs(field).average
-        5.0
+        >>> abs(field).mean()
+        array([5.])
 
         .. seealso:: :py:func:`~discretisedfield.Field.norm`
 
         """
-        return self.norm
+        return self.__class__(
+            self.mesh, dim=self.dim, value=np.abs(self.array), units=self.units
+        )
 
     @property
     def zero(self):
@@ -578,8 +570,8 @@ class Field:
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(3, -1, 1))
         >>> zero_field = field.zero
-        >>> zero_field.average
-        (0.0, 0.0, 0.0)
+        >>> zero_field.mean()
+        array([0., 0., 0.])
 
         """
         return self.__class__(
@@ -627,8 +619,8 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=(6, 0, 8))
         >>> field.orientation
         Field(...)
-        >>> field.orientation.norm.average
-        1.0
+        >>> field.orientation.norm.mean()
+        array([1.])
 
         """
         if self.dim == 1:
@@ -638,20 +630,30 @@ class Field:
         orientation_array = np.divide(
             self.array,
             self.norm.array,
-            where=(self.norm.array != 0),
+            where=np.invert(np.isclose(self.norm.array, 0)),
             out=np.zeros_like(self.array),
         )
         return self.__class__(
             self.mesh, dim=self.dim, value=orientation_array, components=self.components
         )
 
-    @property
-    def average(self):
-        """Field average.
+    def mean(self, axis=None):
+        """Field mean.
 
-        It computes the average of the field over the entire volume of the
-        mesh. It returns a tuple with the length same as the dimension
-        (``dim``) of the field.
+        It computes the arithmetic mean along the specified axis of the field
+        over the entire volume of the mesh. It returns a numpy array
+        containing the mean values.
+
+
+        Parameters
+        ----------
+        axis
+
+            None or int or tuple of ints, optional. Axis or axes along which
+            the means are computed. The default is to
+            compute the mean of the entire volume and return an array of the
+            averaged vector components.
+
 
         Returns
         -------
@@ -671,17 +673,31 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
-        >>> field.average
-        (0.0, 0.0, 1.0)
+        >>> field.mean()
+        array([0., 0., 1.])
 
         2. Computing the scalar field average.
 
         >>> field = df.Field(mesh=mesh, dim=1, value=55)
-        >>> field.average
-        55.0
+        >>> field.mean()
+        array([55.])
 
         """
-        return dfu.array2tuple(self.array.mean(axis=(0, 1, 2)))
+        if axis is not None:
+            raise NotImplementedError()
+
+        return np.stack(
+            [self.array[..., i].mean(axis=axis) for i in range(self.dim)], axis=-1
+        )
+
+    @property
+    def average(self):
+        warnings.warn(
+            "The average property is deprecated. Please use the mean function.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.mean()
 
     def __repr__(self):
         """Representation string.
@@ -792,16 +808,16 @@ class Field:
         >>> field = df.Field(mesh=mesh, dim=3, value=(0, 0, 1))
         >>> field.x
         Field(...)
-        >>> field.x.average
-        0.0
+        >>> field.x.mean()
+        array([0.])
         >>> field.y
         Field(...)
-        >>> field.y.average
-        0.0
+        >>> field.y.mean()
+        array([0.])
         >>> field.z
         Field(...)
-        >>> field.z.average
-        1.0
+        >>> field.z.mean()
+        array([1.])
         >>> field.z.dim
         1
 
@@ -818,16 +834,16 @@ class Field:
         ...                  components=['mx', 'my', 'mz'])
         >>> field.mx
         Field(...)
-        >>> field.mx.average
-        0.0
+        >>> field.mx.mean()
+        array([0.])
         >>> field.my
         Field(...)
-        >>> field.my.average
-        0.0
+        >>> field.my.mean()
+        array([0.])
         >>> field.mz
         Field(...)
-        >>> field.mz.average
-        1.0
+        >>> field.mz.mean()
+        array([1.])
         >>> field.mz.dim
         1
 
@@ -1036,6 +1052,62 @@ class Field:
         else:
             return False
 
+    def is_same_vectorspace(self, other):  # TODO: check components
+        if not isinstance(other, self.__class__):
+            raise TypeError(f"Object of type {type(other)} not supported.")
+        return self.dim == other.dim
+
+    def _check_same_mesh_and_field_dim(self, other, ignore_scalar=False):
+        if not isinstance(other, self.__class__):
+            raise TypeError(f"Object of type {type(other)} not supported.")
+
+        if self.mesh != other.mesh:
+            raise ValueError(
+                "To perform this operation both fields must have the same mesh."
+            )
+
+        if ignore_scalar and (self.dim == 1 or other.dim == 1):
+            return
+
+        if not self.is_same_vectorspace(other):
+            raise ValueError(
+                "To perform this operation both fields must have the same"
+                " number of vector components."
+            )
+
+    def _apply_operator(self, other, function, operator):
+        if isinstance(other, self.__class__):
+            self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
+            other = other.array
+        elif isinstance(other, numbers.Complex):
+            pass
+        elif isinstance(other, (tuple, list, np.ndarray)):
+            if not (
+                self.array.shape == np.shape(other)
+                or self.dim == len(other)
+                or self.dim == 1
+            ):
+                raise TypeError(
+                    f"Unsupported operand type(s) for {operator}: {type(self)} with"
+                    f" {self.dim} components and {type(other)} with shape"
+                    f" {np.shape(other)}."
+                )
+        else:
+            msg = (
+                f"Unsupported operand type(s) for {operator}: {type(self)=} and"
+                f" {type(other)=}."
+            )
+            raise TypeError(msg)
+
+        res_array = function(self.array, other)
+        components = self.components if self.dim == res_array.shape[-1] else None
+        return self.__class__(
+            self.mesh,
+            dim=res_array.shape[-1],
+            value=res_array,
+            components=components,
+        )
+
     def __pos__(self):
         """Unary ``+`` operator.
 
@@ -1065,8 +1137,8 @@ class Field:
         ...
         >>> f = df.Field(mesh, dim=3, value=(0, -1000, -3))
         >>> res = +f
-        >>> res.average
-        (0.0, -1000.0, -3.0)
+        >>> res.mean()
+        array([    0., -1000.,    -3.])
         >>> res == f
         True
         >>> +(+f) == f
@@ -1104,8 +1176,8 @@ class Field:
         ...
         >>> f = df.Field(mesh, dim=1, value=3.1)
         >>> res = -f
-        >>> res.average
-        -3.1
+        >>> res.mean()
+        array([-3.1])
         >>> f == -(-f)
         True
 
@@ -1113,11 +1185,16 @@ class Field:
 
         >>> f = df.Field(mesh, dim=3, value=(0, -1000, -3))
         >>> res = -f
-        >>> res.average
-        (0.0, 1000.0, 3.0)
+        >>> res.mean()
+        array([   0., 1000.,    3.])
 
         """
-        return -1 * self
+        return self.__class__(
+            self.mesh,
+            dim=self.dim,
+            value=-self.array,
+            components=self.components,
+        )
 
     def __pow__(self, other):
         """Unary ``**`` operator.
@@ -1159,15 +1236,13 @@ class Field:
         >>> res = f**(-1)
         >>> res
         Field(...)
-        >>> res.average
-        0.5
+        >>> res.mean()
+        array([0.5])
         >>> res = f**2
-        >>> res.average
-        4.0
-        >>> f**f  # the power must be numbers.Real
-        Traceback (most recent call last):
-        ...
-        TypeError: ...
+        >>> res.mean()
+        array([4.])
+        >>> (f**f).mean()
+        array([4.])
 
         2. Attempt to apply power operator on a vector field.
 
@@ -1177,27 +1252,11 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
         >>> f = df.Field(mesh, dim=3, value=(0, -1, -3))
-        >>> f**2
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
+        >>> (f**2).mean()
+        array([0., 1., 9.])
 
         """
-        if self.dim != 1:
-            msg = f"Cannot apply ** operator on {self.dim=} field."
-            raise ValueError(msg)
-        if not isinstance(other, numbers.Real):
-            msg = (
-                f"Unsupported operand type(s) for **: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
-
-        return self.__class__(
-            self.mesh,
-            dim=1,
-            value=np.power(self.array, other),
-            components=self.components,
-        )
+        return self._apply_operator(other, np.power, "**")
 
     def __add__(self, other):
         """Binary ``+`` operator.
@@ -1243,44 +1302,20 @@ class Field:
         >>> f1 = df.Field(mesh, dim=3, value=(0, -1, -3.1))
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3.1))
         >>> res = f1 + f2
-        >>> res.average
-        (0.0, 0.0, 0.0)
+        >>> res.mean()
+        array([0., 0., 0.])
         >>> f1 + f2 == f2 + f1
         True
         >>> res = f1 + (1, 2, 3.1)
-        >>> res.average
-        (1.0, 1.0, 0.0)
-        >>> f1 + 5
-        Traceback (most recent call last):
-        ...
-        TypeError: ...
+        >>> res.mean()
+        array([1., 1., 0.])
+        >>> (f1 + 5).mean()
+        array([5. , 4. , 1.9])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__sub__`
 
         """
-        if isinstance(other, self.__class__):
-            if self.dim != other.dim:
-                msg = f"Cannot apply operator + on {self.dim=} and {other.dim=} fields."
-                raise ValueError(msg)
-            if self.mesh != other.mesh:
-                msg = "Cannot apply operator + on fields defined on different meshes."
-                raise ValueError(msg)
-        elif self.dim == 1 and isinstance(other, numbers.Complex):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other)
-        elif self.dim == 3 and isinstance(other, (tuple, list, np.ndarray)):
-            return self + self.__class__(self.mesh, dim=self.dim, value=other)
-        else:
-            msg = (
-                f"Unsupported operand type(s) for +: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
-
-        return self.__class__(
-            self.mesh,
-            dim=self.dim,
-            value=self.array + other.array,
-            components=self.components,
-        )
+        return self._apply_operator(other, np.add, "+")
 
     def __radd__(self, other):
         return self + other
@@ -1329,22 +1364,18 @@ class Field:
         >>> f1 = df.Field(mesh, dim=3, value=(0, 1, 6))
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 3))
         >>> res = f1 - f2
-        >>> res.average
-        (0.0, 0.0, 3.0)
+        >>> res.mean()
+        array([0., 0., 3.])
         >>> f1 - f2 == -(f2 - f1)
         True
         >>> res = f1 - (0, 1, 0)
-        >>> res.average
-        (0.0, 0.0, 6.0)
+        >>> res.mean()
+        array([0., 0., 6.])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__add__`
 
         """
-        # Ensure unary '-' can be applied to other.
-        if isinstance(other, (list, tuple)):
-            other = np.array(other)
-
-        return self + (-other)
+        return self._apply_operator(other, np.subtract, "-")
 
     def __rsub__(self, other):
         return -self + other
@@ -1354,13 +1385,11 @@ class Field:
 
         It can be applied between:
 
-        1. Two scalar (``dim=1``) fields,
+        1. Two fields with equal vector dimentions,
 
-        2. A field of any dimension and ``numbers.Real``,
+        2. A field of any dimension and ``numbers.Complex``,
 
-        3. A field of any dimension and a scalar (``dim=1``) field, or
-
-        4. A field and an "abstract" integration variable (e.g. ``df.dV``)
+        3. A field of any dimension and a scalar (``dim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
         defined on the same mesh.
@@ -1397,8 +1426,8 @@ class Field:
         >>> f1 = df.Field(mesh, dim=1, value=5)
         >>> f2 = df.Field(mesh, dim=1, value=9)
         >>> res = f1 * f2
-        >>> res.average
-        45.0
+        >>> res.mean()
+        array([45.])
         >>> f1 * f2 == f2 * f1
         True
 
@@ -1407,44 +1436,16 @@ class Field:
         >>> f1 = df.Field(mesh, dim=3, value=(0, 2, 5))
         ...
         >>> res = f1 * 5  # discretisedfield.Field.__mul__ is called
-        >>> res.average
-        (0.0, 10.0, 25.0)
+        >>> res.mean()
+        array([ 0., 10., 25.])
         >>> res = 10 * f1  # discretisedfield.Field.__rmul__ is called
-        >>> res.average
-        (0.0, 20.0, 50.0)
+        >>> res.mean()
+        array([ 0., 20., 50.])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__truediv__`
 
         """
-        if isinstance(other, self.__class__):
-            if self.dim == 3 and other.dim == 3:
-                msg = f"Cannot apply operator * on {self.dim=} and {other.dim=} fields."
-                raise ValueError(msg)
-            if self.mesh != other.mesh:
-                msg = "Cannot apply operator * on fields defined on different meshes."
-                raise ValueError(msg)
-        elif isinstance(other, numbers.Complex):
-            return self * self.__class__(self.mesh, dim=1, value=other)
-        elif self.dim == 1 and isinstance(other, (tuple, list, np.ndarray)):
-            return self * self.__class__(
-                self.mesh, dim=np.array(other).shape[-1], value=other
-            )
-        elif isinstance(other, df.DValue):
-            return self * other(self)
-        else:
-            msg = (
-                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
-
-        res_array = np.multiply(self.array, other.array)
-        components = self.components if self.dim == res_array.shape[-1] else None
-        return self.__class__(
-            self.mesh,
-            dim=res_array.shape[-1],
-            value=res_array,
-            components=components,
-        )
+        return self._apply_operator(other, np.multiply, "*")
 
     def __rmul__(self, other):
         return self * other
@@ -1454,14 +1455,14 @@ class Field:
 
         It can be applied between:
 
-        1. Two scalar (``dim=1``) fields,
+        1. Two fields with equal vector dimentions,
 
-        2. A field of any dimension and ``numbers.Real``, or
+        2. A field of any dimension and ``numbers.Complex``,
 
         3. A field of any dimension and a scalar (``dim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
-        defined on the same mesh.
+        defined on the same mesh.F
 
         Parameters
         ----------
@@ -1495,8 +1496,8 @@ class Field:
         >>> f1 = df.Field(mesh, dim=1, value=100)
         >>> f2 = df.Field(mesh, dim=1, value=20)
         >>> res = f1 / f2
-        >>> res.average
-        5.0
+        >>> res.mean()
+        array([5.])
         >>> f1 / f2 == (f2 / f1)**(-1)
         True
 
@@ -1504,26 +1505,25 @@ class Field:
 
         >>> f1 = df.Field(mesh, dim=3, value=(0, 10, 5))
         >>> res = f1 / 5  # discretisedfield.Field.__mul__ is called
-        >>> res.average
-        (0.0, 2.0, 1.0)
-        >>> 10 / f1  # division by a vector is not allowed
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
+        >>> res.mean()
+        array([0., 2., 1.])
+        >>> (10 / f1).mean()  # division by a vector is not allowed
+        array([inf,  1.,  2.])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
         """
-        return self * other ** (-1)
+        return self._apply_operator(other, np.divide, "/")
 
     def __rtruediv__(self, other):
-        return self ** (-1) * other
+        # TODO: Fix error messages - wrong order
+        return self._apply_operator(other, lambda x, y: np.divide(y, x), "/")
 
-    def __matmul__(self, other):
-        """Binary ``@`` operator, defined as dot product.
+    def dot(self, other):
+        """Dot product.
 
         This method computes the dot product between two fields. Both fields
-        must be three-dimensional (``dim=3``) and defined on the same mesh.
+        must have the same number of vector dimentions and defined on the same mesh
 
         Parameters
         ----------
@@ -1556,37 +1556,31 @@ class Field:
         ...
         >>> f1 = df.Field(mesh, dim=3, value=(1, 3, 6))
         >>> f2 = df.Field(mesh, dim=3, value=(-1, -2, 2))
-        >>> (f1@f2).average
-        5.0
+        >>> f1.dot(f2).mean()
+        array([5.])
 
         """
         if isinstance(other, self.__class__):
-            if self.mesh != other.mesh:
-                msg = "Cannot apply operator @ on fields defined on different meshes."
-                raise ValueError(msg)
-            if self.dim != 3 or other.dim != 3:
-                msg = f"Cannot apply operator @ on {self.dim=} and {other.dim=} fields."
-                raise ValueError(msg)
-        elif isinstance(other, (tuple, list, np.ndarray)):
-            return self @ self.__class__(
-                self.mesh, dim=3, value=other, components=self.components
-            )
-        elif isinstance(other, df.DValue):
-            return self @ other(self)
-        else:
+            self._check_same_mesh_and_field_dim(other)
+            other = other.array
+        elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
-                f"Unsupported operand type(s) for @: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for dot product: {type(self)=} and"
+                f" {type(other)=}."
             )
             raise TypeError(msg)
 
-        res_array = np.einsum("ijkl,ijkl->ijk", self.array, other.array)
+        res_array = np.einsum("...l,...l->...", self.array, other)
         return df.Field(self.mesh, dim=1, value=res_array[..., np.newaxis])
 
-    def __rmatmul__(self, other):
-        return self @ other
+    def __matmul__(self, other):
+        return self.dot(other)
 
-    def __and__(self, other):
-        """Binary ``&`` operator, defined as cross product.
+    def __rmatmul__(self, other):
+        return self.dot(other)
+
+    def cross(self, other):
+        """Cross product.
 
         This method computes the cross product between two fields. Both fields
         must be three-dimensional (``dim=3``) and defined on the same mesh.
@@ -1622,39 +1616,40 @@ class Field:
         ...
         >>> f1 = df.Field(mesh, dim=3, value=(1, 0, 0))
         >>> f2 = df.Field(mesh, dim=3, value=(0, 1, 0))
-        >>> (f1 & f2).average
-        (0.0, 0.0, 1.0)
-        >>> (f1 & (0, 0, 1)).average
-        (0.0, -1.0, 0.0)
+        >>> (f1.cross(f2)).mean()
+        array([0., 0., 1.])
+        >>> (f1.cross((0, 0, 1))).mean()
+        array([ 0., -1.,  0.])
 
         """
         if isinstance(other, self.__class__):
-            if self.mesh != other.mesh:
-                msg = "Cannot apply operator & on fields defined on different meshes."
-                raise ValueError(msg)
+            self._check_same_mesh_and_field_dim(other)
             if self.dim != 3 or other.dim != 3:
-                msg = f"Cannot apply operator & on {self.dim=} and {other.dim=} fields."
+                msg = (
+                    f"Cannot apply cross product on {self.dim=} and"
+                    f" {other.dim=} fields."
+                )
                 raise ValueError(msg)
-        elif isinstance(other, (tuple, list, np.ndarray)):
-            return self & self.__class__(
-                self.mesh, dim=3, value=other, components=self.components
-            )
-        else:
+            other = other.array
+        elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
-                f"Unsupported operand type(s) for &: {type(self)=} and {type(other)=}."
+                f"Unsupported operand type(s) for cross product: {type(self)=} and"
+                f" {type(other)=}."
             )
             raise TypeError(msg)
 
-        res_array = np.cross(self.array, other.array)
         return self.__class__(
             self.mesh,
             dim=3,
-            value=res_array,
+            value=np.cross(self.array, other),
             components=self.components,
         )
 
+    def __and__(self, other):
+        return self.cross(other)
+
     def __rand__(self, other):
-        return self & other
+        return -self.cross(other)
 
     def __lshift__(self, other):
         """Stacks multiple scalar fields in a single vector field.
@@ -1700,8 +1695,8 @@ class Field:
         >>> f3 = df.Field(mesh, dim=1, value=-3)
         ...
         >>> f = f1 << f2 << f3
-        >>> f.average
-        (1.0, 5.0, -3.0)
+        >>> f.mean()
+        array([ 1.,  5., -3.])
         >>> f.dim
         3
         >>> f.x == f1
@@ -1805,8 +1800,8 @@ class Field:
         ...
         >>> # Two cells with value 1
         >>> pf = field.pad({'x': (1, 1)}, mode='constant')  # zeros padded
-        >>> pf.average
-        0.5
+        >>> pf.mean()
+        array([0.5])
 
         """
         d = {}
@@ -1889,8 +1884,8 @@ class Field:
         ...     return 2*x + 3*y + -5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
-        >>> f.derivative('y').average  # first-order derivative by default
-        3.0
+        >>> f.derivative('y').mean()  # first-order derivative by default
+        array([3.])
 
         2. Try to compute the second-order directional derivative of the vector
         field which has only one discretisation cell in the z-direction. For
@@ -1906,12 +1901,12 @@ class Field:
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
-        >>> f.derivative('x', n=1).average
-        (2.0, 0.0, 0.0)
-        >>> f.derivative('y', n=1).average
-        (0.0, 3.0, 0.0)
-        >>> f.derivative('z', n=1).average  # derivative cannot be calculated
-        (0.0, 0.0, 0.0)
+        >>> f.derivative('x', n=1).mean()
+        array([2., 0., 0.])
+        >>> f.derivative('y', n=1).mean()
+        array([0., 3., 0.])
+        >>> f.derivative('z', n=1).mean()  # derivative cannot be calculated
+        array([0., 0., 0.])
         >>> # second-order derivatives
 
         """
@@ -2022,8 +2017,8 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> f.grad.average
-        (0.0, 0.0, 0.0)
+        >>> f.grad.mean()
+        array([0., 0., 0.])
 
         2. Compute gradient of a spatially varying field. For a field we choose
         :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the gradient
@@ -2034,8 +2029,8 @@ class Field:
         ...     return 2*x + 3*y - 5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
-        >>> f.grad.average
-        (2.0, 3.0, -5.0)
+        >>> f.grad.mean()
+        array([ 2.,  3., -5.])
 
         3. Attempt to compute the gradient of a vector field.
 
@@ -2102,8 +2097,8 @@ class Field:
         ...     return (2*x, -2*y, 5*z)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
-        >>> f.div.average
-        5.0
+        >>> f.div.mean()
+        array([5.])
 
         2. Attempt to compute the divergence of a scalar field.
 
@@ -2245,8 +2240,8 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, dim=1, value=5)
-        >>> f.laplace.average
-        0.0
+        >>> f.laplace.mean()
+        array([0.])
 
         2. Compute Laplacian of a spatially varying field. For a field we
         choose :math:`f(x, y, z) = 2x^{2} + 3y - 5z`. Accordingly, we expect
@@ -2258,7 +2253,7 @@ class Field:
         ...     return 2*x**2 + 3*y - 5*z
         ...
         >>> f = df.Field(mesh, dim=1, value=value_fun)
-        >>> assert abs(f.laplace.average - 4) < 1e-3
+        >>> assert abs(f.laplace.mean() - 4) < 1e-3
 
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
@@ -2376,7 +2371,7 @@ class Field:
 
         >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane * df.dx).integral(direction='x').average
+        >>> (f_plane * df.dx).integral(direction='x').mean()
         (10.0, 20.0, 30.0)
 
         6. Improper integral along x-direction.
@@ -2582,14 +2577,14 @@ class Field:
         ...         return (-1, -2, -3)
         ...
         >>> f = df.Field(mesh, dim=3, value=value_fun)
-        >>> f.average
-        (0.0, 0.0, 0.0)
+        >>> f.mean()
+        array([0., 0., 0.])
         >>> f['r1']
         Field(...)
-        >>> f['r1'].average
-        (1.0, 2.0, 3.0)
-        >>> f['r2'].average
-        (-1.0, -2.0, -3.0)
+        >>> f['r1'].mean()
+        array([1., 2., 3.])
+        >>> f['r2'].mean()
+        array([-1., -2., -3.])
 
         2. Extracting a subfield by passing a region.
 
@@ -2658,8 +2653,8 @@ class Field:
         ...
         >>> field.project('z')
         Field(...)
-        >>> field.project('z').average
-        (1.0, 2.0, 3.0)
+        >>> field.project('z').mean()
+        array([1., 2., 3.])
         >>> field.project('z').array.shape
         (2, 2, 1, 3)
 
@@ -2667,15 +2662,24 @@ class Field:
         n_cells = self.mesh.n[dfu.axesdict[direction]]
         return self.integral(direction=direction) / n_cells
 
-    @property
-    def angle(self):
-        r"""In-plane angle of the vector field.
+    def angle(self, vector):
+        r"""Angle between two vectors.
 
-        This method can be applied only on sliced fields, when a plane is
-        defined. This method then returns a scalar field which is an angle
-        between the in-plane compoenent of the vector field and the horizontal
-        axis. The angle is computed in radians and all values are in :math:`(0,
+        It can be applied between two ``discretisedfield.Field`` objects.
+        For a vector field, the second operand can be a vector in the form of
+        an iterable, such as ``tuple``, ``list``,
+        or ``numpy.ndarray``. If the second operand
+        is a ``discretisedfield.Field`` object, both must be defined on the
+        same mesh and have the same dimensions.
+        This method then returns a scalar field which is an angle
+        between the component of the vector field and a vector.
+        The angle is computed in radians and all values are in :math:`(0,
         2\\pi)` range.
+
+        Parameters
+        ----------
+        other : discretisedfield.Field, numbers.Real, tuple, list, np.ndarray
+            Second operand.
 
         Returns
         -------
@@ -2685,7 +2689,7 @@ class Field:
 
         Raises
         ------
-        ValueError
+        ValueError, TypeError
 
             If the field is not sliced.
 
@@ -2702,23 +2706,26 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
         ...
-        >>> abs(field.plane('z').angle.average - np.pi/2) < 1e-3
-        True
+        >>> field.angle((1, 0, 0)).mean()
+        array([1.57079633])
 
         """
-        if not self.mesh.attributes["isplane"]:
-            msg = "The field must be sliced before angle can be computed."
-            raise ValueError(msg)
+        if isinstance(vector, self.__class__):
+            self._check_same_mesh_and_field_dim(vector)
+        elif self.dim == 1 and isinstance(vector, numbers.Complex):
+            vector = self.__class__(self.mesh, dim=self.dim, value=vector)
+        elif self.dim != 1 and isinstance(vector, (tuple, list, np.ndarray)):
+            vector = self.__class__(self.mesh, dim=self.dim, value=vector)
+        else:
+            msg = (
+                f"Unsupported operand type(s) for angle: {type(self)=} and"
+                f" {type(vector)=}."
+            )
+            raise TypeError(msg)
 
-        angle_array = np.arctan2(
-            self.array[..., self.mesh.attributes["axis2"]],
-            self.array[..., self.mesh.attributes["axis1"]],
-        )
+        angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
 
-        # Place all values in [0, 2pi] range
-        angle_array[angle_array < 0] += 2 * np.pi
-
-        return self.__class__(self.mesh, dim=1, value=angle_array[..., np.newaxis])
+        return self.__class__(self.mesh, dim=1, value=angle_array)
 
     def write(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
@@ -3276,6 +3283,16 @@ class Field:
         )
 
     @property
+    def abs(self):
+        """Absolute value of complex field."""
+        return self.__class__(
+            self.mesh,
+            dim=self.dim,
+            value=np.abs(self.array),
+            components=self.components,
+        )
+
+    @property
     def conjugate(self):
         """Complex conjugate of complex field."""
         return self.__class__(
@@ -3519,8 +3536,8 @@ class Field:
         >>> field = df.Field.from_xarray(xa)
         >>> field
         Field(...)
-        >>> field.average
-        (1.0, 1.0, 1.0)
+        >>> field.mean()
+        array([1., 1., 1.])
 
         """
         if not isinstance(xa, xr.DataArray):
