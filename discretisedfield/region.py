@@ -501,8 +501,8 @@ class Region:
         """Compute multiplier for the region."""
         return uu.si_max_multiplier(self.edges)
 
-    def __mul__(self, other):
-        """Binary ``*`` operator.
+    def __mul__(self, factor):
+        """Scale the region.
 
         It can be applied only between ``discretisedfield.Region`` and
         ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
@@ -510,7 +510,7 @@ class Region:
 
         Parameters
         ----------
-        other : numbers.Real
+        other : array-like or numbers.Real
 
             Second operand.
 
@@ -546,23 +546,14 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
 
         """
-        if not isinstance(other, numbers.Real):
-            msg = (
-                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
-
-        return self.__class__(
-            p1=np.multiply(self.pmin, other),
-            p2=np.multiply(self.pmax, other),
-            unit=self.unit,
-        )
+        self._check_operand(factor, True, "operator *")
+        return self._apply_operator(factor, np.multiply)
 
     def __rmul__(self, other):
         return self * other
 
-    def __truediv__(self, other):
-        """Binary ``/`` operator.
+    def __truediv__(self, factor):
+        """Scale the region.
 
         It can be applied only between ``discretisedfield.Region`` and
         ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
@@ -606,7 +597,58 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
 
         """
-        return self * other ** (-1)
+        self._check_operand(factor, True, "operator /")
+        return self._apply_operator(factor, np.divide)
+
+    def scale(self, factor):
+        """Scale the region."""
+        self._check_operand(factor, True, "method scale")
+        return self._apply_operator(factor, np.multiply)
+
+    def __add__(self, vector):
+        """Translate the region."""
+        self._check_operand(vector, False, "operator +")
+        return self._apply_operator(vector, np.add)
+
+    def __radd__(self, vector):
+        return self + vector
+
+    def __sub__(self, vector):
+        """Translate the region."""
+        self._check_operand(vector, False, "operator -")
+        return self._apply_operator(vector, np.subtract)
+
+    def __rsub__(self, vector):
+        return self - vector
+
+    def translate(self, vector):
+        """Translate the region."""
+        self._check_operand(vector, False, "method translate")
+        return self._apply_operator(vector, np.add)
+
+    def _check_operand(self, other, allow_scalar, operation):
+        if allow_scalar and isinstance(other, numbers.Real):
+            return
+        elif not isinstance(other, (tuple, list, np.ndarray)):
+            raise TypeError(f"Unsupported type {type(other)} for {operation}.")
+        elif len(other) != len(self.pmin):  # TODO self.ndim
+            raise ValueError(
+                f"Wrong length for array-like argument: {len(other)}; expected length"
+                f" {len(self.pmin)}."
+            )
+
+        for elem in other:
+            if not isinstance(elem, numbers.Real):
+                raise TypeError(
+                    f"Unsupported element {elem} of type {type(elem)} for {operation}."
+                )
+
+    def _apply_operator(self, other, function):
+        return self.__class__(
+            p1=function(self.pmin, other),
+            p2=function(self.pmax, other),
+            unit=self.unit,
+        )
 
     @property
     def mpl(self):
