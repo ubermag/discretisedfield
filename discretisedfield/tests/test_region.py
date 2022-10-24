@@ -1,4 +1,3 @@
-import numbers
 import os
 import re
 import tempfile
@@ -17,60 +16,6 @@ html_re = (
     r"<li>p2 = .*</li>\s*"
     r"</ul>"
 )
-
-
-def check_region(region):
-    assert isinstance(region.p1, tuple)
-    assert len(region.p1) == 3
-    assert all(isinstance(i, numbers.Real) for i in region.p1)
-    assert region.p1 in region
-
-    assert isinstance(region.p2, tuple)
-    assert len(region.p2) == 3
-    assert all(isinstance(i, numbers.Real) for i in region.p2)
-    assert region.p2 in region
-
-    assert isinstance(region.pmin, tuple)
-    assert len(region.pmin) == 3
-    assert all(isinstance(i, numbers.Real) for i in region.pmin)
-    assert region.pmin in region
-
-    assert isinstance(region.pmax, tuple)
-    assert len(region.pmax) == 3
-    assert all(isinstance(i, numbers.Real) for i in region.pmax)
-    assert region.pmax in region
-
-    assert isinstance(region.edges, tuple)
-    assert len(region.edges) == 3
-    assert all(isinstance(i, numbers.Real) for i in region.edges)
-
-    assert isinstance(region.centre, tuple)
-    assert len(region.centre) == 3
-    assert all(isinstance(i, numbers.Real) for i in region.centre)
-    assert region.centre in region
-
-    assert isinstance(region.random_point(), tuple)
-    assert len(region.random_point()) == 3
-    assert all(isinstance(i, numbers.Real) for i in region.random_point())
-    assert region.random_point() in region
-
-    assert isinstance(region.volume, numbers.Real)
-
-    assert isinstance(repr(region), str)
-    pattern = r"^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$"
-    assert re.match(pattern, str(region))
-
-    assert isinstance(region._repr_html_(), str)
-    assert re.match(html_re, region._repr_html_())
-
-    assert region == region
-    assert not region != region
-    assert region != 2
-    assert region in region
-
-    # There are no facing surfaces in region | region
-    with pytest.raises(ValueError):
-        region | region
 
 
 class TestRegion:
@@ -96,7 +41,9 @@ class TestRegion:
     def test_init_valid_args(self):
         for p1, p2 in self.valid_args:
             region = df.Region(p1=p1, p2=p2)
-            check_region(region)
+            assert isinstance(region, df.Region)
+            pattern = r"^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$"
+            assert re.match(pattern, str(region))
 
     def test_init_invalid_args(self):
         for p1, p2 in self.invalid_args:
@@ -120,7 +67,7 @@ class TestRegion:
         p2 = (15, -6, 11)
         region = df.Region(p1=p1, p2=p2)
 
-        check_region(region)
+        assert isinstance(region, df.Region)
         assert region.pmin == (0, -6, 11)
         assert region.pmax == (15, -4, 16.5)
         assert region.edges == (15, 2, 5.5)
@@ -131,7 +78,7 @@ class TestRegion:
         p2 = (10e6, 1e6, 1e6)
         region = df.Region(p1=p1, p2=p2)
 
-        check_region(region)
+        assert isinstance(region, df.Region)
         assert region.pmin == (-10e6, 0, 0)
         assert region.pmax == (10e6, 1e6, 1e6)
         assert region.edges == (20e6, 1e6, 1e6)
@@ -142,7 +89,7 @@ class TestRegion:
         p2 = (10e-9, 5e-9, -10e-9)
         region = df.Region(p1=p1, p2=p2)
 
-        check_region(region)
+        assert isinstance(region, df.Region)
         assert np.allclose(region.pmin, (-18.5e-9, 5e-9, -10e-9))
         assert np.allclose(region.pmax, (10e-9, 10e-9, 0))
         assert np.allclose(region.edges, (28.5e-9, 5e-9, 10e-9))
@@ -154,18 +101,20 @@ class TestRegion:
         p2 = (15, 10.1, 12.5)
         region = df.Region(p1=p1, p2=p2)
 
-        check_region(region)
+        assert isinstance(region, df.Region)
         rstr = "Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5))"
         assert repr(region) == rstr
+
+        assert re.match(html_re, region._repr_html_())
 
     def test_eq(self):
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10))
 
-        check_region(region1)
-        check_region(region2)
-        check_region(region3)
+        assert isinstance(region1, df.Region)
+        assert isinstance(region2, df.Region)
+        assert isinstance(region3, df.Region)
         assert region1 == region2
         assert not region1 != region2
         assert region1 != region3
@@ -187,7 +136,7 @@ class TestRegion:
         p2 = (10e-9, 0, 20e-9)
         region = df.Region(p1=p1, p2=p2)
 
-        check_region(region)
+        assert isinstance(region, df.Region)
         tol = np.min(region.edges) * region.tolerance_factor
         tol_in = tol / 2
         tol_out = tol * 2
@@ -310,13 +259,13 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         res = region * 2
-        check_region(res)
+        assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (-100e-9, -100e-9, 0))
         assert np.allclose(res.pmax, (100e-9, 100e-9, 40e-9))
         assert np.allclose(res.edges, (200e-9, 200e-9, 40e-9))
 
         res = region / 2
-        check_region(res)
+        assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (-25e-9, -25e-9, 0))
         assert np.allclose(res.pmax, (25e-9, 25e-9, 10e-9))
         assert np.allclose(res.edges, (50e-9, 50e-9, 10e-9))
@@ -334,7 +283,7 @@ class TestRegion:
         p2 = (50e-9, 50e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2)
 
-        check_region(region)
+        assert isinstance(region, df.Region)
 
         # Check if it runs.
         region.mpl()
@@ -359,7 +308,7 @@ class TestRegion:
         p2 = (50e9, 50e9, 20e9)
         region = df.Region(p1=p1, p2=p2)
 
-        check_region(region)
+        assert isinstance(region, df.Region)
 
         # Check if runs.
         region.k3d()

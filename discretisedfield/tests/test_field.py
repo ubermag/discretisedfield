@@ -1,11 +1,11 @@
 import itertools
-import numbers
 import os
 import random
 import re
 import tempfile
 import types
 
+import holoviews as hv
 import k3d
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,16 +28,11 @@ html_re = (
 
 
 def check_field(field):
-    assert isinstance(field.mesh, df.Mesh)
-
+    # TODO add explicit tests for the remaining checks in here and remove
+    # this function
     assert isinstance(field.dim, int)
-    assert field.dim > 0
 
-    assert isinstance(field.array, np.ndarray)
     assert field.array.shape == (*field.mesh.n, field.dim)
-
-    average = field.mean()
-    assert isinstance(average, (np.ndarray, numbers.Complex))
 
     rstr = repr(field)
     assert isinstance(rstr, str)
@@ -54,37 +49,15 @@ def check_field(field):
     assert isinstance(field.__iter__(), types.GeneratorType)
     assert len(list(field)) == len(field.mesh)
 
-    line = field.line(p1=field.mesh.region.pmin, p2=field.mesh.region.pmax, n=5)
-    assert isinstance(line, df.Line)
-    assert line.n == 5
 
-    plane = field.plane("z", n=(2, 2))
-    assert isinstance(plane, df.Field)
-    assert len(plane.mesh) == 4
-    assert plane.mesh.n == (2, 2, 1)
-
-    project = field.project("z")
-    assert isinstance(project, df.Field)
-    assert project.mesh.n[2] == 1
-
-    assert isinstance(field(field.mesh.region.centre), (tuple, numbers.Complex))
-    assert isinstance(field(field.mesh.region.random_point()), (tuple, numbers.Complex))
-
-    assert field == field
-    assert not field != field
-
-    assert +field == field
-    assert -(-field) == field
-    assert field + field == 2 * field
-    assert field - (-field) == field + field
-    assert 1 * field == field
-    assert -1 * field == -field
-    assert field.units is None or isinstance(field.units, str)
-
-    if field.dim > 1 and field.components is not None:
-        for comp in field.components:
-            assert isinstance(getattr(field, comp), df.Field)
-            assert getattr(field, comp).dim == 1
+def check_hv(plot, types):
+    # generate the first plot output to have enough data in plot.info
+    hv.renderer("bokeh").get_plot(plot)
+    # find strings like "    :DynamicMap [comp,z]" or "    :Image    [x,y]"
+    # the number of spaces can vary
+    assert sorted(
+        re.findall(r"(?<=:)\w+ \[[^]]+\]", re.sub(r"\s+", " ", str(plot)))
+    ) == sorted(types)
 
 
 class TestField:
@@ -168,9 +141,17 @@ class TestField:
                 f = df.Field(mesh, dim=1, value=value, dtype=dtype)
                 check_field(f)
 
+                assert isinstance(f.mesh, df.Mesh)
+                assert f.dim == 1
+                assert isinstance(f.array, np.ndarray)
+
             for value, dtype in self.iters + self.vfuncs:
                 f = df.Field(mesh, dim=3, value=value, dtype=dtype)
                 check_field(f)
+
+                assert isinstance(f.mesh, df.Mesh)
+                assert f.dim == 3
+                assert isinstance(f.array, np.ndarray)
 
     def test_init_invalid_args(self):
         with pytest.raises(TypeError):
@@ -478,6 +459,7 @@ class TestField:
 
         # No zero-norm cells
         f = df.Field(mesh, dim=3, value=(2, 0, 0))
+        assert isinstance(f.orientation, df.Field)
         assert np.allclose(f.orientation.mean(), (1, 0, 0))
 
         # With zero-norm cells
@@ -495,6 +477,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=0)
         with pytest.raises(ValueError):
             f.orientation
+
+    def test_call(self):
+        raise NotImplementedError
 
     def test_mean(self):
         tol = 1e-12
@@ -581,7 +566,7 @@ class TestField:
         assert f1.allclose(f2)
         assert not f1.allclose(f3)
         assert not f1.allclose(f5)
-        assert f4.allclose(f5)
+        assert f4.allclose(f5
         assert not f4.allclose(f6)
 
         with pytest.raises(TypeError):
@@ -2096,106 +2081,280 @@ class TestField:
 
     def test_hv_scalar(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
-            self.pf.hv.scalar(kdims=kdims)
-            self.pf.hv.scalar(kdims=kdims, roi=self.pf.norm)
+            normal = (set("xyz") - set(kdims)).pop()
+            kdim_str = f"[{','.join(kdims)}]"
+            check_hv(
+                self.pf.hv.scalar(kdims=kdims),
+                [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            )
+            check_hv(
+                self.pf.hv.scalar(kdims=kdims, roi=self.pf.norm),
+                [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            )
 
-            # additional kwargs
-            self.pf.hv.scalar(kdims=kdims, clim=(-1, 1))
+            # additional kwargs and plane
+            check_hv(
+                self.pf.plane(normal).hv.scalar(kdims=kdims, clim=(-1, 1)),
+                ["DynamicMap [comp]", f"Image {kdim_str}"],
+            )
 
             for c in self.pf.components:
-                getattr(self.pf, c).hv.scalar(kdims=kdims)
+                check_hv(
+                    getattr(self.pf, c).hv.scalar(kdims=kdims),
+                    [f"DynamicMap [{normal}]", f"Image {kdim_str}"],
+                )
+                check_hv(
+                    getattr(self.pf, c).plane(normal).hv.scalar(kdims=kdims),
+                    [f"Image {kdim_str}"],
+                )
 
         with pytest.raises(ValueError):
-            self.pf.hv.contour(kdims=["wrong_name", "x"])
+            check_hv(self.pf.hv.scalar(kdims=["wrong_name", "x"]), ...)
+
+        with pytest.raises(ValueError):
+            check_hv(self.pf.hv.scalar(kdims=["x", "y", "z"]), ...)
+
+        with pytest.raises(TypeError):
+            check_hv(self.pf.hv.scalar(kdims=["x", "y"], roi="z"), ...)
+
+        with pytest.raises(ValueError):
+            check_hv(self.pf.hv.scalar(kdims=["x", "y"], roi=self.pf), ...)
+
+        with pytest.raises(ValueError):
+            check_hv(
+                self.pf.plane("z").hv.scalar(kdims=["x", "y"], roi=self.pf.norm), ...
+            )
+
+        with pytest.raises(ValueError):
+            check_hv(
+                self.pf[
+                    df.Region(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, -1e-9))
+                ].hv.scalar(kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)),
+                ...,
+            )
 
     def test_hv_vector(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
-            self.pf.hv.vector(kdims=kdims)
-            self.pf.hv.vector(kdims=kdims, roi=self.pf.norm)
+            normal = (set("xyz") - set(kdims)).pop()
+            kdim_str = f"[{','.join(kdims)}]"
+            check_hv(
+                self.pf.hv.vector(kdims=kdims),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                self.pf.plane(normal).hv.vector(kdims=kdims),
+                [f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                self.pf.hv.vector(kdims=kdims, roi=self.pf.norm),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                self.pf.hv.vector(kdims=kdims, n=(10, 10)),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
 
             # additional kwargs
-            self.pf.hv.vector(kdims=kdims, use_color=False, color="blue")
+            check_hv(
+                self.pf.hv.vector(kdims=kdims, use_color=False, color="blue"),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
 
             for comp in self.pf.components:
-                self.pf.hv.vector(kdims=kdims, cdim=getattr(self.pf, comp))
-                self.pf.hv.vector(kdims=kdims, cdim=comp)
-            self.pf.hv.vector(kdims=kdims, cdim=self.pf.norm)
+                check_hv(
+                    self.pf.hv.vector(kdims=kdims, cdim=comp),
+                    [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+                )
 
-            with pytest.raises(KeyError):
-                self.pf.hv.vector(kdims=kdims, cdim="wrong")
+            with pytest.raises(ValueError):
+                check_hv(self.pf.hv.vector(kdims=kdims, cdim="wrong"), ...)
+
+            with pytest.raises(TypeError):
+                check_hv(self.pf.hv.vector(kdims=kdims, cdim=self.pf.norm), ...)
+
+            with pytest.raises(ValueError):
+                check_hv(self.pf.hv.vector(kdims=kdims, vdims=["a", "b", "c"]), ...)
 
             # 2d field
             with pytest.raises(ValueError):
-                (self.pf.a << self.pf.b).hv.vector(kdims=kdims)
+                check_hv((self.pf.a << self.pf.b).hv.vector(kdims=kdims), ...)
 
             field_2d = self.pf.a << self.pf.b
             field_2d.components = ["a", "b"]
-            field_2d.hv.vector(kdims=kdims, vdims=["a", "b"])
-            field_2d.hv.vector(kdims=kdims, vdims=[None, "b"])
-            field_2d.hv.vector(kdims=kdims, vdims=["a", None])
+            check_hv(
+                field_2d.hv.vector(kdims=kdims, vdims=["a", "b"]),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                field_2d.hv.vector(kdims=kdims, vdims=[None, "b"]),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                field_2d.hv.vector(kdims=kdims, vdims=["a", None]),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
             with pytest.raises(ValueError):
-                field_2d.hv.vector(kdims=kdims, vdims=[None, None])
+                check_hv(field_2d.hv.vector(kdims=kdims, vdims=[None, None]), ...)
 
             # 4d field
             field_4d = self.pf.a << self.pf.b << self.pf.a << self.pf.b
             field_4d.components = ["a", "b", "c", "d"]
             with pytest.raises(ValueError):
-                field_4d.hv.vector(kdims=kdims)
-            field_4d.hv.vector(kdims=kdims, vdims=["c", "d"])
-            field_4d.hv.vector(kdims=kdims, vdims=["c", "d"])
-            field_4d.hv.vector(kdims=kdims, vdims=[None, "b"])
+                check_hv(field_4d.hv.vector(kdims=kdims), ...)
+            check_hv(
+                field_4d.hv.vector(kdims=kdims, vdims=["c", "d"]),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                field_4d.hv.vector(kdims=kdims, vdims=["c", "d"]),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                field_4d.hv.vector(kdims=kdims, vdims=[None, "b"]),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
 
         with pytest.raises(ValueError):
-            self.pf.hv.contour(kdims=["wrong_name", "x"])
+            check_hv(self.pf.hv.contour(kdims=["wrong_name", "x"]), ...)
+
+        with pytest.raises(ValueError):
+            check_hv(self.pf.hv.vector(kdims=["x", "y"], n=(10, 10, 10)), ...)
+
+        # scalar field
+        with pytest.raises(ValueError):
+            check_hv(field_2d.a.hv.vector(kdims=["x", "y"]), ...)
 
     def test_hv_contour(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
-            self.pf.hv.contour(kdims=kdims)
-            self.pf.hv.contour(kdims=kdims, roi=self.pf.norm)
+            normal = (set("xyz") - set(kdims)).pop()
+            kdim_str = f"[{','.join(kdims)}]"
+            # Required for the tests (not in a notebook):
+            # If not specified the plot creation for the test fails because the width
+            # and height of the plot cannot be calculated (NaN values). By manually
+            # setting frame_width and frame_height this can be avoided.
+            # It is not fully clear why this does not happen for the other plots.
+            # Presumably, because we use a different method to create the contour plot.
+            opts = dict(frame_width=300, frame_height=300)
+            check_hv(
+                self.pf.hv.contour(kdims=kdims).opts(**opts),
+                [f"DynamicMap [{normal},comp]", f"Contours {kdim_str}"],
+            )
+            check_hv(
+                self.pf.hv.contour(kdims=kdims, roi=self.pf.norm).opts(**opts),
+                [f"DynamicMap [{normal},comp]", f"Contours {kdim_str}"],
+            )
 
             # additional kwargs
-            self.pf.hv.contour(kdims=kdims, clim=(-1, 1))
+            check_hv(
+                self.pf.plane(normal)
+                .hv.contour(kdims=kdims, clim=(-1, 1))
+                .opts(**opts),
+                ["DynamicMap [comp]", f"Contours {kdim_str}"],
+            )
 
             for c in self.pf.components:
-                getattr(self.pf, c).hv.contour(kdims=kdims)
+                check_hv(
+                    getattr(self.pf, c).hv.contour(kdims=kdims).opts(**opts),
+                    [f"DynamicMap [{normal}]", f"Contours {kdim_str}"],
+                )
 
         with pytest.raises(ValueError):
-            self.pf.hv.contour(kdims=["wrong_name", "x"])
+            check_hv(self.pf.hv.contour(kdims=["wrong_name", "x"]), ...)
 
     def test_hv(self):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             normal = (set("xyz") - set(kdims)).pop()
+            kdim_str = f"[{','.join(kdims)}]"
             # 1d field
-            self.pf.a.hv(kdims=kdims)
-            self.pf.a.plane(normal).hv(kdims=kdims)
+            check_hv(
+                self.pf.a.hv(kdims=kdims),
+                [f"DynamicMap [{normal}]", f"Image {kdim_str}"],
+            )
+            check_hv(self.pf.a.plane(normal).hv(kdims=kdims), [f"Image {kdim_str}"])
 
             # 2d field
             field_2d = self.pf.b << self.pf.c
-            with pytest.warns(UserWarning):
-                field_2d.hv(kdims=kdims)
-            field_2d.hv(kdims=kdims, vdims=["x", "y"])
-            field_2d.plane(normal).hv(kdims=kdims)
+            check_hv(
+                field_2d.hv(kdims=kdims),
+                [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            )
+            check_hv(
+                field_2d.hv(kdims=kdims, vdims=["x", "y"]),
+                [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
+            )
+            check_hv(
+                field_2d.plane(normal).hv(kdims=kdims),
+                ["DynamicMap [comp]", f"Image {kdim_str}"],
+            )
 
             # 3d field
-            self.pf.hv(kdims=kdims)
-            self.pf.hv(kdims=kdims, vdims=["a", "b"])
-            self.pf.plane(normal).hv(kdims=kdims)
+            check_hv(
+                self.pf.hv(kdims=kdims),
+                [
+                    f"DynamicMap [{normal}]",
+                    f"Image {kdim_str}",
+                    f"VectorField {kdim_str}",
+                ],
+            )
+            check_hv(
+                self.pf.hv(kdims=kdims, vdims=["a", "b"]),
+                [
+                    f"DynamicMap [{normal}]",
+                    f"Image {kdim_str}",
+                    f"VectorField {kdim_str}",
+                ],
+            )
+            check_hv(
+                self.pf.plane(normal).hv(kdims=kdims),
+                [f"Image {kdim_str}", f"VectorField {kdim_str}"],
+            )
 
             # additional kwargs
-            self.pf.hv(
-                kdims=kdims,
-                scalar_kw={"clim": (-1, 1)},
-                vector_kw={"cmap": "cividis"},
+            check_hv(
+                self.pf.hv(
+                    kdims=kdims,
+                    scalar_kw={"clim": (-1, 1)},
+                    vector_kw={"cmap": "cividis"},
+                ),
+                [
+                    f"DynamicMap [{normal}]",
+                    f"Image {kdim_str}",
+                    f"VectorField {kdim_str}",
+                ],
             )
 
             # 4d field
             field_4d = self.pf.b << self.pf.c << self.pf.a << self.pf.a
             field_4d.components = ["v1", "v2", "v3", "v4"]
-            with pytest.warns(UserWarning):
-                field_4d.hv(kdims=kdims)
-            field_4d.hv(kdims=kdims, vdims=["v2", "v1"])
-            field_4d.hv(kdims=kdims, vdims=["v2", "v1"], vector_kw={"cdim": "v4"})
-            field_4d.plane(normal).hv(kdims=kdims)
+            check_hv(
+                field_4d.hv(kdims=kdims),
+                [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            )
+
+            check_hv(
+                field_4d.hv(kdims=kdims, vdims=["v2", "v1"]),
+                [
+                    f"DynamicMap [{normal},comp]",
+                    f"Image {kdim_str}",
+                    f"VectorField {kdim_str}",
+                ],
+            )
+
+            check_hv(
+                field_4d.plane(normal).hv(kdims=kdims),
+                ["DynamicMap [comp]", f"Image {kdim_str}"],
+            )
+
+            check_hv(
+                field_4d.plane(normal).hv(
+                    kdims=kdims, vdims=["v2", "v1"], vector_kw={"cdim": "v4"}
+                ),
+                [
+                    "DynamicMap [comp]",
+                    f"Image {kdim_str}",
+                    f"VectorField {kdim_str}",
+                ],
+            )
 
     def test_k3d_nonzero(self):
         # Default

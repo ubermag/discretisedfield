@@ -13,6 +13,7 @@ from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
+from discretisedfield.plotting.util import hv_key_dim
 
 from . import html, io
 from .mesh import Mesh
@@ -3065,7 +3066,47 @@ class Field:
         :DynamicMap...
 
         """
-        return dfp.Hv(self.to_xarray())
+        return dfp.Hv(self._hv_key_dims, self._hv_data_selection, self._hv_vdims_guess)
+
+    def _hv_data_selection(self, **kwargs):
+        """Select field part as specified by the input arguments."""
+        comp = kwargs.pop("comp") if "comp" in kwargs else None
+        res = self.to_xarray().sel(**kwargs, method="nearest")
+        if comp:
+            res = res.sel(comp=comp)
+        return res
+
+    def _hv_vdims_guess(self, kdims):
+        """Try to find vector components matching the given kdims."""
+        mesh_dims = "xyz"
+        if len(mesh_dims) != self.dim:
+            return None
+        vdims = []
+        for dim in kdims:
+            if dim not in mesh_dims:  # hard-coded names in Mesh
+                return None
+            vdims.append(self.components[mesh_dims.index(dim)])
+        return vdims
+
+    @property
+    def _hv_key_dims(self):
+        """Dict of key dimensions of the field.
+
+        Keys are the field dimensions (domain and vector space, e.g. x, y, z, comp) that
+        have length > 1. Values are named_tuples ``hv_key_dim(data, unit)`` that contain
+        the data (which has to fulfill len(data) > 1, typically as a numpy array or
+        list) and the unit of a string (empty string if there is no unit).
+
+        """
+        mesh_dims = "xyz"
+        key_dims = {
+            dim: hv_key_dim(coords, "m")
+            for dim in mesh_dims
+            if len(coords := getattr(self.mesh.midpoints, dim)) > 1
+        }
+        if self.dim > 1:
+            key_dims["comp"] = hv_key_dim(self.components, "")
+        return key_dims
 
     @property
     def fftn(self):

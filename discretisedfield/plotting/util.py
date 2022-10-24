@@ -1,3 +1,4 @@
+import collections
 import colorsys
 
 import numpy as np
@@ -60,6 +61,7 @@ cp_hex = [
     "#64b5cd",
 ]
 cp_int = [int(color[1:], 16) for color in cp_hex]
+hv_key_dim = collections.namedtuple("hv_key_dim", ["data", "unit"])
 
 
 def plot_line(ax, p1, p2, *args, **kwargs):
