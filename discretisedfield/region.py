@@ -793,10 +793,17 @@ class Region:
         return dfp.K3dRegion(self)
 
     def to_dict(self):
-        """Convert region object to dict with items p1, p2, unit, tolerance_factor."""
+        """Convert region object to dict
+
+        Convert region object to dict with items pmin, pmax,
+        ndims, dims, units, tolerance_factor.
+
+        """
         return {
             "pmin": self.pmin,
             "pmax": self.pmax,
-            "unit": self.units,
+            "ndim": self.ndim,
+            "dims": self.dims,
+            "units": self.units,
             "tolerance_factor": self.tolerance_factor,
         }
