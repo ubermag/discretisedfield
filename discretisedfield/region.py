@@ -17,7 +17,7 @@ from . import html
     p2=ts.Vector(size=3, const=True),
     # pmin=ts.Vector(size=3, const=True),
     # pmax=ts.Vector(size=3, const=True),
-    unit=ts.Name(const=True),
+    # units=ts.Name(const=True),
     tolerance_factor=ts.Scalar(expected_type=float, positive=True),
 )
 class Region:
@@ -80,19 +80,26 @@ class Region:
     """
 
     def __init__(
-        self, p1, p2, ndim, dims=["x", "y", "z"], unit="m", tolerance_factor=1e-12
+        self,
+        p1,
+        p2,
+        ndim=3,
+        dims=["x", "y", "z"],
+        units=["m", "m", "m"],
+        tolerance_factor=1e-12,
     ):
 
-        if not (ndim == len(p1) == len(p2) == len(dims)):
+        if not (ndim == len(p1) == len(p2) == len(dims) == len(units)):
             raise ValueError(
-                "The length of p1, p2, and dims must all be equal to ndim."
+                "The length of p1, p2, units, and dims must all be equal and equal to"
+                " ndim."
             )
 
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
         self.ndim = ndim
         self.dims = dims
-        self.unit = unit
+        self.units = units
         self.tolerance_factor = tolerance_factor
 
         if not np.all(self.edges):
@@ -376,7 +383,7 @@ class Region:
                 and np.array_equal(self.pmax, other.pmax)
                 and self.ndim == other.ndim
                 and self.dims == other.dims
-                and self.unit == other.unit
+                and self.units == other.units
             )
 
         return False
@@ -571,7 +578,7 @@ class Region:
             p2=np.multiply(self.pmax, other),
             ndim=self.ndim,
             dims=self.dims,
-            unit=self.unit,
+            units=self.units,
         )
 
     def __rmul__(self, other):
@@ -790,6 +797,6 @@ class Region:
         return {
             "pmin": self.pmin,
             "pmax": self.pmax,
-            "unit": self.unit,
+            "unit": self.units,
             "tolerance_factor": self.tolerance_factor,
         }

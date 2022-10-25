@@ -78,5 +78,8 @@ class K3dRegion:
         return self.region.multiplier if multiplier is None else multiplier
 
     def _axis_labels(self, plot, multiplier):
-        unit = f"({uu.rsi_prefixes[multiplier]}{self.region.unit})"
-        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
+        units = f"({uu.rsi_prefixes[multiplier]}{self.region.units})"
+        plot.axes = [
+            i + r"\,\text{{{}}}".format(units[dfu.axesdict[i]])
+            for i in dfu.axesdict.keys()
+        ]

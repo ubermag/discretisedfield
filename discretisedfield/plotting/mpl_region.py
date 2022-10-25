@@ -114,5 +114,5 @@ class MplRegion(Mpl):
         return self.region.multiplier if multiplier is None else multiplier
 
     def _axis_labels(self, ax, multiplier):
-        unit = rf" ({uu.rsi_prefixes[multiplier]}{self.region.unit})"
-        ax.set(xlabel=f"x {unit}", ylabel=f"y {unit}", zlabel=f"z {unit}")
+        units = rf" ({uu.rsi_prefixes[multiplier]}{self.region.units})"
+        ax.set(xlabel=f"x {units[0]}", ylabel=f"y {units[1]}", zlabel=f"z {units[2]}")

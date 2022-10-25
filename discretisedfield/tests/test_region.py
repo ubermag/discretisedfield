@@ -297,7 +297,21 @@ class TestRegion:
             res = 5 / region
 
     def test_units(self):
-        raise NotImplementedError()
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        ndim = 3
+        units = ["m", "m", "m"]
+        region = df.Region(p1=p1, p2=p2, ndim=ndim, units=units)
+        assert isinstance(region, df.Region)
+        assert region.units == units
+
+        units = ["m"]
+        with pytest.raises(ValueError):
+            df.Region(p1=p1, p2=p2, ndim=ndim, units=units)
+
+        units = "m"
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, ndim=ndim, units=units)
 
     def test_ndim(self):
         p1 = (-50e-9, -50e-9, 0)
