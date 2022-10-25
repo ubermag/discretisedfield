@@ -187,26 +187,26 @@ class Region:
         return dfu.array2tuple(np.abs(np.subtract(self.p1, self.p2)))
 
     @functools.cached_property
-    def centre(self):
-        r"""Centre point.
+    def center(self):
+        r"""Center point.
 
-        Centre point is computed as the middle point between region's points
+        Center point is computed as the middle point between region's points
         with minimum and maximum coordinates:
 
         .. math::
 
-            \mathbf{p}_\text{centre} = \frac{1}{2} (\mathbf{p}_\text{min}
+            \mathbf{p}_\text{center} = \frac{1}{2} (\mathbf{p}_\text{min}
             + \mathbf{p}_\text{max}).
 
         Returns
         -------
         tuple (3,)
 
-            Centre point :math:`(p_c^x, p_c^y, p_c^z)`.
+            Center point :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
-        1. Getting the centre point.
+        1. Getting the center point.
 
         >>> import discretisedfield as df
         ...
@@ -214,7 +214,7 @@ class Region:
         >>> p2 = (5, 15, 20)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> region.centre
+        >>> region.center
         (2.5, 7.5, 10.0)
 
         """
