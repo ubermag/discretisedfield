@@ -12,8 +12,8 @@ import discretisedfield.plotting.util as plot_util
 html_re = (
     r"<strong>Region</strong>( <i>\w+</i>)?\s*"
     r"<ul>\s*"
-    r"<li>p1 = .*</li>\s*"
-    r"<li>p2 = .*</li>\s*"
+    r"<li>pmin = .*</li>\s*"
+    r"<li>pmax = .*</li>\s*"
     r"</ul>"
 )
 
@@ -42,7 +42,7 @@ class TestRegion:
         for p1, p2 in self.valid_args:
             region = df.Region(p1=p1, p2=p2)
             assert isinstance(region, df.Region)
-            pattern = r"^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$"
+            pattern = r"^Region\(pmin=\([\d\se.,-]+\), pmax=\([\d\se.,-]+\)\)$"
             assert re.match(pattern, str(region))
 
     def test_init_invalid_args(self):
@@ -102,7 +102,7 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
-        rstr = "Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5))"
+        rstr = "Region(pmin=[-1, -4, 11], p2max=[15, 10.1, 12.5])"
         assert repr(region) == rstr
 
         assert re.match(html_re, region._repr_html_())
