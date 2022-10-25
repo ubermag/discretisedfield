@@ -78,8 +78,8 @@ class Region:
     """
 
     def __init__(self, p1, p2, unit="m", tolerance_factor=1e-12):
-        self.p1 = tuple(p1)
-        self.p2 = tuple(p2)
+        self._pmin = np.minimum(p1, p2)
+        self._pmax = np.maximum(p1, p2)
         self.unit = unit
         self.tolerance_factor = tolerance_factor
 
@@ -87,7 +87,7 @@ class Region:
             msg = f"One of the region's edge lengths is zero: {self.edges=}."
             raise ValueError(msg)
 
-    @functools.cached_property
+    @property
     def pmin(self):
         r"""Point with minimum coordinates in the region.
 
@@ -118,9 +118,9 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return np.minimum(self.p1, self.p2)
+        return self._pmin
 
-    @functools.cached_property
+    @property
     def pmax(self):
         r"""Point with maximum coordinates in the region.
 
@@ -151,7 +151,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        return np.maximum(self.p1, self.p2)
+        return self._pmax
 
     @functools.cached_property
     def edges(self):
@@ -184,7 +184,7 @@ class Region:
         (5, 15, 20)
 
         """
-        return np.abs(np.subtract(self.p1, self.p2))
+        return np.abs(np.subtract(self.pmin, self.pmax))
 
     @functools.cached_property
     def center(self):
@@ -725,8 +725,8 @@ class Region:
     def to_dict(self):
         """Convert region object to dict with items p1, p2, unit, tolerance_factor."""
         return {
-            "p1": self.p1,
-            "p2": self.p2,
+            "pmin": self.pmin,
+            "pmax": self.pmax,
             "unit": self.unit,
             "tolerance_factor": self.tolerance_factor,
         }
