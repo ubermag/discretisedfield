@@ -97,7 +97,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
             Point with minimum coordinates :math:`(p_x^\text{min},
             p_y^\text{min}, p_z^\text{min})`.
@@ -118,7 +118,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return dfu.array2tuple(np.minimum(self.p1, self.p2))
+        return np.minimum(self.p1, self.p2)
 
     @functools.cached_property
     def pmax(self):
@@ -130,7 +130,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
             Point with maximum coordinates :math:`(p_x^\text{max},
             p_y^\text{max}, p_z^\text{max})`.
@@ -151,7 +151,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        return dfu.array2tuple(np.maximum(self.p1, self.p2))
+        return np.maximum(self.p1, self.p2)
 
     @functools.cached_property
     def edges(self):
@@ -166,7 +166,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
              Edge lengths :math:`(l_{x}, l_{y}, l_{z})`.
 
@@ -184,7 +184,7 @@ class Region:
         (5, 15, 20)
 
         """
-        return dfu.array2tuple(np.abs(np.subtract(self.p1, self.p2)))
+        return np.abs(np.subtract(self.p1, self.p2))
 
     @functools.cached_property
     def center(self):
@@ -200,7 +200,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
             Center point :math:`(p_c^x, p_c^y, p_c^z)`.
 
@@ -218,7 +218,7 @@ class Region:
         (2.5, 7.5, 10.0)
 
         """
-        return dfu.array2tuple(0.5 * np.add(self.pmin, self.pmax))
+        return 0.5 * np.add(self.pmin, self.pmax)
 
     @functools.cached_property
     def volume(self):
@@ -250,7 +250,7 @@ class Region:
         100.0
 
         """
-        return dfu.array2tuple(np.prod(self.edges))
+        return np.prod(self.edges)
 
     def random_point(self):
         r"""Regions random point.
@@ -261,7 +261,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
             Random point coordinates :math:`\mathbf{p}_\text{r} =
             (p_x^\text{r}, p_y^\text{r}, p_z^\text{r})`.
@@ -286,7 +286,7 @@ class Region:
            ``discretisedfield.Region.random_point()`` method is called.
 
         """
-        return dfu.array2tuple(np.random.random(3) * self.edges + self.pmin)
+        return np.random.random(3) * self.edges + self.pmin
 
     def __repr__(self):
         r"""Representation string.
