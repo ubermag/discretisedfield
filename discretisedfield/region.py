@@ -77,9 +77,14 @@ class Region:
 
     """
 
-    def __init__(self, p1, p2, unit="m", tolerance_factor=1e-12):
+    def __init__(self, p1, p2, ndim, unit="m", tolerance_factor=1e-12):
+
+        if not (ndim == len(p1) == len(p2)):
+            raise ValueError("The length of p1 and p2 must be equal to ndim.")
+
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
+        self.ndim = ndim
         self.unit = unit
         self.tolerance_factor = tolerance_factor
 
