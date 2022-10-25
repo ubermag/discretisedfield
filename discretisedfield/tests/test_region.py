@@ -320,6 +320,10 @@ class TestRegion:
         with pytest.raises(ValueError):
             df.Region(p1=p1, p2=p2, ndim=ndim, dims=dims)
 
+        dims = "x"
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, ndim=ndim, dims=dims)
+
     def test_allclose(self):
         raise NotImplementedError()
 
