@@ -307,6 +307,19 @@ class TestRegion:
         assert isinstance(region, df.Region)
         assert region.ndim == ndim
 
+    def test_dims(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        ndim = 3
+        dims = ["x", "y", "z"]
+        region = df.Region(p1=p1, p2=p2, ndim=ndim, dims=dims)
+        assert isinstance(region, df.Region)
+        assert region.dims == ["x", "y", "z"]
+
+        dims = ["x", "y", "z", "t"]
+        with pytest.raises(ValueError):
+            df.Region(p1=p1, p2=p2, ndim=ndim, dims=dims)
+
     def test_allclose(self):
         raise NotImplementedError()
 
