@@ -15,6 +15,8 @@ from . import html
 @ts.typesystem(
     p1=ts.Vector(size=3, const=True),
     p2=ts.Vector(size=3, const=True),
+    pmin=ts.Vector(size=3, const=True),
+    pmax=ts.Vector(size=3, const=True),
     unit=ts.Name(const=True),
     tolerance_factor=ts.Scalar(expected_type=float, positive=True),
 )
@@ -77,14 +79,19 @@ class Region:
 
     """
 
-    def __init__(self, p1, p2, ndim, unit="m", tolerance_factor=1e-12):
+    def __init__(
+        self, p1, p2, ndim, dims=["x", "y", "z"], unit="m", tolerance_factor=1e-12
+    ):
 
-        if not (ndim == len(p1) == len(p2)):
-            raise ValueError("The length of p1 and p2 must be equal to ndim.")
+        if not (ndim == len(p1) == len(p2) == len(dims)):
+            raise ValueError(
+                "The length of p1, p2, and dims must all be equal to ndim."
+            )
 
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
         self.ndim = ndim
+        self.dims = dims
         self.unit = unit
         self.tolerance_factor = tolerance_factor
 
@@ -560,6 +567,7 @@ class Region:
         return self.__class__(
             p1=np.multiply(self.pmin, other),
             p2=np.multiply(self.pmax, other),
+            ndim=self.ndim,
             unit=self.unit,
         )
 
