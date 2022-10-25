@@ -62,7 +62,7 @@ class TestRegion:
                 df.Region(p1=p1, p2=p2)
             assert "is zero" in str(excinfo.value)
 
-    def test_pmin_pmax_edges_centre_volume(self):
+    def test_pmin_pmax_edges_center_volume(self):
         p1 = (0, -4, 16.5)
         p2 = (15, -6, 11)
         region = df.Region(p1=p1, p2=p2)
@@ -71,7 +71,7 @@ class TestRegion:
         assert region.pmin == (0, -6, 11)
         assert region.pmax == (15, -4, 16.5)
         assert region.edges == (15, 2, 5.5)
-        assert region.centre == (7.5, -5, 13.75)
+        assert region.center == (7.5, -5, 13.75)
         assert region.volume == 165
 
         p1 = (-10e6, 0, 0)
@@ -82,7 +82,7 @@ class TestRegion:
         assert region.pmin == (-10e6, 0, 0)
         assert region.pmax == (10e6, 1e6, 1e6)
         assert region.edges == (20e6, 1e6, 1e6)
-        assert region.centre == (0, 0.5e6, 0.5e6)
+        assert region.center == (0, 0.5e6, 0.5e6)
         assert abs(region.volume - 20 * (1e6) ** 3) < 1
 
         p1 = (-18.5e-9, 10e-9, 0)
@@ -93,7 +93,7 @@ class TestRegion:
         assert np.allclose(region.pmin, (-18.5e-9, 5e-9, -10e-9))
         assert np.allclose(region.pmax, (10e-9, 10e-9, 0))
         assert np.allclose(region.edges, (28.5e-9, 5e-9, 10e-9))
-        assert np.allclose(region.centre, (-4.25e-9, 7.5e-9, -5e-9))
+        assert np.allclose(region.center, (-4.25e-9, 7.5e-9, -5e-9))
         assert abs(region.volume - 1425 * (1e-9**3)) < 1e-30
 
     def test_repr(self):
