@@ -15,8 +15,8 @@ from . import html
 @ts.typesystem(
     p1=ts.Vector(size=3, const=True),
     p2=ts.Vector(size=3, const=True),
-    pmin=ts.Vector(size=3, const=True),
-    pmax=ts.Vector(size=3, const=True),
+    # pmin=ts.Vector(size=3, const=True),
+    # pmax=ts.Vector(size=3, const=True),
     unit=ts.Name(const=True),
     tolerance_factor=ts.Scalar(expected_type=float, positive=True),
 )
@@ -568,6 +568,7 @@ class Region:
             p1=np.multiply(self.pmin, other),
             p2=np.multiply(self.pmax, other),
             ndim=self.ndim,
+            dims=self.dims,
             unit=self.unit,
         )
 
