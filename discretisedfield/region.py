@@ -336,9 +336,7 @@ class Region:
         r"""Relational operator ``==``.
 
         Two regions are considered to be equal if they have the same minimum
-        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
-        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
-        \mathbf{p}^\text{min}_2`.
+        and maximum coordinate points, the same units, and the same dimention names.
 
         Parameters
         ----------
@@ -373,8 +371,12 @@ class Region:
 
         """
         if isinstance(other, self.__class__):
-            return np.allclose(self.pmin, other.pmin, atol=0) and np.allclose(
-                self.pmax, other.pmax, atol=0
+            return (
+                np.array_equal(self.pmin, other.pmin)
+                and np.array_equal(self.pmax, other.pmax)
+                and self.ndim == other.ndim
+                and self.dims == other.dims
+                and self.unit == other.unit
             )
 
         return False
@@ -621,6 +623,53 @@ class Region:
 
         """
         return self * other ** (-1)
+
+    def allclose(self, other):
+        r"""Check if two regions are close.
+
+        Two regions are considered to be equal if they have the same minimum
+        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
+        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
+        \mathbf{p}^\text{min}_2` within a tolerance.
+
+        Parameters
+        ----------
+        other : discretisedfield.Region
+
+            Second operand.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if two regions are equal and ``False`` otherwise.
+
+        Examples
+        --------
+        1. Usage of relational operator ``==``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> region1 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
+        >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
+        >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
+        ...
+        >>> region1.isclose(region2)
+        True
+        >>> region1.isclose(region2)
+        False
+        >>> region1.isclose(region3)
+        False
+        >>> region1.isclose(region3)
+        True
+
+        """
+        if isinstance(other, self.__class__):
+            return np.allclose(self.pmin, other.pmin, atol=0) and np.allclose(
+                self.pmax, other.pmax, atol=0
+            )
+
+        return False
 
     @property
     def mpl(self):

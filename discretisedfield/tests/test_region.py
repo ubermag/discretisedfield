@@ -325,7 +325,16 @@ class TestRegion:
             df.Region(p1=p1, p2=p2, ndim=ndim, dims=dims)
 
     def test_allclose(self):
-        raise NotImplementedError()
+        region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10), ndim=3)
+        region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10), ndim=3)
+        region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10), ndim=3)
+
+        assert isinstance(region1, df.Region)
+        assert isinstance(region2, df.Region)
+        assert isinstance(region3, df.Region)
+        assert region1.allclose(region2)
+        assert not region1.allclose(region3)
+        assert not region2.allclose(region3)
 
     def test_mpl(self):
         p1 = (-50e-9, -50e-9, 0)
