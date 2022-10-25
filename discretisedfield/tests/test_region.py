@@ -278,6 +278,15 @@ class TestRegion:
         with pytest.raises(TypeError):
             res = 5 / region
 
+    def test_units(self):
+        raise NotImplementedError()
+
+    def test_ndim(self):
+        raise NotImplementedError()
+
+    def test_allclose(self):
+        raise NotImplementedError()
+
     def test_mpl(self):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
