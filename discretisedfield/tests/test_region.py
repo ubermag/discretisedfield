@@ -53,20 +53,21 @@ class TestRegion:
 
     def test_init_zero_edge_length(self):
         args = [
-            [(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9)],
-            [(0, 101e-9, -1), (150e-9, 101e-9, 0)],
-            [(10e9, 10e3, 0), (0.01e12, 11e3, 5)],
+            [(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9), 3],
+            [(0, 101e-9, -1), (150e-9, 101e-9, 0), 3],
+            [(10e9, 10e3, 0), (0.01e12, 11e3, 5), 3],
         ]
 
-        for p1, p2 in args:
+        for p1, p2, ndim in args:
             with pytest.raises(ValueError) as excinfo:
-                df.Region(p1=p1, p2=p2)
+                df.Region(p1=p1, p2=p2, ndim=ndim)
             assert "is zero" in str(excinfo.value)
 
     def test_pmin_pmax_edges_center_volume(self):
         p1 = (0, -4, 16.5)
         p2 = (15, -6, 11)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert isinstance(region, df.Region)
         assert all(region.pmin == np.array((0, -6, 11)))
@@ -77,7 +78,8 @@ class TestRegion:
 
         p1 = (-10e6, 0, 0)
         p2 = (10e6, 1e6, 1e6)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert isinstance(region, df.Region)
         assert all(region.pmin == np.array((-10e6, 0, 0)))
@@ -88,7 +90,8 @@ class TestRegion:
 
         p1 = (-18.5e-9, 10e-9, 0)
         p2 = (10e-9, 5e-9, -10e-9)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert isinstance(region, df.Region)
         assert np.allclose(region.pmin, (-18.5e-9, 5e-9, -10e-9))
@@ -100,7 +103,8 @@ class TestRegion:
     def test_repr(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert isinstance(region, df.Region)
         rstr = "Region(pmin=[-1, -4, 11], p2max=[15, 10.1, 12.5])"
@@ -109,9 +113,9 @@ class TestRegion:
         assert re.match(html_re, region._repr_html_())
 
     def test_eq(self):
-        region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
-        region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
-        region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10))
+        region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10), ndim=3)
+        region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10), ndim=3)
+        region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10), ndim=3)
 
         assert isinstance(region1, df.Region)
         assert isinstance(region2, df.Region)
@@ -124,10 +128,11 @@ class TestRegion:
     def test_tolerance_factor(self):
         p1 = (0, 0, 0)
         p2 = (100e-9, 100e-9, 100e-9)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
         assert np.isclose(region.tolerance_factor, 1e-12)
 
-        region = df.Region(p1=p1, p2=p2, tolerance_factor=1e-3)
+        region = df.Region(p1=p1, p2=p2, ndim=ndim, tolerance_factor=1e-3)
         assert np.isclose(region.tolerance_factor, 1e-3)
         region.tolerance_factor = 1e-6
         assert np.isclose(region.tolerance_factor, 1e-6)
@@ -135,7 +140,8 @@ class TestRegion:
     def test_contains(self):
         p1 = (0, 10e-9, 0)
         p2 = (10e-9, 0, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert isinstance(region, df.Region)
         tol = np.min(region.edges) * region.tolerance_factor
@@ -181,11 +187,13 @@ class TestRegion:
         # x-direction
         p11 = (0, 0, 0)
         p12 = (10e-9, 50e-9, 20e-9)
-        region1 = df.Region(p1=p11, p2=p12)
+        ndim = 3
+        region1 = df.Region(p1=p11, p2=p12, ndim=ndim)
 
         p21 = (20e-9, 0, 0)
         p22 = (30e-9, 50e-9, 20e-9)
-        region2 = df.Region(p1=p21, p2=p22)
+        ndim = 3
+        region2 = df.Region(p1=p21, p2=p22, ndim=ndim)
 
         res = region1 | region2
 
@@ -197,11 +205,13 @@ class TestRegion:
         # y-direction
         p11 = (0, 0, 0)
         p12 = (10e-9, 50e-9, 20e-9)
-        region1 = df.Region(p1=p11, p2=p12)
+        ndim = 3
+        region1 = df.Region(p1=p11, p2=p12, ndim=ndim)
 
         p21 = (0, -50e-9, 0)
         p22 = (10e-9, -10e-9, 20e-9)
-        region2 = df.Region(p1=p21, p2=p22)
+        ndim = 3
+        region2 = df.Region(p1=p21, p2=p22, ndim=ndim)
 
         res = region1 | region2
 
@@ -213,11 +223,13 @@ class TestRegion:
         # z-direction
         p11 = (0, 0, 0)
         p12 = (100e-9, 50e-9, 20e-9)
-        region1 = df.Region(p1=p11, p2=p12)
+        ndim = 3
+        region1 = df.Region(p1=p11, p2=p12, ndim=ndim)
 
         p21 = (0, 0, 20e-9)
         p22 = (100e-9, 50e-9, 30e-9)
-        region2 = df.Region(p1=p21, p2=p22)
+        ndim = 3
+        region2 = df.Region(p1=p21, p2=p22, ndim=ndim)
 
         res = region1 | region2
 
@@ -229,11 +241,13 @@ class TestRegion:
         # Exceptions
         p11 = (0, 0, 0)
         p12 = (100e-9, 50e-9, 20e-9)
-        region1 = df.Region(p1=p11, p2=p12)
+        ndim = 3
+        region1 = df.Region(p1=p11, p2=p12, ndim=ndim)
 
         p21 = (0, 0, 10e-9)
         p22 = (100e-9, 50e-9, 30e-9)
-        region2 = df.Region(p1=p21, p2=p22)
+        ndim = 3
+        region2 = df.Region(p1=p21, p2=p22, ndim=ndim)
 
         with pytest.raises(ValueError):
             res = region1 | region2
@@ -244,20 +258,23 @@ class TestRegion:
     def test_multiplier(self):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert region.multiplier == 1e-9
 
         p1 = (0, 0, 0)
         p2 = (1e-5, 1e-4, 1e-5)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert region.multiplier == 1e-6
 
     def test_mul_truediv(self):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         res = region * 2
         assert isinstance(res, df.Region)
@@ -283,7 +300,12 @@ class TestRegion:
         raise NotImplementedError()
 
     def test_ndim(self):
-        raise NotImplementedError()
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
+        assert isinstance(region, df.Region)
+        assert region.ndim == ndim
 
     def test_allclose(self):
         raise NotImplementedError()
@@ -291,7 +313,8 @@ class TestRegion:
     def test_mpl(self):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert isinstance(region, df.Region)
 
@@ -316,7 +339,8 @@ class TestRegion:
     def test_k3d(self):
         p1 = (-50e9, -50e9, 0)
         p2 = (50e9, 50e9, 20e9)
-        region = df.Region(p1=p1, p2=p2)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2, ndim=ndim)
 
         assert isinstance(region, df.Region)
 
