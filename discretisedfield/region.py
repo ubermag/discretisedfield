@@ -874,7 +874,6 @@ class Region:
         return {
             "pmin": self.pmin,
             "pmax": self.pmax,
-            "ndim": self.ndim,
             "dims": self.dims,
             "units": self.units,
             "tolerance_factor": self.tolerance_factor,
