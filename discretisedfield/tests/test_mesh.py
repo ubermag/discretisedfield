@@ -890,3 +890,14 @@ class TestMesh:
         assert mesh2.subregions == {}
         mesh2.load_subregions(str(tmp_path / "mesh.json"))
         assert mesh2.subregions == subregions
+
+    def test_coordinate_field(self):
+        for p1, p2, n, cell in self.valid_args:
+            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+            cfield = mesh.coordinate_field()
+            assert isinstance(cfield, df.Field)
+            manually = df.Field(mesh, dim=3, value=lambda p: p)
+            assert cfield.allclose(manually)
+            assert np.allclose(cfield.array[:, 0, 0, 0], mesh.points.x)
+            assert np.allclose(cfield.array[0, :, 0, 1], mesh.points.y)
+            assert np.allclose(cfield.array[0, 0, :, 2], mesh.points.z)
