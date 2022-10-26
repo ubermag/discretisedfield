@@ -107,7 +107,7 @@ class Region:
 
         if dims is None:
             if ndim == 3:
-                dims = ("x", "y", "z")
+                dims = ["x", "y", "z"]
             else:
                 dims = [f"x{i}" for i in range(ndim)]
 

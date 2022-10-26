@@ -317,9 +317,12 @@ class TestRegion:
     def test_dims(self):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
-        dims = ["x", "y", "z"]
+        dims = ["a", "b", "c"]
         region = df.Region(p1=p1, p2=p2, dims=dims)
         assert isinstance(region, df.Region)
+        assert region.dims == dims
+
+        region = df.Region(p1=p1, p2=p2)
         assert region.dims == ["x", "y", "z"]
 
         dims = ["x", "y", "z", "t"]
@@ -327,6 +330,10 @@ class TestRegion:
             df.Region(p1=p1, p2=p2, dims=dims)
 
         dims = "x"
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, dims=dims)
+
+        dims = ["x", 1, "z"]
         with pytest.raises(TypeError):
             df.Region(p1=p1, p2=p2, dims=dims)
 
