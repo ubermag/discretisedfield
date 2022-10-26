@@ -180,7 +180,13 @@ class Region:
                 f" dimensions: {self.ndim=}. Not len(pmin)={len(value)}."
             )
 
+        old_pmin = self._pmin
         self._pmin = np.array(value)
+        if not np.all(self.edges):
+            self._pmin = old_pmin
+            raise ValueError(
+                f"One of the region's edge lengths is zero: {self.edges=}."
+            )
 
     @property
     def pmax(self):
@@ -231,7 +237,13 @@ class Region:
                 f" dimensions: {self.ndim=}. Not len(pmax)={len(value)}."
             )
 
+        old_pmax = self._pmax
         self._pmax = np.array(value)
+        if not np.all(self.edges):
+            self._pmax = old_pmax
+            raise ValueError(
+                f"One of the region's edge lengths is zero: {self.edges=}."
+            )
 
     @property
     def ndim(self):
