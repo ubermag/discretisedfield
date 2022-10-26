@@ -281,16 +281,28 @@ class TestRegion:
     def test_units(self):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
-        units = ["m", "m", "m"]
+        units = ["a", "b", "c"]
         region = df.Region(p1=p1, p2=p2, units=units)
         assert isinstance(region, df.Region)
         assert region.units == units
+
+        region = df.Region(p1=p1, p2=p2)
+        assert isinstance(region, df.Region)
+        assert region.units == ["m", "m", "m"]
 
         units = ["m"]
         with pytest.raises(ValueError):
             df.Region(p1=p1, p2=p2, units=units)
 
         units = "m"
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, units=units)
+
+        units = ["m", "m", "m", "m"]
+        with pytest.raises(ValueError):
+            df.Region(p1=p1, p2=p2, units=units)
+
+        units = ["m", 1, "m"]
         with pytest.raises(TypeError):
             df.Region(p1=p1, p2=p2, units=units)
 
