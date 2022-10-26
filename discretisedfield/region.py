@@ -764,7 +764,12 @@ class Region:
         """
         return self * other ** (-1)
 
-    def allclose(self, other):
+    def allclose(
+        self,
+        other,
+        atol=None,
+        rtol=None,
+    ):
         r"""Check if two regions are close.
 
         Two regions are considered to be equal if they have the same minimum
@@ -805,9 +810,19 @@ class Region:
 
         """
         if isinstance(other, self.__class__):
-            return np.allclose(self.pmin, other.pmin, atol=0) and np.allclose(
-                self.pmax, other.pmax, atol=0
-            )
+            if atol is None:
+                atol = np.min(self.edges) * self.tolerance_factor
+            elif not isinstance(atol, numbers.Number):
+                raise TypeError(f"{type(atol)=} is not a number.")
+
+            if rtol is None:
+                rtol = np.min(self.edges) * self.tolerance_factor
+            elif not isinstance(rtol, numbers.Number):
+                raise TypeError(f"{type(rtol)=} is not a number.")
+
+            return np.allclose(
+                self.pmin, other.pmin, atol=atol, rtol=rtol
+            ) and np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)
 
         return False
 
