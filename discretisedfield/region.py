@@ -118,6 +118,8 @@ class Region:
                     "dims must have the same length as p1 and p2."
                     f" Not dims={dims} and p1={p1}."
                 )
+        elif self._ndim == 3:
+            dims = ("x", "y", "z")
         else:
             dims = [f"x{i}" for i in range(self._ndim)]
 
