@@ -3,7 +3,6 @@ import functools
 import numbers
 
 import numpy as np
-import ubermagutil.typesystem as ts
 import ubermagutil.units as uu
 
 import discretisedfield.plotting as dfp
@@ -12,14 +11,6 @@ import discretisedfield.util as dfu
 from . import html
 
 
-@ts.typesystem(
-    p1=ts.Vector(size=3, const=True),
-    p2=ts.Vector(size=3, const=True),
-    # pmin=ts.Vector(size=3, const=True),
-    # pmax=ts.Vector(size=3, const=True),
-    # units=ts.Name(const=True),
-    tolerance_factor=ts.Scalar(expected_type=float, positive=True),
-)
 class Region:
     r"""Region.
 
