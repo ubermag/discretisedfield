@@ -101,6 +101,12 @@ class Region:
                 f" len(p1)={len(p1)} and len(p2)={len(p2)}."
             )
 
+        if not isinstance(tolerance_factor, numbers.Number):
+            raise TypeError(
+                "tolerance_factor must be of type numbers.Number. Not"
+                f" tolerance_factor={type(tolerance_factor)}."
+            )
+
         # TODO: Remove for ndim != 3 functionality.
         if ndim != 3:
             raise NotImplementedError("Only 3D regions are supported at the moment.")
@@ -158,6 +164,24 @@ class Region:
         """
         return self._pmin
 
+    @pmin.setter
+    def pmin(self, value):
+        if not isinstance(value, (tuple, list, np.ndarray)):
+            raise TypeError(
+                "pmin must be of type tuple, list, or np.ndarray. Not"
+                f" type(pmin)={type(value)}."
+            )
+        if not all(isinstance(i, numbers.Number) for i in value):
+            raise TypeError("pmin can only contain elements of type numbers.Number.")
+
+        if not len(value) == self.ndim:
+            raise ValueError(
+                "The length of pmin must be the same as the number of"
+                f" dimensions: {self.ndim=}. Not len(pmin)={len(value)}."
+            )
+
+        self._pmin = np.array(value)
+
     @property
     def pmax(self):
         r"""Point with maximum coordinates in the region.
@@ -190,6 +214,24 @@ class Region:
 
         """
         return self._pmax
+
+    @pmax.setter
+    def pmax(self, value):
+        if not isinstance(value, (tuple, list, np.ndarray)):
+            raise TypeError(
+                "pmax must be of type tuple, list, or np.ndarray. Not"
+                f" type(pmax)={type(value)}."
+            )
+        if not all(isinstance(i, numbers.Number) for i in value):
+            raise TypeError("pmax can only contain elements of type numbers.Number.")
+
+        if not len(value) == self.ndim:
+            raise ValueError(
+                "The length of pmax must be the same as the number of"
+                f" dimensions: {self.ndim=}. Not len(pmax)={len(value)}."
+            )
+
+        self._pmax = np.array(value)
 
     @property
     def ndim(self):
