@@ -1,5 +1,4 @@
 import collections
-import functools
 import numbers
 
 import numpy as np
@@ -151,8 +150,9 @@ class Region:
         self.tolerance_factor = tolerance_factor
 
         if not np.all(self.edges):
-            msg = f"One of the region's edge lengths is zero: {self.edges=}."
-            raise ValueError(msg)
+            raise ValueError(
+                f"One of the region's edge lengths is zero: {self.edges=}."
+            )
 
     @property
     def pmin(self):
@@ -250,7 +250,7 @@ class Region:
         """
         return len(self.pmin)
 
-    @functools.cached_property
+    @property
     def edges(self):
         r"""Region's edge lengths.
 
@@ -283,7 +283,7 @@ class Region:
         """
         return np.abs(np.subtract(self.pmin, self.pmax))
 
-    @functools.cached_property
+    @property
     def center(self):
         r"""Center point.
 
@@ -317,7 +317,7 @@ class Region:
         """
         return 0.5 * np.add(self.pmin, self.pmax)
 
-    @functools.cached_property
+    @property
     def volume(self):
         r"""Region's volume.
 
@@ -594,7 +594,7 @@ class Region:
             msg = "Cannot find facing surface."
             raise ValueError(msg)
 
-    @functools.cached_property
+    @property
     def multiplier(self):
         """Compute multiplier for the region."""
         return uu.si_max_multiplier(self.edges)
