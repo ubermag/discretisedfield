@@ -253,6 +253,29 @@ class TestMesh:
         assert mesh1 != mesh3
         assert mesh2 != mesh3
 
+    def test_allclose(self):
+        p1 = (0, 0, 0)
+        p2 = (10, 10, 10)
+        n = (1, 1, 1)
+        mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
+        mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
+
+        assert mesh1.allclose(mesh2)
+
+        p1 = (0, 0, 0)
+        p2 = (10 + 1e-12, 10 + 2e-13, 10 + 3e-12)
+        n = (1, 1, 1)
+        atol = 1e-8
+        rtol = 1e-5
+        mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
+
+        assert mesh1.allclose(mesh3, rtol=rtol, atol=atol)
+
+        p2 = (10 + 1e-9, 10 + 2e-7, 10 + 3e-8)
+        mesh4 = df.Mesh(p1=p1, p2=p2, n=n)
+
+        assert not mesh1.allclose(mesh4, rtol=rtol, atol=atol)
+
     def test_repr(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
