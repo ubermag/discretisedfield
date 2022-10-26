@@ -593,6 +593,45 @@ class TestMesh:
             assert mesh1 | mesh4 is False
             assert mesh1 | mesh1 is True
 
+    def test_is_aligned(self):
+        p1 = (-50e-9, -25e-9, 0)
+        p2 = (50e-9, 25e-9, 5e-9)
+        cell = (5e-9, 5e-9, 5e-9)
+        mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        p1 = (-45e-9, -20e-9, 0)
+        p2 = (10e-9, 20e-9, 5e-9)
+        cell = (5e-9, 5e-9, 5e-9)
+        mesh2 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        p1 = (-42e-9, -20e-9, 0)
+        p2 = (13e-9, 20e-9, 5e-9)
+        cell = (5e-9, 5e-9, 5e-9)
+        mesh3 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        p1 = (-50e-9, -25e-9, 0)
+        p2 = (50e-9, 25e-9, 5e-9)
+        cell = (2.5e-9, 2.5e-9, 2.5e-9)
+        mesh4 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+        assert mesh1.is_aligned(mesh2) is True
+        assert mesh1.is_aligned(mesh3) is False
+        assert mesh1.is_aligned(mesh4) is False
+        assert mesh1.is_aligned(mesh1) is True
+
+        # Test tolerance
+        tol = 1e-12
+        mesh5 = df.Mesh(p1=(0, 0, 0), p2=(20e-9, 20e-9, 20e-9), cell=(5e-9, 5e-9, 5e-9))
+        mesh6 = df.Mesh(
+            p1=(0 + 1e-13, 0, 0), p2=(20e-9, 20e-9, 20e-9), cell=(5e-9, 5e-9, 5e-9)
+        )
+        mesh7 = df.Mesh(
+            p1=(0, 0, 0 + 1e-10), p2=(20e-9, 20e-9, 20e-9), cell=(5e-9, 5e-9, 5e-9)
+        )
+
+        assert mesh5.is_aligned(mesh6, tol) is True
+        assert mesh5.is_aligned(mesh7, tol) is False
+
     def test_getitem(self):
         # Subregions disctionary
         p1 = (0, 0, 0)
