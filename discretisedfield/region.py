@@ -105,42 +105,13 @@ class Region:
         if ndim != 3:
             raise NotImplementedError("Only 3D regions are supported at the moment.")
 
-        if dims is not None:
-            if not isinstance(dims, (tuple, list)):
-                raise TypeError(
-                    f"dims must be of type tuple or list. Not {type(dims)}."
-                )
+        if dims is None:
+            if ndim == 3:
+                dims = ("x", "y", "z")
+            else:
+                dims = [f"x{i}" for i in range(ndim)]
 
-            if not all(isinstance(i, str) for i in dims):
-                msg = "dims can only contain elements of type str."
-                raise TypeError(msg)
-
-            if len(dims) != ndim:
-                raise ValueError(
-                    "dims must have the same length as p1 and p2."
-                    f" Not len(dims)={len(dims)} and ndim={ndim}."
-                )
-        elif ndim == 3:
-            dims = ("x", "y", "z")
-        else:
-            dims = [f"x{i}" for i in range(ndim)]
-
-        if units is not None:
-            if not isinstance(units, (tuple, list)):
-                raise TypeError(
-                    f"units must be of type tuple or list. Not {type(units)}."
-                )
-
-            if not all(isinstance(i, str) for i in units):
-                msg = "units can only contain elements of type str."
-                raise TypeError(msg)
-
-            if len(units) != ndim:
-                raise ValueError(
-                    "units must have the same length as p1 and p2."
-                    f" Not len(units)={len(units)} and ndim={ndim}."
-                )
-        else:
+        if units is None:
             units = ["m" for i in range(ndim)]
 
         self._pmin = np.minimum(p1, p2)
@@ -249,6 +220,92 @@ class Region:
 
         """
         return len(self.pmin)
+
+    @property
+    def dims(self):
+        r"""Names of the region's dimensions.
+
+        Returns
+        -------
+        tuple, list of str
+
+            Names of the region's dimensions.
+
+        Examples
+        --------
+        1. Getting region's dimension names.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, -0.1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> region.dims
+        ('x', 'y', 'z')
+
+        """
+        return self._dims
+
+    @dims.setter
+    def dims(self, dims):
+        if not isinstance(dims, (tuple, list)):
+            raise TypeError(f"dims must be of type tuple or list. Not {type(dims)}.")
+
+        if not all(isinstance(i, str) for i in dims):
+            msg = "dims can only contain elements of type str."
+            raise TypeError(msg)
+
+        if len(dims) != self.ndim:
+            raise ValueError(
+                "dims must have the same length as p1 and p2."
+                f" Not len(dims)={len(dims)} and ndim={self.ndim}."
+            )
+
+        self._dims = dims
+
+    @property
+    def units(self):
+        r"""Units of the region's dimensions.
+
+        Returns
+        -------
+        tuple, list of str
+
+            Units of the region's dimensions.
+
+        Examples
+        --------
+        1. Getting region's dimension units.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, -0.1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> region.units
+        ('m', 'm', 'm')
+
+        """
+        return self._units
+
+    @units.setter
+    def units(self, units):
+        if not isinstance(units, (tuple, list)):
+            raise TypeError(f"units must be of type tuple or list. Not {type(units)}.")
+
+        if not all(isinstance(i, str) for i in units):
+            msg = "units can only contain elements of type str."
+            raise TypeError(msg)
+
+        if len(units) != self.ndim:
+            raise ValueError(
+                "units must have the same length as p1 and p2."
+                f" Not len(units)={len(units)} and ndim={self.ndim}."
+            )
+
+        self._units = units
 
     @property
     def edges(self):
