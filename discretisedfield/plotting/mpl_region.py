@@ -85,6 +85,8 @@ class MplRegion(Mpl):
         >>> region.mpl()
 
         """
+        if self.region.ndim != 3:
+            raise ValueError("Only 3 dimentional regions can be plotted.")
         ax = self._setup_axes(ax, figsize, projection="3d")
 
         multiplier = self._setup_multiplier(multiplier)
@@ -114,5 +116,7 @@ class MplRegion(Mpl):
         return self.region.multiplier if multiplier is None else multiplier
 
     def _axis_labels(self, ax, multiplier):
-        units = rf" ({uu.rsi_prefixes[multiplier]}{self.region.units})"
-        ax.set(xlabel=f"x {units[0]}", ylabel=f"y {units[1]}", zlabel=f"z {units[2]}")
+        unit_x = rf" ({uu.rsi_prefixes[multiplier]}{self.region.units[0]})"
+        unit_y = rf" ({uu.rsi_prefixes[multiplier]}{self.region.units[1]})"
+        unit_z = rf" ({uu.rsi_prefixes[multiplier]}{self.region.units[2]})"
+        ax.set(xlabel=f"x {unit_x}", ylabel=f"y {unit_y}", zlabel=f"z {unit_z}")
