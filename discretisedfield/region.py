@@ -462,42 +462,6 @@ class Region:
         """
         return np.prod(self.edges)
 
-    def random_point(self):
-        r"""Regions random point.
-
-        The use of this function is mostly for writing tests. This method is
-        not a property and it is called as
-        ``discretisedfield.Region.random_point()``.
-
-        Returns
-        -------
-        numpy.ndarray (3,)
-
-            Random point coordinates :math:`\mathbf{p}_\text{r} =
-            (p_x^\text{r}, p_y^\text{r}, p_z^\text{r})`.
-
-        Examples
-        --------
-        1. Generating a random point in the region.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (200e-9, 200e-9, 1e-9)
-        >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> region.random_point()
-        (...)
-
-        .. note::
-
-           In this example, ellipsis is used instead of an exact tuple because
-           the result differs each time
-           ``discretisedfield.Region.random_point()`` method is called.
-
-        """
-        return np.random.random(3) * self.edges + self.pmin
-
     def __repr__(self):
         r"""Representation string.
 
