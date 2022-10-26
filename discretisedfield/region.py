@@ -74,21 +74,73 @@ class Region:
         self,
         p1,
         p2,
-        ndim=3,
-        dims=["x", "y", "z"],
-        units=["m", "m", "m"],
+        dims=None,
+        units=None,
         tolerance_factor=1e-12,
     ):
 
-        if not (ndim == len(p1) == len(p2) == len(dims) == len(units)):
-            raise ValueError(
-                "The length of p1, p2, units, and dims must all be equal and equal to"
-                " ndim."
+        if not isinstance(p1, (tuple, list, np.ndarray)) or not isinstance(
+            p2, (tuple, list, np.ndarray)
+        ):
+            raise TypeError(
+                "p1 and p2 must be of type tuple, list, or np.ndarray. Not"
+                f" p1={type(p1)} and p2={type(p2)}."
             )
+
+        if not all(isinstance(i, numbers.Number) for i in p1):
+            msg = "p1 can only contain elements of type numbers.Number."
+            raise TypeError(msg)
+
+        if not all(isinstance(i, numbers.Number) for i in p2):
+            msg = "p2 can only contain elements of type numbers.Number."
+            raise TypeError(msg)
+
+        if not (len(p1) == len(p2)):
+            raise ValueError(
+                "The length of p1 and p2 must be the same. Not"
+                f" len(p1)={len(p1)} and len(p2)={len(p2)}."
+            )
+
+        self._ndim = len(p1)
+
+        if dims is not None:
+            if not isinstance(dims, (tuple, list)):
+                raise TypeError(
+                    f"dims must be of type tuple or list. Not {type(dims)}."
+                )
+
+            if not all(isinstance(i, str) for i in dims):
+                msg = "dims can only contain elements of type str."
+                raise TypeError(msg)
+
+            if len(dims) != self._ndim:
+                raise ValueError(
+                    "dims must have the same length as p1 and p2."
+                    f" Not dims={dims} and p1={p1}."
+                )
+        else:
+            dims = [f"x{i}" for i in range(self._ndim)]
+
+        if units is not None:
+            if not isinstance(units, (tuple, list)):
+                raise TypeError(
+                    f"units must be of type tuple or list. Not {type(units)}."
+                )
+
+            if not all(isinstance(i, str) for i in units):
+                msg = "units can only contain elements of type str."
+                raise TypeError(msg)
+
+            if len(units) != self._ndim:
+                raise ValueError(
+                    "units must have the same length as p1 and p2."
+                    f" Not len(units)={len(units)} and ndim={self._ndim}."
+                )
+        else:
+            units = ["m" for i in range(self._ndim)]
 
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
-        self.ndim = ndim
         self.dims = dims
         self.units = units
         self.tolerance_factor = tolerance_factor
@@ -162,6 +214,36 @@ class Region:
 
         """
         return self._pmax
+
+    @property
+    def ndim(self):
+        r"""Number of dimentions.
+
+        Calculates the number of dimensions of the region.
+
+        Returns
+        -------
+        int
+
+            Number of dimensions in the region.
+
+        Examples
+        --------
+        1. Getting region's point with minimum coordinates.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, -0.1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> region.ndim
+        3
+
+        .. seealso:: :py:func:`~discretisedfield.Region.pmax`
+
+        """
+        return self._ndim
 
     @functools.cached_property
     def edges(self):
@@ -558,7 +640,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
 
         """
-        if not isinstance(other, numbers.Real):
+        if not isinstance(other, numbers.Number):
             msg = (
                 f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
             )
@@ -567,7 +649,6 @@ class Region:
         return self.__class__(
             p1=np.multiply(self.pmin, other),
             p2=np.multiply(self.pmax, other),
-            ndim=self.ndim,
             dims=self.dims,
             units=self.units,
         )
