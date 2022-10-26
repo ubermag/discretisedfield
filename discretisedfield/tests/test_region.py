@@ -48,7 +48,7 @@ class TestRegion:
     def test_init_invalid_args(self):
         for p1, p2 in self.invalid_args:
             with pytest.raises((TypeError, ValueError)):
-                df.Region(p1=p1, p2=p2)  # Raised by descriptors.
+                df.Region(p1=p1, p2=p2)
 
     def test_init_zero_edge_length(self):
         args = [
@@ -68,10 +68,10 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
-        assert all(region.pmin == np.array((0, -6, 11)))
-        assert all(region.pmax == np.array((15, -4, 16.5)))
-        assert all(region.edges == np.array((15, 2, 5.5)))
-        assert all(region.center == np.array((7.5, -5, 13.75)))
+        assert np.allclose(region.pmin, (0, -6, 11))
+        assert np.allclose(region.pmax, (15, -4, 16.5))
+        assert np.allclose(region.edges, (15, 2, 5.5))
+        assert np.allclose(region.center, (7.5, -5, 13.75))
         assert region.volume == 165
 
         p1 = (-10e6, 0, 0)
@@ -79,10 +79,10 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
-        assert all(region.pmin == np.array((-10e6, 0, 0)))
-        assert all(region.pmax == np.array((10e6, 1e6, 1e6)))
-        assert all(region.edges == np.array((20e6, 1e6, 1e6)))
-        assert all(region.center == np.array((0, 0.5e6, 0.5e6)))
+        assert np.allclose(region.pmin, (-10e6, 0, 0))
+        assert np.allclose(region.pmax, (10e6, 1e6, 1e6))
+        assert np.allclose(region.edges, (20e6, 1e6, 1e6))
+        assert np.allclose(region.center, (0, 0.5e6, 0.5e6))
         assert abs(region.volume - 20 * (1e6) ** 3) < 1
 
         p1 = (-18.5e-9, 10e-9, 0)

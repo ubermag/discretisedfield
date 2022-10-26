@@ -95,13 +95,16 @@ class Region:
             msg = "p2 can only contain elements of type numbers.Number."
             raise TypeError(msg)
 
+        ndim = len(p1)
         if not (len(p1) == len(p2)):
             raise ValueError(
                 "The length of p1 and p2 must be the same. Not"
                 f" len(p1)={len(p1)} and len(p2)={len(p2)}."
             )
 
-        self._ndim = len(p1)
+        # TODO: Remove for ndim != 3 functionality.
+        if ndim != 3:
+            raise NotImplementedError("Only 3D regions are supported at the moment.")
 
         if dims is not None:
             if not isinstance(dims, (tuple, list)):
@@ -113,15 +116,15 @@ class Region:
                 msg = "dims can only contain elements of type str."
                 raise TypeError(msg)
 
-            if len(dims) != self._ndim:
+            if len(dims) != ndim:
                 raise ValueError(
                     "dims must have the same length as p1 and p2."
-                    f" Not dims={dims} and p1={p1}."
+                    f" Not len(dims)={len(dims)} and ndim={ndim}."
                 )
-        elif self._ndim == 3:
+        elif ndim == 3:
             dims = ("x", "y", "z")
         else:
-            dims = [f"x{i}" for i in range(self._ndim)]
+            dims = [f"x{i}" for i in range(ndim)]
 
         if units is not None:
             if not isinstance(units, (tuple, list)):
@@ -133,13 +136,13 @@ class Region:
                 msg = "units can only contain elements of type str."
                 raise TypeError(msg)
 
-            if len(units) != self._ndim:
+            if len(units) != ndim:
                 raise ValueError(
                     "units must have the same length as p1 and p2."
-                    f" Not len(units)={len(units)} and ndim={self._ndim}."
+                    f" Not len(units)={len(units)} and ndim={ndim}."
                 )
         else:
-            units = ["m" for i in range(self._ndim)]
+            units = ["m" for i in range(ndim)]
 
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
@@ -245,7 +248,7 @@ class Region:
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return self._ndim
+        return len(self.pmin)
 
     @functools.cached_property
     def edges(self):
@@ -456,7 +459,6 @@ class Region:
             return (
                 np.array_equal(self.pmin, other.pmin)
                 and np.array_equal(self.pmax, other.pmax)
-                and self.ndim == other.ndim
                 and self.dims == other.dims
                 and self.units == other.units
             )
@@ -869,8 +871,8 @@ class Region:
     def to_dict(self):
         """Convert region object to dict
 
-        Convert region object to dict with items pmin, pmax,
-        ndims, dims, units, tolerance_factor.
+        Convert region object to dict with items pmin, pmax, dims,
+        units, and tolerance_factor.
 
         """
         return {
