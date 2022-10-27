@@ -298,7 +298,7 @@ class Region:
         if units is None:
             units = ["m"] * self.ndim
         elif isinstance(units, (tuple, list)):
-            if not all(isinstance(i, str) for i in units):
+            if not all(isinstance(unit, str) for unit in units):
                 raise TypeError("units can only contain elements of type str.")
             if len(units) != self.ndim:
                 raise ValueError(
