@@ -252,7 +252,7 @@ class Region:
             else:
                 dims = [f"x{i}" for i in range(self.ndim)]
         elif isinstance(dims, (tuple, list)):
-            if not all(isinstance(i, str) for i in dims):
+            if not all(isinstance(dim, str) for dim in dims):
                 raise TypeError("dims can only contain elements of type str.")
             if len(dims) != self.ndim:
                 raise ValueError(
