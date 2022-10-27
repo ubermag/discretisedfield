@@ -307,8 +307,7 @@ class Region:
             raise TypeError(f"dims must be of type tuple or list. Not {type(dims)}.")
 
         if not all(isinstance(i, str) for i in dims):
-            msg = "dims can only contain elements of type str."
-            raise TypeError(msg)
+            raise TypeError("dims can only contain elements of type str.")
 
         if len(dims) != self.ndim:
             raise ValueError(
