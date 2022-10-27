@@ -354,7 +354,7 @@ class Region:
         if len(units) != self.ndim:
             raise ValueError(
                 "units must have the same length as p1 and p2."
-                f" Not len(units)={len(units)} and ndim={self.ndim}."
+                f" Not {len(units)=} and {self.ndim=}."
             )
 
         self._units = units
