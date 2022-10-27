@@ -769,7 +769,7 @@ class Region:
         -------
         bool
 
-            ``True`` if two regions are close and ``False`` otherwise.
+            ``True`` if two regions are equal (within floating-point accuracy) and ``False`` otherwise.
 
         Examples
         --------
