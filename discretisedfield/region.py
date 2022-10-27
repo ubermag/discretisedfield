@@ -87,8 +87,7 @@ class Region:
             )
 
         if not all(isinstance(i, numbers.Number) for i in p1):
-            msg = "p1 can only contain elements of type numbers.Number."
-            raise TypeError(msg)
+            raise TypeError("p1 can only contain elements of type numbers.Number.")
 
         if not all(isinstance(i, numbers.Number) for i in p2):
             msg = "p2 can only contain elements of type numbers.Number."
