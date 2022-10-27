@@ -803,11 +803,23 @@ class Region:
 
             Second operand.
 
+        atol : numbers.Number, optional
+
+            Absolute tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the tolerance factor.
+
+        rtol : numbers.Number, optional
+
+            Relative tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the tolerance factor.
+
         Returns
         -------
         bool
 
-            ``True`` if two regions are equal and ``False`` otherwise.
+            ``True`` if two regions are close and ``False`` otherwise.
 
         Examples
         --------
@@ -819,13 +831,13 @@ class Region:
         >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
         >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
         ...
-        >>> region1.isclose(region2)
+        >>> region1.allclose(region2)
         True
-        >>> region1.isclose(region2)
+        >>> region1.allclose(region2)
         False
-        >>> region1.isclose(region3)
+        >>> region1.allclose(region3)
         False
-        >>> region1.isclose(region3)
+        >>> region1.allclose(region3)
         True
 
         """
