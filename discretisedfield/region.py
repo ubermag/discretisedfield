@@ -98,7 +98,7 @@ class Region:
         if len(p1) != len(p2):
             raise ValueError(
                 "The length of p1 and p2 must be the same. Not"
-                f" len(p1)={len(p1)} and len(p2)={len(p2)}."
+                f" {len(p1)=} and {len(p2)=}."
             )
 
         if not isinstance(tolerance_factor, numbers.Number):
