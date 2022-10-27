@@ -328,6 +328,9 @@ class TestRegion:
         region.dims = dims
         assert region.dims == dims
 
+        region.dims = None
+        assert region.dims == ["x", "y", "z"]
+
         dims = ["x", "y", "z", "t"]
         with pytest.raises(ValueError):
             df.Region(p1=p1, p2=p2, dims=dims)
