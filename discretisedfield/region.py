@@ -1,4 +1,5 @@
 import collections
+import functools
 import numbers
 
 import numpy as np
@@ -236,7 +237,7 @@ class Region:
                 f"At least one of the region's edge lengths is zero: {edges}."
             )
 
-    @property
+    @functools.cached_property
     def ndim(self):
         r"""Number of dimentions.
 
@@ -362,7 +363,7 @@ class Region:
 
         self._units = units
 
-    @property
+    @functools.cached_property
     def edges(self):
         r"""Region's edge lengths.
 
@@ -395,7 +396,7 @@ class Region:
         """
         return np.abs(np.subtract(self.pmin, self.pmax))
 
-    @property
+    @functools.cached_property
     def center(self):
         r"""Center point.
 
@@ -429,7 +430,7 @@ class Region:
         """
         return 0.5 * np.add(self.pmin, self.pmax)
 
-    @property
+    @functools.cached_property
     def volume(self):
         r"""Region's volume.
 
