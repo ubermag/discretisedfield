@@ -118,7 +118,7 @@ class Region:
                 dims = [f"x{i}" for i in range(ndim)]
 
         if units is None:
-            units = ["m" for i in range(ndim)]
+            units = ["m"] * ndim
 
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
