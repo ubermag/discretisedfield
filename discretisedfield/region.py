@@ -95,7 +95,7 @@ class Region:
             raise TypeError(msg)
 
         ndim = len(p1)
-        if not (len(p1) == len(p2)):
+        if len(p1) != len(p2):
             raise ValueError(
                 "The length of p1 and p2 must be the same. Not"
                 f" len(p1)={len(p1)} and len(p2)={len(p2)}."
