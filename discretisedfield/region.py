@@ -109,9 +109,6 @@ class Region:
         if ndim != 3:
             raise NotImplementedError("Only 3D regions are supported at the moment.")
 
-        if units is None:
-            units = ["m"] * ndim
-
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
         self.dims = dims
@@ -347,16 +344,20 @@ class Region:
 
     @units.setter
     def units(self, units):
-        if not isinstance(units, (tuple, list)):
-            raise TypeError(f"units must be of type tuple or list. Not {type(units)}.")
-
-        if not all(isinstance(i, str) for i in units):
-            raise TypeError("units can only contain elements of type str.")
-
-        if len(units) != self.ndim:
-            raise ValueError(
-                "units must have the same length as p1 and p2."
-                f" Not {len(units)=} and {self.ndim=}."
+        if units is None:
+            units = ["m"] * self.ndim
+        elif isinstance(units, (tuple, list)):
+            if not all(isinstance(i, str) for i in units):
+                raise TypeError("units can only contain elements of type str.")
+            if len(units) != self.ndim:
+                raise ValueError(
+                    "units must have the same length as p1 and p2."
+                    f" Not {len(units)=} and {self.ndim=}."
+                )
+        else:
+            raise TypeError(
+                "units must be of type tuple, list, or None (for default behaviour)."
+                f" Not {type(units)}."
             )
 
         self._units = units

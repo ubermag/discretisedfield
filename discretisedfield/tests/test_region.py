@@ -290,6 +290,12 @@ class TestRegion:
         assert isinstance(region, df.Region)
         assert region.units == ["m", "m", "m"]
 
+        region.units = units
+        assert region.units == units
+
+        region.units = None
+        assert region.units == ["m", "m", "m"]
+
         units = ["m"]
         with pytest.raises(ValueError):
             df.Region(p1=p1, p2=p2, units=units)
@@ -305,6 +311,15 @@ class TestRegion:
         units = ["m", 1, "m"]
         with pytest.raises(TypeError):
             df.Region(p1=p1, p2=p2, units=units)
+
+        with pytest.raises(TypeError):
+            region.units = 5
+
+        with pytest.raises(TypeError):
+            region.units = ["m", 1, "m"]
+
+        with pytest.raises(ValueError):
+            region.units = ["m", "m", "m", "m"]
 
     def test_ndim(self):
         p1 = (-50e-9, -50e-9, 0)
