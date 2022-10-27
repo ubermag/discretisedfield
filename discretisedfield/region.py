@@ -154,31 +154,6 @@ class Region:
         """
         return self._pmin
 
-    @pmin.setter
-    def pmin(self, value):
-        if not isinstance(value, (tuple, list, np.ndarray)):
-            raise TypeError(
-                "pmin must be of type tuple, list, or np.ndarray. Not"
-                f" type(pmin)={type(value)}."
-            )
-        if not all(isinstance(i, numbers.Number) for i in value):
-            raise TypeError("pmin can only contain elements of type numbers.Number.")
-
-        if not len(value) == self.ndim:
-            raise ValueError(
-                "The length of pmin must be the same as the number of"
-                f" dimensions: {self.ndim=}. Not len(pmin)={len(value)}."
-            )
-
-        old_pmin = self._pmin
-        self._pmin = np.array(value)
-        if not np.all(self.edges):
-            edges = self.edges
-            self._pmin = old_pmin
-            raise ValueError(
-                f"At least one of the region's edge lengths is zero: {edges}."
-            )
-
     @property
     def pmax(self):
         r"""Point with maximum coordinates in the region.
@@ -211,31 +186,6 @@ class Region:
 
         """
         return self._pmax
-
-    @pmax.setter
-    def pmax(self, value):
-        if not isinstance(value, (tuple, list, np.ndarray)):
-            raise TypeError(
-                "pmax must be of type tuple, list, or np.ndarray. Not"
-                f" type(pmax)={type(value)}."
-            )
-        if not all(isinstance(i, numbers.Number) for i in value):
-            raise TypeError("pmax can only contain elements of type numbers.Number.")
-
-        if not len(value) == self.ndim:
-            raise ValueError(
-                "The length of pmax must be the same as the number of"
-                f" dimensions: {self.ndim=}. Not len(pmax)={len(value)}."
-            )
-
-        old_pmax = self._pmax
-        self._pmax = np.array(value)
-        if not np.all(self.edges):
-            edges = self.edges
-            self._pmax = old_pmax
-            raise ValueError(
-                f"At least one of the region's edge lengths is zero: {edges}."
-            )
 
     @functools.cached_property
     def ndim(self):

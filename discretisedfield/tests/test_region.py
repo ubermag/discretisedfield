@@ -384,32 +384,12 @@ class TestRegion:
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2)
-        region.pmin = (-100e-9, -100e-9, 0)
-        region.pmax = (100e-9, 100e-9, 40e-9)
 
-        with pytest.raises(TypeError):
-            region.pmin = 5
+        with pytest.raises(AttributeError):
+            region.pmin = (-100e-9, -100e-9, 0)
 
-        with pytest.raises(TypeError):
-            region.pmax = 5
-
-        with pytest.raises(ValueError):
-            region.pmin = (5, 5, 5, 5)
-
-        with pytest.raises(ValueError):
-            region.pmax = (5, 5, 5, 5)
-
-        with pytest.raises(TypeError):
-            region.pmin = (5, 5, "a")
-
-        with pytest.raises(TypeError):
-            region.pmax = (5, 5, "a")
-
-        with pytest.raises(ValueError):
-            region.pmin = region.pmax
-
-        with pytest.raises(ValueError):
-            region.pmax = region.pmin
+        with pytest.raises(AttributeError):
+            region.pmax = (100e-9, 100e-9, 40e-9)
 
     def test_mpl(self):
         p1 = (-50e-9, -50e-9, 0)
