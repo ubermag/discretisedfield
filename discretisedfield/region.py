@@ -346,7 +346,7 @@ class Region:
         """
         return np.abs(np.subtract(self.pmin, self.pmax))
 
-    @functools.cached_property
+    @property
     def center(self):
         r"""Center point.
 
