@@ -349,8 +349,7 @@ class Region:
             raise TypeError(f"units must be of type tuple or list. Not {type(units)}.")
 
         if not all(isinstance(i, str) for i in units):
-            msg = "units can only contain elements of type str."
-            raise TypeError(msg)
+            raise TypeError("units can only contain elements of type str.")
 
         if len(units) != self.ndim:
             raise ValueError(
