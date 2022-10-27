@@ -313,7 +313,7 @@ class Region:
 
         self._units = units
 
-    @functools.cached_property
+    @property
     def edges(self):
         r"""Region's edge lengths.
 
