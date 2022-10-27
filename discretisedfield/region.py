@@ -380,7 +380,7 @@ class Region:
         """
         return 0.5 * np.add(self.pmin, self.pmax)
 
-    @functools.cached_property
+    @property
     def volume(self):
         r"""Region's volume.
 
