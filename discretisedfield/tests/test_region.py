@@ -325,6 +325,9 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
         assert region.dims == ["x", "y", "z"]
 
+        region.dims = dims
+        assert region.dims == dims
+
         dims = ["x", "y", "z", "t"]
         with pytest.raises(ValueError):
             df.Region(p1=p1, p2=p2, dims=dims)
@@ -336,6 +339,15 @@ class TestRegion:
         dims = ["x", 1, "z"]
         with pytest.raises(TypeError):
             df.Region(p1=p1, p2=p2, dims=dims)
+
+        with pytest.raises(TypeError):
+            region.dims = 5
+
+        with pytest.raises(ValueError):
+            region.dims = ["x", "y", "z", "t"]
+
+        with pytest.raises(TypeError):
+            region.dims = ["x", 1, "z"]
 
     def test_allclose(self):
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))

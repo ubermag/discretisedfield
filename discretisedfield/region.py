@@ -109,12 +109,6 @@ class Region:
         if ndim != 3:
             raise NotImplementedError("Only 3D regions are supported at the moment.")
 
-        if dims is None:
-            if ndim == 3:
-                dims = ["x", "y", "z"]
-            else:
-                dims = [f"x{i}" for i in range(ndim)]
-
         if units is None:
             units = ["m"] * ndim
 
@@ -303,16 +297,24 @@ class Region:
 
     @dims.setter
     def dims(self, dims):
-        if not isinstance(dims, (tuple, list)):
-            raise TypeError(f"dims must be of type tuple or list. Not {type(dims)}.")
-
-        if not all(isinstance(i, str) for i in dims):
-            raise TypeError("dims can only contain elements of type str.")
-
-        if len(dims) != self.ndim:
-            raise ValueError(
-                "dims must have the same length as p1 and p2."
-                f" Not len(dims)={len(dims)} and ndim={self.ndim}."
+        # TODO: Think about correct defaults
+        if dims is None:
+            if self.ndim == 3:
+                dims = ["x", "y", "z"]
+            else:
+                dims = [f"x{i}" for i in range(self.ndim)]
+        elif isinstance(dims, (tuple, list)):
+            if not all(isinstance(i, str) for i in dims):
+                raise TypeError("dims can only contain elements of type str.")
+            if len(dims) != self.ndim:
+                raise ValueError(
+                    "dims must have the same length as p1 and p2."
+                    f" Not len(dims)={len(dims)} and ndim={self.ndim}."
+                )
+        else:
+            raise TypeError(
+                "dims must be of type tuple, list, or None (for default behaviour)."
+                f" Not {type(dims)}."
             )
 
         self._dims = dims
