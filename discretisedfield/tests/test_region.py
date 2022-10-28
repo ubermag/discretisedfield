@@ -304,17 +304,17 @@ class TestRegion:
         units = ["a", "b", "c"]
         region = df.Region(p1=p1, p2=p2, units=units)
         assert isinstance(region, df.Region)
-        assert region.units == units
+        assert region.units == tuple(units)
 
         region = df.Region(p1=p1, p2=p2)
         assert isinstance(region, df.Region)
-        assert region.units == ["m", "m", "m"]
+        assert region.units == ("m", "m", "m")
 
         region.units = units
-        assert region.units == units
+        assert region.units == tuple(units)
 
         region.units = None
-        assert region.units == ["m", "m", "m"]
+        assert region.units == ("m", "m", "m")
 
         units = ["m"]
         with pytest.raises(ValueError):
@@ -355,16 +355,16 @@ class TestRegion:
         dims = ["a", "b", "c"]
         region = df.Region(p1=p1, p2=p2, dims=dims)
         assert isinstance(region, df.Region)
-        assert region.dims == dims
+        assert region.dims == tuple(dims)
 
         region = df.Region(p1=p1, p2=p2)
-        assert region.dims == ["x", "y", "z"]
+        assert region.dims == ("x", "y", "z")
 
         region.dims = dims
-        assert region.dims == dims
+        assert region.dims == tuple(dims)
 
         region.dims = None
-        assert region.dims == ["x", "y", "z"]
+        assert region.dims == ("x", "y", "z")
 
         dims = ["x", "y", "z", "t"]
         with pytest.raises(ValueError):
