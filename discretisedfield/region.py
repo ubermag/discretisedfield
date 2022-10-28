@@ -106,7 +106,7 @@ class Region:
             )
 
         # TODO: Remove for ndim != 3 functionality.
-        if ndim != 3:
+        if len(p1) != 3:
             raise NotImplementedError("Only 3D regions are supported at the moment.")
 
         self._pmin = np.minimum(p1, p2)
