@@ -86,7 +86,7 @@ class MplRegion(Mpl):
 
         """
         if self.region.ndim != 3:
-            raise ValueError("Only 3 dimentional regions can be plotted.")
+            raise ValueError("Only 3-dimensional regions can be plotted.")
         ax = self._setup_axes(ax, figsize, projection="3d")
 
         multiplier = self._setup_multiplier(multiplier)
