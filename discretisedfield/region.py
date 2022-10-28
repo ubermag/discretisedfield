@@ -220,26 +220,26 @@ class Region:
     def dims(self):
         r"""Names of the region's dimensions.
 
-        Returns
-        -------
-        tuple of str
+                Returns
+                -------
+                tuple of str
 
-            Names of the region's dimensions.
+                    Names of the region's dimensions.
 
-        Examples
-        --------
-        1. Getting region's dimension names.
+                Examples
+                --------
+                1. Getting region's dimension names.
 
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-1.1, 2.9, 0)
-        >>> p2 = (5, 0, -0.1)
-        >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> region.dims
-        ('x', 'y', 'z')
+                >>> import discretisedfield as df
+                ...
+                >>> p1 = (-1.1, 2.9, 0)
+                >>> p2 = (5, 0, -0.1)
+                >>> region = df.Region(p1=p1, p2=p2)
+                ...
+                >>> region.dims
+                ('x', 'y', 'z')
 
-.. seealso:: :py:func:`~discretisedfield.Region.ndim`
+        .. seealso:: :py:func:`~discretisedfield.Region.ndim`
         """
         return self._dims
 
