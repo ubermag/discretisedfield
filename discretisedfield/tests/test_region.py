@@ -12,8 +12,10 @@ import discretisedfield.plotting.util as plot_util
 html_re = (
     r"<strong>Region</strong>( <i>\w+</i>)?\s*"
     r"<ul>\s*"
-    r"<li>pmin = .*</li>\s*"
-    r"<li>pmax = .*</li>\s*"
+    r"<li>pmin = \[.*\]</li>\s*"
+    r"<li>pmax = \[.*\]</li>\s*"
+    r"<li>dims = .*</li>\s*"
+    r"<li>units = .*</li>\s*"
     r"</ul>"
 )
 
@@ -102,9 +104,27 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
-        rstr = "Region(pmin=[-1, -4, 11], p2max=[15, 10.1, 12.5])"
+        rstr = (
+            "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+            " dims=['x', 'y', 'z'], units=['m', 'm', 'm'])"
+        )
         assert repr(region) == rstr
+        assert re.match(html_re, region._repr_html_())
 
+        region.units = ["nm", "nm", "s"]
+        rstr = (
+            "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+            " dims=['x', 'y', 'z'], units=['nm', 'nm', 's'])"
+        )
+        assert repr(region) == rstr
+        assert re.match(html_re, region._repr_html_())
+
+        region.dims = ["time", "space", "c"]
+        rstr = (
+            "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+            " dims=['time', 'space', 'c'], units=['nm', 'nm', 's'])"
+        )
+        assert repr(region) == rstr
         assert re.match(html_re, region._repr_html_())
 
     def test_eq(self):
