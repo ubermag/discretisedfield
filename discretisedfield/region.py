@@ -99,12 +99,6 @@ class Region:
                 f" {len(p1)=} and {len(p2)=}."
             )
 
-        if not isinstance(tolerance_factor, numbers.Number):
-            raise TypeError(
-                "tolerance_factor must be of type numbers.Number. Not"
-                f" tolerance_factor={type(tolerance_factor)}."
-            )
-
         # TODO: Remove for ndim != 3 functionality.
         if len(p1) != 3:
             raise NotImplementedError("Only 3D regions are supported at the moment.")
@@ -312,6 +306,26 @@ class Region:
             )
 
         self._units = tuple(units)
+
+    @property
+    def tolerance_factor(self):
+        r"""Tolerance factor for floating-point comparisons.
+
+        The tolerance factor is used for allclose and ``in`` if no other tolerance is
+        provided. It is multiplied with the minimum edge length of the region to obtain
+        reasonable relative and absolute tolerance.
+
+        """
+        return self._tolerance_factor
+
+    @tolerance_factor.setter
+    def tolerance_factor(self, tolerance_factor):
+        if not isinstance(tolerance_factor, numbers.Number):
+            raise TypeError(
+                "tolerance_factor must be of type numbers.Number. Not"
+                f" tolerance_factor={type(tolerance_factor)}."
+            )
+        self._tolerance_factor = tolerance_factor
 
     @property
     def edges(self):
