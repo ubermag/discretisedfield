@@ -87,17 +87,17 @@ class Region:
                 f" p1={type(p1)} and p2={type(p2)}."
             )
 
-        if not all(isinstance(i, numbers.Number) for i in p1):
-            raise TypeError("p1 can only contain elements of type numbers.Number.")
-
-        if not all(isinstance(i, numbers.Number) for i in p2):
-            raise TypeError("p2 can only contain elements of type numbers.Number.")
-
         if len(p1) != len(p2):
             raise ValueError(
                 "The length of p1 and p2 must be the same. Not"
                 f" {len(p1)=} and {len(p2)=}."
             )
+
+        if not all(isinstance(i, numbers.Number) for i in p1):
+            raise TypeError("p1 can only contain elements of type numbers.Number.")
+
+        if not all(isinstance(i, numbers.Number) for i in p2):
+            raise TypeError("p2 can only contain elements of type numbers.Number.")
 
         # TODO: Remove for ndim != 3 functionality.
         if len(p1) != 3:
@@ -246,13 +246,13 @@ class Region:
             else:
                 dims = [f"x{i}" for i in range(self.ndim)]
         elif isinstance(dims, (tuple, list)):
-            if not all(isinstance(dim, str) for dim in dims):
-                raise TypeError("dims can only contain elements of type str.")
             if len(dims) != self.ndim:
                 raise ValueError(
                     "dims must have the same length as p1 and p2."
                     f" Not len(dims)={len(dims)} and ndim={self.ndim}."
                 )
+            if not all(isinstance(dim, str) for dim in dims):
+                raise TypeError("dims can only contain elements of type str.")
         else:
             raise TypeError(
                 "dims must be of type tuple, list, or None (for default behaviour)."
@@ -292,13 +292,13 @@ class Region:
         if units is None:
             units = ["m"] * self.ndim
         elif isinstance(units, (tuple, list)):
-            if not all(isinstance(unit, str) for unit in units):
-                raise TypeError("units can only contain elements of type str.")
             if len(units) != self.ndim:
                 raise ValueError(
                     "units must have the same length as p1 and p2."
                     f" Not {len(units)=} and {self.ndim=}."
                 )
+            if not all(isinstance(unit, str) for unit in units):
+                raise TypeError("units can only contain elements of type str.")
         else:
             raise TypeError(
                 "units must be of type tuple, list, or None (for default behaviour)."
