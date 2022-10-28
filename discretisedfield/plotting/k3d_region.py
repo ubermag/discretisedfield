@@ -54,7 +54,7 @@ class K3dRegion:
 
         """
         if self.region.ndim != 3:
-            raise ValueError("Only 3 dimentional regions can be plotted.")
+            raise ValueError("Only 3-dimensional regions can be plotted.")
 
         if plot is None:
             plot = k3d.plot()
