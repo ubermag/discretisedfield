@@ -93,7 +93,6 @@ class Region:
         if not all(isinstance(i, numbers.Number) for i in p2):
             raise TypeError("p2 can only contain elements of type numbers.Number.")
 
-        ndim = len(p1)
         if len(p1) != len(p2):
             raise ValueError(
                 "The length of p1 and p2 must be the same. Not"
