@@ -188,7 +188,7 @@ class Region:
 
     @functools.cached_property
     def ndim(self):
-        r"""Number of dimentions.
+        r"""Number of dimensions.
 
         Calculates the number of dimensions of the region.
 
@@ -196,11 +196,11 @@ class Region:
         -------
         int
 
-            Number of dimensions in the region.
+            Number of dimensions of the region.
 
         Examples
         --------
-        1. Getting region's point with minimum coordinates.
+        1. Getting number of dimensions of the region.
 
         >>> import discretisedfield as df
         ...
@@ -211,7 +211,7 @@ class Region:
         >>> region.ndim
         3
 
-        .. seealso:: :py:func:`~discretisedfield.Region.pmax`
+        .. seealso:: :py:func:`~discretisedfield.Region.dims`
 
         """
         return len(self.pmin)
@@ -222,7 +222,7 @@ class Region:
 
         Returns
         -------
-        tuple, list of str
+        tuple of str
 
             Names of the region's dimensions.
 
@@ -239,6 +239,7 @@ class Region:
         >>> region.dims
         ('x', 'y', 'z')
 
+.. seealso:: :py:func:`~discretisedfield.Region.ndim`
         """
         return self._dims
 
