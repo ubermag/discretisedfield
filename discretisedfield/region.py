@@ -265,7 +265,7 @@ class Region:
                 f" Not {type(dims)}."
             )
 
-        self._dims = dims
+        self._dims = tuple(dims)
 
     @property
     def units(self):
@@ -273,7 +273,7 @@ class Region:
 
         Returns
         -------
-        tuple, list of str
+        tuple of str
 
             Units of the region's dimensions.
 
@@ -311,7 +311,7 @@ class Region:
                 f" Not {type(units)}."
             )
 
-        self._units = units
+        self._units = tuple(units)
 
     @property
     def edges(self):
@@ -448,7 +448,7 @@ class Region:
         r"""Relational operator ``==``.
 
         Two regions are considered to be equal if they have the same minimum
-        and maximum coordinate points, the same units, and the same dimention names.
+        and maximum coordinate points, the same units, and the same dimension names.
 
         Parameters
         ----------
