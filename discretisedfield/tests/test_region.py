@@ -365,8 +365,8 @@ class TestRegion:
         assert region - (10e-9, 20e-9, 30e-9) == (10e-9, 20e-9, 30e-9) - region
         assert region + (10e-9, 20e-9, 30e-9) == region - (-10e-9, -20e-9, -30e-9)
 
-        assert region.pmin == p1
-        assert region.pmax == p2
+        assert all(region.pmin == p1)
+        assert all(region.pmax == p2)
 
         region += (50e-9, 0, -10e-9)
         assert isinstance(region, df.Region)
