@@ -770,7 +770,7 @@ class Region:
             return
         elif not isinstance(other, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(other)} for {operation}.")
-        elif len(other) != len(self.pmin):  # TODO self.ndim
+        elif len(other) != self.ndim:
             raise ValueError(
                 f"Wrong length for array-like argument: {len(other)}; expected length"
                 f" {len(self.pmin)}."
