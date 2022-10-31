@@ -359,7 +359,7 @@ class Region:
         (5, 15, 20)
 
         """
-        return np.abs(np.subtract(self.pmin, self.pmax))
+        return self.pmax - self.pmin
 
     @property
     def center(self):
