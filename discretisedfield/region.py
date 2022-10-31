@@ -1,6 +1,7 @@
 import collections
 import functools
 import numbers
+import warnings
 
 import numpy as np
 import ubermagutil.units as uu
@@ -393,6 +394,14 @@ class Region:
 
         """
         return 0.5 * np.add(self.pmin, self.pmax)
+
+    @property
+    def centre(self):
+        warnings.warn(
+            "Spelling has been changed to American spelling; use 'center' instead.",
+            FutureWarning,
+        )
+        return self.center
 
     @property
     def volume(self):
