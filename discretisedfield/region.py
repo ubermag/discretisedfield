@@ -830,7 +830,10 @@ class Region:
                 self.pmin, other.pmin, atol=atol, rtol=rtol
             ) and np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)
 
-        return False
+        raise TypeError(
+            f"Unsupported {(type(other))=}; only objects of type Region are allowed for"
+            " method allclose."
+        )
 
     @property
     def mpl(self):
