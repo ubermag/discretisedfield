@@ -36,7 +36,9 @@ def check_field(field):
 
     rstr = repr(field)
     assert isinstance(rstr, str)
-    pattern = r"^Field\(Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), .+\)," r" dim=\d+\)$"
+    pattern = (
+        r"^Field\(Mesh\(Region\(pmin=\[.+\], pmax=\[.+\], .+\), .+\)," r" dim=\d+\)$"
+    )
     if field.components:
         pattern = pattern[:-3] + r", components: \(.+\)\)$"
     if field.units is not None:
