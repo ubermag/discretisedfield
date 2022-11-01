@@ -380,11 +380,11 @@ class Mesh:
             yield self.index2point(index)
 
     def axis_points(self, axis, /):
-        warnings.warn("Deprecated; use `mesh.midpoints` instead.", FutureWarning)
-        return getattr(self.midpoints, axis)
+        warnings.warn("Deprecated; use `mesh.points` instead.", FutureWarning)
+        return getattr(self.points, axis)
 
     @functools.cached_property
-    def midpoints(self):
+    def points(self):
         """Midpoints of the cells of the mesh along the three directions.
 
         This method returns a named tuple containing three numpy arrays with
@@ -409,13 +409,13 @@ class Mesh:
         >>> cell = (2, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
-        >>> mesh.midpoints.x
+        >>> mesh.points.x
         array([1., 3., 5., 7., 9.])
 
         """
-        midpoints = collections.namedtuple("midpoints", ["x", "y", "z"])
+        points = collections.namedtuple("points", ["x", "y", "z"])
 
-        return midpoints(
+        return points(
             *(
                 np.linspace(pmin + cell / 2, pmax - cell / 2, n)
                 for pmin, pmax, cell, n in zip(
