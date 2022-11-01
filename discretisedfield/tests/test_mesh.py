@@ -646,14 +646,24 @@ class TestMesh:
         tol = 1e-12
         mesh5 = df.Mesh(p1=(0, 0, 0), p2=(20e-9, 20e-9, 20e-9), cell=(5e-9, 5e-9, 5e-9))
         mesh6 = df.Mesh(
-            p1=(0 + 1e-13, 0, 0), p2=(20e-9, 20e-9, 20e-9), cell=(5e-9, 5e-9, 5e-9)
+            p1=(0 + 1e-13, 0, 0),
+            p2=(20e-9 + 1e-13, 20e-9, 20e-9),
+            cell=(5e-9, 5e-9, 5e-9),
         )
         mesh7 = df.Mesh(
-            p1=(0, 0, 0 + 1e-10), p2=(20e-9, 20e-9, 20e-9), cell=(5e-9, 5e-9, 5e-9)
+            p1=(0, 0, 0 + 1e-10),
+            p2=(20e-9, 20e-9, 20e-9 + 1e-10),
+            cell=(5e-9, 5e-9, 5e-9),
         )
 
         assert mesh5.is_aligned(mesh6, tol) is True
         assert mesh5.is_aligned(mesh7, tol) is False
+
+        # Test exceptions
+        with pytest.raises(TypeError):
+            mesh5.is_aligned(mesh6.region, tol)
+        with pytest.raises(TypeError):
+            mesh5.is_aligned(mesh6, "1e-12")
 
     def test_getitem(self):
         # Subregions disctionary
