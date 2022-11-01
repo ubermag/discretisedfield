@@ -902,6 +902,10 @@ class Mesh:
         True
 
         """
+        warnings.warn(
+            "Bitwise OR (|) operator is depricated; please use is_aligned",
+            DeprecationWarning,
+        )
         if self.cell != other.cell:
             return False
 
