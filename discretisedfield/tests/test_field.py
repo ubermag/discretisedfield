@@ -199,7 +199,12 @@ class TestField:
                 f = df.Field(mesh, dim=1, value=func, dtype=dtype)
                 check_field(f)
 
-                rp = f.mesh.region.random_point()
+                def random_point(f):
+                    return (
+                        np.random.random(3) * f.mesh.region.edges + f.mesh.region.pmin
+                    )
+
+                rp = random_point(f)
                 # Make sure to be at the centre of the cell
                 rp = f.mesh.index2point(f.mesh.point2index(rp))
                 assert f(rp) == func(rp)
@@ -209,7 +214,7 @@ class TestField:
                 f = df.Field(mesh, dim=3, value=func, dtype=dtype)
                 check_field(f)
 
-                rp = f.mesh.region.random_point()
+                rp = random_point(f)
                 rp = f.mesh.index2point(f.mesh.point2index(rp))
                 assert np.all(f(rp) == func(rp))
 
@@ -2588,10 +2593,10 @@ class TestField:
                 fxa = f.to_xarray()
                 assert isinstance(fxa, xr.DataArray)
                 assert f.dim == fxa["comp"].size
-                assert sorted([*fxa.attrs]) == ["cell", "p1", "p2", "units"]
+                assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
                 assert fxa.attrs["cell"] == f.mesh.cell
-                assert fxa.attrs["p1"] == f.mesh.region.p1
-                assert fxa.attrs["p2"] == f.mesh.region.p2
+                assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
+                assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
                     assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
@@ -2602,10 +2607,10 @@ class TestField:
                 f = df.Field(mesh, dim=1, value=value, dtype=dtype)
                 fxa = f.to_xarray()
                 assert isinstance(fxa, xr.DataArray)
-                assert sorted([*fxa.attrs]) == ["cell", "p1", "p2", "units"]
+                assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
                 assert fxa.attrs["cell"] == f.mesh.cell
-                assert fxa.attrs["p1"] == f.mesh.region.p1
-                assert fxa.attrs["p2"] == f.mesh.region.p2
+                assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
+                assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
                     assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]

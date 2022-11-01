@@ -3446,8 +3446,8 @@ class Field:
             attrs=dict(
                 units=units or self.units,
                 cell=self.mesh.cell,
-                p1=self.mesh.region.pmin,
-                p2=self.mesh.region.pmax,
+                pmin=self.mesh.region.pmin,
+                pmax=self.mesh.region.pmax,
             ),
         )
 
@@ -3570,13 +3570,13 @@ class Field:
             cell = [np.diff(xa[i].values).mean() for i in "xyz"]
 
         p1 = (
-            xa.attrs["p1"]
-            if "p1" in xa.attrs
+            xa.attrs["pmin"]
+            if "pmin" in xa.attrs
             else [xa[i].values[0] - c / 2 for i, c in zip("xyz", cell)]
         )
         p2 = (
-            xa.attrs["p2"]
-            if "p2" in xa.attrs
+            xa.attrs["pmax"]
+            if "pmax" in xa.attrs
             else [xa[i].values[-1] + c / 2 for i, c in zip("xyz", cell)]
         )
 
