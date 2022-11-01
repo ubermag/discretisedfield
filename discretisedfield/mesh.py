@@ -676,65 +676,6 @@ class Mesh:
         i2 = self.point2index(np.array(region.p2) - np.array(self.cell) / 2)
         return tuple(slice(i1[i], i2[i] + 1) for i in range(3))
 
-    def neighbours(self, index, /):
-        """Indices of discretisation cell neighbours.
-
-        Parameters
-        ----------
-        index : (3,) array_like
-
-            The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
-
-        Returns
-        -------
-        list
-
-            The list of cell's neighbour indices.
-
-        Raises
-        ------
-        ValueError
-
-            If ``index`` is outside the mesh.
-
-        Examples
-        --------
-        1. Getting cell neighbours' indices.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 1)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, bc='xz')
-        >>> mesh.neighbours((1, 0, 0))
-        [(0, 0, 0), (1, 1, 0)]
-        >>> mesh.neighbours((0, 1, 0))
-        [(1, 1, 0), (0, 0, 0)]
-
-        """
-        if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
-            msg = f"Index {index=} out of range."
-            raise ValueError(msg)
-
-        nghbrs = []
-        for axis in range(3):
-            for i in [index[axis] - 1, index[axis] + 1]:
-                nghbr_index = list(index)  # make it mutable
-                if 0 <= i <= self.n[axis] - 1:
-                    # not outside the mesh
-                    nghbr_index[axis] = i
-                elif dfu.raxesdict[axis] in self.bc:
-                    if i == -1 and self.n[axis] != 1:
-                        nghbr_index[axis] = self.n[0] - 1
-                    elif i == self.n[axis] and self.n[axis] != 1:
-                        nghbr_index[axis] = 0
-                if tuple(nghbr_index) != index:
-                    nghbrs.append(tuple(nghbr_index))
-
-        # Remove duplicates and preserve order.
-        return list(collections.OrderedDict.fromkeys(nghbrs))
-
     def line(self, *, p1, p2, n):
         """Line generator.
 
