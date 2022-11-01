@@ -599,15 +599,15 @@ class TestMesh:
 
         submesh1 = mesh["r1"]
         assert isinstance(submesh1, df.Mesh)
-        assert submesh1.region.pmin == (0, 0, 0)
-        assert submesh1.region.pmax == (50, 50, 10)
-        assert submesh1.cell == (5, 5, 5)
+        assert np.allclose(submesh1.region.pmin, (0, 0, 0))
+        assert np.allclose(submesh1.region.pmax, (50, 50, 10))
+        assert np.allclose(submesh1.cell, (5, 5, 5))
 
         submesh2 = mesh["r2"]
         assert isinstance(submesh2, df.Mesh)
-        assert submesh2.region.pmin == (50, 0, 0)
-        assert submesh2.region.pmax == (100, 50, 10)
-        assert submesh2.cell == (5, 5, 5)
+        assert np.allclose(submesh2.region.pmin, (50, 0, 0))
+        assert np.allclose(submesh2.region.pmax, (100, 50, 10))
+        assert np.allclose(submesh2.cell, (5, 5, 5))
 
         assert len(submesh1) + len(submesh2) == len(mesh)
 
@@ -620,10 +620,10 @@ class TestMesh:
 
         submesh = mesh[df.Region(p1=(0.1, 2.2, 4.01), p2=(4.9, 3.8, 5.7))]
         assert isinstance(submesh, df.Mesh)
-        assert submesh.region.pmin == (0, 2, 4)
-        assert submesh.region.pmax == (5, 4, 6)
-        assert submesh.cell == cell
-        assert submesh.n == (5, 2, 2)
+        assert np.allclose(submesh.region.pmin, (0, 2, 4))
+        assert np.allclose(submesh.region.pmax, (5, 4, 6))
+        assert np.allclose(submesh.cell, cell)
+        assert np.allclose(submesh.n, (5, 2, 2))
         assert mesh[mesh.region] == mesh
 
         p1 = (20e-9, 0, 15e-9)
