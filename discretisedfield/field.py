@@ -3352,8 +3352,8 @@ class Field:
         ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
         of the geometric dimensions are derived from ``self.mesh.midpoints``,
         and for vector field components from ``self.components``. Addtionally,
-        the values of ``self.mesh.cell``, ``self.mesh.region.p1``, and
-        ``self.mesh.region.p2`` are stored as ``cell``, ``p1``, and ``p2``
+        the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
+        ``self.mesh.region.pmax`` are stored as ``cell``, ``p1``, and ``p2``
         attributes of the DataArray. The ``units`` attribute of geometric
         dimensions is set to ``self.mesh.attributes['unit']``.
 
@@ -3446,8 +3446,8 @@ class Field:
             attrs=dict(
                 units=units or self.units,
                 cell=self.mesh.cell,
-                p1=self.mesh.region.p1,
-                p2=self.mesh.region.p2,
+                p1=self.mesh.region.pmin,
+                p2=self.mesh.region.pmax,
             ),
         )
 
