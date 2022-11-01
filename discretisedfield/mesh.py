@@ -1538,3 +1538,30 @@ class Mesh:
             description=description,
             disabled=False,
         )
+
+    def allclose(self, other, rtol=1e-05, atol=1e-08):
+        if not isinstance(other, df.Mesh):
+            raise TypeError(
+                f"Expected argument of type discretisedfield.Mesh but got {type(other)}"
+            )
+
+        if self.region.dims != other.region.dims:
+            raise ValueError("The mesh dimensions do not match.")
+
+        if (not isinstance(rtol, (int, float))) or (not isinstance(atol, (int, float))):
+            raise TypeError(
+                "Expected both rtol and atol to be either int or float but got"
+                f" {type(rtol)} and {type(atol)} respectively"
+            )
+
+        return all(
+            [
+                np.allclose(
+                    getattr(self.points, dim),
+                    getattr(other.points, dim),
+                    rtol=rtol,
+                    atol=atol,
+                )
+                for dim in self.region.dims
+            ]
+        )
