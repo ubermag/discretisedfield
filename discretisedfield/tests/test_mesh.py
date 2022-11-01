@@ -68,29 +68,19 @@ class TestMesh:
             assert isinstance(mesh1, df.Mesh)
 
             assert isinstance(mesh1.region, df.Region)
-            assert mesh1.region.p1 == p1
-            assert mesh1.region.p2 == p2
             if n is not None:
-                assert mesh1.n == n
+                assert np.allclose(mesh1.n, n)
             if cell is not None:
                 assert np.allclose(mesh1.cell, cell)
-
-            pattern = r"^Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$"
-            assert re.match(pattern, str(mesh1))
 
             mesh2 = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             assert isinstance(mesh2, df.Mesh)
 
             assert isinstance(mesh2.region, df.Region)
-            assert mesh2.region.p1 == p1
-            assert mesh2.region.p2 == p2
             if n is not None:
-                assert mesh2.n == n
+                assert np.allclose(mesh2.n, n)
             if cell is not None:
                 assert np.allclose(mesh2.cell, cell)
-
-            pattern = r"^Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$"
-            assert re.match(pattern, str(mesh2))
 
             assert mesh1 == mesh2
 
