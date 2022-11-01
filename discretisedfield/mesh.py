@@ -906,10 +906,98 @@ class Mesh:
             "Bitwise OR (|) operator is depricated; please use is_aligned",
             DeprecationWarning,
         )
+        return self.is_aligned(other)
+
+    def is_aligned(self, other, tolerance=1e-12):
+        """Check if meshes are aligned.
+
+        Two meshes are considered to be aligned if and only if:
+
+            1. They have same discretisation cells.
+
+            2. They have common cell coordinates.
+
+        for a given tolerance value.
+
+        Parameters
+        ----------
+        other : discretisedfield.Mesh
+
+            Other mesh to be checked if it is aligned with self.
+
+        tolerance : Union[int, float]
+
+            The allowed value of misalignment for Discretisation cells and cell
+            coordinates.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if meshes are aligned, ``False`` otherwise.
+
+        Examples
+        --------
+        1. Check if two meshes are aligned.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-50e-9, -25e-9, 0)
+        >>> p2 = (50e-9, 25e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region1 = df.Region(p1=p1, p2=p2)
+        >>> mesh1 = df.Mesh(region=region1, cell=cell)
+        ...
+        >>> p1 = (-45e-9, -20e-9, 0)
+        >>> p2 = (10e-9, 20e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region2 = df.Region(p1=p1, p2=p2)
+        >>> mesh2 = df.Mesh(region=region2, cell=cell)
+        ...
+        >>> p1 = (-42e-9, -20e-9, 0)
+        >>> p2 = (13e-9, 20e-9, 5e-9)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> region3 = df.Region(p1=p1, p2=p2)
+        >>> mesh3 = df.Mesh(region=region3, cell=cell)
+        ...
+        >>> mesh1.is_aligned(mesh2)
+        True
+        >>> mesh1.is_aligned(mesh3)
+        False
+        >>> mesh1.is_aligned(mesh1)
+        True
+        ...
+        >>> p_1 = (0, 0, 0)
+        >>> p_2 = (0 + 1e-13, 0, 0)
+        >>> p_3 = (0, 0, 0 + 1e-10)
+        >>> p_4 = (20e-9, 20e-9, 20e-9)
+        >>> p_5 = (20e-9 + 1e-13, 20e-9, 20e-9)
+        >>> p_6 = (20e-9, 20e-9, 20e-9 + 1e-10)
+        >>> cell = (5e-9, 5e-9, 5e-9)
+        >>> mesh4 = df.Mesh(p1=p_1, p2=p_4, cell=cell)
+        >>> mesh5 = df.Mesh(p1=p_2, p2=p_5, cell=cell)
+        >>> mesh6 = df.Mesh(p1=p_3, p2=p_6, cell=cell)
+        ...
+        >>> mesh4.is_aligned(mesh5, 1e-12)
+        True
+        >>> mesh4.is_aligned(mesh6, 1e-11)
+        False
+
+        """
+        if not isinstance(other, df.Mesh):
+            raise TypeError(
+                f"Expected argument of type discretisedfield.Mesh but got {type(other)}"
+            )
+        if not isinstance(tolerance, (int, float)):
+            raise TypeError(
+                "Expected tolerance to be either a float or an integer but got"
+                f" {type(tolerance)}"
+            )
+
         if self.cell != other.cell:
             return False
 
-        tol = 1e-12  # picometre tolerance
+        tol = tolerance
         for i in ["pmin", "pmax"]:
             diff = np.subtract(getattr(self.region, i), getattr(other.region, i))
             rem = np.remainder(abs(diff), self.cell)
