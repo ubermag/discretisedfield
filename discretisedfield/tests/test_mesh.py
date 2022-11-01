@@ -252,7 +252,8 @@ class TestMesh:
         assert isinstance(mesh, df.Mesh)
 
         rstr = (
-            "Mesh(Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5)), "
+            "Mesh(Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5], "
+            "dims=['x', 'y', 'z'], units=['m', 'm', 'm']), "
             "n=(16, 141, 3), bc=x, attributes: (unit: m, fourierspace: "
             "False, isplane: False))"
         )
