@@ -61,8 +61,8 @@ def field_to_hdf5(field, filename, save_subregions=True):
         gregion = gmesh.create_group("region")
 
         # Save everything as datasets
-        gregion.create_dataset("p1", data=field.mesh.region.p1)
-        gregion.create_dataset("p2", data=field.mesh.region.p2)
+        gregion.create_dataset("p1", data=field.mesh.region.pmin)
+        gregion.create_dataset("p2", data=field.mesh.region.pmax)
         gmesh.create_dataset("n", dtype="i4", data=field.mesh.n)
         gfield.create_dataset("dim", dtype="i4", data=field.dim)
         gfield.create_dataset("array", data=field.array)
