@@ -850,58 +850,8 @@ class Mesh:
         return plane_mesh
 
     def __or__(self, other):
-        """Check if meshes are aligned.
+        """Depricated method to check if meshes are aligned: use ``is_aligned``"""
 
-        Two meshes are considered to be aligned if and only if:
-
-            1. They have same discretisation cells.
-
-            2. They have common cell coordinates.
-
-        Parameters
-        ----------
-        other : discretisedfield.Mesh
-
-            Second operand.
-
-        Returns
-        -------
-        bool
-
-            ``True`` if meshes are aligned, ``False`` otherwise.
-
-        Examples
-        --------
-        1. Check if two meshes are aligned.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50e-9, -25e-9, 0)
-        >>> p2 = (50e-9, 25e-9, 5e-9)
-        >>> cell = (5e-9, 5e-9, 5e-9)
-        >>> region1 = df.Region(p1=p1, p2=p2)
-        >>> mesh1 = df.Mesh(region=region1, cell=cell)
-        ...
-        >>> p1 = (-45e-9, -20e-9, 0)
-        >>> p2 = (10e-9, 20e-9, 5e-9)
-        >>> cell = (5e-9, 5e-9, 5e-9)
-        >>> region2 = df.Region(p1=p1, p2=p2)
-        >>> mesh2 = df.Mesh(region=region2, cell=cell)
-        ...
-        >>> p1 = (-42e-9, -20e-9, 0)
-        >>> p2 = (13e-9, 20e-9, 5e-9)
-        >>> cell = (5e-9, 5e-9, 5e-9)
-        >>> region3 = df.Region(p1=p1, p2=p2)
-        >>> mesh3 = df.Mesh(region=region3, cell=cell)
-        ...
-        >>> mesh1 | mesh2
-        True
-        >>> mesh1 | mesh3
-        False
-        >>> mesh1 | mesh1
-        True
-
-        """
         warnings.warn(
             "Bitwise OR (|) operator is depricated; please use is_aligned",
             DeprecationWarning,
@@ -925,9 +875,9 @@ class Mesh:
 
             Other mesh to be checked if it is aligned with self.
 
-        tolerance : Union[int, float]
+        tolerance : int, float, optional
 
-            The allowed value of misalignment for Discretisation cells and cell
+            The allowed extent of misalignment for discretisation cells and cell
             coordinates.
 
         Returns
@@ -935,6 +885,13 @@ class Mesh:
         bool
 
             ``True`` if meshes are aligned, ``False`` otherwise.
+
+        Raises
+        ------
+        TypeError
+
+            If ``other`` argument is not of type ``discretisedfield.Mesh`` or if
+            ``tolerance`` argument is not of type either ``float`` or ``int``.
 
         Examples
         --------
@@ -1540,6 +1497,67 @@ class Mesh:
         )
 
     def allclose(self, other, rtol=1e-05, atol=1e-08):
+        """Check if the mesh is close enough to the other based on a tolerance.
+
+        The midpoints (``discretisedfield.Mesh.points``) along all the dimensions for
+        both the mesh are compared utilizng ``numpy.allclose``. The value of relative
+        tolerance (``rtol``) and absolute tolerance (``atol``) are passed on to
+        ``numpy.allclose`` for the comparison. If the midpoints along all the
+        dimensions are close enough simultaneously, the method returns ``True``
+        otherwise it returns ``False``.
+
+        Parameters
+        ----------
+        other : discretisedfield.Mesh
+
+            The other mesh used for comparison.
+
+        rtol : int, float, optional
+
+            Relative tolerance used to compare the mesh; passed on to ``numpy.allclose``
+            . It defaults to 1e-05.
+
+        atol : int, float, optional
+
+            Absolute tolerance used to compare the mesh; passed on to ``numpy.allclose``
+            . It defaults to 1e-08.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if other mesh is close enough, otherwise ``False``.
+
+        Raises
+        ------
+        TypeError
+
+            If the ``other`` argument is not of type ``discretisedfield.Mesh`` or if
+            ``rtol`` and ``atol`` arguments are not of type either ``float`` or ``int``.
+
+        ValueError
+
+            If the dimensions of the mesh and the other mesh does not match.
+
+        Example
+        -------
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (20e-9, 20e-9, 20e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (20e-9 + 1.2e-12, 20e-9 + 1e-13, 20e-9 + 2e-12)
+        >>> n = (10, 10, 10)
+        >>> mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
+        >>> mesh1.allclose(mesh2, rtol=1e-6, atol=1e-11)
+        True
+        >>> mesh1.allclose(mesh2, rtol=1e-6, atol=1e-13)
+        False
+
+        """
+
         if not isinstance(other, df.Mesh):
             raise TypeError(
                 f"Expected argument of type discretisedfield.Mesh but got {type(other)}"
@@ -1567,6 +1585,50 @@ class Mesh:
         )
 
     def coordinate_field(self):
+        """Create a field whose values are the mesh coordinates.
+
+        This method can be used to create a vector field with values equal to the
+        coordinates of the cell midpoints. The result is equivalent to a field created
+        with the following code:
+
+        .. code-block::
+
+            mesh = df.Mesh(...)
+            df.Field(mesh, dim=3, value=lambda point: point)
+
+        This method should be preferred over the manual creation with a callable because
+        it provides much better performance.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Field with coordinates as values.
+
+        Examples
+        --------
+        1. Create a coordinate field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(4, 2, 1), cell=(1, 1, 1))
+        >>> cfield = mesh.coordinate_field()
+        >>> cfield
+        Field(...)
+
+        2. Extract its value at position (0.5, 0.5, 0.5)
+
+        >>> cfield((0.5, 0.5, 0.5))
+        (0.5, 0.5, 0.5)
+
+        3. Compare with manually created coordinate field
+
+        >>> manually = df.Field(mesh, dim=3, value=lambda point: point)
+        >>> cfield.allclose(manually)
+        True
+
+        """
+
         field = df.Field(self, dim=self.region.ndim)
         for i, dim in enumerate(self.region.dims):
             field.array[..., i] = getattr(self.points, dim).reshape(
