@@ -230,11 +230,12 @@ class TestMesh:
     def test_eq(self):
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
-        mesh1 = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh1, df.Mesh)
-        mesh2 = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh2, df.Mesh)
+        n = (1, 1, 1)
+        mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
+        # NOTE: Why do we need to test mesh1 type here?
+        # assert isinstance(mesh1, df.Mesh)
+        mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
+        # assert isinstance(mesh2, df.Mesh)
 
         assert mesh1 == mesh2
         assert not mesh1 != mesh2
@@ -242,10 +243,10 @@ class TestMesh:
         assert not mesh2 == "mesh2"
 
         p1 = (0, 0, 0)
-        p2 = (10e-9, 5e-9, 3e-9)
-        cell = (1e-9, 2.5e-9, 0.5e-9)
-        mesh3 = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh3, df.Mesh)
+        p2 = (10 + 1e-12, 10 + 2e-13, 10 + 3e-12)
+        n = (1, 1, 1)
+        mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
+        # assert isinstance(mesh3, df.Mesh)
 
         assert not mesh1 == mesh3
         assert not mesh2 == mesh3
@@ -391,15 +392,15 @@ class TestMesh:
         assert np.allclose(mesh.axis_points("y"), [1.0, 3.0, 5.0])
         assert np.allclose(mesh.axis_points("z"), [1.0, 3.0, 5.0, 7.0])
 
-    def test_midpoints(self):
+    def test_points(self):
         p1 = (0, 0, 4)
         p2 = (10, 6, 0)
         cell = (2, 2, 1)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert np.allclose(mesh.midpoints.x, [1.0, 3.0, 5.0, 7.0, 9.0])
-        assert np.allclose(mesh.midpoints.y, [1.0, 3.0, 5.0])
-        assert np.allclose(mesh.midpoints.z, [0.5, 1.5, 2.5, 3.5])
+        assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0])
+        assert np.allclose(mesh.points.y, [1.0, 3.0, 5.0])
+        assert np.allclose(mesh.points.z, [0.5, 1.5, 2.5, 3.5])
 
     def test_vertices(self):
         p1 = (0, 1, 0)
@@ -410,54 +411,6 @@ class TestMesh:
         assert np.allclose(mesh.vertices.x, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0])
         assert np.allclose(mesh.vertices.y, [0.0, 1.0])
         assert np.allclose(mesh.vertices.z, [0.0, 2.0, 4.0, 6.0])
-
-    def test_neighbours(self):
-        p1 = (0, 0, 0)
-        p2 = (5, 3, 2)
-        n = (5, 3, 2)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-
-        neighbours = mesh.neighbours((1, 1, 1))
-        assert isinstance(neighbours, list)
-        assert len(neighbours) == 5
-        assert (0, 1, 1) in neighbours
-        assert (2, 1, 1) in neighbours
-        assert (1, 0, 1) in neighbours
-        assert (1, 2, 1) in neighbours
-        assert (1, 1, 0) in neighbours
-
-        neighbours = mesh.neighbours((0, 0, 0))
-        assert isinstance(neighbours, list)
-        assert len(neighbours) == 3
-        assert (1, 0, 0) in neighbours
-        assert (0, 1, 0) in neighbours
-        assert (0, 0, 1) in neighbours
-
-        p1 = (0, 0, 0)
-        p2 = (5, 5, 5)
-        n = (5, 5, 5)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, bc="xy")
-
-        neighbours = mesh.neighbours((0, 0, 0))
-        assert isinstance(neighbours, list)
-        assert len(neighbours) == 5
-        assert (4, 0, 0) in neighbours
-        assert (1, 0, 0) in neighbours
-        assert (0, 1, 0) in neighbours
-        assert (0, 4, 0) in neighbours
-        assert (0, 0, 1) in neighbours
-
-        neighbours = mesh.neighbours((4, 4, 4))
-        assert isinstance(neighbours, list)
-        assert len(neighbours) == 5
-        assert (3, 4, 4) in neighbours
-        assert (0, 4, 4) in neighbours
-        assert (4, 0, 4) in neighbours
-        assert (4, 3, 4) in neighbours
-        assert (4, 4, 3) in neighbours
-
-        with pytest.raises(ValueError):
-            neighbours = mesh.neighbours((10, 4, 4))
 
     def test_line(self):
         p1 = (0, 0, 0)
@@ -634,10 +587,11 @@ class TestMesh:
         cell = (2.5e-9, 2.5e-9, 2.5e-9)
         mesh4 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert mesh1 | mesh2 is True
-        assert mesh1 | mesh3 is False
-        assert mesh1 | mesh4 is False
-        assert mesh1 | mesh1 is True
+        with pytest.deprecated_call():  # ensures DeprecationWarning
+            assert mesh1 | mesh2 is True
+            assert mesh1 | mesh3 is False
+            assert mesh1 | mesh4 is False
+            assert mesh1 | mesh1 is True
 
     def test_getitem(self):
         # Subregions disctionary
@@ -649,7 +603,8 @@ class TestMesh:
             "r2": df.Region(p1=(50, 0, 0), p2=(100, 50, 10)),
         }
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-        assert isinstance(mesh, df.Mesh)
+        # NOTE: Why do we need to check mesh type here?
+        # assert isinstance(mesh, df.Mesh)
 
         submesh1 = mesh["r1"]
         assert isinstance(submesh1, df.Mesh)
@@ -670,7 +625,7 @@ class TestMesh:
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh, df.Mesh)
+        # assert isinstance(mesh, df.Mesh)
 
         submesh = mesh[df.Region(p1=(0.1, 2.2, 4.01), p2=(4.9, 3.8, 5.7))]
         assert isinstance(submesh, df.Mesh)
@@ -684,7 +639,7 @@ class TestMesh:
         p2 = (-25e-9, 100e-9, -5e-9)
         cell = (5e-9, 5e-9, 5e-9)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert isinstance(mesh, df.Mesh)
+        # assert isinstance(mesh, df.Mesh)
 
         submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9), p2=(-9e-9, 79e-9, 14e-9))]
         assert isinstance(submesh, df.Mesh)
@@ -765,9 +720,9 @@ class TestMesh:
         cell = (1, 2, 2.5)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert mesh.plane("x").dS.average == (5, 0, 0)
-        assert mesh.plane("y").dS.average == (0, 2.5, 0)
-        assert mesh.plane("z").dS.average == (0, 0, 2)
+        assert np.allclose(mesh.plane("x").dS.mean(), (5, 0, 0))
+        assert np.allclose(mesh.plane("y").dS.mean(), (0, 2.5, 0))
+        assert np.allclose(mesh.plane("z").dS.mean(), (0, 0, 2))
 
         # Exception
         with pytest.raises(ValueError):
