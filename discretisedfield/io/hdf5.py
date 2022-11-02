@@ -108,6 +108,7 @@ def field_from_hdf5(filename):
     filename = pathlib.Path(filename)
     with h5py.File(filename, "r") as f:
         # Read data from the file.
+        # discretisedfield <= 0.65.0 saves p1 and p2 instead of pmin and pmax
         try:
             p1 = f["field/mesh/region/pmin"]
         except KeyError:
