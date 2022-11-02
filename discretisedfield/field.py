@@ -3353,7 +3353,7 @@ class Field:
         of the geometric dimensions are derived from ``self.mesh.midpoints``,
         and for vector field components from ``self.components``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
-        ``self.mesh.region.pmax`` are stored as ``cell``, ``p1``, and ``p2``
+        ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
         attributes of the DataArray. The ``units`` attribute of geometric
         dimensions is set to ``self.mesh.attributes['unit']``.
 
