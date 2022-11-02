@@ -108,14 +108,20 @@ def field_from_hdf5(filename):
     filename = pathlib.Path(filename)
     with h5py.File(filename, "r") as f:
         # Read data from the file.
-        p1 = f["field/mesh/region/p1"]
-        p2 = f["field/mesh/region/p2"]
+        try:
+            p1 = f["field/mesh/region/pmin"]
+        except KeyError:
+            p1 = f["field/mesh/region/p1"]
+        try:
+            p2 = f["field/mesh/region/pmax"]
+        except KeyError:
+            p2 = f["field/mesh/region/p2"]
         n = np.array(f["field/mesh/n"]).tolist()
         dim = np.array(f["field/dim"]).tolist()
         array = f["field/array"]
 
         # Create field.
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
+        mesh = df.Mesh(region=df.Region(p1=np.asarray(p1), p2=np.asarray(p2)), n=n)
         with contextlib.suppress(FileNotFoundError):
             mesh.load_subregions(filename)
 
