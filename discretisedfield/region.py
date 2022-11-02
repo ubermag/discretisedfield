@@ -72,13 +72,19 @@ class Region:
     """
 
     def __init__(
-        self,
-        p1,
-        p2,
-        dims=None,
-        units=None,
-        tolerance_factor=1e-12,
+        self, p1=None, p2=None, dims=None, units=None, tolerance_factor=1e-12, **kwargs
     ):
+        # Allow pmin and pmax instead of p1 and p2 to simplify the internal code and the
+        # conversion from a dict to a Region. Users should generally use p1 and p2 in
+        # their code.
+        if "pmin" in kwargs and "pmax" in kwargs:
+            pmin, pmax = kwargs["pmin"], kwargs["pmax"]
+            if not all(np.asarray(pmin) < np.asarray(pmax)):
+                raise ValueError(
+                    f"The values in {pmin=} must be element-wise smaller than in"
+                    f" {pmax=}; use p1 and p2 if the input values are unordered."
+                )
+            p1, p2 = pmin, pmax
 
         if not isinstance(p1, (tuple, list, np.ndarray)) or not isinstance(
             p2, (tuple, list, np.ndarray)
