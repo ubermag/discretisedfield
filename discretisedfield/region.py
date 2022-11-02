@@ -1,7 +1,6 @@
 import collections
 import functools
 import numbers
-import warnings
 
 import numpy as np
 import ubermagutil.units as uu
@@ -403,11 +402,9 @@ class Region:
 
     @property
     def centre(self):
-        warnings.warn(
-            "Spelling has been changed to American spelling; use 'center' instead.",
-            FutureWarning,
+        raise AttributeError(
+            "This attribute is now called 'center'.",
         )
-        return self.center
 
     @property
     def volume(self):
