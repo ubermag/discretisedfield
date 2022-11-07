@@ -641,7 +641,7 @@ class Region:
         return uu.si_max_multiplier(self.edges)
 
     def __mul__(self, factor):
-        """Scale the region.
+        """Binary * operator to scale the region.
 
         It can be applied only between ``discretisedfield.Region`` and
         ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
@@ -649,9 +649,11 @@ class Region:
 
         Parameters
         ----------
-        other : array-like or numbers.Real
+        factor : array-like of numbers.Number or numbers.Number
 
-            Second operand.
+            Factor to scale the region. If it is array-like the number of elements must
+            match ``region.ndim`` and different factors are applied along the different
+            directions.
 
         Returns
         -------
@@ -667,22 +669,34 @@ class Region:
 
         Example
         -------
-        1. Multiply region with a scalar.
+        1. Scale region by multiplying with a scalar.
 
         >>> import discretisedfield as df
-        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        ...
         >>> res = region * 5
-        ...
         >>> res.pmin
-        (0, 0, 0)
+        array([0, 0, 0])
         >>> res.pmax
-        (50, 50, 50)
+        array([50, 50, 50])
 
-        .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
+        2. Scale region with different factors along different directions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region * (2, 3, 4)
+        >>> res.pmin
+        array([0, 0, 0])
+        >>> res.pmax
+        array([20, 30, 40])
+
+        See also
+        --------
+        ~discretisedfield.Region.__truediv__
+        ~discretisedfield.Region.scale
 
         """
         self._check_operand(factor, True, "operator *")
@@ -692,7 +706,7 @@ class Region:
         return self * other
 
     def __truediv__(self, factor):
-        """Scale the region.
+        """Binary / operator to scale the region.
 
         It can be applied only between ``discretisedfield.Region`` and
         ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
@@ -700,9 +714,12 @@ class Region:
 
         Parameters
         ----------
-        other : numbers.Real
+        factor : array-like of numbers.Number or numbers.Number
 
-            Second operand.
+            Factor to scale the region. If it is array-like the number of elements must
+            match ``region.ndim`` and different factors are applied along the different
+            dimensions.
+
 
         Returns
         -------
@@ -718,34 +735,136 @@ class Region:
 
         Example
         -------
-        1. Divide region with a scalar.
+        1. Scale region by dividing with a scalar.
 
         >>> import discretisedfield as df
-        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        ...
         >>> res = region / 2
-        ...
         >>> res.pmin
-        (0.0, 0.0, 0.0)
+        array([0., 0., 0.])
         >>> res.pmax
-        (5.0, 5.0, 5.0)
+        array([5., 5., 5.])
 
-        .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
+        2. Scale region with different factors along different axes.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region / (1, 2, 5)
+        >>> res.pmin
+        array([0., 0., 0.])
+        >>> res.pmax
+        array([10., 5., 2.])
+
+        See also
+        --------
+        ~discretisedfield.Region.__mul__
+        ~discretisedfield.Region.scale
 
         """
         self._check_operand(factor, True, "operator /")
         return self._apply_operator(factor, np.divide)
 
     def scale(self, factor):
-        """Scale the region."""
+        """Scale the region.
+
+        Parameters
+        ----------
+        factor : array-like of numbers.Number or numbers.Number
+
+            Factor to scale the region. If it is array-like the number of elements must
+            match ``region.ndim`` and different factors are applied along the different
+            directions.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            Resulting region.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Example
+        -------
+        1. Scale region by multiplying with a scalar.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region.scale(5)
+        >>> res.pmin
+        array([0, 0, 0])
+        >>> res.pmax
+        array([50, 50, 50])
+
+        2. Scale region with different factors along different directions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region.scale((2, 3, 4))
+        >>> res.pmin
+        array([0, 0, 0])
+        >>> res.pmax
+        array([20, 30, 40])
+
+        See also
+        --------
+        ~discretisedfield.Region.__mul__
+        ~discretisedfield.Region.__truediv__
+
+        """
         self._check_operand(factor, True, "method scale")
         return self._apply_operator(factor, np.multiply)
 
     def __add__(self, vector):
-        """Translate the region."""
+        """Binary + operator to translate the region.
+
+        Parameters
+        ----------
+        vector : array-like of numbers.Number
+
+            Vector to translate the region.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            Resulting region.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Examples
+        --------
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region + (2, 2, 5)
+        >>> res.pmin
+        array([2, 2, 5])
+        >>> res.pmax
+        array([12, 12, 15])
+
+        See also
+        --------
+        ~discretisedfield.Region.__sub__
+        ~discretisedfield.Region.translate
+
+        """
         self._check_operand(vector, False, "operator +")
         return self._apply_operator(vector, np.add)
 
@@ -753,17 +872,93 @@ class Region:
         return self + vector
 
     def __sub__(self, vector):
-        """Translate the region."""
+        """Binary - operator to translate the region.
+
+        Parameters
+        ----------
+        vector : array-like of numbers.Number
+
+            Vector to translate the region.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            Resulting region.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Examples
+        --------
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region - (2, 2, 5)
+        >>> res.pmin
+        array([-2, -2, -5])
+        >>> res.pmax
+        array([8, 8, 5])
+
+        See also
+        --------
+        ~discretisedfield.Region.__add__
+        ~discretisedfield.Region.translate
+
+        """
         self._check_operand(vector, False, "operator -")
         return self._apply_operator(vector, np.subtract)
 
-    def __rsub__(self, vector):
-        return self - vector
+    def translate(self, vector, inplace=False):
+        """Translate the region.
 
-    def translate(self, vector):
-        """Translate the region."""
+        Parameters
+        ----------
+        vector : array-like of numbers.Number
+
+            Vector to translate the region.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            Resulting region.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Examples
+        --------
+        1. Translate the region.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region.translate((2, -2, 5))
+        >>> res.pmin
+        array([2, -2, 5])
+        >>> res.pmax
+        array([12, 8, 15])
+
+        See also
+        --------
+        ~discretisedfield.Region.__add__
+        ~discretisedfield.Region.__sub__
+
+        """
         self._check_operand(vector, False, "method translate")
-        return self._apply_operator(vector, np.add)
+        if inplace:
+            raise NotImplementedError
+        else:
+            return self._apply_operator(vector, np.add)
 
     def _check_operand(self, other, allow_scalar, operation):
         if allow_scalar and isinstance(other, numbers.Real):
