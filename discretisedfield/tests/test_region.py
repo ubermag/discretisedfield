@@ -12,8 +12,10 @@ import discretisedfield.plotting.util as plot_util
 html_re = (
     r"<strong>Region</strong>( <i>\w+</i>)?\s*"
     r"<ul>\s*"
-    r"<li>p1 = .*</li>\s*"
-    r"<li>p2 = .*</li>\s*"
+    r"<li>pmin = \[.*\]</li>\s*"
+    r"<li>pmax = \[.*\]</li>\s*"
+    r"<li>dims = .*</li>\s*"
+    r"<li>units = .*</li>\s*"
     r"</ul>"
 )
 
@@ -28,13 +30,13 @@ class TestRegion:
             [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0))],
             [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6)],
             [(0, 125e-9, 0), (500e-9, 0, -3e-9)],
+            [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1 + 2j)],
         ]
 
         self.invalid_args = [
             [("1", 0, 0), (1, 1, 1)],
             [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9)],
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9)],
-            [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1 + 2j)],
             ["string", (5, 1, 1e-9)],
         ]
 
@@ -42,13 +44,13 @@ class TestRegion:
         for p1, p2 in self.valid_args:
             region = df.Region(p1=p1, p2=p2)
             assert isinstance(region, df.Region)
-            pattern = r"^Region\(p1=\([\d\se.,-]+\), p2=\([\d\se.,-]+\)\)$"
-            assert re.match(pattern, str(region))
+            # pattern = r"^Region\(pmin=\([\d\se.,-]+\), pmax=\([\d\se.,-]+\)\)$"
+            # assert re.match(pattern, str(region))
 
     def test_init_invalid_args(self):
         for p1, p2 in self.invalid_args:
             with pytest.raises((TypeError, ValueError)):
-                df.Region(p1=p1, p2=p2)  # Raised by descriptors.
+                df.Region(p1=p1, p2=p2)
 
     def test_init_zero_edge_length(self):
         args = [
@@ -62,16 +64,16 @@ class TestRegion:
                 df.Region(p1=p1, p2=p2)
             assert "is zero" in str(excinfo.value)
 
-    def test_pmin_pmax_edges_centre_volume(self):
+    def test_pmin_pmax_edges_center_volume(self):
         p1 = (0, -4, 16.5)
         p2 = (15, -6, 11)
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
-        assert region.pmin == (0, -6, 11)
-        assert region.pmax == (15, -4, 16.5)
-        assert region.edges == (15, 2, 5.5)
-        assert region.centre == (7.5, -5, 13.75)
+        assert np.allclose(region.pmin, (0, -6, 11))
+        assert np.allclose(region.pmax, (15, -4, 16.5))
+        assert np.allclose(region.edges, (15, 2, 5.5))
+        assert np.allclose(region.center, (7.5, -5, 13.75))
         assert region.volume == 165
 
         p1 = (-10e6, 0, 0)
@@ -79,10 +81,10 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
-        assert region.pmin == (-10e6, 0, 0)
-        assert region.pmax == (10e6, 1e6, 1e6)
-        assert region.edges == (20e6, 1e6, 1e6)
-        assert region.centre == (0, 0.5e6, 0.5e6)
+        assert np.allclose(region.pmin, (-10e6, 0, 0))
+        assert np.allclose(region.pmax, (10e6, 1e6, 1e6))
+        assert np.allclose(region.edges, (20e6, 1e6, 1e6))
+        assert np.allclose(region.center, (0, 0.5e6, 0.5e6))
         assert abs(region.volume - 20 * (1e6) ** 3) < 1
 
         p1 = (-18.5e-9, 10e-9, 0)
@@ -93,7 +95,7 @@ class TestRegion:
         assert np.allclose(region.pmin, (-18.5e-9, 5e-9, -10e-9))
         assert np.allclose(region.pmax, (10e-9, 10e-9, 0))
         assert np.allclose(region.edges, (28.5e-9, 5e-9, 10e-9))
-        assert np.allclose(region.centre, (-4.25e-9, 7.5e-9, -5e-9))
+        assert np.allclose(region.center, (-4.25e-9, 7.5e-9, -5e-9))
         assert abs(region.volume - 1425 * (1e-9**3)) < 1e-30
 
     def test_repr(self):
@@ -102,9 +104,27 @@ class TestRegion:
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
-        rstr = "Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5))"
+        rstr = (
+            "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+            " dims=['x', 'y', 'z'], units=['m', 'm', 'm'])"
+        )
         assert repr(region) == rstr
+        assert re.match(html_re, region._repr_html_())
 
+        region.units = ["nm", "nm", "s"]
+        rstr = (
+            "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+            " dims=['x', 'y', 'z'], units=['nm', 'nm', 's'])"
+        )
+        assert repr(region) == rstr
+        assert re.match(html_re, region._repr_html_())
+
+        region.dims = ["time", "space", "c"]
+        rstr = (
+            "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+            " dims=['time', 'space', 'c'], units=['nm', 'nm', 's'])"
+        )
+        assert repr(region) == rstr
         assert re.match(html_re, region._repr_html_())
 
     def test_eq(self):
@@ -277,6 +297,119 @@ class TestRegion:
 
         with pytest.raises(TypeError):
             res = 5 / region
+
+    def test_units(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        units = ["a", "b", "c"]
+        region = df.Region(p1=p1, p2=p2, units=units)
+        assert isinstance(region, df.Region)
+        assert region.units == tuple(units)
+
+        region = df.Region(p1=p1, p2=p2)
+        assert isinstance(region, df.Region)
+        assert region.units == ("m", "m", "m")
+
+        region.units = units
+        assert region.units == tuple(units)
+
+        region.units = None
+        assert region.units == ("m", "m", "m")
+
+        units = ["m"]
+        with pytest.raises(ValueError):
+            df.Region(p1=p1, p2=p2, units=units)
+
+        units = "m"
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, units=units)
+
+        units = ["m", "m", "m", "m"]
+        with pytest.raises(ValueError):
+            df.Region(p1=p1, p2=p2, units=units)
+
+        units = ["m", 1, "m"]
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, units=units)
+
+        with pytest.raises(TypeError):
+            region.units = 5
+
+        with pytest.raises(TypeError):
+            region.units = ["m", 1, "m"]
+
+        with pytest.raises(ValueError):
+            region.units = ["m", "m", "m", "m"]
+
+    def test_ndim(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        ndim = 3
+        region = df.Region(p1=p1, p2=p2)
+        assert isinstance(region, df.Region)
+        assert region.ndim == ndim
+
+    def test_dims(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        dims = ["a", "b", "c"]
+        region = df.Region(p1=p1, p2=p2, dims=dims)
+        assert isinstance(region, df.Region)
+        assert region.dims == tuple(dims)
+
+        region = df.Region(p1=p1, p2=p2)
+        assert region.dims == ("x", "y", "z")
+
+        region.dims = dims
+        assert region.dims == tuple(dims)
+
+        region.dims = None
+        assert region.dims == ("x", "y", "z")
+
+        dims = ["x", "y", "z", "t"]
+        with pytest.raises(ValueError):
+            df.Region(p1=p1, p2=p2, dims=dims)
+
+        dims = "x"
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, dims=dims)
+
+        dims = ["x", 1, "z"]
+        with pytest.raises(TypeError):
+            df.Region(p1=p1, p2=p2, dims=dims)
+
+        with pytest.raises(TypeError):
+            region.dims = 5
+
+        with pytest.raises(ValueError):
+            region.dims = ["x", "y", "z", "t"]
+
+        with pytest.raises(TypeError):
+            region.dims = ["x", 1, "z"]
+
+    def test_allclose(self):
+        region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
+        region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
+        region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10))
+
+        assert isinstance(region1, df.Region)
+        assert isinstance(region2, df.Region)
+        assert isinstance(region3, df.Region)
+        assert region1.allclose(region2)
+        assert not region1.allclose(region3)
+        assert not region2.allclose(region3)
+
+    # unit test for setting pmin and pmax
+    def test_pmin_pmax(self):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        region = df.Region(p1=p1, p2=p2)
+
+        with pytest.raises(AttributeError):
+            region.pmin = (-100e-9, -100e-9, 0)
+
+        with pytest.raises(AttributeError):
+            region.pmax = (100e-9, 100e-9, 40e-9)
 
     def test_mpl(self):
         p1 = (-50e-9, -50e-9, 0)

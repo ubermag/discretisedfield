@@ -9,6 +9,8 @@ class _RegionJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, df.Region):
             return o.to_dict()
+        elif isinstance(o, np.ndarray):
+            return tuple(o)
         elif isinstance(o, np.int64):
             return int(o)
         elif isinstance(o, np.float64):

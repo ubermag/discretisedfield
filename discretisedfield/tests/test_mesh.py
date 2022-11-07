@@ -68,29 +68,19 @@ class TestMesh:
             assert isinstance(mesh1, df.Mesh)
 
             assert isinstance(mesh1.region, df.Region)
-            assert mesh1.region.p1 == p1
-            assert mesh1.region.p2 == p2
             if n is not None:
-                assert mesh1.n == n
+                assert np.allclose(mesh1.n, n)
             if cell is not None:
                 assert np.allclose(mesh1.cell, cell)
-
-            pattern = r"^Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$"
-            assert re.match(pattern, str(mesh1))
 
             mesh2 = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
             assert isinstance(mesh2, df.Mesh)
 
             assert isinstance(mesh2.region, df.Region)
-            assert mesh2.region.p1 == p1
-            assert mesh2.region.p2 == p2
             if n is not None:
-                assert mesh2.n == n
+                assert np.allclose(mesh2.n, n)
             if cell is not None:
                 assert np.allclose(mesh2.cell, cell)
-
-            pattern = r"^Mesh\(Region\(p1=\(.+\), p2=\(.+\)\), n=.+\)$"
-            assert re.match(pattern, str(mesh2))
 
             assert mesh1 == mesh2
 
@@ -285,7 +275,8 @@ class TestMesh:
         assert isinstance(mesh, df.Mesh)
 
         rstr = (
-            "Mesh(Region(p1=(-1, -4, 11), p2=(15, 10.1, 12.5)), "
+            "Mesh(Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5], "
+            "dims=['x', 'y', 'z'], units=['m', 'm', 'm']), "
             "n=(16, 141, 3), bc=x, attributes: (unit: m, fourierspace: "
             "False, isplane: False))"
         )
@@ -680,15 +671,15 @@ class TestMesh:
 
         submesh1 = mesh["r1"]
         assert isinstance(submesh1, df.Mesh)
-        assert submesh1.region.pmin == (0, 0, 0)
-        assert submesh1.region.pmax == (50, 50, 10)
-        assert submesh1.cell == (5, 5, 5)
+        assert np.allclose(submesh1.region.pmin, (0, 0, 0))
+        assert np.allclose(submesh1.region.pmax, (50, 50, 10))
+        assert np.allclose(submesh1.cell, (5, 5, 5))
 
         submesh2 = mesh["r2"]
         assert isinstance(submesh2, df.Mesh)
-        assert submesh2.region.pmin == (50, 0, 0)
-        assert submesh2.region.pmax == (100, 50, 10)
-        assert submesh2.cell == (5, 5, 5)
+        assert np.allclose(submesh2.region.pmin, (50, 0, 0))
+        assert np.allclose(submesh2.region.pmax, (100, 50, 10))
+        assert np.allclose(submesh2.cell, (5, 5, 5))
 
         assert len(submesh1) + len(submesh2) == len(mesh)
 
@@ -701,10 +692,10 @@ class TestMesh:
 
         submesh = mesh[df.Region(p1=(0.1, 2.2, 4.01), p2=(4.9, 3.8, 5.7))]
         assert isinstance(submesh, df.Mesh)
-        assert submesh.region.pmin == (0, 2, 4)
-        assert submesh.region.pmax == (5, 4, 6)
-        assert submesh.cell == cell
-        assert submesh.n == (5, 2, 2)
+        assert np.allclose(submesh.region.pmin, (0, 2, 4))
+        assert np.allclose(submesh.region.pmax, (5, 4, 6))
+        assert np.allclose(submesh.cell, cell)
+        assert np.allclose(submesh.n, (5, 2, 2))
         assert mesh[mesh.region] == mesh
 
         p1 = (20e-9, 0, 15e-9)
@@ -738,24 +729,24 @@ class TestMesh:
         mesh = df.Mesh(region=region, cell=cell)
 
         padded_mesh = mesh.pad({"x": (0, 1)})
-        assert padded_mesh.region.pmin == (-1, 2, 4)
-        assert padded_mesh.region.pmax == (6, 9, 7)
-        assert padded_mesh.n == (7, 7, 3)
+        assert np.allclose(padded_mesh.region.pmin, (-1, 2, 4))
+        assert np.allclose(padded_mesh.region.pmax, (6, 9, 7))
+        assert np.allclose(padded_mesh.n, (7, 7, 3))
 
         padded_mesh = mesh.pad({"y": (1, 1)})
-        assert padded_mesh.region.pmin == (-1, 1, 4)
-        assert padded_mesh.region.pmax == (5, 10, 7)
-        assert padded_mesh.n == (6, 9, 3)
+        assert np.allclose(padded_mesh.region.pmin, (-1, 1, 4))
+        assert np.allclose(padded_mesh.region.pmax, (5, 10, 7))
+        assert np.allclose(padded_mesh.n, (6, 9, 3))
 
         padded_mesh = mesh.pad({"z": (2, 3)})
-        assert padded_mesh.region.pmin == (-1, 2, 2)
-        assert padded_mesh.region.pmax == (5, 9, 10)
-        assert padded_mesh.n == (6, 7, 8)
+        assert np.allclose(padded_mesh.region.pmin, (-1, 2, 2))
+        assert np.allclose(padded_mesh.region.pmax, (5, 9, 10))
+        assert np.allclose(padded_mesh.n, (6, 7, 8))
 
         padded_mesh = mesh.pad({"x": (1, 1), "y": (1, 1), "z": (1, 1)})
-        assert padded_mesh.region.pmin == (-2, 1, 3)
-        assert padded_mesh.region.pmax == (6, 10, 8)
-        assert padded_mesh.n == (8, 9, 5)
+        assert np.allclose(padded_mesh.region.pmin, (-2, 1, 3))
+        assert np.allclose(padded_mesh.region.pmax, (6, 10, 8))
+        assert np.allclose(padded_mesh.n, (8, 9, 5))
 
     def test_getattr(self):
         p1 = (0, 0, 0)

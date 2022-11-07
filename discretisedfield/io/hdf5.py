@@ -61,8 +61,8 @@ def field_to_hdf5(field, filename, save_subregions=True):
         gregion = gmesh.create_group("region")
 
         # Save everything as datasets
-        gregion.create_dataset("p1", data=field.mesh.region.p1)
-        gregion.create_dataset("p2", data=field.mesh.region.p2)
+        gregion.create_dataset("pmin", data=field.mesh.region.pmin)
+        gregion.create_dataset("pmax", data=field.mesh.region.pmax)
         gmesh.create_dataset("n", dtype="i4", data=field.mesh.n)
         gfield.create_dataset("dim", dtype="i4", data=field.dim)
         gfield.create_dataset("array", data=field.array)
@@ -108,14 +108,21 @@ def field_from_hdf5(filename):
     filename = pathlib.Path(filename)
     with h5py.File(filename, "r") as f:
         # Read data from the file.
-        p1 = f["field/mesh/region/p1"]
-        p2 = f["field/mesh/region/p2"]
+        # discretisedfield <= 0.65.0 saves p1 and p2 instead of pmin and pmax
+        try:
+            p1 = f["field/mesh/region/pmin"]
+        except KeyError:
+            p1 = f["field/mesh/region/p1"]
+        try:
+            p2 = f["field/mesh/region/pmax"]
+        except KeyError:
+            p2 = f["field/mesh/region/p2"]
         n = np.array(f["field/mesh/n"]).tolist()
         dim = np.array(f["field/dim"]).tolist()
         array = f["field/array"]
 
         # Create field.
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
+        mesh = df.Mesh(region=df.Region(p1=np.asarray(p1), p2=np.asarray(p2)), n=n)
         with contextlib.suppress(FileNotFoundError):
             mesh.load_subregions(filename)
 
