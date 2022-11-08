@@ -296,6 +296,11 @@ class TestRegion:
         assert np.allclose(res.pmax, (50e-9, 5e-9, 80e-9))
         assert np.allclose(res.edges, (100e-9, 10e-9, 80e-9))
 
+        region.scale(2, inplace=True)
+        assert np.allclose(region.pmin, (-100e-9, -100e-9, 0))
+        assert np.allclose(region.pmax, (100e-9, 100e-9, 40e-9))
+        assert np.allclose(region.edges, (200e-9, 200e-9, 40e-9))
+
         with pytest.raises(ValueError):
             region.scale((1, 2))
 
@@ -315,6 +320,11 @@ class TestRegion:
         assert np.allclose(res.pmin, (0, -50e-9, -10e-9))
         assert np.allclose(res.pmax, (100e-9, 50e-9, 10e-9))
         assert np.allclose(res.edges, (100e-9, 100e-9, 20e-9))
+
+        region.translate((50e-9, 0, -10e-9), inplace=True)
+        assert np.allclose(region.pmin, (0, -50e-9, -10e-9))
+        assert np.allclose(region.pmax, (100e-9, 50e-9, 10e-9))
+        assert np.allclose(region.edges, (100e-9, 100e-9, 20e-9))
 
         with pytest.raises(ValueError):
             region.translate((3, 3))
