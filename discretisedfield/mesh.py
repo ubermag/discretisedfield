@@ -672,8 +672,8 @@ class Mesh:
         (slice(0, 10, None), slice(0, 5, None), slice(0, 1, None))
         """
 
-        i1 = self.point2index(np.array(region.p1) + np.array(self.cell) / 2)
-        i2 = self.point2index(np.array(region.p2) - np.array(self.cell) / 2)
+        i1 = self.point2index(np.array(region.pmin) + np.array(self.cell) / 2)
+        i2 = self.point2index(np.array(region.pmax) - np.array(self.cell) / 2)
         return tuple(slice(i1[i], i2[i] + 1) for i in range(3))
 
     def neighbours(self, index, /):
