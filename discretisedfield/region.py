@@ -652,18 +652,24 @@ class Region:
         """Compute multiplier for the region."""
         return uu.si_max_multiplier(self.edges)
 
-    def __mul__(self, other):
-        """Binary ``*`` operator.
+    def scale(self, factor, inplace=False):
+        """Scale the region.
 
-        It can be applied only between ``discretisedfield.Region`` and
-        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
-        are multiplied by ``other``.
+        This method scales the region by multiplying ``pmin`` and ``pmax`` with
+        ``factor``. If ``factor`` is a number the same scaling is applied along all
+        dimensions. If ``factor`` is array-like its length must match ``region.ndim``
+        and different factors are applied along the different directions (based on their
+        order). A new object is created unless ``inplace=True`` is specified.
 
         Parameters
         ----------
-        other : numbers.Real
+        factor : numbers.Number or array-like of numbers.Number
 
-            Second operand.
+            Factor to scale the region.
+
+        inplace : bool, optional
+
+            If True, the Region object is modified in-place. Defaults to False.
 
         Returns
         -------
@@ -679,52 +685,87 @@ class Region:
 
         Example
         -------
-        1. Multiply region with a scalar.
+        1. Scale region uniformly.
 
         >>> import discretisedfield as df
-        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> res = region * 5
-        ...
+        >>> res = region.scale(5)
         >>> res.pmin
-        (0, 0, 0)
+        array([0, 0, 0])
         >>> res.pmax
-        (50, 50, 50)
+        array([50, 50, 50])
 
-        .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
+        2. Scale the region inplace.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> region.scale(5, inplace=True)
+        >>> region.pmin
+        array([0, 0, 0])
+        >>> region.pmax
+        array([50, 50, 50])
+
+        3. Scale region with different factors along different directions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region.scale((2, 3, 4))
+        >>> res.pmin
+        array([0, 0, 0])
+        >>> res.pmax
+        array([20, 30, 40])
 
         """
-        if not isinstance(other, numbers.Number):
-            msg = (
-                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
+        if isinstance(factor, numbers.Number):
+            pass
+        elif not isinstance(factor, (tuple, list, np.ndarray)):
+            raise TypeError(f"Unsupported type {type(factor)} for scale.")
+        elif len(factor) != self.ndim:
+            raise ValueError(
+                f"Wrong length for array-like argument: {len(factor)}; expected length"
+                f" {len(self.pmin)}."
             )
-            raise TypeError(msg)
+        else:
+            for elem in factor:
+                if not isinstance(elem, numbers.Number):
+                    raise TypeError(
+                        f"Unsupported element {elem} of type {type(elem)} for scale."
+                    )
 
-        return self.__class__(
-            p1=np.multiply(self.pmin, other),
-            p2=np.multiply(self.pmax, other),
-            dims=self.dims,
-            units=self.units,
-        )
+        if inplace:
+            np.multiply(self.pmin, factor, out=self.pmin)
+            np.multiply(self.pmax, factor, out=self.pmax)
+            return self
+        else:
+            return self.__class__(
+                p1=np.multiply(self.pmin, factor),
+                p2=np.multiply(self.pmax, factor),
+                dims=self.dims,
+                units=self.units,
+            )
 
-    def __rmul__(self, other):
-        return self * other
+    def translate(self, vector, inplace=False):
+        """Translate the region.
 
-    def __truediv__(self, other):
-        """Binary ``/`` operator.
-
-        It can be applied only between ``discretisedfield.Region`` and
-        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
-        are divided by ``other``.
+        This method translates the region by adding ``vector`` to ``pmin`` and ``pmax``.
+        The ``vector`` must have ``Region.ndim`` elements. A new object is created
+        unless ``inplace=True`` is specified.
 
         Parameters
         ----------
-        other : numbers.Real
+        vector : array-like of numbers.Number
 
-            Second operand.
+            Vector to translate the region.
+
+        inplace : bool, optional
+
+            If True, the Region object is modified in-place. Defaults to False.
 
         Returns
         -------
@@ -738,27 +779,56 @@ class Region:
 
             If the operator cannot be applied.
 
-        Example
-        -------
-        1. Divide region with a scalar.
+        Examples
+        --------
+        1. Translate the region.
 
         >>> import discretisedfield as df
-        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> res = region / 2
-        ...
+        >>> res = region.translate((2, -2, 5))
         >>> res.pmin
-        (0.0, 0.0, 0.0)
+        array([2, -2, 5])
         >>> res.pmax
-        (5.0, 5.0, 5.0)
+        array([12, 8, 15])
 
-        .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
+        2. Translate the region inplace.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> region.translate((2, -2, 5), inplace=True)
+        >>> region.pmin
+        array([2, -2, 5])
+        >>> region.pmax
+        array([12, 8, 15])
 
         """
-        return self * other ** (-1)
+        if not isinstance(vector, (tuple, list, np.ndarray)):
+            raise TypeError(f"Unsupported type {type(vector)} for translate.")
+        elif len(vector) != self.ndim:
+            raise ValueError(
+                f"Wrong length for array-like argument: {len(vector)}; expected length"
+                f" {len(self.pmin)}."
+            )
+        for elem in vector:
+            if not isinstance(elem, numbers.Number):
+                raise TypeError(
+                    f"Unsupported element {elem} of type {type(elem)} for translate."
+                )
+        if inplace:
+            np.add(self.pmin, vector, out=self.pmin)
+            np.add(self.pmax, vector, out=self.pmax)
+            return self
+        else:
+            return self.__class__(
+                p1=np.add(self.pmin, vector),
+                p2=np.add(self.pmax, vector),
+                dims=self.dims,
+                units=self.units,
+            )
 
     def allclose(
         self,

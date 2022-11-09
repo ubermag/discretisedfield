@@ -64,7 +64,7 @@ class K3dRegion:
 
         plot_array = np.ones((1, 1, 1)).astype(np.uint8)  # avoid k3d warning
 
-        rescaled_region = self.region / multiplier
+        rescaled_region = self.region.scale(1 / multiplier)
         bounds = [
             i
             for sublist in zip(rescaled_region.pmin, rescaled_region.pmax)
