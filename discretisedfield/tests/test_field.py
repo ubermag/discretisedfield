@@ -1028,13 +1028,13 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, dim=1, value=0)
 
-        check_field(f.derivative("x"))
-        assert f.derivative("x", n=1).mean() == 0
-        assert f.derivative("y", n=1).mean() == 0
-        assert f.derivative("z", n=1).mean() == 0
-        assert f.derivative("x", n=2).mean() == 0
-        assert f.derivative("y", n=2).mean() == 0
-        assert f.derivative("z", n=2).mean() == 0
+        check_field(f.diff("x"))
+        assert np.isclose(f.diff("x", order=1).mean(), 0)
+        assert np.isclose(f.diff("y", order=1).mean(), 0)
+        assert np.isclose(f.diff("z", order=1).mean(), 0)
+        assert np.isclose(f.diff("x", order=2).mean(), 0)
+        assert np.isclose(f.diff("y", order=2).mean(), 0)
+        assert np.isclose(f.diff("z", order=2).mean(), 0)
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
         # No BC
@@ -1046,12 +1046,12 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative("x", n=1).mean() == 1
-        assert f.derivative("y", n=1).mean() == 1
-        assert f.derivative("z", n=1).mean() == 1
-        assert f.derivative("x", n=2).mean() == 0
-        assert f.derivative("y", n=2).mean() == 0
-        assert f.derivative("z", n=2).mean() == 0
+        assert np.isclose(f.diff("x", order=1).mean(), 1)
+        assert np.isclose(f.diff("y", order=1).mean(), 1)
+        assert np.isclose(f.diff("z", order=1).mean(), 1)
+        assert np.isclose(f.diff("x", order=2).mean(), 0)
+        assert np.isclose(f.diff("y", order=2).mean(), 0)
+        assert np.isclose(f.diff("z", order=2).mean(), 0)
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
@@ -1064,12 +1064,12 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative("x")((7, 5, 1)) == 10
-        assert f.derivative("y")((7, 5, 1)) == 16
-        assert f.derivative("z")((7, 5, 1)) == 35
-        assert f.derivative("x", n=2)((1, 1, 1)) == 0
-        assert f.derivative("y", n=2)((1, 1, 1)) == 0
-        assert f.derivative("z", n=2)((1, 1, 1)) == 0
+        assert np.isclose(f.diff("x")((7, 5, 1)), 10)
+        assert np.isclose(f.diff("y")((7, 5, 1)), 16)
+        assert np.isclose(f.diff("z")((7, 5, 1)), 35)
+        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 0)
+        assert np.isclose(f.diff("y", order=2)((1, 1, 1)), 0)
+        assert np.isclose(f.diff("z", order=2)((1, 1, 1)), 0)
 
         # f(x, y, z) = (0, 0, 0)
         # -> dfdx = (0, 0, 0)
@@ -1079,10 +1079,10 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, dim=3, value=(0, 0, 0))
 
-        check_field(f.derivative("y"))
-        assert np.allclose(f.derivative("x").mean(), (0, 0, 0))
-        assert np.allclose(f.derivative("y").mean(), (0, 0, 0))
-        assert np.allclose(f.derivative("z").mean(), (0, 0, 0))
+        check_field(f.diff("y"))
+        assert np.allclose(f.diff("x").mean(), (0, 0, 0))
+        assert np.allclose(f.diff("y").mean(), (0, 0, 0))
+        assert np.allclose(f.diff("z").mean(), (0, 0, 0))
 
         # f(x, y, z) = (x,  y,  z)
         # -> dfdx = (1, 0, 0)
@@ -1094,9 +1094,9 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert np.allclose(f.derivative("x").mean(), (1, 0, 0))
-        assert np.allclose(f.derivative("y").mean(), (0, 1, 0))
-        assert np.allclose(f.derivative("z").mean(), (0, 0, 1))
+        assert np.allclose(f.diff("x").mean(), (1, 0, 0))
+        assert np.allclose(f.diff("y").mean(), (0, 1, 0))
+        assert np.allclose(f.diff("z").mean(), (0, 0, 1))
 
         # f(x, y, z) = (x*y, y*z, x*y*z)
         # -> dfdx = (y, 0, y*z)
@@ -1108,12 +1108,12 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.derivative("x")((3, 1, 3)) == (1, 0, 3)
-        assert f.derivative("y")((3, 1, 3)) == (3, 3, 9)
-        assert f.derivative("z")((3, 1, 3)) == (0, 1, 3)
-        assert f.derivative("x")((5, 3, 5)) == (3, 0, 15)
-        assert f.derivative("y")((5, 3, 5)) == (5, 5, 25)
-        assert f.derivative("z")((5, 3, 5)) == (0, 3, 15)
+        assert np.allclose(f.diff("x")((3, 1, 3)), (1, 0, 3))
+        assert np.allclose(f.diff("y")((3, 1, 3)), (3, 3, 9))
+        assert np.allclose(f.diff("z")((3, 1, 3)), (0, 1, 3))
+        assert np.allclose(f.diff("x")((5, 3, 5)), (3, 0, 15))
+        assert np.allclose(f.diff("y")((5, 3, 5)), (5, 5, 25))
+        assert np.allclose(f.diff("z")((5, 3, 5)), (0, 3, 15))
 
         # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
         # -> dfdx = (y, 1, y*z)
@@ -1125,9 +1125,9 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert f.derivative("x")((7, 5, 1)) == (5, 1, 5)
-        assert f.derivative("y")((7, 5, 1)) == (7, -2, 7)
-        assert f.derivative("z")((7, 5, 1)) == (0, 0, 35)
+        assert np.allclose(f.diff("x")((7, 5, 1)), (5, 1, 5))
+        assert np.allclose(f.diff("y")((7, 5, 1)), (7, -2, 7))
+        assert np.allclose(f.diff("z")((7, 5, 1)), (0, 0, 35))
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> grad(f) = (4, 4, 6)
@@ -1137,9 +1137,9 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.derivative("x", n=2).mean() == 4
-        assert f.derivative("y", n=2).mean() == 4
-        assert f.derivative("z", n=2).mean() == 6
+        assert np.isclose(f.diff("x", order=2).mean(), 4)
+        assert np.isclose(f.diff("y", order=2).mean(), 4)
+        assert np.isclose(f.diff("z", order=2).mean(), 6)
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
         def value_fun(point):
@@ -1148,12 +1148,11 @@ class TestField:
 
         f = df.Field(mesh, dim=3, value=value_fun)
 
-        assert np.allclose(f.derivative("x", n=2).mean(), (4, 0, 0))
-        assert np.allclose(f.derivative("y", n=2).mean(), (0, 4, 0))
-        assert np.allclose(f.derivative("z", n=2).mean(), (0, 0, 6))
+        assert np.allclose(f.diff("x", order=2).mean(), (4, 0, 0))
+        assert np.allclose(f.diff("y", order=2).mean(), (0, 4, 0))
+        assert np.allclose(f.diff("z", order=2).mean(), (0, 0, 6))
 
-        with pytest.raises(NotImplementedError):
-            f.derivative("x", n=3)
+        raise NotImplementedError  # TODO: test with higher order and accuracy
 
     def test_derivative_pbc(self):
         p1 = (0, 0, 0)
@@ -1169,15 +1168,15 @@ class TestField:
 
         # No PBC
         f = df.Field(mesh_nopbc, dim=1, value=value_fun)
-        assert f.derivative("x")((9, 1, 1)) == 1
-        assert f.derivative("y")((1, 7, 1)) == 1
-        assert f.derivative("z")((1, 1, 5)) == 1
+        assert np.isclose(f.diff("x")((9, 1, 1)), 1)
+        assert np.isclose(f.diff("y")((1, 7, 1)), 1)
+        assert np.isclose(f.diff("z")((1, 1, 5)), 1)
 
         # PBC
         f = df.Field(mesh_pbc, dim=1, value=value_fun)
-        assert f.derivative("x")((9, 1, 1)) == -1.5
-        assert f.derivative("y")((1, 7, 1)) == -1
-        assert f.derivative("z")((1, 1, 5)) == -0.5
+        assert np.isclose(f.diff("x")((9, 1, 1)), -1.5)
+        assert np.isclose(f.diff("y")((1, 7, 1)), -1)
+        assert np.isclose(f.diff("z")((1, 1, 5)), -0.5)
 
         # Vector field
         def value_fun(point):
@@ -1185,15 +1184,17 @@ class TestField:
 
         # No PBC
         f = df.Field(mesh_nopbc, dim=3, value=value_fun)
-        assert f.derivative("x")((9, 1, 1)) == (1, 1, 1)
-        assert f.derivative("y")((1, 7, 1)) == (1, 1, 1)
-        assert f.derivative("z")((1, 1, 5)) == (1, 1, 1)
+        assert np.allclose(f.diff("x")((9, 1, 1)), (1, 1, 1))
+        assert np.allclose(f.diff("y")((1, 7, 1)), (1, 1, 1))
+        assert np.allclose(f.diff("z")((1, 1, 5)), (1, 1, 1))
 
         # PBC
         f = df.Field(mesh_pbc, dim=3, value=value_fun)
-        assert f.derivative("x")((9, 1, 1)) == (-1.5, -1.5, -1.5)
-        assert f.derivative("y")((1, 7, 1)) == (-1, -1, -1)
-        assert f.derivative("z")((1, 1, 5)) == (-0.5, -0.5, -0.5)
+        assert np.allclose(f.diff("x")((9, 1, 1)), (-1.5, -1.5, -1.5))
+        assert np.allclose(f.diff("y")((1, 7, 1)), (-1, -1, -1))
+        assert np.allclose(f.diff("z")((1, 1, 5)), (-0.5, -0.5, -0.5))
+
+        raise NotImplementedError  # TODO: test with higher order and accuracy
 
     def test_derivative_neumann(self):
         p1 = (0, 0, 0)
@@ -1209,16 +1210,20 @@ class TestField:
 
         # No Neumann
         f1 = df.Field(mesh_noneumann, dim=1, value=value_fun)
-        assert f1.derivative("x")((9, 1, 1)) == 1
-        assert f1.derivative("y")((1, 7, 1)) == 1
-        assert f1.derivative("z")((1, 1, 5)) == 1
+        assert np.isclose(f1.diff("x")((9, 1, 1)), 1)
+        assert np.isclose(f1.diff("y")((1, 7, 1)), 1)
+        assert np.isclose(f1.diff("z")((1, 1, 5)), 1)
 
         # Neumann
         f2 = df.Field(mesh_neumann, dim=1, value=value_fun)
-        assert f1.derivative("x")(f1.mesh.region.centre) == f2.derivative("x")(
-            f2.mesh.region.centre
+        assert f1.diff("x")(f1.mesh.region.center) == f2.diff("x")(
+            f2.mesh.region.center
         )
-        assert f1.derivative("x")((1, 7, 1)) != f2.derivative("x")((1, 7, 1))
+        assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
+        raise NotImplementedError  # TODO: test with higher order and accuracy
+
+    def test_derivative_dirichlet(self):
+        raise NotImplementedError
 
     def test_derivative_single_cell(self):
         p1 = (0, 0, 0)
@@ -1235,9 +1240,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=value_fun)
 
         # only one cell in the z-direction
-        assert f.plane("x").derivative("x").mean() == 0
-        assert f.plane("y").derivative("y").mean() == 0
-        assert f.derivative("z").mean() == 0
+        assert f.plane("x").diff("x").mean() == 0
+        assert f.plane("y").diff("y").mean() == 0
+        assert f.diff("z").mean() == 0
 
         # Vector field: f(x, y, z) = (x, y, z)
         # -> grad(f) = (1, 1, 1)
@@ -1248,9 +1253,9 @@ class TestField:
         f = df.Field(mesh, dim=3, value=value_fun)
 
         # only one cell in the z-direction
-        assert np.allclose(f.plane("x").derivative("x").mean(), (0, 0, 0))
-        assert np.allclose(f.plane("y").derivative("y").mean(), (0, 0, 0))
-        assert np.allclose(f.derivative("z").mean(), (0, 0, 0))
+        assert np.allclose(f.plane("x").diff("x").mean(), (0, 0, 0))
+        assert np.allclose(f.plane("y").diff("y").mean(), (0, 0, 0))
+        assert np.allclose(f.diff("z").mean(), (0, 0, 0))
 
     def test_grad(self):
         p1 = (0, 0, 0)
@@ -1292,9 +1297,9 @@ class TestField:
         f = df.Field(mesh, dim=1, value=value_fun)
 
         assert f.grad((7, 5, 1)) == (10, 16, 35)
-        assert f.grad.x == f.derivative("x")
-        assert f.grad.y == f.derivative("y")
-        assert f.grad.z == f.derivative("z")
+        assert f.grad.x == f.diff("x")
+        assert f.grad.y == f.diff("y")
+        assert f.grad.z == f.diff("z")
 
         # Exception
         f = df.Field(mesh, dim=3, value=(1, 2, 3))

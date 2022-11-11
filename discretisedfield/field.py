@@ -4,6 +4,7 @@ import numbers
 import pathlib
 import warnings
 
+import findiff as fd
 import numpy as np
 import ubermagutil.typesystem as ts
 import xarray as xr
@@ -1820,7 +1821,7 @@ class Field:
             units=self.units,
         )
 
-    def derivative(self, direction, n=1):
+    def diff(self, direction, order=1, acc=2):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -1910,65 +1911,50 @@ class Field:
         >>> # second-order derivatives
 
         """
-        direction = dfu.axesdict[direction]
+        direction_idx = dfu.axesdict[direction]
+
+        # Calculate the correct padding needed for the derivative.
+        pw = int(len(fd.coefficients(deriv=order, acc=acc)["center"]["offsets"]) / 2)
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
-        if self.mesh.n[direction] == 1:
-            return self.zero
+        # if self.mesh.n[direction] == 1:
+        #     return self.zero
 
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
         # the field array is padded.
-        if dfu.raxesdict[direction] in self.mesh.bc:  # PBC
-            pad_width = {dfu.raxesdict[direction]: (1, 1)}
+        if direction in self.mesh.bc:  # PBC
+            pad_width = {direction: (pw, pw)}
             padding_mode = "wrap"
         elif self.mesh.bc == "neumann":
-            pad_width = {dfu.raxesdict[direction]: (1, 1)}
-            padding_mode = "edge"
+            pad_width = {direction: (pw, pw)}
+            padding_mode = "symmetric"
+        elif self.mesh.bc == "dirichlet":
+            pad_width = {direction: (pw, pw)}
+            padding_mode = "constant"
         else:  # No BC - no padding
             pad_width = {}
             padding_mode = "constant"
 
         padded_array = self.pad(pad_width, mode=padding_mode).array
 
-        if n not in (1, 2):
-            msg = f"Derivative of the n={n} order is not implemented."
-            raise NotImplementedError(msg)
+        # Create FinDiff object.
+        diff_fd = fd.FinDiff(
+            direction_idx, self.mesh.cell[direction_idx], order, acc=acc
+        )
 
-        elif n == 1:
-            if self.dim == 1:
-                derivative_array = np.gradient(
-                    padded_array[..., 0], self.mesh.cell[direction], axis=direction
-                )[..., np.newaxis]
-            else:
-                derivative_array = np.gradient(
-                    padded_array, self.mesh.cell[direction], axis=direction
-                )
-
-        elif n == 2:
-            derivative_array = np.zeros_like(padded_array)
-            for i in range(padded_array.shape[direction]):
-                if i == 0:
-                    i1, i2, i3 = i + 2, i + 1, i
-                elif i == padded_array.shape[direction] - 1:
-                    i1, i2, i3 = i, i - 1, i - 2
-                else:
-                    i1, i2, i3 = i + 1, i, i - 1
-                index1 = dfu.assemble_index(slice(None), 4, {direction: i1})
-                index2 = dfu.assemble_index(slice(None), 4, {direction: i2})
-                index3 = dfu.assemble_index(slice(None), 4, {direction: i3})
-                index = dfu.assemble_index(slice(None), 4, {direction: i})
-                derivative_array[index] = (
-                    padded_array[index1]
-                    - 2 * padded_array[index2]
-                    + padded_array[index3]
-                ) / self.mesh.cell[direction] ** 2
+        derivative_array = diff_fd(padded_array)
 
         # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:
+            start_delete = np.arange(pad_width[direction][0])
+            end_delete = np.arange(
+                self.array.shape[direction_idx] + pad_width[direction][0],
+                derivative_array.shape[direction_idx],
+            )
             derivative_array = np.delete(
-                derivative_array, (0, self.mesh.n[direction] + 1), axis=direction
+                derivative_array, (*start_delete, *end_delete), axis=direction_idx
             )
 
         return self.__class__(
