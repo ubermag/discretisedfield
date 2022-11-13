@@ -255,8 +255,8 @@ class TestMesh:
         p1 = (0, 0, 0)
         p2 = (10 + 1e-12, 10 + 2e-13, 10 + 3e-12)
         n = (1, 1, 1)
-        atol = 1e-8
-        rtol = 1e-5
+        atol = 1e-10
+        rtol = 1e-8
         mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
 
         assert mesh1.allclose(mesh3, rtol=rtol, atol=atol)
