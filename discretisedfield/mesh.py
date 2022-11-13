@@ -546,7 +546,7 @@ class Mesh:
         >>> bc = 'x'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc=bc)
         >>> mesh
-        Mesh(Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), bc=x, ...)
+        Mesh(Region(pmin=[0, 0, 0], pmax=[2, 2, 1], ...), n=(2, 2, 1), bc=x, ...)
 
         """
         return html.strip_tags(self._repr_html_())
