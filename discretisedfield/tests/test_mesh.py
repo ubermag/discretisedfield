@@ -696,7 +696,7 @@ class TestMesh:
         assert np.allclose(submesh.region.pmax, (5, 4, 6))
         assert np.allclose(submesh.cell, cell)
         assert np.allclose(submesh.n, (5, 2, 2))
-        assert mesh[mesh.region] == mesh
+        assert mesh[mesh.region].allclose(mesh)
 
         p1 = (20e-9, 0, 15e-9)
         p2 = (-25e-9, 100e-9, -5e-9)
@@ -714,7 +714,7 @@ class TestMesh:
         )
         assert submesh.cell == cell
         assert submesh.n == (5, 12, 3)
-        assert mesh[mesh.region] == mesh
+        assert mesh[mesh.region].allclose(mesh)
 
         with pytest.raises(ValueError):
             submesh = mesh[
