@@ -246,6 +246,15 @@ class Mesh:
 
     @subregions.setter
     def subregions(self, subregions):
+        if not isinstance(subregions, dict):
+            raise TypeError(
+                "Subregions must be a dictionary relating the name of a subregion with"
+                " its region."
+            )
+
+        if not all([isinstance(key, str) for key in subregions]):
+            raise TypeError("The keys of subregion dictionary must be strings.")
+
         # Check if subregions are aligned with the mesh
         for key, value in subregions.items():
             # Is the subregion in the mesh region?
