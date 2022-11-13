@@ -1215,8 +1215,8 @@ class TestField:
 
         # Neumann
         f2 = df.Field(mesh_neumann, dim=1, value=value_fun)
-        assert f1.derivative("x")(f1.mesh.region.centre) == f2.derivative("x")(
-            f2.mesh.region.centre
+        assert f1.derivative("x")(f1.mesh.region.center) == f2.derivative("x")(
+            f2.mesh.region.center
         )
         assert f1.derivative("x")((1, 7, 1)) != f2.derivative("x")((1, 7, 1))
 

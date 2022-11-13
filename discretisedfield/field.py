@@ -2520,7 +2520,7 @@ class Field:
             value = self
         else:
             p_axis = plane_mesh.attributes["planeaxis"]
-            plane_idx = self.mesh.point2index(plane_mesh.region.centre)[p_axis]
+            plane_idx = self.mesh.point2index(plane_mesh.region.center)[p_axis]
             slices = tuple(
                 slice(plane_idx, plane_idx + 1) if i == p_axis else slice(0, axis_len)
                 for i, axis_len in enumerate(self.array.shape)

@@ -221,7 +221,7 @@ class FieldRotator:
     def _map_and_interpolate(self, new_mesh, rot_field):
         new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
         new_mesh_pos = (
-            new_mesh_field.array.reshape((-1, 3)) - self._orig_field.mesh.region.centre
+            new_mesh_field.array.reshape((-1, 3)) - self._orig_field.mesh.region.center
         )
 
         new_pos_old_mesh = self._rotation.inv().apply(new_mesh_pos)
@@ -255,7 +255,7 @@ class FieldRotator:
                         pmax[i] + cell[i] * tol,
                     ]
                 )
-                - self._orig_field.mesh.region.centre[i]
+                - self._orig_field.mesh.region.center[i]
             )
 
         m = np.pad(rot_field_component, pad_width=[(1, 1), (1, 1), (1, 1)], mode="edge")
@@ -280,6 +280,6 @@ class FieldRotator:
         rotated_edges = abs(self._rotation.apply(edges))
         edge_centre_length = np.sum(rotated_edges, axis=0) / 2
         return df.Region(
-            p1=(self._orig_field.mesh.region.centre - edge_centre_length),
-            p2=(self._orig_field.mesh.region.centre + edge_centre_length),
+            p1=(self._orig_field.mesh.region.center - edge_centre_length),
+            p2=(self._orig_field.mesh.region.center + edge_centre_length),
         )
