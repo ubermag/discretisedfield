@@ -351,13 +351,13 @@ class Mesh:
     def __iter__(self):
         """Generator yielding coordinates of discretisation cells.
 
-        The discretisation cell's coordinate corresponds to its centre point.
+        The discretisation cell's coordinate corresponds to its center point.
 
         Yields
         ------
         tuple (3,)
 
-            Mesh cell's centre point :math:`\\mathbf{p} = (p_{x}, p_{y},
+            Mesh cell's center point :math:`\\mathbf{p} = (p_{x}, p_{y},
             p_{z})`.
 
         Examples
@@ -569,7 +569,7 @@ class Mesh:
 
         Examples
         --------
-        1. Converting cell's index to its centre point coordinate.
+        1. Converting cell's index to its center point coordinate.
 
         >>> import discretisedfield as df
         ...
@@ -741,7 +741,7 @@ class Mesh:
 
         If one of the axes (``'x'``, ``'y'``, or ``'z'``) is passed as a
         string, a plane mesh perpendicular to that axis is extracted,
-        intersecting the mesh region at its centre. Alternatively, if a keyword
+        intersecting the mesh region at its center. Alternatively, if a keyword
         argument is passed (e.g. ``x=1e-9``), a plane perpendicular to the
         x-axis (parallel to yz-plane) and intersecting it at ``x=1e-9`` is
         extracted. The number of points in two dimensions on the plane can be
@@ -775,7 +775,7 @@ class Mesh:
         ...
         >>> plane_mesh = mesh.plane(y=1)
 
-        2. Extracting the xy-plane mesh at the mesh region centre.
+        2. Extracting the xy-plane mesh at the mesh region center.
 
         >>> plane_mesh = mesh.plane('z')
 
@@ -792,9 +792,9 @@ class Mesh:
                 raise ValueError(msg)
 
             # Only planeaxis is provided via args and the point is defined as
-            # the centre of the sample.
+            # the center of the sample.
             planeaxis = dfu.axesdict[args[0]]
-            point = self.region.centre[planeaxis]
+            point = self.region.center[planeaxis]
         elif kwargs and not args:
             if len(kwargs) != 1:
                 msg = f"Multiple kwargs ({kwargs}) passed."
@@ -804,7 +804,7 @@ class Mesh:
             planeaxis = dfu.axesdict[planeaxis]
 
             # Check if point is outside the mesh region.
-            test_point = list(self.region.centre)  # make it mutable
+            test_point = list(self.region.center)  # make it mutable
             test_point[planeaxis] = point
             if test_point not in self.region:
                 msg = f"Point {test_point} is outside the mesh region."
