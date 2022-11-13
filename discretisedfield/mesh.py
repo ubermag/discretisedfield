@@ -1096,10 +1096,10 @@ class Mesh:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> mesh.region.edges
-        (100, 100, 100)
+        array([100, 100, 100])
         >>> padded_mesh = mesh.pad({'x': (1, 1), 'y': (1, 1), 'z': (0, 1)})
         >>> padded_mesh.region.edges
-        (120, 120, 110)
+        array([120, 120, 110])
         >>> padded_mesh.n
         (12, 12, 11)
 
