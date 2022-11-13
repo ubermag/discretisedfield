@@ -271,9 +271,9 @@ class TestField:
             check_field(cfield)
             manually = df.Field(mesh, dim=3, value=lambda p: p)
             assert cfield.allclose(manually)
-            assert np.allclose(cfield.array[:, 0, 0, 0], mesh.midpoints.x)
-            assert np.allclose(cfield.array[0, :, 0, 1], mesh.midpoints.y)
-            assert np.allclose(cfield.array[0, 0, :, 2], mesh.midpoints.z)
+            assert np.allclose(cfield.array[:, 0, 0, 0], mesh.points.x)
+            assert np.allclose(cfield.array[0, :, 0, 1], mesh.points.y)
+            assert np.allclose(cfield.array[0, 0, :, 2], mesh.points.z)
 
     def test_components(self):
         for mesh in self.meshes:
@@ -2598,7 +2598,7 @@ class TestField:
                 assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
-                    assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
+                    assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
                 assert all(fxa["comp"].values == f.components)
                 assert np.array_equal(f.array, fxa.values)
@@ -2612,7 +2612,7 @@ class TestField:
                 assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
-                    assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
+                    assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
                 assert "comp" not in fxa.dims
                 assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)

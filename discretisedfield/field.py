@@ -198,9 +198,9 @@ class Field:
         """
         nx, ny, nz = mesh.n
         field = cls(mesh, dim=3)
-        field.array[..., 0] = mesh.midpoints.x.reshape((nx, 1, 1))
-        field.array[..., 1] = mesh.midpoints.y.reshape((1, ny, 1))
-        field.array[..., 2] = mesh.midpoints.z.reshape((1, 1, nz))
+        field.array[..., 0] = mesh.points.x.reshape((nx, 1, 1))
+        field.array[..., 1] = mesh.points.y.reshape((1, ny, 1))
+        field.array[..., 2] = mesh.points.z.reshape((1, 1, nz))
         return field
 
     @property
@@ -3102,7 +3102,7 @@ class Field:
         key_dims = {
             dim: hv_key_dim(coords, "m")
             for dim in mesh_dims
-            if len(coords := getattr(self.mesh.midpoints, dim)) > 1
+            if len(coords := getattr(self.mesh.points, dim)) > 1
         }
         if self.dim > 1:
             key_dims["comp"] = hv_key_dim(self.components, "")
@@ -3350,7 +3350,7 @@ class Field:
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
         ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
-        of the geometric dimensions are derived from ``self.mesh.midpoints``,
+        of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.components``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
         ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
@@ -3422,7 +3422,7 @@ class Field:
 
         axes = ["x", "y", "z"]
 
-        data_array_coords = {axis: getattr(self.mesh.midpoints, axis) for axis in axes}
+        data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
 
         if "unit" in self.mesh.attributes:
             geo_units_dict = dict.fromkeys(axes, self.mesh.attributes["unit"])
@@ -3637,9 +3637,7 @@ def _(val, mesh, dim, dtype):
         )
     value = (
         val.to_xarray()
-        .sel(
-            x=mesh.midpoints.x, y=mesh.midpoints.y, z=mesh.midpoints.z, method="nearest"
-        )
+        .sel(x=mesh.points.x, y=mesh.points.y, z=mesh.points.z, method="nearest")
         .data
     )
     if dim == 1:
