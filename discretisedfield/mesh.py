@@ -932,7 +932,6 @@ class Mesh:
         False
         >>> mesh1.is_aligned(mesh1)
         True
-        ...
         >>> p_1 = (0, 0, 0)
         >>> p_2 = (0 + 1e-13, 0, 0)
         >>> p_3 = (0, 0, 0 + 1e-10)
