@@ -395,7 +395,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.center
-        (2.5, 7.5, 10.0)
+        array([ 2.5,  7.5, 10. ])
 
         """
         return 0.5 * np.add(self.pmin, self.pmax)
