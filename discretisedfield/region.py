@@ -790,9 +790,9 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.translate((2, -2, 5))
         >>> res.pmin
-        array([2, -2, 5])
+        array([ 2, -2,  5])
         >>> res.pmax
-        array([12, 8, 15])
+        array([12,  8, 15])
 
         2. Translate the region inplace.
 
@@ -801,10 +801,11 @@ class Region:
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> region.translate((2, -2, 5), inplace=True)
+        Region(...)
         >>> region.pmin
-        array([2, -2, 5])
+        array([ 2, -2,  5])
         >>> region.pmax
-        array([12, 8, 15])
+        array([12,  8, 15])
 
         """
         if not isinstance(vector, (tuple, list, np.ndarray)):
