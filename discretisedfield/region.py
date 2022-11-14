@@ -361,7 +361,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.edges
-        (5, 15, 20)
+        array([ 5, 15, 20])
 
         """
         return self.pmax - self.pmin
