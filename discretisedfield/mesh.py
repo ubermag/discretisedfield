@@ -8,7 +8,6 @@ import warnings
 
 import ipywidgets
 import numpy as np
-import ubermagutil.typesystem as ts
 import ubermagutil.units as uu
 
 import discretisedfield as df
@@ -19,12 +18,6 @@ from . import html, io
 from .region import Region
 
 
-@ts.typesystem(
-    region=ts.Typed(expected_type=Region),
-    cell=ts.Vector(size=3, positive=True, const=True),
-    n=ts.Vector(size=3, component_type=int, unsigned=True, const=True),
-    bc=ts.Typed(expected_type=str),
-)
 class Mesh:
     """Finite-difference mesh.
 
