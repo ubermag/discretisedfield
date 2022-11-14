@@ -1014,16 +1014,16 @@ class Mesh:
         >>> len(mesh)  # number of discretisation cells
         1000
         >>> mesh.region.pmin
-        (0, 0, 0)
+        array([0, 0, 0])
         >>> mesh.region.pmax
-        (100, 100, 100)
+        array([100, 100, 100])
         >>> submesh = mesh['r1']
         >>> len(submesh)
         500
         >>> submesh.region.pmin
-        (0, 0, 0)
+        array([0, 0, 0])
         >>> submesh.region.pmax
-        (50, 100, 100)
+        array([ 50, 100, 100])
 
         2. Extracting a submesh on a "newly-defined" region.
 
