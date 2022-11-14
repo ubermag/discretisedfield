@@ -223,6 +223,25 @@ class Mesh:
             self.attributes["isplane"] = False
 
     @property
+    def bc(self):
+        """Boundary condition for the mesh."""
+        return self._bc
+
+    @bc.setter
+    def bc(self, bc):
+        if not isinstance(bc, str):
+            raise TypeError("Value of bc must be a string")
+        elif bc not in {"neumann", "dirichlet", ""}:
+            for char in bc:
+                if char not in self.region.dims:
+                    raise ValueError(f"Axis {char} is absent in {self.region.dims}.")
+                elif bc.count(char) > 1:
+                    raise ValueError(f"Axis {char} is present more than once.")
+            self._bc = bc
+        else:
+            self._bc = bc
+
+    @property
     def subregions(self):
         """ "Subregions of the mesh.
 
