@@ -200,12 +200,16 @@ class Mesh:
             elif len(cell) != self.region.ndim:
                 raise ValueError("The cell must have same dimensions as the region.")
             self._cell = tuple(cell)
+            n = np.divide(self.region.edges, self._cell).round().astype(int)
+            self._n = dfu.array2tuple(n)
         elif n is not None and cell is None:
             if not isinstance(n, (tuple, list, np.array)):
                 raise TypeError("n must be either a tuple, list or numpy array.")
-            elif len(cell) != self.region.ndim:
+            elif len(n) != self.region.ndim:
                 raise ValueError("n must have same dimensions as the region.")
             self._n = tuple(n)
+            cell = np.divide(self.region.edges, self._n).astype(float)
+            self._cell = dfu.array2tuple(cell)
         else:
             msg = "Either n or cell can be passed, not both."
             raise ValueError(msg)
@@ -254,20 +258,12 @@ class Mesh:
     @property
     def cell(self):
         """The cell dimensions of the mesh."""
-        if self._cell is None:
-            cell = np.divide(self.region.edges, self.n).astype(float)
-            return dfu.array2tuple(cell)
-        else:
-            return self._cell
+        return self._cell
 
     @property
     def n(self):
         """Number of cells along each dimensions of the mesh."""
-        if self._n is None:
-            n = np.divide(self.region.edges, self.cell).round().astype(int)
-            return dfu.array2tuple(n)
-        else:
-            return self._n
+        return self._n
 
     @property
     def region(self):
