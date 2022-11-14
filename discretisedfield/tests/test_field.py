@@ -1395,7 +1395,7 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
         check_field(f.laplace)
-        assert f.laplace.mean() == 0
+        assert np.isclose(f.laplace.mean(), 0)
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> laplace(f) = 4 + 4 + 6 = 14
@@ -1405,7 +1405,7 @@ class TestField:
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        assert f.laplace.mean() == 14
+        assert np.isclose(f.laplace.mean(), 14)
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
         # -> laplace(f) = (4, 4, 6)

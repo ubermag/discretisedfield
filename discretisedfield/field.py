@@ -2248,9 +2248,9 @@ class Field:
             raise ValueError(f"Cannot compute laplace for dim={self.dim} field.")
         if self.dim == 1:
             return (
-                self.derivative("x", n=2)
-                + self.derivative("y", n=2)
-                + self.derivative("z", n=2)
+                self.diff("x", order=2)
+                + self.diff("y", order=2)
+                + self.diff("z", order=2)
             )
         else:
             x, y, z = self.components
