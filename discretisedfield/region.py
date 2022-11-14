@@ -704,6 +704,7 @@ class Region:
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> region.scale(5, inplace=True)
+        Region(...)
         >>> region.pmin
         array([0, 0, 0])
         >>> region.pmax
