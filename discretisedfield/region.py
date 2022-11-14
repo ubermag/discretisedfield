@@ -880,12 +880,10 @@ class Region:
         ...
         >>> region1.allclose(region2)
         True
-        >>> region1.allclose(region2)
-        False
         >>> region1.allclose(region3)
         False
-        >>> region1.allclose(region3)
-        True
+        >>> region2.allclose(region3)
+        False
 
         """
         if isinstance(other, self.__class__):
