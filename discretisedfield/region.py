@@ -178,8 +178,8 @@ class Region:
         >>> p2 = (5, 0, -0.1)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> region.pmin
-        (5.0, 2.9, 0.0)
+        >>> region.pmax
+        array([5. , 2.9, 0. ])
 
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
