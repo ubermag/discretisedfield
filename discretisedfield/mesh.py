@@ -226,6 +226,8 @@ class Mesh:
             )
             raise ValueError(msg)
 
+        if not isinstance(bc, str):
+            raise TypeError("Value of bc must be a string.")
         self.bc = bc.lower()
 
         self.subregions = subregions
@@ -243,9 +245,7 @@ class Mesh:
 
     @bc.setter
     def bc(self, bc):
-        if not isinstance(bc, str):
-            raise TypeError("Value of bc must be a string")
-        elif bc not in {"neumann", "dirichlet", ""}:
+        if bc not in {"neumann", "dirichlet", ""}:
             for char in bc:
                 if char not in self.region.dims:
                     raise ValueError(f"Axis {char} is absent in {self.region.dims}.")
