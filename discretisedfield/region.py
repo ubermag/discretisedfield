@@ -461,8 +461,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region
-        Region(pmin=[0, 0, 0], pmax=[2, 2, 1],
-        dims=['x', 'y', 'z'], units=['m', 'm', 'm'])
+        Region(pmin=[0, 0, 0], pmax=[2, 2, 1], ...)
 
         """
         return html.strip_tags(self._repr_html_())
