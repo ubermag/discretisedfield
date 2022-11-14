@@ -2033,7 +2033,7 @@ class Field:
             msg = f"Cannot compute gradient for dim={self.dim} field."
             raise ValueError(msg)
 
-        return self.derivative("x") << self.derivative("y") << self.derivative("z")
+        return self.diff("x") << self.diff("y") << self.diff("z")
 
     @property
     def div(self):
