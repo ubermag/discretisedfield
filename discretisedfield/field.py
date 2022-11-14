@@ -2178,9 +2178,9 @@ class Field:
             raise ValueError(msg)
 
         x, y, z = self.components
-        curl_x = getattr(self, z).derivative("y") - getattr(self, y).derivative("z")
-        curl_y = getattr(self, x).derivative("z") - getattr(self, z).derivative("x")
-        curl_z = getattr(self, y).derivative("x") - getattr(self, x).derivative("y")
+        curl_x = getattr(self, z).diff("y") - getattr(self, y).diff("z")
+        curl_y = getattr(self, x).diff("z") - getattr(self, z).diff("x")
+        curl_z = getattr(self, y).diff("x") - getattr(self, x).diff("y")
 
         return curl_x << curl_y << curl_z
 
