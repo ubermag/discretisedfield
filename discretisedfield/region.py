@@ -433,7 +433,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.volume
-        100.0
+        100
 
         """
         return np.prod(self.edges)
