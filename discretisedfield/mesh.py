@@ -180,22 +180,32 @@ class Mesh:
         attributes={"unit": "m"},
     ):
         # TODO NO MUTABLE DEFAULT
-        if region is not None and p1 is None and p2 is None:
-            self.region = region
+        if region is None and p1 is None and p2 is None:
+            raise ValueError("p1, p2, and region cannot be None simultaneously.")
+        elif region is not None and p1 is None and p2 is None:
+            if not isinstance(region, df.Region):
+                raise TypeError("region must be of class discretisedfield.Region.")
+            self._region = region
         elif region is None and p1 is not None and p2 is not None:
-            self.region = df.Region(p1=p1, p2=p2)
+            self._region = df.Region(p1=p1, p2=p2)
         else:
             msg = "Either region or p1 and p2 can be passed, not both."
             raise ValueError(msg)
 
-        if cell is not None and n is None:
-            self.cell = tuple(cell)
-            n = np.divide(self.region.edges, self.cell).round().astype(int)
-            self.n = dfu.array2tuple(n)
+        if cell is None and n is None:
+            raise ValueError("Both cell and n cannot be None.")
+        elif cell is not None and n is None:
+            if not isinstance(cell, (tuple, list, np.array)):
+                raise TypeError("Cell must be either a tuple, list or numpy array.")
+            elif len(cell) != self.region.ndim:
+                raise ValueError("The cell must have same dimensions as the region.")
+            self._cell = tuple(cell)
         elif n is not None and cell is None:
-            self.n = tuple(n)
-            cell = np.divide(self.region.edges, self.n).astype(float)
-            self.cell = dfu.array2tuple(cell)
+            if not isinstance(n, (tuple, list, np.array)):
+                raise TypeError("n must be either a tuple, list or numpy array.")
+            elif len(cell) != self.region.ndim:
+                raise ValueError("n must have same dimensions as the region.")
+            self._n = tuple(n)
         else:
             msg = "Either n or cell can be passed, not both."
             raise ValueError(msg)
@@ -240,6 +250,29 @@ class Mesh:
             self._bc = bc
         else:
             self._bc = bc
+
+    @property
+    def cell(self):
+        """The cell dimensions of the mesh."""
+        if self._cell is None:
+            cell = np.divide(self.region.edges, self.n).astype(float)
+            return dfu.array2tuple(cell)
+        else:
+            return self._cell
+
+    @property
+    def n(self):
+        """Number of cells along each dimensions of the mesh."""
+        if self._n is None:
+            n = np.divide(self.region.edges, self.cell).round().astype(int)
+            return dfu.array2tuple(n)
+        else:
+            return self._n
+
+    @property
+    def region(self):
+        """Region over which the mesh is defined."""
+        return self._region
 
     @property
     def subregions(self):
