@@ -179,8 +179,30 @@ class TestMesh:
             with pytest.raises(ValueError):
                 df.Mesh(p1=p1, p2=p2, cell=cell)
 
-    def test_cell(self):
-        raise NotImplementedError
+    def test_cell_n(self):
+        p1 = (0, 0, 0)
+        p2 = (20e-9, 20e-9, 20e-9)
+        cell = (2e-9, 4e-9, 1e-9)
+        n = (10, 5, 20)
+
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        assert mesh.n == n
+        with pytest.raises(AttributeError):
+            mesh.cell = (2e-9, 2e-9, 2e-9)
+        with pytest.raises(AttributeError):
+            mesh.n = (10, 10, 10)
+        with pytest.raises(TypeError):
+            df.Mesh(p1=p1, p2=p2, cell={"x": 2e-9, "y": 4e-9, "z": 1e-9})
+        with pytest.raises(TypeError):
+            df.Mesh(p1=p1, p2=p2, n={"x": 10, "y": 5, "z": 20})
+        with pytest.raises(ValueError):
+            df.Mesh(p1=p1, p2=p2, cell=(2e-9, 4e-9))
+        with pytest.raises(ValueError):
+            df.Mesh(p1=p1, p2=p2, n=(10, 5))
+        with pytest.raises(ValueError):
+            df.Mesh(p1=p1, p2=p2)
+        with pytest.raises(ValueError):
+            df.Mesh(p1=p1, p2=p2, cell=cell, n=n)
 
     def test_bc(self):
         raise NotImplementedError
