@@ -186,7 +186,15 @@ class TestMesh:
         n = (10, 5, 20)
 
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        mesh = df.Mesh(p1=p1, p2=p2, cell=np.array(cell))
+        mesh = df.Mesh(p1=p1, p2=p2, cell=list(cell))
         assert mesh.n == n
+
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        mesh = df.Mesh(p1=p1, p2=p2, n=np.array(n))
+        mesh = df.Mesh(p1=p1, p2=p2, n=list(n))
+        assert mesh.cell == cell
+
         with pytest.raises(AttributeError):
             mesh.cell = (2e-9, 2e-9, 2e-9)
         with pytest.raises(AttributeError):
