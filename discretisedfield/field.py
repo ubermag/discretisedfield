@@ -2103,7 +2103,7 @@ class Field:
 
         return sum(
             [
-                getattr(self, self.components[i]).derivative(dfu.raxesdict[i])
+                getattr(self, self.components[i]).diff(dfu.raxesdict[i])
                 for i in range(self.dim)
             ]
         )
