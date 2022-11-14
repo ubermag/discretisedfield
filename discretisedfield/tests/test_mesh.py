@@ -205,7 +205,20 @@ class TestMesh:
             df.Mesh(p1=p1, p2=p2, cell=cell, n=n)
 
     def test_bc(self):
-        raise NotImplementedError
+        p1 = (0, 0, 0)
+        p2 = (20e-9, 20e-9, 20e-9)
+        region = df.Region(p1=p1, p2=p2, dims=["x", "y", "z"])
+        cell = (2e-9, 4e-9, 1e-9)
+
+        for bc in ["x", "y", "yz", "zx", "xyz", "Neumann", "dirichlet"]:
+            df.Mesh(region=region, cell=cell, bc=bc)
+
+        with pytest.raises(TypeError):
+            df.Mesh(region=region, cell=cell, bc=2)
+        with pytest.raises(ValueError):
+            df.Mesh(region=region, cell=cell, bc="user")
+        with pytest.raises(ValueError):
+            df.Mesh(region=region, cell=cell, bc="xxz")
 
     def test_len(self):
         p1 = (0, 0, 0)
