@@ -146,7 +146,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.pmin
-        (-1.1, 0.0, -0.1)
+        array([-1.1,  0. , -0.1])
 
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
@@ -178,8 +178,8 @@ class Region:
         >>> p2 = (5, 0, -0.1)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> region.pmin
-        (5.0, 2.9, 0.0)
+        >>> region.pmax
+        array([5. , 2.9, 0. ])
 
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
@@ -361,7 +361,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.edges
-        (5, 15, 20)
+        array([ 5, 15, 20])
 
         """
         return self.pmax - self.pmin
@@ -395,7 +395,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.center
-        (2.5, 7.5, 10.0)
+        array([ 2.5,  7.5, 10. ])
 
         """
         return 0.5 * np.add(self.pmin, self.pmax)
@@ -433,7 +433,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.volume
-        100.0
+        100
 
         """
         return np.prod(self.edges)
@@ -461,7 +461,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region
-        Region(p1=(0, 0, 0), p2=(2, 2, 1))
+        Region(pmin=[0, 0, 0], pmax=[2, 2, 1], ...)
 
         """
         return html.strip_tags(self._repr_html_())
@@ -704,6 +704,7 @@ class Region:
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> region.scale(5, inplace=True)
+        Region(...)
         >>> region.pmin
         array([0, 0, 0])
         >>> region.pmax
@@ -789,9 +790,9 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.translate((2, -2, 5))
         >>> res.pmin
-        array([2, -2, 5])
+        array([ 2, -2,  5])
         >>> res.pmax
-        array([12, 8, 15])
+        array([12,  8, 15])
 
         2. Translate the region inplace.
 
@@ -800,10 +801,11 @@ class Region:
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> region.translate((2, -2, 5), inplace=True)
+        Region(...)
         >>> region.pmin
-        array([2, -2, 5])
+        array([ 2, -2,  5])
         >>> region.pmax
-        array([12, 8, 15])
+        array([12,  8, 15])
 
         """
         if not isinstance(vector, (tuple, list, np.ndarray)):
@@ -880,12 +882,10 @@ class Region:
         ...
         >>> region1.allclose(region2)
         True
-        >>> region1.allclose(region2)
-        False
         >>> region1.allclose(region3)
         False
-        >>> region1.allclose(region3)
-        True
+        >>> region2.allclose(region3)
+        False
 
         """
         if isinstance(other, self.__class__):

@@ -537,7 +537,7 @@ class Mesh:
         >>> bc = 'x'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc=bc)
         >>> mesh
-        Mesh(Region(p1=(0, 0, 0), p2=(2, 2, 1)), n=(2, 2, 1), bc=x, ...)
+        Mesh(Region(pmin=[0, 0, 0], pmax=[2, 2, 1], ...), n=(2, 2, 1), bc=x, ...)
 
         """
         return html.strip_tags(self._repr_html_())
@@ -1014,16 +1014,16 @@ class Mesh:
         >>> len(mesh)  # number of discretisation cells
         1000
         >>> mesh.region.pmin
-        (0, 0, 0)
+        array([0, 0, 0])
         >>> mesh.region.pmax
-        (100, 100, 100)
+        array([100, 100, 100])
         >>> submesh = mesh['r1']
         >>> len(submesh)
         500
         >>> submesh.region.pmin
-        (0, 0, 0)
+        array([0, 0, 0])
         >>> submesh.region.pmax
-        (50, 100, 100)
+        array([ 50, 100, 100])
 
         2. Extracting a submesh on a "newly-defined" region.
 
@@ -1098,10 +1098,10 @@ class Mesh:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> mesh.region.edges
-        (100, 100, 100)
+        array([100, 100, 100])
         >>> padded_mesh = mesh.pad({'x': (1, 1), 'y': (1, 1), 'z': (0, 1)})
         >>> padded_mesh.region.edges
-        (120, 120, 110)
+        array([120, 120, 110])
         >>> padded_mesh.n
         (12, 12, 11)
 
