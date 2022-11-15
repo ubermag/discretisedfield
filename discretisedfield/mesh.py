@@ -440,7 +440,7 @@ class Mesh:
         warnings.warn("Deprecated; use `mesh.points` instead.", FutureWarning)
         return getattr(self.points, axis)
 
-    @functools.cached_property
+    @property
     def points(self):
         """Midpoints of the cells of the mesh along the three directions.
 
