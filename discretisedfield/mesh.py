@@ -1686,7 +1686,8 @@ class Mesh:
 
         field = df.Field(self, dim=self.region.ndim)
         for i, dim in enumerate(self.region.dims):
-            field.array[..., i] = getattr(self.points, dim).reshape(
+            points = self.points  # avoid re-computing points
+            field.array[..., i] = getattr(points, dim).reshape(
                 tuple(self.n[i] if i == j else 1 for j in range(self.region.ndim))
             )
 
