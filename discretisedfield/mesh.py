@@ -1588,7 +1588,7 @@ class Mesh:
         TypeError
 
             If the ``other`` argument is not of type ``discretisedfield.Mesh`` or if
-            ``rtol`` and ``atol`` arguments are not of type either ``float`` or ``int``.
+            ``rtol`` and ``atol`` arguments are not of type ``float`` or ``int``.
 
         ValueError
 
