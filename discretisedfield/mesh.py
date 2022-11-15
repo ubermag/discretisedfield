@@ -948,7 +948,7 @@ class Mesh:
         TypeError
 
             If ``other`` argument is not of type ``discretisedfield.Mesh`` or if
-            ``tolerance`` argument is not of type either ``float`` or ``int``.
+            ``tolerance`` argument is not of type ``float`` or ``int``.
 
         Examples
         --------
