@@ -178,7 +178,7 @@ class Mesh:
         n=None,
         cell=None,
         bc="",
-        subregions=dict(),
+        subregions=None,
         attributes={"unit": "m"},
     ):
         # TODO NO MUTABLE DEFAULT
@@ -282,57 +282,60 @@ class Mesh:
 
         Returns
         -------
-        dict
+        dict, None
 
             A dictionary defining subregions in the mesh. The keys of the
             dictionary are the region names (``str``) as valid Python variable
             names, whereas the values are ``discretisedfield.Region`` objects.
-            Defaults to an empty dictionary.
+            Defaults to None.
         """
         return self._subregions
 
     @subregions.setter
     def subregions(self, subregions):
-        if not isinstance(subregions, dict):
-            raise TypeError(
-                "Subregions must be a dictionary relating the name of a subregion with"
-                " its region."
-            )
-
-        if not all(isinstance(key, str) for key in subregions):
-            raise TypeError("The keys of subregion dictionary must be strings.")
-
-        # Check if subregions are aligned with the mesh
-        for key, value in subregions.items():
-            # Is the subregion in the mesh region?
-            if value not in self.region:
-                msg = f"Subregion {key} is not in the mesh region."
-                raise ValueError(msg)
-
-            # Is the subregion an aggregate of discretisation cell?
-            try:
-                self.__class__(region=value, cell=self.cell)
-            except ValueError:
-                msg = (
-                    f"Subregion {key} cannot be divided into "
-                    f"discretisation cells of size {self.cell=}."
+        if subregions is None:
+            self._subregions = None
+        else:
+            if not isinstance(subregions, dict):
+                raise TypeError(
+                    "Subregions must be a dictionary relating the name of a subregion"
+                    " with its region."
                 )
-                raise ValueError(msg)
 
-            # Is the subregion aligned with the mesh?
-            if not (
-                self.__class__(region=self.region, cell=self.cell)
-                | self.__class__(region=value, cell=self.cell)
-            ):
-                msg = f"Subregion {key} is not aligned with the mesh."
-                raise ValueError(msg)
-        if "default" in subregions.keys():
-            msg = (
-                "Subregion name ``default`` has a special meaning when "
-                "initialising field values"
-            )
-            warnings.warn(msg)
-        self._subregions = subregions
+            if not all(isinstance(key, str) for key in subregions):
+                raise TypeError("The keys of subregion dictionary must be strings.")
+
+            # Check if subregions are aligned with the mesh
+            for key, value in subregions.items():
+                # Is the subregion in the mesh region?
+                if value not in self.region:
+                    msg = f"Subregion {key} is not in the mesh region."
+                    raise ValueError(msg)
+
+                # Is the subregion an aggregate of discretisation cell?
+                try:
+                    self.__class__(region=value, cell=self.cell)
+                except ValueError:
+                    msg = (
+                        f"Subregion {key} cannot be divided into "
+                        f"discretisation cells of size {self.cell=}."
+                    )
+                    raise ValueError(msg)
+
+                # Is the subregion aligned with the mesh?
+                if not (
+                    self.__class__(region=self.region, cell=self.cell)
+                    | self.__class__(region=value, cell=self.cell)
+                ):
+                    msg = f"Subregion {key} is not aligned with the mesh."
+                    raise ValueError(msg)
+            if "default" in subregions.keys():
+                msg = (
+                    "Subregion name ``default`` has a special meaning when "
+                    "initialising field values"
+                )
+                warnings.warn(msg)
+            self._subregions = subregions
 
     @property
     def attributes(self):

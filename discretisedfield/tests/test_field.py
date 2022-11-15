@@ -1671,7 +1671,7 @@ class TestField:
 
                 assert f.allclose(f_read)
                 assert f_read.units == "A/m"
-                assert f_read.mesh.subregions == {}
+                assert f_read.mesh.subregions is None
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
@@ -1782,7 +1782,7 @@ class TestField:
                 f_read = df.Field.fromfile(tmpfilename)
 
                 assert f.allclose(f_read)
-                assert f_read.mesh.subregions == {}
+                assert f_read.mesh.subregions is None
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
