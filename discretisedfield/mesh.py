@@ -259,9 +259,8 @@ class Mesh:
                     raise ValueError(f"Axis {char} is absent in {self.region.dims}.")
                 elif bc.count(char) > 1:
                     raise ValueError(f"Axis {char} is present more than once.")
-            self._bc = bc
-        else:
-            self._bc = bc
+
+        self._bc = bc
 
     @property
     def cell(self):
