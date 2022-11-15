@@ -910,7 +910,7 @@ class Mesh:
         """Depricated method to check if meshes are aligned: use ``is_aligned``"""
 
         warnings.warn(
-            "Bitwise OR (|) operator is depricated; please use is_aligned",
+            "Bitwise OR (|) operator is deprecated; please use is_aligned",
             DeprecationWarning,
         )
         return self.is_aligned(other)
