@@ -1649,7 +1649,7 @@ class Mesh:
         .. code-block::
 
             mesh = df.Mesh(...)
-            df.Field(mesh, dim=3, value=lambda point: point)
+            df.Field(mesh, dim=mesh.region.ndim, value=lambda point: point)
 
         This method should be preferred over the manual creation with a callable because
         it provides much better performance.
