@@ -1556,7 +1556,7 @@ class Mesh:
         """Check if the mesh is close enough to the other based on a tolerance.
 
         The midpoints (``discretisedfield.Mesh.points``) along all the dimensions for
-        both the mesh are compared utilizng ``numpy.allclose``. The value of relative
+        both meshes are compared using ``numpy.allclose``. The value of relative
         tolerance (``rtol``) and absolute tolerance (``atol``) are passed on to
         ``numpy.allclose`` for the comparison. If the midpoints along all the
         dimensions are close enough simultaneously, the method returns ``True``
