@@ -5,6 +5,8 @@ import itertools
 import json
 import pathlib
 import warnings
+from collections.abc import Iterable
+from numbers import Integral, Number
 
 import ipywidgets
 import numpy as np
@@ -195,19 +197,25 @@ class Mesh:
         if cell is None and n is None:
             raise ValueError("Both cell and n cannot be None.")
         elif cell is not None and n is None:
-            if not isinstance(cell, (tuple, list, np.ndarray)):
-                raise TypeError("Cell must be either a tuple, list or numpy array.")
-            elif len(cell) != self.region.ndim:
-                raise ValueError("The cell must have same dimensions as the region.")
+            if not isinstance(cell, Iterable):
+                raise TypeError("Cell must be an Iterable.")
             self._cell = tuple(cell)
+            if len(self._cell) != self.region.ndim:
+                raise ValueError("The cell must have same dimensions as the region.")
+            elif not all([isinstance(i, (Number, complex)) for i in self._cell]):
+                raise TypeError(
+                    "The values of cell must be of type either int, float or complex"
+                )
             n = np.divide(self.region.edges, self._cell).round().astype(int)
             self._n = dfu.array2tuple(n)
         elif n is not None and cell is None:
-            if not isinstance(n, (tuple, list, np.ndarray)):
-                raise TypeError("n must be either a tuple, list or numpy array.")
-            elif len(n) != self.region.ndim:
-                raise ValueError("n must have same dimensions as the region.")
+            if not isinstance(n, Iterable):
+                raise TypeError("n must be an Iterable.")
             self._n = tuple(n)
+            if len(self._n) != self.region.ndim:
+                raise ValueError("n must have same dimensions as the region.")
+            elif not all([isinstance(i, Integral) for i in self._n]):
+                raise TypeError("The values of n must be of integer type.")
             cell = np.divide(self.region.edges, self._n).astype(float)
             self._cell = dfu.array2tuple(cell)
         else:
