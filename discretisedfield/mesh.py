@@ -269,7 +269,7 @@ class Mesh:
 
     @property
     def n(self):
-        """Number of cells along each dimensions of the mesh."""
+        """Number of cells along each dimension of the mesh."""
         return self._n
 
     @property
