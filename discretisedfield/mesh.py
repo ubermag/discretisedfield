@@ -219,8 +219,7 @@ class Mesh:
             cell = np.divide(self.region.edges, self._n).astype(float)
             self._cell = dfu.array2tuple(cell)
         else:
-            msg = "Either n or cell can be passed, not both."
-            raise ValueError(msg)
+            raise ValueError("Either n or cell can be passed, not both.")
 
         # Check if the mesh region is an aggregate of the discretisation cell.
         tol = np.min(self.cell) * 1e-3  # tolerance
