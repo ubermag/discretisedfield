@@ -1625,7 +1625,7 @@ class Mesh:
         if (not isinstance(rtol, (int, float))) or (not isinstance(atol, (int, float))):
             raise TypeError(
                 "Expected both rtol and atol to be either int or float but got"
-                f" {type(rtol)} and {type(atol)} respectively"
+                f" {type(rtol)} and {type(atol)}, respectively."
             )
 
         return all(
