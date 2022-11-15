@@ -581,8 +581,8 @@ class TestMesh:
             cell=(5e-9, 5e-9, 5e-9),
         )
 
-        assert mesh5.is_aligned(mesh6, tol) is True
-        assert mesh5.is_aligned(mesh7, tol) is False
+        assert mesh5.is_aligned(mesh6, tol)
+        assert not mesh5.is_aligned(mesh7, tol)
 
         # Test exceptions
         with pytest.raises(TypeError):
