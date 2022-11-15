@@ -191,7 +191,7 @@ class TestMesh:
         assert mesh.n == n
 
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        mesh = df.Mesh(p1=p1, p2=p2, n=np.array(n))
+        mesh = df.Mesh(p1=p1, p2=p2, n=np.array(n, dtype=int))
         mesh = df.Mesh(p1=p1, p2=p2, n=list(n))
         assert mesh.cell == cell
 
@@ -200,6 +200,10 @@ class TestMesh:
         with pytest.raises(AttributeError):
             mesh.n = (10, 10, 10)
         with pytest.raises(TypeError):
+            df.Mesh(p1=p1, p2=p2, cell=2e-9)
+        with pytest.raises(TypeError):
+            df.Mesh(p1=p1, p2=p2, n=10)
+        with pytest.raises(TypeError):
             df.Mesh(p1=p1, p2=p2, cell={"x": 2e-9, "y": 4e-9, "z": 1e-9})
         with pytest.raises(TypeError):
             df.Mesh(p1=p1, p2=p2, n={"x": 10, "y": 5, "z": 20})
@@ -207,6 +211,8 @@ class TestMesh:
             df.Mesh(p1=p1, p2=p2, cell=(2e-9, 4e-9))
         with pytest.raises(ValueError):
             df.Mesh(p1=p1, p2=p2, n=(10, 5))
+        with pytest.raises(TypeError):
+            df.Mesh(p1=p1, p2=p2, n=(10.0, 5.0, 20.0))
         with pytest.raises(ValueError):
             df.Mesh(p1=p1, p2=p2)
         with pytest.raises(ValueError):
