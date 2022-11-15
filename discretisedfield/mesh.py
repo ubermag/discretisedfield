@@ -1557,7 +1557,7 @@ class Mesh:
         The midpoints (``discretisedfield.Mesh.points``) along all the dimensions for
         both meshes are compared using ``numpy.allclose``. The value of relative
         tolerance (``rtol``) and absolute tolerance (``atol``) are passed on to
-        ``numpy.allclose`` for the comparison. If the midpoints along all the
+        ``numpy.allclose`` for the comparison. If the midpoints along all
         dimensions are close enough, the method returns ``True``
         otherwise it returns ``False``.
 
