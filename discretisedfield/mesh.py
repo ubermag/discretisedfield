@@ -300,7 +300,7 @@ class Mesh:
                 " its region."
             )
 
-        if not all([isinstance(key, str) for key in subregions]):
+        if not all(isinstance(key, str) for key in subregions):
             raise TypeError("The keys of subregion dictionary must be strings.")
 
         # Check if subregions are aligned with the mesh
