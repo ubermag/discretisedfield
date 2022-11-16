@@ -5,7 +5,6 @@ import pathlib
 import warnings
 
 import numpy as np
-import ubermagutil.typesystem as ts
 import xarray as xr
 from vtkmodules.util import numpy_support as vns
 from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
@@ -16,16 +15,10 @@ import discretisedfield.util as dfu
 from discretisedfield.plotting.util import hv_key_dim
 
 from . import html, io
-from .mesh import Mesh
 
 # TODO: tutorials, line operations
 
 
-@ts.typesystem(
-    mesh=ts.Typed(expected_type=Mesh, const=True),
-    dim=ts.Scalar(expected_type=int, positive=True, const=True),
-    units=ts.Typed(expected_type=str, allow_none=True),
-)
 class Field:
     """Finite-difference field.
 
@@ -134,9 +127,18 @@ class Field:
     def __init__(
         self, mesh, dim, value=0.0, norm=None, components=None, dtype=None, units=None
     ):
-        self.mesh = mesh
-        self.dim = dim
+        if not isinstance(mesh, df.Mesh):
+            raise TypeError("'mesh' must be of class discretisedfield.Mesh.")
+        self._mesh = mesh
+
+        if not isinstance(dim, numbers.Integral):
+            raise TypeError("'dim' must be of type int.")
+        elif dim < 1:
+            raise ValueError("'dim' must be greater than zero.")
+        self._nvdim = dim
+
         self.dtype = dtype
+
         self.units = units
 
         self.value = value
@@ -144,6 +146,50 @@ class Field:
 
         self._components = None  # required in here for correct initialisation
         self.components = components
+
+    @property
+    def mesh(self):
+        """The mesh on which the field is defined.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            The finite-difference rectangular mesh on which the field is defined.
+        """
+        return self._mesh
+
+    @property
+    def dim(self):
+        """Number of value dimensions.
+
+        Returns
+        -------
+        int
+
+            Scalar fields have dimension 1, vector fields can have any dimension greater
+            than 1.
+
+        """
+        return self._nvdim
+
+    @property
+    def units(self):
+        """Unit of the field.
+
+        Returns
+        -------
+        str
+
+            The unit of the field.
+        """
+        return self._unit
+
+    @units.setter
+    def units(self, unit):
+        if unit is not None and not isinstance(unit, str):
+            raise TypeError("'units' must be of type str.")
+        self._unit = unit
 
     @property
     def value(self):
