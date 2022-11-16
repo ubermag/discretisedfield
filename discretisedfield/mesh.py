@@ -294,7 +294,7 @@ class Mesh:
 
     @property
     def region(self):
-        """Region over which the mesh is defined.
+        """Region on which the mesh is defined.
 
         Returns
         -------
