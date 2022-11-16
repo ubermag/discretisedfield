@@ -21,7 +21,7 @@ html_re = (
     r"<strong>Field</strong>\s*<ul>\s*"
     rf"<li>{mesh_html_re}</li>\s*"
     r"<li>nvdim = \d+</li>\s*"
-    r"(<li>components:\s*<ul>(<li>.*</li>\s*)+</ul>\s*</li>)?\s*"
+    r"(<li>vdims:\s*<ul>(<li>.*</li>\s*)+</ul>\s*</li>)?\s*"
     r"(<li>units = .+</li>)?\s*"
     r"</ul>"
 )
@@ -39,8 +39,8 @@ def check_field(field):
     pattern = (
         r"^Field\(Mesh\(Region\(pmin=\[.+\], pmax=\[.+\], .+\), .+\)," r" nvdim=\d+\)$"
     )
-    if field.components:
-        pattern = pattern[:-3] + r", components: \(.+\)\)$"
+    if field.vdims:
+        pattern = pattern[:-3] + r", vdims: \(.+\)\)$"
     if field.units is not None:
         pattern = pattern[:-3] + r", units=.+\)$"
     assert re.search(pattern, rstr)
@@ -276,7 +276,7 @@ class TestField:
                     value=list(range(dim)),
                     components=valid_components[:dim],
                 )
-                assert f.components == valid_components[:dim]
+                assert f.vdims == valid_components[:dim]
                 check_field(f)
 
                 with pytest.raises(ValueError):
@@ -320,12 +320,12 @@ class TestField:
             # default components if not all fields have component labels
             f1a = f1 << fa
             check_field(f1a)
-            assert f1a.components == ["x", "y"]
+            assert f1a.vdims == ["x", "y"]
 
             # custom components if all fields have custom components
             fab = fa << fb
             check_field(fab)
-            assert fab.components == ["a", "b"]
+            assert fab.vdims == ["a", "b"]
 
     def test_units(self):
         assert self.pf.units is None
@@ -1713,13 +1713,13 @@ class TestField:
         # from OOMMF files
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.omf")
-        ).components == ["x", "y", "z"]
+        ).vdims == ["x", "y", "z"]
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.ohf")
-        ).components == ["x", "y", "z"]
+        ).vdims == ["x", "y", "z"]
         assert df.Field.fromfile(
             os.path.join(dirname, "oommf-ovf2-bin8.oef")
-        ).components == ["Total_energy_density"]
+        ).vdims == ["Total_energy_density"]
 
         # Read different mumax3 bin4 and txt files (made on linux and windows)
         filenames = [
@@ -1748,13 +1748,13 @@ class TestField:
         }
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
-        for dim, value, components in zip(
+        for dim, value, vdims in zip(
             [1, 2, 3, 4],
             [1.2, (1, 2.5), (1e-3, -5e6, 5e6), np.random.random(4)],
             [None, ("m_mag", "m_phase"), None, "abcd"],
         ):
             for repr in ["txt", "bin", "xml"]:
-                f = df.Field(mesh, dim=dim, value=value, components=components)
+                f = df.Field(mesh, dim=dim, value=value, components=vdims)
                 tmpfilename = tmp_path / filename
                 f.write(tmpfilename, representation=repr)
                 f_read = df.Field.fromfile(tmpfilename)
@@ -1764,7 +1764,7 @@ class TestField:
                 assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
                 assert np.allclose(f.mesh.cell, f_read.mesh.cell)
                 assert np.all(f.mesh.n == f_read.mesh.n)
-                assert f.components == f_read.components
+                assert f.vdims == f_read.vdims
                 assert f.mesh.subregions == f_read.mesh.subregions
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
@@ -1800,7 +1800,7 @@ class TestField:
         f = df.Field(mesh, dim=3, value=(0, 0, 1))
         with pytest.raises(ValueError):
             f.write(str(tmp_path / filename), representation="wrong")
-        f._components = None  # manually remove component labels
+        f._vdims = None  # manually remove component labels
         with pytest.raises(AttributeError):
             f.write(str(tmp_path / filename))
 
@@ -1886,17 +1886,17 @@ class TestField:
 
     def test_mpl_scalar(self):
         # No axes
-        for comp in self.pf.components:
+        for comp in self.pf.vdims:
             getattr(self.pf, comp).plane("x", n=(3, 4)).mpl.scalar()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        for comp in self.pf.components:
+        for comp in self.pf.vdims:
             getattr(self.pf, comp).plane("x", n=(3, 4)).mpl.scalar(ax=ax)
 
         # All arguments
-        for comp in self.pf.components:
+        for comp in self.pf.vdims:
             getattr(self.pf, comp).plane("x").mpl.scalar(
                 figsize=(10, 10),
                 filter_field=self.pf.norm,
@@ -1977,7 +1977,7 @@ class TestField:
 
         # 2d vector field
         plane_2d = self.pf.plane("z").a << self.pf.plane("z").b
-        plane_2d.components = ["a", "b"]
+        plane_2d.vdims = ["a", "b"]
         with pytest.raises(ValueError):
             plane_2d.mpl.vector()
         plane_2d.mpl.vector(vdims=["a", "b"])
@@ -2095,7 +2095,7 @@ class TestField:
                 ["DynamicMap [comp]", f"Image {kdim_str}"],
             )
 
-            for c in self.pf.components:
+            for c in self.pf.vdims:
                 check_hv(
                     getattr(self.pf, c).hv.scalar(kdims=kdims),
                     [f"DynamicMap [{normal}]", f"Image {kdim_str}"],
@@ -2157,7 +2157,7 @@ class TestField:
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
 
-            for comp in self.pf.components:
+            for comp in self.pf.vdims:
                 check_hv(
                     self.pf.hv.vector(kdims=kdims, cdim=comp),
                     [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
@@ -2177,7 +2177,7 @@ class TestField:
                 check_hv((self.pf.a << self.pf.b).hv.vector(kdims=kdims), ...)
 
             field_2d = self.pf.a << self.pf.b
-            field_2d.components = ["a", "b"]
+            field_2d.vdims = ["a", "b"]
             check_hv(
                 field_2d.hv.vector(kdims=kdims, vdims=["a", "b"]),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
@@ -2195,7 +2195,7 @@ class TestField:
 
             # 4d field
             field_4d = self.pf.a << self.pf.b << self.pf.a << self.pf.b
-            field_4d.components = ["a", "b", "c", "d"]
+            field_4d.vdims = ["a", "b", "c", "d"]
             with pytest.raises(ValueError):
                 check_hv(field_4d.hv.vector(kdims=kdims), ...)
             check_hv(
@@ -2249,7 +2249,7 @@ class TestField:
                 ["DynamicMap [comp]", f"Contours {kdim_str}"],
             )
 
-            for c in self.pf.components:
+            for c in self.pf.vdims:
                 check_hv(
                     getattr(self.pf, c).hv.contour(kdims=kdims).opts(**opts),
                     [f"DynamicMap [{normal}]", f"Contours {kdim_str}"],
@@ -2322,7 +2322,7 @@ class TestField:
 
             # 4d field
             field_4d = self.pf.b << self.pf.c << self.pf.a << self.pf.a
-            field_4d.components = ["v1", "v2", "v3", "v4"]
+            field_4d.vdims = ["v1", "v2", "v3", "v4"]
             check_hv(
                 field_4d.hv(kdims=kdims),
                 [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
@@ -2590,7 +2590,7 @@ class TestField:
                 for i in "xyz":
                     assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
-                assert all(fxa["comp"].values == f.components)
+                assert all(fxa["comp"].values == f.vdims)
                 assert np.array_equal(f.array, fxa.values)
 
             for value, dtype in self.sfuncs:
@@ -2611,7 +2611,7 @@ class TestField:
         f6d_xa = f6d.to_xarray()
         assert f6d_xa["comp"].size == 6
         assert "comp" not in f6d_xa.coords
-        f6d.components = ["a", "c", "b", "e", "d", "f"]
+        f6d.vdims = ["a", "c", "b", "e", "d", "f"]
         f6d_xa2 = f6d.to_xarray()
         assert "comp" in f6d_xa2.coords
         assert [*f6d_xa2["comp"].values] == ["a", "c", "b", "e", "d", "f"]

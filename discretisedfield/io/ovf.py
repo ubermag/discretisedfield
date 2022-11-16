@@ -81,7 +81,7 @@ def field_to_ovf(
     elif extend_scalar:
         valuelabels = " ".join(["field_x"] * write_dim)
     else:
-        valuelabels = " ".join(f"field_{c}" for c in field.components)
+        valuelabels = " ".join(f"field_{c}" for c in field.vdims)
 
     if representation == "bin4":
         repr_string = "Binary 4"
@@ -289,9 +289,9 @@ def field_from_ovf(filename):
 
     try:
         # multi-word components are surrounded by {}
-        components = re.findall(r"(\w+|{[\w ]+})", header["valuelabels"])
+        vdims = re.findall(r"(\w+|{[\w ]+})", header["valuelabels"])
     except KeyError:
-        components = None
+        vdims = None
     else:
 
         def convert(comp):
@@ -302,9 +302,9 @@ def field_from_ovf(filename):
             comp = comp.replace("{", "").replace("}", "")
             return "_".join(comp.split())
 
-        components = [convert(c) for c in components]
-        if len(components) != len(set(components)):  # components are not unique
-            components = None
+        vdims = [convert(c) for c in vdims]
+        if len(vdims) != len(set(vdims)):  # components are not unique
+            vdims = None
 
     try:
         unit_list = header["valueunits"].split()
@@ -327,6 +327,6 @@ def field_from_ovf(filename):
         mesh,
         dim=header["valuedim"],
         value=array.reshape(r_tuple).transpose(t_tuple),
-        components=components,
+        components=vdims,
         units=units,
     )

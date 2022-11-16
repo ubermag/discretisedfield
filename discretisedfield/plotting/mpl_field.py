@@ -150,7 +150,7 @@ class MplField(Mpl):
 
         else:
             vector_field = self.field
-            scalar_field = getattr(self.field, self.field.components[self.planeaxis])
+            scalar_field = getattr(self.field, self.field.vdims[self.planeaxis])
             scalar_kw.setdefault(
                 "colorbar_label", f"{dfu.raxesdict[self.planeaxis]}-component"
             )
@@ -401,9 +401,7 @@ class MplField(Mpl):
             )
         elif self.field.nvdim == 3:
             if lightness_field is None:
-                lightness_field = getattr(
-                    self.field, self.field.components[self.planeaxis]
-                )
+                lightness_field = getattr(self.field, self.field.vdims[self.planeaxis])
             if filter_field is None:
                 filter_field = self.field.norm
             return self.field.angle((1.0, 0.0, 0.0)).mpl.lightness(
@@ -620,8 +618,8 @@ class MplField(Mpl):
         else:
             if len(vdims) != 2:
                 raise ValueError(f"{vdims=} must contain two elements.")
-            arrow_x = self.field.components.index(vdims[0]) if vdims[0] else None
-            arrow_y = self.field.components.index(vdims[1]) if vdims[1] else None
+            arrow_x = self.field.vdims.index(vdims[0]) if vdims[0] else None
+            arrow_y = self.field.vdims.index(vdims[1]) if vdims[1] else None
             if arrow_x is None and arrow_y is None:
                 raise ValueError(f"At least one element of {vdims=} must be not None.")
 
@@ -649,9 +647,7 @@ class MplField(Mpl):
                     )
                     use_color = False
                 else:
-                    color_field = getattr(
-                        self.field, self.field.components[self.planeaxis]
-                    )
+                    color_field = getattr(self.field, self.field.vdims[self.planeaxis])
             if use_color:
                 color_plane = color_field.plane(**self.planeaxis_point)
                 if color_plane.mesh != self.field.mesh:
