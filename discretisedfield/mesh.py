@@ -399,7 +399,7 @@ class Mesh:
         >>> cell = (1, 0.1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         >>> mesh.n
-        (5, 100, 2)
+        array([  5, 100,   2])
         >>> len(mesh)
         1000
 
@@ -623,7 +623,7 @@ class Mesh:
         >>> bc = 'x'
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, bc=bc)
         >>> mesh
-        Mesh(Region(pmin=[0, 0, 0], pmax=[2, 2, 1], ...), n=(2, 2, 1), bc=x, ...)
+        Mesh(Region(pmin=[0, 0, 0], pmax=[2, 2, 1], ...), n=[2, 2, 1], bc=x)
 
         """
         return html.strip_tags(self._repr_html_())
@@ -1111,9 +1111,9 @@ class Mesh:
         >>> subregion = df.Region(p1=(0, 1e-9, 0), p2=(10e-9, 14e-9, 5e-9))
         >>> submesh = mesh[subregion]
         >>> submesh.cell
-        (5e-09, 5e-09, 5e-09)
+        array([5.e-09, 5.e-09, 5.e-09])
         >>> submesh.n
-        (2, 3, 1)
+        array([2, 3, 1])
 
         """
         if isinstance(item, str):
@@ -1178,7 +1178,7 @@ class Mesh:
         >>> padded_mesh.region.edges
         array([120, 120, 110])
         >>> padded_mesh.n
-        (12, 12, 11)
+        array([12, 12, 11])
 
         """
         # Convert to np.ndarray to allow operations on them.
@@ -1223,11 +1223,11 @@ class Mesh:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> mesh.dx
-        10
+        10.0
         >>> mesh.dy
-        25
+        25.0
         >>> mesh.dz
-        50
+        50.0
 
         """
         for axis, i in dfu.axesdict.items():
@@ -1273,7 +1273,7 @@ class Mesh:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> mesh.dV
-        8
+        8.0
 
         """
         return np.product(self.cell)
