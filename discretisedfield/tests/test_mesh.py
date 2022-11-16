@@ -820,7 +820,7 @@ class TestMesh:
         mesh.save_subregions(str(tmp_path / "mesh.json"))
 
         mesh2 = df.Mesh(p1=p1, p2=p2, cell=cell)
-        assert mesh2.subregions is None
+        assert mesh2.subregions == {}
         mesh2.load_subregions(str(tmp_path / "mesh.json"))
         assert mesh2.subregions == subregions
 
