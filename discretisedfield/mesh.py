@@ -1605,7 +1605,7 @@ class Mesh:
         >>> n = (10, 10, 10)
         >>> mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
         ...
-        >>> mesh1.allclose(mesh2, rtol=1e-6, atol=1e-11)
+        >>> mesh1.allclose(mesh2)
         True
         >>> mesh1.allclose(mesh2, rtol=1e-6, atol=1e-13)
         False
