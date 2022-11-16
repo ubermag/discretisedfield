@@ -19,9 +19,6 @@ html_re = (
     r"<li>n = .*</li>\s*"
     r"(<li>bc = ([xyz]{1,3}|neumann|dirichlet)<li>)?\s*"
     rf"(<li>subregions:\s*<ul>\s*(<li>{region_html_re}</li>\s*)+</ul></li>)?"
-    r"\s*<li>attributes:\s*<ul>\s*"
-    r"(\s*<li>(.*:.*|.*Mesh.*)</li>)+\s*"
-    r"</ul>\s*</li>\s*"
     r"</ul>"
 )
 
@@ -337,8 +334,7 @@ class TestMesh:
         rstr = (
             "Mesh(Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5], "
             "dims=['x', 'y', 'z'], units=['m', 'm', 'm']), "
-            "n=(16, 141, 3), bc=x, attributes: (unit: m, fourierspace: "
-            "False, isplane: False))"
+            "n=[16, 141, 3], bc=x)"
         )
         assert repr(mesh) == rstr
         assert re.match(html_re, mesh._repr_html_(), re.DOTALL)
