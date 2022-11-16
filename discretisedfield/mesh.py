@@ -5,7 +5,6 @@ import itertools
 import json
 import pathlib
 import warnings
-from collections.abc import Iterable
 from numbers import Integral, Number
 
 import ipywidgets
@@ -194,44 +193,41 @@ class Mesh:
                 " pass region or both p1 and p2."
             )
 
-        if cell is None and n is None:
-            raise ValueError("Both cell and n cannot be None.")
-        elif cell is not None and n is None:
-            if not isinstance(cell, Iterable):
-                raise TypeError("Cell must be an Iterable.")
-            self._cell = tuple(cell)
-            if len(self._cell) != self.region.ndim:
-                raise ValueError("The cell must have same dimensions as the region.")
-            elif not all([isinstance(i, (Number, complex)) for i in self._cell]):
+        if cell is not None and n is None:
+            if not isinstance(cell, (tuple, list, np.ndarray)):
                 raise TypeError(
-                    "The values of cell must be of type either int, float or complex"
+                    "Cell must be either a tuple, a list, or a numpy.ndarray."
                 )
-            n = np.divide(self.region.edges, self._cell).round().astype(int)
+            if len(cell) != self.region.ndim:
+                raise ValueError("The cell must have same dimensions as the region.")
+            elif not all(isinstance(i, Number) and i > 0 for i in cell):
+                raise TypeError("The values of cell must be positive numbers.")
+            # Check if the mesh region is an aggregate of the discretisation cell.
+            tol = np.min(cell) * 1e-3  # tolerance
+            rem = np.remainder(self.region.edges, cell)
+            if np.logical_and(
+                np.greater(rem, tol), np.less(rem, np.subtract(cell, tol))
+            ).any():
+                raise ValueError(
+                    "Region cannot be divided into "
+                    f"discretisation cells of size {cell=}."
+                )
+            n = np.divide(self.region.edges, cell).round().astype(int)
             self._n = dfu.array2tuple(n)
         elif n is not None and cell is None:
-            if not isinstance(n, Iterable):
-                raise TypeError("n must be an Iterable.")
-            self._n = tuple(n)
-            if len(self._n) != self.region.ndim:
+            if not isinstance(n, (tuple, list, np.ndarray)):
+                raise TypeError("n must be either a tuple, a list or a numpy.ndarray.")
+            if len(n) != self.region.ndim:
                 raise ValueError("n must have same dimensions as the region.")
-            elif not all([isinstance(i, Integral) for i in self._n]):
-                raise TypeError("The values of n must be of integer type.")
-            cell = np.divide(self.region.edges, self._n).astype(float)
-            self._cell = dfu.array2tuple(cell)
-        else:
-            raise ValueError("Either n or cell can be passed, not both.")
+            elif not all(isinstance(i, Integral) and i > 0 for i in n):
+                raise TypeError("The values of n must be positive integers.")
+            self._n = tuple(n)
 
-        # Check if the mesh region is an aggregate of the discretisation cell.
-        tol = np.min(self.cell) * 1e-3  # tolerance
-        rem = np.remainder(self.region.edges, self.cell)
-        if np.logical_and(
-            np.greater(rem, tol), np.less(rem, np.subtract(self.cell, tol))
-        ).any():
-            msg = (
-                "Region cannot be divided into "
-                f"discretisation cells of size {self.cell=}."
+        else:
+            raise ValueError(
+                "Both n and cell cannot be None or passed simultaneously. Either pass n"
+                " or cell."
             )
-            raise ValueError(msg)
 
         self.bc = bc
 
@@ -265,7 +261,8 @@ class Mesh:
     @property
     def cell(self):
         """The cell dimensions of the mesh."""
-        return self._cell
+        cell = np.divide(self.region.edges, self.n).astype(float)
+        return dfu.array2tuple(cell)
 
     @property
     def n(self):

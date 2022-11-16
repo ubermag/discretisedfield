@@ -149,9 +149,8 @@ class TestMesh:
         n = (15, 141, 11)
         cell = (1, 0.1, 0.5)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-        assert "not both." in str(excinfo.value)
 
     def test_region_not_aggregate_of_cell(self):
         args = [
