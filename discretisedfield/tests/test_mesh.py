@@ -324,9 +324,6 @@ class TestMesh:
         with pytest.raises(TypeError):
             mesh1.allclose(mesh3, rtol="1", atol=atol)
 
-        with pytest.raises(TypeError):
-            mesh1.allclose(mesh3, rtol="1", atol="20")
-
     def test_repr(self):
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
