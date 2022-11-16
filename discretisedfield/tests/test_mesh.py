@@ -69,7 +69,7 @@ class TestMesh:
 
             assert isinstance(mesh1.region, df.Region)
             if n is not None:
-                assert np.allclose(mesh1.n, n)
+                assert np.all(mesh1.n == n)
             if cell is not None:
                 assert np.allclose(mesh1.cell, cell)
 
@@ -78,7 +78,7 @@ class TestMesh:
 
             assert isinstance(mesh2.region, df.Region)
             if n is not None:
-                assert np.allclose(mesh2.n, n)
+                assert np.all(mesh2.n == n)
             if cell is not None:
                 assert np.allclose(mesh2.cell, cell)
 
@@ -186,12 +186,12 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         mesh = df.Mesh(p1=p1, p2=p2, cell=np.array(cell))
         mesh = df.Mesh(p1=p1, p2=p2, cell=list(cell))
-        assert mesh.n == n
+        assert np.all(mesh.n == n)
 
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
         mesh = df.Mesh(p1=p1, p2=p2, n=np.array(n, dtype=int))
         mesh = df.Mesh(p1=p1, p2=p2, n=list(n))
-        assert mesh.cell == cell
+        assert np.allclose(mesh.cell, cell)
 
         with pytest.raises(AttributeError):
             mesh.cell = (2e-9, 2e-9, 2e-9)
@@ -349,11 +349,11 @@ class TestMesh:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         assert isinstance(mesh, df.Mesh)
 
-        assert mesh.index2point((5, 10, 1)) == (4.5, -2.95, 11.75)
+        assert np.allclose(mesh.index2point((5, 10, 1)), (4.5, -2.95, 11.75))
 
         # Correct minimum index
         assert isinstance(mesh.index2point((0, 0, 0)), tuple)
-        assert mesh.index2point((0, 0, 0)) == (-0.5, -3.95, 11.25)
+        assert np.allclose(mesh.index2point((0, 0, 0)), (-0.5, -3.95, 11.25))
 
         # Below minimum index
         with pytest.raises(ValueError):
@@ -365,7 +365,7 @@ class TestMesh:
 
         # Correct maximum index
         assert isinstance(mesh.index2point((15, 140, 2)), tuple)
-        assert mesh.index2point((15, 140, 2)) == (14.5, 10.05, 12.25)
+        assert np.allclose(mesh.index2point((15, 140, 2)), (14.5, 10.05, 12.25))
 
         # Above maximum index
         with pytest.raises(ValueError):
@@ -425,7 +425,7 @@ class TestMesh:
         assert isinstance(mesh, df.Mesh)
 
         for p in [(-0.5, -3.95, 11.25), (14.5, 10.05, 12.25)]:
-            assert mesh.index2point(mesh.point2index(p)) == p
+            assert np.allclose(mesh.index2point(mesh.point2index(p)), p)
 
         for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]:
             assert mesh.point2index(mesh.index2point(i)) == i
@@ -627,7 +627,7 @@ class TestMesh:
         assert np.allclose(submesh.region.pmin, (0, 2, 4))
         assert np.allclose(submesh.region.pmax, (5, 4, 6))
         assert np.allclose(submesh.cell, cell)
-        assert np.allclose(submesh.n, (5, 2, 2))
+        assert np.all(submesh.n == (5, 2, 2))
         assert mesh[mesh.region].allclose(mesh)
 
         p1 = (20e-9, 0, 15e-9)
@@ -644,8 +644,8 @@ class TestMesh:
         assert np.allclose(
             submesh.region.pmax, (15e-9, 80e-9, 15e-9), atol=1e-15, rtol=1e-5
         )
-        assert submesh.cell == cell
-        assert submesh.n == (5, 12, 3)
+        assert np.allclose(submesh.cell, cell)
+        assert np.all(submesh.n == (5, 12, 3))
         assert mesh[mesh.region].allclose(mesh)
 
         with pytest.raises(ValueError):
@@ -663,22 +663,22 @@ class TestMesh:
         padded_mesh = mesh.pad({"x": (0, 1)})
         assert np.allclose(padded_mesh.region.pmin, (-1, 2, 4))
         assert np.allclose(padded_mesh.region.pmax, (6, 9, 7))
-        assert np.allclose(padded_mesh.n, (7, 7, 3))
+        assert np.all(padded_mesh.n == (7, 7, 3))
 
         padded_mesh = mesh.pad({"y": (1, 1)})
         assert np.allclose(padded_mesh.region.pmin, (-1, 1, 4))
         assert np.allclose(padded_mesh.region.pmax, (5, 10, 7))
-        assert np.allclose(padded_mesh.n, (6, 9, 3))
+        assert np.all(padded_mesh.n == (6, 9, 3))
 
         padded_mesh = mesh.pad({"z": (2, 3)})
         assert np.allclose(padded_mesh.region.pmin, (-1, 2, 2))
         assert np.allclose(padded_mesh.region.pmax, (5, 9, 10))
-        assert np.allclose(padded_mesh.n, (6, 7, 8))
+        assert np.all(padded_mesh.n == (6, 7, 8))
 
         padded_mesh = mesh.pad({"x": (1, 1), "y": (1, 1), "z": (1, 1)})
         assert np.allclose(padded_mesh.region.pmin, (-2, 1, 3))
         assert np.allclose(padded_mesh.region.pmax, (6, 10, 8))
-        assert np.allclose(padded_mesh.n, (8, 9, 5))
+        assert np.all(padded_mesh.n == (8, 9, 5))
 
     def test_getattr(self):
         p1 = (0, 0, 0)
@@ -686,9 +686,9 @@ class TestMesh:
         cell = (1e-9, 5e-9, 10e-9)
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-        assert mesh.dx == 1e-9
-        assert mesh.dy == 5e-9
-        assert mesh.dz == 10e-9
+        assert np.allclose(mesh.dx, 1e-9)
+        assert np.allclose(mesh.dy, 5e-9)
+        assert np.allclose(mesh.dz, 10e-9)
 
         with pytest.raises(AttributeError):
             mesh.dk

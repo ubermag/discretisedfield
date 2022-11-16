@@ -3642,7 +3642,7 @@ def _(val, mesh, dim, dtype):
     )
     if dim == 1:
         # xarray dataarrays for scalar data are three dimensional
-        return value.reshape(mesh.n + (-1,))
+        return value.reshape(*mesh.n, -1)
     return value
 
 

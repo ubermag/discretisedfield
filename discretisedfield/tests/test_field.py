@@ -403,8 +403,8 @@ class TestField:
                     norm += f.array[..., 2] ** 2
                     norm = np.sqrt(norm)
 
-                    assert norm.shape == f.mesh.n
-                    assert f.norm.array.shape == (*f.mesh.n, 1)
+                    assert np.all(norm.shape == f.mesh.n)
+                    assert f.norm.array.shape == (*tuple(f.mesh.n), 1)
                     assert np.all(abs(f.norm.array - norm_value) < 1e-12)
 
         # Exception
@@ -1773,7 +1773,7 @@ class TestField:
                 assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
                 assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
                 assert np.allclose(f.mesh.cell, f_read.mesh.cell)
-                assert f.mesh.n == f_read.mesh.n
+                assert np.all(f.mesh.n == f_read.mesh.n)
                 assert f.components == f_read.components
                 assert f.mesh.subregions == f_read.mesh.subregions
 
@@ -1787,7 +1787,7 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
         check_field(f)
-        assert f.mesh.n == (5, 1, 2)
+        assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 3)
         assert f.dim == 3
 
@@ -1795,14 +1795,14 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-vector-legacy.vtk"))
         check_field(f)
-        assert f.mesh.n == (8, 1, 1)
+        assert np.all(f.mesh.n == (8, 1, 1))
         assert f.array.shape == (8, 1, 1, 3)
         assert f.dim == 3
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
         check_field(f)
-        assert f.mesh.n == (5, 1, 2)
+        assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 1)
         assert f.dim == 1
 
@@ -2594,7 +2594,7 @@ class TestField:
                 assert isinstance(fxa, xr.DataArray)
                 assert f.dim == fxa["comp"].size
                 assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
-                assert fxa.attrs["cell"] == f.mesh.cell
+                assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
                 assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
@@ -2608,7 +2608,7 @@ class TestField:
                 fxa = f.to_xarray()
                 assert isinstance(fxa, xr.DataArray)
                 assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
-                assert fxa.attrs["cell"] == f.mesh.cell
+                assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
                 assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":

@@ -78,7 +78,7 @@ class TestFieldRotator:
             n = (10, 10, 10)
             fr.rotate("from_euler", seq="x", angles=np.pi / 6, n=n)
             check_rotator(fr)
-            assert fr.field.mesh.n == n
+            assert np.all(fr.field.mesh.n == n)
 
     def test_rotation_inverse_rotation(self):
         for field in self.fields:

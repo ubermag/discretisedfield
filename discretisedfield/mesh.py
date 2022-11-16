@@ -212,8 +212,8 @@ class Mesh:
                     "Region cannot be divided into "
                     f"discretisation cells of size {cell=}."
                 )
-            n = np.divide(self.region.edges, cell).round().astype(int)
-            self._n = dfu.array2tuple(n)
+            self._n = np.divide(self.region.edges, cell).round().astype(int)
+
         elif n is not None and cell is None:
             if not isinstance(n, (tuple, list, np.ndarray)):
                 raise TypeError("n must be either a tuple, a list or a numpy.ndarray.")
@@ -221,7 +221,7 @@ class Mesh:
                 raise ValueError("n must have same dimensions as the region.")
             elif not all(isinstance(i, Integral) and i > 0 for i in n):
                 raise TypeError("The values of n must be positive integers.")
-            self._n = tuple(n)
+            self._n = np.array(n, dtype=int)
 
         else:
             raise ValueError(
@@ -261,8 +261,7 @@ class Mesh:
     @property
     def cell(self):
         """The cell dimensions of the mesh."""
-        cell = np.divide(self.region.edges, self.n).astype(float)
-        return dfu.array2tuple(cell)
+        return np.divide(self.region.edges, self.n).astype(float)
 
     @property
     def n(self):
@@ -565,7 +564,7 @@ class Mesh:
         """
         if not isinstance(other, self.__class__):
             return False
-        if self.region == other.region and self.n == other.n:
+        if self.region == other.region and all(self.n == other.n):
             return True
         else:
             return False
@@ -1007,7 +1006,7 @@ class Mesh:
                 f" {type(tolerance)}"
             )
 
-        if self.cell != other.cell:
+        if not np.allclose(self.cell, other.cell, atol=tolerance):
             return False
 
         tol = tolerance
