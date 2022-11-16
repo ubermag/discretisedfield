@@ -271,9 +271,9 @@ class TestField:
             check_field(cfield)
             manually = df.Field(mesh, dim=3, value=lambda p: p)
             assert cfield.allclose(manually)
-            assert np.allclose(cfield.array[:, 0, 0, 0], mesh.midpoints.x)
-            assert np.allclose(cfield.array[0, :, 0, 1], mesh.midpoints.y)
-            assert np.allclose(cfield.array[0, 0, :, 2], mesh.midpoints.z)
+            assert np.allclose(cfield.array[:, 0, 0, 0], mesh.points.x)
+            assert np.allclose(cfield.array[0, :, 0, 1], mesh.points.y)
+            assert np.allclose(cfield.array[0, 0, :, 2], mesh.points.z)
 
     def test_components(self):
         for mesh in self.meshes:
@@ -403,8 +403,8 @@ class TestField:
                     norm += f.array[..., 2] ** 2
                     norm = np.sqrt(norm)
 
-                    assert norm.shape == f.mesh.n
-                    assert f.norm.array.shape == (*f.mesh.n, 1)
+                    assert np.all(norm.shape == f.mesh.n)
+                    assert f.norm.array.shape == (*tuple(f.mesh.n), 1)
                     assert np.all(abs(f.norm.array - norm_value) < 1e-12)
 
         # Exception
@@ -1216,8 +1216,8 @@ class TestField:
 
         # Neumann
         f2 = df.Field(mesh_neumann, dim=1, value=value_fun)
-        assert f1.diff("x")(f1.mesh.region.center) == f2.diff("x")(
-            f2.mesh.region.center
+        assert np.allclose(
+            f1.diff("x")(f1.mesh.region.center), f2.diff("x")(f2.mesh.region.center)
         )
         assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
         raise NotImplementedError  # TODO: test with higher order and accuracy
@@ -1778,7 +1778,7 @@ class TestField:
                 assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
                 assert np.allclose(f.mesh.region.pmax, f_read.mesh.region.pmax)
                 assert np.allclose(f.mesh.cell, f_read.mesh.cell)
-                assert f.mesh.n == f_read.mesh.n
+                assert np.all(f.mesh.n == f_read.mesh.n)
                 assert f.components == f_read.components
                 assert f.mesh.subregions == f_read.mesh.subregions
 
@@ -1792,7 +1792,7 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
         check_field(f)
-        assert f.mesh.n == (5, 1, 2)
+        assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 3)
         assert f.dim == 3
 
@@ -1800,14 +1800,14 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-vector-legacy.vtk"))
         check_field(f)
-        assert f.mesh.n == (8, 1, 1)
+        assert np.all(f.mesh.n == (8, 1, 1))
         assert f.array.shape == (8, 1, 1, 3)
         assert f.dim == 3
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.fromfile(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
         check_field(f)
-        assert f.mesh.n == (5, 1, 2)
+        assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 1)
         assert f.dim == 1
 
@@ -2599,11 +2599,11 @@ class TestField:
                 assert isinstance(fxa, xr.DataArray)
                 assert f.dim == fxa["comp"].size
                 assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
-                assert fxa.attrs["cell"] == f.mesh.cell
+                assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
                 assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
-                    assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
+                    assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
                 assert all(fxa["comp"].values == f.components)
                 assert np.array_equal(f.array, fxa.values)
@@ -2613,11 +2613,11 @@ class TestField:
                 fxa = f.to_xarray()
                 assert isinstance(fxa, xr.DataArray)
                 assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
-                assert fxa.attrs["cell"] == f.mesh.cell
+                assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
                 assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
-                    assert np.array_equal(getattr(f.mesh.midpoints, i), fxa[i].values)
+                    assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
                     assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
                 assert "comp" not in fxa.dims
                 assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
