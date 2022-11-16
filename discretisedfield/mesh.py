@@ -1260,6 +1260,204 @@ class Mesh:
     def _subregion_filename(filename):
         return f"{str(filename)}.subregions.json"
 
+    def scale(self, factor, inplace=False):
+        """Scale the underlying region and all subregions.
+
+        This method scales mesh.region and all subregions by multiplying ``pmin`` and
+        ``pmax`` with ``factor``. If ``factor`` is a number the same scaling is applied
+        along all dimensions. If ``factor`` is array-like its length must match
+        ``region.ndim`` and different factors are applied along the different directions
+        (based on their order). A new object is created unless ``inplace=True`` is
+        specified.
+
+        Scaling the mesh also scales ``mesh.cell``. The number of cells ``mesh.n`` stays
+        constant.
+
+        Parameters
+        ----------
+        factor : numbers.Number or array-like of numbers.Number
+
+            Factor to scale the region.
+
+        inplace : bool, optional
+
+            If True, the Region object is modified in-place. Defaults to False.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Resulting mesh.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Example
+        -------
+        1. Scale a mesh without subregions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1))
+        >>> res = mesh.scale(2)
+        >>> res.region.pmin
+        array([0, 0, 0])
+        >>> res.region.pmax
+        array([20, 20, 20])
+
+        2. Scale a mesh with subregions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> sr = {'sub_reg': df.Region(p1=p1, p2=(5, 5, 5))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1), subregions=sr)
+        >>> res = mesh.scale(2)
+        >>> res.region.pmin
+        array([0, 0, 0])
+        >>> res.region.pmax
+        array([20, 20, 20])
+        >>> res.subregions['sub_reg'].pmin
+        array([0, 0, 0])
+        >>> res.subregions['sub_reg'].pmax
+        array([10, 10, 10])
+
+        3. Scale a mesh with subregions in place.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> sr = {'sub_reg': df.Region(p1=p1, p2=(5, 5, 5))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1), subregions=sr)
+        >>> mesh.scale((2, 2, 5), inplace=True)
+        Mesh(...)
+        >>> mesh.region.pmin
+        array([0, 0, 0])
+        >>> mesh.region.pmax
+        array([20, 20, 50])
+        >>> mesh.subregions['sub_reg'].pmin
+        array([0, 0, 0])
+        >>> mesh.subregions['sub_reg'].pmax
+        array([10, 10, 25])
+
+        See also
+        --------
+        ~discretisedfield.Region.scale
+
+        """
+        if inplace:
+            self.region.scale(factor, inplace=True)
+            for sr in self.subregions.values():
+                sr.scale(factor, inplace=True)
+            return self
+        else:
+            region = self.region.scale(factor)
+            subregions = {key: sr.scale(factor) for key, sr in self.subregions.items()}
+            return self.__class__(
+                region=region, n=self.n, bc=self.bc, subregions=subregions
+            )
+
+    def translate(self, vector, inplace=False):
+        """Translate the underlying region and all subregions.
+
+        This method translates mesh.region and all subregions by adding ``vector`` to
+        ``pmin`` and ``pmax``. The ``vector`` must have ``Region.ndim`` elements. A new
+        object is created unless ``inplace=True`` is specified.
+
+        Parameters
+        ----------
+        vector : array-like of numbers.Number
+
+            Vector to translate the underlying region.
+
+        inplace : bool, optional
+
+            If True, the Region objects are modified in-place. Defaults to False.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Resulting mesh.
+
+        Raises
+        ------
+        ValueError, TypeError
+
+            If the operator cannot be applied.
+
+        Examples
+        --------
+        1. Translate a mesh without subregions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1))
+        >>> res = mesh.translate((2, -2, 5))
+        >>> res.region.pmin
+        array([ 2, -2,  5])
+        >>> res.region.pmax
+        array([12,  8, 15])
+
+        2. Translate a mesh with subregions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> sr = {'sub_reg': df.Region(p1=p1, p2=(5, 5, 5))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1), subregions=sr)
+        >>> res = mesh.translate((2, -2, 5))
+        >>> res.region.pmin
+        array([ 2, -2,  5])
+        >>> res.region.pmax
+        array([12,  8, 15])
+        >>> res.subregions['sub_reg'].pmin
+        array([ 2, -2,  5])
+        >>> res.subregions['sub_reg'].pmax
+        array([ 7,  3, 10])
+
+        3. Translate a mesh with subregions in place.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> sr = {'sub_reg': df.Region(p1=p1, p2=(5, 5, 5))}
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1), subregions=sr)
+        >>> mesh.translate((2, -2, 5), inplace=True)
+        Mesh(...)
+        >>> mesh.region.pmin
+        array([ 2, -2,  5])
+        >>> mesh.region.pmax
+        array([12,  8, 15])
+        >>> mesh.subregions['sub_reg'].pmin
+        array([ 2, -2,  5])
+        >>> mesh.subregions['sub_reg'].pmax
+        array([ 7,  3, 10])
+
+        See also
+        --------
+        ~discretisedfield.Region.translate
+
+        """
+        if inplace:
+            self.region.translate(vector, inplace=True)
+            for sr in self.subregions.values():
+                sr.translate(vector, inplace=True)
+            return self
+        else:
+            region = self.region.translate(vector)
+            subregions = {
+                key: sr.translate(vector) for key, sr in self.subregions.items()
+            }
+            return self.__class__(
+                region=region, n=self.n, bc=self.bc, subregions=subregions
+            )
+
     @property
     def mpl(self):
         """``matplotlib`` plot.
