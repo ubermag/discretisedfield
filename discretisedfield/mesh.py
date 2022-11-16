@@ -182,17 +182,17 @@ class Mesh:
         attributes={"unit": "m"},
     ):
         # TODO NO MUTABLE DEFAULT
-        if region is None and p1 is None and p2 is None:
-            raise ValueError("p1, p2, and region cannot be None simultaneously.")
-        elif region is not None and p1 is None and p2 is None:
+        if region is not None and p1 is None and p2 is None:
             if not isinstance(region, df.Region):
                 raise TypeError("region must be of class discretisedfield.Region.")
             self._region = region
         elif region is None and p1 is not None and p2 is not None:
             self._region = df.Region(p1=p1, p2=p2)
         else:
-            msg = "Either region or p1 and p2 can be passed, not both."
-            raise ValueError(msg)
+            raise ValueError(
+                "region, p1, and p2 cannot be None or passed simultaneously. Either"
+                " pass region or both p1 and p2."
+            )
 
         if cell is None and n is None:
             raise ValueError("Both cell and n cannot be None.")

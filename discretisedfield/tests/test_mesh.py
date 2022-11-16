@@ -140,9 +140,8 @@ class TestMesh:
         region = df.Region(p1=p1, p2=p2)
         n = (10, 10, 10)
 
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             df.Mesh(region=region, p1=p1, p2=p2, n=n)
-        assert "not both." in str(excinfo.value)
 
     def test_init_with_n_and_cell(self):
         p1 = (0, -4, 16.5)
