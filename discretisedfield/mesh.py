@@ -315,7 +315,6 @@ class Mesh:
             A dictionary defining subregions in the mesh. The keys of the
             dictionary are the region names (``str``) as valid Python variable
             names, whereas the values are ``discretisedfield.Region`` objects.
-            Defaults to None.
         """
         return self._subregions
 
