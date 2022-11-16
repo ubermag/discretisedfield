@@ -243,7 +243,7 @@ def field_from_ovf(filename):
         # >>> MESH <<<
         p1 = [float(header[f"{key}min"]) for key in "xyz"]
         p2 = [float(header[f"{key}max"]) for key in "xyz"]
-        cell = (float(header[f"{key}stepsize"]) for key in "xyz")
+        cell = [float(header[f"{key}stepsize"]) for key in "xyz"]
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
         nodes = math.prod(int(header[f"{key}nodes"]) for key in "xyz")
