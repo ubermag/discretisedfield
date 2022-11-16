@@ -294,7 +294,7 @@ class TestMesh:
 
     def test_allclose(self):
         p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
+        p2 = (1e-8, 1e-8, 1e-8)
         n = (1, 1, 1)
         mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
         mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
@@ -302,18 +302,20 @@ class TestMesh:
         assert mesh1.allclose(mesh2)
 
         p1 = (0, 0, 0)
-        p2 = (10 + 1e-12, 10 + 2e-13, 10 + 3e-12)
+        p2 = (1e-8 + 1e-12, 1e-8 + 2e-13, 1e-8 + 3e-12)
         n = (1, 1, 1)
-        atol = 1e-10
-        rtol = 1e-8
+        atol = 1e-13
+        rtol = 1e-2
         mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
 
         assert mesh1.allclose(mesh3, rtol=rtol, atol=atol)
+        assert not mesh1.allclose(mesh3, atol=atol)
 
-        p2 = (10 + 1e-9, 10 + 2e-7, 10 + 3e-8)
+        p2 = (1e-8 + 1e-9, 1e-8 + 2e-10, 1e-8 + 3e-11)
         mesh4 = df.Mesh(p1=p1, p2=p2, n=n)
 
         assert not mesh1.allclose(mesh4, rtol=rtol, atol=atol)
+        assert mesh1.allclose(mesh4, atol=1e-7)
 
         with pytest.raises(TypeError):
             mesh1.allclose(df.Region(p1=p1, p2=p2))
