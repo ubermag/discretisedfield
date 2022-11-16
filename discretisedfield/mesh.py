@@ -34,12 +34,6 @@ class Mesh:
     discretisation cells ``n`` in all three dimensions. Either ``cell`` or
     ``n`` can be passed, not both.
 
-    Periodic boundary conditions can be specified by passing ``bc`` argument as
-    a string containing one or more characters from ``{'x', 'y', 'z'}`` set
-    (e.g. ``'x'``, ``'yz'``, ``'xyz'``). Neumann or Dirichlet boundary
-    conditions are defined by passing ``'neumann'`` or ``'dirichlet'`` string.
-    Neumann and Dirichlett boundary conditions are still experimental.
-
     If it is necessary to define subregions in the mesh, a dictionary can be
     passed using ``subregions``. More precisely, dictionary keys are strings
     (valid Python variable names), whereas values are
@@ -241,7 +235,22 @@ class Mesh:
 
     @property
     def bc(self):
-        """Boundary condition for the mesh."""
+        """Boundary condition for the mesh.
+
+        Periodic boundary conditions can be specified by passing a string containing one
+        or more characters from ``self.region.dims`` (e.g. ``'x'``, ``'yz'``, ``'xyz'``)
+        . Neumann or Dirichlet boundary conditions are defined by passing ``'neumann'``
+        or ``'dirichlet'`` string. Neumann and Dirichlett boundary conditions are still
+        experimental.
+
+        Returns
+        -------
+        str
+
+            A string representing periodic boundary condition along one or more axes, or
+            Dirichlet or Neumann boundary condition. The string is empty if no boundary
+            condition is defined.
+        """
         return self._bc
 
     @bc.setter
@@ -260,17 +269,39 @@ class Mesh:
 
     @property
     def cell(self):
-        """The cell dimensions of the mesh."""
+        """The cell dimensions of the mesh.
+
+        Returns
+        -------
+        numpy.ndarray
+
+            A numpy array representing discretisation size along respective axes.
+        """
         return np.divide(self.region.edges, self.n).astype(float)
 
     @property
     def n(self):
-        """Number of cells along each dimension of the mesh."""
+        """Number of cells along each dimension of the mesh.
+
+        Returns
+        -------
+        numpy.ndarray
+
+            A numpy array representing number of discretisation cells along respective
+            axes.
+        """
         return self._n
 
     @property
     def region(self):
-        """Region over which the mesh is defined."""
+        """Region over which the mesh is defined.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            A cuboidal region over which the regular mesh is defined.
+        """
         return self._region
 
     @property
@@ -279,7 +310,7 @@ class Mesh:
 
         Returns
         -------
-        dict, None
+        dict
 
             A dictionary defining subregions in the mesh. The keys of the
             dictionary are the region names (``str``) as valid Python variable
