@@ -454,17 +454,6 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.region2slices(df.Region(p1=(-1, 3, -1), p2=(3, 5, 0)))
 
-    @pytest.mark.filterwarnings("ignore::FutureWarning")
-    def test_axis_points(self):
-        p1 = (0, 0, 0)
-        p2 = (10, 6, 8)
-        cell = (2, 2, 2)
-        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-
-        assert np.allclose(mesh.axis_points("x"), [1.0, 3.0, 5.0, 7.0, 9.0])
-        assert np.allclose(mesh.axis_points("y"), [1.0, 3.0, 5.0])
-        assert np.allclose(mesh.axis_points("z"), [1.0, 3.0, 5.0, 7.0])
-
     def test_points(self):
         p1 = (0, 0, 4)
         p2 = (10, 6, 0)
