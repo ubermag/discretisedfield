@@ -949,7 +949,7 @@ class Mesh:
 
         Two meshes are considered to be aligned if and only if:
 
-            1. They have same discretisation cells.
+            1. They have same discretisation cell size.
 
             2. They have common cell coordinates.
 
