@@ -7,9 +7,7 @@ import jinja2
 def get_template(name):
     """Return html template with the given name."""
     env = jinja2.Environment(
-        loader=jinja2.FileSystemLoader(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
-        )
+        loader=jinja2.PackageLoader("discretisedfield.html", "templates")
     )
     return env.get_template(name + ".jinja2")
 
