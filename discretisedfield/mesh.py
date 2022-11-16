@@ -1345,6 +1345,9 @@ class Mesh:
         (based on their order). A new object is created unless ``inplace=True`` is
         specified.
 
+        Scaling the mesh also scales ``mesh.cell``. The number of cells ``mesh.n`` stays
+        constant.
+
         Parameters
         ----------
         factor : numbers.Number or array-like of numbers.Number
@@ -1419,7 +1422,6 @@ class Mesh:
         See also
         --------
         ~discretisedfield.Region.scale
-
 
         """
         if inplace:
