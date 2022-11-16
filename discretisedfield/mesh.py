@@ -435,10 +435,6 @@ class Mesh:
         for index in self.indices:
             yield self.index2point(index)
 
-    def axis_points(self, axis, /):
-        warnings.warn("Deprecated; use `mesh.points` instead.", FutureWarning)
-        return getattr(self.points, axis)
-
     @property
     def points(self):
         """Midpoints of the cells of the mesh along the three directions.
