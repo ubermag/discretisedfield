@@ -269,7 +269,7 @@ class Mesh:
 
     @property
     def cell(self):
-        """The cell dimensions of the mesh.
+        """The cell size of the mesh.
 
         Returns
         -------
