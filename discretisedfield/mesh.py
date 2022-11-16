@@ -34,6 +34,9 @@ class Mesh:
     discretisation cells ``n`` in all three dimensions. Either ``cell`` or
     ``n`` can be passed, not both.
 
+    It is possible to define boundary conditions (bc) for the mesh by passing a string
+    to ``bc``.
+
     If it is necessary to define subregions in the mesh, a dictionary can be
     passed using ``subregions``. More precisely, dictionary keys are strings
     (valid Python variable names), whereas values are
