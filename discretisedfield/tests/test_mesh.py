@@ -222,7 +222,9 @@ class TestMesh:
         region = df.Region(p1=p1, p2=p2, dims=["x", "y", "z"])
         cell = (2e-9, 4e-9, 1e-9)
 
-        for bc in ["x", "y", "yz", "zx", "xyz", "Neumann", "dirichlet"]:
+        allowed_bc = ["x", "y", "z", "xy", "yz", "zx", "Neumann", "dirichlet"]
+
+        for bc in allowed_bc:
             df.Mesh(region=region, cell=cell, bc=bc)
 
         with pytest.raises(TypeError):
