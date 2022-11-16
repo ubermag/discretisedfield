@@ -435,6 +435,9 @@ class Mesh:
         for index in self.indices:
             yield self.index2point(index)
 
+    def midpoints(self):
+        raise AttributeError('Please use "points" instead.')
+
     @property
     def points(self):
         """Midpoints of the cells of the mesh along the three directions.
