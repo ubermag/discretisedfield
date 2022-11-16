@@ -160,7 +160,7 @@ class Field:
         return self._mesh
 
     @property
-    def dim(self):
+    def nvdim(self):
         """Number of value dimensions.
 
         Returns
@@ -316,7 +316,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = _as_array(self._value, self.mesh, self.dim, dtype=self.dtype)
+        value_array = _as_array(self._value, self.mesh, self.nvdim, dtype=self.dtype)
         if np.array_equal(self.array, value_array):
             return self._value
         else:
@@ -325,7 +325,7 @@ class Field:
     @value.setter
     def value(self, val):
         self._value = val
-        self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
+        self.array = _as_array(val, self.mesh, self.nvdim, dtype=self.dtype)
 
     @property
     def components(self):
@@ -335,8 +335,8 @@ class Field:
     @components.setter
     def components(self, components):
         if components is not None:
-            if len(components) != self.dim:
-                raise ValueError(f"Number of components does not match {self.dim=}.")
+            if len(components) != self.nvdim:
+                raise ValueError(f"Number of components does not match {self.nvdim=}.")
             if len(components) != len(set(components)):
                 raise ValueError("Components must be unique.")
             for c in components:
@@ -349,12 +349,12 @@ class Field:
                         )
             self._components = list(components)
         else:
-            if 2 <= self.dim <= 3:
-                components = ["x", "y", "z"][: self.dim]
-            elif self.dim > 3:
+            if 2 <= self.nvdim <= 3:
+                components = ["x", "y", "z"][: self.nvdim]
+            elif self.nvdim > 3:
                 warnings.warn(
                     "Component labels must be specified for "
-                    f"{self.dim=} fields to get access to individual"
+                    f"{self.nvdim=} fields to get access to individual"
                     " vector components."
                 )
             self._components = components
@@ -416,7 +416,7 @@ class Field:
 
     @array.setter
     def array(self, val):
-        self._array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
+        self._array = _as_array(val, self.mesh, self.nvdim, dtype=self.dtype)
 
     @property
     def norm(self):
@@ -529,7 +529,7 @@ class Field:
 
         """
         return self.__class__(
-            self.mesh, dim=self.dim, value=np.abs(self.array), units=self.units
+            self.mesh, dim=self.nvdim, value=np.abs(self.array), units=self.units
         )
 
     @property
@@ -564,7 +564,7 @@ class Field:
         """
         return self.__class__(
             self.mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=0,
             components=self.components,
             units=self.units,
@@ -611,8 +611,8 @@ class Field:
         array([1.])
 
         """
-        if self.dim == 1:
-            msg = f"Cannot compute orientation field for a dim={self.dim} field."
+        if self.nvdim == 1:
+            msg = f"Cannot compute orientation field for a dim={self.nvdim} field."
             raise ValueError(msg)
 
         orientation_array = np.divide(
@@ -622,7 +622,10 @@ class Field:
             out=np.zeros_like(self.array),
         )
         return self.__class__(
-            self.mesh, dim=self.dim, value=orientation_array, components=self.components
+            self.mesh,
+            dim=self.nvdim,
+            value=orientation_array,
+            components=self.components,
         )
 
     def mean(self, axis=None):
@@ -675,7 +678,7 @@ class Field:
             raise NotImplementedError()
 
         return np.stack(
-            [self.array[..., i].mean(axis=axis) for i in range(self.dim)], axis=-1
+            [self.array[..., i].mean(axis=axis) for i in range(self.nvdim)], axis=-1
         )
 
     @property
@@ -806,7 +809,7 @@ class Field:
         Field(...)
         >>> field.z.mean()
         array([1.])
-        >>> field.z.dim
+        >>> field.z.nvdim
         1
 
         2. Accessing custom vector field components.
@@ -832,7 +835,7 @@ class Field:
         Field(...)
         >>> field.mz.mean()
         array([1.])
-        >>> field.mz.dim
+        >>> field.mz.nvdim
         1
 
         """
@@ -863,11 +866,11 @@ class Field:
 
         if self.components is not None:
             dirlist += self.components
-        if self.dim == 1:
+        if self.nvdim == 1:
             need_removing = ["div", "curl", "orientation"]
-        if self.dim == 2:
+        if self.nvdim == 2:
             need_removing = ["grad", "curl", "k3d"]
-        if self.dim == 3:
+        if self.nvdim == 3:
             need_removing = ["grad"]
 
         for attr in need_removing:
@@ -963,7 +966,7 @@ class Field:
             return False
         elif (
             self.mesh == other.mesh
-            and self.dim == other.dim
+            and self.nvdim == other.nvdim
             and np.array_equal(self.array, other.array)
         ):
             return True
@@ -1035,7 +1038,7 @@ class Field:
             )
             raise TypeError(msg)
 
-        if self.mesh == other.mesh and self.dim == other.dim:
+        if self.mesh == other.mesh and self.nvdim == other.nvdim:
             return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
         else:
             return False
@@ -1043,7 +1046,7 @@ class Field:
     def is_same_vectorspace(self, other):  # TODO: check components
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
-        return self.dim == other.dim
+        return self.nvdim == other.nvdim
 
     def _check_same_mesh_and_field_dim(self, other, ignore_scalar=False):
         if not isinstance(other, self.__class__):
@@ -1054,7 +1057,7 @@ class Field:
                 "To perform this operation both fields must have the same mesh."
             )
 
-        if ignore_scalar and (self.dim == 1 or other.dim == 1):
+        if ignore_scalar and (self.nvdim == 1 or other.nvdim == 1):
             return
 
         if not self.is_same_vectorspace(other):
@@ -1072,12 +1075,12 @@ class Field:
         elif isinstance(other, (tuple, list, np.ndarray)):
             if not (
                 self.array.shape == np.shape(other)
-                or self.dim == len(other)
-                or self.dim == 1
+                or self.nvdim == len(other)
+                or self.nvdim == 1
             ):
                 raise TypeError(
                     f"Unsupported operand type(s) for {operator}: {type(self)} with"
-                    f" {self.dim} components and {type(other)} with shape"
+                    f" {self.nvdim} components and {type(other)} with shape"
                     f" {np.shape(other)}."
                 )
         else:
@@ -1088,7 +1091,7 @@ class Field:
             raise TypeError(msg)
 
         res_array = function(self.array, other)
-        components = self.components if self.dim == res_array.shape[-1] else None
+        components = self.components if self.nvdim == res_array.shape[-1] else None
         return self.__class__(
             self.mesh,
             dim=res_array.shape[-1],
@@ -1179,7 +1182,7 @@ class Field:
         """
         return self.__class__(
             self.mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=-self.array,
             components=self.components,
         )
@@ -1612,10 +1615,10 @@ class Field:
         """
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
-            if self.dim != 3 or other.dim != 3:
+            if self.nvdim != 3 or other.nvdim != 3:
                 msg = (
-                    f"Cannot apply cross product on {self.dim=} and"
-                    f" {other.dim=} fields."
+                    f"Cannot apply cross product on {self.nvdim=} and"
+                    f" {other.nvdim=} fields."
                 )
                 raise ValueError(msg)
             other = other.array
@@ -1685,7 +1688,7 @@ class Field:
         >>> f = f1 << f2 << f3
         >>> f.mean()
         array([ 1.,  5., -3.])
-        >>> f.dim
+        >>> f.nvdim
         3
         >>> f.x == f1
         True
@@ -1709,8 +1712,8 @@ class Field:
             )
             raise TypeError(msg)
 
-        array_list = [self.array[..., i] for i in range(self.dim)]
-        array_list += [other.array[..., i] for i in range(other.dim)]
+        array_list = [self.array[..., i] for i in range(self.nvdim)]
+        array_list += [other.array[..., i] for i in range(other.nvdim)]
 
         if self.components is None or other.components is None:
             components = None
@@ -1802,7 +1805,7 @@ class Field:
 
         return self.__class__(
             padded_mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=padded_array,
             components=self.components,
             units=self.units,
@@ -1925,7 +1928,7 @@ class Field:
             raise NotImplementedError(msg)
 
         elif n == 1:
-            if self.dim == 1:
+            if self.nvdim == 1:
                 derivative_array = np.gradient(
                     padded_array[..., 0], self.mesh.cell[direction], axis=direction
                 )[..., np.newaxis]
@@ -1960,7 +1963,10 @@ class Field:
             )
 
         return self.__class__(
-            self.mesh, dim=self.dim, value=derivative_array, components=self.components
+            self.mesh,
+            dim=self.nvdim,
+            value=derivative_array,
+            components=self.components,
         )
 
     @property
@@ -2031,8 +2037,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim != 1:
-            msg = f"Cannot compute gradient for dim={self.dim} field."
+        if self.nvdim != 1:
+            msg = f"Cannot compute gradient for dim={self.nvdim} field."
             raise ValueError(msg)
 
         return self.derivative("x") << self.derivative("y") << self.derivative("z")
@@ -2099,14 +2105,14 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim not in [2, 3]:
-            msg = f"Cannot compute divergence for dim={self.dim} field."
+        if self.nvdim not in [2, 3]:
+            msg = f"Cannot compute divergence for dim={self.nvdim} field."
             raise ValueError(msg)
 
         return sum(
             [
                 getattr(self, self.components[i]).derivative(dfu.raxesdict[i])
-                for i in range(self.dim)
+                for i in range(self.nvdim)
             ]
         )
 
@@ -2175,8 +2181,8 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim != 3:
-            msg = f"Cannot compute curl for dim={self.dim} field."
+        if self.nvdim != 3:
+            msg = f"Cannot compute curl for dim={self.nvdim} field."
             raise ValueError(msg)
 
         x, y, z = self.components
@@ -2246,9 +2252,9 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.dim not in [1, 3]:
-            raise ValueError(f"Cannot compute laplace for dim={self.dim} field.")
-        if self.dim == 1:
+        if self.nvdim not in [1, 3]:
+            raise ValueError(f"Cannot compute laplace for dim={self.nvdim} field.")
+        if self.nvdim == 1:
             return (
                 self.derivative("x", n=2)
                 + self.derivative("y", n=2)
@@ -2390,7 +2396,7 @@ class Field:
             res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
 
         res = self.__class__(
-            mesh, dim=self.dim, value=res_array, components=self.components
+            mesh, dim=self.nvdim, value=res_array, components=self.components
         )
 
         if len(direction) == 3:
@@ -2516,7 +2522,7 @@ class Field:
             value = self.array[slices]
         return self.__class__(
             plane_mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=value,
             components=self.components,
             units=self.units,
@@ -2599,7 +2605,7 @@ class Field:
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
         return self.__class__(
             submesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=self.array[tuple(slices)],
             components=self.components,
             units=self.units,
@@ -2700,10 +2706,10 @@ class Field:
         """
         if isinstance(vector, self.__class__):
             self._check_same_mesh_and_field_dim(vector)
-        elif self.dim == 1 and isinstance(vector, numbers.Complex):
-            vector = self.__class__(self.mesh, dim=self.dim, value=vector)
-        elif self.dim != 1 and isinstance(vector, (tuple, list, np.ndarray)):
-            vector = self.__class__(self.mesh, dim=self.dim, value=vector)
+        elif self.nvdim == 1 and isinstance(vector, numbers.Complex):
+            vector = self.__class__(self.mesh, dim=self.nvdim, value=vector)
+        elif self.nvdim != 1 and isinstance(vector, (tuple, list, np.ndarray)):
+            vector = self.__class__(self.mesh, dim=self.nvdim, value=vector)
         else:
             msg = (
                 f"Unsupported operand type(s) for angle: {type(self)=} and"
@@ -2868,7 +2874,7 @@ class Field:
         1000
 
         """
-        if self.dim > 1 and self.components is None:
+        if self.nvdim > 1 and self.components is None:
             raise AttributeError(
                 "Field components must be assigned before converting to vtk."
             )
@@ -2891,7 +2897,7 @@ class Field:
         )
         field_norm.SetName("norm")
         cell_data.AddArray(field_norm)
-        if self.dim > 1:
+        if self.nvdim > 1:
             # For some visualisation packages it is an advantage to have direct
             # access to the individual field components, e.g. for colouring.
             for comp in self.components:
@@ -2901,14 +2907,14 @@ class Field:
                 component_array.SetName(f"{comp}-component")
                 cell_data.AddArray(component_array)
         field_array = vns.numpy_to_vtk(
-            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.dim))
+            self.array.transpose((2, 1, 0, 3)).reshape((-1, self.nvdim))
         )
         field_array.SetName("field")
         cell_data.AddArray(field_array)
 
-        if self.dim == 3:
+        if self.nvdim == 3:
             cell_data.SetActiveVectors("field")
-        elif self.dim == 1:
+        elif self.nvdim == 1:
             cell_data.SetActiveScalars("field")
         return rgrid
 
@@ -3067,7 +3073,7 @@ class Field:
     def _hv_vdims_guess(self, kdims):
         """Try to find vector components matching the given kdims."""
         mesh_dims = "xyz"
-        if len(mesh_dims) != self.dim:
+        if len(mesh_dims) != self.nvdim:
             return None
         vdims = []
         for dim in kdims:
@@ -3092,7 +3098,7 @@ class Field:
             for dim in mesh_dims
             if len(coords := getattr(self.mesh.points, dim)) > 1
         }
-        if self.dim > 1:
+        if self.nvdim > 1:
             key_dims["comp"] = hv_key_dim(self.components, "")
         return key_dims
 
@@ -3109,7 +3115,7 @@ class Field:
         mesh = self._fft_mesh()
 
         values = []
-        for idx in range(self.dim):
+        for idx in range(self.nvdim):
             ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
             values.append(ft.reshape(mesh.n))
 
@@ -3133,7 +3139,7 @@ class Field:
             mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
         values = []
-        for idx in range(self.dim):
+        for idx in range(self.nvdim):
             ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
             values.append(ft.reshape(mesh.n))
 
@@ -3155,7 +3161,7 @@ class Field:
         mesh = self._fft_mesh(rfft=True)
 
         values = []
-        for idx in range(self.dim):
+        for idx in range(self.nvdim):
             array = self.array[..., idx].squeeze()
             # no shifting for the last axis
             ft = np.fft.fftshift(np.fft.rfftn(array), axes=range(len(array.shape) - 1))
@@ -3181,7 +3187,7 @@ class Field:
             mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
         values = []
-        for idx in range(self.dim):
+        for idx in range(self.nvdim):
             array = self.array[..., idx].squeeze()
             ft = np.fft.irfftn(
                 np.fft.ifftshift(array, axes=range(len(array.shape) - 1)),
@@ -3243,7 +3249,7 @@ class Field:
         """Real part of complex field."""
         return self.__class__(
             self.mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=self.array.real,
             components=self.components,
             units=self.units,
@@ -3254,7 +3260,7 @@ class Field:
         """Imaginary part of complex field."""
         return self.__class__(
             self.mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=self.array.imag,
             components=self.components,
             units=self.units,
@@ -3265,7 +3271,7 @@ class Field:
         """Phase of complex field."""
         return self.__class__(
             self.mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=np.angle(self.array),
             components=self.components,
         )
@@ -3275,7 +3281,7 @@ class Field:
         """Absolute value of complex field."""
         return self.__class__(
             self.mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=np.abs(self.array),
             components=self.components,
         )
@@ -3285,7 +3291,7 @@ class Field:
         """Complex conjugate of complex field."""
         return self.__class__(
             self.mesh,
-            dim=self.dim,
+            dim=self.nvdim,
             value=self.array.conjugate(),
             components=self.components,
             units=self.units,
@@ -3337,7 +3343,7 @@ class Field:
         """Field value as ``xarray.DataArray``.
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``comp`` (``only if field.dim > 1``). The coordinates
+        ``y``, ``z``, and ``comp`` (``only if field.nvdim > 1``). The coordinates
         of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.components``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
@@ -3417,7 +3423,7 @@ class Field:
         else:
             geo_units_dict = dict.fromkeys(axes, "m")
 
-        if self.dim > 1:
+        if self.nvdim > 1:
             data_array_dims = axes + ["comp"]
             if self.components is not None:
                 data_array_coords["comp"] = self.components

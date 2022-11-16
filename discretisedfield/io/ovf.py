@@ -74,7 +74,7 @@ def field_to_ovf(
 
     """
     filename = pathlib.Path(filename)
-    write_dim = 3 if extend_scalar and field.dim == 1 else field.dim
+    write_dim = 3 if extend_scalar and field.nvdim == 1 else field.nvdim
     valueunits = " ".join([str(field.units) if field.units else "None"] * write_dim)
     if write_dim == 1:
         valuelabels = "field_x"
@@ -171,7 +171,7 @@ def field_to_ovf(
                 )
             f.write(b"\n")
         else:
-            data = pd.DataFrame(reordered.reshape((-1, field.dim)))
+            data = pd.DataFrame(reordered.reshape((-1, field.nvdim)))
             data.insert(loc=0, column="leading_space", value="")
 
             if extend_scalar:
