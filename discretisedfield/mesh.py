@@ -1627,15 +1627,13 @@ class Mesh:
             )
 
         return all(
-            [
-                np.allclose(
-                    getattr(self.points, dim),
-                    getattr(other.points, dim),
-                    rtol=rtol,
-                    atol=atol,
-                )
-                for dim in self.region.dims
-            ]
+            np.allclose(
+                getattr(self.points, dim),
+                getattr(other.points, dim),
+                rtol=rtol,
+                atol=atol,
+            )
+            for dim in self.region.dims
         )
 
     def coordinate_field(self):
