@@ -1913,8 +1913,21 @@ class Field:
         """
         direction_idx = dfu.axesdict[direction]
 
+        # Work out the maximum stencil size to give nicer error message than findiff.
+        coeffs = fd.coefficients(deriv=order, acc=acc)
+        stencil_len_back = len(coeffs["backward"]["offsets"]) - 1
+        stencil_max_cent = max(coeffs["center"]["offsets"]) - 1
+
+        stencil_len = stencil_len_back + stencil_max_cent
+        if stencil_len >= self.mesh.n[direction_idx]:
+            raise ValueError(
+                f"The finite difference stencil ({stencil_len}) is larger than the"
+                f" number of cells in the {direction} direction"
+                f" ({self.mesh.n[direction_idx]})."
+            )
+
         # Calculate the correct padding needed for the derivative.
-        pw = int(len(fd.coefficients(deriv=order, acc=acc)["center"]["offsets"]) / 2)
+        pw = int(len(coeffs["center"]["offsets"]) / 2)
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
