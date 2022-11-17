@@ -1273,8 +1273,8 @@ class TestField:
         assert np.allclose(f.diff("x", order=2, acc=8).mean(), (4, 0, 0))
 
     def test_derivative_pbc(self):
-        p1 = (0, 0, 0)
-        p2 = (10, 8, 6)
+        p1 = (0.0, 0.0, 0.0)
+        p2 = (12.0, 8.0, 6.0)
         cell = (2, 2, 2)
 
         mesh_nopbc = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -1282,37 +1282,59 @@ class TestField:
 
         # Scalar field
         def value_fun(point):
-            return point[0] * point[1] * point[2]
+            x, y, z = point
+            return x * y * z
 
         # No PBC
         f = df.Field(mesh_nopbc, dim=1, value=value_fun)
-        assert np.isclose(f.diff("x")((9, 1, 1)), 1)
+        assert np.isclose(f.diff("x")((11, 1, 1)), 1)
         assert np.isclose(f.diff("y")((1, 7, 1)), 1)
         assert np.isclose(f.diff("z")((1, 1, 5)), 1)
 
         # PBC
         f = df.Field(mesh_pbc, dim=1, value=value_fun)
-        assert np.isclose(f.diff("x")((9, 1, 1)), -1.5)
+        assert np.isclose(f.diff("x")((11, 1, 1)), -2)
         assert np.isclose(f.diff("y")((1, 7, 1)), -1)
         assert np.isclose(f.diff("z")((1, 1, 5)), -0.5)
 
         # Vector field
         def value_fun(point):
-            return (point[0] * point[1] * point[2],) * 3
+            x, y, z = point
+            return (x * y * z,) * 3
 
         # No PBC
         f = df.Field(mesh_nopbc, dim=3, value=value_fun)
-        assert np.allclose(f.diff("x")((9, 1, 1)), (1, 1, 1))
+        assert np.allclose(f.diff("x")((11, 1, 1)), (1, 1, 1))
         assert np.allclose(f.diff("y")((1, 7, 1)), (1, 1, 1))
         assert np.allclose(f.diff("z")((1, 1, 5)), (1, 1, 1))
 
         # PBC
         f = df.Field(mesh_pbc, dim=3, value=value_fun)
-        assert np.allclose(f.diff("x")((9, 1, 1)), (-1.5, -1.5, -1.5))
+        assert np.allclose(f.diff("x")((11, 1, 1)), (-2, -2, -2))
         assert np.allclose(f.diff("y")((1, 7, 1)), (-1, -1, -1))
         assert np.allclose(f.diff("z")((1, 1, 5)), (-0.5, -0.5, -0.5))
 
-        raise NotImplementedError  # TODO: test with higher order and accuracy
+        # Higher order derivatives
+        def value_fun(point):
+            x, y, z = point
+            return x**2
+
+        f = df.Field(mesh_nopbc, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+
+        f = df.Field(mesh_pbc, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 32)
+
+        # Higher accuracy
+        def value_fun(point):
+            x, y, z = point
+            return x
+
+        f = df.Field(mesh_nopbc, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 1)
+
+        f = df.Field(mesh_pbc, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), -2.5)
 
     def test_derivative_neumann(self):
         p1 = (0, 0, 0)
