@@ -1384,7 +1384,51 @@ class TestField:
         assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 7 / 12)
 
     def test_derivative_dirichlet(self):
-        raise NotImplementedError
+        p1 = (0.0, 0.0, 0.0)
+        p2 = (12.0, 8.0, 6.0)
+        cell = (2, 2, 2)
+
+        mesh_nodirichlet = df.Mesh(p1=p1, p2=p2, cell=cell)
+        mesh_dirichlet = df.Mesh(p1=p1, p2=p2, cell=cell, bc="dirichlet")
+
+        # Scalar field
+        def value_fun(point):
+            return point[0] * point[1] * point[2]
+
+        # No Neumann
+        f1 = df.Field(mesh_nodirichlet, dim=1, value=value_fun)
+        assert np.isclose(f1.diff("x")((11, 1, 1)), 1)
+        assert np.isclose(f1.diff("y")((1, 7, 1)), 1)
+        assert np.isclose(f1.diff("z")((1, 1, 5)), 1)
+
+        # Neumann
+        f2 = df.Field(mesh_dirichlet, dim=1, value=value_fun)
+        assert np.allclose(
+            f1.diff("x")(f1.mesh.region.center), f2.diff("x")(f2.mesh.region.center)
+        )
+        assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
+
+        # Higher order derivatives
+        def value_fun(point):
+            x, y, z = point
+            return x**2
+
+        f = df.Field(mesh_nodirichlet, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+
+        f = df.Field(mesh_dirichlet, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 1.75)
+
+        # Higher accuracy
+        def value_fun(point):
+            x, y, z = point
+            return x
+
+        f = df.Field(mesh_nodirichlet, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 1)
+
+        f = df.Field(mesh_dirichlet, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 19 / 24)
 
     def test_derivative_single_cell(self):
         p1 = (0, 0, 0)
