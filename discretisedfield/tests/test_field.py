@@ -1338,7 +1338,7 @@ class TestField:
 
     def test_derivative_neumann(self):
         p1 = (0, 0, 0)
-        p2 = (10, 8, 6)
+        p2 = (12, 8, 6)
         cell = (2, 2, 2)
 
         mesh_noneumann = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -1350,7 +1350,7 @@ class TestField:
 
         # No Neumann
         f1 = df.Field(mesh_noneumann, dim=1, value=value_fun)
-        assert np.isclose(f1.diff("x")((9, 1, 1)), 1)
+        assert np.isclose(f1.diff("x")((11, 1, 1)), 1)
         assert np.isclose(f1.diff("y")((1, 7, 1)), 1)
         assert np.isclose(f1.diff("z")((1, 1, 5)), 1)
 

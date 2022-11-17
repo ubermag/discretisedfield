@@ -1915,16 +1915,6 @@ class Field:
 
         # Work out the maximum stencil size to give nicer error message than findiff.
         coeffs = fd.coefficients(deriv=order, acc=acc)
-        stencil_len_back = len(coeffs["backward"]["offsets"]) - 1
-        stencil_max_cent = max(coeffs["center"]["offsets"]) - 1
-
-        stencil_len = stencil_len_back + stencil_max_cent
-        if stencil_len >= self.mesh.n[direction_idx]:
-            raise ValueError(
-                f"The finite difference stencil ({stencil_len}) is larger than the"
-                f" number of cells in the {direction} direction"
-                f" ({self.mesh.n[direction_idx]})."
-            )
 
         # Calculate the correct padding needed for the derivative.
         pw = int(len(coeffs["center"]["offsets"]) / 2)
@@ -1949,6 +1939,16 @@ class Field:
         else:  # No BC - no padding
             pad_width = {}
             padding_mode = "constant"
+            stencil_len_back = len(coeffs["backward"]["offsets"]) - 1
+            stencil_max_cent = max(coeffs["center"]["offsets"]) - 1
+
+            stencil_len = stencil_len_back + stencil_max_cent
+            if stencil_len >= self.mesh.n[direction_idx]:
+                raise ValueError(
+                    f"The finite difference stencil ({stencil_len}) is the same or"
+                    f" larger than the number of cells in the {direction} direction"
+                    f" ({self.mesh.n[direction_idx]})."
+                )
 
         padded_array = self.pad(pad_width, mode=padding_mode).array
 
