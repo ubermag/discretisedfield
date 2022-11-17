@@ -1337,8 +1337,8 @@ class TestField:
         assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), -2.5)
 
     def test_derivative_neumann(self):
-        p1 = (0, 0, 0)
-        p2 = (12, 8, 6)
+        p1 = (0.0, 0.0, 0.0)
+        p2 = (12.0, 8.0, 6.0)
         cell = (2, 2, 2)
 
         mesh_noneumann = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -1360,7 +1360,28 @@ class TestField:
             f1.diff("x")(f1.mesh.region.center), f2.diff("x")(f2.mesh.region.center)
         )
         assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
-        raise NotImplementedError  # TODO: test with higher order and accuracy
+
+        # Higher order derivatives
+        def value_fun(point):
+            x, y, z = point
+            return x**2
+
+        f = df.Field(mesh_noneumann, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+
+        f = df.Field(mesh_neumann, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+
+        # Higher accuracy
+        def value_fun(point):
+            x, y, z = point
+            return x
+
+        f = df.Field(mesh_noneumann, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 1)
+
+        f = df.Field(mesh_neumann, dim=1, value=value_fun)
+        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 7 / 12)
 
     def test_derivative_dirichlet(self):
         raise NotImplementedError
