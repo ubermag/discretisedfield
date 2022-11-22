@@ -288,7 +288,7 @@ def field_from_ovf(filename):
     t_tuple = (2, 1, 0, 3)
 
     try:
-        # multi-word components are surrounded by {}
+        # multi-word vdims are surrounded by {}
         vdims = re.findall(r"(\w+|{[\w ]+})", header["valuelabels"])
     except KeyError:
         vdims = None
@@ -303,7 +303,7 @@ def field_from_ovf(filename):
             return "_".join(comp.split())
 
         vdims = [convert(c) for c in vdims]
-        if len(vdims) != len(set(vdims)):  # components are not unique
+        if len(vdims) != len(set(vdims)):  # vdims are not unique
             vdims = None
 
     try:
@@ -316,7 +316,7 @@ def field_from_ovf(filename):
         elif len(set(unit_list)) != 1:
             warnings.warn(
                 f"File {filename} contains multiple units for the individual"
-                f" components: {unit_list=}. This is not supported by"
+                f" vdims: {unit_list=}. This is not supported by"
                 " discretisedfield. Units are set to None."
             )
             units = None
@@ -327,6 +327,6 @@ def field_from_ovf(filename):
         mesh,
         dim=header["valuedim"],
         value=array.reshape(r_tuple).transpose(t_tuple),
-        components=vdims,
+        vdims=vdims,
         units=units,
     )
