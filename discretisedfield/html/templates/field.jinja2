@@ -2,12 +2,12 @@
 <ul>
   {% set mesh = field.mesh %}
   <li>{% include 'mesh.jinja2' %}</li>
-  <li>dim = {{ field.dim }}</li>
-  {% if field.components is iterable -%}
-    <li>components:
+  <li>nvdim = {{ field.nvdim }}</li>
+  {% if field.vdims is iterable -%}
+    <li>vdims:
       <ul>
-        {%- for component in field.components -%}
-          <li>{{ component }}</li>
+        {%- for vdim in field.vdims -%}
+          <li>{{ vdim }}</li>
         {% endfor -%}
       </ul>
     </li>
