@@ -25,11 +25,11 @@ class Field:
     This class specifies a finite-difference field and defines operations for
     its analysis and visualisation. The field is defined on a finite-difference
     mesh (`discretisedfield.Mesh`) passed using ``mesh``. Another value that
-    must be passed is the dimension of the field's value using ``dim``. For
-    instance, for a scalar field, ``dim=1`` and for a three-dimensional vector
-    field ``dim=3`` must be passed. The value of the field can be set by
+    must be passed is the dimension of the field's value using ``nvdim``. For
+    instance, for a scalar field, ``nvdim=1`` and for a three-dimensional vector
+    field ``nvdim=3`` must be passed. The value of the field can be set by
     passing ``value``. For details on how the value can be defined, refer to
-    ``discretisedfield.Field.value``. Similarly, if the field has ``dim>1``,
+    ``discretisedfield.Field.value``. Similarly, if the field has ``nvdim>1``,
     the field can be normalised by passing ``norm``. For details on setting the
     norm, please refer to ``discretisedfield.Field.norm``.
 
@@ -213,23 +213,23 @@ class Field:
         Otherwise, ``discretisedfield.Field.array`` containing all field values
         is returned.
 
-        The value of the field can be set using a scalar value for ``dim=1``
-        fields (e.g. ``value=3``) or ``array_like`` value for ``dim>1`` fields
+        The value of the field can be set using a scalar value for ``nvdim=1``
+        fields (e.g. ``value=3``) or ``array_like`` value for ``nvdim>1`` fields
         (e.g. ``value=(1, 2, 3)``). Alternatively, the value can be defined
         using a callable object, which takes a point tuple as an input argument
         and returns a value of appropriate dimension. Internally, callable
         object is called for every point in the mesh on which the field is
         defined. For instance, callable object can be a Python function or
         another ``discretisedfield.Field``. Finally, ``numpy.ndarray`` with
-        shape ``(*self.mesh.n, dim)`` can be passed.
+        shape ``(*self.mesh.n, nvdim)`` can be passed.
 
         Parameters
         ----------
         value : numbers.Real, array_like, callable, dict
 
-            For scalar fields (``dim=1``) ``numbers.Real`` values are allowed.
+            For scalar fields (``nvdim=1``) ``numbers.Real`` values are allowed.
             In the case of vector fields, ``array_like`` (list, tuple,
-            numpy.ndarray) value with length equal to `dim` should be used.
+            numpy.ndarray) value with length equal to `nvdim` should be used.
             Finally, the value can also be a callable (e.g. Python function or
             another field), which for every coordinate in the mesh returns a
             valid value. If ``value=0``, all values in the field will be set to
@@ -237,8 +237,8 @@ class Field:
 
             If subregions are defined value can be initialised with a dict.
             Allowed keys are names of all subregions and ``default``. Items
-            must be either ``numbers.Real`` for ``dim=1`` or ``array_like``
-            for ``dim=3``. If subregion names are missing, the value of
+            must be either ``numbers.Real`` for ``nvdim=1`` or ``array_like``
+            for ``nvdim=3``. If subregion names are missing, the value of
             ``default`` is used if given. If parts of the region are not
             contained within one subregion ``default`` is used if specified,
             else these values are set to 0.
@@ -377,13 +377,13 @@ class Field:
     def array(self):
         """Field value as ``numpy.ndarray``.
 
-        The shape of the array is ``(*mesh.n, dim)``.
+        The shape of the array is ``(*mesh.n, nvdim)``.
 
         Parameters
         ----------
         array : numpy.ndarray
 
-            Array with shape ``(*mesh.n, dim)``.
+            Array with shape ``(*mesh.n, nvdim)``.
 
         Returns
         -------
@@ -437,7 +437,7 @@ class Field:
         """Norm of the field.
 
         Computes the norm of the field and returns ``discretisedfield.Field``
-        with ``dim=1``. Norm of a scalar field is interpreted as an absolute
+        with ``nvdim=1``. Norm of a scalar field is interpreted as an absolute
         value of the field.
 
         The field norm can be set by passing ``numbers.Real``,
@@ -1467,7 +1467,7 @@ class Field:
         3. A field of any dimension and a scalar (``nvdim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
-        defined on the same mesh.F
+        defined on the same mesh.
 
         Parameters
         ----------
