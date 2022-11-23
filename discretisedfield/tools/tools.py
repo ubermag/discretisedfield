@@ -12,7 +12,7 @@ def topological_charge_density(field, /, method="continuous"):
     r"""Topological charge density.
 
     This method computes the topological charge density for a vector field
-    (``dim=3``). Two different methods are available and can be selected using
+    (``nvdim=3``). Two different methods are available and can be selected using
     ``method``:
 
     1. Continuous method:
@@ -74,7 +74,7 @@ def topological_charge_density(field, /, method="continuous"):
     >>> p2 = (10, 10, 10)
     >>> cell = (2, 2, 2)
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+    >>> f = df.Field(mesh, nvdim=3, value=(1, 1, -1))
     ...
     >>> dft.topological_charge_density(f.plane('z'))
     Field(...)
@@ -83,7 +83,7 @@ def topological_charge_density(field, /, method="continuous"):
 
     2. An attempt to compute the topological charge density of a scalar field.
 
-    >>> f = df.Field(mesh, dim=1, value=12)
+    >>> f = df.Field(mesh, nvdim=1, value=12)
     >>> dft.topological_charge_density(f.plane('z'))
     Traceback (most recent call last):
     ...
@@ -92,7 +92,7 @@ def topological_charge_density(field, /, method="continuous"):
     3. Attempt to compute the topological charge density of a vector field,
     which is not sliced.
 
-    >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+    >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
     >>> dft.topological_charge_density(f)
     Traceback (most recent call last):
     ...
@@ -101,8 +101,8 @@ def topological_charge_density(field, /, method="continuous"):
     .. seealso:: :py:func:`~discretisedfield.tools.topological_charge`
 
     """
-    if field.dim != 3:
-        msg = f"Cannot compute topological charge density for {field.dim=} field."
+    if field.nvdim != 3:
+        msg = f"Cannot compute topological charge density for {field.nvdim=} field."
         raise ValueError(msg)
 
     if not field.mesh.attributes["isplane"]:
@@ -132,7 +132,7 @@ def topological_charge_density(field, /, method="continuous"):
         )
 
     elif method == "berg-luescher":
-        q = df.Field(field.mesh, dim=1)
+        q = df.Field(field.mesh, nvdim=1)
 
         # Area of a single triangle
         area = 0.5 * field.mesh.cell[axis1] * field.mesh.cell[axis2]
@@ -183,7 +183,7 @@ def topological_charge_density(field, /, method="continuous"):
 def topological_charge(field, /, method="continuous", absolute=False):
     """Topological charge.
 
-    This function computes topological charge for a vector field (``dim=3``).
+    This function computes topological charge for a vector field (``nvdim=3``).
     There are two possible methods, which can be chosen using ``method``
     parameter. For details on method, please refer to
     :py:func:`~discretisedfield.tools.topological_charge_density`. Absolute
@@ -236,7 +236,7 @@ def topological_charge(field, /, method="continuous", absolute=False):
     >>> cell = (2, 2, 2)
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
     ...
-    >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+    >>> f = df.Field(mesh, nvdim=3, value=(1, 1, -1))
     >>> dft.topological_charge(f.plane('z'), method='continuous')
     0.0
     >>> dft.topological_charge(f.plane('z'), method='continuous',
@@ -250,7 +250,7 @@ def topological_charge(field, /, method="continuous", absolute=False):
 
     2. Attempt to compute the topological charge of a scalar field.
 
-    >>> f = df.Field(mesh, dim=1, value=12)
+    >>> f = df.Field(mesh, nvdim=1, value=12)
     >>> dft.topological_charge(f.plane('z'))
     Traceback (most recent call last):
     ...
@@ -259,7 +259,7 @@ def topological_charge(field, /, method="continuous", absolute=False):
     3. Attempt to compute the topological charge of a vector field, which
     is not sliced.
 
-    >>> f = df.Field(mesh, dim=3, value=(1, 2, 3))
+    >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
     >>> dft.topological_charge(f)
     Traceback (most recent call last):
     ...
@@ -270,8 +270,8 @@ def topological_charge(field, /, method="continuous", absolute=False):
         :py:func:`~discretisedfield.tools.topological_charge_density`
 
     """
-    if field.dim != 3:
-        msg = f"Cannot compute topological charge for {field.dim=} field."
+    if field.nvdim != 3:
+        msg = f"Cannot compute topological charge for {field.nvdim=} field."
         raise ValueError(msg)
 
     if not field.mesh.attributes["isplane"]:
@@ -359,14 +359,14 @@ def emergent_magnetic_field(field):
     >>> p2 = (10, 10, 10)
     >>> cell = (2, 2, 2)
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    >>> f = df.Field(mesh, dim=3, value=(1, 1, -1))
+    >>> f = df.Field(mesh, nvdim=3, value=(1, 1, -1))
     ...
     >>> dft.emergent_magnetic_field(f)
     Field(...)
 
     """
-    if field.dim != 3:
-        msg = f"Cannot compute emergent magnetic field for {field.dim=} field."
+    if field.nvdim != 3:
+        msg = f"Cannot compute emergent magnetic field for {field.nvdim=} field."
         raise ValueError(msg)
 
     Fx = field.dot(field.derivative("y").cross(field.derivative("z")))
@@ -381,7 +381,7 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
 
     This method calculates the angle between magnetic moments in all
     neighbouring cells. The calculation is only possible for vector fields
-    (``dim=3``). Angles are computed in degrees if ``units='deg'`` and in
+    (``nvdim=3``). Angles are computed in degrees if ``units='deg'`` and in
     radians if ``units='rad'``.
 
     The resulting field has one discretisation cell less in the specified
@@ -428,14 +428,14 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
+    >>> field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
     ...
     >>> dft.neigbouring_cell_angle(field, direction='z')
     Field(...)
 
     """
-    if not field.dim == 3:
-        msg = f"Cannot compute spin angles for a field with {field.dim=}."
+    if not field.nvdim == 3:
+        msg = f"Cannot compute spin angles for a field with {field.nvdim=}."
         raise ValueError(msg)
 
     if direction not in dfu.axesdict.keys():
@@ -474,7 +474,7 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
     if units == "deg":
         angles = np.degrees(angles)
 
-    return df.Field(mesh, dim=1, value=angles.reshape(*angles.shape, 1))
+    return df.Field(mesh, nvdim=1, value=angles.reshape(*angles.shape, 1))
 
 
 def max_neigbouring_cell_angle(field, /, units="rad"):
@@ -482,7 +482,7 @@ def max_neigbouring_cell_angle(field, /, units="rad"):
 
     This function computes an angle between a cell and all its six neighbouring
     cells and assigns the maximum to that cell. The calculation is only
-    possible for vector fields (``dim=3``). Angles are computed in degrees if
+    possible for vector fields (``nvdim=3``). Angles are computed in degrees if
     ``units='deg'`` and in radians if ``units='rad'``.
 
     The resulting field has one discretisation cell less in the specified
@@ -516,7 +516,7 @@ def max_neigbouring_cell_angle(field, /, units="rad"):
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    >>> field = df.Field(mesh, dim=3, value=(0, 1, 0))
+    >>> field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
     ...
     >>> dft.max_neigbouring_cell_angle(field)
     Field(...)
@@ -535,7 +535,7 @@ def max_neigbouring_cell_angle(field, /, units="rad"):
     max_angles[:, :, :-1, 5] = z_angles
     max_angles = max_angles.max(axis=-1, keepdims=True)
 
-    return df.Field(field.mesh, dim=1, value=max_angles)
+    return df.Field(field.mesh, nvdim=1, value=max_angles)
 
 
 def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="rad"):
@@ -586,7 +586,7 @@ def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="r
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    >>> field = df.Field(mesh, dim=3, \
+    >>> field = df.Field(mesh, nvdim=3, \
                          value=lambda p: (0, 0, 1) if p[0] < 50 \
                          else (0, 0, -1))
     ...
@@ -602,7 +602,7 @@ def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="r
     >>> p2 = (100, 100, 100)
     >>> n = (10, 10, 10)
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    >>> field = df.Field(mesh, dim=3, \
+    >>> field = df.Field(mesh, nvdim=3, \
                          value=lambda p: (0, 0, 1) if p[0] < 50 \
                                                    else (0, 0, -1))
     ...
@@ -720,9 +720,9 @@ def _demag_tensor_field_based(mesh):
 
     return df.Field(
         mesh_new,
-        dim=6,
+        nvdim=6,
         value=_N(mesh_new),
-        components=["xx", "yy", "zz", "xy", "xz", "yz"],
+        vdims=["xx", "yy", "zz", "xy", "xz", "yz"],
     ).fftn
 
 
@@ -774,7 +774,7 @@ def demag_tensor(mesh):
     mesh_new = df.Mesh(p1=p1, p2=p2, n=n)
 
     return df.Field(
-        mesh_new, dim=6, value=values, components=["xx", "yy", "zz", "xy", "xz", "yz"]
+        mesh_new, nvdim=6, value=values, vdims=["xx", "yy", "zz", "xy", "xz", "yz"]
     ).fftn
 
 
@@ -814,7 +814,7 @@ def demag_field(m, tensor):
     H = (hx_fft << hy_fft << hz_fft).ifftn
     return df.Field(
         m.mesh,
-        dim=3,
+        nvdim=3,
         value=H.array[m.mesh.n[0] - 1 :, m.mesh.n[1] - 1 :, m.mesh.n[2] - 1 :, :],
     ).real
 

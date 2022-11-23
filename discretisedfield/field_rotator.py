@@ -34,7 +34,7 @@ class FieldRotator:
 
     >>> region = df.Region(p1=(0, 0, 0), p2=(20, 10, 2))
     >>> mesh = df.Mesh(region=region, cell=(1, 1, 1))
-    >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
+    >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
     >>> field.mesh.n
     (20, 10, 2)
 
@@ -62,9 +62,9 @@ class FieldRotator:
     """
 
     def __init__(self, field):
-        if field.dim not in [1, 3]:
+        if field.nvdim not in [1, 3]:
             raise ValueError(
-                f"Rotations are not supported for fields with{field.dim=}."
+                f"Rotations are not supported for fields with{field.nvdim=}."
             )
         if field.mesh.bc != "":
             warnings.warn("Boundary conditions are lost when rotating the field.")
@@ -128,7 +128,7 @@ class FieldRotator:
         >>> from math import pi
         >>> region = df.Region(p1=(0, 0, 0), p2=(20, 10, 2))
         >>> mesh = df.Mesh(region=region, cell=(1, 1, 1))
-        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         >>> field_rotator = df.FieldRotator(field)
         >>> field_rotator.rotate('from_euler', seq='x', angles=pi/2)
 
@@ -162,18 +162,18 @@ class FieldRotator:
         new_mesh = df.Mesh(region=new_region, n=n)
 
         # Rotate Field vectors
-        if self._orig_field.dim == 1:
+        if self._orig_field.nvdim == 1:
             rot_field = self._orig_field.array
-        elif self._orig_field.dim == 3:
+        elif self._orig_field.nvdim == 3:
             rot_field = self._rotation.apply(
-                self._orig_field.array.reshape((-1, self._orig_field.dim))
-            ).reshape((*self._orig_field.mesh.n, self._orig_field.dim))
+                self._orig_field.array.reshape((-1, self._orig_field.nvdim))
+            ).reshape((*self._orig_field.mesh.n, self._orig_field.nvdim))
 
         # Calculate field at new mesh positions
         new_m = self._map_and_interpolate(new_mesh, rot_field)
 
         self._rotated_field = df.Field(
-            mesh=new_mesh, dim=self._orig_field.dim, value=new_m
+            mesh=new_mesh, nvdim=self._orig_field.nvdim, value=new_m
         )
 
     def clear_rotation(self):
@@ -204,7 +204,7 @@ class FieldRotator:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
-        >>> field = df.Field(mesh, dim=1, value=1)
+        >>> field = df.Field(mesh, nvdim=1, value=1)
         >>> rotator = df.FieldRotator(field)
         >>> rotator
         FieldRotator(...)
@@ -219,7 +219,7 @@ class FieldRotator:
         )
 
     def _map_and_interpolate(self, new_mesh, rot_field):
-        new_mesh_field = df.Field(mesh=new_mesh, dim=3, value=lambda x: x)
+        new_mesh_field = df.Field(mesh=new_mesh, nvdim=3, value=lambda x: x)
         new_mesh_pos = (
             new_mesh_field.array.reshape((-1, 3)) - self._orig_field.mesh.region.center
         )
@@ -227,8 +227,8 @@ class FieldRotator:
         new_pos_old_mesh = self._rotation.inv().apply(new_mesh_pos)
 
         # Get values of field at new mesh locations
-        result = np.ndarray(shape=[*new_mesh_field.mesh.n, self._orig_field.dim])
-        for i in range(self._orig_field.dim):
+        result = np.ndarray(shape=[*new_mesh_field.mesh.n, self._orig_field.nvdim])
+        for i in range(self._orig_field.nvdim):
             result[..., i] = self._create_interpolation_funcs(rot_field[..., i])(
                 new_pos_old_mesh
             ).reshape(new_mesh.n)
