@@ -1404,24 +1404,21 @@ class TestField:
 
         assert np.allclose(f.laplace.mean(), (4, 4, 6))
 
-    def test_integral(self):
+    def test_integrate(self):
         # Volume integral.
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, nvdim=1, value=0)
-        assert (f * df.dV).integral() == 0
-        assert (f * df.dx * df.dy * df.dz).integral() == 0
+        assert f.integrate() == 0
 
         f = df.Field(mesh, nvdim=1, value=2)
-        assert (f * df.dV).integral() == 2000
-        assert (f * df.dx * df.dy * df.dz).integral() == 2000
+        assert f.integrate() == 2000
 
         f = df.Field(mesh, nvdim=3, value=(-1, 0, 3))
-        assert np.allclose((f * df.dV).integral(), (-1000, 0, 3000))
-        assert np.allclose((f * df.dx * df.dy * df.dz).integral(), (-1000, 0, 3000))
+        assert np.allclose(f.integrate(), (-1000, 0, 3000))
 
         def value_fun(point):
             x, y, z = point
@@ -1431,74 +1428,88 @@ class TestField:
                 return (1, 2, 3)
 
         f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose((f * df.dV).integral(), (0, 0, 0))
-        assert np.allclose((f * df.dx * df.dy * df.dz).integral(), (0, 0, 0))
+        assert np.allclose(f.integrate(), (0, 0, 0))
+        assert np.allclose(f.integrate(), (0, 0, 0))
 
         # Surface integral.
         p1 = (0, 0, 0)
         p2 = (10, 5, 3)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, nvdim=1, value=0)
-        assert (f.plane("x") * df.dy * df.dz).integral() == 0
+        assert f.plane("x").integrate() == 0
 
         f = df.Field(mesh, nvdim=1, value=2)
-        assert (f.plane("x") * df.dy * df.dz).integral() == 30
-        assert (f.plane("y") * df.dx * df.dz).integral() == 60
-        assert (f.plane("z") * df.dx * df.dy).integral() == 100
+        assert f.plane("x").integrate() == 30
+        assert f.plane("y").integrate() == 60
+        assert f.plane("z").integrate() == 100
 
         f = df.Field(mesh, nvdim=3, value=(-1, 0, 3))
-        assert df.integral(f.plane("x").dot(df.dS)) == -15
-        assert df.integral(f.plane("y").dot(df.dS)) == 0
-        assert df.integral(f.plane("z").dot(df.dS)) == 150
+        assert f.plane("x").dot([1, 0, 0]).integrate() == -15
+        assert f.plane("y").dot([0, 1, 0]).integrate() == 0
+        assert f.plane("z").dot([0, 0, 1]).integrate() == 150
+
+        # TODO change when n dimensional meshes are supported
+        # The next line currently fails because we cannot detect consecutive
+        # .plane methods. Therefore, the calculated cell volume is wrong.
+        # The test should "fail" once n dimensional meshes are implemented.
+        # The value on the right-hand-site is the expected result.
+        assert f.plane("z").plane("x").dot([1, 0, 0]).integrate() != -5
 
         # Directional integral
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
-        f = f.integral(direction="x")
-        assert isinstance(f, df.Field)
-        assert f.nvdim == 3
-        assert f.mesh.n == (1, 10, 10)
-        assert np.allclose(f.mean(), (10, 10, 10))
+        res = f.integrate(direction="x")
+        assert isinstance(res, df.Field)
+        assert res.nvdim == 3
+        assert np.array_equal(res.mesh.n, (1, 20, 20))
+        assert np.allclose(res.mean(), (10, 10, 10))
 
-        f = f.integral(direction="x").integral(direction="y")
-        assert isinstance(f, df.Field)
-        assert f.nvdim == 3
-        assert f.mesh.n == (1, 1, 10)
-        assert np.allclose(f.mean(), (100, 100, 100))
+        res = f.integrate(direction="x").integrate(direction="y")
+        assert isinstance(res, df.Field)
+        assert res.nvdim == 3
+        assert np.array_equal(res.mesh.n, (1, 1, 20))
+        assert np.allclose(res.mean(), (100, 100, 100))
 
-        f = f.integral("x").integral("y").integral("z")
-        assert f.nvdim == 3
-        assert f.mesh.n == (1, 1, 1)
-        assert np.allclose(f.mean(), (1000, 1000, 1000))
+        res = f.integrate("x").integrate("y").integrate("z")
+        assert res.nvdim == 3
+        assert np.array_equal(res.mesh.n, (1, 1, 1))
+        assert np.allclose(res.mean(), (1000, 1000, 1000))
 
         assert np.allclose(
-            f.integral("x").integral("y").integral("z").mean(), f.integral()
+            f.integrate("x").integrate("y").integrate("z").mean(), f.integrate()
         )
 
-        # Improper integral
+        # Cumulative integral
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
-        f = f.integral(direction="x", improper=True)
+        f = f.integrate(direction="x", cumulative=True)
         assert isinstance(f, df.Field)
         assert f.nvdim == 3
-        assert f.mesh.n == (10, 10, 10)
-        assert np.allclose(f.mean(), (5.5, 5.5, 5.5))
-        assert f((0, 0, 0)) == (1, 1, 1)
-        assert f((10, 10, 10)) == (10, 10, 10)
+        assert np.array_equal(f.mesh.n, (20, 20, 20))
+        assert np.allclose(f.mean(), (5.25, 5.25, 5.25))
+        assert np.allclose(f((0, 0, 0)), (0.5, 0.5, 0.5))
+        assert np.allclose(f((0.9, 0.9, 0.9)), (1, 1, 1))
+        assert np.allclose(f((10, 10, 10)), (10, 10, 10))
 
         # Exceptions
         with pytest.raises(ValueError):
-            f.integral(direction="xy", improper=True)
+            f.integrate(cumulative=True)
+
+        with pytest.raises(ValueError):
+            f.integrate(direction="a")
+
+        with pytest.raises(TypeError):
+            f.integrate(1)
 
     def test_abs(self):
         p1 = (0, 0, 0)
