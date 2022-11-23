@@ -1159,18 +1159,20 @@ class TestField:
         n = (30, 1, 1)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
+        x = sp.symbols("x")
+        fx = x**6 + sp.sin(x)
+
+        lam_f = sp.lambdify(x, fx, "numpy")
+
         def value_fun(point):
             x, y, z = point
-            return x**6
+            return lam_f(x)
 
         f = df.Field(mesh, dim=1, value=value_fun)
 
-        x = sp.symbols("x")
-        fx = x**6
-
         for order in [1, 2, 3, 4, 5]:
+            mean = fx.diff(x, order).integrate((x, 0, 10)) / 10
             for acc in [2, 4, 6, 8, 10]:
-                mean = fx.diff(x, order).integrate((x, 0, 10)).evalf() / 10
                 np.allclose(f.diff("x", order=order, acc=acc).mean(), float(mean))
 
     def test_derivative_accuracy(self):
