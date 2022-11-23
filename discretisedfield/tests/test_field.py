@@ -478,7 +478,24 @@ class TestField:
             f.orientation
 
     def test_call(self):
-        raise NotImplementedError
+        p1 = (-5e-9, -5e-9, -5e-9)
+        p2 = (5e-9, 5e-9, 5e-9)
+        n = (5, 5, 10)  # cell points in x, y at: [-4, -2, 0, 2, 4] * 1e-9
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        f = df.Field(mesh, nvdim=3, value=lambda p: (p[0], p[1], 1))
+        assert np.allclose(f((0, 0, 0)), (0, 0, 1))
+        assert np.allclose(f((0.5e-9, 0.5e-9, 0.5e-9)), (0, 0, 1))
+        assert np.allclose(f((2e-9, 2e-9, 2e-9)), (2e-9, 2e-9, 1))
+        assert np.allclose(f((1.5e-9, 2.5e-9, 1.5e-9)), (2e-9, 2e-9, 1))
+        assert np.allclose(f((1.5e-9, 3.5e-9, 1.5e-9)), (2e-9, 4e-9, 1))
+        assert np.allclose(f((-5e-9, 5e-9, -5e-9)), (-4e-9, 4e-9, 1))
+
+        with pytest.raises(ValueError):
+            f((0, 1, 0))
+
+        with pytest.raises(ValueError):
+            f((0, 0))
 
     def test_mean(self):
         tol = 1e-12
