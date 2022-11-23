@@ -252,17 +252,16 @@ class DValue:
         return self @ other
 
 
-def integral(field, direction="xyz", improper=False):
+def integrate(field, direction=None, cumulative=False):
     """Integral.
 
     This function calls ``integral`` method of the ``discrteisedfield.Field``
     object.
 
-    For details, please refer to
-    :py:func:`~discretisedfield.Field.integral`
+    For details, please refer to :py:func:`~discretisedfield.Field.integral`
 
     """
-    return field.integral(direction=direction, improper=improper)
+    return field.integrate(direction=direction, cumulative=cumulative)
 
 
 dx = DValue(lambda f: f.mesh.dx)
