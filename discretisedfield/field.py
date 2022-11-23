@@ -2321,7 +2321,7 @@ class Field:
         ------
         ValueError
 
-            If ``improper=True`` and no integration direction is specified.
+            If ``cumulative=True`` and no integration direction is specified.
 
         Example
         -------
