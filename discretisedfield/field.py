@@ -2301,7 +2301,7 @@ class Field:
 
         Parameters
         ----------
-        direction : str
+        direction : str, optional
 
             Direction along which the field is integrated. The direction must be in
             ``field.mesh.region.dims``. Defaults to ``None``.
