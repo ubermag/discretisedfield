@@ -2691,7 +2691,7 @@ class Field:
 
         """
         n_cells = self.mesh.n[dfu.axesdict[direction]]
-        return self.integral(direction=direction) / n_cells
+        return self.integrate(direction=direction) / n_cells
 
     def angle(self, vector):
         r"""Angle between two vectors.

@@ -1883,19 +1883,19 @@ class TestField:
             assert plane.allclose(plane.rfftn.irfftn)
 
         # Fourier slice theoreme
-        for i, di in [["x", df.dx], ["y", df.dy], ["z", df.dz]]:
-            plane = (f * di).integral(i)
+        for i in "xyz":
+            plane = f.integrate(i)
             assert plane.allclose(f.fftn.plane(**{i: 0}).ifftn.real)
             assert (
-                (df.Field(mesh, nvdim=3) * df.dz)
-                .integral(i)
+                df.Field(mesh, nvdim=3)
+                .integrate(i)
                 .allclose(f.fftn.plane(**{i: 0}).ifftn.imag)
             )
 
-        assert (f * df.dx).integral("x").allclose(f.rfftn.plane(x=0).irfftn)
-        assert (f * df.dy).integral("y").allclose(f.rfftn.plane(y=0).irfftn)
+        assert f.integrate("x").allclose(f.rfftn.plane(x=0).irfftn)
+        assert f.integrate("y").allclose(f.rfftn.plane(y=0).irfftn)
         # plane along z removes rfftn-freq axis => needs ifftn
-        assert (f * df.dz).integral("z").allclose(f.rfftn.plane(z=0).ifftn.real)
+        assert f.integrate("z").allclose(f.rfftn.plane(z=0).ifftn.real)
 
     def test_mpl_scalar(self):
         # No axes
