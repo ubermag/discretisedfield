@@ -12,7 +12,7 @@ from .field_rotator import FieldRotator
 from .interact import interact
 from .line import Line
 from .mesh import Mesh
-from .operators import DValue, dS, dV, dx, dy, dz, integrate
+from .operators import integrate
 from .region import Region
 
 # Enable default plotting style.
