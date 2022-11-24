@@ -75,7 +75,7 @@ def field_to_ovf(
     """
     filename = pathlib.Path(filename)
     write_dim = 3 if extend_scalar and field.nvdim == 1 else field.nvdim
-    valueunits = " ".join([str(field.units) if field.units else "None"] * write_dim)
+    valueunits = " ".join([str(field.unit) if field.unit else "None"] * write_dim)
     if write_dim == 1:
         valuelabels = "field_x"
     elif extend_scalar:
@@ -309,24 +309,24 @@ def field_from_ovf(filename):
     try:
         unit_list = header["valueunits"].split()
     except KeyError:
-        units = None
+        unit = None
     else:
         if len(unit_list) == 0:
-            units = None  # no unit in the file
+            unit = None  # no unit in the file
         elif len(set(unit_list)) != 1:
             warnings.warn(
                 f"File {filename} contains multiple units for the individual"
                 f" vdims: {unit_list=}. This is not supported by"
-                " discretisedfield. Units are set to None."
+                " discretisedfield. Unit is set to None."
             )
-            units = None
+            unit = None
         else:
-            units = unit_list[0]
+            unit = unit_list[0]
 
     return df.Field(
         mesh,
         dim=header["valuedim"],
         value=array.reshape(r_tuple).transpose(t_tuple),
         vdims=vdims,
-        units=units,
+        unit=unit,
     )

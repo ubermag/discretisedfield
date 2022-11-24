@@ -63,7 +63,7 @@ class Field:
         callable and dict ``value`` the numpy default (currently
         ``float64``) is used. Defaults to ``None``.
 
-    units : str, optional
+    unit : str, optional
 
         Physical unit of the field.
 
@@ -132,7 +132,7 @@ class Field:
         norm=None,
         vdims=None,
         dtype=None,
-        units=None,
+        unit=None,
         **kwargs,
     ):
         if not isinstance(mesh, df.Mesh):
@@ -153,7 +153,7 @@ class Field:
 
         self.dtype = dtype
 
-        self.units = units
+        self.unit = unit
 
         self.value = value
         self.norm = norm
@@ -188,7 +188,7 @@ class Field:
         return self._nvdim
 
     @property
-    def units(self):
+    def unit(self):
         """Unit of the field.
 
         Returns
@@ -199,8 +199,8 @@ class Field:
         """
         return self._unit
 
-    @units.setter
-    def units(self, unit):
+    @unit.setter
+    def unit(self, unit):
         if unit is not None and not isinstance(unit, str):
             raise TypeError("'units' must be of type str.")
         self._unit = unit
@@ -499,7 +499,7 @@ class Field:
         """
         res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
-        return self.__class__(self.mesh, nvdim=1, value=res, units=self.units)
+        return self.__class__(self.mesh, nvdim=1, value=res, unit=self.unit)
 
     @norm.setter
     def norm(self, val):
@@ -543,7 +543,7 @@ class Field:
 
         """
         return self.__class__(
-            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), units=self.units
+            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), unit=self.unit
         )
 
     @property
@@ -581,7 +581,7 @@ class Field:
             nvdim=self.nvdim,
             value=0,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -856,7 +856,7 @@ class Field:
         if self.vdims is not None and attr in self.vdims:
             attr_array = self.array[..., self.vdims.index(attr), np.newaxis]
             return self.__class__(
-                mesh=self.mesh, nvdim=1, value=attr_array, units=self.units
+                mesh=self.mesh, nvdim=1, value=attr_array, unit=self.unit
             )
         else:
             msg = f"Object has no attribute {attr}."
@@ -1822,7 +1822,7 @@ class Field:
             nvdim=self.nvdim,
             value=padded_array,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def derivative(self, direction, n=1):
@@ -2537,7 +2537,7 @@ class Field:
             nvdim=self.nvdim,
             value=value,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def __getitem__(self, item):
@@ -2620,7 +2620,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array[tuple(slices)],
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def project(self, direction):
@@ -3264,7 +3264,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.real,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -3275,7 +3275,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.imag,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -3306,7 +3306,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.conjugate(),
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     # TODO check and write tests
@@ -3450,7 +3450,7 @@ class Field:
             coords=data_array_coords,
             name=name,
             attrs=dict(
-                units=units or self.units,
+                units=units or self.unit,
                 cell=self.mesh.cell,
                 pmin=self.mesh.region.pmin,
                 pmax=self.mesh.region.pmax,

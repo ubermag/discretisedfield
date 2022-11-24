@@ -22,7 +22,7 @@ html_re = (
     rf"<li>{mesh_html_re}</li>\s*"
     r"<li>nvdim = \d+</li>\s*"
     r"(<li>vdims:\s*<ul>(<li>.*</li>\s*)+</ul>\s*</li>)?\s*"
-    r"(<li>units = .+</li>)?\s*"
+    r"(<li>unit = .+</li>)?\s*"
     r"</ul>"
 )
 
@@ -41,8 +41,8 @@ def check_field(field):
     )
     if field.vdims:
         pattern = pattern[:-3] + r", vdims: \(.+\)\)$"
-    if field.units is not None:
-        pattern = pattern[:-3] + r", units=.+\)$"
+    if field.unit is not None:
+        pattern = pattern[:-3] + r", unit=.+\)$"
     assert re.search(pattern, rstr)
 
     assert isinstance(field._repr_html_(), str)
@@ -327,22 +327,22 @@ class TestField:
             check_field(fab)
             assert fab.vdims == ["a", "b"]
 
-    def test_units(self):
-        assert self.pf.units is None
+    def test_unit(self):
+        assert self.pf.unit is None
         mesh = self.pf.mesh
-        field = df.Field(mesh, nvdim=3, value=(1, 2, 3), units="A/m")
+        field = df.Field(mesh, nvdim=3, value=(1, 2, 3), unit="A/m")
         check_field(field)
-        assert field.units == "A/m"
-        field.units = "mT"
-        assert field.units == "mT"
+        assert field.unit == "A/m"
+        field.unit = "mT"
+        assert field.unit == "mT"
         with pytest.raises(TypeError):
-            field.units = 3
-        assert field.units == "mT"
-        field.units = None
-        assert field.units is None
+            field.unit = 3
+        assert field.unit == "mT"
+        field.unit = None
+        assert field.unit is None
 
         with pytest.raises(TypeError):
-            df.Field(mesh, nvdim=1, units=1)
+            df.Field(mesh, nvdim=1, unit=1)
 
     def test_value(self):
         p1 = (0, 0, 0)
@@ -1664,14 +1664,14 @@ class TestField:
             (2, lambda point: (point[0], point[1] + point[2])),
             (3, lambda point: (point[0], point[1], point[2])),
         ]:
-            f = df.Field(mesh, nvdim=nvdim, value=value, units="A/m")
+            f = df.Field(mesh, nvdim=nvdim, value=value, unit="A/m")
             for rep in representations:
                 tmpfilename = tmp_path / filename
                 f.write(tmpfilename, representation=rep)
                 f_read = df.Field.fromfile(tmpfilename)
 
                 assert f.allclose(f_read)
-                assert f_read.units == "A/m"
+                assert f_read.unit == "A/m"
                 assert f.mesh.subregions == f_read.mesh.subregions
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
@@ -1679,7 +1679,7 @@ class TestField:
                 f_read = df.Field.fromfile(tmpfilename)
 
                 assert f.allclose(f_read)
-                assert f_read.units == "A/m"
+                assert f_read.unit == "A/m"
                 assert f_read.mesh.subregions == {}
 
             # Directly write with wrong representation (no data is written)
@@ -1687,13 +1687,13 @@ class TestField:
                 df.io.field_to_ovf(f, "fname.ovf", representation="bin5")
 
         # multiple different units (not supported by discretisedfield)
-        f = df.Field(mesh, nvdim=3, value=(1, 1, 1), units="m s kg")
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
         tmpfilename = str(tmp_path / filename)
         f.write(tmpfilename, representation=rep)
         f_read = df.Field.fromfile(tmpfilename)
 
         assert f.allclose(f_read)
-        assert f_read.units is None
+        assert f_read.unit is None
 
         # Extend scalar
         for rep in representations:
