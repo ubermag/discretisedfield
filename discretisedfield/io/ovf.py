@@ -74,14 +74,14 @@ def field_to_ovf(
 
     """
     filename = pathlib.Path(filename)
-    write_dim = 3 if extend_scalar and field.dim == 1 else field.dim
+    write_dim = 3 if extend_scalar and field.nvdim == 1 else field.nvdim
     valueunits = " ".join([str(field.units) if field.units else "None"] * write_dim)
     if write_dim == 1:
         valuelabels = "field_x"
     elif extend_scalar:
         valuelabels = " ".join(["field_x"] * write_dim)
     else:
-        valuelabels = " ".join(f"field_{c}" for c in field.components)
+        valuelabels = " ".join(f"field_{c}" for c in field.vdims)
 
     if representation == "bin4":
         repr_string = "Binary 4"
@@ -171,7 +171,7 @@ def field_to_ovf(
                 )
             f.write(b"\n")
         else:
-            data = pd.DataFrame(reordered.reshape((-1, field.dim)))
+            data = pd.DataFrame(reordered.reshape((-1, field.nvdim)))
             data.insert(loc=0, column="leading_space", value="")
 
             if extend_scalar:
@@ -288,10 +288,10 @@ def field_from_ovf(filename):
     t_tuple = (2, 1, 0, 3)
 
     try:
-        # multi-word components are surrounded by {}
-        components = re.findall(r"(\w+|{[\w ]+})", header["valuelabels"])
+        # multi-word vdims are surrounded by {}
+        vdims = re.findall(r"(\w+|{[\w ]+})", header["valuelabels"])
     except KeyError:
-        components = None
+        vdims = None
     else:
 
         def convert(comp):
@@ -302,9 +302,9 @@ def field_from_ovf(filename):
             comp = comp.replace("{", "").replace("}", "")
             return "_".join(comp.split())
 
-        components = [convert(c) for c in components]
-        if len(components) != len(set(components)):  # components are not unique
-            components = None
+        vdims = [convert(c) for c in vdims]
+        if len(vdims) != len(set(vdims)):  # vdims are not unique
+            vdims = None
 
     try:
         unit_list = header["valueunits"].split()
@@ -316,7 +316,7 @@ def field_from_ovf(filename):
         elif len(set(unit_list)) != 1:
             warnings.warn(
                 f"File {filename} contains multiple units for the individual"
-                f" components: {unit_list=}. This is not supported by"
+                f" vdims: {unit_list=}. This is not supported by"
                 " discretisedfield. Units are set to None."
             )
             units = None
@@ -327,6 +327,6 @@ def field_from_ovf(filename):
         mesh,
         dim=header["valuedim"],
         value=array.reshape(r_tuple).transpose(t_tuple),
-        components=components,
+        vdims=vdims,
         units=units,
     )

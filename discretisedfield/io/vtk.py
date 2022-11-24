@@ -97,7 +97,7 @@ def field_from_vtk(filename):
     written by ``discretisedfield.io.field_to_vtk``. It expects the data do be
     specified as cell data and one (vector) field with the name ``field``.
     A vector field should also contain data for the individual components.
-    The individual component names are used as ``components`` for the new
+    The individual component names are used as ``vdims`` for the new
     field. They must appear in the form ``<componentname>-component``.
 
     Older versions of discretisedfield did write the data as point data instead of cell
@@ -158,18 +158,18 @@ def field_from_vtk(filename):
         # Old writing routine did write to points instead of cells.
         return fromvtk_legacy(filename)
 
-    components = []
+    vdims = []
     for i in range(cell_data.GetNumberOfArrays()):
         name = cell_data.GetArrayName(i)
         if name == "field":
             field_idx = i
         elif name.endswith("-component"):
-            components.append(name[: -len("-component")])
+            vdims.append(name[: -len("-component")])
     array = cell_data.GetArray(field_idx)
     dim = array.GetNumberOfComponents()
 
-    if len(components) != dim:
-        components = None
+    if len(vdims) != dim:
+        vdims = None
 
     value = vns.vtk_to_numpy(array).reshape(*reversed(n), dim)
     value = value.transpose((2, 1, 0, 3))
@@ -178,7 +178,7 @@ def field_from_vtk(filename):
     with contextlib.suppress(FileNotFoundError):
         mesh.load_subregions(filename)
 
-    return df.Field(mesh, dim=dim, value=value, components=components)
+    return df.Field(mesh, dim=dim, value=value, vdims=vdims)
 
 
 def fromvtk_legacy(filename):
