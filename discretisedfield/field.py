@@ -202,7 +202,7 @@ class Field:
     @unit.setter
     def unit(self, unit):
         if unit is not None and not isinstance(unit, str):
-            raise TypeError("'units' must be of type str.")
+            raise TypeError("'unit' must be of type str.")
         self._unit = unit
 
     @property
