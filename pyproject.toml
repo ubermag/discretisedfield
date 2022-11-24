@@ -65,7 +65,7 @@ documentation = "https://ubermag.github.io/documentation/discretisedfield"
 repository = "https://github.com/ubermag/discretisedfield"
 
 [project.scripts]
-ovf2vtk = "discretisedfield.io.ovf2vtk:main"
+ovf2vtk = "discretisedfield.io.ovf2vtk:ovf2vtk"
 
 [tool.black]
 experimental-string-processing = true
