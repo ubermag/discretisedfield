@@ -1165,7 +1165,9 @@ class TestField:
         for order in [1, 2, 3, 4, 5]:
             mean = fx.diff(x, order).integrate((x, 0, 10)) / 10
             for acc in [2, 4, 6, 8, 10]:
-                np.allclose(f.diff("x", order=order, acc=acc).mean(), float(mean))
+                assert np.allclose(
+                    f.diff("x", order=order, acc=acc).mean(), float(mean), rtol=0.01
+                )
 
     def test_derivative_accuracy(self):
         p1 = (0, 0, 0)
