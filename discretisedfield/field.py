@@ -1958,6 +1958,11 @@ class Field:
 
         elif order == 2:
             if self.mesh.bc == "":
+                # Pad with specific values so that the same finite difference stencil
+                # can be used across the whole array
+                # central difference = forward difference
+                # f(1) + f(-1) - 2 f(0) = f(2) + f(0) - 2 f(1)
+                # f(-1) = f(2) - 3 f(1) + 3f(0)
 
                 def pad_fun(vector, pad_width, iaxis, kwargs):
                     if iaxis == direction_idx:
