@@ -1832,15 +1832,16 @@ class Field:
         a field. The direction in which the derivative is computed is passed
         via ``direction`` argument, which can be ``'x'``, ``'y'``, or ``'z'``.
         The order of the computed derivative can be 1 or 2 and it is specified
-        using argument ``n`` and it defaults to 1.
+        using argument ``order`` and it defaults to 1.
 
-        Directional derivative cannot be computed if only one discretisation
-        cell exists in a specified direction. In that case, a zero field is
+        Directional derivative cannot be computed if less discretisation
+        cells exists in a specified direction than the order.
+        In that case, a zero field is
         returned. More precisely, it is assumed that the field does not change
         in that direction. Computing of the directional derivative depends
         strongly on the boundary condition specified in the mesh on which the
         field is defined on. More precisely, the values of the derivatives at
-        the boundary are different for periodic, Neumann, or no boundary
+        the boundary are different for periodic, Neumann, dirichlet, or no boundary
         conditions. For details on boundary conditions, please refer to the
         ``disretisedfield.Mesh`` class. The derivatives are computed using
         central differences inside the sample and using forward/backward
@@ -1853,7 +1854,7 @@ class Field:
             The direction in which the derivative is computed. It can be
             ``'x'``, ``'y'``, or ``'z'``.
 
-        n : int
+        order : int
 
             The order of the derivative. It can be 1 or 2 and it defaults to 1.
 
