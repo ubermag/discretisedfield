@@ -10,7 +10,6 @@ import k3d
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
-import sympy as sp
 import xarray as xr
 
 import discretisedfield as df
@@ -1162,129 +1161,6 @@ class TestField:
         assert np.allclose(f.diff("y", order=2).mean(), (0, 4, 0))
         assert np.allclose(f.diff("z", order=2).mean(), (0, 0, 6))
 
-        # Test results against sympy
-        p1 = (0, 0, 0)
-        p2 = (10, 10, 10)
-        n = (30, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-
-        x = sp.symbols("x")
-        fx = x**6
-
-        lam_f = sp.lambdify(x, fx, "numpy")
-
-        def value_fun(point):
-            x, y, z = point
-            return lam_f(x)
-
-        f = df.Field(mesh, nvdim=1, value=value_fun)
-
-        for order in [1, 2, 3, 4, 5]:
-            mean = fx.diff(x, order).integrate((x, 0, 10)) / 10
-            for acc in [2, 4, 6, 8, 10]:
-                assert np.allclose(
-                    f.diff("x", order=order, acc=acc).mean(), float(mean), rtol=0.01
-                )
-
-    def test_derivative_accuracy(self):
-        p1 = (0, 0, 0)
-        p2 = (26, 20, 16)
-        cell = (2, 2, 2)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
-        def value_fun(point):
-            x, y, z = point
-            return (2 * x * x, 2 * y * y, 3 * z * z)
-
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose(f.diff("x", order=2, acc=4).mean(), (4, 0, 0))
-        assert np.allclose(f.diff("y", order=2, acc=4).mean(), (0, 4, 0))
-        assert np.allclose(f.diff("z", order=2, acc=4).mean(), (0, 0, 6))
-
-        assert np.allclose(f.diff("x", order=2, acc=6).mean(), (4, 0, 0))
-        assert np.allclose(f.diff("y", order=2, acc=6).mean(), (0, 4, 0))
-        with pytest.raises(ValueError):
-            f.diff("z", order=2, acc=6)
-
-        assert np.allclose(f.diff("x", order=2, acc=8).mean(), (4, 0, 0))
-        with pytest.raises(ValueError):
-            f.diff("y", order=2, acc=8)
-
-        with pytest.raises(ValueError):
-            f.diff("x", order=2, acc=10)
-
-        p1 = (0, 0, 0)
-        p2 = (10, 1, 1)
-
-        # Order 1
-        n = (2, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        with pytest.raises(ValueError):
-            f.diff("x", order=1, acc=2)
-
-        n = (3, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose(f.diff("x", order=1, acc=2).mean(), (20, 0, 0))
-
-        n = (5, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        with pytest.raises(ValueError):
-            f.diff("x", order=1, acc=4)
-
-        n = (6, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose(f.diff("x", order=1, acc=4).mean(), (20, 0, 0))
-
-        n = (11, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        with pytest.raises(ValueError):
-            f.diff("x", order=1, acc=8)
-
-        n = (12, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose(f.diff("x", order=1, acc=8).mean(), (20, 0, 0))
-
-        # Order 2
-        n = (3, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        with pytest.raises(ValueError):
-            f.diff("x", order=2, acc=2)
-
-        n = (4, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose(f.diff("x", order=2, acc=2).mean(), (4, 0, 0))
-
-        n = (6, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        with pytest.raises(ValueError):
-            f.diff("x", order=2, acc=4)
-
-        n = (7, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose(f.diff("x", order=2, acc=4).mean(), (4, 0, 0))
-
-        n = (12, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        with pytest.raises(ValueError):
-            f.diff("x", order=2, acc=8)
-
-        n = (13, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose(f.diff("x", order=2, acc=8).mean(), (4, 0, 0))
-
     def test_derivative_pbc(self):
         p1 = (0.0, 0.0, 0.0)
         p2 = (12.0, 8.0, 6.0)
@@ -1338,17 +1214,6 @@ class TestField:
         f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
         assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 32)
 
-        # Higher accuracy
-        def value_fun(point):
-            x, y, z = point
-            return x
-
-        f = df.Field(mesh_nopbc, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 1)
-
-        f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), -2.5)
-
     def test_derivative_neumann(self):
         p1 = (0.0, 0.0, 0.0)
         p2 = (12.0, 8.0, 6.0)
@@ -1385,17 +1250,6 @@ class TestField:
         f = df.Field(mesh_neumann, nvdim=1, value=value_fun)
         assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
-        # Higher accuracy
-        def value_fun(point):
-            x, y, z = point
-            return x
-
-        f = df.Field(mesh_noneumann, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 1)
-
-        f = df.Field(mesh_neumann, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 7 / 12)
-
     def test_derivative_dirichlet(self):
         p1 = (0.0, 0.0, 0.0)
         p2 = (12.0, 8.0, 6.0)
@@ -1431,17 +1285,6 @@ class TestField:
 
         f = df.Field(mesh_dirichlet, nvdim=1, value=value_fun)
         assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 1.75)
-
-        # Higher accuracy
-        def value_fun(point):
-            x, y, z = point
-            return x
-
-        f = df.Field(mesh_nodirichlet, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 1)
-
-        f = df.Field(mesh_dirichlet, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", acc=4)((1, 1, 1)), 19 / 24)
 
     def test_derivative_single_cell(self):
         p1 = (0, 0, 0)

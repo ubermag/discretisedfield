@@ -4,7 +4,6 @@ import numbers
 import pathlib
 import warnings
 
-import findiff as fd
 import numpy as np
 import xarray as xr
 from vtkmodules.util import numpy_support as vns
@@ -1826,7 +1825,7 @@ class Field:
             units=self.units,
         )
 
-    def diff(self, direction, order=1, acc=2):
+    def diff(self, direction, order=1):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -1918,62 +1917,75 @@ class Field:
         """
         direction_idx = dfu.axesdict[direction]
 
-        # Work out the maximum stencil size to give nicer error message than findiff.
-        coeffs = fd.coefficients(deriv=order, acc=acc)
-
-        # Calculate the correct padding needed for the derivative.
-        pw = int(len(coeffs["center"]["offsets"]) / 2)
-
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
-        # if self.mesh.n[direction] == 1:
-        #     return self.zero
+        if self.mesh.n[direction_idx] <= order:
+            return self.zero
 
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
         # the field array is padded.
         if direction in self.mesh.bc:  # PBC
-            pad_width = {direction: (pw, pw)}
+            pad_width = {direction: (1, 1)}
             padding_mode = "wrap"
         elif self.mesh.bc == "neumann":
-            pad_width = {direction: (pw, pw)}
+            pad_width = {direction: (1, 1)}
             padding_mode = "symmetric"
         elif self.mesh.bc == "dirichlet":
-            pad_width = {direction: (pw, pw)}
+            pad_width = {direction: (1, 1)}
             padding_mode = "constant"
         else:  # No BC - no padding
             pad_width = {}
             padding_mode = "constant"
-            stencil_len_back = len(coeffs["backward"]["offsets"]) - 1
-            stencil_max_cent = max(coeffs["center"]["offsets"]) - 1
-
-            stencil_len = stencil_len_back + stencil_max_cent
-            if stencil_len >= self.mesh.n[direction_idx]:
-                raise ValueError(
-                    f"The finite difference stencil ({stencil_len}) is the same or"
-                    f" larger than the number of cells in the {direction} direction"
-                    f" ({self.mesh.n[direction_idx]})."
-                )
 
         padded_array = self.pad(pad_width, mode=padding_mode).array
 
-        # Create FinDiff object.
-        diff_fd = fd.FinDiff(
-            direction_idx, self.mesh.cell[direction_idx], order, acc=acc
-        )
+        if order not in (1, 2):
+            msg = f"Derivative of the n={order} order is not implemented."
+            raise NotImplementedError(msg)
 
-        derivative_array = diff_fd(padded_array)
+        elif order == 1:
+            if self.nvdim == 1:
+                derivative_array = np.gradient(
+                    padded_array[..., 0],
+                    self.mesh.cell[direction_idx],
+                    axis=direction_idx,
+                )[..., np.newaxis]
+            else:
+                derivative_array = np.gradient(
+                    padded_array, self.mesh.cell[direction_idx], axis=direction_idx
+                )
+
+        elif order == 2:
+            if self.mesh.bc == "":
+
+                def pad_fun(vector, pad_width, iaxis, kwargs):
+                    if iaxis == direction_idx:
+                        vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
+                        vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
+
+                pad_width = [(0, 0)] * 4
+                pad_width[direction_idx] = (1, 1)
+                padded_array = np.pad(padded_array, pad_width, pad_fun)
+
+            index_p1 = dfu.assemble_index(
+                slice(None), 4, {direction_idx: slice(2, None)}
+            )
+            index_0 = dfu.assemble_index(slice(None), 4, {direction_idx: slice(1, -1)})
+            index_m1 = dfu.assemble_index(
+                slice(None), 4, {direction_idx: slice(None, -2)}
+            )
+            derivative_array = (
+                padded_array[index_p1]
+                - 2 * padded_array[index_0]
+                + padded_array[index_m1]
+            ) / self.mesh.cell[direction_idx] ** 2
 
         # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:
-            start_delete = np.arange(pad_width[direction][0])
-            end_delete = np.arange(
-                self.array.shape[direction_idx] + pad_width[direction][0],
-                derivative_array.shape[direction_idx],
-            )
-            derivative_array = np.delete(
-                derivative_array, (*start_delete, *end_delete), axis=direction_idx
-            )
+            derivative_array = derivative_array[
+                dfu.assemble_index(slice(None), 4, {direction_idx: slice(1, -1)})
+            ]
 
         return self.__class__(
             self.mesh,
