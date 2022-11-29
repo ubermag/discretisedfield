@@ -2148,11 +2148,7 @@ class Field:
             msg = f"Cannot compute divergence for nvdim={self.nvdim} field."
             raise ValueError(msg)
 
-        return sum(
-            [
-                getattr(self, vdim).diff(vdim) for vdim in self.nvdim
-            ]
-        )
+        return sum([getattr(self, vdim).diff(vdim) for vdim in self.nvdim])
 
     @property
     def curl(self):
