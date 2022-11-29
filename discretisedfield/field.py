@@ -642,19 +642,20 @@ class Field:
             vdims=self.vdims,
         )
 
-    def mean(self, axis=None):
+    def mean(self, direction=None):
         """Field mean.
 
-        It computes the arithmetic mean along the specified axis of the field
+        It computes the arithmetic mean along the specified direction of the field
         over the entire volume of the mesh. It returns a numpy array
         containing the mean values.
 
 
         Parameters
         ----------
-        axis
+        direction
 
-            None or int or tuple of ints, optional. Axis or axes along which
+            None or string or tuple of strings, optional.
+            Directions along which
             the means are computed. The default is to
             compute the mean of the entire volume and return an array of the
             averaged vector components.
@@ -688,12 +689,17 @@ class Field:
         array([55.])
 
         """
-        if axis is not None:
-            raise NotImplementedError()
+        if direction is None:
+            return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
+        # elif isinstance(direction, (tuple, list)):
+        #    axis
+        # if direcition is not None:
+        #    raise self.mesh.region.dims.index(direction)
 
-        return np.stack(
-            [self.array[..., i].mean(axis=axis) for i in range(self.nvdim)], axis=-1
-        )
+        # return np.stack(
+        #    [self.array[..., i].mean(axis=direcition) for i in range(self.nvdim)],
+        # axis=-1
+        # )
 
     @property
     def average(self):
