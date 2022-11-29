@@ -1889,7 +1889,7 @@ class Field:
         ...     return 2*x + 3*y + -5*z
         ...
         >>> f = df.Field(mesh, nvdim=1, value=value_fun)
-        >>> f.derivative('y').mean()  # first-order derivative by default
+        >>> f.diff('y').mean()  # first-order derivative by default
         array([3.])
 
         2. Try to compute the second-order directional derivative of the vector
@@ -1898,21 +1898,19 @@ class Field:
         expect the directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
         :math:`df/dy=(0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because
         there is only one discretisation cell in the z-direction, the
-        derivative cannot be computed and a zero field is returned. Similarly,
-        second-order derivatives in all directions are expected to be zero.
+        derivative cannot be computed and a zero field is returned.
 
         >>> def value_fun(point):
         ...     x, y, z = point
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, nvdim=3, value=value_fun)
-        >>> f.derivative('x', n=1).mean()
+        >>> f.diff('x', order=1).mean()
         array([2., 0., 0.])
-        >>> f.derivative('y', n=1).mean()
+        >>> f.diff('y', order=1).mean()
         array([0., 3., 0.])
-        >>> f.derivative('z', n=1).mean()  # derivative cannot be calculated
+        >>> f.diff('z', order=1).mean()  # derivative cannot be calculated
         array([0., 0., 0.])
-        >>> # second-order derivatives
 
         """
         if direction not in self.mesh.region.dims:
