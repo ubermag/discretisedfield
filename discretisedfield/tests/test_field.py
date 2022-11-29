@@ -511,6 +511,36 @@ class TestField:
         f = df.Field(mesh, nvdim=3, value=(0, 1, 2))
         assert np.allclose(f.mean(), (0, 1, 2))
 
+        # Test with direction
+        assert np.allclose(f.mean(direction=None), f.mean())
+
+        assert np.allclose(f.mean(direction="x"), (0, 1, 2))
+        assert np.allclose(f.mean(direction="y"), (0, 1, 2))
+        assert np.allclose(f.mean(direction="z"), (0, 1, 2))
+
+        with pytest.raises(ValueError):
+            f.mean(direction="a")
+
+        assert np.allclose(f.mean(direction=["x", "y"]), (0, 1, 2))
+        assert np.allclose(f.mean(direction=["x", "z"]), (0, 1, 2))
+        assert np.allclose(f.mean(direction=["y", "z"]), (0, 1, 2))
+        assert np.allclose(f.mean(direction=("y", "z")), (0, 1, 2))
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "a"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["a", "x"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["a", "b"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "x"])
+
+        assert np.allclose(f.mean(direction=["x", "y", "z"]), f.mean())
+        assert np.allclose(f.mean(direction=("x", "y", "z")), f.mean())
+
     def test_field_component(self):
         for mesh in self.meshes:
             f = df.Field(mesh, nvdim=3, value=(1, 2, 3))

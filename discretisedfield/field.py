@@ -691,15 +691,32 @@ class Field:
         """
         if direction is None:
             return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
-        # elif isinstance(direction, (tuple, list)):
-        #    axis
-        # if direcition is not None:
-        #    raise self.mesh.region.dims.index(direction)
+        elif isinstance(direction, (tuple, list)):
+            if not all(d in self.mesh.region.dims for d in direction):
+                raise TypeError(
+                    "Invalid direction. All directions must be in "
+                    f"{self.mesh.region.dims}."
+                )
+            axis = tuple(self.mesh.region.axes.index(d) for d in direction)
+        elif isinstance(direction, str):
+            if direction not in self.mesh.region.dims:
+                raise TypeError(
+                    f"Invalid direction. Directions must be in {self.mesh.region.dims}."
+                )
+            axis = self.mesh.region.axes.index(direction)
+        else:
+            raise ValueError(
+                "Direction must be None, string or tuple of strings, not"
+                f" {type(direction)}."
+            )
 
-        # return np.stack(
-        #    [self.array[..., i].mean(axis=direcition) for i in range(self.nvdim)],
-        # axis=-1
-        # )
+        return self.__class__(
+            self.mesh.plane(direction),  # mesh sel method
+            nvdim=self.nvdim,
+            value=self.array.mean(axis=axis),
+            vdims=self.vdims,
+            units=self.units,
+        )
 
     @property
     def average(self):
