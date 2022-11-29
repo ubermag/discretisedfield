@@ -4,6 +4,7 @@ import numbers
 import pathlib
 import warnings
 
+import numba as nb
 import numpy as np
 import ubermagutil.typesystem as ts
 import xarray as xr
@@ -336,8 +337,16 @@ class Field:
 
     @value.setter
     def value(self, val):
-        self._value = val
-        self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
+        if callable(val):
+            nb_value_func = nb.guvectorize(
+                [(nb.float64[:], nb.float64[:])], "(n)->(n)", nopython=True
+            )(val)
+            nb_value_array = nb_value_func(self.coordinate_field(self.mesh).array)
+            self._value = nb_value_array
+            self.array = nb_value_array
+        else:
+            self._value = val
+            self.array = _as_array(val, self.mesh, self.dim, dtype=self.dtype)
 
     @property
     def components(self):
@@ -500,7 +509,7 @@ class Field:
         if self.dim == 1:
             res = abs(self.value)
         else:
-            res = np.linalg.norm(self.array, axis=-1)[..., np.newaxis]
+            res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
         return self.__class__(self.mesh, dim=1, value=res, units=self.units)
 
@@ -517,7 +526,16 @@ class Field:
                 out=np.zeros_like(self.array),
                 where=self.norm.array != 0.0,
             )
-            self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
+
+            if callable(val):
+                nb_norm_func = nb.guvectorize(
+                    [(nb.float64[:], nb.float64[:])], "(n)->(n)", nopython=True
+                )(val)
+                nb_norm_array = nb_norm_func(self.coordinate_field(self.mesh).array)
+
+                self.array *= nb_norm_array
+            else:
+                self.array *= _as_array(val, self.mesh, dim=1, dtype=None)
 
     def __abs__(self):
         """Field norm.
