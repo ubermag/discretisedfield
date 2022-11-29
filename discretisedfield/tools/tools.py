@@ -124,11 +124,7 @@ def topological_charge_density(field, /, method="continuous"):
         return (
             1
             / (4 * np.pi)
-            * of.dot(
-                of.derivative(dfu.raxesdict[axis1]).cross(
-                    of.derivative(dfu.raxesdict[axis2])
-                )
-            )
+            * of.dot(of.diff(dfu.raxesdict[axis1]).cross(of.diff(dfu.raxesdict[axis2])))
         )
 
     elif method == "berg-luescher":
@@ -369,9 +365,9 @@ def emergent_magnetic_field(field):
         msg = f"Cannot compute emergent magnetic field for {field.nvdim=} field."
         raise ValueError(msg)
 
-    Fx = field.dot(field.derivative("y").cross(field.derivative("z")))
-    Fy = field.dot(field.derivative("z").cross(field.derivative("x")))
-    Fz = field.dot(field.derivative("x").cross(field.derivative("y")))
+    Fx = field.dot(field.diff("y").cross(field.diff("z")))
+    Fy = field.dot(field.diff("z").cross(field.diff("x")))
+    Fz = field.dot(field.diff("x").cross(field.diff("y")))
 
     return Fx << Fy << Fz
 
