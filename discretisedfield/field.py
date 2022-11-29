@@ -749,7 +749,7 @@ class Field:
         ----------
         point : (3,) array_like
 
-            The mesh point coordinate :math:`\\mathbf{p} = (p_{x}, p_{y},
+            The mesh point coordinate :math:`\mathbf{p} = (p_{x}, p_{y},
             p_{z})`.
 
         Returns
@@ -900,7 +900,7 @@ class Field:
         ------
         tuple (2,)
 
-            The first value is the mesh cell coordinates :math:`\\mathbf{p} =
+            The first value is the mesh cell coordinates :math:`\mathbf{p} =
             (p_{x}, p_{y}, p_{z})`, whereas the second one is the field value.
 
         Examples
@@ -1160,7 +1160,7 @@ class Field:
 
         .. math::
 
-            -f(x, y, z) = -1 \\cdot f(x, y, z)
+            -f(x, y, z) = -1 \cdot f(x, y, z)
 
         Returns
         -------
@@ -1825,22 +1825,22 @@ class Field:
             units=self.units,
         )
 
-    def derivative(self, direction, n=1):
+    def diff(self, direction, order=1):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
         a field. The direction in which the derivative is computed is passed
         via ``direction`` argument, which can be ``'x'``, ``'y'``, or ``'z'``.
         The order of the computed derivative can be 1 or 2 and it is specified
-        using argument ``n`` and it defaults to 1.
+        using argument ``order`` and it defaults to 1.
 
-        Directional derivative cannot be computed if only one discretisation
-        cell exists in a specified direction. In that case, a zero field is
-        returned. More precisely, it is assumed that the field does not change
-        in that direction. Computing of the directional derivative depends
+        Directional derivative cannot be computed if less or equal discretisation
+        cells exists in a specified direction than the order.
+        In that case, a zero field is
+        returned. Computing of the directional derivative depends
         strongly on the boundary condition specified in the mesh on which the
         field is defined on. More precisely, the values of the derivatives at
-        the boundary are different for periodic, Neumann, or no boundary
+        the boundary are different for periodic, Neumann, dirichlet, or no boundary
         conditions. For details on boundary conditions, please refer to the
         ``disretisedfield.Mesh`` class. The derivatives are computed using
         central differences inside the sample and using forward/backward
@@ -1853,7 +1853,7 @@ class Field:
             The direction in which the derivative is computed. It can be
             ``'x'``, ``'y'``, or ``'z'``.
 
-        n : int
+        order : int
 
             The order of the derivative. It can be 1 or 2 and it defaults to 1.
 
@@ -1915,66 +1915,84 @@ class Field:
         >>> # second-order derivatives
 
         """
-        direction = dfu.axesdict[direction]
+        if direction not in self.mesh.region.dims:
+            raise ValueError(
+                f"Direction {direction} is not valid. "
+                "It must be one of the following: "
+                f"{self.mesh.region.dims}."
+            )
+        direction_idx = self.mesh.region.dims.index(direction)
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
-        if self.mesh.n[direction] == 1:
+        # Directional derivative cannot be computed if less or an equal number of
+        # discretisation cells exists in a specified direction than the order.
+        # In that case, a zero field is returned.
+        if self.mesh.n[direction_idx] <= order:
             return self.zero
 
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
         # the field array is padded.
-        if dfu.raxesdict[direction] in self.mesh.bc:  # PBC
-            pad_width = {dfu.raxesdict[direction]: (1, 1)}
+        if direction in self.mesh.bc:  # PBC
+            pad_width = {direction: (1, 1)}
             padding_mode = "wrap"
         elif self.mesh.bc == "neumann":
-            pad_width = {dfu.raxesdict[direction]: (1, 1)}
-            padding_mode = "edge"
+            pad_width = {direction: (1, 1)}
+            padding_mode = "symmetric"
+        elif self.mesh.bc == "dirichlet":
+            pad_width = {direction: (1, 1)}
+            padding_mode = "constant"
         else:  # No BC - no padding
             pad_width = {}
             padding_mode = "constant"
 
         padded_array = self.pad(pad_width, mode=padding_mode).array
 
-        if n not in (1, 2):
-            msg = f"Derivative of the n={n} order is not implemented."
+        if order not in (1, 2):
+            msg = f"Derivative of the {order} order is not implemented."
             raise NotImplementedError(msg)
 
-        elif n == 1:
-            if self.nvdim == 1:
-                derivative_array = np.gradient(
-                    padded_array[..., 0], self.mesh.cell[direction], axis=direction
-                )[..., np.newaxis]
-            else:
-                derivative_array = np.gradient(
-                    padded_array, self.mesh.cell[direction], axis=direction
-                )
+        elif order == 1:
+            derivative_array = np.gradient(
+                padded_array, self.mesh.cell[direction_idx], axis=direction_idx
+            )
 
-        elif n == 2:
-            derivative_array = np.zeros_like(padded_array)
-            for i in range(padded_array.shape[direction]):
-                if i == 0:
-                    i1, i2, i3 = i + 2, i + 1, i
-                elif i == padded_array.shape[direction] - 1:
-                    i1, i2, i3 = i, i - 1, i - 2
-                else:
-                    i1, i2, i3 = i + 1, i, i - 1
-                index1 = dfu.assemble_index(slice(None), 4, {direction: i1})
-                index2 = dfu.assemble_index(slice(None), 4, {direction: i2})
-                index3 = dfu.assemble_index(slice(None), 4, {direction: i3})
-                index = dfu.assemble_index(slice(None), 4, {direction: i})
-                derivative_array[index] = (
-                    padded_array[index1]
-                    - 2 * padded_array[index2]
-                    + padded_array[index3]
-                ) / self.mesh.cell[direction] ** 2
+        elif order == 2:
+            if self.mesh.bc == "":
+                # Pad with specific values so that the same finite difference stencil
+                # can be used across the whole array
+                # central difference = forward difference
+                # f(1) + f(-1) - 2 f(0) = f(2) + f(0) - 2 f(1)
+                # f(-1) = f(2) - 3 f(1) + 3f(0)
+
+                def pad_fun(vector, pad_width, iaxis, kwargs):
+                    if iaxis == direction_idx:
+                        vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
+                        vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
+
+                pad_width = [(0, 0)] * 4
+                pad_width[direction_idx] = (1, 1)
+                padded_array = np.pad(padded_array, pad_width, pad_fun)
+
+            index_p1 = dfu.assemble_index(
+                slice(None), 4, {direction_idx: slice(2, None)}
+            )
+            index_0 = dfu.assemble_index(slice(None), 4, {direction_idx: slice(1, -1)})
+            index_m1 = dfu.assemble_index(
+                slice(None), 4, {direction_idx: slice(None, -2)}
+            )
+            derivative_array = (
+                padded_array[index_p1]
+                - 2 * padded_array[index_0]
+                + padded_array[index_m1]
+            ) / self.mesh.cell[direction_idx] ** 2
 
         # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:
-            derivative_array = np.delete(
-                derivative_array, (0, self.mesh.n[direction] + 1), axis=direction
-            )
+            derivative_array = derivative_array[
+                dfu.assemble_index(slice(None), 4, {direction_idx: slice(1, -1)})
+            ]
 
         return self.__class__(
             self.mesh,
@@ -1992,9 +2010,9 @@ class Field:
 
         .. math::
 
-            \\nabla f = (\\frac{\\partial f}{\\partial x},
-                         \\frac{\\partial f}{\\partial y},
-                         \\frac{\\partial f}{\\partial z})
+            \nabla f = (\frac{\partial f}{\partial x},
+                         \frac{\partial f}{\partial y},
+                         \frac{\partial f}{\partial z})
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2030,7 +2048,7 @@ class Field:
 
         2. Compute gradient of a spatially varying field. For a field we choose
         :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the gradient
-        to be a constant vector field :math:`\\nabla f = (2, 3, -5)`.
+        to be a constant vector field :math:`\nabla f = (2, 3, -5)`.
 
         >>> def value_fun(point):
         ...     x, y, z = point
@@ -2055,7 +2073,7 @@ class Field:
             msg = f"Cannot compute gradient for nvdim={self.nvdim} field."
             raise ValueError(msg)
 
-        return self.derivative("x") << self.derivative("y") << self.derivative("z")
+        return self.diff("x") << self.diff("y") << self.diff("z")
 
     @property
     def div(self):
@@ -2066,8 +2084,8 @@ class Field:
 
         .. math::
 
-            \\nabla\\cdot\\mathbf{v} = \\sum_i\\frac{\\partial v_{i}}
-            {\\partial i}
+            \nabla\cdot\mathbf{v} = \sum_i\frac{\partial v_{i}}
+            {\partial i}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2089,9 +2107,9 @@ class Field:
         Example
         -------
         1. Compute the divergence of a vector field. For a field we choose
-        :math:`\\mathbf{v}(x, y, z) = (2x, -2y, 5z)`. Accordingly, we expect
-        the divergence to be to be a constant scalar field :math:`\\nabla\\cdot
-        \\mathbf{v} = 5`.
+        :math:`\mathbf{v}(x, y, z) = (2x, -2y, 5z)`. Accordingly, we expect
+        the divergence to be to be a constant scalar field :math:`\nabla\cdot
+        \mathbf{v} = 5`.
 
         >>> import discretisedfield as df
         ...
@@ -2123,12 +2141,7 @@ class Field:
             msg = f"Cannot compute divergence for nvdim={self.nvdim} field."
             raise ValueError(msg)
 
-        return sum(
-            [
-                getattr(self, self.vdims[i]).derivative(dfu.raxesdict[i])
-                for i in range(self.nvdim)
-            ]
-        )
+        return sum(getattr(self, vdim).diff(vdim) for vdim in self.vdims)
 
     @property
     def curl(self):
@@ -2139,11 +2152,11 @@ class Field:
 
         .. math::
 
-            \\nabla \\times \\mathbf{v} = \\left(\\frac{\\partial
-            v_{z}}{\\partial y} - \\frac{\\partial v_{y}}{\\partial z},
-            \\frac{\\partial v_{x}}{\\partial z} - \\frac{\\partial
-            v_{z}}{\\partial x}, \\frac{\\partial v_{y}}{\\partial x} -
-            \\frac{\\partial v_{x}}{\\partial y},\\right)
+            \nabla \times \mathbf{v} = \left(\frac{\partial
+            v_{z}}{\partial y} - \frac{\partial v_{y}}{\partial z},
+            \frac{\partial v_{x}}{\partial z} - \frac{\partial
+            v_{z}}{\partial x}, \frac{\partial v_{y}}{\partial x} -
+            \frac{\partial v_{x}}{\partial y},\right)
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2165,9 +2178,9 @@ class Field:
         Example
         -------
         1. Compute curl of a vector field. For a field we choose
-        :math:`\\mathbf{v}(x, y, z) = (2xy, -2y, 5xz)`. Accordingly, we expect
-        the curl to be to be a constant vector field :math:`\\nabla\\times
-        \\mathbf{v} = (0, -5z, -2x)`.
+        :math:`\mathbf{v}(x, y, z) = (2xy, -2y, 5xz)`. Accordingly, we expect
+        the curl to be to be a constant vector field :math:`\nabla\times
+        \mathbf{v} = (0, -5z, -2x)`.
 
         >>> import discretisedfield as df
         ...
@@ -2200,9 +2213,9 @@ class Field:
             raise ValueError(msg)
 
         x, y, z = self.vdims
-        curl_x = getattr(self, z).derivative("y") - getattr(self, y).derivative("z")
-        curl_y = getattr(self, x).derivative("z") - getattr(self, z).derivative("x")
-        curl_z = getattr(self, y).derivative("x") - getattr(self, x).derivative("y")
+        curl_x = getattr(self, z).diff("y") - getattr(self, y).diff("z")
+        curl_y = getattr(self, x).diff("z") - getattr(self, z).diff("x")
+        curl_z = getattr(self, y).diff("x") - getattr(self, x).diff("y")
 
         return curl_x << curl_y << curl_z
 
@@ -2215,15 +2228,15 @@ class Field:
 
         .. math::
 
-            \\nabla^2 f = \\frac{\\partial^{2} f}{\\partial x^{2}} +
-                          \\frac{\\partial^{2} f}{\\partial y^{2}} +
-                          \\frac{\\partial^{2} f}{\\partial z^{2}}
+            \nabla^2 f = \frac{\partial^{2} f}{\partial x^{2}} +
+                          \frac{\partial^{2} f}{\partial y^{2}} +
+                          \frac{\partial^{2} f}{\partial z^{2}}
 
         .. math::
 
-            \\nabla^2 \\mathbf{f} = (\\nabla^2 f_{x},
-                                     \\nabla^2 f_{y},
-                                     \\nabla^2 f_{z})
+            \nabla^2 \mathbf{f} = (\nabla^2 f_{x},
+                                     \nabla^2 f_{y},
+                                     \nabla^2 f_{z})
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2253,7 +2266,7 @@ class Field:
 
         2. Compute Laplacian of a spatially varying field. For a field we
         choose :math:`f(x, y, z) = 2x^{2} + 3y - 5z`. Accordingly, we expect
-        the Laplacian to be a constant vector field :math:`\\nabla f = (4, 0,
+        the Laplacian to be a constant vector field :math:`\nabla f = (4, 0,
         0)`.
 
         >>> def value_fun(point):
@@ -2270,9 +2283,9 @@ class Field:
             raise ValueError(f"Cannot compute laplace for nvdim={self.nvdim} field.")
         if self.nvdim == 1:
             return (
-                self.derivative("x", n=2)
-                + self.derivative("y", n=2)
-                + self.derivative("z", n=2)
+                self.diff("x", order=2)
+                + self.diff("y", order=2)
+                + self.diff("z", order=2)
             )
         else:
             x, y, z = self.vdims
@@ -2324,7 +2337,7 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{V} f(\\mathbf{r}) \\mathrm{d}V
+            \int_\mathrm{V} f(\mathbf{r}) \mathrm{d}V
 
         >>> import discretisedfield as df
         ...
@@ -2341,7 +2354,7 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{V} \\mathbf{f}(\\mathbf{r}) \\mathrm{d}V
+            \int_\mathrm{V} \mathbf{f}(\mathbf{r}) \mathrm{d}V
 
         >>> f = df.Field(mesh, nvdim=3, value=(-1, -2, -3))
         >>> (f * df.dV).integral()
@@ -2351,7 +2364,7 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{S} f(\\mathbf{r}) |\\mathrm{d}\\mathbf{S}|
+            \int_\mathrm{S} f(\mathbf{r}) |\mathrm{d}\mathbf{S}|
 
         >>> f = df.Field(mesh, nvdim=1, value=5)
         >>> f_plane = f.plane('z')
@@ -2362,8 +2375,8 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{S} \\mathbf{f}(\\mathbf{r}) \\cdot
-            \\mathrm{d}\\mathbf{S}
+            \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot
+            \mathrm{d}\mathbf{S}
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
@@ -2374,8 +2387,8 @@ class Field:
 
         .. math::
 
-            \\int_{x_\\mathrm{min}}^{x_\\mathrm{max}} \\mathbf{f}(\\mathbf{r})
-            \\mathrm{d}x
+            \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r})
+            \mathrm{d}x
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
@@ -2386,8 +2399,8 @@ class Field:
 
         .. math::
 
-            \\int_{x_\\mathrm{min}}^{x} \\mathbf{f}(\\mathbf{r})
-            \\mathrm{d}x'
+            \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r})
+            \mathrm{d}x'
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
@@ -2424,8 +2437,8 @@ class Field:
 
         .. math::
 
-           \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} -
-           \\mathbf{p}_{1}}{n-1}
+           \mathbf{r}_{i} = i\frac{\mathbf{p}_{2} -
+           \mathbf{p}_{1}}{n-1}
 
         Parameters
         ----------
@@ -2680,7 +2693,7 @@ class Field:
         This method then returns a scalar field which is an angle
         between the component of the vector field and a vector.
         The angle is computed in radians and all values are in :math:`(0,
-        2\\pi)` range.
+        2\pi)` range.
 
         Parameters
         ----------
