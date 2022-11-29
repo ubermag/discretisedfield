@@ -260,10 +260,10 @@ class Field:
         >>> # if value is not specified, zero-field is defined
         >>> field = df.Field(mesh=mesh, nvdim=3)
         >>> field.mean()
-        (0.0, 0.0, 0.0)
+        array([0., 0., 0.])
         >>> field.update_field_values((0, 0, 1))
         >>> field.mean()
-        (0, 0, 1)
+        array([0., 0., 1.])
         >>> # Setting the field value using a Python function (callable).
         >>> def value_function(point):
         ...     x, y, z = point
@@ -273,9 +273,9 @@ class Field:
         ...         return (0, 0, -1)
         >>> field.update_field_values(value_function)
         >>> field.array[0, 0, 0, :]
-        (0, 0, 1)
+        array([0., 0., 1.])
         >>> field.array[1, 0, 0, :]
-        (0, 0, -1)
+        array([ 0.,  0., -1.])
 
         2. Field with subregions in mesh
         >>> import discretisedfield as df
