@@ -1242,6 +1242,8 @@ class TestField:
             f1.diff("x")(f1.mesh.region.center), f2.diff("x")(f2.mesh.region.center)
         )
         assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
+        assert np.isclose(f2.diff("x")((11, 1, 1)), 0.5)
+        assert np.isclose(f2.diff("x")((1, 1, 1)), 0.5)
 
         # Higher order derivatives
         def value_fun(point):
