@@ -1834,11 +1834,10 @@ class Field:
         The order of the computed derivative can be 1 or 2 and it is specified
         using argument ``order`` and it defaults to 1.
 
-        Directional derivative cannot be computed if less discretisation
+        Directional derivative cannot be computed if less or equal discretisation
         cells exists in a specified direction than the order.
         In that case, a zero field is
-        returned. More precisely, it is assumed that the field does not change
-        in that direction. Computing of the directional derivative depends
+        returned. Computing of the directional derivative depends
         strongly on the boundary condition specified in the mesh on which the
         field is defined on. More precisely, the values of the derivatives at
         the boundary are different for periodic, Neumann, dirichlet, or no boundary
@@ -1920,6 +1919,9 @@ class Field:
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
+        # Directional derivative cannot be computed if less or an equal number of
+        # discretisation cells exists in a specified direction than the order.
+        # In that case, a zero field is returned.
         if self.mesh.n[direction_idx] <= order:
             return self.zero
 
@@ -1942,7 +1944,7 @@ class Field:
         padded_array = self.pad(pad_width, mode=padding_mode).array
 
         if order not in (1, 2):
-            msg = f"Derivative of the n={order} order is not implemented."
+            msg = f"Derivative of the {order} order is not implemented."
             raise NotImplementedError(msg)
 
         elif order == 1:
