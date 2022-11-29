@@ -179,19 +179,20 @@ class TestField:
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
             f = df.Field(mesh, nvdim=3)
-            f.value = np.ones(
-                (
-                    *f.mesh.n,
-                    f.nvdim,
+            f.update_field_values(
+                np.ones(
+                    (
+                        *f.mesh.n,
+                        f.nvdim,
+                    )
                 )
             )
 
             check_field(f)
-            assert isinstance(f.value, np.ndarray)
             assert np.allclose(f.mean(), (1, 1, 1))
 
             with pytest.raises(ValueError):
-                f.value = np.ones((2, 2))
+                f.update_field_values(np.ones((2, 2)))
 
     def test_set_with_callable(self):
         for mesh in self.meshes:
