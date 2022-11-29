@@ -1266,18 +1266,20 @@ class TestField:
         def value_fun(point):
             return point[0] * point[1] * point[2]
 
-        # No Neumann
+        # No Dirichlet
         f1 = df.Field(mesh_nodirichlet, nvdim=1, value=value_fun)
         assert np.isclose(f1.diff("x")((11, 1, 1)), 1)
         assert np.isclose(f1.diff("y")((1, 7, 1)), 1)
         assert np.isclose(f1.diff("z")((1, 1, 5)), 1)
 
-        # Neumann
+        # Dirichlet
         f2 = df.Field(mesh_dirichlet, nvdim=1, value=value_fun)
         assert np.allclose(
             f1.diff("x")(f1.mesh.region.center), f2.diff("x")(f2.mesh.region.center)
         )
         assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
+        assert np.isclose(f2.diff("x")((11, 1, 1)), -2.25)
+        assert np.isclose(f2.diff("x")((1, 1, 1)), 0.75)
 
         # Higher order derivatives
         def value_fun(point):
