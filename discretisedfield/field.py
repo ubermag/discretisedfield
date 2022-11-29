@@ -1954,16 +1954,9 @@ class Field:
             raise NotImplementedError(msg)
 
         elif order == 1:
-            if self.nvdim == 1:
-                derivative_array = np.gradient(
-                    padded_array[..., 0],
-                    self.mesh.cell[direction_idx],
-                    axis=direction_idx,
-                )[..., np.newaxis]
-            else:
-                derivative_array = np.gradient(
-                    padded_array, self.mesh.cell[direction_idx], axis=direction_idx
-                )
+            derivative_array = np.gradient(
+                padded_array, self.mesh.cell[direction_idx], axis=direction_idx
+            )
 
         elif order == 2:
             if self.mesh.bc == "":
