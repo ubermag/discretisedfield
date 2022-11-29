@@ -2150,8 +2150,7 @@ class Field:
 
         return sum(
             [
-                getattr(self, self.vdims[i]).diff(dfu.raxesdict[i])
-                for i in range(self.nvdim)
+                getattr(self, vdim).diff(vdim) for vdim in self.nvdim
             ]
         )
 
