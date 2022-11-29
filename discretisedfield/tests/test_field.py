@@ -1161,6 +1161,10 @@ class TestField:
         assert np.allclose(f.diff("y", order=2).mean(), (0, 4, 0))
         assert np.allclose(f.diff("z", order=2).mean(), (0, 0, 6))
 
+        # Test invalid direction
+        with pytest.raises(ValueError):
+            f.diff("q")
+
     def test_derivative_pbc(self):
         p1 = (0.0, 0.0, 0.0)
         p2 = (12.0, 8.0, 6.0)
