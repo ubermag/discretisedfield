@@ -209,8 +209,9 @@ class Field:
         """Set field value representation.
 
         The value of the field can be set using a scalar value for ``nvdim=1``
-        fields (e.g. ``value=3``) or ``array_like`` value for ``nvdim>1`` fields
-        (e.g. ``value=(1, 2, 3)``). Alternatively, the value can be defined
+        fields (e.g. ``field.update_field_values(3)``) or ``array_like`` value
+        for ``nvdim>1`` fields (e.g. ``field.update_field_values((1, 2, 3))``).
+        Alternatively, the value can be defined
         using a callable object, which takes a point tuple as an input argument
         and returns a value of appropriate dimension. Internally, callable
         object is called for every point in the mesh on which the field is
@@ -227,8 +228,8 @@ class Field:
             numpy.ndarray) value with length equal to `nvdim` should be used.
             Finally, the value can also be a callable (e.g. Python function or
             another field), which for every coordinate in the mesh returns a
-            valid value. If ``value=0``, all values in the field will be set to
-            zero independent of the field dimension.
+            valid value. If ``field.update_field_values(0)``, all values in the field
+            will be set to zero independent of the field dimension.
 
             If subregions are defined value can be initialised with a dict.
             Allowed keys are names of all subregions and ``default``. Items
