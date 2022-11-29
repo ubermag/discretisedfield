@@ -1915,7 +1915,7 @@ class Field:
         >>> # second-order derivatives
 
         """
-        direction_idx = dfu.axesdict[direction]
+        direction_idx = self.mesh.region.dims.index(direction)
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
