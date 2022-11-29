@@ -352,12 +352,9 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
         f = df.Field(mesh, nvdim=3)
-        f.value = (1, 1, 1)
+        f.update_field_values((1, 1, 1))
 
-        assert f.value == (1, 1, 1)
-
-        f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.value, np.ndarray)
+        assert np.allclose(f.mean(), (1, 1, 1))
 
     def test_average(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
