@@ -1038,12 +1038,12 @@ class TestField:
         f = df.Field(mesh, nvdim=1, value=0)
 
         check_field(f.diff("x"))
-        assert np.isclose(f.diff("x", order=1).mean(), 0)
-        assert np.isclose(f.diff("y", order=1).mean(), 0)
-        assert np.isclose(f.diff("z", order=1).mean(), 0)
-        assert np.isclose(f.diff("x", order=2).mean(), 0)
-        assert np.isclose(f.diff("y", order=2).mean(), 0)
-        assert np.isclose(f.diff("z", order=2).mean(), 0)
+        assert np.allclose(f.diff("x", order=1).mean(), 0)
+        assert np.allclose(f.diff("y", order=1).mean(), 0)
+        assert np.allclose(f.diff("z", order=1).mean(), 0)
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
         # No BC
@@ -1055,12 +1055,12 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert np.isclose(f.diff("x", order=1).mean(), 1)
-        assert np.isclose(f.diff("y", order=1).mean(), 1)
-        assert np.isclose(f.diff("z", order=1).mean(), 1)
-        assert np.isclose(f.diff("x", order=2).mean(), 0)
-        assert np.isclose(f.diff("y", order=2).mean(), 0)
-        assert np.isclose(f.diff("z", order=2).mean(), 0)
+        assert np.allclose(f.diff("x", order=1).mean(), 1)
+        assert np.allclose(f.diff("y", order=1).mean(), 1)
+        assert np.allclose(f.diff("z", order=1).mean(), 1)
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
@@ -1073,12 +1073,12 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert np.isclose(f.diff("x")((7, 5, 1)), 10)
-        assert np.isclose(f.diff("y")((7, 5, 1)), 16)
-        assert np.isclose(f.diff("z")((7, 5, 1)), 35)
-        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 0)
-        assert np.isclose(f.diff("y", order=2)((1, 1, 1)), 0)
-        assert np.isclose(f.diff("z", order=2)((1, 1, 1)), 0)
+        assert np.allclose(f.diff("x")((7, 5, 1)), 10)
+        assert np.allclose(f.diff("y")((7, 5, 1)), 16)
+        assert np.allclose(f.diff("z")((7, 5, 1)), 35)
+        assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 0)
+        assert np.allclose(f.diff("y", order=2)((1, 1, 1)), 0)
+        assert np.allclose(f.diff("z", order=2)((1, 1, 1)), 0)
 
         # f(x, y, z) = (0, 0, 0)
         # -> dfdx = (0, 0, 0)
@@ -1146,9 +1146,9 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert np.isclose(f.diff("x", order=2).mean(), 4)
-        assert np.isclose(f.diff("y", order=2).mean(), 4)
-        assert np.isclose(f.diff("z", order=2).mean(), 6)
+        assert np.allclose(f.diff("x", order=2).mean(), 4)
+        assert np.allclose(f.diff("y", order=2).mean(), 4)
+        assert np.allclose(f.diff("z", order=2).mean(), 6)
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
         def value_fun(point):
@@ -1180,15 +1180,15 @@ class TestField:
 
         # No PBC
         f = df.Field(mesh_nopbc, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x")((11, 1, 1)), 1)
-        assert np.isclose(f.diff("y")((1, 7, 1)), 1)
-        assert np.isclose(f.diff("z")((1, 1, 5)), 1)
+        assert np.allclose(f.diff("x")((11, 1, 1)), 1)
+        assert np.allclose(f.diff("y")((1, 7, 1)), 1)
+        assert np.allclose(f.diff("z")((1, 1, 5)), 1)
 
         # PBC
         f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x")((11, 1, 1)), -2)
-        assert np.isclose(f.diff("y")((1, 7, 1)), -1)
-        assert np.isclose(f.diff("z")((1, 1, 5)), -0.5)
+        assert np.allclose(f.diff("x")((11, 1, 1)), -2)
+        assert np.allclose(f.diff("y")((1, 7, 1)), -1)
+        assert np.allclose(f.diff("z")((1, 1, 5)), -0.5)
 
         # Vector field
         def value_fun(point):
@@ -1213,10 +1213,10 @@ class TestField:
             return x**2
 
         f = df.Field(mesh_nopbc, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+        assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
         f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 32)
+        assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 32)
 
     def test_derivative_neumann(self):
         p1 = (0.0, 0.0, 0.0)
@@ -1232,9 +1232,9 @@ class TestField:
 
         # No Neumann
         f1 = df.Field(mesh_noneumann, nvdim=1, value=value_fun)
-        assert np.isclose(f1.diff("x")((11, 1, 1)), 1)
-        assert np.isclose(f1.diff("y")((1, 7, 1)), 1)
-        assert np.isclose(f1.diff("z")((1, 1, 5)), 1)
+        assert np.allclose(f1.diff("x")((11, 1, 1)), 1)
+        assert np.allclose(f1.diff("y")((1, 7, 1)), 1)
+        assert np.allclose(f1.diff("z")((1, 1, 5)), 1)
 
         # Neumann
         f2 = df.Field(mesh_neumann, nvdim=1, value=value_fun)
@@ -1242,8 +1242,8 @@ class TestField:
             f1.diff("x")(f1.mesh.region.center), f2.diff("x")(f2.mesh.region.center)
         )
         assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
-        assert np.isclose(f2.diff("x")((11, 1, 1)), 0.5)
-        assert np.isclose(f2.diff("x")((1, 1, 1)), 0.5)
+        assert np.allclose(f2.diff("x")((11, 1, 1)), 0.5)
+        assert np.allclose(f2.diff("x")((1, 1, 1)), 0.5)
 
         # Higher order derivatives
         def value_fun(point):
@@ -1251,10 +1251,10 @@ class TestField:
             return x**2
 
         f = df.Field(mesh_noneumann, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+        assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
         f = df.Field(mesh_neumann, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+        assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
     def test_derivative_dirichlet(self):
         p1 = (0.0, 0.0, 0.0)
@@ -1270,9 +1270,9 @@ class TestField:
 
         # No Dirichlet
         f1 = df.Field(mesh_nodirichlet, nvdim=1, value=value_fun)
-        assert np.isclose(f1.diff("x")((11, 1, 1)), 1)
-        assert np.isclose(f1.diff("y")((1, 7, 1)), 1)
-        assert np.isclose(f1.diff("z")((1, 1, 5)), 1)
+        assert np.allclose(f1.diff("x")((11, 1, 1)), 1)
+        assert np.allclose(f1.diff("y")((1, 7, 1)), 1)
+        assert np.allclose(f1.diff("z")((1, 1, 5)), 1)
 
         # Dirichlet
         f2 = df.Field(mesh_dirichlet, nvdim=1, value=value_fun)
@@ -1280,8 +1280,8 @@ class TestField:
             f1.diff("x")(f1.mesh.region.center), f2.diff("x")(f2.mesh.region.center)
         )
         assert f1.diff("x")((1, 7, 1)) != f2.diff("x")((1, 7, 1))
-        assert np.isclose(f2.diff("x")((11, 1, 1)), -2.25)
-        assert np.isclose(f2.diff("x")((1, 1, 1)), 0.75)
+        assert np.allclose(f2.diff("x")((11, 1, 1)), -2.25)
+        assert np.allclose(f2.diff("x")((1, 1, 1)), 0.75)
 
         # Higher order derivatives
         def value_fun(point):
@@ -1289,10 +1289,10 @@ class TestField:
             return x**2
 
         f = df.Field(mesh_nodirichlet, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 2)
+        assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
         f = df.Field(mesh_dirichlet, nvdim=1, value=value_fun)
-        assert np.isclose(f.diff("x", order=2)((1, 1, 1)), 1.75)
+        assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 1.75)
 
     def test_derivative_single_cell(self):
         p1 = (0, 0, 0)
@@ -1464,7 +1464,7 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
         check_field(f.laplace)
-        assert np.isclose(f.laplace.mean(), 0)
+        assert np.allclose(f.laplace.mean(), 0)
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> laplace(f) = 4 + 4 + 6 = 14
@@ -1474,7 +1474,7 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert np.isclose(f.laplace.mean(), 14)
+        assert np.allclose(f.laplace.mean(), 14)
 
         # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
         # -> laplace(f) = (4, 4, 6)
@@ -1708,8 +1708,8 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3, value=(1.0, 0.0, 0.0))
 
-        assert np.isclose(f.angle((1.0, 0.0, 0.0)).mean(), 0.0)
-        assert np.isclose(f.angle((0.0, 1.0, 0.0)).mean(), np.pi / 2)
+        assert np.allclose(f.angle((1.0, 0.0, 0.0)).mean(), 0.0)
+        assert np.allclose(f.angle((0.0, 1.0, 0.0)).mean(), np.pi / 2)
 
     def test_write_read_ovf(self, tmp_path):
         representations = ["txt", "bin4", "bin8"]
