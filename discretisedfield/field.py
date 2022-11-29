@@ -2412,7 +2412,6 @@ class Field:
                     self.mesh.cell[self.mesh.attributes["axis1"]]
                     * self.mesh.cell[self.mesh.attributes["axis2"]]
                 )
-            # TODO Should this return a number or a np.ndarray for nvdim == 1?
             return sum_ * dV
         elif not isinstance(direction, str):
             raise TypeError("'direction' must be of type str.")
@@ -2432,10 +2431,12 @@ class Field:
             # NOTE reduce dimension n -> n-1:
             # - remove keepdims
             # - replace mesh.plane
+            #   - either mesh.sel
+            #   - or manually
             res_array = np.sum(self.array, axis=axis, keepdims=True) * mesh.cell[axis]
             mesh = mesh.plane(direction)
 
-        # TODO what should this method return for ndim == 0?
+        # NOTE what should this method return for ndim == 0?
         # if mesh.region.ndim == 0:
         #     return res_array
 
