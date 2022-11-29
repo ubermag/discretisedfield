@@ -749,7 +749,7 @@ class Field:
         ----------
         point : (3,) array_like
 
-            The mesh point coordinate :math:`\\mathbf{p} = (p_{x}, p_{y},
+            The mesh point coordinate :math:`\mathbf{p} = (p_{x}, p_{y},
             p_{z})`.
 
         Returns
@@ -900,7 +900,7 @@ class Field:
         ------
         tuple (2,)
 
-            The first value is the mesh cell coordinates :math:`\\mathbf{p} =
+            The first value is the mesh cell coordinates :math:`\mathbf{p} =
             (p_{x}, p_{y}, p_{z})`, whereas the second one is the field value.
 
         Examples
@@ -1160,7 +1160,7 @@ class Field:
 
         .. math::
 
-            -f(x, y, z) = -1 \\cdot f(x, y, z)
+            -f(x, y, z) = -1 \cdot f(x, y, z)
 
         Returns
         -------
@@ -2010,9 +2010,9 @@ class Field:
 
         .. math::
 
-            \\nabla f = (\\frac{\\partial f}{\\partial x},
-                         \\frac{\\partial f}{\\partial y},
-                         \\frac{\\partial f}{\\partial z})
+            \nabla f = (\frac{\partial f}{\partial x},
+                         \frac{\partial f}{\partial y},
+                         \frac{\partial f}{\partial z})
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2048,7 +2048,7 @@ class Field:
 
         2. Compute gradient of a spatially varying field. For a field we choose
         :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the gradient
-        to be a constant vector field :math:`\\nabla f = (2, 3, -5)`.
+        to be a constant vector field :math:`\nabla f = (2, 3, -5)`.
 
         >>> def value_fun(point):
         ...     x, y, z = point
@@ -2084,8 +2084,8 @@ class Field:
 
         .. math::
 
-            \\nabla\\cdot\\mathbf{v} = \\sum_i\\frac{\\partial v_{i}}
-            {\\partial i}
+            \nabla\cdot\mathbf{v} = \sum_i\frac{\partial v_{i}}
+            {\partial i}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2107,9 +2107,9 @@ class Field:
         Example
         -------
         1. Compute the divergence of a vector field. For a field we choose
-        :math:`\\mathbf{v}(x, y, z) = (2x, -2y, 5z)`. Accordingly, we expect
-        the divergence to be to be a constant scalar field :math:`\\nabla\\cdot
-        \\mathbf{v} = 5`.
+        :math:`\mathbf{v}(x, y, z) = (2x, -2y, 5z)`. Accordingly, we expect
+        the divergence to be to be a constant scalar field :math:`\nabla\cdot
+        \mathbf{v} = 5`.
 
         >>> import discretisedfield as df
         ...
@@ -2152,11 +2152,11 @@ class Field:
 
         .. math::
 
-            \\nabla \\times \\mathbf{v} = \\left(\\frac{\\partial
-            v_{z}}{\\partial y} - \\frac{\\partial v_{y}}{\\partial z},
-            \\frac{\\partial v_{x}}{\\partial z} - \\frac{\\partial
-            v_{z}}{\\partial x}, \\frac{\\partial v_{y}}{\\partial x} -
-            \\frac{\\partial v_{x}}{\\partial y},\\right)
+            \nabla \times \mathbf{v} = \left(\frac{\partial
+            v_{z}}{\partial y} - \frac{\partial v_{y}}{\partial z},
+            \frac{\partial v_{x}}{\partial z} - \frac{\partial
+            v_{z}}{\partial x}, \frac{\partial v_{y}}{\partial x} -
+            \frac{\partial v_{x}}{\partial y},\right)
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2178,9 +2178,9 @@ class Field:
         Example
         -------
         1. Compute curl of a vector field. For a field we choose
-        :math:`\\mathbf{v}(x, y, z) = (2xy, -2y, 5xz)`. Accordingly, we expect
-        the curl to be to be a constant vector field :math:`\\nabla\\times
-        \\mathbf{v} = (0, -5z, -2x)`.
+        :math:`\mathbf{v}(x, y, z) = (2xy, -2y, 5xz)`. Accordingly, we expect
+        the curl to be to be a constant vector field :math:`\nabla\times
+        \mathbf{v} = (0, -5z, -2x)`.
 
         >>> import discretisedfield as df
         ...
@@ -2228,15 +2228,15 @@ class Field:
 
         .. math::
 
-            \\nabla^2 f = \\frac{\\partial^{2} f}{\\partial x^{2}} +
-                          \\frac{\\partial^{2} f}{\\partial y^{2}} +
-                          \\frac{\\partial^{2} f}{\\partial z^{2}}
+            \nabla^2 f = \frac{\partial^{2} f}{\partial x^{2}} +
+                          \frac{\partial^{2} f}{\partial y^{2}} +
+                          \frac{\partial^{2} f}{\partial z^{2}}
 
         .. math::
 
-            \\nabla^2 \\mathbf{f} = (\\nabla^2 f_{x},
-                                     \\nabla^2 f_{y},
-                                     \\nabla^2 f_{z})
+            \nabla^2 \mathbf{f} = (\nabla^2 f_{x},
+                                     \nabla^2 f_{y},
+                                     \nabla^2 f_{z})
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2266,7 +2266,7 @@ class Field:
 
         2. Compute Laplacian of a spatially varying field. For a field we
         choose :math:`f(x, y, z) = 2x^{2} + 3y - 5z`. Accordingly, we expect
-        the Laplacian to be a constant vector field :math:`\\nabla f = (4, 0,
+        the Laplacian to be a constant vector field :math:`\nabla f = (4, 0,
         0)`.
 
         >>> def value_fun(point):
@@ -2337,7 +2337,7 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{V} f(\\mathbf{r}) \\mathrm{d}V
+            \int_\mathrm{V} f(\mathbf{r}) \mathrm{d}V
 
         >>> import discretisedfield as df
         ...
@@ -2354,7 +2354,7 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{V} \\mathbf{f}(\\mathbf{r}) \\mathrm{d}V
+            \int_\mathrm{V} \mathbf{f}(\mathbf{r}) \mathrm{d}V
 
         >>> f = df.Field(mesh, nvdim=3, value=(-1, -2, -3))
         >>> (f * df.dV).integral()
@@ -2364,7 +2364,7 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{S} f(\\mathbf{r}) |\\mathrm{d}\\mathbf{S}|
+            \int_\mathrm{S} f(\mathbf{r}) |\mathrm{d}\mathbf{S}|
 
         >>> f = df.Field(mesh, nvdim=1, value=5)
         >>> f_plane = f.plane('z')
@@ -2375,8 +2375,8 @@ class Field:
 
         .. math::
 
-            \\int_\\mathrm{S} \\mathbf{f}(\\mathbf{r}) \\cdot
-            \\mathrm{d}\\mathbf{S}
+            \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot
+            \mathrm{d}\mathbf{S}
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
@@ -2387,8 +2387,8 @@ class Field:
 
         .. math::
 
-            \\int_{x_\\mathrm{min}}^{x_\\mathrm{max}} \\mathbf{f}(\\mathbf{r})
-            \\mathrm{d}x
+            \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r})
+            \mathrm{d}x
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
@@ -2399,8 +2399,8 @@ class Field:
 
         .. math::
 
-            \\int_{x_\\mathrm{min}}^{x} \\mathbf{f}(\\mathbf{r})
-            \\mathrm{d}x'
+            \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r})
+            \mathrm{d}x'
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
@@ -2437,8 +2437,8 @@ class Field:
 
         .. math::
 
-           \\mathbf{r}_{i} = i\\frac{\\mathbf{p}_{2} -
-           \\mathbf{p}_{1}}{n-1}
+           \mathbf{r}_{i} = i\frac{\mathbf{p}_{2} -
+           \mathbf{p}_{1}}{n-1}
 
         Parameters
         ----------
@@ -2693,7 +2693,7 @@ class Field:
         This method then returns a scalar field which is an angle
         between the component of the vector field and a vector.
         The angle is computed in radians and all values are in :math:`(0,
-        2\\pi)` range.
+        2\pi)` range.
 
         Parameters
         ----------
