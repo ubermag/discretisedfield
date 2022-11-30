@@ -1732,16 +1732,16 @@ class TestField:
             f = df.Field(mesh, nvdim=nvdim, value=value, units="A/m")
             for rep in representations:
                 tmpfilename = tmp_path / filename
-                f.write(tmpfilename, representation=rep)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=rep)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f.allclose(f_read)
                 assert f_read.units == "A/m"
                 assert f.mesh.subregions == f_read.mesh.subregions
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.write(tmpfilename, representation=rep, save_subregions=False)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=rep, save_subregions=False)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f.allclose(f_read)
                 assert f_read.units == "A/m"
@@ -1754,8 +1754,8 @@ class TestField:
         # multiple different units (not supported by discretisedfield)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1), units="m s kg")
         tmpfilename = str(tmp_path / filename)
-        f.write(tmpfilename, representation=rep)
-        f_read = df.Field.fromfile(tmpfilename)
+        f.to_file(tmpfilename, representation=rep)
+        f_read = df.Field.from_file(tmpfilename)
 
         assert f.allclose(f_read)
         assert f_read.units is None
@@ -1766,8 +1766,8 @@ class TestField:
                 mesh, nvdim=1, value=lambda point: point[0] + point[1] + point[2]
             )
             tmpfilename = tmp_path / filename
-            f.write(tmpfilename, representation=rep, extend_scalar=True)
-            f_read = df.Field.fromfile(tmpfilename)
+            f.to_file(tmpfilename, representation=rep, extend_scalar=True)
+            f_read = df.Field.from_file(tmpfilename)
 
             assert f.allclose(f_read.x)
 
@@ -1784,7 +1784,7 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         for filename in filenames:
             omffilename = os.path.join(dirname, filename)
-            f_read = df.Field.fromfile(omffilename)
+            f_read = df.Field.from_file(omffilename)
 
             if "ovf2" in filename:
                 # The magnetisation is in the x-direction in OVF2 files.
@@ -1795,13 +1795,13 @@ class TestField:
 
         # Read component names (single-word and multi-word with and without hyphen)
         # from OOMMF files
-        assert df.Field.fromfile(
+        assert df.Field.from_file(
             os.path.join(dirname, "oommf-ovf2-bin8.omf")
         ).vdims == ["x", "y", "z"]
-        assert df.Field.fromfile(
+        assert df.Field.from_file(
             os.path.join(dirname, "oommf-ovf2-bin8.ohf")
         ).vdims == ["x", "y", "z"]
-        assert df.Field.fromfile(
+        assert df.Field.from_file(
             os.path.join(dirname, "oommf-ovf2-bin8.oef")
         ).vdims == ["Total_energy_density"]
 
@@ -1814,13 +1814,13 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         for filename in filenames:
             omffilename = os.path.join(dirname, filename)
-            f_read = df.Field.fromfile(omffilename)
+            f_read = df.Field.from_file(omffilename)
 
             # We know the saved magentisation.
             f_saved = df.Field(f_read.mesh, nvdim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
-    def test_write_read_vtk(self, tmp_path):
+    def test_to_file_read_vtk(self, tmp_path):
         filename = "testfile.vtk"
 
         p1 = (0, 0, 0)
@@ -1840,8 +1840,8 @@ class TestField:
             for repr in ["txt", "bin", "xml"]:
                 f = df.Field(mesh, nvdim=nvdim, value=value, vdims=vdims)
                 tmpfilename = tmp_path / filename
-                f.write(tmpfilename, representation=repr)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=repr)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert np.allclose(f.array, f_read.array)
                 assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
@@ -1852,14 +1852,14 @@ class TestField:
                 assert f.mesh.subregions == f_read.mesh.subregions
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.write(tmpfilename, representation=repr, save_subregions=False)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=repr, save_subregions=False)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f.allclose(f_read)
                 assert f_read.mesh.subregions == {}
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
-        f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
+        f = df.Field.from_file(os.path.join(dirname, "vtk-file.vtk"))
         check_field(f)
         assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 3)
@@ -1867,14 +1867,14 @@ class TestField:
 
         # test reading legacy vtk file (written with discretisedfield<=0.61.0)
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
-        f = df.Field.fromfile(os.path.join(dirname, "vtk-vector-legacy.vtk"))
+        f = df.Field.from_file(os.path.join(dirname, "vtk-vector-legacy.vtk"))
         check_field(f)
         assert np.all(f.mesh.n == (8, 1, 1))
         assert f.array.shape == (8, 1, 1, 3)
         assert f.nvdim == 3
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
-        f = df.Field.fromfile(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
+        f = df.Field.from_file(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
         check_field(f)
         assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 1)
@@ -1883,12 +1883,12 @@ class TestField:
         # test invalid arguments
         f = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         with pytest.raises(ValueError):
-            f.write(str(tmp_path / filename), representation="wrong")
+            f.to_file(str(tmp_path / filename), representation="wrong")
         f._vdims = None  # manually remove component labels
         with pytest.raises(AttributeError):
-            f.write(str(tmp_path / filename))
+            f.to_file(str(tmp_path / filename))
 
-    def test_write_read_hdf5(self, tmp_path):
+    def test_to_file_read_hdf5(self, tmp_path):
         filenames = ["testfile.hdf5", "testfile.h5"]
 
         p1 = (0, 0, 0)
@@ -1904,17 +1904,17 @@ class TestField:
             f = df.Field(mesh, nvdim=nvdim, value=value)
             for filename in filenames:
                 tmpfilename = tmp_path / filename
-                f.write(tmpfilename)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f == f_read
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.write(tmpfilename, save_subregions=False)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, save_subregions=False)
+                f_read = df.Field.from_file(tmpfilename)
                 assert f == f_read
 
-    def test_read_write_invalid_extension(self):
+    def test_read_to_file_invalid_extension(self):
         filename = "testfile.jpg"
 
         p1 = (0, 0, 0)
@@ -1924,9 +1924,9 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=5e-12)
         with pytest.raises(ValueError):
-            f.write(filename)
+            f.to_file(filename)
         with pytest.raises(ValueError):
-            df.Field.fromfile(filename)
+            df.Field.from_file(filename)
 
     def test_fft(self):
         p1 = (-10, -10, -5)
@@ -2012,7 +2012,7 @@ class TestField:
         for i in filenames:
             filename = os.path.join(os.path.dirname(__file__), "test_sample", i)
 
-            field = df.Field.fromfile(filename)
+            field = df.Field.from_file(filename)
             for plane in ["z"]:  # TODO test all directions "xyz" (check samples first)
                 field.plane(plane).mpl.lightness()
                 field.plane(plane).mpl.lightness(
