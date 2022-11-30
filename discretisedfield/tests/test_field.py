@@ -179,19 +179,13 @@ class TestField:
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
             f = df.Field(mesh, nvdim=3)
-            f.value = np.ones(
-                (
-                    *f.mesh.n,
-                    f.nvdim,
-                )
-            )
+            f.update_field_values(np.ones((*f.mesh.n, f.nvdim)))
 
             check_field(f)
-            assert isinstance(f.value, np.ndarray)
             assert np.allclose(f.mean(), (1, 1, 1))
 
             with pytest.raises(ValueError):
-                f.value = np.ones((2, 2))
+                f.update_field_values(np.ones((2, 2)))
 
     def test_set_with_callable(self):
         for mesh in self.meshes:
@@ -351,12 +345,9 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
         f = df.Field(mesh, nvdim=3)
-        f.value = (1, 1, 1)
+        f.update_field_values((1, 1, 1))
 
-        assert f.value == (1, 1, 1)
-
-        f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.value, np.ndarray)
+        assert np.allclose(f.mean(), (1, 1, 1))
 
     def test_average(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
@@ -368,18 +359,12 @@ class TestField:
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
         f = df.Field(mesh, nvdim=3, value=(2, 2, 2))
 
-        assert np.all(f.norm.value == 2 * np.sqrt(3))
-        assert np.all(f.norm.array == 2 * np.sqrt(3))
-        assert np.all(f.array == 2)
+        assert np.allclose(f.norm.array, 2 * np.sqrt(3))
+        assert np.allclose(f.array, 2)
 
         f.norm = 1
-        assert np.all(f.norm.value == 1)
-        assert np.all(f.norm.array == 1)
-        assert np.all(f.array == 1 / np.sqrt(3))
-
-        f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.norm.value, np.ndarray)
-        assert not np.all(f.norm.value == 1)
+        assert np.allclose(f.norm.array, 1)
+        assert np.allclose(f.array, 1 / np.sqrt(3))
 
         for mesh in self.meshes:
             for value, dtype in self.iters + self.vfuncs:
@@ -412,12 +397,11 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3)
 
-        f.value = (0, 3, 0)
+        f.update_field_values((0, 3, 0))
         f.norm = 1
         assert np.all(f.norm.array == 1)
 
-        f.value = (0, 2, 0)
-        assert np.all(f.norm.value != 1)
+        f.update_field_values((0, 2, 0))
         assert np.all(f.norm.array == 2)
 
     def test_norm_zero_field(self):

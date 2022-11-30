@@ -156,7 +156,7 @@ class Field:
 
         self.units = units
 
-        self.value = value
+        self.update_field_values(value)
         self.norm = norm
 
         self._vdims = None  # required in here for correct initialisation
@@ -206,17 +206,13 @@ class Field:
             raise TypeError("'units' must be of type str.")
         self._unit = unit
 
-    @property
-    def value(self):
-        """Field value representation.
-
-        This property returns a representation of the field value if it exists.
-        Otherwise, ``discretisedfield.Field.array`` containing all field values
-        is returned.
+    def update_field_values(self, value):
+        """Set field value representation.
 
         The value of the field can be set using a scalar value for ``nvdim=1``
-        fields (e.g. ``value=3``) or ``array_like`` value for ``nvdim>1`` fields
-        (e.g. ``value=(1, 2, 3)``). Alternatively, the value can be defined
+        fields (e.g. ``field.update_field_values(3)``) or ``array_like`` value
+        for ``nvdim>1`` fields (e.g. ``field.update_field_values((1, 2, 3))``).
+        Alternatively, the value can be defined
         using a callable object, which takes a point tuple as an input argument
         and returns a value of appropriate dimension. Internally, callable
         object is called for every point in the mesh on which the field is
@@ -233,8 +229,8 @@ class Field:
             numpy.ndarray) value with length equal to `nvdim` should be used.
             Finally, the value can also be a callable (e.g. Python function or
             another field), which for every coordinate in the mesh returns a
-            valid value. If ``value=0``, all values in the field will be set to
-            zero independent of the field dimension.
+            valid value. If ``field.update_field_values(0)``, all values in the field
+            will be set to zero independent of the field dimension.
 
             If subregions are defined value can be initialised with a dict.
             Allowed keys are names of all subregions and ``default``. Items
@@ -244,15 +240,6 @@ class Field:
             contained within one subregion ``default`` is used if specified,
             else these values are set to 0.
 
-        Returns
-        -------
-        array_like, callable, numbers.Real, numpy.ndarray
-
-            The value used (representation) for setting the field is returned.
-            However, if the actual value of the field does not correspond to
-            the initially used value anymore, a ``numpy.ndarray`` is returned
-            containing all field values.
-
         Raises
         ------
         ValueError
@@ -261,7 +248,7 @@ class Field:
 
         Examples
         --------
-        1. Different ways of setting and getting the field value.
+        1. Different ways of setting the field value.
 
         >>> import discretisedfield as df
         ...
@@ -273,11 +260,11 @@ class Field:
         ...
         >>> # if value is not specified, zero-field is defined
         >>> field = df.Field(mesh=mesh, nvdim=3)
-        >>> field.value
-        0.0
-        >>> field.value = (0, 0, 1)
-        >>> field.value
-        (0, 0, 1)
+        >>> field.mean()
+        array([0., 0., 0.])
+        >>> field.update_field_values((0, 0, 1))
+        >>> field.mean()
+        array([0., 0., 1.])
         >>> # Setting the field value using a Python function (callable).
         >>> def value_function(point):
         ...     x, y, z = point
@@ -285,17 +272,11 @@ class Field:
         ...         return (0, 0, 1)
         ...     else:
         ...         return (0, 0, -1)
-        >>> field.value = value_function
-        >>> field.value
-        <function value_function at ...>
-        >>> # We now change the value of a single cell so that the
-        >>> # representation used for initialising field is not valid
-        >>> # anymore.
-        >>> field.array[0, 0, 0, :] = (0, 0, 0)
-        >>> field.value
-        array(...)
-        >>> field.value.shape
-        (2, 2, 1, 3)
+        >>> field.update_field_values(value_function)
+        >>> field((0.5, 1.5, 0.5))
+        (0.0, 0.0, 1.0)
+        >>> field((1.5, 1.5, 0.5))
+        (0.0, 0.0, -1.0)
 
         2. Field with subregions in mesh
         >>> import discretisedfield as df
@@ -331,16 +312,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = _as_array(self._value, self.mesh, self.nvdim, dtype=self.dtype)
-        if np.array_equal(self.array, value_array):
-            return self._value
-        else:
-            return self.array
-
-    @value.setter
-    def value(self, val):
-        self._value = val
-        self.array = _as_array(val, self.mesh, self.nvdim, dtype=self.dtype)
+        self.array = _as_array(value, self.mesh, self.nvdim, dtype=self.dtype)
 
     @property
     def vdims(self):
@@ -424,8 +396,6 @@ class Field:
         >>> field.mean()
         array([1., 1., 1.])
 
-        .. seealso:: :py:func:`~discretisedfield.Field.value`
-
         """
         return self._array
 
@@ -483,12 +453,12 @@ class Field:
         >>> field.norm = 2
         >>> field.mean()
         array([0., 0., 2.])
-        >>> field.value = (1, 0, 0)
+        >>> field.update_field_values((1, 0, 0))
         >>> field.norm.mean()
         array([1.])
 
         Set the norm for a zero field.
-        >>> field.value = 0
+        >>> field.update_field_values(0)
         >>> field.mean()
         array([0., 0., 0.])
         >>> field.norm = 1
