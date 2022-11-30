@@ -3351,20 +3351,20 @@ class Field:
                 vdims=self.vdims,
             )
 
-    def to_xarray(self, name="field", units=None):
+    def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``comp`` (``only if field.nvdim > 1``). The coordinates
+        ``y``, ``z``, and ``comp`` (only if ``field.nvdim > 1``). The coordinates
         of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.vdims``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
         ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
-        attributes of the DataArray. The ``units`` attribute of geometric
-        dimensions is set to ``self.mesh.attributes['unit']``.
+        attributes of the DataArray. The ``unit`` attribute of geometric
+        dimensions is set to the respective strings in ``self.mesh.region.units``.
 
-        The name and units of the field ``DataArray`` can be set by passing
-        ``name`` and ``units``. If the type of value passed to any of the two
+        The name and unit of the field ``DataArray`` can be set by passing
+        ``name`` and ``unit``. If the type of value passed to any of the two
         arguments is not ``str``, then a ``TypeError`` is raised.
 
         Parameters
@@ -3373,7 +3373,7 @@ class Field:
 
             String to set name of the field ``DataArray``.
 
-        units : str, optional
+        unit : str, optional
 
             String to set units of the field ``DataArray``.
 
@@ -3387,7 +3387,7 @@ class Field:
         ------
         TypeError
 
-            If either ``name`` or ``units`` argument is not a string.
+            If either ``name`` or ``unit`` argument is not a string.
 
         Examples
         --------
@@ -3422,18 +3422,15 @@ class Field:
             msg = "Name argument must be a string."
             raise TypeError(msg)
 
-        if units is not None and not isinstance(units, str):
-            msg = "Units argument must be a string."
+        if unit is not None and not isinstance(unit, str):
+            msg = "Unit argument must be a string."
             raise TypeError(msg)
 
         axes = ["x", "y", "z"]
 
         data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
 
-        if "unit" in self.mesh.attributes:
-            geo_units_dict = dict.fromkeys(axes, self.mesh.attributes["unit"])
-        else:
-            geo_units_dict = dict.fromkeys(axes, "m")
+        geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
         if self.nvdim > 1:
             data_array_dims = axes + ["comp"]
@@ -3450,7 +3447,7 @@ class Field:
             coords=data_array_coords,
             name=name,
             attrs=dict(
-                units=units or self.unit,
+                units=unit or self.unit,
                 cell=self.mesh.cell,
                 pmin=self.mesh.region.pmin,
                 pmax=self.mesh.region.pmax,
@@ -3589,9 +3586,9 @@ class Field:
         if any("units" not in xa[i].attrs for i in "xyz"):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         else:
-            mesh = df.Mesh(
-                p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
-            )
+            print(xa["x"].units)
+            region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in "xyz"])
+            mesh = df.Mesh(region=region, cell=cell)
 
         comp = xa.comp.values if "comp" in xa.coords else None
         val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values

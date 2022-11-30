@@ -2608,7 +2608,10 @@ class TestField:
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
                     assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
-                    assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
+                    assert (
+                        fxa[i].attrs["units"]
+                        == f.mesh.region.units[f.mesh.region.dims.index(i)]
+                    )
                 assert all(fxa["comp"].values == f.vdims)
                 assert np.array_equal(f.array, fxa.values)
 
@@ -2622,7 +2625,10 @@ class TestField:
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
                     assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
-                    assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
+                    assert (
+                        fxa[i].attrs["units"]
+                        == f.mesh.region.units[f.mesh.region.dims.index(i)]
+                    )
                 assert "comp" not in fxa.dims
                 assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
 
@@ -2641,7 +2647,7 @@ class TestField:
         assert f3d_xa.attrs["units"] is None
 
         # test name and units
-        f3d_xa_2 = self.pf.to_xarray(name="m", units="A/m")
+        f3d_xa_2 = self.pf.to_xarray(name="m", unit="A/m")
         assert f3d_xa_2.name == "m"
         assert f3d_xa_2.attrs["units"] == "A/m"
 
@@ -2650,16 +2656,16 @@ class TestField:
             ["m", 42.0],
             [21.0, 42],
             [21, "A/m"],
-            [{"name": "m"}, {"units": "A/m"}],
+            [{"name": "m"}, {"unit": "A/m"}],
             [["m"], ["A/m"]],
             [["m", "A/m"], None],
             [("m", "A/m"), None],
-            [{"name": "m", "units": "A/m"}, None],
+            [{"name": "m", "unit": "A/m"}, None],
         ]
 
-        for name, units in args:
+        for name, unit in args:
             with pytest.raises(TypeError):
-                self.pf.to_xarray(name, units)
+                self.pf.to_xarray(name, unit)
 
     def test_from_xarray_valid_args(self):
         for mesh in self.meshes:
