@@ -179,14 +179,7 @@ class TestField:
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
             f = df.Field(mesh, nvdim=3)
-            f.update_field_values(
-                np.ones(
-                    (
-                        *f.mesh.n,
-                        f.nvdim,
-                    )
-                )
-            )
+            f.update_field_values(np.ones((*f.mesh.n, f.nvdim)))
 
             check_field(f)
             assert np.allclose(f.mean(), (1, 1, 1))
