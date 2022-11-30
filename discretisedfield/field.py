@@ -2310,7 +2310,15 @@ class Field:
         surface normal vector prior to integration (see example 4).
 
         A cumulative integral can be computed by passing ``cumulative=True`` and by
-        specifying a single direction.
+        specifying a single direction. It resembles the following integral (here as an
+        example in the x direction):
+
+        .. math::
+
+            F(x, y, z) = \int_{p_\mathrm{min}}^x f(x', y, z) \mathrm{d}x
+
+        The method sums all cells up to (excluding) the cell that contains the point x.
+        The cell containing x is added with a weight 1/2.
 
         Parameters
         ----------
@@ -2435,11 +2443,8 @@ class Field:
 
         axis = mesh.region.dims.index(direction)
         if cumulative:
-            # TODO is this the desired behaviour?
-            # Cumulative integrals currently sum all values up (including) the cell
-            # that contains the maximum point. Therefore, the integral value is
-            # "overestimated".
-            res_array = np.cumsum(self.array, axis=axis) * mesh.cell[axis]
+            res_array = self.array * mesh.cell[axis] / 2
+            res_array[1:] += np.cumsum(self.array, axis=axis)[:-1] * mesh.cell[axis]
         else:
             # NOTE reduce dimension n -> n-1:
             # - remove keepdims

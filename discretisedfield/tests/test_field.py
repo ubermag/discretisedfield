@@ -1574,14 +1574,23 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
-        f = f.integrate(direction="x", cumulative=True)
-        assert isinstance(f, df.Field)
-        assert f.nvdim == 3
-        assert np.array_equal(f.mesh.n, (20, 20, 20))
-        assert np.allclose(f.mean(), (5.25, 5.25, 5.25))
-        assert np.allclose(f((0, 0, 0)), (0.5, 0.5, 0.5))
-        assert np.allclose(f((0.9, 0.9, 0.9)), (1, 1, 1))
-        assert np.allclose(f((10, 10, 10)), (10, 10, 10))
+        f_int = f.integrate(direction="x", cumulative=True)
+        assert isinstance(f_int, df.Field)
+        assert f_int.nvdim == 3
+        assert np.array_equal(f_int.mesh.n, (20, 20, 20))
+        assert np.allclose(f_int.mean(), (5, 5, 5))
+        assert np.allclose(f_int((0, 0, 0)), (0.25, 0.25, 0.25))
+        assert np.allclose(f_int((0.9, 0.9, 0.9)), (0.75, 0.75, 0.75))
+        assert np.allclose(f_int((10, 10, 10)), (9.75, 9.75, 9.75))
+        assert np.allclose(f_int.diff("x").array, f.array)
+
+        f = df.Field(mesh, nvdim=1, value=lambda p: p[0])
+        f_int = f.integrate(direction="x", cumulative=True)
+        assert np.allclose(f_int.diff("x").array, f.array)
+
+        f = df.Field(mesh, nvdim=1, value=lambda p: p[0] ** 2)
+        f_int = f.integrate(direction="x", cumulative=True)
+        assert np.allclose(f_int.diff("x").array, f.array)
 
         # Exceptions
         with pytest.raises(ValueError):
