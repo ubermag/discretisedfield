@@ -272,9 +272,9 @@ class Field:
         ...     else:
         ...         return (0, 0, -1)
         >>> field.update_field_values(value_function)
-        >>> field.array[0, 0, 0, :]
+        >>> field((0.5, 1.5, 0.5))
         array([0., 0., 1.])
-        >>> field.array[1, 0, 0, :]
+        >>> field((1.5, 1.5, 0.5))
         array([ 0.,  0., -1.])
 
         2. Field with subregions in mesh
@@ -311,7 +311,6 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        self._value = value
         self.array = _as_array(value, self.mesh, self.nvdim, dtype=self.dtype)
 
     @property

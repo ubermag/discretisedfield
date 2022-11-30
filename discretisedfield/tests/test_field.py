@@ -359,12 +359,12 @@ class TestField:
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
         f = df.Field(mesh, nvdim=3, value=(2, 2, 2))
 
-        assert np.all(f.norm.array == 2 * np.sqrt(3))
-        assert np.all(f.array == 2)
+        assert np.allclose(f.norm.array, 2 * np.sqrt(3))
+        assert np.allclose(f.array, 2)
 
         f.norm = 1
-        assert np.all(f.norm.array == 1)
-        assert np.all(f.array == 1 / np.sqrt(3))
+        assert np.allclose(f.norm.array, 1)
+        assert np.allclose(f.array, 1 / np.sqrt(3))
 
         for mesh in self.meshes:
             for value, dtype in self.iters + self.vfuncs:
