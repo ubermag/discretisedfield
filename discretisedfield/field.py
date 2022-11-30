@@ -893,19 +893,17 @@ class Field:
         return dirlist
 
     def __iter__(self):
-        r"""Generator yielding coordinates and values of all mesh
-        discretisation cells.
+        r"""Generator yielding values of all discretisation cells.
 
         Yields
         ------
-        tuple (2,)
+        np.ndarray
 
-            The first value is the mesh cell coordinates :math:`\mathbf{p} =
-            (p_{x}, p_{y}, p_{z})`, whereas the second one is the field value.
+            The field value in one discretisation cell.
 
         Examples
         --------
-        1. Iterating through the field coordinates and values
+        1. Iterating through the field values
 
         >>> import discretisedfield as df
         ...
@@ -915,18 +913,38 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
-        >>> for coord, value in field:
-        ...     print (coord, value)
-        (0.5, 0.5, 0.5) (0.0, 0.0, 1.0)
-        (1.5, 0.5, 0.5) (0.0, 0.0, 1.0)
-        (0.5, 1.5, 0.5) (0.0, 0.0, 1.0)
-        (1.5, 1.5, 0.5) (0.0, 0.0, 1.0)
+        >>> for value in field:
+        ...     print(value)
+        [0. 0. 1.]
+        [0. 0. 1.]
+        [0. 0. 1.]
+        [0. 0. 1.]
 
-        .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
+        2. Iterating through the mesh coordinates and field values
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
+        >>> for coord, value in zip(field.mesh, field):
+        ...     print(coord, value)
+        (0.5, 0.5, 0.5) [0. 0. 1.]
+        (1.5, 0.5, 0.5) [0. 0. 1.]
+        (0.5, 1.5, 0.5) [0. 0. 1.]
+        (1.5, 1.5, 0.5) [0. 0. 1.]
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Mesh.__iter__`
+        :py:func:`~discretisedfield.Mesh.indices`
 
         """
         for point in self.mesh:
-            yield point, self(point)
+            yield self(point)
 
     def __eq__(self, other):
         """Relational operator ``==``.
