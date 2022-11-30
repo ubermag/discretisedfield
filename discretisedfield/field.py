@@ -64,7 +64,7 @@ class Field:
         callable and dict ``value`` the numpy default (currently
         ``float64``) is used. Defaults to ``None``.
 
-    units : str, optional
+    unit : str, optional
 
         Physical unit of the field.
 
@@ -133,7 +133,7 @@ class Field:
         norm=None,
         vdims=None,
         dtype=None,
-        units=None,
+        unit=None,
         **kwargs,
     ):
         if not isinstance(mesh, df.Mesh):
@@ -154,7 +154,7 @@ class Field:
 
         self.dtype = dtype
 
-        self.units = units
+        self.unit = unit
 
         self.update_field_values(value)
         self.norm = norm
@@ -189,7 +189,7 @@ class Field:
         return self._nvdim
 
     @property
-    def units(self):
+    def unit(self):
         """Unit of the field.
 
         Returns
@@ -200,10 +200,10 @@ class Field:
         """
         return self._unit
 
-    @units.setter
-    def units(self, unit):
+    @unit.setter
+    def unit(self, unit):
         if unit is not None and not isinstance(unit, str):
-            raise TypeError("'units' must be of type str.")
+            raise TypeError("'unit' must be of type str.")
         self._unit = unit
 
     def update_field_values(self, value):
@@ -470,7 +470,7 @@ class Field:
         """
         res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
-        return self.__class__(self.mesh, nvdim=1, value=res, units=self.units)
+        return self.__class__(self.mesh, nvdim=1, value=res, unit=self.unit)
 
     @norm.setter
     def norm(self, val):
@@ -514,7 +514,7 @@ class Field:
 
         """
         return self.__class__(
-            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), units=self.units
+            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), unit=self.unit
         )
 
     @property
@@ -552,7 +552,7 @@ class Field:
             nvdim=self.nvdim,
             value=0,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -827,7 +827,7 @@ class Field:
         if self.vdims is not None and attr in self.vdims:
             attr_array = self.array[..., self.vdims.index(attr), np.newaxis]
             return self.__class__(
-                mesh=self.mesh, nvdim=1, value=attr_array, units=self.units
+                mesh=self.mesh, nvdim=1, value=attr_array, unit=self.unit
             )
         else:
             msg = f"Object has no attribute {attr}."
@@ -1808,7 +1808,7 @@ class Field:
             nvdim=self.nvdim,
             value=padded_array,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def diff(self, direction, order=1):
@@ -2556,7 +2556,7 @@ class Field:
             nvdim=self.nvdim,
             value=value,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def resample(self, n):
@@ -2702,7 +2702,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array[tuple(slices)],
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def project(self, direction):
@@ -3353,7 +3353,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.real,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -3364,7 +3364,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.imag,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -3395,7 +3395,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.conjugate(),
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     # TODO check and write tests
@@ -3440,20 +3440,20 @@ class Field:
                 vdims=self.vdims,
             )
 
-    def to_xarray(self, name="field", units=None):
+    def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``comp`` (``only if field.nvdim > 1``). The coordinates
+        ``y``, ``z``, and ``comp`` (only if ``field.nvdim > 1``). The coordinates
         of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.vdims``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
         ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
-        attributes of the DataArray. The ``units`` attribute of geometric
-        dimensions is set to ``self.mesh.attributes['unit']``.
+        attributes of the DataArray. The ``unit`` attribute of geometric
+        dimensions is set to the respective strings in ``self.mesh.region.units``.
 
-        The name and units of the field ``DataArray`` can be set by passing
-        ``name`` and ``units``. If the type of value passed to any of the two
+        The name and unit of the field ``DataArray`` can be set by passing
+        ``name`` and ``unit``. If the type of value passed to any of the two
         arguments is not ``str``, then a ``TypeError`` is raised.
 
         Parameters
@@ -3462,7 +3462,7 @@ class Field:
 
             String to set name of the field ``DataArray``.
 
-        units : str, optional
+        unit : str, optional
 
             String to set units of the field ``DataArray``.
 
@@ -3476,7 +3476,7 @@ class Field:
         ------
         TypeError
 
-            If either ``name`` or ``units`` argument is not a string.
+            If either ``name`` or ``unit`` argument is not a string.
 
         Examples
         --------
@@ -3511,18 +3511,15 @@ class Field:
             msg = "Name argument must be a string."
             raise TypeError(msg)
 
-        if units is not None and not isinstance(units, str):
-            msg = "Units argument must be a string."
+        if unit is not None and not isinstance(unit, str):
+            msg = "Unit argument must be a string."
             raise TypeError(msg)
 
         axes = ["x", "y", "z"]
 
         data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
 
-        if "unit" in self.mesh.attributes:
-            geo_units_dict = dict.fromkeys(axes, self.mesh.attributes["unit"])
-        else:
-            geo_units_dict = dict.fromkeys(axes, "m")
+        geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
         if self.nvdim > 1:
             data_array_dims = axes + ["comp"]
@@ -3539,7 +3536,7 @@ class Field:
             coords=data_array_coords,
             name=name,
             attrs=dict(
-                units=units or self.units,
+                units=unit or self.unit,
                 cell=self.mesh.cell,
                 pmin=self.mesh.region.pmin,
                 pmax=self.mesh.region.pmax,
@@ -3678,9 +3675,9 @@ class Field:
         if any("units" not in xa[i].attrs for i in "xyz"):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         else:
-            mesh = df.Mesh(
-                p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
-            )
+            print(xa["x"].units)
+            region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in "xyz"])
+            mesh = df.Mesh(region=region, cell=cell)
 
         comp = xa.comp.values if "comp" in xa.coords else None
         val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
