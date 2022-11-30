@@ -2461,8 +2461,11 @@ class Field:
 
         axis = mesh.region.dims.index(direction)
         if cumulative:
-            res_array = self.array * mesh.cell[axis] / 2
-            res_array[1:] += np.cumsum(self.array, axis=axis)[:-1] * mesh.cell[axis]
+            tmp_array = self.array / 2
+            left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
+            right_cells = dfu.assemble_index(slice(None), 3, {axis: slice(1, None)})
+            tmp_array[right_cells] += np.cumsum(self.array, axis=axis)[left_cells]
+            res_array = tmp_array * mesh.cell[axis]
         else:
             # NOTE reduce dimension n -> n-1:
             # - remove keepdims

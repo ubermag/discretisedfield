@@ -1738,13 +1738,10 @@ class TestField:
         assert np.allclose(f_int((10, 10, 10)), (9.75, 9.75, 9.75))
         assert np.allclose(f_int.diff("x").array, f.array)
 
-        f = df.Field(mesh, nvdim=1, value=lambda p: p[0])
-        f_int = f.integrate(direction="x", cumulative=True)
-        assert np.allclose(f_int.diff("x").array, f.array)
-
-        f = df.Field(mesh, nvdim=1, value=lambda p: p[0] ** 2)
-        f_int = f.integrate(direction="x", cumulative=True)
-        assert np.allclose(f_int.diff("x").array, f.array)
+        for i, d in enumerate("xyz"):
+            f = df.Field(mesh, nvdim=1, value=lambda p: p[i])
+            assert np.allclose(f.integrate(d, cumulative=True).diff(d).array, f.array)
+            assert np.allclose(f.diff(d).integrate(d, cumulative=True).array, f.array)
 
         # Exceptions
         with pytest.raises(ValueError):
