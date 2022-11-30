@@ -465,7 +465,8 @@ class K3dField:
                 coordinates.append(point)
                 vectors.append(value)
                 if color_field is not None:
-                    color_values.append(color_field(point))
+                    # scalar color_field.__call__ returns an array with a single element
+                    color_values.append(color_field(point)[0])
 
         if color_field is not None:
             color_values = plot_util.normalise_to_range(color_values, (0, 255))
