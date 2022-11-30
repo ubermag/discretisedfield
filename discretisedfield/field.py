@@ -2353,7 +2353,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, nvdim=1, value=5)
         >>> f.integrate()
-        5000.0
+        array([5000.])
 
         2. Volume integral of a vector field.
 
@@ -2363,7 +2363,7 @@ class Field:
 
         >>> f = df.Field(mesh, nvdim=3, value=(-1, -2, -3))
         >>> f.integrate()
-        array([-1000.0, -2000.0, -3000.0])
+        array([-1000., -2000., -3000.])
 
         3. Surface integral of a scalar field.
 
@@ -2374,7 +2374,7 @@ class Field:
         >>> f = df.Field(mesh, nvdim=1, value=5)
         >>> f_plane = f.plane('z')
         >>> f_plane.integrate()
-        500.0
+        array([500.])
 
         4. Surface integral of a vector field (flux). The dot product with the surface
         normal vector must be calculated manually.
@@ -2387,7 +2387,7 @@ class Field:
         >>> f_plane = f.plane('z')
         >>> e_z = [0, 0, 1]
         >>> f_plane.dot(e_z).integrate()
-        300.0
+        array([300.])
 
         5. Integral along x-direction.
 
@@ -2398,7 +2398,7 @@ class Field:
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
         >>> f_plane.integrate(direction='x').mean()
-        array([10.0, 20.0, 30.0])
+        array([10., 20., 30.])
 
         6. Cumulative integral along x-direction.
 
