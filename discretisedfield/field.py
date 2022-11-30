@@ -273,9 +273,9 @@ class Field:
         ...         return (0, 0, -1)
         >>> field.update_field_values(value_function)
         >>> field((0.5, 1.5, 0.5))
-        array([0., 0., 1.])
+        (0.0, 0.0, 1.0)
         >>> field((1.5, 1.5, 0.5))
-        array([ 0.,  0., -1.])
+        (0.0, 0.0, -1.0)
 
         2. Field with subregions in mesh
         >>> import discretisedfield as df
