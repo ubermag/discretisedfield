@@ -4,6 +4,7 @@ import numbers
 import pathlib
 import warnings
 
+import findiff as fd
 import numpy as np
 import xarray as xr
 from vtkmodules.util import numpy_support as vns
@@ -978,14 +979,11 @@ class Field:
         """
         if not isinstance(other, self.__class__):
             return False
-        elif (
+        return (
             self.mesh == other.mesh
             and self.nvdim == other.nvdim
             and np.array_equal(self.array, other.array)
-        ):
-            return True
-        else:
-            return False
+        )
 
     # TODO The mesh comparison has no tolerance.
     def allclose(self, other, rtol=1e-5, atol=1e-8):
@@ -1834,6 +1832,12 @@ class Field:
         The order of the computed derivative can be 1 or 2 and it is specified
         using argument ``order`` and it defaults to 1.
 
+        This method uses second order accurate finite difference stencils by default
+        unless the field is defined on a mesh with too few cells in the differential
+        direction. In this case the first order accurate finite difference stencils
+        are used at the boundaries and the second order accurate finite difference
+        stencils are used in the interior.
+
         Directional derivative cannot be computed if less or equal discretisation
         cells exists in a specified direction than the order.
         In that case, a zero field is
@@ -1889,7 +1893,7 @@ class Field:
         ...     return 2*x + 3*y + -5*z
         ...
         >>> f = df.Field(mesh, nvdim=1, value=value_fun)
-        >>> f.derivative('y').mean()  # first-order derivative by default
+        >>> f.diff('y').mean()  # first-order derivative by default
         array([3.])
 
         2. Try to compute the second-order directional derivative of the vector
@@ -1898,21 +1902,19 @@ class Field:
         expect the directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
         :math:`df/dy=(0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because
         there is only one discretisation cell in the z-direction, the
-        derivative cannot be computed and a zero field is returned. Similarly,
-        second-order derivatives in all directions are expected to be zero.
+        derivative cannot be computed and a zero field is returned.
 
         >>> def value_fun(point):
         ...     x, y, z = point
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, nvdim=3, value=value_fun)
-        >>> f.derivative('x', n=1).mean()
+        >>> f.diff('x', order=1).mean()
         array([2., 0., 0.])
-        >>> f.derivative('y', n=1).mean()
+        >>> f.diff('y', order=1).mean()
         array([0., 3., 0.])
-        >>> f.derivative('z', n=1).mean()  # derivative cannot be calculated
+        >>> f.diff('z', order=1).mean()  # derivative cannot be calculated
         array([0., 0., 0.])
-        >>> # second-order derivatives
 
         """
         if direction not in self.mesh.region.dims:
@@ -1954,39 +1956,55 @@ class Field:
             raise NotImplementedError(msg)
 
         elif order == 1:
-            derivative_array = np.gradient(
-                padded_array, self.mesh.cell[direction_idx], axis=direction_idx
-            )
+            if self.mesh.n[direction_idx] < 3:
+                # The derivative is computed using the central difference
+                # with forward/backward difference at the boundaries.
+                derivative_array = np.gradient(
+                    padded_array, self.mesh.cell[direction_idx], axis=direction_idx
+                )
+            else:
+                # The derivative is computed using accuracy of 2 everywhere
+                diff_fd = fd.FinDiff(direction_idx, self.mesh.cell[direction_idx], 1)
+                derivative_array = diff_fd(padded_array)
 
         elif order == 2:
-            if self.mesh.bc == "":
-                # Pad with specific values so that the same finite difference stencil
-                # can be used across the whole array
-                # central difference = forward difference
-                # f(1) + f(-1) - 2 f(0) = f(2) + f(0) - 2 f(1)
-                # f(-1) = f(2) - 3 f(1) + 3f(0)
+            if self.mesh.n[direction_idx] < 4:
+                # The derivative is computed using the central difference
+                # with forward/backward difference at the boundaries.
+                if self.mesh.bc == "":
+                    # Pad with specific values so that the same finite difference
+                    # stencil can be used across the whole array
+                    # central difference = forward difference
+                    # f(1) + f(-1) - 2 f(0) = f(2) + f(0) - 2 f(1)
+                    # f(-1) = f(2) - 3 f(1) + 3f(0)
 
-                def pad_fun(vector, pad_width, iaxis, kwargs):
-                    if iaxis == direction_idx:
-                        vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
-                        vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
+                    def pad_fun(vector, pad_width, iaxis, kwargs):
+                        if iaxis == direction_idx:
+                            vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
+                            vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
 
-                pad_width = [(0, 0)] * 4
-                pad_width[direction_idx] = (1, 1)
-                padded_array = np.pad(padded_array, pad_width, pad_fun)
+                    pad_width = [(0, 0)] * 4
+                    pad_width[direction_idx] = (1, 1)
+                    padded_array = np.pad(padded_array, pad_width, pad_fun)
 
-            index_p1 = dfu.assemble_index(
-                slice(None), 4, {direction_idx: slice(2, None)}
-            )
-            index_0 = dfu.assemble_index(slice(None), 4, {direction_idx: slice(1, -1)})
-            index_m1 = dfu.assemble_index(
-                slice(None), 4, {direction_idx: slice(None, -2)}
-            )
-            derivative_array = (
-                padded_array[index_p1]
-                - 2 * padded_array[index_0]
-                + padded_array[index_m1]
-            ) / self.mesh.cell[direction_idx] ** 2
+                index_p1 = dfu.assemble_index(
+                    slice(None), 4, {direction_idx: slice(2, None)}
+                )
+                index_0 = dfu.assemble_index(
+                    slice(None), 4, {direction_idx: slice(1, -1)}
+                )
+                index_m1 = dfu.assemble_index(
+                    slice(None), 4, {direction_idx: slice(None, -2)}
+                )
+                derivative_array = (
+                    padded_array[index_p1]
+                    - 2 * padded_array[index_0]
+                    + padded_array[index_m1]
+                ) / self.mesh.cell[direction_idx] ** 2
+            else:
+                # The derivative is computed using accuracy of 2 everywhere
+                diff_fd = fd.FinDiff(direction_idx, self.mesh.cell[direction_idx], 2)
+                derivative_array = diff_fd(padded_array)
 
         # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:

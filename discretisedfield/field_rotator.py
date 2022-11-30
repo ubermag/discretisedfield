@@ -36,7 +36,7 @@ class FieldRotator:
     >>> mesh = df.Mesh(region=region, cell=(1, 1, 1))
     >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
     >>> field.mesh.n
-    (20, 10, 2)
+    array([20, 10,  2])
 
     Create a ``FieldRotator`` object for the ``field``.
 
@@ -51,13 +51,13 @@ class FieldRotator:
     >>> field_rotator.field
     Field(...)
     >>> field_rotator.field.mesh.n
-    (20, 2, 10)
+    array([20,  2, 10])
 
     Apply a second rotation.
 
     >>> field_rotator.rotate('from_euler', seq='z', angles=pi/2)
     >>> field_rotator.field.mesh.n
-    (2, 20, 10)
+    array([ 2, 20, 10])
 
     """
 

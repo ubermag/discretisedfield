@@ -46,7 +46,8 @@ dependencies = [
     "jinja2",
     "vtk",
     "xarray",
-    "hvplot"
+    "hvplot",
+    "findiff"
 ]
 
 [project.optional-dependencies]
