@@ -978,14 +978,11 @@ class Field:
         """
         if not isinstance(other, self.__class__):
             return False
-        elif (
+        return (
             self.mesh == other.mesh
             and self.nvdim == other.nvdim
             and np.array_equal(self.array, other.array)
-        ):
-            return True
-        else:
-            return False
+        )
 
     # TODO The mesh comparison has no tolerance.
     def allclose(self, other, rtol=1e-5, atol=1e-8):
