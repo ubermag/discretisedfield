@@ -1619,6 +1619,22 @@ class TestField:
             assert len(p) == 9
             assert len(v) == 9
 
+    def test_resample(self):
+        resampled = self.pf.resample(n=(10, 15, 20))
+        assert np.allclose(resampled.mesh.n, (10, 15, 20))
+        assert resampled.mesh.region == self.pf.mesh.region
+        pmin = self.pf.mesh.region.pmin
+        assert np.allclose(resampled(pmin), self.pf(pmin))
+
+        resampled = self.pf.resample(n=(1, 1, 1))
+        assert np.allclose(resampled.mesh.n, (1, 1, 1))
+        assert resampled.mesh.region == self.pf.mesh.region
+        pmin = self.pf.mesh.region.pmin
+        assert np.allclose(resampled(pmin), self.pf((0, 0, 0)))
+
+        with pytest.raises(TypeError):
+            self.pf.resample((0, 1, 2))
+
     def test_getitem(self):
         p1 = (0, 0, 0)
         p2 = (90, 50, 10)

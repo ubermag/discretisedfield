@@ -2553,6 +2553,69 @@ class Field:
             units=self.units,
         )
 
+    def resample(self, n):
+        """Resample field.
+
+        This method computes the field on a new mesh with ``n`` cells. The boundaries
+        ``pmin`` and ``pmax`` stay unchanged. The values of the new cells are taken from
+        the nearest old cell, no interpolation is performed.
+
+        Parameters
+        ----------
+        n : array_like
+
+            Number of cells in each direction. The number of elements must match
+            field.mesh.region.ndim.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            The resampled field.
+
+        Examples
+        --------
+        1. Decrease the number of cells.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f.mesh.n
+        array([10, 10, 10])
+        >>> down_sampled = f.resample((5, 5, 5))
+        >>> down_sampled.mesh.n
+        array([5, 5, 5])
+
+        2. Increase the number of cells.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f.mesh.n
+        array([10, 10, 10])
+        >>> up_sampled = f.resample((10, 15, 20))
+        >>> up_sampled.mesh.n
+        array([10, 15, 20])
+
+        """
+        mesh = df.Mesh(region=self.mesh.region, n=n)
+        return self.__class__(
+            mesh,
+            nvdim=self.nvdim,
+            value=self,
+            vdims=self.vdims,
+            units=self.units,
+            dtype=self.dtype,
+        )
+
     def __getitem__(self, item):
         """Extracts the field on a subregion.
 
