@@ -743,10 +743,10 @@ class Field:
         >>> field = df.Field(mesh, nvdim=3, value=(1, 3, 4))
         >>> point = (10, 2, 3)
         >>> field(point)
-        (1.0, 3.0, 4.0)
+        array([1., 3., 4.])
 
         """
-        return dfu.array2tuple(self.array[self.mesh.point2index(point)])
+        return self.array[self.mesh.point2index(point)]
 
     def __getattr__(self, attr):
         """Extract the component of the vector field.
@@ -2183,7 +2183,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, nvdim=3, value=value_fun)
         >>> f.curl((1, 1, 1))
-        (0.0, -5.0, -2.0)
+        array([ 0., -5., -2.])
 
         2. Attempt to compute the curl of a scalar field.
 

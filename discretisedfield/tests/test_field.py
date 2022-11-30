@@ -1492,8 +1492,8 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert f.grad((3, 1, 3)) == (1, 4, 1)
-        assert f.grad((5, 3, 5)) == (3, 6, 1)
+        assert np.allclose(f.grad((3, 1, 3)), (1, 4, 1))
+        assert np.allclose(f.grad((5, 3, 5)), (3, 6, 1))
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
@@ -1503,7 +1503,7 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert f.grad((7, 5, 1)) == (10, 16, 35)
+        assert np.allclose(f.grad((7, 5, 1)), (10, 16, 35))
         assert f.grad.x == f.diff("x")
         assert f.grad.y == f.diff("y")
         assert f.grad.z == f.diff("z")
@@ -1554,11 +1554,11 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3, value=value_fun)
 
-        assert f.div((3, 1, 3)) == 7
-        assert f.div((5, 3, 5)) == 23
+        assert np.allclose(f.div((3, 1, 3)), 7)
+        assert np.allclose(f.div((5, 3, 5)), 23)
 
-        assert f.curl((3, 1, 3)) == (8, -3, -3)
-        assert f.curl((5, 3, 5)) == (22, -15, -5)
+        assert np.allclose(f.curl((3, 1, 3)), (8, -3, -3))
+        assert np.allclose(f.curl((5, 3, 5)), (22, -15, -5))
 
         # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
         # -> div(f) = y - 2 + x*y
@@ -1569,8 +1569,8 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3, value=value_fun)
 
-        assert f.div((7, 5, 1)) == 38
-        assert f.curl((7, 5, 1)) == (7, -5, -6)
+        assert np.allclose(f.div((7, 5, 1)), 38)
+        assert np.allclose(f.curl((7, 5, 1)), (7, -5, -6))
 
         # Exception
         f = df.Field(mesh, nvdim=1, value=3.11)
@@ -2765,8 +2765,8 @@ class TestField:
         # real field
         real_field = self.pf.real
         check_field(real_field)
-        assert real_field((-2e-9, 0, 0)) == (0, 0, 1e5)
-        assert real_field((2e-9, 0, 0)) == (0, 0, -1e5)
+        assert np.allclose(real_field((-2e-9, 0, 0)), (0, 0, 1e5))
+        assert np.allclose(real_field((2e-9, 0, 0)), (0, 0, -1e5))
 
         imag_field = self.pf.imag
         check_field(imag_field)

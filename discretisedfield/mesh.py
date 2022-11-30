@@ -1902,7 +1902,7 @@ class Mesh:
         2. Extract its value at position (0.5, 0.5, 0.5)
 
         >>> cfield((0.5, 0.5, 0.5))
-        (0.5, 0.5, 0.5)
+        array([0.5, 0.5, 0.5])
 
         3. Compare with manually created coordinate field
 
