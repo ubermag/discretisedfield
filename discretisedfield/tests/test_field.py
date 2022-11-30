@@ -1178,7 +1178,7 @@ class TestField:
         check_field(f.diff("x"))
         assert np.allclose(f.diff("x", order=1).mean(), 0)
         assert np.allclose(f.diff("y", order=1).mean(), 0)
-        assert np.allclose(f.diff("y", order=1).mean(), 0)
+        assert np.allclose(f.diff("z", order=1).mean(), 0)
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
         # No BC
