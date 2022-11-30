@@ -1165,6 +1165,160 @@ class TestField:
         with pytest.raises(ValueError):
             f.diff("q")
 
+    def test_derivative_small(self):
+        p1 = (0, 0, 0)
+        p2 = (3, 3, 3)
+        n = (3, 3, 3)
+
+        # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        f = df.Field(mesh, nvdim=1, value=0)
+
+        check_field(f.diff("x"))
+        assert np.allclose(f.diff("x", order=1).mean(), 0)
+        assert np.allclose(f.diff("y", order=1).mean(), 0)
+        assert np.allclose(f.diff("y", order=1).mean(), 0)
+
+        # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x + y + z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=1).mean(), 1)
+        assert np.allclose(f.diff("y", order=1).mean(), 1)
+        assert np.allclose(f.diff("z", order=1).mean(), 1)
+
+        # f(x, y, z) = x*y + 2*y + x*y*z ->
+        # grad(f) = (y+y*z, x+2+x*z, x*y)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x * y + 2 * y + x * y * z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x")((2.5, 1.5, 1.5)), 3.75)
+        assert np.allclose(f.diff("y")((1.5, 2.5, 1.5)), 5.75)
+        assert np.allclose(f.diff("z")((1.5, 1.5, 2.5)), 2.25)
+
+        # f(x, y, z) = (0, 0, 0)
+        # -> dfdx = (0, 0, 0)
+        # -> dfdy = (0, 0, 0)
+        # -> dfdz = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+
+        assert np.allclose(f.diff("x").mean(), (0, 0, 0))
+        assert np.allclose(f.diff("y").mean(), (0, 0, 0))
+        assert np.allclose(f.diff("z").mean(), (0, 0, 0))
+
+        # f(x, y, z) = (x,  y,  z)
+        # -> dfdx = (1, 0, 0)
+        # -> dfdy = (0, 1, 0)
+        # -> dfdz = (0, 0, 1)
+        def value_fun(point):
+            x, y, z = point
+            return (x, y, z)
+
+        f = df.Field(mesh, nvdim=3, value=value_fun)
+
+        assert np.allclose(f.diff("x").mean(), (1, 0, 0))
+        assert np.allclose(f.diff("y").mean(), (0, 1, 0))
+        assert np.allclose(f.diff("z").mean(), (0, 0, 1))
+
+        # f(x, y, z) = (x*y, y*z, x*y*z)
+        # -> dfdx = (y, 0, y*z)
+        # -> dfdy = (x, z, x*z)
+        # -> dfdz = (0, y, x*y)
+        def value_fun(point):
+            x, y, z = point
+            return (x * y, y * z, x * y * z)
+
+        f = df.Field(mesh, nvdim=3, value=value_fun)
+
+        assert np.allclose(f.diff("x")((1.5, 1.5, 1.5)), (1.5, 0, 2.25))
+        assert np.allclose(f.diff("x")((2.5, 1.5, 1.5)), (1.5, 0, 2.25))
+        assert np.allclose(f.diff("y")((1.5, 1.5, 1.5)), (1.5, 1.5, 2.25))
+        assert np.allclose(f.diff("y")((1.5, 2.5, 1.5)), (1.5, 1.5, 2.25))
+        assert np.allclose(f.diff("z")((1.5, 1.5, 1.5)), (0, 1.5, 2.25))
+        assert np.allclose(f.diff("z")((1.5, 1.5, 2.5)), (0, 1.5, 2.25))
+
+        p1 = (0, 0, 0)
+        p2 = (4, 4, 4)
+        n = (4, 4, 4)
+        # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        f = df.Field(mesh, nvdim=1, value=0)
+
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
+
+        # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x + y + z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
+
+        # f(x, y, z) = x*y + 2*y + x*y*z ->
+        # grad(f) = (y+y*z, x+2+x*z, x*y)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x * y + 2 * y + x * y * z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2)((1.5, 1.5, 1.5)), 0)
+        assert np.allclose(f.diff("y", order=2)((1.5, 1.5, 1.5)), 0)
+        assert np.allclose(f.diff("z", order=2)((1.5, 1.5, 1.5)), 0)
+
+        # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
+        # -> grad(f) = (4, 4, 6)
+        def value_fun(point):
+            x, y, z = point
+            return 2 * x * x + 2 * y * y + 3 * z * z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2).mean(), 4)
+        assert np.allclose(f.diff("y", order=2).mean(), 4)
+        assert np.allclose(f.diff("z", order=2).mean(), 6)
+
+        # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
+        def value_fun(point):
+            x, y, z = point
+            return (2 * x * x, 2 * y * y, 3 * z * z)
+
+        f = df.Field(mesh, nvdim=3, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2)((1.5, 1.5, 1.5)), (4, 0, 0))
+        assert np.allclose(f.diff("x", order=2)((3.5, 1.5, 1.5)), (4, 0, 0))
+        assert np.allclose(f.diff("y", order=2)((1.5, 1.5, 1.5)), (0, 4, 0))
+        assert np.allclose(f.diff("y", order=2)((1.5, 3.5, 1.5)), (0, 4, 0))
+        assert np.allclose(f.diff("z", order=2)((1.5, 1.5, 1.5)), (0, 0, 6))
+        assert np.allclose(f.diff("z", order=2)((1.5, 1.5, 3.5)), (0, 0, 6))
+
     def test_derivative_pbc(self):
         p1 = (0.0, 0.0, 0.0)
         p2 = (12.0, 8.0, 6.0)
