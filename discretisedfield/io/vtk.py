@@ -55,14 +55,14 @@ def field_to_vtk(field, filename, representation="bin", save_subregions=True):
     >>> field = df.Field(mesh, dim=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.vtk'
-    >>> field.write(filename)  # write the file
+    >>> field.to_file(filename)  # write the file
     >>> os.path.isfile(filename)
     True
     >>> os.remove(filename)  # delete the file
 
     See also
     --------
-    ~discretisedfield.Field.write
+    ~discretisedfield.Field.to_file
     field_from_vtk
 
     """
@@ -125,13 +125,13 @@ def field_from_vtk(filename):
     ...
     >>> current_path = pathlib.Path(__file__).absolute().parent
     >>> filepath = current_path / '..' / 'tests' / 'test_sample' / 'vtk-file.vtk'
-    >>> field = df.Field.fromfile(filepath)
+    >>> field = df.Field.from_file(filepath)
     >>> field
     Field(...)
 
     See also
     --------
-    ~discretisedfield.Field.fromfile
+    ~discretisedfield.Field.from_file
     field_to_vtk
 
     """

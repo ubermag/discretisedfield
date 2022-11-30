@@ -2734,7 +2734,10 @@ class Field:
 
         return self.__class__(self.mesh, nvdim=1, value=angle_array)
 
-    def write(
+    def write(self, *args, **kwargs):
+        raise AttributeError("This method has been renamed to 'to_file'.")
+
+    def to_file(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
         """Write the field to OVF, HDF5, or VTK file.
@@ -2794,10 +2797,10 @@ class Field:
         >>> field = df.Field(mesh, nvdim=3, value=(5, 6, 7))
         ...
         >>> filename = 'mytestfile.omf'
-        >>> field.write(filename)  # write the file
+        >>> field.to_file(filename)  # write the file
         >>> os.path.isfile(filename)
         True
-        >>> field_read = df.Field.fromfile(filename)  # read the file
+        >>> field_read = df.Field.from_file(filename)  # read the file
         >>> field_read == field
         True
         >>> os.remove(filename)  # delete the file
@@ -2805,7 +2808,7 @@ class Field:
         2. Write field to the VTK file.
 
         >>> filename = 'mytestfile.vtk'
-        >>> field.write(filename)  # write the file
+        >>> field.to_file(filename)  # write the file
         >>> os.path.isfile(filename)
         True
         >>> os.remove(filename)  # delete the file
@@ -2813,17 +2816,17 @@ class Field:
         3. Write field to the HDF5 file.
 
         >>> filename = 'mytestfile.hdf5'
-        >>> field.write(filename)  # write the file
+        >>> field.to_file(filename)  # write the file
         >>> os.path.isfile(filename)
         True
-        >>> field_read = df.Field.fromfile(filename)  # read the file
+        >>> field_read = df.Field.from_file(filename)  # read the file
         >>> field_read == field
         True
         >>> os.remove(filename)  # delete the file
 
         See also
         --------
-        ~discretisedfield.Field.fromfile
+        ~discretisedfield.Field.from_file
         ~discretisedfield.io.field_to_ovf
         ~discretisedfield.io.field_to_vtk
         ~discretisedfield.io.field_to_hdf5
@@ -2933,6 +2936,10 @@ class Field:
 
     @classmethod
     def fromfile(cls, filename):
+        raise AttributeError("This method has been renamed to 'from_file'.")
+
+    @classmethod
+    def from_file(cls, filename):
         """Read the field from an OVF (1.0 or 2.0), VTK, or HDF5 file.
 
         The extension of the ``filename`` should correspond to either:
@@ -2965,27 +2972,27 @@ class Field:
         >>> dirname = os.path.join(os.path.dirname(__file__),
         ...                        'tests', 'test_sample')
         >>> filename = os.path.join(dirname, 'oommf-ovf2-bin4.omf')
-        >>> field = df.Field.fromfile(filename)
+        >>> field = df.Field.from_file(filename)
         >>> field
         Field(...)
 
         2. Read a field from the VTK file.
 
         >>> filename = os.path.join(dirname, 'vtk-file.vtk')
-        >>> field = df.Field.fromfile(filename)
+        >>> field = df.Field.from_file(filename)
         >>> field
         Field(...)
 
         3. Read a field from the HDF5 file.
 
         >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
-        >>> field = df.Field.fromfile(filename)
+        >>> field = df.Field.from_file(filename)
         >>> field
         Field(...)
 
         See also
         --------
-        ~discretisedfield.Field.write
+        ~discretisedfield.Field.to_file
         ~discretisedfield.io.field_from_ovf
         ~discretisedfield.io.field_from_vtk
         ~discretisedfield.io.field_from_hdf5

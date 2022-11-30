@@ -59,17 +59,17 @@ def field_to_ovf(
     >>> field = df.Field(mesh, dim=3, value=value_fun)
     ...
     >>> filename = 'mytestfile.ohf'
-    >>> field.write(filename, representation='bin8')  # write the file
+    >>> field.to_file(filename, representation='bin8')  # write the file
     >>> os.path.isfile(filename)
     True
-    >>> field_read = df.Field.fromfile(filename)  # read the file
+    >>> field_read = df.Field.from_file(filename)  # read the file
     >>> field_read == field
     True
     >>> os.remove(filename)  # delete the file
 
     See also
     --------
-    ~discretisedfield.Field.write
+    ~discretisedfield.Field.to_file
     field_from_ovf
 
     """
@@ -210,13 +210,13 @@ def field_from_ovf(filename):
     ...
     >>> current_path = pathlib.Path(__file__).absolute().parent
     >>> filepath = current_path / '..' / 'tests' / 'test_sample' / 'oommf-ovf2-bin8.omf'
-    >>> field = df.Field.fromfile(filepath)
+    >>> field = df.Field.from_file(filepath)
     >>> field
     Field(...)
 
     See also
     --------
-    ~discretisedfield.Field.fromfile
+    ~discretisedfield.Field.from_file
     field_to_ovf
 
     """
