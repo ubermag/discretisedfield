@@ -663,6 +663,32 @@ class Field:
         >>> field.mean()
         array([55.])
 
+        3. Computing the vector field mean along x direction.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
+        >>> field.mean(direction='x')((2.5, 0.5, 0.5))
+        array([0., 0., 1.])
+
+        4. Computing the vector field mean along x and y directions.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
+        >>> field.mean(direction=['x', 'y'])((2.5, 2.5, 0.5))
+        array([0., 0., 1.])
+
         """
         if direction is None:
             return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
