@@ -541,6 +541,12 @@ class TestField:
         assert np.allclose(f.mean(direction=["x", "y", "z"]), f.mean())
         assert np.allclose(f.mean(direction=("x", "y", "z")), f.mean())
 
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "y", "z", "a"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "y", "z", "z"])
+
     def test_field_component(self):
         for mesh in self.meshes:
             f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
