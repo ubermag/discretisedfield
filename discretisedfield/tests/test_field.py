@@ -22,7 +22,7 @@ html_re = (
     rf"<li>{mesh_html_re}</li>\s*"
     r"<li>nvdim = \d+</li>\s*"
     r"(<li>vdims:\s*<ul>(<li>.*</li>\s*)+</ul>\s*</li>)?\s*"
-    r"(<li>units = .+</li>)?\s*"
+    r"(<li>unit = .+</li>)?\s*"
     r"</ul>"
 )
 
@@ -41,8 +41,8 @@ def check_field(field):
     )
     if field.vdims:
         pattern = pattern[:-3] + r", vdims: \(.+\)\)$"
-    if field.units is not None:
-        pattern = pattern[:-3] + r", units=.+\)$"
+    if field.unit is not None:
+        pattern = pattern[:-3] + r", unit=.+\)$"
     assert re.search(pattern, rstr)
 
     assert isinstance(field._repr_html_(), str)
@@ -179,19 +179,13 @@ class TestField:
     def test_set_with_ndarray(self):
         for mesh in self.meshes:
             f = df.Field(mesh, nvdim=3)
-            f.value = np.ones(
-                (
-                    *f.mesh.n,
-                    f.nvdim,
-                )
-            )
+            f.update_field_values(np.ones((*f.mesh.n, f.nvdim)))
 
             check_field(f)
-            assert isinstance(f.value, np.ndarray)
             assert np.allclose(f.mean(), (1, 1, 1))
 
             with pytest.raises(ValueError):
-                f.value = np.ones((2, 2))
+                f.update_field_values(np.ones((2, 2)))
 
     def test_set_with_callable(self):
         for mesh in self.meshes:
@@ -327,22 +321,22 @@ class TestField:
             check_field(fab)
             assert fab.vdims == ["a", "b"]
 
-    def test_units(self):
-        assert self.pf.units is None
+    def test_unit(self):
+        assert self.pf.unit is None
         mesh = self.pf.mesh
-        field = df.Field(mesh, nvdim=3, value=(1, 2, 3), units="A/m")
+        field = df.Field(mesh, nvdim=3, value=(1, 2, 3), unit="A/m")
         check_field(field)
-        assert field.units == "A/m"
-        field.units = "mT"
-        assert field.units == "mT"
+        assert field.unit == "A/m"
+        field.unit = "mT"
+        assert field.unit == "mT"
         with pytest.raises(TypeError):
-            field.units = 3
-        assert field.units == "mT"
-        field.units = None
-        assert field.units is None
+            field.unit = 3
+        assert field.unit == "mT"
+        field.unit = None
+        assert field.unit is None
 
         with pytest.raises(TypeError):
-            df.Field(mesh, nvdim=1, units=1)
+            df.Field(mesh, nvdim=1, unit=1)
 
     def test_value(self):
         p1 = (0, 0, 0)
@@ -351,12 +345,9 @@ class TestField:
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
         f = df.Field(mesh, nvdim=3)
-        f.value = (1, 1, 1)
+        f.update_field_values((1, 1, 1))
 
-        assert f.value == (1, 1, 1)
-
-        f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.value, np.ndarray)
+        assert np.allclose(f.mean(), (1, 1, 1))
 
     def test_average(self):
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
@@ -368,18 +359,12 @@ class TestField:
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
         f = df.Field(mesh, nvdim=3, value=(2, 2, 2))
 
-        assert np.all(f.norm.value == 2 * np.sqrt(3))
-        assert np.all(f.norm.array == 2 * np.sqrt(3))
-        assert np.all(f.array == 2)
+        assert np.allclose(f.norm.array, 2 * np.sqrt(3))
+        assert np.allclose(f.array, 2)
 
         f.norm = 1
-        assert np.all(f.norm.value == 1)
-        assert np.all(f.norm.array == 1)
-        assert np.all(f.array == 1 / np.sqrt(3))
-
-        f.array[0, 0, 0, 0] = 3
-        assert isinstance(f.norm.value, np.ndarray)
-        assert not np.all(f.norm.value == 1)
+        assert np.allclose(f.norm.array, 1)
+        assert np.allclose(f.array, 1 / np.sqrt(3))
 
         for mesh in self.meshes:
             for value, dtype in self.iters + self.vfuncs:
@@ -412,12 +397,11 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3)
 
-        f.value = (0, 3, 0)
+        f.update_field_values((0, 3, 0))
         f.norm = 1
         assert np.all(f.norm.array == 1)
 
-        f.value = (0, 2, 0)
-        assert np.all(f.norm.value != 1)
+        f.update_field_values((0, 2, 0))
         assert np.all(f.norm.array == 2)
 
     def test_norm_zero_field(self):
@@ -1201,6 +1185,160 @@ class TestField:
         with pytest.raises(ValueError):
             f.diff("q")
 
+    def test_derivative_small(self):
+        p1 = (0, 0, 0)
+        p2 = (3, 3, 3)
+        n = (3, 3, 3)
+
+        # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        f = df.Field(mesh, nvdim=1, value=0)
+
+        check_field(f.diff("x"))
+        assert np.allclose(f.diff("x", order=1).mean(), 0)
+        assert np.allclose(f.diff("y", order=1).mean(), 0)
+        assert np.allclose(f.diff("z", order=1).mean(), 0)
+
+        # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x + y + z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=1).mean(), 1)
+        assert np.allclose(f.diff("y", order=1).mean(), 1)
+        assert np.allclose(f.diff("z", order=1).mean(), 1)
+
+        # f(x, y, z) = x*y + 2*y + x*y*z ->
+        # grad(f) = (y+y*z, x+2+x*z, x*y)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x * y + 2 * y + x * y * z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x")((2.5, 1.5, 1.5)), 3.75)
+        assert np.allclose(f.diff("y")((1.5, 2.5, 1.5)), 5.75)
+        assert np.allclose(f.diff("z")((1.5, 1.5, 2.5)), 2.25)
+
+        # f(x, y, z) = (0, 0, 0)
+        # -> dfdx = (0, 0, 0)
+        # -> dfdy = (0, 0, 0)
+        # -> dfdz = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+
+        assert np.allclose(f.diff("x").mean(), (0, 0, 0))
+        assert np.allclose(f.diff("y").mean(), (0, 0, 0))
+        assert np.allclose(f.diff("z").mean(), (0, 0, 0))
+
+        # f(x, y, z) = (x,  y,  z)
+        # -> dfdx = (1, 0, 0)
+        # -> dfdy = (0, 1, 0)
+        # -> dfdz = (0, 0, 1)
+        def value_fun(point):
+            x, y, z = point
+            return (x, y, z)
+
+        f = df.Field(mesh, nvdim=3, value=value_fun)
+
+        assert np.allclose(f.diff("x").mean(), (1, 0, 0))
+        assert np.allclose(f.diff("y").mean(), (0, 1, 0))
+        assert np.allclose(f.diff("z").mean(), (0, 0, 1))
+
+        # f(x, y, z) = (x*y, y*z, x*y*z)
+        # -> dfdx = (y, 0, y*z)
+        # -> dfdy = (x, z, x*z)
+        # -> dfdz = (0, y, x*y)
+        def value_fun(point):
+            x, y, z = point
+            return (x * y, y * z, x * y * z)
+
+        f = df.Field(mesh, nvdim=3, value=value_fun)
+
+        assert np.allclose(f.diff("x")((1.5, 1.5, 1.5)), (1.5, 0, 2.25))
+        assert np.allclose(f.diff("x")((2.5, 1.5, 1.5)), (1.5, 0, 2.25))
+        assert np.allclose(f.diff("y")((1.5, 1.5, 1.5)), (1.5, 1.5, 2.25))
+        assert np.allclose(f.diff("y")((1.5, 2.5, 1.5)), (1.5, 1.5, 2.25))
+        assert np.allclose(f.diff("z")((1.5, 1.5, 1.5)), (0, 1.5, 2.25))
+        assert np.allclose(f.diff("z")((1.5, 1.5, 2.5)), (0, 1.5, 2.25))
+
+        p1 = (0, 0, 0)
+        p2 = (4, 4, 4)
+        n = (4, 4, 4)
+        # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        f = df.Field(mesh, nvdim=1, value=0)
+
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
+
+        # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x + y + z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
+
+        # f(x, y, z) = x*y + 2*y + x*y*z ->
+        # grad(f) = (y+y*z, x+2+x*z, x*y)
+        # No BC
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+        def value_fun(point):
+            x, y, z = point
+            return x * y + 2 * y + x * y * z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2)((1.5, 1.5, 1.5)), 0)
+        assert np.allclose(f.diff("y", order=2)((1.5, 1.5, 1.5)), 0)
+        assert np.allclose(f.diff("z", order=2)((1.5, 1.5, 1.5)), 0)
+
+        # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
+        # -> grad(f) = (4, 4, 6)
+        def value_fun(point):
+            x, y, z = point
+            return 2 * x * x + 2 * y * y + 3 * z * z
+
+        f = df.Field(mesh, nvdim=1, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2).mean(), 4)
+        assert np.allclose(f.diff("y", order=2).mean(), 4)
+        assert np.allclose(f.diff("z", order=2).mean(), 6)
+
+        # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
+        def value_fun(point):
+            x, y, z = point
+            return (2 * x * x, 2 * y * y, 3 * z * z)
+
+        f = df.Field(mesh, nvdim=3, value=value_fun)
+
+        assert np.allclose(f.diff("x", order=2)((1.5, 1.5, 1.5)), (4, 0, 0))
+        assert np.allclose(f.diff("x", order=2)((3.5, 1.5, 1.5)), (4, 0, 0))
+        assert np.allclose(f.diff("y", order=2)((1.5, 1.5, 1.5)), (0, 4, 0))
+        assert np.allclose(f.diff("y", order=2)((1.5, 3.5, 1.5)), (0, 4, 0))
+        assert np.allclose(f.diff("z", order=2)((1.5, 1.5, 1.5)), (0, 0, 6))
+        assert np.allclose(f.diff("z", order=2)((1.5, 1.5, 3.5)), (0, 0, 6))
+
     def test_derivative_pbc(self):
         p1 = (0.0, 0.0, 0.0)
         p2 = (12.0, 8.0, 6.0)
@@ -1390,8 +1528,8 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert f.grad((3, 1, 3)) == (1, 4, 1)
-        assert f.grad((5, 3, 5)) == (3, 6, 1)
+        assert np.allclose(f.grad((3, 1, 3)), (1, 4, 1))
+        assert np.allclose(f.grad((5, 3, 5)), (3, 6, 1))
 
         # f(x, y, z) = x*y + 2*y + x*y*z ->
         # grad(f) = (y+y*z, x+2+x*z, x*y)
@@ -1401,7 +1539,7 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
 
-        assert f.grad((7, 5, 1)) == (10, 16, 35)
+        assert np.allclose(f.grad((7, 5, 1)), (10, 16, 35))
         assert f.grad.x == f.diff("x")
         assert f.grad.y == f.diff("y")
         assert f.grad.z == f.diff("z")
@@ -1452,11 +1590,11 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3, value=value_fun)
 
-        assert f.div((3, 1, 3)) == 7
-        assert f.div((5, 3, 5)) == 23
+        assert np.allclose(f.div((3, 1, 3)), 7)
+        assert np.allclose(f.div((5, 3, 5)), 23)
 
-        assert f.curl((3, 1, 3)) == (8, -3, -3)
-        assert f.curl((5, 3, 5)) == (22, -15, -5)
+        assert np.allclose(f.curl((3, 1, 3)), (8, -3, -3))
+        assert np.allclose(f.curl((5, 3, 5)), (22, -15, -5))
 
         # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
         # -> div(f) = y - 2 + x*y
@@ -1467,8 +1605,8 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3, value=value_fun)
 
-        assert f.div((7, 5, 1)) == 38
-        assert f.curl((7, 5, 1)) == (7, -5, -6)
+        assert np.allclose(f.div((7, 5, 1)), 38)
+        assert np.allclose(f.curl((7, 5, 1)), (7, -5, -6))
 
         # Exception
         f = df.Field(mesh, nvdim=1, value=3.11)
@@ -1522,24 +1660,21 @@ class TestField:
 
         assert np.allclose(f.laplace.mean(), (4, 4, 6))
 
-    def test_integral(self):
+    def test_integrate(self):
         # Volume integral.
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, nvdim=1, value=0)
-        assert (f * df.dV).integral() == 0
-        assert (f * df.dx * df.dy * df.dz).integral() == 0
+        assert f.integrate() == 0
 
         f = df.Field(mesh, nvdim=1, value=2)
-        assert (f * df.dV).integral() == 2000
-        assert (f * df.dx * df.dy * df.dz).integral() == 2000
+        assert f.integrate() == 2000
 
         f = df.Field(mesh, nvdim=3, value=(-1, 0, 3))
-        assert np.allclose((f * df.dV).integral(), (-1000, 0, 3000))
-        assert np.allclose((f * df.dx * df.dy * df.dz).integral(), (-1000, 0, 3000))
+        assert np.allclose(f.integrate(), (-1000, 0, 3000))
 
         def value_fun(point):
             x, y, z = point
@@ -1549,74 +1684,94 @@ class TestField:
                 return (1, 2, 3)
 
         f = df.Field(mesh, nvdim=3, value=value_fun)
-        assert np.allclose((f * df.dV).integral(), (0, 0, 0))
-        assert np.allclose((f * df.dx * df.dy * df.dz).integral(), (0, 0, 0))
+        assert np.allclose(f.integrate(), (0, 0, 0))
+        assert np.allclose(f.integrate(), (0, 0, 0))
 
         # Surface integral.
         p1 = (0, 0, 0)
         p2 = (10, 5, 3)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
         f = df.Field(mesh, nvdim=1, value=0)
-        assert (f.plane("x") * df.dy * df.dz).integral() == 0
+        assert f.plane("x").integrate() == 0
 
         f = df.Field(mesh, nvdim=1, value=2)
-        assert (f.plane("x") * df.dy * df.dz).integral() == 30
-        assert (f.plane("y") * df.dx * df.dz).integral() == 60
-        assert (f.plane("z") * df.dx * df.dy).integral() == 100
+        assert f.plane("x").integrate() == 30
+        assert f.plane("y").integrate() == 60
+        assert f.plane("z").integrate() == 100
 
         f = df.Field(mesh, nvdim=3, value=(-1, 0, 3))
-        assert df.integral(f.plane("x").dot(df.dS)) == -15
-        assert df.integral(f.plane("y").dot(df.dS)) == 0
-        assert df.integral(f.plane("z").dot(df.dS)) == 150
+        assert f.plane("x").dot([1, 0, 0]).integrate() == -15
+        assert f.plane("y").dot([0, 1, 0]).integrate() == 0
+        assert f.plane("z").dot([0, 0, 1]).integrate() == 150
+
+        # TODO change when n dimensional meshes are supported
+        # The next line currently fails because we cannot detect consecutive
+        # .plane methods. Therefore, the calculated cell volume is wrong.
+        # The test should "fail" once n dimensional meshes are implemented.
+        # The value on the right-hand-site is the expected result.
+        assert f.plane("z").plane("x").dot([1, 0, 0]).integrate() != -5
 
         # Directional integral
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
-        f = f.integral(direction="x")
-        assert isinstance(f, df.Field)
-        assert f.nvdim == 3
-        assert f.mesh.n == (1, 10, 10)
-        assert np.allclose(f.mean(), (10, 10, 10))
+        res = f.integrate(direction="x")
+        assert isinstance(res, df.Field)
+        assert res.nvdim == 3
+        assert np.array_equal(res.mesh.n, (1, 20, 20))
+        assert np.allclose(res.mean(), (10, 10, 10))
 
-        f = f.integral(direction="x").integral(direction="y")
-        assert isinstance(f, df.Field)
-        assert f.nvdim == 3
-        assert f.mesh.n == (1, 1, 10)
-        assert np.allclose(f.mean(), (100, 100, 100))
+        res = f.integrate(direction="x").integrate(direction="y")
+        assert isinstance(res, df.Field)
+        assert res.nvdim == 3
+        assert np.array_equal(res.mesh.n, (1, 1, 20))
+        assert np.allclose(res.mean(), (100, 100, 100))
 
-        f = f.integral("x").integral("y").integral("z")
-        assert f.nvdim == 3
-        assert f.mesh.n == (1, 1, 1)
-        assert np.allclose(f.mean(), (1000, 1000, 1000))
+        res = f.integrate("x").integrate("y").integrate("z")
+        assert res.nvdim == 3
+        assert np.array_equal(res.mesh.n, (1, 1, 1))
+        assert np.allclose(res.mean(), (1000, 1000, 1000))
 
         assert np.allclose(
-            f.integral("x").integral("y").integral("z").mean(), f.integral()
+            f.integrate("x").integrate("y").integrate("z").mean(), f.integrate()
         )
 
-        # Improper integral
+        # Cumulative integral
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
-        cell = (1, 1, 1)
+        cell = (0.5, 0.5, 0.5)
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
-        f = f.integral(direction="x", improper=True)
-        assert isinstance(f, df.Field)
-        assert f.nvdim == 3
-        assert f.mesh.n == (10, 10, 10)
-        assert np.allclose(f.mean(), (5.5, 5.5, 5.5))
-        assert f((0, 0, 0)) == (1, 1, 1)
-        assert f((10, 10, 10)) == (10, 10, 10)
+        f_int = f.integrate(direction="x", cumulative=True)
+        assert isinstance(f_int, df.Field)
+        assert f_int.nvdim == 3
+        assert np.array_equal(f_int.mesh.n, (20, 20, 20))
+        assert np.allclose(f_int.mean(), (5, 5, 5))
+        assert np.allclose(f_int((0, 0, 0)), (0.25, 0.25, 0.25))
+        assert np.allclose(f_int((0.9, 0.9, 0.9)), (0.75, 0.75, 0.75))
+        assert np.allclose(f_int((10, 10, 10)), (9.75, 9.75, 9.75))
+        assert np.allclose(f_int.diff("x").array, f.array)
+
+        for i, d in enumerate("xyz"):
+            f = df.Field(mesh, nvdim=1, value=lambda p: p[i])
+            assert np.allclose(f.integrate(d, cumulative=True).diff(d).array, f.array)
+            assert np.allclose(f.diff(d).integrate(d, cumulative=True).array, f.array)
 
         # Exceptions
         with pytest.raises(ValueError):
-            f.integral(direction="xy", improper=True)
+            f.integrate(cumulative=True)
+
+        with pytest.raises(ValueError):
+            f.integrate(direction="a")
+
+        with pytest.raises(TypeError):
+            f.integrate(1)
 
     def test_abs(self):
         p1 = (0, 0, 0)
@@ -1651,9 +1806,24 @@ class TestField:
             plane = f.plane(direction, n=(3, 3))
             assert isinstance(plane, df.Field)
 
-            p, v = zip(*list(plane))
-            assert len(p) == 9
-            assert len(v) == 9
+            assert len(list(plane.mesh)) == 9  # 3 x 3 cells
+            assert len(list(plane)) == 9
+
+    def test_resample(self):
+        resampled = self.pf.resample(n=(10, 15, 20))
+        assert np.allclose(resampled.mesh.n, (10, 15, 20))
+        assert resampled.mesh.region == self.pf.mesh.region
+        pmin = self.pf.mesh.region.pmin
+        assert np.allclose(resampled(pmin), self.pf(pmin))
+
+        resampled = self.pf.resample(n=(1, 1, 1))
+        assert np.allclose(resampled.mesh.n, (1, 1, 1))
+        assert resampled.mesh.region == self.pf.mesh.region
+        pmin = self.pf.mesh.region.pmin
+        assert np.allclose(resampled(pmin), self.pf((0, 0, 0)))
+
+        with pytest.raises(TypeError):
+            self.pf.resample((0, 1, 2))
 
     def test_getitem(self):
         p1 = (0, 0, 0)
@@ -1765,22 +1935,22 @@ class TestField:
             (2, lambda point: (point[0], point[1] + point[2])),
             (3, lambda point: (point[0], point[1], point[2])),
         ]:
-            f = df.Field(mesh, nvdim=nvdim, value=value, units="A/m")
+            f = df.Field(mesh, nvdim=nvdim, value=value, unit="A/m")
             for rep in representations:
                 tmpfilename = tmp_path / filename
-                f.write(tmpfilename, representation=rep)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=rep)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f.allclose(f_read)
-                assert f_read.units == "A/m"
+                assert f_read.unit == "A/m"
                 assert f.mesh.subregions == f_read.mesh.subregions
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.write(tmpfilename, representation=rep, save_subregions=False)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=rep, save_subregions=False)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f.allclose(f_read)
-                assert f_read.units == "A/m"
+                assert f_read.unit == "A/m"
                 assert f_read.mesh.subregions == {}
 
             # Directly write with wrong representation (no data is written)
@@ -1788,13 +1958,13 @@ class TestField:
                 df.io.field_to_ovf(f, "fname.ovf", representation="bin5")
 
         # multiple different units (not supported by discretisedfield)
-        f = df.Field(mesh, nvdim=3, value=(1, 1, 1), units="m s kg")
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
         tmpfilename = str(tmp_path / filename)
-        f.write(tmpfilename, representation=rep)
-        f_read = df.Field.fromfile(tmpfilename)
+        f.to_file(tmpfilename, representation=rep)
+        f_read = df.Field.from_file(tmpfilename)
 
         assert f.allclose(f_read)
-        assert f_read.units is None
+        assert f_read.unit is None
 
         # Extend scalar
         for rep in representations:
@@ -1802,8 +1972,8 @@ class TestField:
                 mesh, nvdim=1, value=lambda point: point[0] + point[1] + point[2]
             )
             tmpfilename = tmp_path / filename
-            f.write(tmpfilename, representation=rep, extend_scalar=True)
-            f_read = df.Field.fromfile(tmpfilename)
+            f.to_file(tmpfilename, representation=rep, extend_scalar=True)
+            f_read = df.Field.from_file(tmpfilename)
 
             assert f.allclose(f_read.x)
 
@@ -1820,7 +1990,7 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         for filename in filenames:
             omffilename = os.path.join(dirname, filename)
-            f_read = df.Field.fromfile(omffilename)
+            f_read = df.Field.from_file(omffilename)
 
             if "ovf2" in filename:
                 # The magnetisation is in the x-direction in OVF2 files.
@@ -1831,13 +2001,13 @@ class TestField:
 
         # Read component names (single-word and multi-word with and without hyphen)
         # from OOMMF files
-        assert df.Field.fromfile(
+        assert df.Field.from_file(
             os.path.join(dirname, "oommf-ovf2-bin8.omf")
         ).vdims == ["x", "y", "z"]
-        assert df.Field.fromfile(
+        assert df.Field.from_file(
             os.path.join(dirname, "oommf-ovf2-bin8.ohf")
         ).vdims == ["x", "y", "z"]
-        assert df.Field.fromfile(
+        assert df.Field.from_file(
             os.path.join(dirname, "oommf-ovf2-bin8.oef")
         ).vdims == ["Total_energy_density"]
 
@@ -1850,13 +2020,13 @@ class TestField:
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         for filename in filenames:
             omffilename = os.path.join(dirname, filename)
-            f_read = df.Field.fromfile(omffilename)
+            f_read = df.Field.from_file(omffilename)
 
             # We know the saved magentisation.
             f_saved = df.Field(f_read.mesh, nvdim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
-    def test_write_read_vtk(self, tmp_path):
+    def test_to_file_read_vtk(self, tmp_path):
         filename = "testfile.vtk"
 
         p1 = (0, 0, 0)
@@ -1876,8 +2046,8 @@ class TestField:
             for repr in ["txt", "bin", "xml"]:
                 f = df.Field(mesh, nvdim=nvdim, value=value, vdims=vdims)
                 tmpfilename = tmp_path / filename
-                f.write(tmpfilename, representation=repr)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=repr)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert np.allclose(f.array, f_read.array)
                 assert np.allclose(f.mesh.region.pmin, f_read.mesh.region.pmin)
@@ -1888,14 +2058,14 @@ class TestField:
                 assert f.mesh.subregions == f_read.mesh.subregions
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.write(tmpfilename, representation=repr, save_subregions=False)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, representation=repr, save_subregions=False)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f.allclose(f_read)
                 assert f_read.mesh.subregions == {}
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
-        f = df.Field.fromfile(os.path.join(dirname, "vtk-file.vtk"))
+        f = df.Field.from_file(os.path.join(dirname, "vtk-file.vtk"))
         check_field(f)
         assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 3)
@@ -1903,14 +2073,14 @@ class TestField:
 
         # test reading legacy vtk file (written with discretisedfield<=0.61.0)
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
-        f = df.Field.fromfile(os.path.join(dirname, "vtk-vector-legacy.vtk"))
+        f = df.Field.from_file(os.path.join(dirname, "vtk-vector-legacy.vtk"))
         check_field(f)
         assert np.all(f.mesh.n == (8, 1, 1))
         assert f.array.shape == (8, 1, 1, 3)
         assert f.nvdim == 3
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
-        f = df.Field.fromfile(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
+        f = df.Field.from_file(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
         check_field(f)
         assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 1)
@@ -1919,12 +2089,12 @@ class TestField:
         # test invalid arguments
         f = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         with pytest.raises(ValueError):
-            f.write(str(tmp_path / filename), representation="wrong")
+            f.to_file(str(tmp_path / filename), representation="wrong")
         f._vdims = None  # manually remove component labels
         with pytest.raises(AttributeError):
-            f.write(str(tmp_path / filename))
+            f.to_file(str(tmp_path / filename))
 
-    def test_write_read_hdf5(self, tmp_path):
+    def test_to_file_read_hdf5(self, tmp_path):
         filenames = ["testfile.hdf5", "testfile.h5"]
 
         p1 = (0, 0, 0)
@@ -1940,17 +2110,17 @@ class TestField:
             f = df.Field(mesh, nvdim=nvdim, value=value)
             for filename in filenames:
                 tmpfilename = tmp_path / filename
-                f.write(tmpfilename)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename)
+                f_read = df.Field.from_file(tmpfilename)
 
                 assert f == f_read
 
                 tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.write(tmpfilename, save_subregions=False)
-                f_read = df.Field.fromfile(tmpfilename)
+                f.to_file(tmpfilename, save_subregions=False)
+                f_read = df.Field.from_file(tmpfilename)
                 assert f == f_read
 
-    def test_read_write_invalid_extension(self):
+    def test_read_to_file_invalid_extension(self):
         filename = "testfile.jpg"
 
         p1 = (0, 0, 0)
@@ -1960,9 +2130,9 @@ class TestField:
 
         f = df.Field(mesh, nvdim=1, value=5e-12)
         with pytest.raises(ValueError):
-            f.write(filename)
+            f.to_file(filename)
         with pytest.raises(ValueError):
-            df.Field.fromfile(filename)
+            df.Field.from_file(filename)
 
     def test_fft(self):
         p1 = (-10, -10, -5)
@@ -1990,19 +2160,19 @@ class TestField:
             assert plane.allclose(plane.rfftn.irfftn)
 
         # Fourier slice theoreme
-        for i, di in [["x", df.dx], ["y", df.dy], ["z", df.dz]]:
-            plane = (f * di).integral(i)
+        for i in "xyz":
+            plane = f.integrate(i)
             assert plane.allclose(f.fftn.plane(**{i: 0}).ifftn.real)
             assert (
-                (df.Field(mesh, nvdim=3) * df.dz)
-                .integral(i)
+                df.Field(mesh, nvdim=3)
+                .integrate(i)
                 .allclose(f.fftn.plane(**{i: 0}).ifftn.imag)
             )
 
-        assert (f * df.dx).integral("x").allclose(f.rfftn.plane(x=0).irfftn)
-        assert (f * df.dy).integral("y").allclose(f.rfftn.plane(y=0).irfftn)
+        assert f.integrate("x").allclose(f.rfftn.plane(x=0).irfftn)
+        assert f.integrate("y").allclose(f.rfftn.plane(y=0).irfftn)
         # plane along z removes rfftn-freq axis => needs ifftn
-        assert (f * df.dz).integral("z").allclose(f.rfftn.plane(z=0).ifftn.real)
+        assert f.integrate("z").allclose(f.rfftn.plane(z=0).ifftn.real)
 
     def test_mpl_scalar(self):
         # No axes
@@ -2048,7 +2218,7 @@ class TestField:
         for i in filenames:
             filename = os.path.join(os.path.dirname(__file__), "test_sample", i)
 
-            field = df.Field.fromfile(filename)
+            field = df.Field.from_file(filename)
             for plane in ["z"]:  # TODO test all directions "xyz" (check samples first)
                 field.plane(plane).mpl.lightness()
                 field.plane(plane).mpl.lightness(
@@ -2663,8 +2833,8 @@ class TestField:
         # real field
         real_field = self.pf.real
         check_field(real_field)
-        assert real_field((-2e-9, 0, 0)) == (0, 0, 1e5)
-        assert real_field((2e-9, 0, 0)) == (0, 0, -1e5)
+        assert np.allclose(real_field((-2e-9, 0, 0)), (0, 0, 1e5))
+        assert np.allclose(real_field((2e-9, 0, 0)), (0, 0, -1e5))
 
         imag_field = self.pf.imag
         check_field(imag_field)
@@ -2709,7 +2879,10 @@ class TestField:
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
                     assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
-                    assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
+                    assert (
+                        fxa[i].attrs["units"]
+                        == f.mesh.region.units[f.mesh.region.dims.index(i)]
+                    )
                 assert all(fxa["comp"].values == f.vdims)
                 assert np.array_equal(f.array, fxa.values)
 
@@ -2723,7 +2896,10 @@ class TestField:
                 assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
                 for i in "xyz":
                     assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
-                    assert fxa[i].attrs["units"] == f.mesh.attributes["unit"]
+                    assert (
+                        fxa[i].attrs["units"]
+                        == f.mesh.region.units[f.mesh.region.dims.index(i)]
+                    )
                 assert "comp" not in fxa.dims
                 assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
 
@@ -2742,7 +2918,7 @@ class TestField:
         assert f3d_xa.attrs["units"] is None
 
         # test name and units
-        f3d_xa_2 = self.pf.to_xarray(name="m", units="A/m")
+        f3d_xa_2 = self.pf.to_xarray(name="m", unit="A/m")
         assert f3d_xa_2.name == "m"
         assert f3d_xa_2.attrs["units"] == "A/m"
 
@@ -2751,16 +2927,16 @@ class TestField:
             ["m", 42.0],
             [21.0, 42],
             [21, "A/m"],
-            [{"name": "m"}, {"units": "A/m"}],
+            [{"name": "m"}, {"unit": "A/m"}],
             [["m"], ["A/m"]],
             [["m", "A/m"], None],
             [("m", "A/m"), None],
-            [{"name": "m", "units": "A/m"}, None],
+            [{"name": "m", "unit": "A/m"}, None],
         ]
 
-        for name, units in args:
+        for name, unit in args:
             with pytest.raises(TypeError):
-                self.pf.to_xarray(name, units)
+                self.pf.to_xarray(name, unit)
 
     def test_from_xarray_valid_args(self):
         for mesh in self.meshes:

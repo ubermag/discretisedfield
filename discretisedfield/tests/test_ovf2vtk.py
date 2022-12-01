@@ -22,7 +22,7 @@ def test_ovf2vtk(tmp_path, capfd):
     # Output filename provided.
     omffilename_1 = str(tmp_path / "test-ovf2vtk1.omf")
     vtkfilename_1 = str(tmp_path / "test-ovf2vtk1.vtk")
-    f.write(omffilename_1)
+    f.to_file(omffilename_1)
 
     cmd = [
         sys.executable,
@@ -36,19 +36,19 @@ def test_ovf2vtk(tmp_path, capfd):
     proc_return = subprocess.run(cmd)
     assert proc_return.returncode == 0
 
-    f_read = df.Field.fromfile(vtkfilename_1)
+    f_read = df.Field.from_file(vtkfilename_1)
     assert np.allclose(f.array, f_read.array)
 
     # Output filename not provided.
     omffilename_2 = str(tmp_path / "test-ovf2vtk2.omf")
     vtkfilename_2 = str(tmp_path / "test-ovf2vtk2.vtk")
-    f.write(omffilename_2, representation="bin4")
+    f.to_file(omffilename_2, representation="bin4")
 
     cmd = [sys.executable, "-m", "discretisedfield.io.ovf2vtk", "-i", omffilename_2]
     proc_return = subprocess.run(cmd)
     assert proc_return.returncode == 0
 
-    f_read = df.Field.fromfile(vtkfilename_2)
+    f_read = df.Field.from_file(vtkfilename_2)
     assert np.allclose(f.array, f_read.array)
 
     # Number of input and output files do not match.

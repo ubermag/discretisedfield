@@ -281,9 +281,9 @@ def topological_charge(field, /, method="continuous", absolute=False):
     if method == "continuous":
         q = topological_charge_density(field, method=method)
         if absolute:
-            return df.integral(abs(q) * abs(df.dS))
+            return float(abs(q).integrate())
         else:
-            return df.integral(q * abs(df.dS))
+            return float(q.integrate())
 
     elif method == "berg-luescher":
         axis1 = field.mesh.attributes["axis1"]
@@ -660,13 +660,10 @@ def count_bps(field, /, direction="x"):
     """
     F_div = emergent_magnetic_field(field.orientation).div
 
-    d_vals = {"x": df.dx, "y": df.dy, "z": df.dz}
     averaged = str.replace("xyz", direction, "")
-    dF = d_vals[averaged[0]] * d_vals[averaged[1]]
-    dl = d_vals[direction]
 
-    F_red = df.integral(F_div * dF, direction=averaged)
-    F_int = df.integral(F_red * dl, direction=direction, improper=True)
+    F_red = F_div.integrate(direction=averaged[0]).integrate(direction=averaged[1])
+    F_int = F_red.integrate(direction=direction, cumulative=True)
     bp_number = (F_int / (4 * np.pi)).array.squeeze().round()
     bp_count = bp_number[1:] - bp_number[:-1]
 

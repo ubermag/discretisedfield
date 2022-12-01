@@ -4,6 +4,7 @@ import numbers
 import pathlib
 import warnings
 
+import findiff as fd
 import numpy as np
 import xarray as xr
 from vtkmodules.util import numpy_support as vns
@@ -63,7 +64,7 @@ class Field:
         callable and dict ``value`` the numpy default (currently
         ``float64``) is used. Defaults to ``None``.
 
-    units : str, optional
+    unit : str, optional
 
         Physical unit of the field.
 
@@ -132,7 +133,7 @@ class Field:
         norm=None,
         vdims=None,
         dtype=None,
-        units=None,
+        unit=None,
         **kwargs,
     ):
         if not isinstance(mesh, df.Mesh):
@@ -153,9 +154,9 @@ class Field:
 
         self.dtype = dtype
 
-        self.units = units
+        self.unit = unit
 
-        self.value = value
+        self.update_field_values(value)
         self.norm = norm
 
         self._vdims = None  # required in here for correct initialisation
@@ -188,7 +189,7 @@ class Field:
         return self._nvdim
 
     @property
-    def units(self):
+    def unit(self):
         """Unit of the field.
 
         Returns
@@ -199,23 +200,19 @@ class Field:
         """
         return self._unit
 
-    @units.setter
-    def units(self, unit):
+    @unit.setter
+    def unit(self, unit):
         if unit is not None and not isinstance(unit, str):
-            raise TypeError("'units' must be of type str.")
+            raise TypeError("'unit' must be of type str.")
         self._unit = unit
 
-    @property
-    def value(self):
-        """Field value representation.
-
-        This property returns a representation of the field value if it exists.
-        Otherwise, ``discretisedfield.Field.array`` containing all field values
-        is returned.
+    def update_field_values(self, value):
+        """Set field value representation.
 
         The value of the field can be set using a scalar value for ``nvdim=1``
-        fields (e.g. ``value=3``) or ``array_like`` value for ``nvdim>1`` fields
-        (e.g. ``value=(1, 2, 3)``). Alternatively, the value can be defined
+        fields (e.g. ``field.update_field_values(3)``) or ``array_like`` value
+        for ``nvdim>1`` fields (e.g. ``field.update_field_values((1, 2, 3))``).
+        Alternatively, the value can be defined
         using a callable object, which takes a point tuple as an input argument
         and returns a value of appropriate dimension. Internally, callable
         object is called for every point in the mesh on which the field is
@@ -232,8 +229,8 @@ class Field:
             numpy.ndarray) value with length equal to `nvdim` should be used.
             Finally, the value can also be a callable (e.g. Python function or
             another field), which for every coordinate in the mesh returns a
-            valid value. If ``value=0``, all values in the field will be set to
-            zero independent of the field dimension.
+            valid value. If ``field.update_field_values(0)``, all values in the field
+            will be set to zero independent of the field dimension.
 
             If subregions are defined value can be initialised with a dict.
             Allowed keys are names of all subregions and ``default``. Items
@@ -243,15 +240,6 @@ class Field:
             contained within one subregion ``default`` is used if specified,
             else these values are set to 0.
 
-        Returns
-        -------
-        array_like, callable, numbers.Real, numpy.ndarray
-
-            The value used (representation) for setting the field is returned.
-            However, if the actual value of the field does not correspond to
-            the initially used value anymore, a ``numpy.ndarray`` is returned
-            containing all field values.
-
         Raises
         ------
         ValueError
@@ -260,7 +248,7 @@ class Field:
 
         Examples
         --------
-        1. Different ways of setting and getting the field value.
+        1. Different ways of setting the field value.
 
         >>> import discretisedfield as df
         ...
@@ -269,34 +257,32 @@ class Field:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> value = (0, 0, 1)
-        ...
-        >>> # if value is not specified, zero-field is defined
+
+        If value is not specified, zero-field is defined
+
         >>> field = df.Field(mesh=mesh, nvdim=3)
-        >>> field.value
-        0.0
-        >>> field.value = (0, 0, 1)
-        >>> field.value
-        (0, 0, 1)
-        >>> # Setting the field value using a Python function (callable).
+        >>> field.mean()
+        array([0., 0., 0.])
+        >>> field.update_field_values((0, 0, 1))
+        >>> field.mean()
+        array([0., 0., 1.])
+
+        Setting the field value using a Python function (callable).
+
         >>> def value_function(point):
         ...     x, y, z = point
         ...     if x <= 1:
         ...         return (0, 0, 1)
         ...     else:
         ...         return (0, 0, -1)
-        >>> field.value = value_function
-        >>> field.value
-        <function value_function at ...>
-        >>> # We now change the value of a single cell so that the
-        >>> # representation used for initialising field is not valid
-        >>> # anymore.
-        >>> field.array[0, 0, 0, :] = (0, 0, 0)
-        >>> field.value
-        array(...)
-        >>> field.value.shape
-        (2, 2, 1, 3)
+        >>> field.update_field_values(value_function)
+        >>> field((0.5, 1.5, 0.5))
+        array([0., 0., 1.])
+        >>> field((1.5, 1.5, 0.5))
+        array([ 0.,  0., -1.])
 
         2. Field with subregions in mesh
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0,0,0)
@@ -330,16 +316,7 @@ class Field:
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        value_array = _as_array(self._value, self.mesh, self.nvdim, dtype=self.dtype)
-        if np.array_equal(self.array, value_array):
-            return self._value
-        else:
-            return self.array
-
-    @value.setter
-    def value(self, val):
-        self._value = val
-        self.array = _as_array(val, self.mesh, self.nvdim, dtype=self.dtype)
+        self.array = _as_array(value, self.mesh, self.nvdim, dtype=self.dtype)
 
     @property
     def vdims(self):
@@ -423,8 +400,6 @@ class Field:
         >>> field.mean()
         array([1., 1., 1.])
 
-        .. seealso:: :py:func:`~discretisedfield.Field.value`
-
         """
         return self._array
 
@@ -482,12 +457,12 @@ class Field:
         >>> field.norm = 2
         >>> field.mean()
         array([0., 0., 2.])
-        >>> field.value = (1, 0, 0)
+        >>> field.update_field_values((1, 0, 0))
         >>> field.norm.mean()
         array([1.])
 
         Set the norm for a zero field.
-        >>> field.value = 0
+        >>> field.update_field_values(0)
         >>> field.mean()
         array([0., 0., 0.])
         >>> field.norm = 1
@@ -499,7 +474,7 @@ class Field:
         """
         res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
-        return self.__class__(self.mesh, nvdim=1, value=res, units=self.units)
+        return self.__class__(self.mesh, nvdim=1, value=res, unit=self.unit)
 
     @norm.setter
     def norm(self, val):
@@ -543,7 +518,7 @@ class Field:
 
         """
         return self.__class__(
-            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), units=self.units
+            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), unit=self.unit
         )
 
     @property
@@ -581,7 +556,7 @@ class Field:
             nvdim=self.nvdim,
             value=0,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -815,10 +790,10 @@ class Field:
         >>> field = df.Field(mesh, nvdim=3, value=(1, 3, 4))
         >>> point = (10, 2, 3)
         >>> field(point)
-        (1.0, 3.0, 4.0)
+        array([1., 3., 4.])
 
         """
-        return dfu.array2tuple(self.array[self.mesh.point2index(point)])
+        return self.array[self.mesh.point2index(point)]
 
     def __getattr__(self, attr):
         """Extract the component of the vector field.
@@ -899,7 +874,7 @@ class Field:
         if self.vdims is not None and attr in self.vdims:
             attr_array = self.array[..., self.vdims.index(attr), np.newaxis]
             return self.__class__(
-                mesh=self.mesh, nvdim=1, value=attr_array, units=self.units
+                mesh=self.mesh, nvdim=1, value=attr_array, unit=self.unit
             )
         else:
             msg = f"Object has no attribute {attr}."
@@ -936,19 +911,17 @@ class Field:
         return dirlist
 
     def __iter__(self):
-        r"""Generator yielding coordinates and values of all mesh
-        discretisation cells.
+        r"""Generator yielding values of all discretisation cells.
 
         Yields
         ------
-        tuple (2,)
+        np.ndarray
 
-            The first value is the mesh cell coordinates :math:`\mathbf{p} =
-            (p_{x}, p_{y}, p_{z})`, whereas the second one is the field value.
+            The field value in one discretisation cell.
 
         Examples
         --------
-        1. Iterating through the field coordinates and values
+        1. Iterating through the field values
 
         >>> import discretisedfield as df
         ...
@@ -958,18 +931,38 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
-        >>> for coord, value in field:
-        ...     print (coord, value)
-        (0.5, 0.5, 0.5) (0.0, 0.0, 1.0)
-        (1.5, 0.5, 0.5) (0.0, 0.0, 1.0)
-        (0.5, 1.5, 0.5) (0.0, 0.0, 1.0)
-        (1.5, 1.5, 0.5) (0.0, 0.0, 1.0)
+        >>> for value in field:
+        ...     print(value)
+        [0. 0. 1.]
+        [0. 0. 1.]
+        [0. 0. 1.]
+        [0. 0. 1.]
 
-        .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
+        2. Iterating through the mesh coordinates and field values
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (2, 2, 1)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
+        >>> for coord, value in zip(field.mesh, field):
+        ...     print(coord, value)
+        (0.5, 0.5, 0.5) [0. 0. 1.]
+        (1.5, 0.5, 0.5) [0. 0. 1.]
+        (0.5, 1.5, 0.5) [0. 0. 1.]
+        (1.5, 1.5, 0.5) [0. 0. 1.]
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Mesh.__iter__`
+        :py:func:`~discretisedfield.Mesh.indices`
 
         """
         for point in self.mesh:
-            yield point, self(point)
+            yield self(point)
 
     def __eq__(self, other):
         """Relational operator ``==``.
@@ -1021,14 +1014,11 @@ class Field:
         """
         if not isinstance(other, self.__class__):
             return False
-        elif (
+        return (
             self.mesh == other.mesh
             and self.nvdim == other.nvdim
             and np.array_equal(self.array, other.array)
-        ):
-            return True
-        else:
-            return False
+        )
 
     # TODO The mesh comparison has no tolerance.
     def allclose(self, other, rtol=1e-5, atol=1e-8):
@@ -1865,7 +1855,7 @@ class Field:
             nvdim=self.nvdim,
             value=padded_array,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def diff(self, direction, order=1):
@@ -1876,6 +1866,12 @@ class Field:
         via ``direction`` argument, which can be ``'x'``, ``'y'``, or ``'z'``.
         The order of the computed derivative can be 1 or 2 and it is specified
         using argument ``order`` and it defaults to 1.
+
+        This method uses second order accurate finite difference stencils by default
+        unless the field is defined on a mesh with too few cells in the differential
+        direction. In this case the first order accurate finite difference stencils
+        are used at the boundaries and the second order accurate finite difference
+        stencils are used in the interior.
 
         Directional derivative cannot be computed if less or equal discretisation
         cells exists in a specified direction than the order.
@@ -1932,7 +1928,7 @@ class Field:
         ...     return 2*x + 3*y + -5*z
         ...
         >>> f = df.Field(mesh, nvdim=1, value=value_fun)
-        >>> f.derivative('y').mean()  # first-order derivative by default
+        >>> f.diff('y').mean()  # first-order derivative by default
         array([3.])
 
         2. Try to compute the second-order directional derivative of the vector
@@ -1941,21 +1937,20 @@ class Field:
         expect the directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
         :math:`df/dy=(0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because
         there is only one discretisation cell in the z-direction, the
-        derivative cannot be computed and a zero field is returned. Similarly,
-        second-order derivatives in all directions are expected to be zero.
+        derivative cannot be computed and a zero field is returned.
 
+        >>> import numpy as np
         >>> def value_fun(point):
         ...     x, y, z = point
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, nvdim=3, value=value_fun)
-        >>> f.derivative('x', n=1).mean()
-        array([2., 0., 0.])
-        >>> f.derivative('y', n=1).mean()
-        array([0., 3., 0.])
-        >>> f.derivative('z', n=1).mean()  # derivative cannot be calculated
+        >>> np.allclose(f.diff('x', order=1).mean(), [2, 0, 0])
+        True
+        >>> np.allclose(f.diff('y', order=1).mean(), [0, 3, 0])
+        True
+        >>> f.diff('z', order=1).mean()  # derivative cannot be calculated
         array([0., 0., 0.])
-        >>> # second-order derivatives
 
         """
         if direction not in self.mesh.region.dims:
@@ -1997,39 +1992,55 @@ class Field:
             raise NotImplementedError(msg)
 
         elif order == 1:
-            derivative_array = np.gradient(
-                padded_array, self.mesh.cell[direction_idx], axis=direction_idx
-            )
+            if self.mesh.n[direction_idx] < 3:
+                # The derivative is computed using the central difference
+                # with forward/backward difference at the boundaries.
+                derivative_array = np.gradient(
+                    padded_array, self.mesh.cell[direction_idx], axis=direction_idx
+                )
+            else:
+                # The derivative is computed using accuracy of 2 everywhere
+                diff_fd = fd.FinDiff(direction_idx, self.mesh.cell[direction_idx], 1)
+                derivative_array = diff_fd(padded_array)
 
         elif order == 2:
-            if self.mesh.bc == "":
-                # Pad with specific values so that the same finite difference stencil
-                # can be used across the whole array
-                # central difference = forward difference
-                # f(1) + f(-1) - 2 f(0) = f(2) + f(0) - 2 f(1)
-                # f(-1) = f(2) - 3 f(1) + 3f(0)
+            if self.mesh.n[direction_idx] < 4:
+                # The derivative is computed using the central difference
+                # with forward/backward difference at the boundaries.
+                if self.mesh.bc == "":
+                    # Pad with specific values so that the same finite difference
+                    # stencil can be used across the whole array
+                    # central difference = forward difference
+                    # f(1) + f(-1) - 2 f(0) = f(2) + f(0) - 2 f(1)
+                    # f(-1) = f(2) - 3 f(1) + 3f(0)
 
-                def pad_fun(vector, pad_width, iaxis, kwargs):
-                    if iaxis == direction_idx:
-                        vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
-                        vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
+                    def pad_fun(vector, pad_width, iaxis, kwargs):
+                        if iaxis == direction_idx:
+                            vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
+                            vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
 
-                pad_width = [(0, 0)] * 4
-                pad_width[direction_idx] = (1, 1)
-                padded_array = np.pad(padded_array, pad_width, pad_fun)
+                    pad_width = [(0, 0)] * 4
+                    pad_width[direction_idx] = (1, 1)
+                    padded_array = np.pad(padded_array, pad_width, pad_fun)
 
-            index_p1 = dfu.assemble_index(
-                slice(None), 4, {direction_idx: slice(2, None)}
-            )
-            index_0 = dfu.assemble_index(slice(None), 4, {direction_idx: slice(1, -1)})
-            index_m1 = dfu.assemble_index(
-                slice(None), 4, {direction_idx: slice(None, -2)}
-            )
-            derivative_array = (
-                padded_array[index_p1]
-                - 2 * padded_array[index_0]
-                + padded_array[index_m1]
-            ) / self.mesh.cell[direction_idx] ** 2
+                index_p1 = dfu.assemble_index(
+                    slice(None), 4, {direction_idx: slice(2, None)}
+                )
+                index_0 = dfu.assemble_index(
+                    slice(None), 4, {direction_idx: slice(1, -1)}
+                )
+                index_m1 = dfu.assemble_index(
+                    slice(None), 4, {direction_idx: slice(None, -2)}
+                )
+                derivative_array = (
+                    padded_array[index_p1]
+                    - 2 * padded_array[index_0]
+                    + padded_array[index_m1]
+                ) / self.mesh.cell[direction_idx] ** 2
+            else:
+                # The derivative is computed using accuracy of 2 everywhere
+                diff_fd = fd.FinDiff(direction_idx, self.mesh.cell[direction_idx], 2)
+                derivative_array = diff_fd(padded_array)
 
         # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:
@@ -2238,7 +2249,7 @@ class Field:
         ...
         >>> f = df.Field(mesh, nvdim=3, value=value_fun)
         >>> f.curl((1, 1, 1))
-        (0.0, -5.0, -2.0)
+        array([ 0., -5., -2.])
 
         2. Attempt to compute the curl of a scalar field.
 
@@ -2339,40 +2350,53 @@ class Field:
             )
 
     def integral(self, direction="xyz", improper=False):
+        raise AttributeError("This method has been renamed to 'integrate'.")
+
+    def integrate(self, direction=None, cumulative=False):
         r"""Integral.
 
-        This method integrates the field over the mesh along the specified
-        direction(s), which can ce specified using ``direction``. Field must be
-        explicitly multiplied by an infinitesimal value (``DValue``) before
-        integration. Improper integral can be computed by passing
-        ``improper=True`` and by specifying a single direction.
+        This method integrates the field over the mesh along the specified direction,
+        which can be specified using ``direction``. The field is internally multiplied
+        with the cell size in that direction. If no direction is specified the integral
+        is computed along all directions.
+
+        To compute surface integrals, e.g. flux, the field must be multiplied with the
+        surface normal vector prior to integration (see example 4).
+
+        A cumulative integral can be computed by passing ``cumulative=True`` and by
+        specifying a single direction. It resembles the following integral (here as an
+        example in the x direction):
+
+        .. math::
+
+            F(x, y, z) = \int_{p_\mathrm{min}}^x f(x', y, z) \mathrm{d}x
+
+        The method sums all cells up to (excluding) the cell that contains the point x.
+        The cell containing x is added with a weight 1/2.
 
         Parameters
         ----------
         direction : str, optional
 
-            Direction(s) along which the field is integrated. Defaults to
-            ``'xyz'``.
+            Direction along which the field is integrated. The direction must be in
+            ``field.mesh.region.dims``. Defaults to ``None``.
 
-        improper : bool, optional
+        cumulative : bool, optional
 
-            If ``True``, an improper (cumulative) integral is computed.
-            Defaults to ``False``.
+            If ``True``, an cumulative integral is computed. Defaults to ``False``.
 
         Returns
         -------
-        discretisedfield.Field, numbers.Real, or (3,) array_like
+        discretisedfield.Field or np.ndarray
 
-            Integration result. If the field is integrated in all directions,
-            ``numbers.Real`` or ``array_like`` value is returned depending on
-            the dimension of the field.
+            Integration result. If the field is integrated in all directions, an
+            ``np.ndarray`` is returned.
 
         Raises
         ------
         ValueError
 
-            If ``improper=True`` and more than one integration direction is
-            specified.
+            If ``cumulative=True`` and no integration direction is specified.
 
         Example
         -------
@@ -2390,8 +2414,8 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, nvdim=1, value=5)
-        >>> (f * df.dV).integral()
-        5000.0
+        >>> f.integrate()
+        array([5000.])
 
         2. Volume integral of a vector field.
 
@@ -2400,8 +2424,8 @@ class Field:
             \int_\mathrm{V} \mathbf{f}(\mathbf{r}) \mathrm{d}V
 
         >>> f = df.Field(mesh, nvdim=3, value=(-1, -2, -3))
-        >>> (f * df.dV).integral()
-        (-1000.0, -2000.0, -3000.0)
+        >>> f.integrate()
+        array([-1000., -2000., -3000.])
 
         3. Surface integral of a scalar field.
 
@@ -2411,66 +2435,87 @@ class Field:
 
         >>> f = df.Field(mesh, nvdim=1, value=5)
         >>> f_plane = f.plane('z')
-        >>> (f_plane * abs(df.dS)).integral()
-        500.0
+        >>> f_plane.integrate()
+        array([500.])
 
-        4. Surface integral of a vector field (flux).
+        4. Surface integral of a vector field (flux). The dot product with the surface
+        normal vector must be calculated manually.
 
         .. math::
 
-            \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot
-            \mathrm{d}\mathbf{S}
+            \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot \mathrm{d}\mathbf{S}
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane @ df.dS).integral()
-        300.0
+        >>> e_z = [0, 0, 1]
+        >>> f_plane.dot(e_z).integrate()
+        array([300.])
 
         5. Integral along x-direction.
 
         .. math::
 
-            \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r})
-            \mathrm{d}x
+            \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r}) \mathrm{d}x
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane * df.dx).integral(direction='x').mean()
-        (10.0, 20.0, 30.0)
+        >>> f_plane.integrate(direction='x').mean()
+        array([10., 20., 30.])
 
-        6. Improper integral along x-direction.
+        6. Cumulative integral along x-direction.
 
         .. math::
 
-            \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r})
-            \mathrm{d}x'
+            \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r}) \mathrm{d}x'
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane * df.dx).integral(direction='x', improper=True)
+        >>> f_plane.integrate(direction='x', cumulative=True)
         Field(...)
 
         """
-        if improper and len(direction) > 1:
-            msg = "Cannot compute improper integral along multiple directions."
-            raise ValueError(msg)
+        if direction is None:
+            if cumulative:
+                raise ValueError(
+                    "A cumulative integral can only computed along one direction."
+                )
+            sum_ = np.sum(self.array, axis=tuple(range(self.mesh.region.ndim)))
+            dV = np.prod(self.mesh.cell)
+            # NOTE the next 3 lines can be removed when the mesh is n dimensional
+            if self.mesh.attributes["isplane"]:
+                dV = (
+                    self.mesh.cell[self.mesh.attributes["axis1"]]
+                    * self.mesh.cell[self.mesh.attributes["axis2"]]
+                )
+            return sum_ * dV
+        elif not isinstance(direction, str):
+            raise TypeError("'direction' must be of type str.")
+        elif direction not in self.mesh.region.dims:
+            raise ValueError(f"{direction=} not in {self.mesh.region.dims}.")
 
         mesh = self.mesh
 
-        if not improper:
-            for i in direction:
-                mesh = mesh.plane(i)
-            axes = [dfu.axesdict[i] for i in direction]
-            res_array = np.sum(self.array, axis=tuple(axes), keepdims=True)
+        axis = mesh.region.dims.index(direction)
+        if cumulative:
+            tmp_array = self.array / 2
+            left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
+            right_cells = dfu.assemble_index(slice(None), 3, {axis: slice(1, None)})
+            tmp_array[right_cells] += np.cumsum(self.array, axis=axis)[left_cells]
+            res_array = tmp_array * mesh.cell[axis]
         else:
-            res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
+            # NOTE reduce dimension n -> n-1:
+            # - remove keepdims
+            # - replace mesh.plane
+            #   - either mesh.sel
+            #   - or manually
+            res_array = np.sum(self.array, axis=axis, keepdims=True) * mesh.cell[axis]
+            mesh = mesh.plane(direction)
 
-        res = self.__class__(mesh, nvdim=self.nvdim, value=res_array, vdims=self.vdims)
+        # NOTE what should this method return for ndim == 0?
+        # if mesh.region.ndim == 0:
+        #     return res_array
 
-        if len(direction) == 3:
-            return dfu.array2tuple(res.array.squeeze())
-        else:
-            return res
+        return self.__class__(mesh, nvdim=self.nvdim, value=res_array, vdims=self.vdims)
 
     def line(self, p1, p2, n=100):
         r"""Sample the field along the line.
@@ -2593,7 +2638,70 @@ class Field:
             nvdim=self.nvdim,
             value=value,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
+        )
+
+    def resample(self, n):
+        """Resample field.
+
+        This method computes the field on a new mesh with ``n`` cells. The boundaries
+        ``pmin`` and ``pmax`` stay unchanged. The values of the new cells are taken from
+        the nearest old cell, no interpolation is performed.
+
+        Parameters
+        ----------
+        n : array_like
+
+            Number of cells in each direction. The number of elements must match
+            field.mesh.region.ndim.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            The resampled field.
+
+        Examples
+        --------
+        1. Decrease the number of cells.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f.mesh.n
+        array([10, 10, 10])
+        >>> down_sampled = f.resample((5, 5, 5))
+        >>> down_sampled.mesh.n
+        array([5, 5, 5])
+
+        2. Increase the number of cells.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f.mesh.n
+        array([10, 10, 10])
+        >>> up_sampled = f.resample((10, 15, 20))
+        >>> up_sampled.mesh.n
+        array([10, 15, 20])
+
+        """
+        mesh = df.Mesh(region=self.mesh.region, n=n)
+        return self.__class__(
+            mesh,
+            nvdim=self.nvdim,
+            value=self,
+            vdims=self.vdims,
+            unit=self.unit,
+            dtype=self.dtype,
         )
 
     def __getitem__(self, item):
@@ -2676,7 +2784,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array[tuple(slices)],
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     def project(self, direction):
@@ -2722,7 +2830,7 @@ class Field:
 
         """
         n_cells = self.mesh.n[dfu.axesdict[direction]]
-        return self.integral(direction=direction) / n_cells
+        return self.integrate(direction=direction) / n_cells
 
     def angle(self, vector):
         r"""Angle between two vectors.
@@ -2789,7 +2897,10 @@ class Field:
 
         return self.__class__(self.mesh, nvdim=1, value=angle_array)
 
-    def write(
+    def write(self, *args, **kwargs):
+        raise AttributeError("This method has been renamed to 'to_file'.")
+
+    def to_file(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
         """Write the field to OVF, HDF5, or VTK file.
@@ -2849,10 +2960,10 @@ class Field:
         >>> field = df.Field(mesh, nvdim=3, value=(5, 6, 7))
         ...
         >>> filename = 'mytestfile.omf'
-        >>> field.write(filename)  # write the file
+        >>> field.to_file(filename)  # write the file
         >>> os.path.isfile(filename)
         True
-        >>> field_read = df.Field.fromfile(filename)  # read the file
+        >>> field_read = df.Field.from_file(filename)  # read the file
         >>> field_read == field
         True
         >>> os.remove(filename)  # delete the file
@@ -2860,7 +2971,7 @@ class Field:
         2. Write field to the VTK file.
 
         >>> filename = 'mytestfile.vtk'
-        >>> field.write(filename)  # write the file
+        >>> field.to_file(filename)  # write the file
         >>> os.path.isfile(filename)
         True
         >>> os.remove(filename)  # delete the file
@@ -2868,17 +2979,17 @@ class Field:
         3. Write field to the HDF5 file.
 
         >>> filename = 'mytestfile.hdf5'
-        >>> field.write(filename)  # write the file
+        >>> field.to_file(filename)  # write the file
         >>> os.path.isfile(filename)
         True
-        >>> field_read = df.Field.fromfile(filename)  # read the file
+        >>> field_read = df.Field.from_file(filename)  # read the file
         >>> field_read == field
         True
         >>> os.remove(filename)  # delete the file
 
         See also
         --------
-        ~discretisedfield.Field.fromfile
+        ~discretisedfield.Field.from_file
         ~discretisedfield.io.field_to_ovf
         ~discretisedfield.io.field_to_vtk
         ~discretisedfield.io.field_to_hdf5
@@ -2988,6 +3099,10 @@ class Field:
 
     @classmethod
     def fromfile(cls, filename):
+        raise AttributeError("This method has been renamed to 'from_file'.")
+
+    @classmethod
+    def from_file(cls, filename):
         """Read the field from an OVF (1.0 or 2.0), VTK, or HDF5 file.
 
         The extension of the ``filename`` should correspond to either:
@@ -3020,27 +3135,27 @@ class Field:
         >>> dirname = os.path.join(os.path.dirname(__file__),
         ...                        'tests', 'test_sample')
         >>> filename = os.path.join(dirname, 'oommf-ovf2-bin4.omf')
-        >>> field = df.Field.fromfile(filename)
+        >>> field = df.Field.from_file(filename)
         >>> field
         Field(...)
 
         2. Read a field from the VTK file.
 
         >>> filename = os.path.join(dirname, 'vtk-file.vtk')
-        >>> field = df.Field.fromfile(filename)
+        >>> field = df.Field.from_file(filename)
         >>> field
         Field(...)
 
         3. Read a field from the HDF5 file.
 
         >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
-        >>> field = df.Field.fromfile(filename)
+        >>> field = df.Field.from_file(filename)
         >>> field
         Field(...)
 
         See also
         --------
-        ~discretisedfield.Field.write
+        ~discretisedfield.Field.to_file
         ~discretisedfield.io.field_from_ovf
         ~discretisedfield.io.field_from_vtk
         ~discretisedfield.io.field_from_hdf5
@@ -3320,7 +3435,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.real,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -3331,7 +3446,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.imag,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
@@ -3362,7 +3477,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.conjugate(),
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     # TODO check and write tests
@@ -3407,20 +3522,20 @@ class Field:
                 vdims=self.vdims,
             )
 
-    def to_xarray(self, name="field", units=None):
+    def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``comp`` (``only if field.nvdim > 1``). The coordinates
+        ``y``, ``z``, and ``comp`` (only if ``field.nvdim > 1``). The coordinates
         of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.vdims``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
         ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
-        attributes of the DataArray. The ``units`` attribute of geometric
-        dimensions is set to ``self.mesh.attributes['unit']``.
+        attributes of the DataArray. The ``unit`` attribute of geometric
+        dimensions is set to the respective strings in ``self.mesh.region.units``.
 
-        The name and units of the field ``DataArray`` can be set by passing
-        ``name`` and ``units``. If the type of value passed to any of the two
+        The name and unit of the field ``DataArray`` can be set by passing
+        ``name`` and ``unit``. If the type of value passed to any of the two
         arguments is not ``str``, then a ``TypeError`` is raised.
 
         Parameters
@@ -3429,7 +3544,7 @@ class Field:
 
             String to set name of the field ``DataArray``.
 
-        units : str, optional
+        unit : str, optional
 
             String to set units of the field ``DataArray``.
 
@@ -3443,7 +3558,7 @@ class Field:
         ------
         TypeError
 
-            If either ``name`` or ``units`` argument is not a string.
+            If either ``name`` or ``unit`` argument is not a string.
 
         Examples
         --------
@@ -3478,18 +3593,15 @@ class Field:
             msg = "Name argument must be a string."
             raise TypeError(msg)
 
-        if units is not None and not isinstance(units, str):
-            msg = "Units argument must be a string."
+        if unit is not None and not isinstance(unit, str):
+            msg = "Unit argument must be a string."
             raise TypeError(msg)
 
         axes = ["x", "y", "z"]
 
         data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
 
-        if "unit" in self.mesh.attributes:
-            geo_units_dict = dict.fromkeys(axes, self.mesh.attributes["unit"])
-        else:
-            geo_units_dict = dict.fromkeys(axes, "m")
+        geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
         if self.nvdim > 1:
             data_array_dims = axes + ["comp"]
@@ -3506,7 +3618,7 @@ class Field:
             coords=data_array_coords,
             name=name,
             attrs=dict(
-                units=units or self.units,
+                units=unit or self.unit,
                 cell=self.mesh.cell,
                 pmin=self.mesh.region.pmin,
                 pmax=self.mesh.region.pmax,
@@ -3645,9 +3757,9 @@ class Field:
         if any("units" not in xa[i].attrs for i in "xyz"):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         else:
-            mesh = df.Mesh(
-                p1=p1, p2=p2, cell=cell, attributes={"unit": xa["z"].attrs["units"]}
-            )
+            print(xa["x"].units)
+            region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in "xyz"])
+            mesh = df.Mesh(region=region, cell=cell)
 
         comp = xa.comp.values if "comp" in xa.coords else None
         val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
