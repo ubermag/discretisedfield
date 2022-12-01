@@ -685,7 +685,9 @@ class Field:
                     mesh = mesh.plane(d)
                     # Keepdims is needed for the current 3D behaviour
                     array = array.mean(axis=mesh.region.dims.index(d), keepdims=True)
-                return self.__class__(mesh, nvdim=self.nvdim, value=array)
+                return self.__class__(
+                    mesh, nvdim=self.nvdim, value=array, unit=self.unit
+                )
         elif isinstance(direction, str):
             if direction not in self.mesh.region.dims:
                 raise ValueError(
@@ -697,7 +699,7 @@ class Field:
                 nvdim=self.nvdim,
                 value=self.array.mean(axis=axis, keepdims=True),
                 vdims=self.vdims,
-                units=self.units,
+                unit=self.unit,
             )
         else:
             raise ValueError(
@@ -710,7 +712,7 @@ class Field:
             nvdim=self.nvdim,
             value=self.array.mean(axis=axis),
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
         )
 
     @property
