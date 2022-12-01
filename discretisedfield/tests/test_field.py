@@ -514,17 +514,17 @@ class TestField:
         # Test with direction
         assert np.allclose(f.mean(direction=None), f.mean())
 
-        assert np.allclose(f.mean(direction="x"), (0, 1, 2))
-        assert np.allclose(f.mean(direction="y"), (0, 1, 2))
-        assert np.allclose(f.mean(direction="z"), (0, 1, 2))
+        assert np.allclose(f.mean(direction="x").array, (0, 1, 2))
+        assert np.allclose(f.mean(direction="y").array, (0, 1, 2))
+        assert np.allclose(f.mean(direction="z").array, (0, 1, 2))
 
         with pytest.raises(ValueError):
             f.mean(direction="a")
 
-        assert np.allclose(f.mean(direction=["x", "y"]), (0, 1, 2))
-        assert np.allclose(f.mean(direction=["x", "z"]), (0, 1, 2))
-        assert np.allclose(f.mean(direction=["y", "z"]), (0, 1, 2))
-        assert np.allclose(f.mean(direction=("y", "z")), (0, 1, 2))
+        assert np.allclose(f.mean(direction=["x", "y"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=["x", "z"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=["y", "z"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=("y", "z")).array, (0, 1, 2))
 
         with pytest.raises(ValueError):
             f.mean(direction=["x", "a"])

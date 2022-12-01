@@ -693,17 +693,37 @@ class Field:
             return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
         elif isinstance(direction, (tuple, list)):
             if not all(d in self.mesh.region.dims for d in direction):
-                raise TypeError(
-                    "Invalid direction. All directions must be in "
-                    f"{self.mesh.region.dims}."
-                )
-            axis = tuple(self.mesh.region.axes.index(d) for d in direction)
-        elif isinstance(direction, str):
-            if direction not in self.mesh.region.dims:
-                raise TypeError(
+                raise ValueError(
                     f"Invalid direction. Directions must be in {self.mesh.region.dims}."
                 )
-            axis = self.mesh.region.axes.index(direction)
+            elif len(direction) != len(set(direction)):
+                raise ValueError("Duplicate directions are not allowed.")
+
+            if sorted(direction) == sorted(self.mesh.region.dims):
+                return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
+            else:
+                # NOTE: this is a temporary solution until mesh.sel is implemented.
+                # Hence, this is not the most efficient way to do it.
+                mesh = self.mesh  # Do we need a deepcopy here?
+                array = self.array
+                for d in direction:
+                    mesh = mesh.plane(d)
+                    # Keepdims is needed for the current 3D behaviour
+                    array = array.mean(axis=mesh.region.dims.index(d), keepdims=True)
+                return self.__class__(mesh, nvdim=self.nvdim, value=array)
+        elif isinstance(direction, str):
+            if direction not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Invalid direction. Direction must be in {self.mesh.region.dims}."
+                )
+            axis = self.mesh.region.dims.index(direction)
+            return self.__class__(
+                self.mesh.plane(direction),
+                nvdim=self.nvdim,
+                value=self.array.mean(axis=axis, keepdims=True),
+                vdims=self.vdims,
+                units=self.units,
+            )
         else:
             raise ValueError(
                 "Direction must be None, string or tuple of strings, not"
