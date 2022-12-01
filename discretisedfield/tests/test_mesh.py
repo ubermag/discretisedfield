@@ -24,7 +24,7 @@ html_re = (
 
 
 class TestMesh:
-    def setup(self):
+    def setup_method(self):
         self.valid_args = [
             [(0, 0, 0), (5, 5, 5), [1, 1, 1], None],
             [(-1, 0, -3), (5, 7, 5), None, (1, 1, 1)],

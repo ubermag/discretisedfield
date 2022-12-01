@@ -63,7 +63,7 @@ def check_hv(plot, types):
 
 
 class TestField:
-    def setup(self):
+    def setup_method(self):
         # Get meshes using valid arguments from TestMesh.
         tm = TestMesh()
         tm.setup()

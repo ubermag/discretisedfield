@@ -27,7 +27,7 @@ def check_rotator(rotator):
 
 
 class TestFieldRotator:
-    def setup(self):
+    def setup_method(self):
         self.mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
 
         def vector(p):
