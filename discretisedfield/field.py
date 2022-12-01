@@ -2652,7 +2652,7 @@ class Field:
             nvdim=self.nvdim,
             value=self,
             vdims=self.vdims,
-            units=self.units,
+            unit=self.unit,
             dtype=self.dtype,
         )
 
