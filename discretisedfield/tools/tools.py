@@ -281,9 +281,9 @@ def topological_charge(field, /, method="continuous", absolute=False):
     if method == "continuous":
         q = topological_charge_density(field, method=method)
         if absolute:
-            return abs(q).integrate()
+            return float(abs(q).integrate())
         else:
-            return q.integrate()
+            return float(q.integrate())
 
     elif method == "berg-luescher":
         axis1 = field.mesh.attributes["axis1"]
