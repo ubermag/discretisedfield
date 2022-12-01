@@ -66,7 +66,7 @@ class TestField:
     def setup_method(self):
         # Get meshes using valid arguments from TestMesh.
         tm = TestMesh()
-        tm.setup()
+        tm.setup_method()
         self.meshes = []
         for p1, p2, n, cell in tm.valid_args:
             region = df.Region(p1=p1, p2=p2)
