@@ -2302,40 +2302,53 @@ class Field:
             )
 
     def integral(self, direction="xyz", improper=False):
+        raise AttributeError("This method has been renamed to 'integrate'.")
+
+    def integrate(self, direction=None, cumulative=False):
         r"""Integral.
 
-        This method integrates the field over the mesh along the specified
-        direction(s), which can ce specified using ``direction``. Field must be
-        explicitly multiplied by an infinitesimal value (``DValue``) before
-        integration. Improper integral can be computed by passing
-        ``improper=True`` and by specifying a single direction.
+        This method integrates the field over the mesh along the specified direction,
+        which can be specified using ``direction``. The field is internally multiplied
+        with the cell size in that direction. If no direction is specified the integral
+        is computed along all directions.
+
+        To compute surface integrals, e.g. flux, the field must be multiplied with the
+        surface normal vector prior to integration (see example 4).
+
+        A cumulative integral can be computed by passing ``cumulative=True`` and by
+        specifying a single direction. It resembles the following integral (here as an
+        example in the x direction):
+
+        .. math::
+
+            F(x, y, z) = \int_{p_\mathrm{min}}^x f(x', y, z) \mathrm{d}x
+
+        The method sums all cells up to (excluding) the cell that contains the point x.
+        The cell containing x is added with a weight 1/2.
 
         Parameters
         ----------
         direction : str, optional
 
-            Direction(s) along which the field is integrated. Defaults to
-            ``'xyz'``.
+            Direction along which the field is integrated. The direction must be in
+            ``field.mesh.region.dims``. Defaults to ``None``.
 
-        improper : bool, optional
+        cumulative : bool, optional
 
-            If ``True``, an improper (cumulative) integral is computed.
-            Defaults to ``False``.
+            If ``True``, an cumulative integral is computed. Defaults to ``False``.
 
         Returns
         -------
-        discretisedfield.Field, numbers.Real, or (3,) array_like
+        discretisedfield.Field or np.ndarray
 
-            Integration result. If the field is integrated in all directions,
-            ``numbers.Real`` or ``array_like`` value is returned depending on
-            the dimension of the field.
+            Integration result. If the field is integrated in all directions, an
+            ``np.ndarray`` is returned.
 
         Raises
         ------
         ValueError
 
-            If ``improper=True`` and more than one integration direction is
-            specified.
+            If ``cumulative=True`` and no integration direction is specified.
 
         Example
         -------
@@ -2353,8 +2366,8 @@ class Field:
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, nvdim=1, value=5)
-        >>> (f * df.dV).integral()
-        5000.0
+        >>> f.integrate()
+        array([5000.])
 
         2. Volume integral of a vector field.
 
@@ -2363,8 +2376,8 @@ class Field:
             \int_\mathrm{V} \mathbf{f}(\mathbf{r}) \mathrm{d}V
 
         >>> f = df.Field(mesh, nvdim=3, value=(-1, -2, -3))
-        >>> (f * df.dV).integral()
-        (-1000.0, -2000.0, -3000.0)
+        >>> f.integrate()
+        array([-1000., -2000., -3000.])
 
         3. Surface integral of a scalar field.
 
@@ -2374,66 +2387,87 @@ class Field:
 
         >>> f = df.Field(mesh, nvdim=1, value=5)
         >>> f_plane = f.plane('z')
-        >>> (f_plane * abs(df.dS)).integral()
-        500.0
+        >>> f_plane.integrate()
+        array([500.])
 
-        4. Surface integral of a vector field (flux).
+        4. Surface integral of a vector field (flux). The dot product with the surface
+        normal vector must be calculated manually.
 
         .. math::
 
-            \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot
-            \mathrm{d}\mathbf{S}
+            \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot \mathrm{d}\mathbf{S}
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane @ df.dS).integral()
-        300.0
+        >>> e_z = [0, 0, 1]
+        >>> f_plane.dot(e_z).integrate()
+        array([300.])
 
         5. Integral along x-direction.
 
         .. math::
 
-            \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r})
-            \mathrm{d}x
+            \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r}) \mathrm{d}x
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane * df.dx).integral(direction='x').mean()
-        (10.0, 20.0, 30.0)
+        >>> f_plane.integrate(direction='x').mean()
+        array([10., 20., 30.])
 
-        6. Improper integral along x-direction.
+        6. Cumulative integral along x-direction.
 
         .. math::
 
-            \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r})
-            \mathrm{d}x'
+            \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r}) \mathrm{d}x'
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> f_plane = f.plane('z')
-        >>> (f_plane * df.dx).integral(direction='x', improper=True)
+        >>> f_plane.integrate(direction='x', cumulative=True)
         Field(...)
 
         """
-        if improper and len(direction) > 1:
-            msg = "Cannot compute improper integral along multiple directions."
-            raise ValueError(msg)
+        if direction is None:
+            if cumulative:
+                raise ValueError(
+                    "A cumulative integral can only computed along one direction."
+                )
+            sum_ = np.sum(self.array, axis=tuple(range(self.mesh.region.ndim)))
+            dV = np.prod(self.mesh.cell)
+            # NOTE the next 3 lines can be removed when the mesh is n dimensional
+            if self.mesh.attributes["isplane"]:
+                dV = (
+                    self.mesh.cell[self.mesh.attributes["axis1"]]
+                    * self.mesh.cell[self.mesh.attributes["axis2"]]
+                )
+            return sum_ * dV
+        elif not isinstance(direction, str):
+            raise TypeError("'direction' must be of type str.")
+        elif direction not in self.mesh.region.dims:
+            raise ValueError(f"{direction=} not in {self.mesh.region.dims}.")
 
         mesh = self.mesh
 
-        if not improper:
-            for i in direction:
-                mesh = mesh.plane(i)
-            axes = [dfu.axesdict[i] for i in direction]
-            res_array = np.sum(self.array, axis=tuple(axes), keepdims=True)
+        axis = mesh.region.dims.index(direction)
+        if cumulative:
+            tmp_array = self.array / 2
+            left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
+            right_cells = dfu.assemble_index(slice(None), 3, {axis: slice(1, None)})
+            tmp_array[right_cells] += np.cumsum(self.array, axis=axis)[left_cells]
+            res_array = tmp_array * mesh.cell[axis]
         else:
-            res_array = np.cumsum(self.array, axis=dfu.axesdict[direction])
+            # NOTE reduce dimension n -> n-1:
+            # - remove keepdims
+            # - replace mesh.plane
+            #   - either mesh.sel
+            #   - or manually
+            res_array = np.sum(self.array, axis=axis, keepdims=True) * mesh.cell[axis]
+            mesh = mesh.plane(direction)
 
-        res = self.__class__(mesh, nvdim=self.nvdim, value=res_array, vdims=self.vdims)
+        # NOTE what should this method return for ndim == 0?
+        # if mesh.region.ndim == 0:
+        #     return res_array
 
-        if len(direction) == 3:
-            return dfu.array2tuple(res.array.squeeze())
-        else:
-            return res
+        return self.__class__(mesh, nvdim=self.nvdim, value=res_array, vdims=self.vdims)
 
     def line(self, p1, p2, n=100):
         r"""Sample the field along the line.
@@ -2748,7 +2782,7 @@ class Field:
 
         """
         n_cells = self.mesh.n[dfu.axesdict[direction]]
-        return self.integral(direction=direction) / n_cells
+        return self.integrate(direction=direction) / n_cells
 
     def angle(self, vector):
         r"""Angle between two vectors.
