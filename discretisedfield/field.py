@@ -257,15 +257,18 @@ class Field:
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> value = (0, 0, 1)
-        ...
-        >>> # if value is not specified, zero-field is defined
+
+        If value is not specified, zero-field is defined
+
         >>> field = df.Field(mesh=mesh, nvdim=3)
         >>> field.mean()
         array([0., 0., 0.])
         >>> field.update_field_values((0, 0, 1))
         >>> field.mean()
         array([0., 0., 1.])
-        >>> # Setting the field value using a Python function (callable).
+
+        Setting the field value using a Python function (callable).
+
         >>> def value_function(point):
         ...     x, y, z = point
         ...     if x <= 1:
@@ -274,11 +277,12 @@ class Field:
         ...         return (0, 0, -1)
         >>> field.update_field_values(value_function)
         >>> field((0.5, 1.5, 0.5))
-        (0.0, 0.0, 1.0)
+        array([0., 0., 1.])
         >>> field((1.5, 1.5, 0.5))
-        (0.0, 0.0, -1.0)
+        array([ 0.,  0., -1.])
 
         2. Field with subregions in mesh
+
         >>> import discretisedfield as df
         ...
         >>> p1 = (0,0,0)
@@ -1892,15 +1896,16 @@ class Field:
         there is only one discretisation cell in the z-direction, the
         derivative cannot be computed and a zero field is returned.
 
+        >>> import numpy as np
         >>> def value_fun(point):
         ...     x, y, z = point
         ...     return (2*x, 3*y, -5*z)
         ...
         >>> f = df.Field(mesh, nvdim=3, value=value_fun)
-        >>> f.diff('x', order=1).mean()
-        array([2., 0., 0.])
-        >>> f.diff('y', order=1).mean()
-        array([0., 3., 0.])
+        >>> np.allclose(f.diff('x', order=1).mean(), [2, 0, 0])
+        True
+        >>> np.allclose(f.diff('y', order=1).mean(), [0, 3, 0])
+        True
         >>> f.diff('z', order=1).mean()  # derivative cannot be calculated
         array([0., 0., 0.])
 
