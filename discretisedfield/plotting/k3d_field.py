@@ -460,7 +460,7 @@ class K3dField:
 
         coordinates, vectors, color_values = [], [], []
         norm_field = self.data.norm  # assigned to be computed only once
-        for point, value in self.data:
+        for point, value in zip(self.data.mesh, self.data):
             if norm_field(point) != 0:
                 coordinates.append(point)
                 vectors.append(value)

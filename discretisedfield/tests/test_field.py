@@ -1770,8 +1770,9 @@ class TestField:
             plane = f.plane(direction, n=(3, 3))
             assert isinstance(plane, df.Field)
 
-            p, v = zip(*list(plane))
+            p = zip(*list(plane.mesh))
             assert len(p) == 9
+            v = zip(*list(plane))
             assert len(v) == 9
 
     def test_resample(self):
