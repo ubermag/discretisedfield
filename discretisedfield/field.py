@@ -2320,7 +2320,7 @@ class Field:
         r"""Integral.
 
         This method integrates the field over the mesh along the specified direction,
-        which can ce specified using ``direction``. The field is internally multiplied
+        which can be specified using ``direction``. The field is internally multiplied
         with the cell size in that direction. If no direction is specified the integral
         is computed along all directions.
 
@@ -2455,7 +2455,7 @@ class Field:
         elif not isinstance(direction, str):
             raise TypeError("'direction' must be of type str.")
         elif direction not in self.mesh.region.dims:
-            raise ValueError(f"{direction=} not it {self.mesh.region.dims}.")
+            raise ValueError(f"{direction=} not in {self.mesh.region.dims}.")
 
         mesh = self.mesh
 
