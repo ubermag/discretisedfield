@@ -2811,7 +2811,7 @@ class Field:
 
     def project(self, direction):
         raise AttributeError(
-            "The project method has been depricated. Use mean instead."
+            "The project method has been deprecated. Use mean instead."
         )
 
     def angle(self, vector):
