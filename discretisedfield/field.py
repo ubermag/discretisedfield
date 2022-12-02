@@ -631,7 +631,7 @@ class Field:
 
             None or string or tuple of strings, optional.
             Directions along which
-            the means are computed. The default is to
+            the mean is computed. The default is to
             compute the mean of the entire volume and return an array of the
             averaged vector components.
 
