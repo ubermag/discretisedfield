@@ -2810,49 +2810,9 @@ class Field:
         )
 
     def project(self, direction):
-        """Projects the field along one direction and averages it out along
-        that direction.
-
-        One of the axes (``'x'``, ``'y'``, or ``'z'``) is passed and the field
-        is projected (averaged) along that direction. For example
-        ``project('z')`` would average the field in the z-direction and return
-        the field which has only one discretisation cell in the z-direction.
-
-        Parameters
-        ----------
-        direction : str
-
-            Direction along which the field is projected (``'x'``, ``'y'``, or
-            ``'z'``).
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            A projected field.
-
-        Example
-        -------
-        1. Projecting the field along a certain direction.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 2)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        ...
-        >>> field.project('z')
-        Field(...)
-        >>> field.project('z').mean()
-        array([1., 2., 3.])
-        >>> field.project('z').array.shape
-        (2, 2, 1, 3)
-
-        """
-        n_cells = self.mesh.n[dfu.axesdict[direction]]
-        return self.integrate(direction=direction) / n_cells
+        raise AttributeError(
+            "The project method has been depricated. Use mean instead."
+        )
 
     def angle(self, vector):
         r"""Angle between two vectors.
