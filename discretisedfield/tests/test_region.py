@@ -20,9 +20,17 @@ html_re = (
 )
 
 
+@pytest.fixture
+def region():
+    p1 = (-50e-9, -50e-9, 0)
+    p2 = (50e-9, 50e-9, 20e-9)
+    return df.Region(p1=p1, p2=p2)
+
+
 class TestRegion:
-    def setup(self):
-        self.valid_args = [
+    @pytest.mark.parametrize(
+        "p1, p2",
+        [
             [(0, 0, 0), (5, 5, 5)],
             [(-1, 0, -3), (5, 7, 5)],
             [(0, 0, 0), (5e-9, 5e-9, 5e-9)],
@@ -31,37 +39,38 @@ class TestRegion:
             [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6)],
             [(0, 125e-9, 0), (500e-9, 0, -3e-9)],
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1 + 2j)],
-        ]
+        ],
+    )
+    def test_init_valid_args(self, p1, p2):
+        region = df.Region(p1=p1, p2=p2)
+        assert isinstance(region, df.Region)
+        pattern = r"^Region\(pmin=\[.+\], pmax=\[.+\], dims=\[.+\], units=\[.+\]\)$"
+        assert re.match(pattern, str(region))
 
-        self.invalid_args = [
-            [("1", 0, 0), (1, 1, 1)],
-            [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9)],
-            [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9)],
-            ["string", (5, 1, 1e-9)],
-        ]
+    @pytest.mark.parametrize(
+        "p1,p2,error",
+        [
+            [("1", 0, 0), (1, 1, 1), TypeError],
+            [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9), TypeError],
+            [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9), ValueError],
+            ["string", (5, 1, 1e-9), TypeError],
+        ],
+    )
+    def test_init_invalid_args(self, p1, p2, error):
+        with pytest.raises(error):
+            df.Region(p1=p1, p2=p2)
 
-    def test_init_valid_args(self):
-        for p1, p2 in self.valid_args:
-            region = df.Region(p1=p1, p2=p2)
-            assert isinstance(region, df.Region)
-            # pattern = r"^Region\(pmin=\([\d\se.,-]+\), pmax=\([\d\se.,-]+\)\)$"
-            # assert re.match(pattern, str(region))
-
-    def test_init_invalid_args(self):
-        for p1, p2 in self.invalid_args:
-            with pytest.raises((TypeError, ValueError)):
-                df.Region(p1=p1, p2=p2)
-
-    def test_init_zero_edge_length(self):
-        args = [
+    @pytest.mark.parametrize(
+        "p1,p2",
+        [
             [(0, 100e-9, 1e-9), (150e-9, 100e-9, 6e-9)],
             [(0, 101e-9, -1), (150e-9, 101e-9, 0)],
             [(10e9, 10e3, 0), (0.01e12, 11e3, 5)],
-        ]
-
-        for p1, p2 in args:
-            with pytest.raises(ValueError) as excinfo:
-                df.Region(p1=p1, p2=p2)
+        ],
+    )
+    def test_init_zero_edge_length(self, p1, p2):
+        with pytest.raises(ValueError) as excinfo:
+            df.Region(p1=p1, p2=p2)
             assert "is zero" in str(excinfo.value)
 
     def test_pmin_pmax_edges_center_volume(self):
@@ -260,24 +269,17 @@ class TestRegion:
         with pytest.raises(TypeError):
             res = region1 | 5
 
-    def test_multiplier(self):
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+    @pytest.mark.parametrize(
+        "region,multiplier",
+        [
+            [df.Region(p1=(-50e-9, -50e-9, 0), p2=(50e-9, 50e-9, 20e-9)), 1e-9],
+            [df.Region(p1=(0, 0, 0), p2=(1e-5, 1e-4, 1e-5)), 1e-6],
+        ],
+    )
+    def test_multiplier(self, region, multiplier):
+        assert region.multiplier == multiplier
 
-        assert region.multiplier == 1e-9
-
-        p1 = (0, 0, 0)
-        p2 = (1e-5, 1e-4, 1e-5)
-        region = df.Region(p1=p1, p2=p2)
-
-        assert region.multiplier == 1e-6
-
-    def test_scale(self):
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
-
+    def test_scale(self, region):
         res = region.scale(2)
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (-100e-9, -100e-9, 0))
@@ -310,11 +312,7 @@ class TestRegion:
         with pytest.raises(TypeError):
             res = region.scale("two")
 
-    def test_translate(self):
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
-
+    def test_translate(self, region):
         res = region.translate((50e-9, 0, -10e-9))
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (0, -50e-9, -10e-9))
