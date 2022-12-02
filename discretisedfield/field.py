@@ -627,9 +627,8 @@ class Field:
 
         Parameters
         ----------
-        direction
+        direction : None, string or tuple of strings, optional.
 
-            None or string or tuple of strings, optional.
             Directions along which
             the mean is computed. The default is to
             compute the mean of the entire volume and return an array of the
@@ -690,6 +689,7 @@ class Field:
         array([0., 0., 1.])
 
         """
+        # Mean over all directions implicitly.
         if direction is None:
             return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
         elif isinstance(direction, (tuple, list)):
@@ -699,18 +699,20 @@ class Field:
                 )
             elif len(direction) != len(set(direction)):
                 raise ValueError("Duplicate directions are not allowed.")
-
+            # Mean over all directions explicitly.
             if sorted(direction) == sorted(self.mesh.region.dims):
                 return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
             else:
                 # NOTE: this is a temporary solution until mesh.sel is implemented.
                 # Hence, this is not the most efficient way to do it.
-                mesh = self.mesh  # Do we need a deepcopy here?
+                mesh = self.mesh
                 array = self.array
-                for d in direction:
+                axis = np.zeros(len(direction), dtype=int)
+                for i, d in enumerate(direction):
                     mesh = mesh.plane(d)
-                    # Keepdims is needed for the current 3D behaviour
-                    array = array.mean(axis=mesh.region.dims.index(d), keepdims=True)
+                    axis[i] = self.mesh.region.dims.index(d)
+                # Keepdims is needed for the current 3D behaviour
+                array = array.mean(axis=tuple(axis), keepdims=True)
                 return self.__class__(
                     mesh, nvdim=self.nvdim, value=array, unit=self.unit
                 )
@@ -732,14 +734,6 @@ class Field:
                 "Direction must be None, string or tuple of strings, not"
                 f" {type(direction)}."
             )
-
-        return self.__class__(
-            self.mesh.plane(direction),  # mesh sel method
-            nvdim=self.nvdim,
-            value=self.array.mean(axis=axis),
-            vdims=self.vdims,
-            unit=self.unit,
-        )
 
     @property
     def average(self):

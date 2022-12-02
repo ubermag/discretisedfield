@@ -496,8 +496,6 @@ class TestField:
         assert np.allclose(f.mean(), (0, 1, 2))
 
         # Test with direction
-        assert np.allclose(f.mean(direction=None), f.mean())
-
         assert np.allclose(f.mean(direction="x").array, (0, 1, 2))
         assert np.allclose(f.mean(direction="y").array, (0, 1, 2))
         assert np.allclose(f.mean(direction="z").array, (0, 1, 2))
@@ -506,6 +504,7 @@ class TestField:
             f.mean(direction="a")
 
         assert np.allclose(f.mean(direction=["x", "y"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=["y", "x"]).array, (0, 1, 2))
         assert np.allclose(f.mean(direction=["x", "z"]).array, (0, 1, 2))
         assert np.allclose(f.mean(direction=["y", "z"]).array, (0, 1, 2))
         assert np.allclose(f.mean(direction=("y", "z")).array, (0, 1, 2))
