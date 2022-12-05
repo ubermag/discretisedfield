@@ -2058,7 +2058,10 @@ class TestField:
         with pytest.raises(AttributeError):
             f.to_file(str(tmp_path / filename))
 
-    def test_write_read_hdf5(self, tmp_path):
+    @pytest.mark.parametrize(
+        "nvdim,value", [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]
+    )
+    def test_write_read_hdf5(self, nvdim, value, tmp_path):
         filenames = ["testfile.hdf5", "testfile.h5"]
 
         p1 = (0, 0, 0)
@@ -2070,19 +2073,18 @@ class TestField:
         }
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
-        for nvdim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]:
-            f = df.Field(mesh, nvdim=nvdim, value=value)
-            for filename in filenames:
-                tmpfilename = tmp_path / filename
-                f.to_file(tmpfilename)
-                f_read = df.Field.from_file(tmpfilename)
+        f = df.Field(mesh, nvdim=nvdim, value=value)
+        for filename in filenames:
+            tmpfilename = tmp_path / filename
+            f.to_file(tmpfilename)
+            f_read = df.Field.from_file(tmpfilename)
 
-                assert f == f_read
+            assert f == f_read
 
-                tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.to_file(tmpfilename, save_subregions=False)
-                f_read = df.Field.from_file(tmpfilename)
-                assert f == f_read
+            tmpfilename = tmp_path / f"no_sr_{filename}"
+            f.to_file(tmpfilename, save_subregions=False)
+            f_read = df.Field.from_file(tmpfilename)
+            assert f == f_read
 
     def test_write_read_invalid_extension(self):
         filename = "testfile.jpg"
