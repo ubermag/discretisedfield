@@ -2032,6 +2032,7 @@ class Field:
                     # All of these finite difference methods are second-order
                     # accurate.
                     # These stencil coefficients are taken from FinDiff.
+                    # https://findiff.readthedocs.io/en/latest/
                     # Pad with specific values so that the same finite difference
                     # stencil can be used across the whole array
                     # The example for forward difference is shown below with the
