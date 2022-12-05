@@ -1632,6 +1632,9 @@ class TestField:
         assert f.laplace.nvdim == 3
         assert np.allclose(f.laplace.mean(), (0, 0, 0))
 
+        f = df.Field(mesh, nvdim=1, value=5)
+        assert np.allclose(f.laplace.mean(), 0)
+
         # f(x, y, z) = x + y + z
         # -> laplace(f) = 0
         def value_fun(point):
