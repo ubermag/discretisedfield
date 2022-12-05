@@ -15,11 +15,12 @@ import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 
-from . import html, io
+from . import html
+from .io import _MeshIO
 from .region import Region
 
 
-class Mesh:
+class Mesh(_MeshIO):
     """Finite-difference mesh.
 
     Mesh discretises cubic ``discretisedfield.Region``, passed as ``region``,
@@ -1323,7 +1324,7 @@ class Mesh:
         with pathlib.Path(self._subregion_filename(field_filename)).open(
             mode="wt", encoding="utf-8"
         ) as f:
-            json.dump(self.subregions, f, cls=io._RegionJSONEncoder)
+            json.dump(self.subregions, f, cls=df.Region._JSONEncoder)
 
     def load_subregions(self, field_filename):
         """Load subregions from json file."""

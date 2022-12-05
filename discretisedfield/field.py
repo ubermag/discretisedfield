@@ -2964,17 +2964,15 @@ class Field(_FieldIO):
         filename = pathlib.Path(filename)
         if filename.suffix in [".omf", ".ovf", ".ohf"]:
             self._to_ovf(
-                self,
                 filename,
                 representation=representation,
                 extend_scalar=extend_scalar,
                 save_subregions=save_subregions,
             )
         elif filename.suffix in [".hdf5", ".h5"]:
-            self._to_hdf5(self, filename)
+            self._to_hdf5(filename)
         elif filename.suffix == ".vtk":
             self._to_vtk(
-                self,
                 filename,
                 representation=representation,
                 save_subregions=save_subregions,

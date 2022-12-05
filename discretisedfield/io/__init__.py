@@ -17,7 +17,7 @@ from .vtk import _FieldIOVTK
 
 
 class _RegionIO(_RegionIOHDF5):
-    class _RegionJSONEncoder(json.JSONEncoder):
+    class _JSONEncoder(json.JSONEncoder):
         def default(self, o):
             if isinstance(o, df.Region):
                 return o.to_dict()

@@ -9,9 +9,10 @@ import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 
 from . import html
+from .io import _RegionIO
 
 
-class Region:
+class Region(_RegionIO):
     r"""Region.
 
     A cuboid region spans between two corner points :math:`\mathbf{p}_1` and

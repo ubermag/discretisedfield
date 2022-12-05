@@ -1919,7 +1919,7 @@ class TestField:
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
-                df.io.field_to_ovf(f, "fname.ovf", representation="bin5")
+                f._to_ovf("fname.ovf", representation="bin5")
 
         # multiple different units (not supported by discretisedfield)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
@@ -1990,7 +1990,7 @@ class TestField:
             f_saved = df.Field(f_read.mesh, nvdim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
-    def test_to_file_read_vtk(self, tmp_path):
+    def test_write_read_vtk(self, tmp_path):
         filename = "testfile.vtk"
 
         p1 = (0, 0, 0)
@@ -2058,7 +2058,7 @@ class TestField:
         with pytest.raises(AttributeError):
             f.to_file(str(tmp_path / filename))
 
-    def test_to_file_read_hdf5(self, tmp_path):
+    def test_write_read_hdf5(self, tmp_path):
         filenames = ["testfile.hdf5", "testfile.h5"]
 
         p1 = (0, 0, 0)
@@ -2084,7 +2084,7 @@ class TestField:
                 f_read = df.Field.from_file(tmpfilename)
                 assert f == f_read
 
-    def test_read_to_file_invalid_extension(self):
+    def test_write_read_invalid_extension(self):
         filename = "testfile.jpg"
 
         p1 = (0, 0, 0)
