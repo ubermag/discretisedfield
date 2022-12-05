@@ -414,26 +414,6 @@ class TestField:
         f.norm = 1  # Does not change the norm of zero field
         assert np.all(f.norm.array == 0)
 
-    def test_zero(self):
-        p1 = (0, 0, 0)
-        p2 = (10e-9, 10e-9, 10e-9)
-        n = (5, 5, 5)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-
-        f = df.Field(mesh, nvdim=1, value=1e-6)
-        zf = f.zero
-
-        assert f.mesh == zf.mesh
-        assert f.nvdim == zf.nvdim
-        assert not np.any(zf.array)
-
-        f = df.Field(mesh, nvdim=3, value=(5, -7, 1e3))
-        zf = f.zero
-
-        assert f.mesh == zf.mesh
-        assert f.nvdim == zf.nvdim
-        assert not np.any(zf.array)
-
     def test_orientation(self):
         p1 = (-5e-9, -5e-9, -5e-9)
         p2 = (5e-9, 5e-9, 5e-9)
