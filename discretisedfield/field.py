@@ -15,12 +15,13 @@ import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 from discretisedfield.plotting.util import hv_key_dim
 
-from . import html, io
+from . import html
+from .io import _FieldIO
 
 # TODO: tutorials, line operations
 
 
-class Field:
+class Field(_FieldIO):
     """Finite-difference field.
 
     This class specifies a finite-difference field and defines operations for
@@ -2862,20 +2863,30 @@ class Field:
     ):
         """Write the field to OVF, HDF5, or VTK file.
 
-        If the extension of ``filename`` is ``.vtk``, a VTK file is written
-        (:py:func:`~discretisedfield.io.field_to_vtk`). The representation of the data
-        (``'bin'`` [``'bin8'`` as equivalent], ``'txt'``, or ``'xml'``) is passed as
-        ``'representation'``.
+        If the extension of ``filename`` is ``.vtk``, a VTK file is written. The
+        representation of the data (``'bin'`` [``'bin8'`` as equivalent], ``'txt'``, or
+        ``'xml'``) is passed as ``'representation'``.
+        The data is saved as a ``RECTILINEAR_GRID`` dataset. Scalar field
+        (``dim=1``) is saved as ``SCALARS``. On the other hand, vector field
+        (``dim=3``) is saved as both ``VECTORS`` as well as ``SCALARS`` for all
+        three components to enable easy colouring of vectors in some
+        visualisation packages. The data is stored as ``CELL_DATA``.
+        The saved VTK file can be opened with `Paraview
+        <https://www.paraview.org/>`_ or `Mayavi
+        <https://docs.enthought.com/mayavi/mayavi/>`_. To show contour lines in
+        Paraview one has to first convert Cell Data to Point Data using a
+        filter.
 
-        For ``.ovf``, ``.omf``, or ``.ohf`` extensions, the field is saved to
-        OVF file (:py:func:`~discretisedfield.io.field_to_ovf`). In that case,
-        the representation of data (``'bin4'``, ``'bin8'``, or ``'txt'``) is
-        passed as ``representation`` and if ``extend_scalar=True``, a scalar
-        field will be saved as a vector field. More precisely, if the value at
-        a cell is X, that cell will be saved as (X, 0, 0).
 
-        Finally, if the extension of ``filename`` is ``.hdf5``, HDF5 file will
-        be written (:py:func:`~discretisedfield.io.field_to_hdf5`).
+        For ``.ovf``, ``.omf``, or ``.ohf`` extensions, the field is saved to OVF file.
+        In that case, the representation of data (``'bin4'``, ``'bin8'``, or ``'txt'``)
+        is passed as ``representation`` and if ``extend_scalar=True``, a scalar field
+        will be saved as a vector field. More precisely, if the value at a cell is X,
+        that cell will be saved as (X, 0, 0).
+
+        Finally, if the extension of ``filename`` is ``.hdf5``, HDF5 file will be
+        written. The format of the HDF5 files was changed in discretisedfield version
+        0.70.0.
 
         Parameters
         ----------
@@ -2901,7 +2912,12 @@ class Field:
         save_subregions : bool, optional
 
             If ``True`` and subregions are defined for the mesh the subregions will be
-            saved to a json file. Defaults to ``True``.
+            saved to a json file. Defaults to ``True``. This has no effect for hdf5
+            files which always contain subregions in the file.
+
+        See also
+        --------
+        ~discretisedfield.Field.from_file
 
         Example
         -------
@@ -2944,17 +2960,10 @@ class Field:
         True
         >>> os.remove(filename)  # delete the file
 
-        See also
-        --------
-        ~discretisedfield.Field.from_file
-        ~discretisedfield.io.field_to_ovf
-        ~discretisedfield.io.field_to_vtk
-        ~discretisedfield.io.field_to_hdf5
-
         """
         filename = pathlib.Path(filename)
         if filename.suffix in [".omf", ".ovf", ".ohf"]:
-            io.field_to_ovf(
+            self._to_ovf(
                 self,
                 filename,
                 representation=representation,
@@ -2962,9 +2971,9 @@ class Field:
                 save_subregions=save_subregions,
             )
         elif filename.suffix in [".hdf5", ".h5"]:
-            io.field_to_hdf5(self, filename, save_subregions=save_subregions)
+            self._to_hdf5(self, filename)
         elif filename.suffix == ".vtk":
-            io.field_to_vtk(
+            self._to_vtk(
                 self,
                 filename,
                 representation=representation,
@@ -3070,6 +3079,23 @@ class Field:
         This method automatically determines the file type based on the file name
         extension.
 
+        For OVF the data representation (``txt``, ``bin4``, or ``bin8``) as well as the
+        OVF version (OVF1.0 or OVF2.0) are extracted from the file itself.
+
+        For VTK files this method reads the field from a VTK file defined on RECTILINEAR
+        GRID written by ``discretisedfield.to_file``. It expects the data do be
+        specified as cell data and one (vector) field with the name ``field``. A vector
+        field should also contain data for the individual components. The individual
+        component names are used as ``vdims`` for the new field. They must appear in the
+        form ``<componentname>-component``. Older versions of discretisedfield did write
+        the data as point data instead of cell data. This function can load new and old
+        files and automatically extracts the correct data without additional user input.
+
+        The file format for hdf5 files was changed in discretisedfield version 0.70.0.
+        Older versions of discretisedfield did only did not save all attributes (e.g. no
+        subregions). Reading old files is automatically handled internally. Subregions
+        can only be read from disk if they were saved in a separate json file.
+
         Parameters
         ----------
         filename : str
@@ -3081,6 +3107,10 @@ class Field:
         discretisedfield.Field
 
             Field read from the file.
+
+        See also
+        --------
+        ~discretisedfield.Field.to_file
 
         Example
         -------
@@ -3110,21 +3140,14 @@ class Field:
         >>> field
         Field(...)
 
-        See also
-        --------
-        ~discretisedfield.Field.to_file
-        ~discretisedfield.io.field_from_ovf
-        ~discretisedfield.io.field_from_vtk
-        ~discretisedfield.io.field_from_hdf5
-
         """
         filename = pathlib.Path(filename)
         if filename.suffix in [".omf", ".ovf", ".ohf", ".oef"]:
-            return io.field_from_ovf(filename)
+            return cls._from_ovf(filename)
         elif filename.suffix == ".vtk":
-            return io.field_from_vtk(filename)
+            return cls._from_vtk(filename)
         elif filename.suffix in [".hdf5", ".h5"]:
-            return io.field_from_hdf5(filename)
+            return cls._from_hdf5(filename)
         else:
             raise ValueError(
                 f"Reading file with extension {filename.suffix} not supported."
