@@ -522,44 +522,6 @@ class Field:
         )
 
     @property
-    def zero(self):
-        """Zero field.
-
-        This method returns a zero field defined on the same mesh and with the
-        same value dimension.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Zero field.
-
-        Examples
-        --------
-        1. Getting the zero-field.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 10, 13)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-        ...
-        >>> field = df.Field(mesh=mesh, nvdim=3, value=(3, -1, 1))
-        >>> zero_field = field.zero
-        >>> zero_field.mean()
-        array([0., 0., 0.])
-
-        """
-        return self.__class__(
-            self.mesh,
-            nvdim=self.nvdim,
-            value=0,
-            vdims=self.vdims,
-            unit=self.unit,
-        )
-
-    @property
     def orientation(self):
         """Orientation field.
 
