@@ -1951,7 +1951,12 @@ class Field:
         # discretisation cells exists in a specified direction than the order.
         # In that case, a zero field is returned.
         if self.mesh.n[direction_idx] <= order:
-            return self.zero
+            return self.__class__(
+                self.mesh,
+                nvdim=self.nvdim,
+                vdims=self.vdims,
+                unit=self.unit,
+            )
 
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
@@ -2037,6 +2042,7 @@ class Field:
             nvdim=self.nvdim,
             value=derivative_array,
             vdims=self.vdims,
+            unit=self.unit,
         )
 
     @property
