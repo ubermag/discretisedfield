@@ -1136,6 +1136,9 @@ class TestField:
         assert np.allclose(f.diff("x")((7, 5, 1)), (5, 1, 5))
         assert np.allclose(f.diff("y")((7, 5, 1)), (7, -2, 7))
         assert np.allclose(f.diff("z")((7, 5, 1)), (0, 0, 35))
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> grad(f) = (4, 4, 6)
@@ -1608,6 +1611,9 @@ class TestField:
         check_field(f.laplace)
         assert f.laplace.nvdim == 3
         assert np.allclose(f.laplace.mean(), (0, 0, 0))
+
+        f = df.Field(mesh, nvdim=1, value=5)
+        assert np.allclose(f.laplace.mean(), 0)
 
         # f(x, y, z) = x + y + z
         # -> laplace(f) = 0
