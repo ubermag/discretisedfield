@@ -29,7 +29,9 @@ class _MeshIO_HDF5:
 
         h5_mesh.create_dataset("subregion_names", data=list(self.subregions.keys()))
         h5_mesh_subregions = h5_mesh.create_dataset(
-            "subregions", (len(self.subregions), 2 * self.region.ndim)
+            "subregions",
+            (len(self.subregions), 2 * self.region.ndim),
+            dtype=self.region.pmin.dtype,
         )
         for i, subregion in enumerate(self.subregions.values()):
             h5_mesh_subregions[i] = [*subregion.pmin, *subregion.pmax]
