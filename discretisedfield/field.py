@@ -2021,6 +2021,7 @@ class Field:
             if self.mesh.n[direction_idx] < 3:
                 # The derivative is computed using forward/backward difference
                 # as the array is too small to use central difference.
+                # This is first order accurate.
                 derivative_array = np.gradient(
                     padded_array, self.mesh.cell[direction_idx], axis=direction_idx
                 )
