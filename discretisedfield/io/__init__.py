@@ -45,7 +45,7 @@ class _FieldIO(_FieldIOHDF5, _FieldIOOVF, _FieldIOVTK):
     ):
         """Write the field to OVF, HDF5, or VTK file.
 
-        For ``.ovf``, ``.omf``, or ``.ohf`` extensions the field is saved in an OVF
+        For ``.ovf``, ``.omf``, or ``.ohf`` extensions the field is saved in an OVF 2.0
         file. Possible values for `representation` of the data are ``'bin4'``,
         ``'bin8'``, or ``'txt'``. If ``extend_scalar=True``, a scalar field will be
         saved as a vector field. More precisely, if the value at a cell is X, that cell
