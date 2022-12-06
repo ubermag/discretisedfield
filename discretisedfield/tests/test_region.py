@@ -21,7 +21,7 @@ html_re = (
 
 
 class TestRegion:
-    def setup(self):
+    def setup_method(self):
         self.valid_args = [
             [(0, 0, 0), (5, 5, 5)],
             [(-1, 0, -3), (5, 7, 5)],

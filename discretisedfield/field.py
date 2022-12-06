@@ -523,44 +523,6 @@ class Field(_FieldIO):
         )
 
     @property
-    def zero(self):
-        """Zero field.
-
-        This method returns a zero field defined on the same mesh and with the
-        same value dimension.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Zero field.
-
-        Examples
-        --------
-        1. Getting the zero-field.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 10, 13)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-        ...
-        >>> field = df.Field(mesh=mesh, nvdim=3, value=(3, -1, 1))
-        >>> zero_field = field.zero
-        >>> zero_field.mean()
-        array([0., 0., 0.])
-
-        """
-        return self.__class__(
-            self.mesh,
-            nvdim=self.nvdim,
-            value=0,
-            vdims=self.vdims,
-            unit=self.unit,
-        )
-
-    @property
     def orientation(self):
         """Orientation field.
 
@@ -618,20 +580,20 @@ class Field(_FieldIO):
             vdims=self.vdims,
         )
 
-    def mean(self, axis=None):
+    def mean(self, direction=None):
         """Field mean.
 
-        It computes the arithmetic mean along the specified axis of the field
+        It computes the arithmetic mean along the specified direction of the field
         over the entire volume of the mesh. It returns a numpy array
         containing the mean values.
 
 
         Parameters
         ----------
-        axis
+        direction : None, string or tuple of strings, optional.
 
-            None or int or tuple of ints, optional. Axis or axes along which
-            the means are computed. The default is to
+            Directions along which
+            the mean is computed. The default is to
             compute the mean of the entire volume and return an array of the
             averaged vector components.
 
@@ -663,13 +625,78 @@ class Field(_FieldIO):
         >>> field.mean()
         array([55.])
 
-        """
-        if axis is not None:
-            raise NotImplementedError()
+        3. Computing the vector field mean along x direction.
 
-        return np.stack(
-            [self.array[..., i].mean(axis=axis) for i in range(self.nvdim)], axis=-1
-        )
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
+        >>> field.mean(direction='x')((2.5, 0.5, 0.5))
+        array([0., 0., 1.])
+
+        4. Computing the vector field mean along x and y directions.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
+        >>> field.mean(direction=['x', 'y'])((2.5, 2.5, 0.5))
+        array([0., 0., 1.])
+
+        """
+        # Mean over all directions implicitly.
+        if direction is None:
+            return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
+        elif isinstance(direction, (tuple, list)):
+            if not all(d in self.mesh.region.dims for d in direction):
+                raise ValueError(
+                    f"Invalid direction. Directions must be in {self.mesh.region.dims}."
+                )
+            elif len(direction) != len(set(direction)):
+                raise ValueError("Duplicate directions are not allowed.")
+            # Mean over all directions explicitly.
+            if sorted(direction) == sorted(self.mesh.region.dims):
+                return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
+            else:
+                # NOTE: this is a temporary solution until mesh.sel is implemented.
+                # Hence, this is not the most efficient way to do it.
+                mesh = self.mesh
+                array = self.array
+                axis = np.zeros(len(direction), dtype=int)
+                for i, d in enumerate(direction):
+                    mesh = mesh.plane(d)
+                    axis[i] = self.mesh.region.dims.index(d)
+                # Keepdims is needed for the current 3D behaviour
+                array = array.mean(axis=tuple(axis), keepdims=True)
+                return self.__class__(
+                    mesh, nvdim=self.nvdim, value=array, unit=self.unit
+                )
+        elif isinstance(direction, str):
+            if direction not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Invalid direction. Direction must be in {self.mesh.region.dims}."
+                )
+            axis = self.mesh.region.dims.index(direction)
+            return self.__class__(
+                self.mesh.plane(direction),
+                nvdim=self.nvdim,
+                value=self.array.mean(axis=axis, keepdims=True),
+                vdims=self.vdims,
+                unit=self.unit,
+            )
+        else:
+            raise ValueError(
+                "Direction must be None, string or tuple of strings, not"
+                f" {type(direction)}."
+            )
 
     @property
     def average(self):
@@ -1925,7 +1952,12 @@ class Field(_FieldIO):
         # discretisation cells exists in a specified direction than the order.
         # In that case, a zero field is returned.
         if self.mesh.n[direction_idx] <= order:
-            return self.zero
+            return self.__class__(
+                self.mesh,
+                nvdim=self.nvdim,
+                vdims=self.vdims,
+                unit=self.unit,
+            )
 
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
@@ -2011,6 +2043,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=derivative_array,
             vdims=self.vdims,
+            unit=self.unit,
         )
 
     @property
@@ -2746,49 +2779,9 @@ class Field(_FieldIO):
         )
 
     def project(self, direction):
-        """Projects the field along one direction and averages it out along
-        that direction.
-
-        One of the axes (``'x'``, ``'y'``, or ``'z'``) is passed and the field
-        is projected (averaged) along that direction. For example
-        ``project('z')`` would average the field in the z-direction and return
-        the field which has only one discretisation cell in the z-direction.
-
-        Parameters
-        ----------
-        direction : str
-
-            Direction along which the field is projected (``'x'``, ``'y'``, or
-            ``'z'``).
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            A projected field.
-
-        Example
-        -------
-        1. Projecting the field along a certain direction.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 2)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        ...
-        >>> field.project('z')
-        Field(...)
-        >>> field.project('z').mean()
-        array([1., 2., 3.])
-        >>> field.project('z').array.shape
-        (2, 2, 1, 3)
-
-        """
-        n_cells = self.mesh.n[dfu.axesdict[direction]]
-        return self.integrate(direction=direction) / n_cells
+        raise AttributeError(
+            "The project method has been deprecated. Use mean instead."
+        )
 
     def angle(self, vector):
         r"""Angle between two vectors.
