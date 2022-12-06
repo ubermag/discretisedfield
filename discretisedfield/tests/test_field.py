@@ -2031,16 +2031,22 @@ class TestField:
     @pytest.mark.parametrize(
         "nvdim,value", [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]
     )
-    def test_write_read_hdf5(self, nvdim, value, tmp_path):
+    @pytest.mark.parametrize(
+        "subregions",
+        [
+            {},
+            {
+                "sr1": df.Region(p1=(0, 0, 0), p2=(2e-12, 2e-12, 1e-12)),
+                "sr2": df.Region(p1=(3e-12, 0, 0), p2=(10e-12, 5e-12, 5e-12)),
+            },
+        ],
+    )
+    def test_write_read_hdf5(self, nvdim, value, subregions, tmp_path):
         filenames = ["testfile.hdf5", "testfile.h5"]
 
         p1 = (0, 0, 0)
         p2 = (10e-12, 5e-12, 5e-12)
         cell = (1e-12, 1e-12, 1e-12)
-        subregions = {
-            "sr1": df.Region(p1=p1, p2=(2e-12, 2e-12, 1e-12)),
-            "sr2": df.Region(p1=(3e-12, 0, 0), p2=p2),
-        }
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
         f = df.Field(mesh, nvdim=nvdim, value=value)
@@ -2055,6 +2061,7 @@ class TestField:
             f.to_file(tmpfilename, save_subregions=False)
             f_read = df.Field.from_file(tmpfilename)
             assert f == f_read
+            assert f.mesh.subregions == f_read.mesh.subregions  # not checked above
 
     def test_write_read_invalid_extension(self):
         filename = "testfile.jpg"
