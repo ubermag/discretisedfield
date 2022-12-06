@@ -33,7 +33,24 @@ class _RegionIO(_RegionIOHDF5):
 
 
 class _MeshIO(_MeshIOHDF5):
-    pass
+    def save_subregions(self, field_filename):
+        """Save subregions to json file."""
+        with pathlib.Path(self._subregion_filename(field_filename)).open(
+            mode="wt", encoding="utf-8"
+        ) as f:
+            json.dump(self.subregions, f, cls=df.Region._JSONEncoder)
+
+    def load_subregions(self, field_filename):
+        """Load subregions from json file."""
+        with pathlib.Path(self._subregion_filename(field_filename)).open(
+            mode="rt", encoding="utf-8"
+        ) as f:
+            subregions = json.load(f)
+        self.subregions = {key: df.Region(**val) for key, val in subregions.items()}
+
+    @staticmethod
+    def _subregion_filename(filename):
+        return f"{str(filename)}.subregions.json"
 
 
 class _FieldIO(_FieldIOHDF5, _FieldIOOVF, _FieldIOVTK):
