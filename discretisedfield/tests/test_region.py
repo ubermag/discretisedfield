@@ -160,12 +160,15 @@ class TestRegion:
         region.tolerance_factor = 1e-6
         assert np.isclose(region.tolerance_factor, 1e-6)
 
-    def test_contains(self):
+    @pytest.mark.parametrize("factor", [None, 1.0])
+    def test_contains(self, factor):
         p1 = (0, 10e-9, 0)
         p2 = (10e-9, 0, 20e-9)
         region = df.Region(p1=p1, p2=p2)
 
         assert isinstance(region, df.Region)
+        if factor is not None:
+            region.tolerance_factor = factor
         tol = np.min(region.edges) * region.tolerance_factor
         tol_in = tol / 2
         tol_out = tol * 2
@@ -177,26 +180,6 @@ class TestRegion:
         assert (10e-9 + tol_in, 10e-9, 10e-9) in region
         assert (10e-9, 10e-9 + tol_in, 10e-9) in region
         assert (1e-9, 3e-9, 20e-9 + tol_in) in region
-
-        assert (-tol_out, 0, 0) not in region
-        assert (0, -tol_out, 0) not in region
-        assert (0, 0, -tol_out) not in region
-        assert (10e-9 + tol_out, 10e-9, 20e-9) not in region
-        assert (10e-9, 10e-9 + tol_out, 20e-9) not in region
-        assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
-
-        region.tolerance_factor = 1.0
-        tol = np.min(region.edges) * region.tolerance_factor
-        tol_in = tol / 2
-        tol_out = tol * 2
-        assert (0, 0, 0) in region
-        assert (-tol_in, 0, 0) in region
-        assert (0, -tol_in, 0) in region
-        assert (0, 0, -tol_in) in region
-        assert (10e-9, 10e-9, 20e-9) in region
-        assert (10e-9 + tol_in, 10e-9, 20e-9) in region
-        assert (10e-9, 10e-9 + tol_in, 20e-9) in region
-        assert (10e-9, 10e-9, 20e-9 + tol_in) in region
 
         assert (-tol_out, 0, 0) not in region
         assert (0, -tol_out, 0) not in region
@@ -348,30 +331,26 @@ class TestRegion:
         region.units = None
         assert region.units == ("m", "m", "m")
 
-        units = ["m"]
-        with pytest.raises(ValueError):
+    @pytest.mark.parametrize(
+        "units, error",
+        [
+            (["m"], ValueError),
+            (["m", "m", "m", "m"], ValueError),
+            (["m", 1, "m"], TypeError),
+            ("m", TypeError),
+            (5, TypeError),
+        ],
+    )
+    def test_units_errors(self, units, error):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        region = df.Region(p1=p1, p2=p2)
+
+        with pytest.raises(error):
+            region.units = units
+
+        with pytest.raises(error):
             df.Region(p1=p1, p2=p2, units=units)
-
-        units = "m"
-        with pytest.raises(TypeError):
-            df.Region(p1=p1, p2=p2, units=units)
-
-        units = ["m", "m", "m", "m"]
-        with pytest.raises(ValueError):
-            df.Region(p1=p1, p2=p2, units=units)
-
-        units = ["m", 1, "m"]
-        with pytest.raises(TypeError):
-            df.Region(p1=p1, p2=p2, units=units)
-
-        with pytest.raises(TypeError):
-            region.units = 5
-
-        with pytest.raises(TypeError):
-            region.units = ["m", 1, "m"]
-
-        with pytest.raises(ValueError):
-            region.units = ["m", "m", "m", "m"]
 
     def test_ndim(self):
         p1 = (-50e-9, -50e-9, 0)
@@ -398,26 +377,24 @@ class TestRegion:
         region.dims = None
         assert region.dims == ("x", "y", "z")
 
-        dims = ["x", "y", "z", "t"]
-        with pytest.raises(ValueError):
+    @pytest.mark.parametrize(
+        "dims, error",
+        [
+            (["x", "y", "z", "t"], ValueError),
+            (["x", 1, "z"], TypeError)("x", TypeError),
+            (5, TypeError),
+        ],
+    )
+    def test_dims_errors(self, dims, error):
+        p1 = (-50e-9, -50e-9, 0)
+        p2 = (50e-9, 50e-9, 20e-9)
+        region = df.Region(p1=p1, p2=p2)
+
+        with pytest.raises(error):
+            region.dims = dims
+
+        with pytest.raises(error):
             df.Region(p1=p1, p2=p2, dims=dims)
-
-        dims = "x"
-        with pytest.raises(TypeError):
-            df.Region(p1=p1, p2=p2, dims=dims)
-
-        dims = ["x", 1, "z"]
-        with pytest.raises(TypeError):
-            df.Region(p1=p1, p2=p2, dims=dims)
-
-        with pytest.raises(TypeError):
-            region.dims = 5
-
-        with pytest.raises(ValueError):
-            region.dims = ["x", "y", "z", "t"]
-
-        with pytest.raises(TypeError):
-            region.dims = ["x", 1, "z"]
 
     def test_allclose(self):
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
