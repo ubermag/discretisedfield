@@ -123,8 +123,8 @@ class _FieldIO_HDF5:
     @classmethod
     def _h5_legacy_load_field(cls, h5_file: h5py.Group, filename):
         # reads old hdf5 files written prior to introducing ubermag-hdf5-file-version
-        p1 = h5_file["field/mesh/region/p1"]
-        p2 = h5_file["field/mesh/region/p2"]
+        p1 = tuple(h5_file["field/mesh/region/p1"])
+        p2 = tuple(h5_file["field/mesh/region/p2"])
         n = np.array(h5_file["field/mesh/n"]).tolist()
         dim = np.array(h5_file["field/dim"]).tolist()
         array = h5_file["field/array"]
