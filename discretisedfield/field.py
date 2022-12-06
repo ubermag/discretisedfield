@@ -4,7 +4,6 @@ import numbers
 import pathlib
 import warnings
 
-import findiff as fd
 import numpy as np
 import xarray as xr
 from vtkmodules.util import numpy_support as vns
@@ -522,44 +521,6 @@ class Field:
         )
 
     @property
-    def zero(self):
-        """Zero field.
-
-        This method returns a zero field defined on the same mesh and with the
-        same value dimension.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Zero field.
-
-        Examples
-        --------
-        1. Getting the zero-field.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (5, 10, 13)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-        ...
-        >>> field = df.Field(mesh=mesh, nvdim=3, value=(3, -1, 1))
-        >>> zero_field = field.zero
-        >>> zero_field.mean()
-        array([0., 0., 0.])
-
-        """
-        return self.__class__(
-            self.mesh,
-            nvdim=self.nvdim,
-            value=0,
-            vdims=self.vdims,
-            unit=self.unit,
-        )
-
-    @property
     def orientation(self):
         """Orientation field.
 
@@ -617,20 +578,20 @@ class Field:
             vdims=self.vdims,
         )
 
-    def mean(self, axis=None):
+    def mean(self, direction=None):
         """Field mean.
 
-        It computes the arithmetic mean along the specified axis of the field
+        It computes the arithmetic mean along the specified direction of the field
         over the entire volume of the mesh. It returns a numpy array
         containing the mean values.
 
 
         Parameters
         ----------
-        axis
+        direction : None, string or tuple of strings, optional.
 
-            None or int or tuple of ints, optional. Axis or axes along which
-            the means are computed. The default is to
+            Directions along which
+            the mean is computed. The default is to
             compute the mean of the entire volume and return an array of the
             averaged vector components.
 
@@ -662,13 +623,78 @@ class Field:
         >>> field.mean()
         array([55.])
 
-        """
-        if axis is not None:
-            raise NotImplementedError()
+        3. Computing the vector field mean along x direction.
 
-        return np.stack(
-            [self.array[..., i].mean(axis=axis) for i in range(self.nvdim)], axis=-1
-        )
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
+        >>> field.mean(direction='x')((2.5, 0.5, 0.5))
+        array([0., 0., 1.])
+
+        4. Computing the vector field mean along x and y directions.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
+        >>> field.mean(direction=['x', 'y'])((2.5, 2.5, 0.5))
+        array([0., 0., 1.])
+
+        """
+        # Mean over all directions implicitly.
+        if direction is None:
+            return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
+        elif isinstance(direction, (tuple, list)):
+            if not all(d in self.mesh.region.dims for d in direction):
+                raise ValueError(
+                    f"Invalid direction. Directions must be in {self.mesh.region.dims}."
+                )
+            elif len(direction) != len(set(direction)):
+                raise ValueError("Duplicate directions are not allowed.")
+            # Mean over all directions explicitly.
+            if sorted(direction) == sorted(self.mesh.region.dims):
+                return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
+            else:
+                # NOTE: this is a temporary solution until mesh.sel is implemented.
+                # Hence, this is not the most efficient way to do it.
+                mesh = self.mesh
+                array = self.array
+                axis = np.zeros(len(direction), dtype=int)
+                for i, d in enumerate(direction):
+                    mesh = mesh.plane(d)
+                    axis[i] = self.mesh.region.dims.index(d)
+                # Keepdims is needed for the current 3D behaviour
+                array = array.mean(axis=tuple(axis), keepdims=True)
+                return self.__class__(
+                    mesh, nvdim=self.nvdim, value=array, unit=self.unit
+                )
+        elif isinstance(direction, str):
+            if direction not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Invalid direction. Direction must be in {self.mesh.region.dims}."
+                )
+            axis = self.mesh.region.dims.index(direction)
+            return self.__class__(
+                self.mesh.plane(direction),
+                nvdim=self.nvdim,
+                value=self.array.mean(axis=axis, keepdims=True),
+                vdims=self.vdims,
+                unit=self.unit,
+            )
+        else:
+            raise ValueError(
+                "Direction must be None, string or tuple of strings, not"
+                f" {type(direction)}."
+            )
 
     @property
     def average(self):
@@ -1910,6 +1936,11 @@ class Field:
         array([0., 0., 0.])
 
         """
+        # We tried using FinDiff for calculating the derivatives, but there
+        # was a problem with the boundary conditions. We have implemented
+        # differential operators using slicing. This is not the most efficient
+        # way, and we should consider using ndimage.convolve in the future.
+
         if direction not in self.mesh.region.dims:
             raise ValueError(
                 f"Direction {direction} is not valid. "
@@ -1924,7 +1955,12 @@ class Field:
         # discretisation cells exists in a specified direction than the order.
         # In that case, a zero field is returned.
         if self.mesh.n[direction_idx] <= order:
-            return self.zero
+            return self.__class__(
+                self.mesh,
+                nvdim=self.nvdim,
+                vdims=self.vdims,
+                unit=self.unit,
+            )
 
         # Preparation (padding) for computing the derivative, depending on the
         # boundary conditions (PBC, Neumann, or no BC). Depending on the BC,
@@ -1950,28 +1986,39 @@ class Field:
 
         elif order == 1:
             if self.mesh.n[direction_idx] < 3:
-                # The derivative is computed using the central difference
-                # with forward/backward difference at the boundaries.
+                # The derivative is computed using forward/backward difference
+                # as the array is too small to use central difference.
+                # This is first order accurate.
                 derivative_array = np.gradient(
                     padded_array, self.mesh.cell[direction_idx], axis=direction_idx
                 )
             else:
-                # The derivative is computed using accuracy of 2 everywhere
-                diff_fd = fd.FinDiff(direction_idx, self.mesh.cell[direction_idx], 1)
-                derivative_array = diff_fd(padded_array)
-
-        elif order == 2:
-            if self.mesh.n[direction_idx] < 4:
-                # The derivative is computed using the central difference
-                # with forward/backward difference at the boundaries.
                 if self.mesh.bc == "":
+                    # If there is no boundary condition, the derivative is
+                    # computed using central difference in the interior and
+                    # forward/backward difference at the boundaries.
+                    # All of these finite difference methods are second-order
+                    # accurate.
+                    # These stencil coefficients are taken from FinDiff.
+                    # https://findiff.readthedocs.io/en/latest/
                     # Pad with specific values so that the same finite difference
                     # stencil can be used across the whole array
+                    # The example for forward difference is shown below with the
+                    # 0 index for the cell at the start of the array and the
+                    # p index for the for the padded cell which is positioned
+                    # at before index 0.
+                    #
                     # central difference = forward difference
-                    # f(1) + f(-1) - 2 f(0) = f(2) + f(0) - 2 f(1)
-                    # f(-1) = f(2) - 3 f(1) + 3f(0)
-
+                    # 0.5 * f(1) - 0.5 * f(p) = - 0.5 f(2) + 2 f(1) - 1.5 f(0)
+                    # f(p) = f(2) - 3 f(1) + 3 f(0)
                     def pad_fun(vector, pad_width, iaxis, kwargs):
+                        # The incides of the padded array is
+                        # Original array -> Padded array
+                        # f(p) -> f(0)
+                        # f(0) -> f(1)
+                        # f(1) -> f(2)
+                        # f(2) -> f(3)
+
                         if iaxis == direction_idx:
                             vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
                             vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
@@ -1983,21 +2030,70 @@ class Field:
                 index_p1 = dfu.assemble_index(
                     slice(None), 4, {direction_idx: slice(2, None)}
                 )
-                index_0 = dfu.assemble_index(
-                    slice(None), 4, {direction_idx: slice(1, -1)}
-                )
                 index_m1 = dfu.assemble_index(
                     slice(None), 4, {direction_idx: slice(None, -2)}
                 )
                 derivative_array = (
-                    padded_array[index_p1]
-                    - 2 * padded_array[index_0]
-                    + padded_array[index_m1]
-                ) / self.mesh.cell[direction_idx] ** 2
-            else:
-                # The derivative is computed using accuracy of 2 everywhere
-                diff_fd = fd.FinDiff(direction_idx, self.mesh.cell[direction_idx], 2)
-                derivative_array = diff_fd(padded_array)
+                    0.5 * padded_array[index_p1] - 0.5 * padded_array[index_m1]
+                ) / self.mesh.cell[direction_idx]
+
+        elif order == 2:
+            # The derivative is computed using the central difference
+            # with forward/backward difference at the boundaries.
+            if self.mesh.bc == "":
+                if self.mesh.n[direction_idx] < 4:
+                    # Pad with specific values so that the same finite difference
+                    # stencil can be used across the whole array
+                    # See comments in order == 1 for more details.
+                    # central difference = forward difference
+                    # f(1) + f(p) - 2 f(0) = f(2) + f(0) - 2 f(1)
+                    # f(p) = f(2) - 3 f(1) + 3f(0)
+
+                    def pad_fun(vector, pad_width, iaxis, kwargs):
+                        if iaxis == direction_idx:
+                            vector[0] = vector[3] - 3 * vector[2] + 3 * vector[1]
+                            vector[-1] = vector[-4] - 3 * vector[-3] + 3 * vector[-2]
+
+                else:
+                    # The derivative is computed using accuracy of 2 everywhere
+                    # Pad with specific values so that the same finite difference
+                    # stencil can be used across the whole array
+                    # See comments in order == 1 for more details.
+                    # central difference = forward difference
+                    # f(1) + f(p) - 2 f(0) =  - f(3) + 4 f(2) - 5 f(1) + 2 f(0)
+                    # f(p) = - f(3) + 4 f(2) - 6 f(1) + 4 f(0)
+
+                    def pad_fun(vector, pad_width, iaxis, kwargs):
+                        if iaxis == direction_idx:
+                            vector[0] = (
+                                -vector[4]
+                                + 4 * vector[3]
+                                - 6 * vector[2]
+                                + 4 * vector[1]
+                            )
+                            vector[-1] = (
+                                -vector[-5]
+                                + 4 * vector[-4]
+                                - 6 * vector[-3]
+                                + 4 * vector[-2]
+                            )
+
+                pad_width = [(0, 0)] * 4
+                pad_width[direction_idx] = (1, 1)
+                padded_array = np.pad(padded_array, pad_width, pad_fun)
+
+            index_p1 = dfu.assemble_index(
+                slice(None), 4, {direction_idx: slice(2, None)}
+            )
+            index_0 = dfu.assemble_index(slice(None), 4, {direction_idx: slice(1, -1)})
+            index_m1 = dfu.assemble_index(
+                slice(None), 4, {direction_idx: slice(None, -2)}
+            )
+            derivative_array = (
+                padded_array[index_p1]
+                - 2 * padded_array[index_0]
+                + padded_array[index_m1]
+            ) / self.mesh.cell[direction_idx] ** 2
 
         # Remove padded values (if any).
         if derivative_array.shape != self.array.shape:
@@ -2010,6 +2106,7 @@ class Field:
             nvdim=self.nvdim,
             value=derivative_array,
             vdims=self.vdims,
+            unit=self.unit,
         )
 
     @property
@@ -2745,49 +2842,9 @@ class Field:
         )
 
     def project(self, direction):
-        """Projects the field along one direction and averages it out along
-        that direction.
-
-        One of the axes (``'x'``, ``'y'``, or ``'z'``) is passed and the field
-        is projected (averaged) along that direction. For example
-        ``project('z')`` would average the field in the z-direction and return
-        the field which has only one discretisation cell in the z-direction.
-
-        Parameters
-        ----------
-        direction : str
-
-            Direction along which the field is projected (``'x'``, ``'y'``, or
-            ``'z'``).
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            A projected field.
-
-        Example
-        -------
-        1. Projecting the field along a certain direction.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (2, 2, 2)
-        >>> cell = (1, 1, 1)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        ...
-        >>> field.project('z')
-        Field(...)
-        >>> field.project('z').mean()
-        array([1., 2., 3.])
-        >>> field.project('z').array.shape
-        (2, 2, 1, 3)
-
-        """
-        n_cells = self.mesh.n[dfu.axesdict[direction]]
-        return self.integrate(direction=direction) / n_cells
+        raise AttributeError(
+            "The project method has been deprecated. Use mean instead."
+        )
 
     def angle(self, vector):
         r"""Angle between two vectors.

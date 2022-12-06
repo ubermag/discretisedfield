@@ -63,10 +63,10 @@ def check_hv(plot, types):
 
 
 class TestField:
-    def setup(self):
+    def setup_method(self):
         # Get meshes using valid arguments from TestMesh.
         tm = TestMesh()
-        tm.setup()
+        tm.setup_method()
         self.meshes = []
         for p1, p2, n, cell in tm.valid_args:
             region = df.Region(p1=p1, p2=p2)
@@ -414,26 +414,6 @@ class TestField:
         f.norm = 1  # Does not change the norm of zero field
         assert np.all(f.norm.array == 0)
 
-    def test_zero(self):
-        p1 = (0, 0, 0)
-        p2 = (10e-9, 10e-9, 10e-9)
-        n = (5, 5, 5)
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-
-        f = df.Field(mesh, nvdim=1, value=1e-6)
-        zf = f.zero
-
-        assert f.mesh == zf.mesh
-        assert f.nvdim == zf.nvdim
-        assert not np.any(zf.array)
-
-        f = df.Field(mesh, nvdim=3, value=(5, -7, 1e3))
-        zf = f.zero
-
-        assert f.mesh == zf.mesh
-        assert f.nvdim == zf.nvdim
-        assert not np.any(zf.array)
-
     def test_orientation(self):
         p1 = (-5e-9, -5e-9, -5e-9)
         p2 = (5e-9, 5e-9, 5e-9)
@@ -494,6 +474,41 @@ class TestField:
 
         f = df.Field(mesh, nvdim=3, value=(0, 1, 2))
         assert np.allclose(f.mean(), (0, 1, 2))
+
+        # Test with direction
+        assert np.allclose(f.mean(direction="x").array, (0, 1, 2))
+        assert np.allclose(f.mean(direction="y").array, (0, 1, 2))
+        assert np.allclose(f.mean(direction="z").array, (0, 1, 2))
+
+        with pytest.raises(ValueError):
+            f.mean(direction="a")
+
+        assert np.allclose(f.mean(direction=["x", "y"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=["y", "x"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=["x", "z"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=["y", "z"]).array, (0, 1, 2))
+        assert np.allclose(f.mean(direction=("y", "z")).array, (0, 1, 2))
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "a"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["a", "x"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["a", "b"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "x"])
+
+        assert np.allclose(f.mean(direction=["x", "y", "z"]), f.mean())
+        assert np.allclose(f.mean(direction=("x", "y", "z")), f.mean())
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "y", "z", "a"])
+
+        with pytest.raises(ValueError):
+            f.mean(direction=["x", "y", "z", "z"])
 
     def test_field_component(self):
         for mesh in self.meshes:
@@ -1121,6 +1136,9 @@ class TestField:
         assert np.allclose(f.diff("x")((7, 5, 1)), (5, 1, 5))
         assert np.allclose(f.diff("y")((7, 5, 1)), (7, -2, 7))
         assert np.allclose(f.diff("z")((7, 5, 1)), (0, 0, 35))
+        assert np.allclose(f.diff("x", order=2).mean(), 0)
+        assert np.allclose(f.diff("y", order=2).mean(), 0)
+        assert np.allclose(f.diff("z", order=2).mean(), 0)
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
         # -> grad(f) = (4, 4, 6)
@@ -1594,6 +1612,9 @@ class TestField:
         assert f.laplace.nvdim == 3
         assert np.allclose(f.laplace.mean(), (0, 0, 0))
 
+        f = df.Field(mesh, nvdim=1, value=5)
+        assert np.allclose(f.laplace.mean(), 0)
+
         # f(x, y, z) = x + y + z
         # -> laplace(f) = 0
         def value_fun(point):
@@ -1824,51 +1845,6 @@ class TestField:
         subregion = df.Region(p1=(1.1, 0, 0), p2=(9.9, 15, 5))
 
         assert f[subregion].array.shape == (2, 3, 1, 3)
-
-    def test_project(self):
-        p1 = (-5, -5, -5)
-        p2 = (5, 5, 5)
-        cell = (1, 1, 1)
-        mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-        # Constant scalar field
-        f = df.Field(mesh, nvdim=1, value=5)
-        check_field(f)
-        assert f.project("x").array.shape == (1, 10, 10, 1)
-        assert f.project("y").array.shape == (10, 1, 10, 1)
-        assert f.project("z").array.shape == (10, 10, 1, 1)
-
-        # Constant vector field
-        f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        assert f.project("x").array.shape == (1, 10, 10, 3)
-        assert f.project("y").array.shape == (10, 1, 10, 3)
-        assert f.project("z").array.shape == (10, 10, 1, 3)
-
-        # Spatially varying scalar field
-        def value_fun(point):
-            x, y, z = point
-            if z <= 0:
-                return 1
-            else:
-                return -1
-
-        f = df.Field(mesh, nvdim=1, value=value_fun)
-        sf = f.project("z")
-        assert sf.array.shape == (10, 10, 1, 1)
-        assert sf.mean() == 0
-
-        # Spatially varying vector field
-        def value_fun(point):
-            x, y, z = point
-            if z <= 0:
-                return (3, 2, 1)
-            else:
-                return (3, 2, -1)
-
-        f = df.Field(mesh, nvdim=3, value=value_fun)
-        sf = f.project("z")
-        assert sf.array.shape == (10, 10, 1, 3)
-        assert np.allclose(sf.mean(), (3, 2, 0))
 
     def test_angle(self):
         p1 = (0, 0, 0)
