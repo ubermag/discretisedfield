@@ -27,7 +27,8 @@ def region():
     return df.Region(p1=p1, p2=p2)
 
 
-class TestRegion:
+if True:  # temporary "fix" to keep the diff minimal; remove in the end
+
     @pytest.mark.parametrize(
         "p1, p2",
         [
@@ -41,7 +42,7 @@ class TestRegion:
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1 + 2j)],
         ],
     )
-    def test_init_valid_args(self, p1, p2):
+    def test_init_valid_args(p1, p2):
         region = df.Region(p1=p1, p2=p2)
         assert isinstance(region, df.Region)
         pattern = r"^Region\(pmin=\[.+\], pmax=\[.+\], dims=\[.+\], units=\[.+\]\)$"
@@ -56,7 +57,7 @@ class TestRegion:
             ["string", (5, 1, 1e-9), TypeError],
         ],
     )
-    def test_init_invalid_args(self, p1, p2, error):
+    def test_init_invalid_args(p1, p2, error):
         with pytest.raises(error):
             df.Region(p1=p1, p2=p2)
 
@@ -68,12 +69,12 @@ class TestRegion:
             [(10e9, 10e3, 0), (0.01e12, 11e3, 5)],
         ],
     )
-    def test_init_zero_edge_length(self, p1, p2):
+    def test_init_zero_edge_length(p1, p2):
         with pytest.raises(ValueError) as excinfo:
             df.Region(p1=p1, p2=p2)
             assert "is zero" in str(excinfo.value)
 
-    def test_pmin_pmax_edges_center_volume(self):
+    def test_pmin_pmax_edges_center_volume():
         p1 = (0, -4, 16.5)
         p2 = (15, -6, 11)
         region = df.Region(p1=p1, p2=p2)
@@ -107,7 +108,7 @@ class TestRegion:
         assert np.allclose(region.center, (-4.25e-9, 7.5e-9, -5e-9))
         assert abs(region.volume - 1425 * (1e-9**3)) < 1e-30
 
-    def test_repr(self):
+    def test_repr():
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         region = df.Region(p1=p1, p2=p2)
@@ -136,7 +137,7 @@ class TestRegion:
         assert repr(region) == rstr
         assert re.match(html_re, region._repr_html_())
 
-    def test_eq(self):
+    def test_eq():
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10))
@@ -149,7 +150,7 @@ class TestRegion:
         assert region1 != region3
         assert not region1 == region3
 
-    def test_tolerance_factor(self):
+    def test_tolerance_factor():
         p1 = (0, 0, 0)
         p2 = (100e-9, 100e-9, 100e-9)
         region = df.Region(p1=p1, p2=p2)
@@ -161,7 +162,7 @@ class TestRegion:
         assert np.isclose(region.tolerance_factor, 1e-6)
 
     @pytest.mark.parametrize("factor", [None, 1.0])
-    def test_contains(self, factor):
+    def test_contains(factor):
         p1 = (0, 10e-9, 0)
         p2 = (10e-9, 0, 20e-9)
         region = df.Region(p1=p1, p2=p2)
@@ -188,7 +189,7 @@ class TestRegion:
         assert (10e-9, 10e-9 + tol_out, 20e-9) not in region
         assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
 
-    def test_or(self):
+    def test_or():
         # x-direction
         p11 = (0, 0, 0)
         p12 = (10e-9, 50e-9, 20e-9)
@@ -259,10 +260,10 @@ class TestRegion:
             [df.Region(p1=(0, 0, 0), p2=(1e-5, 1e-4, 1e-5)), 1e-6],
         ],
     )
-    def test_multiplier(self, region, multiplier):
+    def test_multiplier(region, multiplier):
         assert region.multiplier == multiplier
 
-    def test_scale(self, region):
+    def test_scale(region):
         res = region.scale(2)
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (-100e-9, -100e-9, 0))
@@ -295,7 +296,7 @@ class TestRegion:
         with pytest.raises(TypeError):
             res = region.scale("two")
 
-    def test_translate(self, region):
+    def test_translate(region):
         res = region.translate((50e-9, 0, -10e-9))
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (0, -50e-9, -10e-9))
@@ -313,7 +314,7 @@ class TestRegion:
         with pytest.raises(TypeError):
             region.translate(3)
 
-    def test_units(self):
+    def test_units():
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         units = ["a", "b", "c"]
@@ -341,7 +342,7 @@ class TestRegion:
             (5, TypeError),
         ],
     )
-    def test_units_errors(self, units, error):
+    def test_units_errors(units, error):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2)
@@ -352,7 +353,7 @@ class TestRegion:
         with pytest.raises(error):
             df.Region(p1=p1, p2=p2, units=units)
 
-    def test_ndim(self):
+    def test_ndim():
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         ndim = 3
@@ -360,7 +361,7 @@ class TestRegion:
         assert isinstance(region, df.Region)
         assert region.ndim == ndim
 
-    def test_dims(self):
+    def test_dims():
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         dims = ["a", "b", "c"]
@@ -386,7 +387,7 @@ class TestRegion:
             (5, TypeError),
         ],
     )
-    def test_dims_errors(self, dims, error):
+    def test_dims_errors(dims, error):
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2)
@@ -397,7 +398,7 @@ class TestRegion:
         with pytest.raises(error):
             df.Region(p1=p1, p2=p2, dims=dims)
 
-    def test_allclose(self):
+    def test_allclose():
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region2 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
         region3 = df.Region(p1=(3, 3, 3), p2=(10, 10, 10))
@@ -410,7 +411,7 @@ class TestRegion:
         assert not region2.allclose(region3)
 
     # unit test for setting pmin and pmax
-    def test_pmin_pmax(self):
+    def test_pmin_pmax():
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2)
@@ -420,7 +421,7 @@ class TestRegion:
         with pytest.raises(AttributeError):
             region.pmax = (100e-9, 100e-9, 40e-9)
 
-    def test_mpl(self):
+    def test_mpl():
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2)
@@ -445,7 +446,7 @@ class TestRegion:
 
         plt.close("all")
 
-    def test_k3d(self):
+    def test_k3d():
         p1 = (-50e9, -50e9, 0)
         p2 = (50e9, 50e9, 20e9)
         region = df.Region(p1=p1, p2=p2)
