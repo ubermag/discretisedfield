@@ -7,7 +7,7 @@ import numpy as np
 import discretisedfield as df
 
 
-class _RegionIOHDF5:
+class _RegionIO_HDF5:
     _h5_attrs = ("pmin", "pmax", "dims", "ndim", "units", "tolerance_factor")
 
     def _h5_save(self, h5_region):
@@ -19,7 +19,7 @@ class _RegionIOHDF5:
         return cls(**{attr: h5_region.attrs[attr] for attr in cls._h5_attrs})
 
 
-class _MeshIOHDF5:
+class _MeshIO_HDF5:
     def _h5_save(self, h5_mesh):
         h5_region = h5_mesh.create_group("region")
         self.region._h5_save(h5_region)
@@ -46,7 +46,7 @@ class _MeshIOHDF5:
         return cls(region=region, n=h5_mesh.attrs["n"], subregions=subregions)
 
 
-class _FieldIOHDF5:
+class _FieldIO_HDF5:
     def _to_hdf5(self, filename):
         utc_now = datetime.datetime.utcnow().isoformat(timespec="seconds")
         with h5py.File(filename, "w") as f:

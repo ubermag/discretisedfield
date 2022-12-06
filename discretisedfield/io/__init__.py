@@ -12,12 +12,12 @@ import numpy as np
 
 import discretisedfield as df
 
-from .hdf5 import _FieldIOHDF5, _MeshIOHDF5, _RegionIOHDF5
-from .ovf import _FieldIOOVF
-from .vtk import _FieldIOVTK
+from .hdf5 import _FieldIO_HDF5, _MeshIOHDF5, _RegionIO_HDF5
+from .ovf import _FieldIO_OVF
+from .vtk import _FieldIO_VTK
 
 
-class _RegionIO(_RegionIOHDF5):
+class _RegionIO(_RegionIO_HDF5):
     class _JSONEncoder(json.JSONEncoder):
         def default(self, o):
             if isinstance(o, df.Region):
@@ -53,7 +53,7 @@ class _MeshIO(_MeshIOHDF5):
         return f"{str(filename)}.subregions.json"
 
 
-class _FieldIO(_FieldIOHDF5, _FieldIOOVF, _FieldIOVTK):
+class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
     def write(self, *args, **kwargs):
         raise AttributeError("This method has been renamed to 'to_file'.")
 

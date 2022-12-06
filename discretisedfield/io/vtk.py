@@ -9,7 +9,7 @@ from vtkmodules.vtkIOXML import vtkXMLRectilinearGridReader, vtkXMLRectilinearGr
 import discretisedfield as df
 
 
-class _FieldIOVTK:
+class _FieldIO_VTK:
     def _to_vtk(self, filename, representation="bin", save_subregions=True):
         filename = pathlib.Path(filename)
         if representation == "xml":

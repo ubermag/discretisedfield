@@ -12,7 +12,7 @@ import pandas as pd
 import discretisedfield as df
 
 
-class _FieldIOOVF:
+class _FieldIO_OVF:
     def _to_ovf(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
