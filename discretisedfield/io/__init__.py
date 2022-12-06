@@ -12,7 +12,7 @@ import numpy as np
 
 import discretisedfield as df
 
-from .hdf5 import _FieldIO_HDF5, _MeshIOHDF5, _RegionIO_HDF5
+from .hdf5 import _FieldIO_HDF5, _MeshIO_HDF5, _RegionIO_HDF5
 from .ovf import _FieldIO_OVF
 from .vtk import _FieldIO_VTK
 
@@ -32,7 +32,7 @@ class _RegionIO(_RegionIO_HDF5):
                 super().default(o)
 
 
-class _MeshIO(_MeshIOHDF5):
+class _MeshIO(_MeshIO_HDF5):
     def save_subregions(self, field_filename):
         """Save subregions to json file."""
         with pathlib.Path(self._subregion_filename(field_filename)).open(
