@@ -381,7 +381,8 @@ class TestRegion:
         "dims, error",
         [
             (["x", "y", "z", "t"], ValueError),
-            (["x", 1, "z"], TypeError)("x", TypeError),
+            (["x", 1, "z"], TypeError),
+            ("x", TypeError),
             (5, TypeError),
         ],
     )
