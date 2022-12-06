@@ -93,9 +93,7 @@ class _FieldIOHDF5:
 
     @classmethod
     def _h5_load_field(cls, h5_field, data_location):
-        vdims = h5_field.attrs["vdims"]
-        if isinstance(vdims, str) and vdims == "None":
-            vdims = None
+        vdims = h5_field.attrs["vdims"] if h5_field.attrs["nvdim"] > 1 else None
         return cls(
             mesh=df.Mesh._h5_load(h5_field["mesh"]),
             nvdim=h5_field.attrs["nvdim"],
