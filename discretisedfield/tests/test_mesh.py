@@ -135,34 +135,22 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         assert isinstance(mesh, df.Mesh)
         assert mesh.subregions == subregions
 
-        # Invalid subregions.
+    @pytest.mark.parametrize(
+        "subregions, error",
+        [
+            ({"r1": df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 10e-9))}, ValueError),
+            ({"r1": df.Region(p1=(5e-9, 0, 0), p2=(45e-9, 50e-9, 10e-9))}, ValueError),
+            ({"r1": df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 200e-9))}, ValueError),
+            ({1: df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 200e-9))}, TypeError),
+            ({"r1": "top half of the region"}, TypeError),
+        ],
+    )
+    def test_invalid_subregions(subregions, error):
         p1 = (0, 0, 0)
         p2 = (100e-9, 50e-9, 10e-9)
         cell = (10e-9, 10e-9, 10e-9)
 
-        # Subregion not an aggregate.
-        subregions = {"r1": df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 10e-9))}
-        with pytest.raises(ValueError):
-            df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-
-        # Subregion not aligned.
-        subregions = {"r1": df.Region(p1=(5e-9, 0, 0), p2=(45e-9, 50e-9, 10e-9))}
-        with pytest.raises(ValueError):
-            df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-
-        # Subregion not in the mesh region.
-        subregions = {"r1": df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 200e-9))}
-        with pytest.raises(ValueError):
-            df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-
-        with pytest.raises(TypeError):
-            df.Mesh(p1=p1, p2=p2, cell=cell, subregions=["a", "b"])
-
-        subregions = {1: df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 200e-9))}
-        with pytest.raises(TypeError):
-            df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-        subregions = {"r1": "top half of the region"}
-        with pytest.raises(TypeError):
+        with pytest.raises(error):
             df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
     def test_init_with_region_and_points():
@@ -183,30 +171,33 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         with pytest.raises(ValueError):
             df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
 
-    def test_region_not_aggregate_of_cell():
-        args = [
+    @pytest.mark.parametrize(
+        "p1, p2, cell",
+        [
             [(0, 100e-9, 1e-9), (150e-9, 120e-9, 6e-9), (4e-9, 1e-9, 1e-9)],
             [(0, 100e-9, 0), (150e-9, 104e-9, 1e-9), (2e-9, 1.5e-9, 0.1e-9)],
             [(10e9, 10e3, 0), (11e9, 11e3, 5), (1e9, 1e3, 1.5)],
-        ]
+        ],
+    )
+    def test_region_not_aggregate_of_cell(p1, p2, cell):
+        with pytest.raises(ValueError):
+            df.Mesh(p1=p1, p2=p2, cell=cell)
 
-        for p1, p2, cell in args:
-            with pytest.raises(ValueError):
-                df.Mesh(p1=p1, p2=p2, cell=cell)
-
-    def test_cell_greater_than_domain():
-        p1 = (0, 0, 0)
-        p2 = (1e-9, 1e-9, 1e-9)
-        args = [
+    @pytest.mark.parametrize(
+        "cell",
+        [
             (2e-9, 1e-9, 1e-9),
             (1e-9, 2e-9, 1e-9),
             (1e-9, 1e-9, 2e-9),
             (1e-9, 5e-9, 0.1e-9),
-        ]
+        ],
+    )
+    def test_cell_greater_than_domain(cell):
+        p1 = (0, 0, 0)
+        p2 = (1e-9, 1e-9, 1e-9)
 
-        for cell in args:
-            with pytest.raises(ValueError):
-                df.Mesh(p1=p1, p2=p2, cell=cell)
+        with pytest.raises(ValueError):
+            df.Mesh(p1=p1, p2=p2, cell=cell)
 
     def test_cell_n():
         p1 = (0, 0, 0)
