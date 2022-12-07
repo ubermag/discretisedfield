@@ -926,11 +926,11 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
         assert isinstance(mesh, df.Mesh)
 
-        mesh.save_subregions(str(tmp_path / "mesh.json"))
+        mesh.save_subregions(tmp_path / "mesh.json")
 
         mesh2 = df.Mesh(p1=p1, p2=p2, cell=cell)
         assert mesh2.subregions == {}
-        mesh2.load_subregions(str(tmp_path / "mesh.json"))
+        mesh2.load_subregions(tmp_path / "mesh.json")
         assert mesh2.subregions == subregions
 
     def test_coordinate_field(valid_mesh):
