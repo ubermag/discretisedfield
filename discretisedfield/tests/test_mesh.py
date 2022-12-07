@@ -48,12 +48,13 @@ def valid_mesh(request):
     return df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
 
 
-class TestMesh:
+if True:  # temporary "fix" to keep the diff minimal; remove in the end
+
     @pytest.mark.parametrize(
         "p1, p2, n, cell",
         valid_args,
     )
-    def test_init_valid_args(self, p1, p2, n, cell):
+    def test_init_valid_args(p1, p2, n, cell):
         mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
         assert isinstance(mesh1, df.Mesh)
 
@@ -115,14 +116,14 @@ class TestMesh:
             [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 16e-9), None, 2 + 2j, TypeError],
         ],
     )
-    def test_init_invalid_args(self, p1, p2, n, cell, error):
+    def test_init_invalid_args(p1, p2, n, cell, error):
         with pytest.raises(error):
             df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
 
         with pytest.raises(error):
             df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
 
-    def test_init_subregions(self):
+    def test_init_subregions():
         p1 = (0, 0, 0)
         p2 = (100, 50, 10)
         cell = (10, 10, 10)
@@ -164,7 +165,7 @@ class TestMesh:
         with pytest.raises(TypeError):
             df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
-    def test_init_with_region_and_points(self):
+    def test_init_with_region_and_points():
         p1 = (0, -4, 16.5)
         p2 = (15, 10.1, 11)
         region = df.Region(p1=p1, p2=p2)
@@ -173,7 +174,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             df.Mesh(region=region, p1=p1, p2=p2, n=n)
 
-    def test_init_with_n_and_cell(self):
+    def test_init_with_n_and_cell():
         p1 = (0, -4, 16.5)
         p2 = (15, 10.1, 11)
         n = (15, 141, 11)
@@ -182,7 +183,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
 
-    def test_region_not_aggregate_of_cell(self):
+    def test_region_not_aggregate_of_cell():
         args = [
             [(0, 100e-9, 1e-9), (150e-9, 120e-9, 6e-9), (4e-9, 1e-9, 1e-9)],
             [(0, 100e-9, 0), (150e-9, 104e-9, 1e-9), (2e-9, 1.5e-9, 0.1e-9)],
@@ -193,7 +194,7 @@ class TestMesh:
             with pytest.raises(ValueError):
                 df.Mesh(p1=p1, p2=p2, cell=cell)
 
-    def test_cell_greater_than_domain(self):
+    def test_cell_greater_than_domain():
         p1 = (0, 0, 0)
         p2 = (1e-9, 1e-9, 1e-9)
         args = [
@@ -207,7 +208,7 @@ class TestMesh:
             with pytest.raises(ValueError):
                 df.Mesh(p1=p1, p2=p2, cell=cell)
 
-    def test_cell_n(self):
+    def test_cell_n():
         p1 = (0, 0, 0)
         p2 = (20e-9, 20e-9, 20e-9)
         cell = (2e-9, 4e-9, 1e-9)
@@ -246,7 +247,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             df.Mesh(p1=p1, p2=p2, cell=cell, n=n)
 
-    def test_bc(self):
+    def test_bc():
         p1 = (0, 0, 0)
         p2 = (20e-9, 20e-9, 20e-9)
         region = df.Region(p1=p1, p2=p2, dims=["x", "y", "z"])
@@ -264,7 +265,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             df.Mesh(region=region, cell=cell, bc="xxz")
 
-    def test_len(self):
+    def test_len():
         p1 = (0, 0, 0)
         p2 = (5, 4, 3)
         cell = (1, 1, 1)
@@ -273,7 +274,7 @@ class TestMesh:
 
         assert len(mesh) == 5 * 4 * 3
 
-    def test_indices_coordinates_iter(self):
+    def test_indices_coordinates_iter():
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         n = (5, 5, 5)
@@ -296,7 +297,7 @@ class TestMesh:
             assert all(isinstance(i, numbers.Real) for i in point)
             assert all([1 <= i <= 9 for i in point])
 
-    def test_eq(self):
+    def test_eq():
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         n = (1, 1, 1)
@@ -322,7 +323,7 @@ class TestMesh:
         assert mesh1 != mesh3
         assert mesh2 != mesh3
 
-    def test_allclose(self):
+    def test_allclose():
         p1 = (0, 0, 0)
         p2 = (1e-8, 1e-8, 1e-8)
         n = (1, 1, 1)
@@ -356,7 +357,7 @@ class TestMesh:
         with pytest.raises(TypeError):
             mesh1.allclose(mesh3, rtol="1", atol=atol)
 
-    def test_repr(self):
+    def test_repr():
         p1 = (-1, -4, 11)
         p2 = (15, 10.1, 12.5)
         cell = (1, 0.1, 0.5)
@@ -372,7 +373,7 @@ class TestMesh:
         assert repr(mesh) == rstr
         assert re.match(html_re, mesh._repr_html_(), re.DOTALL)
 
-    def test_index2point(self):
+    def test_index2point():
         p1 = (15, -4, 12.5)
         p2 = (-1, 10.1, 11)
         cell = (1, 0.1, 0.5)
@@ -405,7 +406,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.index2point((0, 0, 3))
 
-    def test_point2index(self):
+    def test_point2index():
         p1 = (-10e-9, -5e-9, 10e-9)
         p2 = (10e-9, 5e-9, 0)
         cell = (1e-9, 5e-9, 1e-9)
@@ -447,7 +448,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.point2index((0, 0, 10e-9 + tol))
 
-    def test_index2point_point2index_mutually_inverse(self):
+    def test_index2point_point2index_mutually_inverse():
         p1 = (15, -4, 12.5)
         p2 = (-1, 10.1, 11)
         cell = (1, 0.1, 0.5)
@@ -460,7 +461,7 @@ class TestMesh:
         for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]:
             assert mesh.point2index(mesh.index2point(i)) == i
 
-    def test_region2slice(self):
+    def test_region2slice():
         p1 = (0, 0, -2)
         p2 = (4, 5, 4)
         cell = (1, 1, 1)
@@ -484,7 +485,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.region2slices(df.Region(p1=(-1, 3, -1), p2=(3, 5, 0)))
 
-    def test_points(self):
+    def test_points():
         p1 = (0, 0, 4)
         p2 = (10, 6, 0)
         cell = (2, 2, 1)
@@ -494,7 +495,7 @@ class TestMesh:
         assert np.allclose(mesh.points.y, [1.0, 3.0, 5.0])
         assert np.allclose(mesh.points.z, [0.5, 1.5, 2.5, 3.5])
 
-    def test_vertices(self):
+    def test_vertices():
         p1 = (0, 1, 0)
         p2 = (5, 0, 6)
         cell = (1, 1, 2)
@@ -504,7 +505,7 @@ class TestMesh:
         assert np.allclose(mesh.vertices.y, [0.0, 1.0])
         assert np.allclose(mesh.vertices.z, [0.0, 2.0, 4.0, 6.0])
 
-    def test_line(self):
+    def test_line():
         p1 = (0, 0, 0)
         p2 = (10, 10, 10)
         cell = (1, 1, 1)
@@ -531,7 +532,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             line = list(mesh.line(p1=(0, 0, 0), p2=(11, 0, 0), n=100))
 
-    def test_or(self):
+    def test_or():
         p1 = (-50e-9, -25e-9, 0)
         p2 = (50e-9, 25e-9, 5e-9)
         cell = (5e-9, 5e-9, 5e-9)
@@ -558,7 +559,7 @@ class TestMesh:
             assert mesh1 | mesh4 is False
             assert mesh1 | mesh1 is True
 
-    def test_is_aligned(self):
+    def test_is_aligned():
         p1 = (-50e-9, -25e-9, 0)
         p2 = (50e-9, 25e-9, 5e-9)
         cell = (5e-9, 5e-9, 5e-9)
@@ -607,7 +608,7 @@ class TestMesh:
         with pytest.raises(TypeError):
             mesh5.is_aligned(mesh6, "1e-12")
 
-    def test_getitem(self):
+    def test_getitem():
         # Subregions disctionary
         p1 = (0, 0, 0)
         p2 = (100, 50, 10)
@@ -672,7 +673,7 @@ class TestMesh:
                 df.Region(p1=(11e-9, 22e-9, 1e-9), p2=(200e-9, 79e-9, 14e-9))
             ]
 
-    def test_pad(self):
+    def test_pad():
         p1 = (-1, 2, 7)
         p2 = (5, 9, 4)
         cell = (1, 1, 1)
@@ -699,7 +700,7 @@ class TestMesh:
         assert np.allclose(padded_mesh.region.pmax, (6, 10, 8))
         assert np.all(padded_mesh.n == (8, 9, 5))
 
-    def test_getattr(self):
+    def test_getattr():
         p1 = (0, 0, 0)
         p2 = (100e-9, 80e-9, 10e-9)
         cell = (1e-9, 5e-9, 10e-9)
@@ -712,7 +713,7 @@ class TestMesh:
         with pytest.raises(AttributeError):
             mesh.dk
 
-    def test_dir(self):
+    def test_dir():
         p1 = (0, 0, 0)
         p2 = (100e-9, 80e-9, 10e-9)
         cell = (1e-9, 5e-9, 10e-9)
@@ -720,7 +721,7 @@ class TestMesh:
 
         assert all([i in dir(mesh) for i in ["dx", "dy", "dz"]])
 
-    def test_dV(self):
+    def test_dV():
         p1 = (0, 0, 0)
         p2 = (100, 80, 10)
         cell = (1, 2, 2.5)
@@ -728,7 +729,7 @@ class TestMesh:
 
         assert mesh.dV == 5
 
-    def test_dS(self):
+    def test_dS():
         p1 = (0, 0, 0)
         p2 = (100, 80, 10)
         cell = (1, 2, 2.5)
@@ -742,7 +743,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.dS
 
-    def test_mpl(self, valid_mesh):
+    def test_mpl(valid_mesh):
         valid_mesh.mpl()
         valid_mesh.mpl(box_aspect=[1, 2, 3])
 
@@ -753,11 +754,11 @@ class TestMesh:
 
         plt.close("all")
 
-    def test_k3d(self, valid_mesh):
+    def test_k3d(valid_mesh):
         valid_mesh.k3d()
         valid_mesh.plane("x").k3d()
 
-    def test_k3d_mpl_subregions(self):
+    def test_k3d_mpl_subregions():
         p1 = (0, 0, 0)
         p2 = (100, 80, 10)
         cell = (100, 5, 10)
@@ -786,7 +787,7 @@ class TestMesh:
         # k3d tests
         mesh.k3d.subregions()
 
-    def test_scale(self):
+    def test_scale():
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         cell = (1e-9, 1e-9, 2e-9)
@@ -843,7 +844,7 @@ class TestMesh:
         assert np.allclose(mesh.subregions["sr2"].pmin, (-100e-9, -200e-9, 0))
         assert np.allclose(mesh.subregions["sr2"].pmax, (100e-9, 200e-9, 5e-9))
 
-    def test_translate(self):
+    def test_translate():
         p1 = (-50e-9, -50e-9, 0)
         p2 = (50e-9, 50e-9, 20e-9)
         cell = (1e-9, 1e-9, 2e-9)
@@ -898,7 +899,7 @@ class TestMesh:
         assert np.allclose(res.subregions["sr2"].pmin, (0, -50e-9, -10e-9))
         assert np.allclose(res.subregions["sr2"].pmax, (100e-9, 50e-9, 10e-9))
 
-    def test_slider(self):
+    def test_slider():
         p1 = (-10e-9, -5e-9, 10e-9)
         p2 = (10e-9, 5e-9, 0)
         cell = (1e-9, 2.5e-9, 1e-9)
@@ -914,7 +915,7 @@ class TestMesh:
         z_slider = mesh.slider("z", multiplier=1e3)
         assert isinstance(z_slider, ipywidgets.SelectionSlider)
 
-    def test_axis_selector(self):
+    def test_axis_selector():
         p1 = (-10e-9, -5e-9, 10e-9)
         p2 = (10e-9, 5e-9, 0)
         cell = (1e-9, 2.5e-9, 1e-9)
@@ -933,7 +934,7 @@ class TestMesh:
         with pytest.raises(ValueError):
             axis_widget = mesh.axis_selector(widget="something")
 
-    def test_save_load_subregions(self, tmp_path):
+    def test_save_load_subregions(tmp_path):
         p1 = (0, 0, 0)
         p2 = (100, 50, 10)
         cell = (10, 10, 10)
@@ -951,7 +952,7 @@ class TestMesh:
         mesh2.load_subregions(str(tmp_path / "mesh.json"))
         assert mesh2.subregions == subregions
 
-    def test_coordinate_field(self, valid_mesh):
+    def test_coordinate_field(valid_mesh):
         cfield = valid_mesh.coordinate_field()
         assert isinstance(cfield, df.Field)
         manually = df.Field(valid_mesh, dim=3, value=lambda p: p)
@@ -961,7 +962,7 @@ class TestMesh:
         assert np.allclose(cfield.array[0, 0, :, 2], valid_mesh.points.z)
 
     # ------------------ sel method test draft -----------------------------------------
-    # def test_sel(self):
+    # def test_sel():
     #     p1 = (0, 0, 0)
     #     p2 = (20, 20, 20)
     #     cell = (2, 2, 2)
