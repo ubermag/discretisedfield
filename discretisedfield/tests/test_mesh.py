@@ -22,72 +22,105 @@ html_re = (
     r"</ul>"
 )
 
+valid_args = [
+    [(0, 0, 0), (5, 5, 5), [1, 1, 1], None],
+    [(-1, 0, -3), (5, 7, 5), None, (1, 1, 1)],
+    [(0, 0, 0), (5e-9, 5e-9, 5e-9), None, (1e-9, 1e-9, 1e-9)],
+    [(0, 0, 0), (5e-9, 5e-9, 5e-9), (5, 5, 5), None],
+    [
+        (-1.5e-9, -5e-9, 0),
+        (1.5e-9, -15e-9, -10e-9),
+        None,
+        (1.5e-9, 0.5e-9, 10e-9),
+    ],
+    [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9), (3, 10, 2), None],
+    [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), None, (0.5e-9, 1e-9, 5e-9)],
+    [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), (5, 5, 7), None],
+    [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), None, (0.5e-6, 2e-6, 2.5e-6)],
+    [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), (1, 10, 20), None],
+    [(0, 125e-9, 0), (500e-9, 0, -3e-9), None, (25e-9, 25e-9, 3e-9)],
+]
+
+
+@pytest.fixture(params=valid_args)
+def valid_mesh(request):
+    p1, p2, n, cell = request.param
+    return df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+
 
 class TestMesh:
-    def setup_method(self):
-        self.valid_args = [
-            [(0, 0, 0), (5, 5, 5), [1, 1, 1], None],
-            [(-1, 0, -3), (5, 7, 5), None, (1, 1, 1)],
-            [(0, 0, 0), (5e-9, 5e-9, 5e-9), None, (1e-9, 1e-9, 1e-9)],
-            [(0, 0, 0), (5e-9, 5e-9, 5e-9), (5, 5, 5), None],
+    @pytest.mark.parametrize(
+        "p1, p2, n, cell",
+        valid_args,
+    )
+    def test_init_valid_args(self, p1, p2, n, cell):
+        mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
+        assert isinstance(mesh1, df.Mesh)
+
+        assert isinstance(mesh1.region, df.Region)
+        if n is not None:
+            assert np.all(mesh1.n == n)
+        if cell is not None:
+            assert np.allclose(mesh1.cell, cell)
+
+        mesh2 = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+        assert isinstance(mesh2, df.Mesh)
+
+        assert isinstance(mesh2.region, df.Region)
+        if n is not None:
+            assert np.all(mesh2.n == n)
+        if cell is not None:
+            assert np.allclose(mesh2.cell, cell)
+
+        assert mesh1 == mesh2
+
+    @pytest.mark.parametrize(
+        "p1, p2, n, cell, error",
+        [
+            [(0, 0, 0), (5, 5, 5), None, (-1, 1, 1), ValueError],  # FIXME
+            [(0, 0, 0), (5, 5, 5), (-1, 1, 1), None, ValueError],  # FIXME
+            [(0, 0, 0), (5, 5, 5), "n", None, TypeError],
+            [(0, 0, 0), (5, 5, 5), (1, 2, 2 + 1j), None, TypeError],
+            [(0, 0, 0), (5, 5, 5), (1, 2, "2"), None, TypeError],
+            [("1", 0, 0), (1, 1, 1), None, (0, 0, 1e-9), TypeError],
+            [
+                (-1.5e-9, -5e-9, "a"),
+                (1.5e-9, 15e-9, 16e-9),
+                None,
+                (5, 1, -1e-9),
+                TypeError,
+            ],
+            [
+                (-1.5e-9, -5e-9, "a"),
+                (1.5e-9, 15e-9, 16e-9),
+                (5, 1, -1),
+                None,
+                TypeError,
+            ],
             [
                 (-1.5e-9, -5e-9, 0),
-                (1.5e-9, -15e-9, -10e-9),
+                (1.5e-9, 16e-9),
                 None,
-                (1.5e-9, 0.5e-9, 10e-9),
+                (0.1e-9, 0.1e-9, 1e-9),
+                ValueError,
             ],
-            [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9), (3, 10, 2), None],
-            [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), None, (0.5e-9, 1e-9, 5e-9)],
-            [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), (5, 5, 7), None],
-            [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), None, (0.5e-6, 2e-6, 2.5e-6)],
-            [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), (1, 10, 20), None],
-            [(0, 125e-9, 0), (500e-9, 0, -3e-9), None, (25e-9, 25e-9, 3e-9)],
-        ]
+            [
+                (-1.5e-9, -5e-9, 0),
+                (1.5e-9, 15e-9, 1 + 2j),
+                None,
+                (5, 1, 1e-9),
+                TypeError,
+            ],
+            ["string", (5, 1, 1e-9), None, "string", TypeError],
+            [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 16e-9), None, 2 + 2j, TypeError],
+        ],
+    )
+    def test_init_invalid_args(self, p1, p2, n, cell, error):
+        with pytest.raises(error):
+            df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
 
-        self.invalid_args = [
-            [(0, 0, 0), (5, 5, 5), None, (-1, 1, 1)],
-            [(0, 0, 0), (5, 5, 5), (-1, 1, 1), None],
-            [(0, 0, 0), (5, 5, 5), "n", None],
-            [(0, 0, 0), (5, 5, 5), (1, 2, 2 + 1j), None],
-            [(0, 0, 0), (5, 5, 5), (1, 2, "2"), None],
-            [("1", 0, 0), (1, 1, 1), None, (0, 0, 1e-9)],
-            [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9), None, (5, 1, -1e-9)],
-            [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9), (5, 1, -1), None],
-            [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9), None, (0.1e-9, 0.1e-9, 1e-9)],
-            [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 1 + 2j), None, (5, 1, 1e-9)],
-            ["string", (5, 1, 1e-9), None, "string"],
-            [(-1.5e-9, -5e-9, 0), (1.5e-9, 15e-9, 16e-9), None, 2 + 2j],
-        ]
-
-    def test_init_valid_args(self):
-        for p1, p2, n, cell in self.valid_args:
-            mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
-            assert isinstance(mesh1, df.Mesh)
-
-            assert isinstance(mesh1.region, df.Region)
-            if n is not None:
-                assert np.all(mesh1.n == n)
-            if cell is not None:
-                assert np.allclose(mesh1.cell, cell)
-
-            mesh2 = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-            assert isinstance(mesh2, df.Mesh)
-
-            assert isinstance(mesh2.region, df.Region)
-            if n is not None:
-                assert np.all(mesh2.n == n)
-            if cell is not None:
-                assert np.allclose(mesh2.cell, cell)
-
-            assert mesh1 == mesh2
-
-    def test_init_invalid_args(self):
-        for p1, p2, n, cell in self.invalid_args:
-            with pytest.raises((TypeError, ValueError)):
-                df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
-
-            with pytest.raises((TypeError, ValueError)):
-                df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+        with pytest.raises(error):
+            df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
 
     def test_init_subregions(self):
         p1 = (0, 0, 0)
@@ -709,24 +742,20 @@ class TestMesh:
         with pytest.raises(ValueError):
             mesh.dS
 
-    def test_mpl(self):
-        for p1, p2, n, cell in self.valid_args:
-            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
-            mesh.mpl()
-            mesh.mpl(box_aspect=[1, 2, 3])
+    def test_mpl(self, valid_mesh):
+        valid_mesh.mpl()
+        valid_mesh.mpl(box_aspect=[1, 2, 3])
 
-            filename = "figure.pdf"
-            with tempfile.TemporaryDirectory() as tmpdir:
-                tmpfilename = os.path.join(tmpdir, filename)
-                mesh.mpl(filename=tmpfilename)
+        filename = "figure.pdf"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmpfilename = os.path.join(tmpdir, filename)
+            valid_mesh.mpl(filename=tmpfilename)
 
-            plt.close("all")
+        plt.close("all")
 
-    def test_k3d(self):
-        for p1, p2, n, cell in self.valid_args:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-            mesh.k3d()
-            mesh.plane("x").k3d()
+    def test_k3d(self, valid_mesh):
+        valid_mesh.k3d()
+        valid_mesh.plane("x").k3d()
 
     def test_k3d_mpl_subregions(self):
         p1 = (0, 0, 0)
@@ -922,16 +951,14 @@ class TestMesh:
         mesh2.load_subregions(str(tmp_path / "mesh.json"))
         assert mesh2.subregions == subregions
 
-    def test_coordinate_field(self):
-        for p1, p2, n, cell in self.valid_args:
-            mesh = df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-            cfield = mesh.coordinate_field()
-            assert isinstance(cfield, df.Field)
-            manually = df.Field(mesh, dim=3, value=lambda p: p)
-            assert cfield.allclose(manually)
-            assert np.allclose(cfield.array[:, 0, 0, 0], mesh.points.x)
-            assert np.allclose(cfield.array[0, :, 0, 1], mesh.points.y)
-            assert np.allclose(cfield.array[0, 0, :, 2], mesh.points.z)
+    def test_coordinate_field(self, valid_mesh):
+        cfield = valid_mesh.coordinate_field()
+        assert isinstance(cfield, df.Field)
+        manually = df.Field(valid_mesh, dim=3, value=lambda p: p)
+        assert cfield.allclose(manually)
+        assert np.allclose(cfield.array[:, 0, 0, 0], valid_mesh.points.x)
+        assert np.allclose(cfield.array[0, :, 0, 1], valid_mesh.points.y)
+        assert np.allclose(cfield.array[0, 0, :, 2], valid_mesh.points.z)
 
     # ------------------ sel method test draft -----------------------------------------
     # def test_sel(self):
