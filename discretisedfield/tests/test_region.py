@@ -21,7 +21,7 @@ html_re = (
 
 
 @pytest.fixture
-def region():
+def test_region():
     p1 = (-50e-9, -50e-9, 0)
     p2 = (50e-9, 50e-9, 20e-9)
     return df.Region(p1=p1, p2=p2)
@@ -260,59 +260,59 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
             [df.Region(p1=(0, 0, 0), p2=(1e-5, 1e-4, 1e-5)), 1e-6],
         ],
     )
-    def test_multiplier(region, multiplier):
-        assert region.multiplier == multiplier
+    def test_multiplier(test_region, multiplier):
+        assert test_region.multiplier == multiplier
 
-    def test_scale(region):
-        res = region.scale(2)
+    def test_scale(test_region):
+        res = test_region.scale(2)
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (-100e-9, -100e-9, 0))
         assert np.allclose(res.pmax, (100e-9, 100e-9, 40e-9))
         assert np.allclose(res.edges, (200e-9, 200e-9, 40e-9))
 
-        res = region.scale(0.5)
+        res = test_region.scale(0.5)
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (-25e-9, -25e-9, 0))
         assert np.allclose(res.pmax, (25e-9, 25e-9, 10e-9))
         assert np.allclose(res.edges, (50e-9, 50e-9, 10e-9))
 
-        res = region.scale((1, 0.1, 4))
+        res = test_region.scale((1, 0.1, 4))
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (-50e-9, -5e-9, 0))
         assert np.allclose(res.pmax, (50e-9, 5e-9, 80e-9))
         assert np.allclose(res.edges, (100e-9, 10e-9, 80e-9))
 
-        region.scale(2, inplace=True)
-        assert np.allclose(region.pmin, (-100e-9, -100e-9, 0))
-        assert np.allclose(region.pmax, (100e-9, 100e-9, 40e-9))
-        assert np.allclose(region.edges, (200e-9, 200e-9, 40e-9))
+        test_region.scale(2, inplace=True)
+        assert np.allclose(test_region.pmin, (-100e-9, -100e-9, 0))
+        assert np.allclose(test_region.pmax, (100e-9, 100e-9, 40e-9))
+        assert np.allclose(test_region.edges, (200e-9, 200e-9, 40e-9))
 
         with pytest.raises(ValueError):
-            region.scale((1, 2))
+            test_region.scale((1, 2))
 
         with pytest.raises(TypeError):
-            region.scale((1, "two", 3))
+            test_region.scale((1, "two", 3))
 
         with pytest.raises(TypeError):
-            res = region.scale("two")
+            res = test_region.scale("two")
 
-    def test_translate(region):
-        res = region.translate((50e-9, 0, -10e-9))
+    def test_translate(test_region):
+        res = test_region.translate((50e-9, 0, -10e-9))
         assert isinstance(res, df.Region)
         assert np.allclose(res.pmin, (0, -50e-9, -10e-9))
         assert np.allclose(res.pmax, (100e-9, 50e-9, 10e-9))
         assert np.allclose(res.edges, (100e-9, 100e-9, 20e-9))
 
-        region.translate((50e-9, 0, -10e-9), inplace=True)
-        assert np.allclose(region.pmin, (0, -50e-9, -10e-9))
-        assert np.allclose(region.pmax, (100e-9, 50e-9, 10e-9))
-        assert np.allclose(region.edges, (100e-9, 100e-9, 20e-9))
+        test_region.translate((50e-9, 0, -10e-9), inplace=True)
+        assert np.allclose(test_region.pmin, (0, -50e-9, -10e-9))
+        assert np.allclose(test_region.pmax, (100e-9, 50e-9, 10e-9))
+        assert np.allclose(test_region.edges, (100e-9, 100e-9, 20e-9))
 
         with pytest.raises(ValueError):
-            region.translate((3, 3))
+            test_region.translate((3, 3))
 
         with pytest.raises(TypeError):
-            region.translate(3)
+            test_region.translate(3)
 
     def test_units():
         p1 = (-50e-9, -50e-9, 0)
@@ -342,24 +342,17 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
             (5, TypeError),
         ],
     )
-    def test_units_errors(units, error):
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+    def test_units_errors(test_region, units, error):
+        with pytest.raises(error):
+            test_region.units = units
 
         with pytest.raises(error):
-            region.units = units
+            df.Region(p1=test_region.p1, p2=test_region.p2, units=units)
 
-        with pytest.raises(error):
-            df.Region(p1=p1, p2=p2, units=units)
-
-    def test_ndim():
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
+    def test_ndim(test_region):
         ndim = 3
-        region = df.Region(p1=p1, p2=p2)
-        assert isinstance(region, df.Region)
-        assert region.ndim == ndim
+        assert isinstance(test_region, df.Region)
+        assert test_region.ndim == ndim
 
     def test_dims():
         p1 = (-50e-9, -50e-9, 0)
@@ -387,16 +380,12 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
             (5, TypeError),
         ],
     )
-    def test_dims_errors(dims, error):
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+    def test_dims_errors(test_region, dims, error):
+        with pytest.raises(error):
+            test_region.dims = dims
 
         with pytest.raises(error):
-            region.dims = dims
-
-        with pytest.raises(error):
-            df.Region(p1=p1, p2=p2, dims=dims)
+            df.Region(p1=test_region.p1, p2=test_region.p2, dims=dims)
 
     def test_allclose():
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
@@ -411,26 +400,17 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         assert not region2.allclose(region3)
 
     # unit test for setting pmin and pmax
-    def test_pmin_pmax():
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
+    def test_pmin_pmax(test_region):
         with pytest.raises(AttributeError):
-            region.pmin = (-100e-9, -100e-9, 0)
+            test_region.pmin = (-100e-9, -100e-9, 0)
 
         with pytest.raises(AttributeError):
-            region.pmax = (100e-9, 100e-9, 40e-9)
+            test_region.pmax = (100e-9, 100e-9, 40e-9)
 
-    def test_mpl():
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
-        region = df.Region(p1=p1, p2=p2)
-
-        assert isinstance(region, df.Region)
-
+    def test_mpl(test_region):
         # Check if it runs.
-        region.mpl()
-        region.mpl(
+        test_region.mpl()
+        test_region.mpl(
             figsize=(10, 10),
             multiplier=1e-9,
             color=plot_util.cp_hex[1],
@@ -442,17 +422,11 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         filename = "figure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            region.mpl(filename=tmpfilename)
+            test_region.mpl(filename=tmpfilename)
 
         plt.close("all")
 
-    def test_k3d():
-        p1 = (-50e9, -50e9, 0)
-        p2 = (50e9, 50e9, 20e9)
-        region = df.Region(p1=p1, p2=p2)
-
-        assert isinstance(region, df.Region)
-
+    def test_k3d(test_region):
         # Check if runs.
-        region.k3d()
-        region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
+        test_region.k3d()
+        test_region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
