@@ -1,7 +1,5 @@
 import numbers
-import os
 import re
-import tempfile
 import types
 
 import ipywidgets
@@ -734,22 +732,18 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         with pytest.raises(ValueError):
             mesh.dS
 
-    def test_mpl(valid_mesh):
+    def test_mpl(valid_mesh, tmp_path):
         valid_mesh.mpl()
         valid_mesh.mpl(box_aspect=[1, 2, 3])
 
-        filename = "figure.pdf"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpfilename = os.path.join(tmpdir, filename)
-            valid_mesh.mpl(filename=tmpfilename)
-
+        valid_mesh.mpl(filename=tmp_path / "figure.pdf")
         plt.close("all")
 
     def test_k3d(valid_mesh):
         valid_mesh.k3d()
         valid_mesh.plane("x").k3d()
 
-    def test_k3d_mpl_subregions():
+    def test_k3d_mpl_subregions(tmp_path):
         p1 = (0, 0, 0)
         p2 = (100, 80, 10)
         cell = (100, 5, 10)
@@ -768,11 +762,7 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         # matplotlib tests
         mesh.mpl.subregions(box_aspect=(1, 1, 1), show_region=True)
 
-        filename = "figure.pdf"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmpfilename = os.path.join(tmpdir, filename)
-            mesh.mpl.subregions(filename=tmpfilename)
-
+        mesh.mpl.subregions(filename=tmp_path / "figure.pdf")
         plt.close("all")
 
         # k3d tests
