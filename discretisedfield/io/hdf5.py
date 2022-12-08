@@ -77,7 +77,7 @@ class _FieldIO_HDF5:
         self.mesh._h5_save(h5_mesh)
 
         h5_field.attrs["nvdim"] = self.nvdim
-        h5_field.attrs["vdims"] = self.vdims
+        h5_field.attrs["vdims"] = self.vdims if self.vdims is not None else "None"
         h5_field.attrs["unit"] = str(self.unit)
 
     def _h5_save_data(self, h5_field_data: h5py.Dataset, location):
@@ -110,11 +110,14 @@ class _FieldIO_HDF5:
         (e.g. in a time series). The correct part of the array can be selected with
         `data_location`.
         """
+        vdims = h5_field.attrs["vdims"]
+        if isinstance(vdims, str) and vdims == "None":
+            vdims = None
         return cls(
             mesh=df.Mesh._h5_load(h5_field["mesh"]),
             nvdim=h5_field.attrs["nvdim"],
             value=h5_field["array"][data_location],
-            vdims=h5_field.attrs["vdims"],
+            vdims=vdims,
             unit=h5_field.attrs["unit"],
         )
 

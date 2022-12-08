@@ -326,9 +326,7 @@ class Field(_FieldIO):
     @vdims.setter
     def vdims(self, vdims):
         if vdims is None:
-            if self.nvdim == 1:
-                vdims = []
-            elif 2 <= self.nvdim <= 3:
+            if 2 <= self.nvdim <= 3:
                 vdims = ["x", "y", "z"][: self.nvdim]
             elif self.nvdim > 3:
                 vdims = [f"v{i}" for i in range(self.nvdim)]
@@ -337,7 +335,7 @@ class Field(_FieldIO):
         ):
             raise TypeError(f"vdims must be a sequence of strings, not {type(vdims)=}.")
         elif len(vdims) == 0:
-            vdims = list(vdims)
+            vdims = None
         else:
             if len(vdims) != self.nvdim:
                 raise ValueError(f"Number of vdims does not match {self.nvdim=}.")
