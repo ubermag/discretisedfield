@@ -325,7 +325,20 @@ class Field(_FieldIO):
 
     @vdims.setter
     def vdims(self, vdims):
-        if vdims is not None:
+        if vdims is None:
+            if self.nvdim == 1:
+                vdims = []
+            elif 2 <= self.nvdim <= 3:
+                vdims = ["x", "y", "z"][: self.nvdim]
+            elif self.nvdim > 3:
+                vdims = [f"v{i}" for i in range(self.nvdim)]
+        elif not isinstance(vdims, (list, tuple, np.ndarray)) or any(
+            not isinstance(vdim, str) for vdim in vdims
+        ):
+            raise TypeError(f"vdims must be a sequence of strings, not {type(vdims)=}.")
+        elif len(vdims) == 0:
+            vdims = list(vdims)
+        else:
             if len(vdims) != self.nvdim:
                 raise ValueError(f"Number of vdims does not match {self.nvdim=}.")
             if len(vdims) != len(set(vdims)):
@@ -338,17 +351,9 @@ class Field(_FieldIO):
                             f"Component name {c} is already "
                             "used by a different method/property."
                         )
-            self._vdims = list(vdims)
-        else:
-            if 2 <= self.nvdim <= 3:
-                vdims = ["x", "y", "z"][: self.nvdim]
-            elif self.nvdim > 3:
-                warnings.warn(
-                    "Component labels must be specified for "
-                    f"{self.nvdim=} fields to get access to individual"
-                    " vector components."
-                )
-            self._vdims = vdims
+            vdims = list(vdims)
+
+        self._vdims = vdims
 
     @property
     def array(self):
