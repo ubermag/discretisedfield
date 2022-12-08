@@ -124,8 +124,8 @@ def test_field():
         mesh, nvdim=3, value=value_fun, norm=norm_fun, vdims=["a", "b", "c"]
     )
 
-class TestField:
 
+class TestField:
     @pytest.mark.parametrize("value, dtype", consts + sfuncs)
     def test_init_scalar_valid_args(self, valid_mesh, value, dtype):
         f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
@@ -309,9 +309,9 @@ class TestField:
         check_field(fab)
         assert fab.vdims == ["a", "b"]
 
-    def test_unit(self):
-        assert self.pf.unit is None
-        mesh = self.pf.mesh
+    def test_unit(self, test_field):
+        assert test_field.unit is None
+        mesh = test_field.mesh
         field = df.Field(mesh, nvdim=3, value=(1, 2, 3), unit="A/m")
         check_field(field)
         assert field.unit == "A/m"
@@ -1776,21 +1776,21 @@ class TestField:
         assert len(list(plane.mesh)) == 9  # 3 x 3 cells
         assert len(list(plane)) == 9
 
-    def test_resample(self):
-        resampled = self.pf.resample(n=(10, 15, 20))
+    def test_resample(self, test_field):
+        resampled = test_field.resample(n=(10, 15, 20))
         assert np.allclose(resampled.mesh.n, (10, 15, 20))
-        assert resampled.mesh.region == self.pf.mesh.region
-        pmin = self.pf.mesh.region.pmin
-        assert np.allclose(resampled(pmin), self.pf(pmin))
+        assert resampled.mesh.region == test_field.mesh.region
+        pmin = test_field.mesh.region.pmin
+        assert np.allclose(resampled(pmin), test_field(pmin))
 
-        resampled = self.pf.resample(n=(1, 1, 1))
+        resampled = test_field.resample(n=(1, 1, 1))
         assert np.allclose(resampled.mesh.n, (1, 1, 1))
-        assert resampled.mesh.region == self.pf.mesh.region
-        pmin = self.pf.mesh.region.pmin
-        assert np.allclose(resampled(pmin), self.pf((0, 0, 0)))
+        assert resampled.mesh.region == test_field.mesh.region
+        pmin = test_field.mesh.region.pmin
+        assert np.allclose(resampled(pmin), test_field((0, 0, 0)))
 
         with pytest.raises(TypeError):
-            self.pf.resample((0, 1, 2))
+            test_field.resample((0, 1, 2))
 
     def test_getitem(self):
         p1 = (0, 0, 0)
@@ -2103,22 +2103,22 @@ class TestField:
         # plane along z removes rfftn-freq axis => needs ifftn
         assert f.integrate("z").allclose(f.rfftn.plane(z=0).ifftn.real)
 
-    def test_mpl_scalar(self):
+    def test_mpl_scalar(self, test_field):
         # No axes
-        for comp in self.pf.vdims:
-            getattr(self.pf, comp).plane("x", n=(3, 4)).mpl.scalar()
+        for comp in test_field.vdims:
+            getattr(test_field, comp).plane("x", n=(3, 4)).mpl.scalar()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        for comp in self.pf.vdims:
-            getattr(self.pf, comp).plane("x", n=(3, 4)).mpl.scalar(ax=ax)
+        for comp in test_field.vdims:
+            getattr(test_field, comp).plane("x", n=(3, 4)).mpl.scalar(ax=ax)
 
         # All arguments
-        for comp in self.pf.vdims:
-            getattr(self.pf, comp).plane("x").mpl.scalar(
+        for comp in test_field.vdims:
+            getattr(test_field, comp).plane("x").mpl.scalar(
                 figsize=(10, 10),
-                filter_field=self.pf.norm,
+                filter_field=test_field.norm,
                 colorbar=True,
                 colorbar_label="something",
                 multiplier=1e-6,
@@ -2130,19 +2130,19 @@ class TestField:
         filename = "testfigure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.a.plane("x", n=(3, 4)).mpl.scalar(filename=tmpfilename)
+            test_field.a.plane("x", n=(3, 4)).mpl.scalar(filename=tmpfilename)
 
         # Exceptions
         with pytest.raises(ValueError):
-            self.pf.a.mpl.scalar()  # not sliced
+            test_field.a.mpl.scalar()  # not sliced
         with pytest.raises(ValueError):
-            self.pf.plane("z").mpl.scalar()  # vector field
+            test_field.plane("z").mpl.scalar()  # vector field
         with pytest.raises(ValueError):
             # wrong filter field
-            self.pf.a.plane("z").mpl.scalar(filter_field=self.pf)
+            test_field.a.plane("z").mpl.scalar(filter_field=test_field)
         plt.close("all")
 
-    def test_mpl_lightess(self):
+    def test_mpl_lightess(self, test_field):
         filenames = ["skyrmion.omf", "skyrmion-disk.omf"]
         for i in filenames:
             filename = os.path.join(os.path.dirname(__file__), "test_sample", i)
@@ -2165,28 +2165,28 @@ class TestField:
 
         # Exceptions
         with pytest.raises(ValueError):
-            self.pf.mpl.lightness()  # not sliced
+            test_field.mpl.lightness()  # not sliced
         with pytest.raises(ValueError):
             # wrong filter field
-            self.pf.plane("z").mpl.lightness(filter_field=self.pf)
+            test_field.plane("z").mpl.lightness(filter_field=test_field)
         with pytest.raises(ValueError):
             # wrong lightness field
-            self.pf.plane("z").mpl.lightness(lightness_field=self.pf)
+            test_field.plane("z").mpl.lightness(lightness_field=test_field)
         plt.close("all")
 
-    def test_mpl_vector(self):
+    def test_mpl_vector(self, test_field):
         # No axes
-        self.pf.plane("x", n=(3, 4)).mpl.vector()
+        test_field.plane("x", n=(3, 4)).mpl.vector()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        self.pf.plane("x", n=(3, 4)).mpl.vector(ax=ax)
+        test_field.plane("x", n=(3, 4)).mpl.vector(ax=ax)
 
         # All arguments
-        self.pf.plane("x").mpl.vector(
+        test_field.plane("x").mpl.vector(
             figsize=(10, 10),
-            color_field=self.pf.b,
+            color_field=test_field.b,
             colorbar=True,
             colorbar_label="something",
             multiplier=1e-6,
@@ -2195,7 +2195,7 @@ class TestField:
         )
 
         # 2d vector field
-        plane_2d = self.pf.plane("z").a << self.pf.plane("z").b
+        plane_2d = test_field.plane("z").a << test_field.plane("z").b
         plane_2d.vdims = ["a", "b"]
         with pytest.raises(ValueError):
             plane_2d.mpl.vector()
@@ -2209,32 +2209,32 @@ class TestField:
         filename = "testfigure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane("x", n=(3, 4)).mpl.vector(filename=tmpfilename)
+            test_field.plane("x", n=(3, 4)).mpl.vector(filename=tmpfilename)
 
         # Exceptions
         with pytest.raises(ValueError):
-            self.pf.mpl.vector()  # not sliced
+            test_field.mpl.vector()  # not sliced
         with pytest.raises(ValueError):
-            self.pf.b.plane("z").mpl.vector()  # scalar field
+            test_field.b.plane("z").mpl.vector()  # scalar field
         with pytest.raises(ValueError):
             # wrong color field
-            self.pf.plane("z").mpl.vector(color_field=self.pf)
+            test_field.plane("z").mpl.vector(color_field=test_field)
 
         plt.close("all")
 
-    def test_mpl_contour(self):
+    def test_mpl_contour(self, test_field):
         # No axes
-        self.pf.plane("z").c.mpl.contour()
+        test_field.plane("z").c.mpl.contour()
 
         # Axes
         fig, ax = plt.subplots()
-        self.pf.plane("z").c.mpl.contour(ax=ax)
+        test_field.plane("z").c.mpl.contour(ax=ax)
 
         # All arguments
-        self.pf.plane("z").c.mpl.contour(
+        test_field.plane("z").c.mpl.contour(
             figsize=(10, 10),
             multiplier=1e-6,
-            filter_field=self.pf.norm,
+            filter_field=test_field.norm,
             colorbar=True,
             colorbar_label="something",
         )
@@ -2243,37 +2243,37 @@ class TestField:
         filename = "testfigure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane("z").c.mpl.contour(filename=tmpfilename)
+            test_field.plane("z").c.mpl.contour(filename=tmpfilename)
 
         # Exceptions
         with pytest.raises(ValueError):
-            self.pf.mpl.contour()  # not sliced
+            test_field.mpl.contour()  # not sliced
         with pytest.raises(ValueError):
-            self.pf.plane("z").mpl.contour()  # vector field
+            test_field.plane("z").mpl.contour()  # vector field
         with pytest.raises(ValueError):
             # wrong filter field
-            self.pf.plane("z").c.mpl.contour(filter_field=self.pf)
+            test_field.plane("z").c.mpl.contour(filter_field=test_field)
 
         plt.close("all")
 
-    def test_mpl(self):
+    def test_mpl(self, test_field):
         # No axes
-        self.pf.plane("x", n=(3, 4)).mpl()
+        test_field.plane("x", n=(3, 4)).mpl()
 
         # Axes
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        self.pf.a.plane("x", n=(3, 4)).mpl(ax=ax)
+        test_field.a.plane("x", n=(3, 4)).mpl(ax=ax)
 
-        self.pf.c.plane("x").mpl(
+        test_field.c.plane("x").mpl(
             figsize=(12, 6),
             scalar_kw={
-                "filter_field": self.pf.norm,
+                "filter_field": test_field.norm,
                 "colorbar_label": "scalar",
                 "cmap": "twilight",
             },
             vector_kw={
-                "color_field": self.pf.b,
+                "color_field": test_field.b,
                 "use_color": True,
                 "colorbar": True,
                 "colorbar_label": "vector",
@@ -2287,115 +2287,116 @@ class TestField:
         filename = "testfigure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            self.pf.plane("x", n=(3, 4)).mpl(filename=tmpfilename)
+            test_field.plane("x", n=(3, 4)).mpl(filename=tmpfilename)
 
         # Exception
         with pytest.raises(ValueError):
-            self.pf.mpl()
+            test_field.mpl()
 
         plt.close("all")
 
-    def test_hv_scalar(self):
+    def test_hv_scalar(self, test_field):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             normal = (set("xyz") - set(kdims)).pop()
             kdim_str = f"[{','.join(kdims)}]"
             check_hv(
-                self.pf.hv.scalar(kdims=kdims),
+                test_field.hv.scalar(kdims=kdims),
                 [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
             )
             check_hv(
-                self.pf.hv.scalar(kdims=kdims, roi=self.pf.norm),
+                test_field.hv.scalar(kdims=kdims, roi=test_field.norm),
                 [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
             )
 
             # additional kwargs and plane
             check_hv(
-                self.pf.plane(normal).hv.scalar(kdims=kdims, clim=(-1, 1)),
+                test_field.plane(normal).hv.scalar(kdims=kdims, clim=(-1, 1)),
                 ["DynamicMap [comp]", f"Image {kdim_str}"],
             )
 
-            for c in self.pf.vdims:
+            for c in test_field.vdims:
                 check_hv(
-                    getattr(self.pf, c).hv.scalar(kdims=kdims),
+                    getattr(test_field, c).hv.scalar(kdims=kdims),
                     [f"DynamicMap [{normal}]", f"Image {kdim_str}"],
                 )
                 check_hv(
-                    getattr(self.pf, c).plane(normal).hv.scalar(kdims=kdims),
+                    getattr(test_field, c).plane(normal).hv.scalar(kdims=kdims),
                     [f"Image {kdim_str}"],
                 )
 
         with pytest.raises(ValueError):
-            check_hv(self.pf.hv.scalar(kdims=["wrong_name", "x"]), ...)
+            check_hv(test_field.hv.scalar(kdims=["wrong_name", "x"]), ...)
 
         with pytest.raises(ValueError):
-            check_hv(self.pf.hv.scalar(kdims=["x", "y", "z"]), ...)
+            check_hv(test_field.hv.scalar(kdims=["x", "y", "z"]), ...)
 
         with pytest.raises(TypeError):
-            check_hv(self.pf.hv.scalar(kdims=["x", "y"], roi="z"), ...)
+            check_hv(test_field.hv.scalar(kdims=["x", "y"], roi="z"), ...)
 
         with pytest.raises(ValueError):
-            check_hv(self.pf.hv.scalar(kdims=["x", "y"], roi=self.pf), ...)
-
-        with pytest.raises(ValueError):
-            check_hv(
-                self.pf.plane("z").hv.scalar(kdims=["x", "y"], roi=self.pf.norm), ...
-            )
+            check_hv(test_field.hv.scalar(kdims=["x", "y"], roi=test_field), ...)
 
         with pytest.raises(ValueError):
             check_hv(
-                self.pf[
-                    df.Region(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, -1e-9))
-                ].hv.scalar(kdims=["x", "y"], roi=self.pf.norm.plane(z=4e-9)),
+                test_field.plane("z").hv.scalar(kdims=["x", "y"], roi=test_field.norm),
                 ...,
             )
 
-    def test_hv_vector(self):
+        with pytest.raises(ValueError):
+            check_hv(
+                test_field[
+                    df.Region(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, -1e-9))
+                ].hv.scalar(kdims=["x", "y"], roi=test_field.norm.plane(z=4e-9)),
+                ...,
+            )
+
+    def test_hv_vector(self, test_field):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             normal = (set("xyz") - set(kdims)).pop()
             kdim_str = f"[{','.join(kdims)}]"
             check_hv(
-                self.pf.hv.vector(kdims=kdims),
+                test_field.hv.vector(kdims=kdims),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
             check_hv(
-                self.pf.plane(normal).hv.vector(kdims=kdims),
+                test_field.plane(normal).hv.vector(kdims=kdims),
                 [f"VectorField {kdim_str}"],
             )
             check_hv(
-                self.pf.hv.vector(kdims=kdims, roi=self.pf.norm),
+                test_field.hv.vector(kdims=kdims, roi=test_field.norm),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
             check_hv(
-                self.pf.hv.vector(kdims=kdims, n=(10, 10)),
+                test_field.hv.vector(kdims=kdims, n=(10, 10)),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
 
             # additional kwargs
             check_hv(
-                self.pf.hv.vector(kdims=kdims, use_color=False, color="blue"),
+                test_field.hv.vector(kdims=kdims, use_color=False, color="blue"),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
 
-            for comp in self.pf.vdims:
+            for comp in test_field.vdims:
                 check_hv(
-                    self.pf.hv.vector(kdims=kdims, cdim=comp),
+                    test_field.hv.vector(kdims=kdims, cdim=comp),
                     [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
                 )
 
             with pytest.raises(ValueError):
-                check_hv(self.pf.hv.vector(kdims=kdims, cdim="wrong"), ...)
+                check_hv(test_field.hv.vector(kdims=kdims, cdim="wrong"), ...)
 
             with pytest.raises(TypeError):
-                check_hv(self.pf.hv.vector(kdims=kdims, cdim=self.pf.norm), ...)
+                check_hv(test_field.hv.vector(kdims=kdims, cdim=test_field.norm), ...)
 
             with pytest.raises(ValueError):
-                check_hv(self.pf.hv.vector(kdims=kdims, vdims=["a", "b", "c"]), ...)
+                check_hv(test_field.hv.vector(kdims=kdims, vdims=["a", "b", "c"]), ...)
 
             # 2d field
             with pytest.raises(ValueError):
-                check_hv((self.pf.a << self.pf.b).hv.vector(kdims=kdims), ...)
+                check_hv((test_field.a << test_field.b).hv.vector(kdims=kdims), ...)
 
-            field_2d = self.pf.a << self.pf.b
+            field_2d = test_field.a << test_field.b
             field_2d.vdims = ["a", "b"]
             check_hv(
                 field_2d.hv.vector(kdims=kdims, vdims=["a", "b"]),
@@ -2413,7 +2414,7 @@ class TestField:
                 check_hv(field_2d.hv.vector(kdims=kdims, vdims=[None, None]), ...)
 
             # 4d field
-            field_4d = self.pf.a << self.pf.b << self.pf.a << self.pf.b
+            field_4d = test_field.a << test_field.b << test_field.a << test_field.b
             field_4d.vdims = ["a", "b", "c", "d"]
             with pytest.raises(ValueError):
                 check_hv(field_4d.hv.vector(kdims=kdims), ...)
@@ -2431,16 +2432,16 @@ class TestField:
             )
 
         with pytest.raises(ValueError):
-            check_hv(self.pf.hv.contour(kdims=["wrong_name", "x"]), ...)
+            check_hv(test_field.hv.contour(kdims=["wrong_name", "x"]), ...)
 
         with pytest.raises(ValueError):
-            check_hv(self.pf.hv.vector(kdims=["x", "y"], n=(10, 10, 10)), ...)
+            check_hv(test_field.hv.vector(kdims=["x", "y"], n=(10, 10, 10)), ...)
 
         # scalar field
         with pytest.raises(ValueError):
             check_hv(field_2d.a.hv.vector(kdims=["x", "y"]), ...)
 
-    def test_hv_contour(self):
+    def test_hv_contour(self, test_field):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             normal = (set("xyz") - set(kdims)).pop()
             kdim_str = f"[{','.join(kdims)}]"
@@ -2452,44 +2453,44 @@ class TestField:
             # Presumably, because we use a different method to create the contour plot.
             opts = dict(frame_width=300, frame_height=300)
             check_hv(
-                self.pf.hv.contour(kdims=kdims).opts(**opts),
+                test_field.hv.contour(kdims=kdims).opts(**opts),
                 [f"DynamicMap [{normal},comp]", f"Contours {kdim_str}"],
             )
             check_hv(
-                self.pf.hv.contour(kdims=kdims, roi=self.pf.norm).opts(**opts),
+                test_field.hv.contour(kdims=kdims, roi=test_field.norm).opts(**opts),
                 [f"DynamicMap [{normal},comp]", f"Contours {kdim_str}"],
             )
 
             # additional kwargs
             check_hv(
-                self.pf.plane(normal)
+                test_field.plane(normal)
                 .hv.contour(kdims=kdims, clim=(-1, 1))
                 .opts(**opts),
                 ["DynamicMap [comp]", f"Contours {kdim_str}"],
             )
 
-            for c in self.pf.vdims:
+            for c in test_field.vdims:
                 check_hv(
-                    getattr(self.pf, c).hv.contour(kdims=kdims).opts(**opts),
+                    getattr(test_field, c).hv.contour(kdims=kdims).opts(**opts),
                     [f"DynamicMap [{normal}]", f"Contours {kdim_str}"],
                 )
 
         with pytest.raises(ValueError):
-            check_hv(self.pf.hv.contour(kdims=["wrong_name", "x"]), ...)
+            check_hv(test_field.hv.contour(kdims=["wrong_name", "x"]), ...)
 
-    def test_hv(self):
+    def test_hv(self, test_field):
         for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
             normal = (set("xyz") - set(kdims)).pop()
             kdim_str = f"[{','.join(kdims)}]"
             # 1d field
             check_hv(
-                self.pf.a.hv(kdims=kdims),
+                test_field.a.hv(kdims=kdims),
                 [f"DynamicMap [{normal}]", f"Image {kdim_str}"],
             )
-            check_hv(self.pf.a.plane(normal).hv(kdims=kdims), [f"Image {kdim_str}"])
+            check_hv(test_field.a.plane(normal).hv(kdims=kdims), [f"Image {kdim_str}"])
 
             # 2d field
-            field_2d = self.pf.b << self.pf.c
+            field_2d = test_field.b << test_field.c
             check_hv(
                 field_2d.hv(kdims=kdims),
                 [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
@@ -2505,7 +2506,7 @@ class TestField:
 
             # 3d field
             check_hv(
-                self.pf.hv(kdims=kdims),
+                test_field.hv(kdims=kdims),
                 [
                     f"DynamicMap [{normal}]",
                     f"Image {kdim_str}",
@@ -2513,7 +2514,7 @@ class TestField:
                 ],
             )
             check_hv(
-                self.pf.hv(kdims=kdims, vdims=["a", "b"]),
+                test_field.hv(kdims=kdims, vdims=["a", "b"]),
                 [
                     f"DynamicMap [{normal}]",
                     f"Image {kdim_str}",
@@ -2521,13 +2522,13 @@ class TestField:
                 ],
             )
             check_hv(
-                self.pf.plane(normal).hv(kdims=kdims),
+                test_field.plane(normal).hv(kdims=kdims),
                 [f"Image {kdim_str}", f"VectorField {kdim_str}"],
             )
 
             # additional kwargs
             check_hv(
-                self.pf.hv(
+                test_field.hv(
                     kdims=kdims,
                     scalar_kw={"clim": (-1, 1)},
                     vector_kw={"cmap": "cividis"},
@@ -2540,7 +2541,7 @@ class TestField:
             )
 
             # 4d field
-            field_4d = self.pf.b << self.pf.c << self.pf.a << self.pf.a
+            field_4d = test_field.b << test_field.c << test_field.a << test_field.a
             field_4d.vdims = ["v1", "v2", "v3", "v4"]
             check_hv(
                 field_4d.hv(kdims=kdims),
@@ -2572,122 +2573,129 @@ class TestField:
                 ],
             )
 
-    def test_k3d_nonzero(self):
+    def test_k3d_nonzero(self, test_field):
         # Default
-        self.pf.norm.k3d.nonzero()
+        test_field.norm.k3d.nonzero()
 
         # Color
-        self.pf.a.k3d.nonzero(color=0xFF00FF)
+        test_field.a.k3d.nonzero(color=0xFF00FF)
 
         # Multiplier
-        self.pf.b.k3d.nonzero(color=0xFF00FF, multiplier=1e-6)
+        test_field.b.k3d.nonzero(color=0xFF00FF, multiplier=1e-6)
 
         # Interactive field
-        self.pf.c.plane("z").k3d.nonzero(
-            color=0xFF00FF, multiplier=1e-6, interactive_field=self.pf
+        test_field.c.plane("z").k3d.nonzero(
+            color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
         )
 
         # kwargs
-        self.pf.a.plane("z").k3d.nonzero(
-            color=0xFF00FF, multiplier=1e-6, interactive_field=self.pf, wireframe=True
-        )
-
-        # Plot
-        plot = k3d.plot()
-        plot.display()
-        self.pf.b.plane(z=0).k3d.nonzero(
-            plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=self.pf
-        )
-
-        # Continuation for interactive plot testing.
-        self.pf.c.plane(z=1e-9).k3d.nonzero(
-            plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=self.pf
-        )
-
-        assert len(plot.objects) == 2
-
-        with pytest.raises(ValueError):
-            self.pf.k3d.nonzero()
-
-    def test_k3d_scalar(self):
-        # Default
-        self.pf.a.k3d.scalar()
-
-        # Filter field
-        self.pf.b.k3d.scalar(filter_field=self.pf.norm)
-
-        # Colormap
-        self.pf.c.k3d.scalar(filter_field=self.pf.norm, cmap="hsv", color=0xFF00FF)
-
-        # Multiplier
-        self.pf.a.k3d.scalar(filter_field=self.pf.norm, color=0xFF00FF, multiplier=1e-6)
-
-        # Interactive field
-        self.pf.b.k3d.scalar(
-            filter_field=self.pf.norm,
+        test_field.a.plane("z").k3d.nonzero(
             color=0xFF00FF,
             multiplier=1e-6,
-            interactive_field=self.pf,
-        )
-
-        # kwargs
-        self.pf.c.k3d.scalar(
-            filter_field=self.pf.norm,
-            color=0xFF00FF,
-            multiplier=1e-6,
-            interactive_field=self.pf,
+            interactive_field=test_field,
             wireframe=True,
         )
 
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.a.plane(z=0).k3d.scalar(
-            plot=plot,
-            filter_field=self.pf.norm,
-            color=0xFF00FF,
-            multiplier=1e-6,
-            interactive_field=self.pf,
+        test_field.b.plane(z=0).k3d.nonzero(
+            plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
         )
 
         # Continuation for interactive plot testing.
-        self.pf.b.plane(z=1e-9).k3d.scalar(
-            plot=plot,
-            filter_field=self.pf.norm,
+        test_field.c.plane(z=1e-9).k3d.nonzero(
+            plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
+        )
+
+        assert len(plot.objects) == 2
+
+        with pytest.raises(ValueError):
+            test_field.k3d.nonzero()
+
+    def test_k3d_scalar(self, test_field):
+        # Default
+        test_field.a.k3d.scalar()
+
+        # Filter field
+        test_field.b.k3d.scalar(filter_field=test_field.norm)
+
+        # Colormap
+        test_field.c.k3d.scalar(
+            filter_field=test_field.norm, cmap="hsv", color=0xFF00FF
+        )
+
+        # Multiplier
+        test_field.a.k3d.scalar(
+            filter_field=test_field.norm, color=0xFF00FF, multiplier=1e-6
+        )
+
+        # Interactive field
+        test_field.b.k3d.scalar(
+            filter_field=test_field.norm,
             color=0xFF00FF,
             multiplier=1e-6,
-            interactive_field=self.pf,
+            interactive_field=test_field,
+        )
+
+        # kwargs
+        test_field.c.k3d.scalar(
+            filter_field=test_field.norm,
+            color=0xFF00FF,
+            multiplier=1e-6,
+            interactive_field=test_field,
+            wireframe=True,
+        )
+
+        # Plot
+        plot = k3d.plot()
+        plot.display()
+        test_field.a.plane(z=0).k3d.scalar(
+            plot=plot,
+            filter_field=test_field.norm,
+            color=0xFF00FF,
+            multiplier=1e-6,
+            interactive_field=test_field,
+        )
+
+        # Continuation for interactive plot testing.
+        test_field.b.plane(z=1e-9).k3d.scalar(
+            plot=plot,
+            filter_field=test_field.norm,
+            color=0xFF00FF,
+            multiplier=1e-6,
+            interactive_field=test_field,
         )
 
         assert len(plot.objects) == 2
 
         # Exceptions
         with pytest.raises(ValueError):
-            self.pf.k3d.scalar()
+            test_field.k3d.scalar()
         with pytest.raises(ValueError):
-            self.pf.c.k3d.scalar(filter_field=self.pf)  # filter field nvdim=3
+            test_field.c.k3d.scalar(filter_field=test_field)  # filter field nvdim=3
 
-    def test_k3d_vector(self):
+    def test_k3d_vector(self, test_field):
         # Default
-        self.pf.k3d.vector()
+        test_field.k3d.vector()
 
         # Color field
-        self.pf.k3d.vector(color_field=self.pf.a)
+        test_field.k3d.vector(color_field=test_field.a)
 
         # Colormap
-        self.pf.k3d.vector(color_field=self.pf.norm, cmap="hsv")
+        test_field.k3d.vector(color_field=test_field.norm, cmap="hsv")
 
         # Head size
-        self.pf.k3d.vector(color_field=self.pf.norm, cmap="hsv", head_size=3)
+        test_field.k3d.vector(color_field=test_field.norm, cmap="hsv", head_size=3)
 
         # Points
-        self.pf.k3d.vector(
-            color_field=self.pf.norm, cmap="hsv", head_size=3, points=False
+        test_field.k3d.vector(
+            color_field=test_field.norm, cmap="hsv", head_size=3, points=False
         )
 
         # Point size
-        self.pf.k3d.vector(
-            color_field=self.pf.norm,
+        test_field.k3d.vector(
+            color_field=test_field.norm,
             cmap="hsv",
             head_size=3,
             points=False,
@@ -2695,8 +2703,8 @@ class TestField:
         )
 
         # Vector multiplier
-        self.pf.k3d.vector(
-            color_field=self.pf.norm,
+        test_field.k3d.vector(
+            color_field=test_field.norm,
             cmap="hsv",
             head_size=3,
             points=False,
@@ -2705,8 +2713,8 @@ class TestField:
         )
 
         # Multiplier
-        self.pf.k3d.vector(
-            color_field=self.pf.norm,
+        test_field.k3d.vector(
+            color_field=test_field.norm,
             cmap="hsv",
             head_size=3,
             points=False,
@@ -2716,32 +2724,32 @@ class TestField:
         )
 
         # Interactive field
-        self.pf.plane("z").k3d.vector(
-            color_field=self.pf.norm,
+        test_field.plane("z").k3d.vector(
+            color_field=test_field.norm,
             cmap="hsv",
             head_size=3,
             points=False,
             point_size=1,
             vector_multiplier=1,
             multiplier=1e-6,
-            interactive_field=self.pf,
+            interactive_field=test_field,
         )
 
         # Plot
         plot = k3d.plot()
         plot.display()
-        self.pf.plane(z=0).k3d.vector(plot=plot, interactive_field=self.pf)
+        test_field.plane(z=0).k3d.vector(plot=plot, interactive_field=test_field)
 
         # Continuation for interactive plot testing.
-        self.pf.plane(z=1e-9).k3d.vector(plot=plot, interactive_field=self.pf)
+        test_field.plane(z=1e-9).k3d.vector(plot=plot, interactive_field=test_field)
 
         assert len(plot.objects) == 3
 
         # Exceptions
         with pytest.raises(ValueError):
-            self.pf.a.k3d.vector()
+            test_field.a.k3d.vector()
         with pytest.raises(ValueError):
-            self.pf.k3d.vector(color_field=self.pf)  # filter field nvdim=3
+            test_field.k3d.vector(color_field=test_field)  # filter field nvdim=3
 
     def test_plot_large_sample(self):
         p1 = (0, 0, 0)
@@ -2756,19 +2764,19 @@ class TestField:
         field.x.k3d.scalar()
         field.k3d.vector()
 
-    def test_complex(self):
+    def test_complex(self, test_field):
         mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
 
         # real field
-        real_field = self.pf.real
+        real_field = test_field.real
         check_field(real_field)
         assert np.allclose(real_field((-2e-9, 0, 0)), (0, 0, 1e5))
         assert np.allclose(real_field((2e-9, 0, 0)), (0, 0, -1e5))
 
-        imag_field = self.pf.imag
+        imag_field = test_field.imag
         check_field(imag_field)
         assert df.Field(mesh, nvdim=3).allclose(imag_field)
-        assert df.Field(mesh, nvdim=3).allclose(np.mod(self.pf.phase, np.pi))
+        assert df.Field(mesh, nvdim=3).allclose(np.mod(test_field.phase, np.pi))
 
         # complex field
         field = df.Field(mesh, nvdim=1, value=1 + 1j)
@@ -2781,15 +2789,17 @@ class TestField:
         assert df.Field(mesh, nvdim=1, value=1).allclose(imag_field)
         assert df.Field(mesh, nvdim=1, value=np.pi / 4).allclose(field.phase)
 
-    def test_numpy_ufunc(self):
-        assert np.allclose(np.sin(self.pf).array, np.sin(self.pf.array))
-        assert np.sum([self.pf, self.pf]).allclose(self.pf + self.pf)
-        assert np.multiply(self.pf.a, self.pf.b).allclose(self.pf.a * self.pf.b)
-        assert np.power(self.pf.c, 2).allclose(self.pf.c**2)
+    def test_numpy_ufunc(self, test_field):
+        assert np.allclose(np.sin(test_field).array, np.sin(test_field.array))
+        assert np.sum([test_field, test_field]).allclose(test_field + test_field)
+        assert np.multiply(test_field.a, test_field.b).allclose(
+            test_field.a * test_field.b
+        )
+        assert np.power(test_field.c, 2).allclose(test_field.c**2)
 
-        # self.pf contains values of 1e5 and exp of this,produces an overflow
+        # test_field contains values of 1e5 and exp of this,produces an overflow
         field = df.Field(
-            self.pf.mesh, nvdim=3, value=lambda _: np.random.random(3) * 2 - 1
+            test_field.mesh, nvdim=3, value=lambda _: np.random.random(3) * 2 - 1
         )
         assert np.allclose(
             np.exp(field.orientation).array, np.exp(field.orientation.array)
@@ -2832,8 +2842,8 @@ class TestField:
         assert "comp" not in fxa.dims
         assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
 
-    def test_to_xarray_6d_field(self):
-        f6d = self.pf << self.pf
+    def test_to_xarray_6d_field(self, test_field):
+        f6d = test_field << test_field
         f6d_xa = f6d.to_xarray()
         assert f6d_xa["comp"].size == 6
         assert "comp" in f6d_xa.coords
@@ -2844,12 +2854,12 @@ class TestField:
         assert [*f6d_xa2["comp"].values] == ["a", "c", "b", "e", "d", "f"]
 
         # test name and units defaults
-        f3d_xa = self.pf.to_xarray()
+        f3d_xa = test_field.to_xarray()
         assert f3d_xa.name == "field"
         assert f3d_xa.attrs["units"] is None
 
         # test name and units
-        f3d_xa_2 = self.pf.to_xarray(name="m", unit="A/m")
+        f3d_xa_2 = test_field.to_xarray(name="m", unit="A/m")
         assert f3d_xa_2.name == "m"
         assert f3d_xa_2.attrs["units"] == "A/m"
 
@@ -2866,9 +2876,9 @@ class TestField:
             [{"name": "m", "unit": "A/m"}, None],
         ],
     )
-    def test_to_xarray_invalid_args(self, name, unit):
+    def test_to_xarray_invalid_args(self, name, unit, test_field):
         with pytest.raises(TypeError):
-            self.pf.to_xarray(name, unit)
+            test_field.to_xarray(name, unit)
 
     def test_from_xarray_valid_args(self, valid_mesh):
         for value, dtype in self.vfuncs:
@@ -2883,12 +2893,12 @@ class TestField:
             f_new = df.Field.from_xarray(fxa)
             assert f_new == f  # or use allclose()
 
-        f_plane = self.pf.plane("z")
+        f_plane = test_field.plane("z")
         f_plane_xa = f_plane.to_xarray()
         f_plane_new = df.Field.from_xarray(f_plane_xa)
         assert f_plane_new == f_plane  # or use allclose()
 
-        f6d = self.pf << self.pf
+        f6d = test_field << test_field
         f6d_xa = f6d.to_xarray()
         f6d_new = df.Field.from_xarray(f6d_xa)
         assert f6d_new == f6d  # or use allclose()
