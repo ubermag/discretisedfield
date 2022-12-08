@@ -2849,7 +2849,8 @@ class TestField:
         f6d = self.pf << self.pf
         f6d_xa = f6d.to_xarray()
         assert f6d_xa["comp"].size == 6
-        assert "comp" not in f6d_xa.coords
+        assert "comp" in f6d_xa.coords
+        assert [*f6d_xa["comp"].values] == [f"v{i}" for i in range(6)]
         f6d.vdims = ["a", "c", "b", "e", "d", "f"]
         f6d_xa2 = f6d.to_xarray()
         assert "comp" in f6d_xa2.coords
