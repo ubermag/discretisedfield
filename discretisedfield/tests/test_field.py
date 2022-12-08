@@ -124,8 +124,8 @@ def test_field():
         mesh, nvdim=3, value=value_fun, norm=norm_fun, vdims=["a", "b", "c"]
     )
 
-class TestField:
 
+class TestField:
     @pytest.mark.parametrize("value, dtype", consts + sfuncs)
     def test_init_scalar_valid_args(self, valid_mesh, value, dtype):
         f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
