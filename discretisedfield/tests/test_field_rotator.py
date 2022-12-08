@@ -38,103 +38,107 @@ def field(mesh, request):
     )
 
 
-if True:  # remove
+def test_valid_rotation(field):
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
 
-    def test_valid_rotation(field):
-        fr = df.FieldRotator(field)
-        # no rotation => field should be the same
-        assert fr.field == field
+    fr.rotate("from_quat", [0, 0, 1, 1])
+    check_rotator(fr)
 
-        fr.rotate("from_quat", [0, 0, 1, 1])
-        check_rotator(fr)
+    matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+    fr.rotate("from_matrix", matrix)
+    check_rotator(fr)
 
-        matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-        fr.rotate("from_matrix", matrix)
-        check_rotator(fr)
+    fr.rotate("from_rotvec", rotvec=np.pi / 2 * np.array([0, 0, 1]))
+    check_rotator(fr)
 
-        fr.rotate("from_rotvec", rotvec=np.pi / 2 * np.array([0, 0, 1]))
-        check_rotator(fr)
+    fr.rotate("from_mrp", [0, 0, np.pi / 2])
+    check_rotator(fr)
 
-        fr.rotate("from_mrp", [0, 0, np.pi / 2])
-        check_rotator(fr)
+    fr.rotate("from_euler", seq="x", angles=np.pi / 2)
+    check_rotator(fr)
+    fr.rotate("from_euler", seq="xyz", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
+    check_rotator(fr)
+    fr.rotate("from_euler", seq="XYZ", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
+    check_rotator(fr)
 
-        fr.rotate("from_euler", seq="x", angles=np.pi / 2)
-        check_rotator(fr)
-        fr.rotate("from_euler", seq="xyz", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
-        check_rotator(fr)
-        fr.rotate("from_euler", seq="XYZ", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
-        check_rotator(fr)
+    fr.rotate("align_vector", initial=(1, 0, 1), final=(0, 0.2, -3))
+    check_rotator(fr)
 
-        fr.rotate("align_vector", initial=(1, 0, 1), final=(0, 0.2, -3))
-        check_rotator(fr)
 
-    def test_n(field):
-        fr = df.FieldRotator(field)
-        # no rotation => field should be the same
-        assert fr.field == field
+def test_n(field):
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
 
-        n = (10, 10, 10)
-        fr.rotate("from_euler", seq="x", angles=np.pi / 6, n=n)
-        check_rotator(fr)
-        assert np.all(fr.field.mesh.n == n)
+    n = (10, 10, 10)
+    fr.rotate("from_euler", seq="x", angles=np.pi / 6, n=n)
+    check_rotator(fr)
+    assert np.all(fr.field.mesh.n == n)
 
-    def test_rotation_inverse_rotation(field):
-        fr = df.FieldRotator(field)
-        # no rotation => field should be the same
-        assert fr.field == field
 
-        fr.rotate("align_vector", initial=(0, 0, 1), final=(1, 1, 1))
-        check_rotator(fr)
-        fr.rotate("align_vector", initial=(1, 1, 1), final=(0, 0, 1))
-        check_rotator(fr)
-        # field.allclose needs '==' for the mesh
-        assert np.allclose(field.array, fr.field.array)
+def test_rotation_inverse_rotation(field):
+    fr = df.FieldRotator(field)
+    # no rotation => field should be the same
+    assert fr.field == field
 
-    def test_scalar_cube():
-        # multiples of 90 degree rotations should return the same array
-        mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
-        field = df.Field(mesh, nvdim=1, value=1)
-        fr = df.FieldRotator(field)
-        for s in ["x", "y", "z"]:
-            for pref in range(1, 5):
-                fr.rotate("from_euler", seq=s, angles=pref * np.pi / 2)
-                check_rotator(fr)
-                assert np.allclose(field.array, fr.field.array)
-                fr.clear_rotation()
-        check_rotator(fr)
-        # no rotation => field should be the same
-        assert field == fr.field
+    fr.rotate("align_vector", initial=(0, 0, 1), final=(1, 1, 1))
+    check_rotator(fr)
+    fr.rotate("align_vector", initial=(1, 1, 1), final=(0, 0, 1))
+    check_rotator(fr)
+    # field.allclose needs '==' for the mesh
+    assert np.allclose(field.array, fr.field.array)
 
-    def test_macrospin_rotation():
-        mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), n=(1, 1, 1))
-        field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
 
-        fr = df.FieldRotator(field)
+def test_scalar_cube():
+    # multiples of 90 degree rotations should return the same array
+    mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
+    field = df.Field(mesh, nvdim=1, value=1)
+    fr = df.FieldRotator(field)
+    for s in ["x", "y", "z"]:
+        for pref in range(1, 5):
+            fr.rotate("from_euler", seq=s, angles=pref * np.pi / 2)
+            check_rotator(fr)
+            assert np.allclose(field.array, fr.field.array)
+            fr.clear_rotation()
+    check_rotator(fr)
+    # no rotation => field should be the same
+    assert field == fr.field
 
-        fr.rotate("from_euler", seq="z", angles=np.pi)
-        assert np.allclose(fr.field.array.squeeze(), [0, 0, 1])
 
-        fr.rotate("from_euler", seq="x", angles=np.pi / 2)
-        assert np.allclose(fr.field.array.squeeze(), [0, -1, 0])
+def test_macrospin_rotation():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), n=(1, 1, 1))
+    field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
 
-        fr.clear_rotation()
-        fr.rotate("from_euler", seq="y", angles=np.pi / 2)
-        assert np.allclose(fr.field.array.squeeze(), [1, 0, 0])
-        fr.rotate("from_euler", seq="z", angles=np.pi)
-        assert np.allclose(fr.field.array.squeeze(), [-1, 0, 0])
+    fr = df.FieldRotator(field)
 
-        fr.clear_rotation()
-        fr.rotate("align_vector", initial=(0, 0, 1), final=(1, 1, 1), n=(1, 1, 1))
-        assert np.allclose(
-            fr.field.array.squeeze(), [1 / np.sqrt(3), 1 / np.sqrt(3), 1 / np.sqrt(3)]
-        )
+    fr.rotate("from_euler", seq="z", angles=np.pi)
+    assert np.allclose(fr.field.array.squeeze(), [0, 0, 1])
 
-    def test_invalid_field(mesh):
-        field = df.Field(mesh, nvdim=2, value=(1, 1))
-        with pytest.raises(ValueError):
-            df.FieldRotator(field)
+    fr.rotate("from_euler", seq="x", angles=np.pi / 2)
+    assert np.allclose(fr.field.array.squeeze(), [0, -1, 0])
 
-    def test_invalid_method(field):
-        fr = df.FieldRotator(field)
-        with pytest.raises(ValueError):
-            fr.rotate("unknown method")
+    fr.clear_rotation()
+    fr.rotate("from_euler", seq="y", angles=np.pi / 2)
+    assert np.allclose(fr.field.array.squeeze(), [1, 0, 0])
+    fr.rotate("from_euler", seq="z", angles=np.pi)
+    assert np.allclose(fr.field.array.squeeze(), [-1, 0, 0])
+
+    fr.clear_rotation()
+    fr.rotate("align_vector", initial=(0, 0, 1), final=(1, 1, 1), n=(1, 1, 1))
+    assert np.allclose(
+        fr.field.array.squeeze(), [1 / np.sqrt(3), 1 / np.sqrt(3), 1 / np.sqrt(3)]
+    )
+
+
+def test_invalid_field(mesh):
+    field = df.Field(mesh, nvdim=2, value=(1, 1))
+    with pytest.raises(ValueError):
+        df.FieldRotator(field)
+
+
+def test_invalid_method(field):
+    fr = df.FieldRotator(field)
+    with pytest.raises(ValueError):
+        fr.rotate("unknown method")
