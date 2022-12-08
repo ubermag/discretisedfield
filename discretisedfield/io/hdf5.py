@@ -63,9 +63,8 @@ class _FieldIO_HDF5:
 
             h5_field = f.create_group("field")
             self._h5_save_structure(h5_field)
-            # TODO is 'data' or 'array' a better name for the following dataset?
             h5_field_data = h5_field.create_dataset(
-                "data", (*self.mesh.n, self.nvdim), dtype=self.array.dtype
+                "array", (*self.mesh.n, self.nvdim), dtype=self.array.dtype
             )
             self._h5_save_data(h5_field_data, slice(None))
 
@@ -115,7 +114,7 @@ class _FieldIO_HDF5:
         return cls(
             mesh=df.Mesh._h5_load(h5_field["mesh"]),
             nvdim=h5_field.attrs["nvdim"],
-            value=h5_field["data"][data_location],
+            value=h5_field["array"][data_location],
             vdims=h5_field.attrs["vdims"],
             unit=h5_field.attrs["unit"],
         )
