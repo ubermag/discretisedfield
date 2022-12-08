@@ -138,7 +138,7 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         [
             ({"r1": df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 10e-9))}, ValueError),
             ({"r1": df.Region(p1=(5e-9, 0, 0), p2=(45e-9, 50e-9, 10e-9))}, ValueError),
-            ({"r1": df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 200e-9))}, ValueError),
+            ({"r1": df.Region(p1=(0, 0, 0), p2=(40e-9, 50e-9, 200e-9))}, ValueError),
             ({1: df.Region(p1=(0, 0, 0), p2=(45e-9, 50e-9, 200e-9))}, TypeError),
             ({"r1": "top half of the region"}, TypeError),
         ],
