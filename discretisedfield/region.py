@@ -591,7 +591,7 @@ class Region(_RegionIO):
 
         return False
 
-    def __or__(self, other):
+    def facing_surface(self, other):
         """Facing surface.
 
         Parameters
@@ -635,7 +635,8 @@ class Region(_RegionIO):
         """
         if not isinstance(other, self.__class__):
             msg = (
-                f"Unsupported operand type(s) for |: {type(self)=} and {type(other)=}."
+                f"Unsupported type(s) for facing_surfaces: {type(self)=} and"
+                f" {type(other)=}."
             )
             raise TypeError(msg)
 
