@@ -126,6 +126,34 @@ def test_init_subregions():
     assert mesh.subregions == subregions
 
 
+def test_subregions_custom_parameters():
+    p1 = (0, 0, 0)
+    p2 = (100, 50, 10)
+    dims = list("abc")
+    units = ["d", "ef", "ghi"]
+    region = df.Region(p1=p1, p2=p2, dims=dims, units=units, tolerance_factor=1e-6)
+    subregions = {
+        "r1": df.Region(p1=(0, 0, 0), p2=(50, 50, 10)),
+        "r2": df.Region(
+            p1=(50, 0, 0),
+            p2=(100, 50, 10),
+            dims=list("rst"),
+            units=list("aei"),
+            tolerance_factor=10,
+        ),
+    }
+    cell = (10, 10, 10)
+    mesh = df.Mesh(region=region, cell=cell, subregions=subregions)
+    assert isinstance(mesh, df.Mesh)
+    assert len(mesh.subregions) == len(subregions)
+    for sr_name in mesh.subregions:
+        assert mesh.subregions[sr_name].pmin == subregions[sr_name].pmin
+        assert mesh.subregions[sr_name].pmax == subregions[sr_name].pmax
+        assert mesh.subregions[sr_name].units == mesh.region.units
+        assert mesh.subregions[sr_name].dims == mesh.region.dims
+        assert mesh.subregions[sr_name].tolerance_factor == mesh.region.tolerance_factor
+
+
 @pytest.mark.parametrize(
     "subregions, error",
     [
