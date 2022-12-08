@@ -147,8 +147,8 @@ def test_subregions_custom_parameters():
     assert isinstance(mesh, df.Mesh)
     assert len(mesh.subregions) == len(subregions)
     for sr_name in mesh.subregions:
-        assert mesh.subregions[sr_name].pmin == subregions[sr_name].pmin
-        assert mesh.subregions[sr_name].pmax == subregions[sr_name].pmax
+        assert np.array_equal(mesh.subregions[sr_name].pmin, subregions[sr_name].pmin)
+        assert np.array_equal(mesh.subregions[sr_name].pmax, subregions[sr_name].pmax)
         assert mesh.subregions[sr_name].units == mesh.region.units
         assert mesh.subregions[sr_name].dims == mesh.region.dims
         assert mesh.subregions[sr_name].tolerance_factor == mesh.region.tolerance_factor
