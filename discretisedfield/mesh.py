@@ -195,8 +195,10 @@ class Mesh(_MeshIO):
                 )
             if len(cell) != self.region.ndim:
                 raise ValueError("The cell must have same dimensions as the region.")
-            elif not all(isinstance(i, Number) and i > 0 for i in cell):
-                raise TypeError("The values of cell must be positive numbers.")
+            elif not all(isinstance(i, Number) for i in cell):
+                raise TypeError("The values of cell must be numbers.")
+            elif not all(i > 0 for i in cell):
+                raise ValueError("The values of cell must be positive numbers.")
             # Check if the mesh region is an aggregate of the discretisation cell.
             tol = np.min(cell) * 1e-3  # tolerance
             rem = np.remainder(self.region.edges, cell)
@@ -214,8 +216,10 @@ class Mesh(_MeshIO):
                 raise TypeError("n must be either a tuple, a list or a numpy.ndarray.")
             if len(n) != self.region.ndim:
                 raise ValueError("n must have same dimensions as the region.")
-            elif not all(isinstance(i, Integral) and i > 0 for i in n):
-                raise TypeError("The values of n must be positive integers.")
+            elif not all(isinstance(i, Integral) for i in n):
+                raise TypeError("The values of n must be integers.")
+            elif not all(i > 0 for i in n):
+                raise ValueError("The values of n must be positive integers.")
             self._n = np.array(n, dtype=int)
 
         else:
