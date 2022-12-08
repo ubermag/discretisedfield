@@ -73,7 +73,6 @@ class _FieldIO_HDF5:
         Save the 'field structure', that is the mesh and field attributes into an
         existing hdf5 group. The field data is NOT saved.
         """
-        # TODO better method name?
         h5_mesh = h5_field.create_group("mesh")
         self.mesh._h5_save(h5_mesh)
 
