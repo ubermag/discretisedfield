@@ -15,7 +15,7 @@ html_re = (
 
 
 def check_rotator(rotator):
-    isinstance(rotator.field, df.Field)
+    assert isinstance(rotator.field, df.Field)
 
     assert isinstance(repr(rotator), str)
     pattern = r"^FieldRotator\(unrotatedField\(.+\), rotation_quaternion:.*\)$"
@@ -25,74 +25,72 @@ def check_rotator(rotator):
     assert re.match(html_re, rotator._repr_html_(), re.DOTALL)
 
 
-class TestFieldRotator:
-    def setup_method(self):
-        self.mesh = df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
+@pytest.fixture
+def mesh():
+    return df.Mesh(p1=(0, 0, 0), p2=(20, 10, 5), cell=(1, 1, 1))
 
-        def vector(p):
-            return np.random.random(3) * 2 - 1
 
-        def scalar(p):
-            return np.random.random(1) * 2 - 1
+@pytest.fixture(params=[(1, None), (3, 1)])
+def field(mesh, request):
+    nvdim, norm = request.param
+    return df.Field(
+        mesh, nvdim=nvdim, value=np.random.random((*mesh.n, nvdim)) * 2 - 1, norm=norm
+    )
 
-        scalar_field = df.Field(self.mesh, nvdim=1, value=scalar)
-        vector_field = df.Field(self.mesh, nvdim=3, value=vector, norm=1)
-        self.fields = [scalar_field, vector_field]
 
-    def test_valid_rotation(self):
-        for field in self.fields:
-            fr = df.FieldRotator(field)
-            # no rotation => field should be the same
-            assert fr.field == field
+if True:  # remove
 
-            fr.rotate("from_quat", [0, 0, 1, 1])
-            check_rotator(fr)
+    def test_valid_rotation(field):
+        fr = df.FieldRotator(field)
+        # no rotation => field should be the same
+        assert fr.field == field
 
-            matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
-            fr.rotate("from_matrix", matrix)
-            check_rotator(fr)
+        fr.rotate("from_quat", [0, 0, 1, 1])
+        check_rotator(fr)
 
-            fr.rotate("from_rotvec", rotvec=np.pi / 2 * np.array([0, 0, 1]))
-            check_rotator(fr)
+        matrix = [[0, -1, 0], [1, 0, 0], [0, 0, 1]]
+        fr.rotate("from_matrix", matrix)
+        check_rotator(fr)
 
-            fr.rotate("from_mrp", [0, 0, np.pi / 2])
-            check_rotator(fr)
+        fr.rotate("from_rotvec", rotvec=np.pi / 2 * np.array([0, 0, 1]))
+        check_rotator(fr)
 
-            fr.rotate("from_euler", seq="x", angles=np.pi / 2)
-            check_rotator(fr)
-            fr.rotate("from_euler", seq="xyz", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
-            check_rotator(fr)
-            fr.rotate("from_euler", seq="XYZ", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
-            check_rotator(fr)
+        fr.rotate("from_mrp", [0, 0, np.pi / 2])
+        check_rotator(fr)
 
-            fr.rotate("align_vector", initial=(1, 0, 1), final=(0, 0.2, -3))
-            check_rotator(fr)
+        fr.rotate("from_euler", seq="x", angles=np.pi / 2)
+        check_rotator(fr)
+        fr.rotate("from_euler", seq="xyz", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
+        check_rotator(fr)
+        fr.rotate("from_euler", seq="XYZ", angles=(np.pi / 2, np.pi / 4, np.pi / 6))
+        check_rotator(fr)
 
-    def test_n(self):
-        for field in self.fields:
-            fr = df.FieldRotator(field)
-            # no rotation => field should be the same
-            assert fr.field == field
+        fr.rotate("align_vector", initial=(1, 0, 1), final=(0, 0.2, -3))
+        check_rotator(fr)
 
-            n = (10, 10, 10)
-            fr.rotate("from_euler", seq="x", angles=np.pi / 6, n=n)
-            check_rotator(fr)
-            assert np.all(fr.field.mesh.n == n)
+    def test_n(field):
+        fr = df.FieldRotator(field)
+        # no rotation => field should be the same
+        assert fr.field == field
 
-    def test_rotation_inverse_rotation(self):
-        for field in self.fields:
-            fr = df.FieldRotator(field)
-            # no rotation => field should be the same
-            assert fr.field == field
+        n = (10, 10, 10)
+        fr.rotate("from_euler", seq="x", angles=np.pi / 6, n=n)
+        check_rotator(fr)
+        assert np.all(fr.field.mesh.n == n)
 
-            fr.rotate("align_vector", initial=(0, 0, 1), final=(1, 1, 1))
-            check_rotator(fr)
-            fr.rotate("align_vector", initial=(1, 1, 1), final=(0, 0, 1))
-            check_rotator(fr)
-            # field.allclose needs '==' for the mesh
-            assert np.allclose(field.array, fr.field.array)
+    def test_rotation_inverse_rotation(field):
+        fr = df.FieldRotator(field)
+        # no rotation => field should be the same
+        assert fr.field == field
 
-    def test_scalar_cube(self):
+        fr.rotate("align_vector", initial=(0, 0, 1), final=(1, 1, 1))
+        check_rotator(fr)
+        fr.rotate("align_vector", initial=(1, 1, 1), final=(0, 0, 1))
+        check_rotator(fr)
+        # field.allclose needs '==' for the mesh
+        assert np.allclose(field.array, fr.field.array)
+
+    def test_scalar_cube():
         # multiples of 90 degree rotations should return the same array
         mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
         field = df.Field(mesh, nvdim=1, value=1)
@@ -107,7 +105,7 @@ class TestFieldRotator:
         # no rotation => field should be the same
         assert field == fr.field
 
-    def test_macrospin_rotation(self):
+    def test_macrospin_rotation():
         mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), n=(1, 1, 1))
         field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
 
@@ -131,13 +129,12 @@ class TestFieldRotator:
             fr.field.array.squeeze(), [1 / np.sqrt(3), 1 / np.sqrt(3), 1 / np.sqrt(3)]
         )
 
-    def test_invalid_field(self):
-        field = df.Field(self.mesh, nvdim=2, value=(1, 1))
+    def test_invalid_field(mesh):
+        field = df.Field(mesh, nvdim=2, value=(1, 1))
         with pytest.raises(ValueError):
             df.FieldRotator(field)
 
-    def test_invalid_method(self):
-        for field in self.fields:
-            fr = df.FieldRotator(field)
-            with pytest.raises(ValueError):
-                fr.rotate("unknown method")
+    def test_invalid_method(field):
+        fr = df.FieldRotator(field)
+        with pytest.raises(ValueError):
+            fr.rotate("unknown method")
