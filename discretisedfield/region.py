@@ -591,6 +591,11 @@ class Region(_RegionIO):
 
         return False
 
+    def __or__(self, other):
+        raise AttributeError(
+            "This operator has been removed. Please use the `facing_surface` method."
+        )
+
     def facing_surface(self, other):
         """Facing surface.
 
@@ -634,11 +639,7 @@ class Region(_RegionIO):
 
         """
         if not isinstance(other, self.__class__):
-            msg = (
-                f"Unsupported type(s) for facing_surfaces: {type(self)=} and"
-                f" {type(other)=}."
-            )
-            raise TypeError(msg)
+            raise TypeError(f"Cannot find facing surface for {type(other)}.")
 
         for i in range(3):
             if self.pmin[i] >= other.pmax[i]:
