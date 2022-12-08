@@ -260,8 +260,8 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
             [df.Region(p1=(0, 0, 0), p2=(1e-5, 1e-4, 1e-5)), 1e-6],
         ],
     )
-    def test_multiplier(test_region, multiplier):
-        assert test_region.multiplier == multiplier
+    def test_multiplier(region, multiplier):
+        assert region.multiplier == multiplier
 
     def test_scale(test_region):
         res = test_region.scale(2)
