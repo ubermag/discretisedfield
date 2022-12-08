@@ -14,7 +14,6 @@ import xarray as xr
 import discretisedfield as df
 
 from .test_mesh import html_re as mesh_html_re
-from .test_mesh import valid_mesh  # noqa: F401
 
 html_re = (
     r"<strong>Field</strong>\s*<ul>\s*"

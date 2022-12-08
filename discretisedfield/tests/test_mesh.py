@@ -20,37 +20,29 @@ html_re = (
     r"</ul>"
 )
 
-valid_args = [
-    [(0, 0, 0), (5, 5, 5), [1, 1, 1], None],
-    [(-1, 0, -3), (5, 7, 5), None, (1, 1, 1)],
-    [(0, 0, 0), (5e-9, 5e-9, 5e-9), None, (1e-9, 1e-9, 1e-9)],
-    [(0, 0, 0), (5e-9, 5e-9, 5e-9), (5, 5, 5), None],
-    [
-        (-1.5e-9, -5e-9, 0),
-        (1.5e-9, -15e-9, -10e-9),
-        None,
-        (1.5e-9, 0.5e-9, 10e-9),
-    ],
-    [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9), (3, 10, 2), None],
-    [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), None, (0.5e-9, 1e-9, 5e-9)],
-    [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), (5, 5, 7), None],
-    [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), None, (0.5e-6, 2e-6, 2.5e-6)],
-    [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), (1, 10, 20), None],
-    [(0, 125e-9, 0), (500e-9, 0, -3e-9), None, (25e-9, 25e-9, 3e-9)],
-]
-
-
-@pytest.fixture(params=valid_args)
-def valid_mesh(request):
-    p1, p2, n, cell = request.param
-    return df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
-
 
 if True:  # temporary "fix" to keep the diff minimal; remove in the end
 
     @pytest.mark.parametrize(
         "p1, p2, n, cell",
-        valid_args,
+        [
+            [(0, 0, 0), (5, 5, 5), [1, 1, 1], None],
+            [(-1, 0, -3), (5, 7, 5), None, (1, 1, 1)],
+            [(0, 0, 0), (5e-9, 5e-9, 5e-9), None, (1e-9, 1e-9, 1e-9)],
+            [(0, 0, 0), (5e-9, 5e-9, 5e-9), (5, 5, 5), None],
+            [
+                (-1.5e-9, -5e-9, 0),
+                (1.5e-9, -15e-9, -10e-9),
+                None,
+                (1.5e-9, 0.5e-9, 10e-9),
+            ],
+            [(-1.5e-9, -5e-9, 0), (1.5e-9, -15e-9, -10e-9), (3, 10, 2), None],
+            [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), None, (0.5e-9, 1e-9, 5e-9)],
+            [(-1.5e-9, -5e-9, -5e-9), np.array((0, 0, 0)), (5, 5, 7), None],
+            [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), None, (0.5e-6, 2e-6, 2.5e-6)],
+            [[0, 5e-6, 0], (-1.5e-6, -5e-6, -5e-6), (1, 10, 20), None],
+            [(0, 125e-9, 0), (500e-9, 0, -3e-9), None, (25e-9, 25e-9, 3e-9)],
+        ],
     )
     def test_init_valid_args(p1, p2, n, cell):
         mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n, cell=cell)
