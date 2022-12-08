@@ -2,8 +2,6 @@ import collections
 import copy
 import functools
 import itertools
-import json
-import pathlib
 import warnings
 from numbers import Integral, Number
 
@@ -15,11 +13,11 @@ import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 
-from . import html, io
-from .region import Region
+from . import html
+from .io import _MeshIO
 
 
-class Mesh:
+class Mesh(_MeshIO):
     """Finite-difference mesh.
 
     Mesh discretises cubic ``discretisedfield.Region``, passed as ``region``,
@@ -1317,25 +1315,6 @@ class Mesh:
         norm = self.cell[self.attributes["axis1"]] * self.cell[self.attributes["axis2"]]
         dn = dfu.assemble_index(0, 3, {self.attributes["planeaxis"]: 1})
         return df.Field(self, dim=3, value=dn, norm=norm)
-
-    def save_subregions(self, field_filename):
-        """Save subregions to json file."""
-        with pathlib.Path(self._subregion_filename(field_filename)).open(
-            mode="wt", encoding="utf-8"
-        ) as f:
-            json.dump(self.subregions, f, cls=io._RegionJSONEncoder)
-
-    def load_subregions(self, field_filename):
-        """Load subregions from json file."""
-        with pathlib.Path(self._subregion_filename(field_filename)).open(
-            mode="rt", encoding="utf-8"
-        ) as f:
-            subregions = json.load(f)
-        self.subregions = {key: Region(**val) for key, val in subregions.items()}
-
-    @staticmethod
-    def _subregion_filename(filename):
-        return f"{str(filename)}.subregions.json"
 
     def scale(self, factor, inplace=False):
         """Scale the underlying region and all subregions.
