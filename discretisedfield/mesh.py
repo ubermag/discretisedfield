@@ -311,7 +311,11 @@ class Mesh(_MeshIO):
 
     @property
     def subregions(self):
-        """ "Subregions of the mesh.
+        """Subregions of the mesh.
+
+        When setting subregions all attributes of the individual regions (e.g. dims)
+        apart from ``pmin`` and ``pmax`` will be overwritten with the values from
+        ``mesh.region``.
 
         Returns
         -------
@@ -320,6 +324,7 @@ class Mesh(_MeshIO):
             A dictionary defining subregions in the mesh. The keys of the
             dictionary are the region names (``str``) as valid Python variable
             names, whereas the values are ``discretisedfield.Region`` objects.
+
         """
         return self._subregions
 
@@ -341,8 +346,7 @@ class Mesh(_MeshIO):
         for key, value in subregions.items():
             # Is the subregion in the mesh region?
             if value not in self.region:
-                msg = f"Subregion {key} is not in the mesh region."
-                raise ValueError(msg)
+                raise ValueError(f"Subregion {key} is not in the mesh region.")
 
             # Is the subregion an aggregate of discretisation cell?
             try:
@@ -355,19 +359,25 @@ class Mesh(_MeshIO):
                 raise ValueError(msg)
 
             # Is the subregion aligned with the mesh?
-            if not (
-                self.__class__(region=self.region, cell=self.cell)
-                | self.__class__(region=value, cell=self.cell)
+            if not self.is_aligned(
+                self.__class__(region=value, cell=self.cell)
             ):
-                msg = f"Subregion {key} is not aligned with the mesh."
-                raise ValueError(msg)
+                raise ValueError(f"Subregion {key} is not aligned with the mesh.")
         if "default" in subregions.keys():
-            msg = (
+            warnings.warn(
                 "Subregion name ``default`` has a special meaning when "
                 "initialising field values"
             )
-            warnings.warn(msg)
-        self._subregions = subregions
+        self._subregions = {
+            name: df.Region(
+                p1=sr.pmin,
+                p2=sr.pmax,
+                dims=self.region.dims,
+                units=self.region.units,
+                tolerance_factor=self.region.tolerance_factor,
+            )
+            for name, sr in subregions.items()
+        }
 
     @property
     def attributes(self):
