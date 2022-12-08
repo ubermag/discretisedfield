@@ -24,9 +24,9 @@ class _RegionIO(_RegionIO_HDF5):
                 return o.to_dict()
             elif isinstance(o, np.ndarray):
                 return tuple(o)
-            elif isinstance(o, np.int64):
+            elif isinstance(o, (np.int32, np.int64)):
                 return int(o)
-            elif isinstance(o, np.float64):
+            elif isinstance(o, (np.float32, np.float64)):
                 return float(o)
             else:
                 super().default(o)
