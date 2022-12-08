@@ -105,23 +105,20 @@ def check_hv(plot, types):
 @pytest.fixture
 def test_field():
     mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
+    c_array = mesh.coordinate_field().array
 
-    def norm_fun(point):
-        x, y, z = point
-        if x**2 + y**2 <= (5e-9) ** 2:
-            return 1e5
-        else:
-            return 0
+    def norm(points):
+        return np.where(
+            (points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0
+        )[..., np.newaxis]
 
-    def value_fun(point):
-        x, y, z = point
-        if x <= 0:
-            return (0, 0, 1)
-        else:
-            return (0, 0, -1)
+    def value(points):
+        res = np.zeros((*mesh.n, 3))
+        res[..., 2] = np.where(points[..., 0] <= 0, 1, -1)
+        return res
 
     return df.Field(
-        mesh, nvdim=3, value=value_fun, norm=norm_fun, vdims=["a", "b", "c"]
+        mesh, nvdim=3, value=value(c_array), norm=norm(c_array), vdims=["a", "b", "c"]
     )
 
 
