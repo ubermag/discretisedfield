@@ -5,7 +5,6 @@ import pytest
 
 import discretisedfield as df
 
-from .test_field import check_field
 from .test_field import html_re as field_html_re
 
 html_re = (
@@ -16,7 +15,7 @@ html_re = (
 
 
 def check_rotator(rotator):
-    check_field(rotator.field)
+    isinstance(rotator.field, df.Field)
 
     assert isinstance(repr(rotator), str)
     pattern = r"^FieldRotator\(unrotatedField\(.+\), rotation_quaternion:.*\)$"

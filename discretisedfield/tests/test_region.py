@@ -70,9 +70,8 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         ],
     )
     def test_init_zero_edge_length(p1, p2):
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(ValueError):
             df.Region(p1=p1, p2=p2)
-            assert "is zero" in str(excinfo.value)
 
     def test_pmin_pmax_edges_center_volume():
         p1 = (0, -4, 16.5)

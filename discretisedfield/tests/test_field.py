@@ -67,31 +67,6 @@ iters = [
 ]
 
 
-def check_field(field):
-    # TODO add explicit tests for the remaining checks in here and remove
-    # this function
-    assert isinstance(field.nvdim, int)
-
-    assert field.array.shape == (*field.mesh.n, field.nvdim)
-
-    rstr = repr(field)
-    assert isinstance(rstr, str)
-    pattern = (
-        r"^Field\(Mesh\(Region\(pmin=\[.+\], pmax=\[.+\], .+\), .+\)," r" nvdim=\d+\)$"
-    )
-    if field.vdims:
-        pattern = pattern[:-3] + r", vdims: \(.+\)\)$"
-    if field.unit is not None:
-        pattern = pattern[:-3] + r", unit=.+\)$"
-    assert re.search(pattern, rstr)
-
-    assert isinstance(field._repr_html_(), str)
-    assert re.search(html_re, field._repr_html_(), re.DOTALL)
-
-    assert isinstance(field.__iter__(), types.GeneratorType)
-    assert len(list(field)) == len(field.mesh)
-
-
 def check_hv(plot, types):
     # generate the first plot output to have enough data in plot.info
     hv.renderer("bokeh").get_plot(plot)
@@ -130,20 +105,57 @@ if True:  # remove
     @pytest.mark.parametrize("value, dtype", consts + sfuncs)
     def test_init_scalar_valid_args(valid_mesh, value, dtype):
         f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
-        check_field(f)
+        assert isinstance(f, df.Field)
 
         assert isinstance(f.mesh, df.Mesh)
+        assert isinstance(f.nvdim, int)
         assert f.nvdim == 1
         assert isinstance(f.array, np.ndarray)
+        assert f.array.shape == (*f.mesh.n, f.nvdim)
+        rstr = repr(f)
+        assert isinstance(rstr, str)
+        pattern = (
+            r"^Field\(Mesh\(Region\(pmin=\[.+\], pmax=\[.+\], .+\), .+\),"
+            r" nvdim=\d+\)$"
+        )
+        if f.vdims:
+            pattern = pattern[:-3] + r", vdims: \(.+\)\)$"
+        if f.unit is not None:
+            pattern = pattern[:-3] + r", unit=.+\)$"
+        assert re.search(pattern, rstr)
+
+        assert isinstance(f._repr_html_(), str)
+        assert re.search(html_re, f._repr_html_(), re.DOTALL)
+
+        assert isinstance(f.__iter__(), types.GeneratorType)
+        assert len(list(f)) == len(f.mesh)
 
     @pytest.mark.parametrize("value, dtype", iters + vfuncs)
     def test_init_vector_valid_args(valid_mesh, value, dtype):
         f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
-        check_field(f)
+        assert isinstance(f, df.Field)
 
         assert isinstance(f.mesh, df.Mesh)
+        assert isinstance(f.nvdim, int)
         assert f.nvdim == 3
         assert isinstance(f.array, np.ndarray)
+        assert f.array.shape == (*f.mesh.n, f.nvdim)
+        rstr = repr(f)
+        assert isinstance(rstr, str)
+        pattern = (
+            r"^Field\(Mesh\(Region\(pmin=\[.+\], pmax=\[.+\], .+\), .+\),"
+            r" nvdim=\d+\)$"
+        )
+        if f.vdims:
+            pattern = pattern[:-3] + r", vdims: \(.+\)\)$"
+        if f.unit is not None:
+            pattern = pattern[:-3] + r", unit=.+\)$"
+        assert re.search(pattern, rstr)
+
+        assert isinstance(f._repr_html_(), str)
+        assert re.search(html_re, f._repr_html_(), re.DOTALL)
+        assert isinstance(f.__iter__(), types.GeneratorType)
+        assert len(list(f)) == len(f.mesh)
 
     def test_init_invalid_arguments():
         p1 = (0, 0, 0)
@@ -176,7 +188,7 @@ if True:  # remove
         f = df.Field(valid_mesh, nvdim=3)
         f.update_field_values(np.ones((*f.mesh.n, f.nvdim)))
 
-        check_field(f)
+        assert isinstance(f, df.Field)
         assert np.allclose(f.mean(), (1, 1, 1))
 
         with pytest.raises(ValueError):
@@ -185,7 +197,7 @@ if True:  # remove
     @pytest.mark.parametrize("func, dtype", sfuncs)
     def test_set_with_callable_scalar(valid_mesh, func, dtype):
         f = df.Field(valid_mesh, nvdim=1, value=func, dtype=dtype)
-        check_field(f)
+        assert isinstance(f, df.Field)
 
         def random_point(f):
             return np.random.random(3) * f.mesh.region.edges + f.mesh.region.pmin
@@ -198,7 +210,7 @@ if True:  # remove
     @pytest.mark.parametrize("func, dtype", vfuncs)
     def test_set_with_callable_vector(valid_mesh, func, dtype):
         f = df.Field(valid_mesh, nvdim=3, value=func, dtype=dtype)
-        check_field(f)
+        assert isinstance(f, df.Field)
 
         def random_point(f):
             return np.random.random(3) * f.mesh.region.edges + f.mesh.region.pmin
@@ -264,7 +276,7 @@ if True:  # remove
                 vdims=valid_components[:nvdim],
             )
             assert f.vdims == valid_components[:nvdim]
-            check_field(f)
+            assert isinstance(f, df.Field)
 
             with pytest.raises(ValueError):
                 df.Field(
@@ -290,7 +302,7 @@ if True:  # remove
         f3 = df.Field(valid_mesh, nvdim=1, value=3)
 
         f12 = f1 << f2
-        check_field(f12)
+        assert isinstance(f12, df.Field)
         assert np.allclose(f12.array[0, 0, 0, :], [1, 2])
         assert f12.x == f1
         assert f12.y == f2
@@ -306,19 +318,19 @@ if True:  # remove
 
         # default components if not all fields have component labels
         f1a = f1 << fa
-        check_field(f1a)
+        assert isinstance(f1a, df.Field)
         assert f1a.vdims == ["x", "y"]
 
         # custom components if all fields have custom components
         fab = fa << fb
-        check_field(fab)
+        assert isinstance(fab, df.Field)
         assert fab.vdims == ["a", "b"]
 
     def test_unit(test_field):
         assert test_field.unit is None
         mesh = test_field.mesh
         field = df.Field(mesh, nvdim=3, value=(1, 2, 3), unit="A/m")
-        check_field(field)
+        assert isinstance(field, df.Field)
         assert field.unit == "A/m"
         field.unit = "mT"
         assert field.unit == "mT"
@@ -583,7 +595,7 @@ if True:  # remove
         # Scalar field
         f = df.Field(mesh, nvdim=1, value=3)
         res = -f
-        check_field(res)
+        assert isinstance(res, df.Field)
         assert res.mean() == -3
         assert f == +f
         assert f == -(-f)
@@ -592,7 +604,7 @@ if True:  # remove
         # Vector field
         f = df.Field(mesh, nvdim=3, value=(1, 2, -3))
         res = -f
-        check_field(res)
+        assert isinstance(res, df.Field)
         assert np.allclose(res.mean(), (-1, -2, 3))
         assert f == +f
         assert f == -(-f)
@@ -1023,7 +1035,7 @@ if True:  # remove
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, nvdim=1, value=0)
 
-        check_field(f.diff("x"))
+        assert isinstance(f.diff("x"), df.Field)
         assert np.allclose(f.diff("x", order=1).mean(), 0)
         assert np.allclose(f.diff("y", order=1).mean(), 0)
         assert np.allclose(f.diff("z", order=1).mean(), 0)
@@ -1074,7 +1086,7 @@ if True:  # remove
         mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
 
-        check_field(f.diff("y"))
+        assert isinstance(f.diff("y"), df.Field)
         assert np.allclose(f.diff("x").mean(), (0, 0, 0))
         assert np.allclose(f.diff("y").mean(), (0, 0, 0))
         assert np.allclose(f.diff("z").mean(), (0, 0, 0))
@@ -1164,7 +1176,7 @@ if True:  # remove
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
         f = df.Field(mesh, nvdim=1, value=0)
 
-        check_field(f.diff("x"))
+        assert isinstance(f.diff("x"), df.Field)
         assert np.allclose(f.diff("x", order=1).mean(), 0)
         assert np.allclose(f.diff("y", order=1).mean(), 0)
         assert np.allclose(f.diff("z", order=1).mean(), 0)
@@ -1478,7 +1490,7 @@ if True:  # remove
         # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
         f = df.Field(mesh, nvdim=1, value=0)
 
-        check_field(f.grad)
+        assert isinstance(f.grad, df.Field)
         assert np.allclose(f.grad.mean(), (0, 0, 0))
 
         # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
@@ -1530,11 +1542,11 @@ if True:  # remove
         # -> curl(f) = (0, 0, 0)
         f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
 
-        check_field(f.div)
+        assert isinstance(f.div, df.Field)
         assert f.div.nvdim == 1
         assert f.div.mean() == 0
 
-        check_field(f.curl)
+        assert isinstance(f.curl, df.Field)
         assert f.curl.nvdim == 3
         assert np.allclose(f.curl.mean(), (0, 0, 0))
 
@@ -1595,7 +1607,7 @@ if True:  # remove
         # -> laplace(f) = 0
         f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
 
-        check_field(f.laplace)
+        assert isinstance(f.laplace, df.Field)
         assert f.laplace.nvdim == 3
         assert np.allclose(f.laplace.mean(), (0, 0, 0))
 
@@ -1609,7 +1621,7 @@ if True:  # remove
             return x + y + z
 
         f = df.Field(mesh, nvdim=1, value=value_fun)
-        check_field(f.laplace)
+        assert isinstance(f.laplace, df.Field)
         assert np.allclose(f.laplace.mean(), 0)
 
         # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
@@ -1763,7 +1775,7 @@ if True:  # remove
     def test_line():
         mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), n=(10, 10, 10))
         f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        check_field(f)
+        assert isinstance(f, df.Field)
 
         line = f.line(p1=(0, 0, 0), p2=(5, 5, 5), n=20)
         assert isinstance(line, df.Line)
@@ -1774,7 +1786,7 @@ if True:  # remove
     @pytest.mark.parametrize("direction", ["x", "y", "z"])
     def test_plane(valid_mesh, direction):
         f = df.Field(valid_mesh, nvdim=1, value=3)
-        check_field(f)
+        assert isinstance(f, df.Field)
         plane = f.plane(direction, n=(3, 3))
         assert isinstance(plane, df.Field)
 
@@ -1815,11 +1827,11 @@ if True:  # remove
                 return (1, 2, 3)
 
         f = df.Field(mesh, nvdim=3, value=value_fun)
-        check_field(f)
-        check_field(f["r1"])
-        check_field(f["r2"])
-        check_field(f[subregions["r1"]])
-        check_field(f[subregions["r2"]])
+        assert isinstance(f, df.Field)
+        assert isinstance(f["r1"], df.Field)
+        assert isinstance(f["r2"], df.Field)
+        assert isinstance(f[subregions["r2"]], df.Field)
+        assert isinstance(f[subregions["r1"]], df.Field)
 
         assert np.allclose(f["r1"].mean(), (-1, -2, -3))
         assert np.allclose(f["r2"].mean(), (0, 0, 0))
@@ -1993,7 +2005,7 @@ if True:  # remove
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.from_file(os.path.join(dirname, "vtk-file.vtk"))
-        check_field(f)
+        assert isinstance(f, df.Field)
         assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 3)
         assert f.nvdim == 3
@@ -2001,14 +2013,14 @@ if True:  # remove
         # test reading legacy vtk file (written with discretisedfield<=0.61.0)
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.from_file(os.path.join(dirname, "vtk-vector-legacy.vtk"))
-        check_field(f)
+        assert isinstance(f, df.Field)
         assert np.all(f.mesh.n == (8, 1, 1))
         assert f.array.shape == (8, 1, 1, 3)
         assert f.nvdim == 3
 
         dirname = os.path.join(os.path.dirname(__file__), "test_sample")
         f = df.Field.from_file(os.path.join(dirname, "vtk-scalar-legacy.vtk"))
-        check_field(f)
+        assert isinstance(f, df.Field)
         assert np.all(f.mesh.n == (5, 1, 2))
         assert f.array.shape == (5, 1, 2, 1)
         assert f.nvdim == 1
@@ -2774,23 +2786,23 @@ if True:  # remove
 
         # real field
         real_field = test_field.real
-        check_field(real_field)
+        assert isinstance(real_field, df.Field)
         assert np.allclose(real_field((-2e-9, 0, 0)), (0, 0, 1e5))
         assert np.allclose(real_field((2e-9, 0, 0)), (0, 0, -1e5))
 
         imag_field = test_field.imag
-        check_field(imag_field)
+        assert isinstance(imag_field, df.Field)
         assert df.Field(mesh, nvdim=3).allclose(imag_field)
         assert df.Field(mesh, nvdim=3).allclose(np.mod(test_field.phase, np.pi))
 
         # complex field
         field = df.Field(mesh, nvdim=1, value=1 + 1j)
         real_field = field.real
-        check_field(real_field)
+        assert isinstance(real_field, df.Field)
         assert df.Field(mesh, nvdim=1, value=1).allclose(real_field)
 
         imag_field = field.imag
-        check_field(imag_field)
+        assert isinstance(imag_field, df.Field)
         assert df.Field(mesh, nvdim=1, value=1).allclose(imag_field)
         assert df.Field(mesh, nvdim=1, value=np.pi / 4).allclose(field.phase)
 
@@ -2949,11 +2961,11 @@ if True:  # remove
         )
 
         fg_1 = df.Field.from_xarray(good_darray1)
-        check_field(fg_1)
+        assert isinstance(fg_1, df.Field)
         fg_2 = df.Field.from_xarray(good_darray2)
-        check_field(fg_2)
+        assert isinstance(fg_2, df.Field)
         fg_3 = df.Field.from_xarray(good_darray3)
-        check_field(fg_3)
+        assert isinstance(fg_3, df.Field)
 
     def test_from_xarray_invalid_args_and_DataArrays():
         args = [
