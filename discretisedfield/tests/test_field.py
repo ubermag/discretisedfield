@@ -2902,25 +2902,25 @@ if True:  # remove
         f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
         fxa = f.to_xarray()
         f_new = df.Field.from_xarray(fxa)
-        assert f_new == f  # or use allclose()
+        assert f_new == f  
 
     @pytest.mark.parametrize("value, dtype", sfuncs)
-    def test_from_xarray_valid_args_vector(valid_mesh, value, dtype):
+    def test_from_xarray_valid_args_scalar(valid_mesh, value, dtype):
         f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
         fxa = f.to_xarray()
         f_new = df.Field.from_xarray(fxa)
-        assert f_new == f  # or use allclose()
+        assert f_new == f  
 
     def test_from_xarray_valid_args(test_field):
         f_plane = test_field.plane("z")
         f_plane_xa = f_plane.to_xarray()
         f_plane_new = df.Field.from_xarray(f_plane_xa)
-        assert f_plane_new == f_plane  # or use allclose()
+        assert f_plane_new == f_plane  
 
         f6d = test_field << test_field
         f6d_xa = f6d.to_xarray()
         f6d_new = df.Field.from_xarray(f6d_xa)
-        assert f6d_new == f6d  # or use allclose()
+        assert f6d_new == f6d  
 
         good_darray1 = xr.DataArray(
             np.ones((20, 20, 5, 3)),
