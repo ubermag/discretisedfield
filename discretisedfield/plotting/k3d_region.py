@@ -53,6 +53,9 @@ class K3dRegion:
         Plot(...)
 
         """
+        if self.region.ndim != 3:
+            raise ValueError("Only 3-dimensional regions can be plotted.")
+
         if plot is None:
             plot = k3d.plot()
             plot.display()
@@ -61,7 +64,7 @@ class K3dRegion:
 
         plot_array = np.ones((1, 1, 1)).astype(np.uint8)  # avoid k3d warning
 
-        rescaled_region = self.region / multiplier
+        rescaled_region = self.region.scale(1 / multiplier)
         bounds = [
             i
             for sublist in zip(rescaled_region.pmin, rescaled_region.pmax)
@@ -78,5 +81,10 @@ class K3dRegion:
         return self.region.multiplier if multiplier is None else multiplier
 
     def _axis_labels(self, plot, multiplier):
-        unit = f"({uu.rsi_prefixes[multiplier]}{self.region.unit})"
-        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
+        plot.axes = [
+            i
+            + r"\,\text{{{}}}".format(
+                f"({uu.rsi_prefixes[multiplier]}{self.region.units[dfu.axesdict[i]]})"
+            )
+            for i in dfu.axesdict.keys()
+        ]

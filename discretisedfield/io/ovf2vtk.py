@@ -34,8 +34,8 @@ def ovf2vtk():
         args.output = [f"{filename[:-4]}.vtk" for filename in args.input]
 
     for input_file, output_file in zip(args.input, args.output):
-        field = df.Field.fromfile(input_file)
-        field.write(output_file)
+        field = df.Field.from_file(input_file)
+        field.to_file(output_file)
 
 
 if __name__ == "__main__":

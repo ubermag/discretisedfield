@@ -3,22 +3,16 @@ import functools
 import numbers
 
 import numpy as np
-import ubermagutil.typesystem as ts
 import ubermagutil.units as uu
 
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 
 from . import html
+from .io import _RegionIO
 
 
-@ts.typesystem(
-    p1=ts.Vector(size=3, const=True),
-    p2=ts.Vector(size=3, const=True),
-    unit=ts.Name(const=True),
-    tolerance_factor=ts.Scalar(expected_type=float, positive=True),
-)
-class Region:
+class Region(_RegionIO):
     r"""Region.
 
     A cuboid region spans between two corner points :math:`\mathbf{p}_1` and
@@ -77,17 +71,57 @@ class Region:
 
     """
 
-    def __init__(self, p1, p2, unit="m", tolerance_factor=1e-12):
-        self.p1 = tuple(p1)
-        self.p2 = tuple(p2)
-        self.unit = unit
+    def __init__(
+        self, p1=None, p2=None, dims=None, units=None, tolerance_factor=1e-12, **kwargs
+    ):
+        # Allow pmin and pmax instead of p1 and p2 to simplify the internal code and the
+        # conversion from a dict to a Region. Users should generally use p1 and p2 in
+        # their code.
+        if "pmin" in kwargs and "pmax" in kwargs:
+            pmin, pmax = kwargs["pmin"], kwargs["pmax"]
+            if not all(np.asarray(pmin) < np.asarray(pmax)):
+                raise ValueError(
+                    f"The values in {pmin=} must be element-wise smaller than in"
+                    f" {pmax=}; use p1 and p2 if the input values are unordered."
+                )
+            p1, p2 = pmin, pmax
+
+        if not isinstance(p1, (tuple, list, np.ndarray)) or not isinstance(
+            p2, (tuple, list, np.ndarray)
+        ):
+            raise TypeError(
+                "p1 and p2 must be of type tuple, list, or np.ndarray. Not"
+                f" p1={type(p1)} and p2={type(p2)}."
+            )
+
+        if len(p1) != len(p2):
+            raise ValueError(
+                "The length of p1 and p2 must be the same. Not"
+                f" {len(p1)=} and {len(p2)=}."
+            )
+
+        if not all(isinstance(i, numbers.Number) for i in p1):
+            raise TypeError("p1 can only contain elements of type numbers.Number.")
+
+        if not all(isinstance(i, numbers.Number) for i in p2):
+            raise TypeError("p2 can only contain elements of type numbers.Number.")
+
+        # TODO: Remove for ndim != 3 functionality.
+        if len(p1) != 3:
+            raise NotImplementedError("Only 3D regions are supported at the moment.")
+
+        self._pmin = np.minimum(p1, p2)
+        self._pmax = np.maximum(p1, p2)
+        self.dims = dims
+        self.units = units
         self.tolerance_factor = tolerance_factor
 
         if not np.all(self.edges):
-            msg = f"One of the region's edge lengths is zero: {self.edges=}."
-            raise ValueError(msg)
+            raise ValueError(
+                f"At least one of the region's edge lengths is zero: {self.edges=}."
+            )
 
-    @functools.cached_property
+    @property
     def pmin(self):
         r"""Point with minimum coordinates in the region.
 
@@ -97,7 +131,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
             Point with minimum coordinates :math:`(p_x^\text{min},
             p_y^\text{min}, p_z^\text{min})`.
@@ -113,14 +147,14 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.pmin
-        (-1.1, 0.0, -0.1)
+        array([-1.1,  0. , -0.1])
 
         .. seealso:: :py:func:`~discretisedfield.Region.pmax`
 
         """
-        return dfu.array2tuple(np.minimum(self.p1, self.p2))
+        return self._pmin
 
-    @functools.cached_property
+    @property
     def pmax(self):
         r"""Point with maximum coordinates in the region.
 
@@ -130,7 +164,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
             Point with maximum coordinates :math:`(p_x^\text{max},
             p_y^\text{max}, p_z^\text{max})`.
@@ -145,15 +179,162 @@ class Region:
         >>> p2 = (5, 0, -0.1)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> region.pmin
-        (5.0, 2.9, 0.0)
+        >>> region.pmax
+        array([5. , 2.9, 0. ])
 
         .. seealso:: :py:func:`~discretisedfield.Region.pmin`
 
         """
-        return dfu.array2tuple(np.maximum(self.p1, self.p2))
+        return self._pmax
 
     @functools.cached_property
+    def ndim(self):
+        r"""Number of dimensions.
+
+        Calculates the number of dimensions of the region.
+
+        Returns
+        -------
+        int
+
+            Number of dimensions of the region.
+
+        Examples
+        --------
+        1. Getting number of dimensions of the region.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, -0.1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> region.ndim
+        3
+
+        .. seealso:: :py:func:`~discretisedfield.Region.dims`
+
+        """
+        return len(self.pmin)
+
+    @property
+    def dims(self):
+        r"""Names of the region's dimensions.
+
+        Returns
+        -------
+        tuple of str
+
+            Names of the region's dimensions.
+
+        Examples
+        --------
+        1. Getting region's dimension names.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, -0.1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> region.dims
+        ('x', 'y', 'z')
+
+        .. seealso:: :py:func:`~discretisedfield.Region.ndim`
+        """
+        return self._dims
+
+    @dims.setter
+    def dims(self, dims):
+        # TODO: Think about correct defaults
+        if dims is None:
+            if self.ndim == 3:
+                dims = ["x", "y", "z"]
+            else:
+                dims = [f"x{i}" for i in range(self.ndim)]
+        elif isinstance(dims, (tuple, list, np.ndarray)):
+            if len(dims) != self.ndim:
+                raise ValueError(
+                    "dims must have the same length as p1 and p2."
+                    f" Not len(dims)={len(dims)} and ndim={self.ndim}."
+                )
+            if not all(isinstance(dim, str) for dim in dims):
+                raise TypeError("dims can only contain elements of type str.")
+        else:
+            raise TypeError(
+                "dims must be of type tuple, list, or None (for default behaviour)."
+                f" Not {type(dims)}."
+            )
+
+        self._dims = tuple(dims)
+
+    @property
+    def units(self):
+        r"""Units of the region's dimensions.
+
+        Returns
+        -------
+        tuple of str
+
+            Units of the region's dimensions.
+
+        Examples
+        --------
+        1. Getting region's dimension units.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (-1.1, 2.9, 0)
+        >>> p2 = (5, 0, -0.1)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> region.units
+        ('m', 'm', 'm')
+
+        """
+        return self._units
+
+    @units.setter
+    def units(self, units):
+        if units is None:
+            units = ["m"] * self.ndim
+        elif isinstance(units, (tuple, list, np.ndarray)):
+            if len(units) != self.ndim:
+                raise ValueError(
+                    "units must have the same length as p1 and p2."
+                    f" Not {len(units)=} and {self.ndim=}."
+                )
+            if not all(isinstance(unit, str) for unit in units):
+                raise TypeError("units can only contain elements of type str.")
+        else:
+            raise TypeError(
+                "units must be of type tuple, list, or None (for default behaviour)."
+                f" Not {type(units)}."
+            )
+
+        self._units = tuple(units)
+
+    @property
+    def tolerance_factor(self):
+        r"""Tolerance factor for floating-point comparisons.
+
+        The tolerance factor is used for allclose and ``in`` if no other tolerance is
+        provided. It is multiplied with the minimum edge length of the region to obtain
+        reasonable relative and absolute tolerance.
+
+        """
+        return self._tolerance_factor
+
+    @tolerance_factor.setter
+    def tolerance_factor(self, tolerance_factor):
+        if not isinstance(tolerance_factor, numbers.Number):
+            raise TypeError(
+                "tolerance_factor must be of type numbers.Number. Not"
+                f" tolerance_factor={type(tolerance_factor)}."
+            )
+        self._tolerance_factor = tolerance_factor
+
+    @property
     def edges(self):
         r"""Region's edge lengths.
 
@@ -166,7 +347,7 @@ class Region:
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
              Edge lengths :math:`(l_{x}, l_{y}, l_{z})`.
 
@@ -181,32 +362,32 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.edges
-        (5, 15, 20)
+        array([ 5, 15, 20])
 
         """
-        return dfu.array2tuple(np.abs(np.subtract(self.p1, self.p2)))
+        return self.pmax - self.pmin
 
-    @functools.cached_property
-    def centre(self):
-        r"""Centre point.
+    @property
+    def center(self):
+        r"""Center point.
 
-        Centre point is computed as the middle point between region's points
+        Center point is computed as the middle point between region's points
         with minimum and maximum coordinates:
 
         .. math::
 
-            \mathbf{p}_\text{centre} = \frac{1}{2} (\mathbf{p}_\text{min}
+            \mathbf{p}_\text{center} = \frac{1}{2} (\mathbf{p}_\text{min}
             + \mathbf{p}_\text{max}).
 
         Returns
         -------
-        tuple (3,)
+        numpy.ndarray (3,)
 
-            Centre point :math:`(p_c^x, p_c^y, p_c^z)`.
+            Center point :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
-        1. Getting the centre point.
+        1. Getting the center point.
 
         >>> import discretisedfield as df
         ...
@@ -214,13 +395,19 @@ class Region:
         >>> p2 = (5, 15, 20)
         >>> region = df.Region(p1=p1, p2=p2)
         ...
-        >>> region.centre
-        (2.5, 7.5, 10.0)
+        >>> region.center
+        array([ 2.5,  7.5, 10. ])
 
         """
-        return dfu.array2tuple(0.5 * np.add(self.pmin, self.pmax))
+        return 0.5 * np.add(self.pmin, self.pmax)
 
-    @functools.cached_property
+    @property
+    def centre(self):
+        raise AttributeError(
+            "This attribute is now called 'center'.",
+        )
+
+    @property
     def volume(self):
         r"""Region's volume.
 
@@ -247,46 +434,10 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region.volume
-        100.0
+        100
 
         """
-        return dfu.array2tuple(np.prod(self.edges))
-
-    def random_point(self):
-        r"""Regions random point.
-
-        The use of this function is mostly for writing tests. This method is
-        not a property and it is called as
-        ``discretisedfield.Region.random_point()``.
-
-        Returns
-        -------
-        tuple (3,)
-
-            Random point coordinates :math:`\mathbf{p}_\text{r} =
-            (p_x^\text{r}, p_y^\text{r}, p_z^\text{r})`.
-
-        Examples
-        --------
-        1. Generating a random point in the region.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (200e-9, 200e-9, 1e-9)
-        >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> region.random_point()
-        (...)
-
-        .. note::
-
-           In this example, ellipsis is used instead of an exact tuple because
-           the result differs each time
-           ``discretisedfield.Region.random_point()`` method is called.
-
-        """
-        return dfu.array2tuple(np.random.random(3) * self.edges + self.pmin)
+        return np.prod(self.edges)
 
     def __repr__(self):
         r"""Representation string.
@@ -311,7 +462,7 @@ class Region:
         >>> region = df.Region(p1=p1, p2=p2)
         ...
         >>> region
-        Region(p1=(0, 0, 0), p2=(2, 2, 1))
+        Region(pmin=[0, 0, 0], pmax=[2, 2, 1], ...)
 
         """
         return html.strip_tags(self._repr_html_())
@@ -324,9 +475,7 @@ class Region:
         r"""Relational operator ``==``.
 
         Two regions are considered to be equal if they have the same minimum
-        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
-        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
-        \mathbf{p}^\text{min}_2`.
+        and maximum coordinate points, the same units, and the same dimension names.
 
         Parameters
         ----------
@@ -361,8 +510,11 @@ class Region:
 
         """
         if isinstance(other, self.__class__):
-            return np.allclose(self.pmin, other.pmin, atol=0) and np.allclose(
-                self.pmax, other.pmax, atol=0
+            return (
+                np.array_equal(self.pmin, other.pmin)
+                and np.array_equal(self.pmax, other.pmax)
+                and self.dims == other.dims
+                and self.units == other.units
             )
 
         return False
@@ -496,23 +648,29 @@ class Region:
             msg = "Cannot find facing surface."
             raise ValueError(msg)
 
-    @functools.cached_property
+    @property
     def multiplier(self):
         """Compute multiplier for the region."""
         return uu.si_max_multiplier(self.edges)
 
-    def __mul__(self, other):
-        """Binary ``*`` operator.
+    def scale(self, factor, inplace=False):
+        """Scale the region.
 
-        It can be applied only between ``discretisedfield.Region`` and
-        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
-        are multiplied by ``other``.
+        This method scales the region by multiplying ``pmin`` and ``pmax`` with
+        ``factor``. If ``factor`` is a number the same scaling is applied along all
+        dimensions. If ``factor`` is array-like its length must match ``region.ndim``
+        and different factors are applied along the different directions (based on their
+        order). A new object is created unless ``inplace=True`` is specified.
 
         Parameters
         ----------
-        other : numbers.Real
+        factor : numbers.Number or array-like of numbers.Number
 
-            Second operand.
+            Factor to scale the region.
+
+        inplace : bool, optional
+
+            If True, the Region object is modified in-place. Defaults to False.
 
         Returns
         -------
@@ -528,51 +686,88 @@ class Region:
 
         Example
         -------
-        1. Multiply region with a scalar.
+        1. Scale region uniformly.
 
         >>> import discretisedfield as df
-        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> res = region * 5
-        ...
+        >>> res = region.scale(5)
         >>> res.pmin
-        (0, 0, 0)
+        array([0, 0, 0])
         >>> res.pmax
-        (50, 50, 50)
+        array([50, 50, 50])
 
-        .. seealso:: :py:func:`~discretisedfield.Region.__truediv__`
+        2. Scale the region inplace.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> region.scale(5, inplace=True)
+        Region(...)
+        >>> region.pmin
+        array([0, 0, 0])
+        >>> region.pmax
+        array([50, 50, 50])
+
+        3. Scale region with different factors along different directions.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> res = region.scale((2, 3, 4))
+        >>> res.pmin
+        array([0, 0, 0])
+        >>> res.pmax
+        array([20, 30, 40])
 
         """
-        if not isinstance(other, numbers.Real):
-            msg = (
-                f"Unsupported operand type(s) for *: {type(self)=} and {type(other)=}."
+        if isinstance(factor, numbers.Number):
+            pass
+        elif not isinstance(factor, (tuple, list, np.ndarray)):
+            raise TypeError(f"Unsupported type {type(factor)} for scale.")
+        elif len(factor) != self.ndim:
+            raise ValueError(
+                f"Wrong length for array-like argument: {len(factor)}; expected length"
+                f" {len(self.pmin)}."
             )
-            raise TypeError(msg)
+        else:
+            for elem in factor:
+                if not isinstance(elem, numbers.Number):
+                    raise TypeError(
+                        f"Unsupported element {elem} of type {type(elem)} for scale."
+                    )
 
-        return self.__class__(
-            p1=np.multiply(self.pmin, other),
-            p2=np.multiply(self.pmax, other),
-            unit=self.unit,
-        )
+        if inplace:
+            np.multiply(self.pmin, factor, out=self.pmin)
+            np.multiply(self.pmax, factor, out=self.pmax)
+            return self
+        else:
+            return self.__class__(
+                p1=np.multiply(self.pmin, factor),
+                p2=np.multiply(self.pmax, factor),
+                dims=self.dims,
+                units=self.units,
+            )
 
-    def __rmul__(self, other):
-        return self * other
+    def translate(self, vector, inplace=False):
+        """Translate the region.
 
-    def __truediv__(self, other):
-        """Binary ``/`` operator.
-
-        It can be applied only between ``discretisedfield.Region`` and
-        ``numbers.Real``. The result is a region whose ``pmax`` and ``pmin``
-        are divided by ``other``.
+        This method translates the region by adding ``vector`` to ``pmin`` and ``pmax``.
+        The ``vector`` must have ``Region.ndim`` elements. A new object is created
+        unless ``inplace=True`` is specified.
 
         Parameters
         ----------
-        other : numbers.Real
+        vector : array-like of numbers.Number
 
-            Second operand.
+            Vector to translate the region.
+
+        inplace : bool, optional
+
+            If True, the Region object is modified in-place. Defaults to False.
 
         Returns
         -------
@@ -586,27 +781,133 @@ class Region:
 
             If the operator cannot be applied.
 
-        Example
-        -------
-        1. Divide region with a scalar.
+        Examples
+        --------
+        1. Translate the region.
 
         >>> import discretisedfield as df
-        ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
-        ...
-        >>> res = region / 2
-        ...
+        >>> res = region.translate((2, -2, 5))
         >>> res.pmin
-        (0.0, 0.0, 0.0)
+        array([ 2, -2,  5])
         >>> res.pmax
-        (5.0, 5.0, 5.0)
+        array([12,  8, 15])
 
-        .. seealso:: :py:func:`~discretisedfield.Region.__mul__`
+        2. Translate the region inplace.
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> region.translate((2, -2, 5), inplace=True)
+        Region(...)
+        >>> region.pmin
+        array([ 2, -2,  5])
+        >>> region.pmax
+        array([12,  8, 15])
 
         """
-        return self * other ** (-1)
+        if not isinstance(vector, (tuple, list, np.ndarray)):
+            raise TypeError(f"Unsupported type {type(vector)} for translate.")
+        elif len(vector) != self.ndim:
+            raise ValueError(
+                f"Wrong length for array-like argument: {len(vector)}; expected length"
+                f" {len(self.pmin)}."
+            )
+        for elem in vector:
+            if not isinstance(elem, numbers.Number):
+                raise TypeError(
+                    f"Unsupported element {elem} of type {type(elem)} for translate."
+                )
+        if inplace:
+            np.add(self.pmin, vector, out=self.pmin)
+            np.add(self.pmax, vector, out=self.pmax)
+            return self
+        else:
+            return self.__class__(
+                p1=np.add(self.pmin, vector),
+                p2=np.add(self.pmax, vector),
+                dims=self.dims,
+                units=self.units,
+            )
+
+    def allclose(
+        self,
+        other,
+        atol=None,
+        rtol=None,
+    ):
+        r"""Check if two regions are close.
+
+        Two regions are considered to be equal if they have the same minimum
+        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
+        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
+        \mathbf{p}^\text{min}_2` within a tolerance.
+
+        Parameters
+        ----------
+        other : discretisedfield.Region
+
+            Second operand.
+
+        atol : numbers.Number, optional
+
+            Absolute tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the tolerance factor.
+
+        rtol : numbers.Number, optional
+
+            Relative tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the tolerance factor.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if two regions are equal (within floating-point accuracy) and
+            ``False`` otherwise.
+
+        Examples
+        --------
+        1. Usage of relational operator ``==``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> region1 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
+        >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
+        >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
+        ...
+        >>> region1.allclose(region2)
+        True
+        >>> region1.allclose(region3)
+        False
+        >>> region2.allclose(region3)
+        False
+
+        """
+        if isinstance(other, self.__class__):
+            if atol is None:
+                atol = np.min(self.edges) * self.tolerance_factor
+            elif not isinstance(atol, numbers.Number):
+                raise TypeError(f"{type(atol)=} is not a number.")
+
+            if rtol is None:
+                rtol = np.min(self.edges) * self.tolerance_factor
+            elif not isinstance(rtol, numbers.Number):
+                raise TypeError(f"{type(rtol)=} is not a number.")
+
+            return np.allclose(
+                self.pmin, other.pmin, atol=atol, rtol=rtol
+            ) and np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)
+
+        raise TypeError(
+            f"Unsupported {(type(other))=}; only objects of type Region are allowed for"
+            " method allclose."
+        )
 
     @property
     def mpl(self):
@@ -723,10 +1024,16 @@ class Region:
         return dfp.K3dRegion(self)
 
     def to_dict(self):
-        """Convert region object to dict with items p1, p2, unit, tolerance_factor."""
+        """Convert region object to dict.
+
+        Convert region object to dict with items pmin, pmax, dims,
+        units, and tolerance_factor.
+
+        """
         return {
-            "p1": self.p1,
-            "p2": self.p2,
-            "unit": self.unit,
+            "pmin": self.pmin,
+            "pmax": self.pmax,
+            "dims": self.dims,
+            "units": self.units,
             "tolerance_factor": self.tolerance_factor,
         }

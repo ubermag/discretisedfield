@@ -100,8 +100,8 @@ class K3dField:
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.voxels`
 
         """
-        if self.data.dim != 1:
-            msg = f"Cannot plot dim={self.data.dim} field."
+        if self.data.nvdim != 1:
+            msg = f"Cannot plot nvdim={self.data.nvdim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -239,8 +239,8 @@ class K3dField:
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.vector`
 
         """
-        if self.data.dim != 1:
-            msg = f"Cannot plot dim={self.data.dim} field."
+        if self.data.nvdim != 1:
+            msg = f"Cannot plot nvdim={self.data.nvdim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -248,8 +248,8 @@ class K3dField:
             plot.display()
 
         if filter_field is not None:
-            if filter_field.dim != 1:
-                msg = f"Cannot use dim={self.data.dim} filter_field."
+            if filter_field.nvdim != 1:
+                msg = f"Cannot use nvdim={self.data.nvdim} filter_field."
                 raise ValueError(msg)
 
         if multiplier is None:
@@ -423,8 +423,8 @@ class K3dField:
         Plot(...)
 
         """
-        if self.data.dim != 3:
-            msg = f"Cannot plot dim={self.data.dim} field."
+        if self.data.nvdim != 3:
+            msg = f"Cannot plot nvdim={self.data.nvdim} field."
             raise ValueError(msg)
 
         if plot is None:
@@ -432,8 +432,8 @@ class K3dField:
             plot.display()
 
         if color_field is not None:
-            if color_field.dim != 1:
-                msg = f"Cannot use dim={self.data.dim} color_field."
+            if color_field.nvdim != 1:
+                msg = f"Cannot use nvdim={self.data.nvdim} color_field."
                 raise ValueError(msg)
 
         if multiplier is None:
@@ -460,12 +460,13 @@ class K3dField:
 
         coordinates, vectors, color_values = [], [], []
         norm_field = self.data.norm  # assigned to be computed only once
-        for point, value in self.data:
+        for point, value in zip(self.data.mesh, self.data):
             if norm_field(point) != 0:
                 coordinates.append(point)
                 vectors.append(value)
                 if color_field is not None:
-                    color_values.append(color_field(point))
+                    # scalar color_field.__call__ returns an array with a single element
+                    color_values.append(color_field(point)[0])
 
         if color_field is not None:
             color_values = plot_util.normalise_to_range(color_values, (0, 255))
@@ -520,7 +521,7 @@ class K3dField:
 
     def __dir__(self):
         dirlist = dir(self.__class__)
-        if self.data.dim == 1:
+        if self.data.nvdim == 1:
             need_removing = ["k3d_vector"]
         else:
             need_removing = ["k3d_scalar", "k3d_nonzero"]
