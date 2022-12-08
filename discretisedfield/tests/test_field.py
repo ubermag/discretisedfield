@@ -146,19 +146,23 @@ if True:  # remove
         assert isinstance(f.array, np.ndarray)
 
     def test_init_invalid_arguments():
+        p1 = (0, 0, 0)
+        p2 = (10e-9, 10e-9, 10e-9)
+        n = (5, 5, 5)
+        mesh = df.Mesh(p1=p1, p2=p2, n=n)
         with pytest.raises(TypeError):
             df.Field("meaningless_mesh_string", nvdim=1)
 
         # wrong abc.Iterable
         with pytest.raises(TypeError):
-            df.Field(meshes[0], nvdim=1, value="string")
+            df.Field(mesh, nvdim=1, value="string")
 
         # all builtin types are numeric types or Iterable
         class WrongType:
             pass
 
         with pytest.raises(TypeError):
-            df.Field(meshes[0], nvdim=1, value=WrongType())
+            df.Field(mesh, nvdim=1, value=WrongType())
 
     @pytest.mark.parametrize(
         "nvdim, error",
@@ -1767,7 +1771,7 @@ if True:  # remove
         assert line.n == 20
         assert line.dim == 3
 
-    @pytest.mark.paramertize("direction", ["x", "y", "z"])
+    @pytest.mark.parametrize("direction", ["x", "y", "z"])
     def test_plane(valid_mesh, direction):
         f = df.Field(valid_mesh, nvdim=1, value=3)
         check_field(f)
@@ -2895,7 +2899,7 @@ if True:  # remove
         f_new = df.Field.from_xarray(fxa)
         assert f_new == f  # or use allclose()
 
-    def test_from_xarray_valid_args(valid_mesh):
+    def test_from_xarray_valid_args(test_field):
         f_plane = test_field.plane("z")
         f_plane_xa = f_plane.to_xarray()
         f_plane_new = df.Field.from_xarray(f_plane_xa)
