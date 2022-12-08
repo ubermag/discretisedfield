@@ -592,6 +592,11 @@ class Region(_RegionIO):
         return False
 
     def __or__(self, other):
+        raise AttributeError(
+            "This operator has been removed. Please use the `facing_surface` method."
+        )
+
+    def facing_surface(self, other):
         """Facing surface.
 
         Parameters
@@ -624,7 +629,7 @@ class Region(_RegionIO):
         >>> p22 = (100e-9, 50e-9, 30e-9)
         >>> region2 = df.Region(p1=p21, p2=p22)
         ...
-        >>> res = region1 | region2
+        >>> res = region1.facing_surface(region2)
         >>> res[0]
         'z'
         >>> res[1] == region1
@@ -634,10 +639,7 @@ class Region(_RegionIO):
 
         """
         if not isinstance(other, self.__class__):
-            msg = (
-                f"Unsupported operand type(s) for |: {type(self)=} and {type(other)=}."
-            )
-            raise TypeError(msg)
+            raise TypeError(f"Cannot find facing surface for {type(other)}.")
 
         for i in range(3):
             if self.pmin[i] >= other.pmax[i]:

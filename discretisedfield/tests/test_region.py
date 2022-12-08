@@ -192,7 +192,7 @@ def test_contains(factor):
     assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
 
 
-def test_or():
+def test_facing_surface():
     # x-direction
     p11 = (0, 0, 0)
     p12 = (10e-9, 50e-9, 20e-9)
@@ -202,12 +202,12 @@ def test_or():
     p22 = (30e-9, 50e-9, 20e-9)
     region2 = df.Region(p1=p21, p2=p22)
 
-    res = region1 | region2
+    res = region1.facing_surface(region2)
 
     assert res[0] == "x"
     assert res[1] == region1
     assert res[2] == region2
-    assert region1 | region2 == region2 | region1
+    assert region1.facing_surface(region2) == region2.facing_surface(region1)
 
     # y-direction
     p11 = (0, 0, 0)
@@ -218,12 +218,12 @@ def test_or():
     p22 = (10e-9, -10e-9, 20e-9)
     region2 = df.Region(p1=p21, p2=p22)
 
-    res = region1 | region2
+    res = region1.facing_surface(region2)
 
     assert res[0] == "y"
     assert res[1] == region2
     assert res[2] == region1
-    assert region1 | region2 == region2 | region1
+    assert region1.facing_surface(region2) == region2.facing_surface(region1)
 
     # z-direction
     p11 = (0, 0, 0)
@@ -234,12 +234,12 @@ def test_or():
     p22 = (100e-9, 50e-9, 30e-9)
     region2 = df.Region(p1=p21, p2=p22)
 
-    res = region1 | region2
+    res = region1.facing_surface(region2)
 
     assert res[0] == "z"
     assert res[1] == region1
     assert res[2] == region2
-    assert region1 | region2 == region2 | region1
+    assert region1.facing_surface(region2) == region2.facing_surface(region1)
 
     # Exceptions
     p11 = (0, 0, 0)
@@ -251,10 +251,10 @@ def test_or():
     region2 = df.Region(p1=p21, p2=p22)
 
     with pytest.raises(ValueError):
-        res = region1 | region2
+        res = region1.facing_surface(region2)
 
     with pytest.raises(TypeError):
-        res = region1 | 5
+        res = region1.facing_surface(5)
 
 
 @pytest.mark.parametrize(
