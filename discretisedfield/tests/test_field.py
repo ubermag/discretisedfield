@@ -1975,7 +1975,7 @@ class TestField:
         for nvdim, value, vdims in zip(
             [1, 2, 3, 4],
             [1.2, (1, 2.5), (1e-3, -5e6, 5e6), np.random.random(4)],
-            [None, ("m_mag", "m_phase"), None, "abcd"],
+            [None, ("m_mag", "m_phase"), None, list("abcd")],
         ):
             for repr in ["txt", "bin", "xml"]:
                 f = df.Field(mesh, nvdim=nvdim, value=value, vdims=vdims)
