@@ -1794,7 +1794,7 @@ if True:  # remove
         pmin = test_field.mesh.region.pmin
         assert np.allclose(resampled(pmin), test_field((0, 0, 0)))
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             test_field.resample((0, 1, 2))
 
     def test_getitem():
