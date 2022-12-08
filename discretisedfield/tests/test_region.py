@@ -314,9 +314,9 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         with pytest.raises(TypeError):
             test_region.translate(3)
 
-    def test_units():
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
+    def test_units(test_region):
+        p1 = test_region.pmin
+        p2 = test_region.pmax
         units = ["a", "b", "c"]
         region = df.Region(p1=p1, p2=p2, units=units)
         assert isinstance(region, df.Region)
@@ -354,9 +354,9 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
         assert isinstance(test_region, df.Region)
         assert test_region.ndim == ndim
 
-    def test_dims():
-        p1 = (-50e-9, -50e-9, 0)
-        p2 = (50e-9, 50e-9, 20e-9)
+    def test_dims(test_region):
+        p1 = test_region.pmin
+        p2 = test_region.pax
         dims = ["a", "b", "c"]
         region = df.Region(p1=p1, p2=p2, dims=dims)
         assert isinstance(region, df.Region)
