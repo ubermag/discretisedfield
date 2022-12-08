@@ -359,9 +359,7 @@ class Mesh(_MeshIO):
                 raise ValueError(msg)
 
             # Is the subregion aligned with the mesh?
-            if not self.is_aligned(
-                self.__class__(region=value, cell=self.cell)
-            ):
+            if not self.is_aligned(self.__class__(region=value, cell=self.cell)):
                 raise ValueError(f"Subregion {key} is not aligned with the mesh.")
         if "default" in subregions.keys():
             warnings.warn(
