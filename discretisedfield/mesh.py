@@ -195,7 +195,9 @@ class Mesh(_MeshIO):
                 )
             if len(cell) != self.region.ndim:
                 raise ValueError("The cell must have same dimensions as the region.")
-            elif not all(isinstance(i, Number) and i > 0 for i in cell):
+            elif not all(isinstance(i, Number) for i in cell):
+                raise TypeError("The values of cell must be numbers.")
+            elif not all(i > 0 for i in cell):
                 raise ValueError("The values of cell must be positive numbers.")
             # Check if the mesh region is an aggregate of the discretisation cell.
             tol = np.min(cell) * 1e-3  # tolerance
