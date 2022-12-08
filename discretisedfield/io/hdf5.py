@@ -1,5 +1,5 @@
 import contextlib
-import pathlib
+import datetime
 
 import h5py
 import numpy as np
@@ -7,123 +7,131 @@ import numpy as np
 import discretisedfield as df
 
 
-def field_to_hdf5(field, filename, save_subregions=True):
-    """Write the field to an HDF5 file.
+class _RegionIO_HDF5:
+    _h5_attrs = ("pmin", "pmax", "dims", "ndim", "units", "tolerance_factor")
 
-    Parameters
-    ----------
-    filename : pathlib.Path, str
+    def _h5_save(self, h5_region: h5py.Group):
+        for attr in self._h5_attrs:
+            h5_region.attrs[attr] = getattr(self, attr)
 
-        Name with an extension of the file written.
-
-    save_subregions : bool, optional
-
-       If ``True`` and subregions are defined for the mesh the subregions will be saved
-       to a json file. Defaults to ``True``.
-
-    Example
-    -------
-    1. Write field to an HDF5 file.
-
-    >>> import os
-    >>> import discretisedfield as df
-    ...
-    >>> p1 = (0, 0, 0)
-    >>> p2 = (10e-9, 5e-9, 3e-9)
-    >>> n = (10, 5, 3)
-    >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    >>> value_fun = lambda point: (point[0], point[1], point[2])
-    >>> field = df.Field(mesh, dim=3, value=value_fun)
-    ...
-    >>> filename = 'mytestfile.h5'
-    >>> field.to_file(filename)  # write the file
-    >>> os.path.isfile(filename)
-    True
-    >>> field_read = df.Field.from_file(filename)  # read the file
-    >>> field_read == field
-    True
-    >>> os.remove(filename)  # delete the file
-
-    See also
-    --------
-    ~discretisedfield.Field.to_file
-    field_from_hdf5
-
-    """
-    filename = pathlib.Path(filename)
-    if save_subregions and field.mesh.subregions:
-        field.mesh.save_subregions(filename)
-
-    with h5py.File(filename, "w") as f:
-        # Set up the file structure
-        gfield = f.create_group("field")
-        gmesh = gfield.create_group("mesh")
-        gregion = gmesh.create_group("region")
-
-        # Save everything as datasets
-        gregion.create_dataset("pmin", data=field.mesh.region.pmin)
-        gregion.create_dataset("pmax", data=field.mesh.region.pmax)
-        gmesh.create_dataset("n", dtype="i4", data=field.mesh.n)
-        gfield.create_dataset("dim", dtype="i4", data=field.nvdim)
-        gfield.create_dataset("array", data=field.array)
+    @classmethod
+    def _h5_load(cls, h5_region: h5py.Group):
+        return cls(**{attr: h5_region.attrs[attr] for attr in cls._h5_attrs})
 
 
-def field_from_hdf5(filename):
-    """Read the field from an HDF5 file.
+class _MeshIO_HDF5:
+    def _h5_save(self, h5_mesh: h5py.Group):
+        h5_region = h5_mesh.create_group("region")
+        self.region._h5_save(h5_region)
 
-    This method reads the field from an HDF5 file defined on written by
-    ``discretisedfield.io.field_to_hdf5``.
+        for attr in ["n", "bc"]:
+            h5_mesh.attrs[attr] = getattr(self, attr)
 
-    Parameters
-    ----------
-    filename : pathlib.Path, str
+        h5_mesh.create_dataset("subregion_names", data=list(self.subregions.keys()))
+        h5_mesh_subregions = h5_mesh.create_dataset(
+            "subregions",
+            (len(self.subregions), 2 * self.region.ndim),
+            dtype=self.region.pmin.dtype,
+        )
+        for i, subregion in enumerate(self.subregions.values()):
+            h5_mesh_subregions[i] = [*subregion.pmin, *subregion.pmax]
 
-        Name of the file to be read.
+    @classmethod
+    def _h5_load(cls, h5_mesh: h5py.Group):
+        region = df.Region._h5_load(h5_mesh["region"])
+        subregions = {
+            name.decode("utf-8"): df.Region(
+                p1=data[: region.ndim], p2=data[region.ndim :]
+            )
+            for name, data in zip(h5_mesh["subregion_names"], h5_mesh["subregions"])
+        }
+        return cls(region=region, n=h5_mesh.attrs["n"], subregions=subregions)
 
-    Returns
-    -------
-    discretisedfield.Field
 
-        Field read from the file.
+class _FieldIO_HDF5:
+    def _to_hdf5(self, filename):
+        """Save a single field in a new hdf5 file."""
+        utc_now = datetime.datetime.utcnow().isoformat(timespec="seconds")
+        with h5py.File(filename, "w") as f:
+            for attribute, value in [
+                ("ubermag-hdf5-file-version", "0.1"),
+                ("discretisedfield.__version__", df.__version__),
+                ("file-creation-time-UTC", utc_now),
+                ("type", "discretisedfield.Field"),
+            ]:
+                f.attrs[attribute] = value
 
-    Example
-    -------
-    1. Read a field from the HDF5 file.
+            h5_field = f.create_group("field")
+            self._h5_save_structure(h5_field)
+            h5_field_data = h5_field.create_dataset(
+                "array", (*self.mesh.n, self.nvdim), dtype=self.array.dtype
+            )
+            self._h5_save_data(h5_field_data, slice(None))
 
-    >>> import pathlib
-    >>> import discretisedfield as df
-    ...
-    >>> current_path = pathlib.Path(__file__).absolute().parent
-    >>> filepath = current_path / '..' / 'tests' / 'test_sample' / 'hdf5-file.hdf5'
-    >>> field = df.Field.from_file(filepath)
-    >>> field
-    Field(...)
+    def _h5_save_structure(self, h5_field: h5py.Group):
+        """
+        Save the 'field structure', that is the mesh and field attributes into an
+        existing hdf5 group. The field data is NOT saved.
+        """
+        h5_mesh = h5_field.create_group("mesh")
+        self.mesh._h5_save(h5_mesh)
 
-    See also
-    --------
-    ~discretisedfield.Field.from_file
-    field_to_hdf5
+        h5_field.attrs["nvdim"] = self.nvdim
+        h5_field.attrs["vdims"] = self.vdims if self.vdims is not None else "None"
+        h5_field.attrs["unit"] = str(self.unit)
 
-    """
-    filename = pathlib.Path(filename)
-    with h5py.File(filename, "r") as f:
-        # Read data from the file.
-        # discretisedfield <= 0.65.0 saves p1 and p2 instead of pmin and pmax
-        try:
-            p1 = f["field/mesh/region/pmin"]
-        except KeyError:
-            p1 = f["field/mesh/region/p1"]
-        try:
-            p2 = f["field/mesh/region/pmax"]
-        except KeyError:
-            p2 = f["field/mesh/region/p2"]
-        n = np.array(f["field/mesh/n"]).tolist()
-        dim = np.array(f["field/dim"]).tolist()
-        array = f["field/array"]
+    def _h5_save_data(self, h5_field_data: h5py.Dataset, location):
+        """
+        Save field data into an existing hdf5 dataset at a given `location` inside that
+        dataset. For a single field in that dataset the `location` refers to the whole
+        dataset (`slice(None)`). Other values for `location` are useful to save a single
+        field into a bigger dataset, e.g. a dataset meant to contain a time series.
+        """
+        h5_field_data[location] = self.array
 
-        # Create field.
-        mesh = df.Mesh(region=df.Region(p1=np.asarray(p1), p2=np.asarray(p2)), n=n)
+    @classmethod
+    def _from_hdf5(cls, filename):
+        """Read an hdf5 file containing a single Field object."""
+        with h5py.File(filename, "r") as f:
+            if "ubermag-hdf5-file-version" not in f.attrs:
+                return cls._h5_legacy_load_field(f, filename)
+            if f.attrs["type"] != "discretisedfield.Field":
+                raise ValueError(
+                    f"{cls} cannot read hdf5 files with type {f.attrs['type']}."
+                )
+            assert f.attrs["ubermag-hdf5-file-version"] == "0.1"
+            return cls._h5_load_field(f["field"], slice(None))
+
+    @classmethod
+    def _h5_load_field(cls, h5_field: h5py.Group, data_location):
+        """
+        Load a Field from an hdf5 group containing a single field. The hdf5 dataset
+        containing the field data can contain multiple fields arrays on the same mesh
+        (e.g. in a time series). The correct part of the array can be selected with
+        `data_location`.
+        """
+        vdims = h5_field.attrs["vdims"]
+        if isinstance(vdims, str) and vdims == "None":
+            vdims = None
+        return cls(
+            mesh=df.Mesh._h5_load(h5_field["mesh"]),
+            nvdim=h5_field.attrs["nvdim"],
+            value=h5_field["array"][data_location],
+            vdims=vdims,
+            unit=h5_field.attrs["unit"],
+        )
+
+    @classmethod
+    def _h5_legacy_load_field(cls, h5_file: h5py.Group, filename):
+        # reads old hdf5 files written prior to introducing ubermag-hdf5-file-version
+        p1 = tuple(h5_file["field/mesh/region/p1"])
+        p2 = tuple(h5_file["field/mesh/region/p2"])
+        n = np.array(h5_file["field/mesh/n"]).tolist()
+        dim = np.array(h5_file["field/dim"]).tolist()
+        array = h5_file["field/array"]
+
+        mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
         with contextlib.suppress(FileNotFoundError):
             mesh.load_subregions(filename)
 
-        return df.Field(mesh, dim=dim, value=array[:])
+        return cls(mesh, dim=dim, value=array[:])

@@ -1895,7 +1895,7 @@ class TestField:
 
             # Directly write with wrong representation (no data is written)
             with pytest.raises(ValueError):
-                df.io.field_to_ovf(f, "fname.ovf", representation="bin5")
+                f._to_ovf("fname.ovf", representation="bin5")
 
         # multiple different units (not supported by discretisedfield)
         f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
@@ -1966,7 +1966,7 @@ class TestField:
             f_saved = df.Field(f_read.mesh, nvdim=3, value=(1, 0.1, 0), norm=1)
             assert f_saved.allclose(f_read)
 
-    def test_to_file_read_vtk(self, tmp_path):
+    def test_write_read_vtk(self, tmp_path):
         filename = "testfile.vtk"
 
         p1 = (0, 0, 0)
@@ -1981,7 +1981,7 @@ class TestField:
         for nvdim, value, vdims in zip(
             [1, 2, 3, 4],
             [1.2, (1, 2.5), (1e-3, -5e6, 5e6), np.random.random(4)],
-            [None, ("m_mag", "m_phase"), None, "abcd"],
+            [None, ("m_mag", "m_phase"), None, list("abcd")],
         ):
             for repr in ["txt", "bin", "xml"]:
                 f = df.Field(mesh, nvdim=nvdim, value=value, vdims=vdims)
@@ -2034,33 +2034,42 @@ class TestField:
         with pytest.raises(AttributeError):
             f.to_file(str(tmp_path / filename))
 
-    def test_to_file_read_hdf5(self, tmp_path):
+    @pytest.mark.parametrize(
+        "nvdim,value", [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]
+    )
+    @pytest.mark.parametrize(
+        "subregions",
+        [
+            {},
+            {
+                "sr1": df.Region(p1=(0, 0, 0), p2=(2e-12, 2e-12, 1e-12)),
+                "sr2": df.Region(p1=(3e-12, 0, 0), p2=(10e-12, 5e-12, 5e-12)),
+            },
+        ],
+    )
+    def test_write_read_hdf5(self, nvdim, value, subregions, tmp_path):
         filenames = ["testfile.hdf5", "testfile.h5"]
 
         p1 = (0, 0, 0)
         p2 = (10e-12, 5e-12, 5e-12)
         cell = (1e-12, 1e-12, 1e-12)
-        subregions = {
-            "sr1": df.Region(p1=p1, p2=(2e-12, 2e-12, 1e-12)),
-            "sr2": df.Region(p1=(3e-12, 0, 0), p2=p2),
-        }
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
-        for nvdim, value in [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))]:
-            f = df.Field(mesh, nvdim=nvdim, value=value)
-            for filename in filenames:
-                tmpfilename = tmp_path / filename
-                f.to_file(tmpfilename)
-                f_read = df.Field.from_file(tmpfilename)
+        f = df.Field(mesh, nvdim=nvdim, value=value)
+        for filename in filenames:
+            tmpfilename = tmp_path / filename
+            f.to_file(tmpfilename)
+            f_read = df.Field.from_file(tmpfilename)
 
-                assert f == f_read
+            assert f == f_read
 
-                tmpfilename = tmp_path / f"no_sr_{filename}"
-                f.to_file(tmpfilename, save_subregions=False)
-                f_read = df.Field.from_file(tmpfilename)
-                assert f == f_read
+            tmpfilename = tmp_path / f"no_sr_{filename}"
+            f.to_file(tmpfilename, save_subregions=False)
+            f_read = df.Field.from_file(tmpfilename)
+            assert f == f_read
+            assert f.mesh.subregions == f_read.mesh.subregions  # not checked above
 
-    def test_read_to_file_invalid_extension(self):
+    def test_write_read_invalid_extension(self):
         filename = "testfile.jpg"
 
         p1 = (0, 0, 0)
@@ -2846,7 +2855,8 @@ class TestField:
         f6d = self.pf << self.pf
         f6d_xa = f6d.to_xarray()
         assert f6d_xa["comp"].size == 6
-        assert "comp" not in f6d_xa.coords
+        assert "comp" in f6d_xa.coords
+        assert [*f6d_xa["comp"].values] == [f"v{i}" for i in range(6)]
         f6d.vdims = ["a", "c", "b", "e", "d", "f"]
         f6d_xa2 = f6d.to_xarray()
         assert "comp" in f6d_xa2.coords

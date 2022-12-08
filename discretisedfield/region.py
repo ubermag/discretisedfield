@@ -9,9 +9,10 @@ import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 
 from . import html
+from .io import _RegionIO
 
 
-class Region:
+class Region(_RegionIO):
     r"""Region.
 
     A cuboid region spans between two corner points :math:`\mathbf{p}_1` and
@@ -251,7 +252,7 @@ class Region:
                 dims = ["x", "y", "z"]
             else:
                 dims = [f"x{i}" for i in range(self.ndim)]
-        elif isinstance(dims, (tuple, list)):
+        elif isinstance(dims, (tuple, list, np.ndarray)):
             if len(dims) != self.ndim:
                 raise ValueError(
                     "dims must have the same length as p1 and p2."
@@ -297,7 +298,7 @@ class Region:
     def units(self, units):
         if units is None:
             units = ["m"] * self.ndim
-        elif isinstance(units, (tuple, list)):
+        elif isinstance(units, (tuple, list, np.ndarray)):
             if len(units) != self.ndim:
                 raise ValueError(
                     "units must have the same length as p1 and p2."

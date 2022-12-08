@@ -1,7 +1,6 @@
 import collections
 import functools
 import numbers
-import pathlib
 import warnings
 
 import numpy as np
@@ -14,12 +13,13 @@ import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 from discretisedfield.plotting.util import hv_key_dim
 
-from . import html, io
+from . import html
+from .io import _FieldIO
 
 # TODO: tutorials, line operations
 
 
-class Field:
+class Field(_FieldIO):
     """Finite-difference field.
 
     This class specifies a finite-difference field and defines operations for
@@ -324,7 +324,18 @@ class Field:
 
     @vdims.setter
     def vdims(self, vdims):
-        if vdims is not None:
+        if vdims is None:
+            if 2 <= self.nvdim <= 3:
+                vdims = ["x", "y", "z"][: self.nvdim]
+            elif self.nvdim > 3:
+                vdims = [f"v{i}" for i in range(self.nvdim)]
+        elif not isinstance(vdims, (list, tuple, np.ndarray)) or any(
+            not isinstance(vdim, str) for vdim in vdims
+        ):
+            raise TypeError(f"vdims must be a sequence of strings, not {type(vdims)=}.")
+        elif len(vdims) == 0:
+            vdims = None
+        else:
             if len(vdims) != self.nvdim:
                 raise ValueError(f"Number of vdims does not match {self.nvdim=}.")
             if len(vdims) != len(set(vdims)):
@@ -337,17 +348,9 @@ class Field:
                             f"Component name {c} is already "
                             "used by a different method/property."
                         )
-            self._vdims = list(vdims)
-        else:
-            if 2 <= self.nvdim <= 3:
-                vdims = ["x", "y", "z"][: self.nvdim]
-            elif self.nvdim > 3:
-                warnings.warn(
-                    "Component labels must be specified for "
-                    f"{self.nvdim=} fields to get access to individual"
-                    " vector components."
-                )
-            self._vdims = vdims
+            vdims = list(vdims)
+
+        self._vdims = vdims
 
     @property
     def array(self):
@@ -2911,127 +2914,6 @@ class Field:
 
         return self.__class__(self.mesh, nvdim=1, value=angle_array)
 
-    def write(self, *args, **kwargs):
-        raise AttributeError("This method has been renamed to 'to_file'.")
-
-    def to_file(
-        self, filename, representation="bin8", extend_scalar=False, save_subregions=True
-    ):
-        """Write the field to OVF, HDF5, or VTK file.
-
-        If the extension of ``filename`` is ``.vtk``, a VTK file is written
-        (:py:func:`~discretisedfield.io.field_to_vtk`). The representation of the data
-        (``'bin'`` [``'bin8'`` as equivalent], ``'txt'``, or ``'xml'``) is passed as
-        ``'representation'``.
-
-        For ``.ovf``, ``.omf``, or ``.ohf`` extensions, the field is saved to
-        OVF file (:py:func:`~discretisedfield.io.field_to_ovf`). In that case,
-        the representation of data (``'bin4'``, ``'bin8'``, or ``'txt'``) is
-        passed as ``representation`` and if ``extend_scalar=True``, a scalar
-        field will be saved as a vector field. More precisely, if the value at
-        a cell is X, that cell will be saved as (X, 0, 0).
-
-        Finally, if the extension of ``filename`` is ``.hdf5``, HDF5 file will
-        be written (:py:func:`~discretisedfield.io.field_to_hdf5`).
-
-        Parameters
-        ----------
-        filename : str
-
-            Name of the file written.
-
-        representation : str, optional
-
-            Only supported for OVF and VTK files. In the case of OVF files
-            (``.ovf``, ``.omf``, or ``.ohf``) the representation can be
-            ``'bin4'``, ``'bin8'``, or ``'txt'``. For VTK files (``.vtk``) the
-            representation can be ``bin``, ``xml``, or ``txt``. Defaults to
-            ``'bin8'`` (interpreted as ``bin`` for VTK files).
-
-        extend_scalar : bool, optional
-
-            If ``True``, a scalar field will be saved as a vector field. More
-            precisely, if the value at a cell is 3, that cell will be saved as
-            (3, 0, 0). This is valid only for the OVF file formats. Defaults to
-            ``False``.
-
-        save_subregions : bool, optional
-
-            If ``True`` and subregions are defined for the mesh the subregions will be
-            saved to a json file. Defaults to ``True``.
-
-        Example
-        -------
-        1. Write field to the OVF file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, -5e-9)
-        >>> p2 = (5e-9, 15e-9, 15e-9)
-        >>> n = (5, 15, 20)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, nvdim=3, value=(5, 6, 7))
-        ...
-        >>> filename = 'mytestfile.omf'
-        >>> field.to_file(filename)  # write the file
-        >>> os.path.isfile(filename)
-        True
-        >>> field_read = df.Field.from_file(filename)  # read the file
-        >>> field_read == field
-        True
-        >>> os.remove(filename)  # delete the file
-
-        2. Write field to the VTK file.
-
-        >>> filename = 'mytestfile.vtk'
-        >>> field.to_file(filename)  # write the file
-        >>> os.path.isfile(filename)
-        True
-        >>> os.remove(filename)  # delete the file
-
-        3. Write field to the HDF5 file.
-
-        >>> filename = 'mytestfile.hdf5'
-        >>> field.to_file(filename)  # write the file
-        >>> os.path.isfile(filename)
-        True
-        >>> field_read = df.Field.from_file(filename)  # read the file
-        >>> field_read == field
-        True
-        >>> os.remove(filename)  # delete the file
-
-        See also
-        --------
-        ~discretisedfield.Field.from_file
-        ~discretisedfield.io.field_to_ovf
-        ~discretisedfield.io.field_to_vtk
-        ~discretisedfield.io.field_to_hdf5
-
-        """
-        filename = pathlib.Path(filename)
-        if filename.suffix in [".omf", ".ovf", ".ohf"]:
-            io.field_to_ovf(
-                self,
-                filename,
-                representation=representation,
-                extend_scalar=extend_scalar,
-                save_subregions=save_subregions,
-            )
-        elif filename.suffix in [".hdf5", ".h5"]:
-            io.field_to_hdf5(self, filename, save_subregions=save_subregions)
-        elif filename.suffix == ".vtk":
-            io.field_to_vtk(
-                self,
-                filename,
-                representation=representation,
-                save_subregions=save_subregions,
-            )
-        else:
-            raise ValueError(
-                f"Writing file with extension {filename.suffix} not supported."
-            )
-
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
 
@@ -3110,82 +2992,6 @@ class Field:
         elif self.nvdim == 1:
             cell_data.SetActiveScalars("field")
         return rgrid
-
-    @classmethod
-    def fromfile(cls, filename):
-        raise AttributeError("This method has been renamed to 'from_file'.")
-
-    @classmethod
-    def from_file(cls, filename):
-        """Read the field from an OVF (1.0 or 2.0), VTK, or HDF5 file.
-
-        The extension of the ``filename`` should correspond to either:
-            - OVF (``.ovf``, ``.omf``, ``.ohf``, ``.oef``)
-            - VTK (``.vtk``), or
-            - HDF5 (``.hdf5`` or ``.h5``).
-
-        This method automatically determines the file type based on the file name
-        extension.
-
-        Parameters
-        ----------
-        filename : str
-
-            Name of the file to be read.
-
-        Returns
-        -------
-        discretisedfield.Field
-
-            Field read from the file.
-
-        Example
-        -------
-        1. Read the field from an OVF file.
-
-        >>> import os
-        >>> import discretisedfield as df
-        ...
-        >>> dirname = os.path.join(os.path.dirname(__file__),
-        ...                        'tests', 'test_sample')
-        >>> filename = os.path.join(dirname, 'oommf-ovf2-bin4.omf')
-        >>> field = df.Field.from_file(filename)
-        >>> field
-        Field(...)
-
-        2. Read a field from the VTK file.
-
-        >>> filename = os.path.join(dirname, 'vtk-file.vtk')
-        >>> field = df.Field.from_file(filename)
-        >>> field
-        Field(...)
-
-        3. Read a field from the HDF5 file.
-
-        >>> filename = os.path.join(dirname, 'hdf5-file.hdf5')
-        >>> field = df.Field.from_file(filename)
-        >>> field
-        Field(...)
-
-        See also
-        --------
-        ~discretisedfield.Field.to_file
-        ~discretisedfield.io.field_from_ovf
-        ~discretisedfield.io.field_from_vtk
-        ~discretisedfield.io.field_from_hdf5
-
-        """
-        filename = pathlib.Path(filename)
-        if filename.suffix in [".omf", ".ovf", ".ohf", ".oef"]:
-            return io.field_from_ovf(filename)
-        elif filename.suffix == ".vtk":
-            return io.field_from_vtk(filename)
-        elif filename.suffix in [".hdf5", ".h5"]:
-            return io.field_from_hdf5(filename)
-        else:
-            raise ValueError(
-                f"Reading file with extension {filename.suffix} not supported."
-            )
 
     @property
     def mpl(self):
