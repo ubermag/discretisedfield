@@ -624,7 +624,7 @@ class Region(_RegionIO):
         >>> p22 = (100e-9, 50e-9, 30e-9)
         >>> region2 = df.Region(p1=p21, p2=p22)
         ...
-        >>> res = region1 | region2
+        >>> res = region1.facing_surface(region2)
         >>> res[0]
         'z'
         >>> res[1] == region1
