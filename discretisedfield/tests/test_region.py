@@ -347,7 +347,7 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
             test_region.units = units
 
         with pytest.raises(error):
-            df.Region(p1=test_region.p1, p2=test_region.p2, units=units)
+            df.Region(p1=test_region.pmin, p2=test_region.pmax, units=units)
 
     def test_ndim(test_region):
         ndim = 3
@@ -356,7 +356,7 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
 
     def test_dims(test_region):
         p1 = test_region.pmin
-        p2 = test_region.pax
+        p2 = test_region.pmax
         dims = ["a", "b", "c"]
         region = df.Region(p1=p1, p2=p2, dims=dims)
         assert isinstance(region, df.Region)
@@ -385,7 +385,7 @@ if True:  # temporary "fix" to keep the diff minimal; remove in the end
             test_region.dims = dims
 
         with pytest.raises(error):
-            df.Region(p1=test_region.p1, p2=test_region.p2, dims=dims)
+            df.Region(p1=test_region.pmin, p2=test_region.pmax, dims=dims)
 
     def test_allclose():
         region1 = df.Region(p1=(0, 0, 0), p2=(10, 10, 10))
