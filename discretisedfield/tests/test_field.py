@@ -102,28 +102,29 @@ def check_hv(plot, types):
     ) == sorted(types)
 
 
+@pytest.fixture
+def test_field():
+    mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
+
+    def norm_fun(point):
+        x, y, z = point
+        if x**2 + y**2 <= (5e-9) ** 2:
+            return 1e5
+        else:
+            return 0
+
+    def value_fun(point):
+        x, y, z = point
+        if x <= 0:
+            return (0, 0, 1)
+        else:
+            return (0, 0, -1)
+
+    return df.Field(
+        mesh, nvdim=3, value=value_fun, norm=norm_fun, vdims=["a", "b", "c"]
+    )
+
 class TestField:
-    def setup_method(self):
-        # Create a field for plotting tests
-        mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
-
-        def norm_fun(point):
-            x, y, z = point
-            if x**2 + y**2 <= (5e-9) ** 2:
-                return 1e5
-            else:
-                return 0
-
-        def value_fun(point):
-            x, y, z = point
-            if x <= 0:
-                return (0, 0, 1)
-            else:
-                return (0, 0, -1)
-
-        self.pf = df.Field(
-            mesh, nvdim=3, value=value_fun, norm=norm_fun, vdims=["a", "b", "c"]
-        )
 
     @pytest.mark.parametrize("value, dtype", consts + sfuncs)
     def test_init_scalar_valid_args(self, valid_mesh, value, dtype):
