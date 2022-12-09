@@ -3417,7 +3417,7 @@ class Field(_FieldIO):
             msg = "Unit argument must be a string."
             raise TypeError(msg)
 
-        axes = ["x", "y", "z"]
+        axes = self.mesh.region.dims
 
         data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
 
@@ -3442,6 +3442,7 @@ class Field(_FieldIO):
                 cell=self.mesh.cell,
                 pmin=self.mesh.region.pmin,
                 pmax=self.mesh.region.pmax,
+                nvdim=self.nvdim,
             ),
         )
 
@@ -3535,19 +3536,28 @@ class Field(_FieldIO):
 
         """
         if not isinstance(xa, xr.DataArray):
-            raise TypeError("Argument must be a xr.DataArray.")
+            raise TypeError("Argument must be a xarray.DataArray.")
 
-        if xa.ndim not in [3, 4]:
-            raise ValueError(
-                "DataArray dimensions must be 3 for a scalar and 4 for a vector field."
+        if "nvdim" not in xa.attrs:
+            raise KeyError(
+                'The DataArray must have an attribute "nvdims" to identify a scalar or'
+                " a vector field."
             )
 
-        if xa.ndim == 3 and sorted(xa.dims) != ["x", "y", "z"]:
-            raise ValueError("The dimensions must be 'x', 'y', and 'z'.")
-        elif xa.ndim == 4 and sorted(xa.dims) != ["comp", "x", "y", "z"]:
-            raise ValueError("The dimensions must be 'x', 'y', 'z',and 'comp'.")
+        if xa.attrs["nvdim"] < 1 or isinstance(xa.attrs["nvdim"], int):
+            raise ValueError(
+                '"nvdim" attribute must be a positive integer greater or equal to 1.'
+            )
 
-        for i in "xyz":
+        if xa.attrs["nvdim"] > 1 and "comp" not in xa.dims:
+            raise ValueError(
+                'The DataArray must have a dimension "comp" when "nvdim" attribute is'
+                " greater than 1."
+            )
+
+        dims_list = [dim for dim in xa.dims if dim != "comp"]
+
+        for i in dims_list:
             if xa[i].values.size > 1 and not np.allclose(
                 np.diff(xa[i].values), np.diff(xa[i].values).mean()
             ):
@@ -3561,24 +3571,23 @@ class Field(_FieldIO):
                     "DataArray must have a 'cell' attribute if any "
                     "of the geometric directions has a single cell."
                 ) from None
-            cell = [np.diff(xa[i].values).mean() for i in "xyz"]
+            cell = [np.diff(xa[i].values).mean() for i in dims_list]
 
         p1 = (
             xa.attrs["pmin"]
             if "pmin" in xa.attrs
-            else [xa[i].values[0] - c / 2 for i, c in zip("xyz", cell)]
+            else [xa[i].values[0] - c / 2 for i, c in zip(dims_list, cell)]
         )
         p2 = (
             xa.attrs["pmax"]
             if "pmax" in xa.attrs
-            else [xa[i].values[-1] + c / 2 for i, c in zip("xyz", cell)]
+            else [xa[i].values[-1] + c / 2 for i, c in zip(dims_list, cell)]
         )
 
-        if any("units" not in xa[i].attrs for i in "xyz"):
+        if any("units" not in xa[i].attrs for i in dims_list):
             mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         else:
-            print(xa["x"].units)
-            region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in "xyz"])
+            region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in dims_list])
             mesh = df.Mesh(region=region, cell=cell)
 
         comp = xa.comp.values if "comp" in xa.coords else None
