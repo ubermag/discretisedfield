@@ -952,6 +952,9 @@ def test_dS():  # TODO: remove
 
 
 def test_mpl(valid_mesh, tmp_path):
+    if valid_mesh.region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
+
     valid_mesh.mpl()
     valid_mesh.mpl(box_aspect=[1, 2, 3])
 
@@ -960,6 +963,8 @@ def test_mpl(valid_mesh, tmp_path):
 
 
 def test_k3d(valid_mesh):
+    if valid_mesh.region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
     valid_mesh.k3d()
     valid_mesh.plane("x").k3d()
 
