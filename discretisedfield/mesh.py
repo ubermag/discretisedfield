@@ -1250,7 +1250,7 @@ class Mesh(_MeshIO):
         50.0
 
         """
-        if len(attr) > 1:
+        if len(attr) > 1 and attr[0] == "d":
             with contextlib.suppress(ValueError):
                 return self.cell[self.region._dim2index(attr[1:])]
         raise AttributeError(f"Object has no attribute {attr}.")
