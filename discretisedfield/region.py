@@ -86,12 +86,18 @@ class Region(_RegionIO):
                 )
             p1, p2 = pmin, pmax
 
+        # scalar data types for 1d regions
+        if isinstance(p1, (int, float)):
+            p1 = [p1]
+        if isinstance(p2, (int, float)):
+            p2 = [p2]
+
         if not isinstance(p1, (tuple, list, np.ndarray)) or not isinstance(
             p2, (tuple, list, np.ndarray)
         ):
             raise TypeError(
-                "p1 and p2 must be of type tuple, list, or np.ndarray. Not"
-                f" p1={type(p1)} and p2={type(p2)}."
+                "p1 and p2 must be real numbers (1d) or sequences of real numbers. Not"
+                f" {type(p1)=} and {type(p2)=}."
             )
 
         if len(p1) != len(p2):
@@ -100,15 +106,11 @@ class Region(_RegionIO):
                 f" {len(p1)=} and {len(p2)=}."
             )
 
-        if not all(isinstance(i, numbers.Number) for i in p1):
-            raise TypeError("p1 can only contain elements of type numbers.Number.")
+        if not all(isinstance(i, numbers.Real) for i in p1):
+            raise TypeError("p1 can only contain elements of type numbers.Real.")
 
-        if not all(isinstance(i, numbers.Number) for i in p2):
-            raise TypeError("p2 can only contain elements of type numbers.Number.")
-
-        # TODO: Remove for ndim != 3 functionality.
-        if len(p1) != 3:
-            raise NotImplementedError("Only 3D regions are supported at the moment.")
+        if not all(isinstance(i, numbers.Real) for i in p2):
+            raise TypeError("p2 can only contain elements of type numbers.Real.")
 
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
@@ -248,8 +250,8 @@ class Region(_RegionIO):
     def dims(self, dims):
         # TODO: Think about correct defaults
         if dims is None:
-            if self.ndim == 3:
-                dims = ["x", "y", "z"]
+            if self.ndim <= 3:
+                dims = ["x", "y", "z"][: self.ndim]
             else:
                 dims = [f"x{i}" for i in range(self.ndim)]
         elif isinstance(dims, (tuple, list, np.ndarray)):
@@ -260,6 +262,8 @@ class Region(_RegionIO):
                 )
             if not all(isinstance(dim, str) for dim in dims):
                 raise TypeError("dims can only contain elements of type str.")
+            if len(dims) != len(set(dims)):
+                raise ValueError("dims must be unique.")
         else:
             raise TypeError(
                 "dims must be of type tuple, list, or None (for default behaviour)."
