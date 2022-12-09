@@ -479,24 +479,43 @@ def test_dims(p1, p2, custom_dims, default_dims):
 
 
 @pytest.mark.parametrize(
+    "p1, p2, dims, check_dims",
+    [
+        [0, 10, None, ("x",)],
+        [0, 10, "a", ("a",)],
+        [(0, 0), (1, 1), ("something", "else"), ("something", "else")],
+        [(0, 0, 0), (1, 1, 1), list("abc"), tuple("abc")],
+        [(0, 0, 0, 0), (1, 1, 1, 1), list("abcd"), tuple("abcd")],
+    ],
+)
+def test_dim2index(p1, p2, dims, check_dims):
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    assert region.dims == check_dims
+    for dim in check_dims:
+        assert region._dim2index(dim) == check_dims.index(dim)
+
+    with pytest.raises(ValueError):
+        region._dim2index("wrong_dim_name")
+
+
+@pytest.mark.parametrize(
     "p1, p2, dims, error",
     [
         ([0], [1], ["a", "b", "c", "m"], ValueError),
         ([0], [1], [1], TypeError),
-        ([0], [1], "m", TypeError),
         ([0], [1], 5, TypeError),
         ([0, 0], [1, 2], ["m"], ValueError),
         ([0, 0], [1, 2], ["m", "x", "y"], ValueError),
         ([0, 0], [1, 2], ["m", 1], TypeError),
         ([0, 0], [1, 2], ["m", "m"], ValueError),
-        ([0, 0], [1, 2], "m", TypeError),
+        ([0, 0], [1, 2], "m", ValueError),
         ([0, 0], [1, 2], 5, TypeError),
         ([0, 0, 0], [1, 2, 3], ["m"], ValueError),
         ([0, 0, 0], [1, 2, 3], ["m", "x", "y", "z"], ValueError),
         ([0, 0, 0], [1, 2, 3], ["m", 1, "y"], TypeError),
         ([0, 0, 0], [1, 2, 3], ["m", "x", "x"], ValueError),
         ([0, 0, 0], [1, 2, 3], ["x", "x", "y", "z"], ValueError),
-        ([0, 0, 0], [1, 2, 3], "m", TypeError),
+        ([0, 0, 0], [1, 2, 3], "m", ValueError),
         ([0, 0, 0], [1, 2, 3], 5, TypeError),
     ],
 )
