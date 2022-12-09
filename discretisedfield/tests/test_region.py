@@ -151,11 +151,11 @@ def test_pmin_pmax_edges_center_volume(p1, p2, pmin, pmax, edges, center, volume
     region = df.Region(p1=p1, p2=p2)
 
     assert isinstance(region, df.Region)
-    assert np.allclose(region.pmin, pmin)
-    assert np.allclose(region.pmax, pmax)
-    assert np.allclose(region.edges, edges)
-    assert np.allclose(region.center, center)
-    assert np.isclose(region.volume, volume)
+    assert np.allclose(region.pmin, pmin, atol=0)
+    assert np.allclose(region.pmax, pmax, atol=0)
+    assert np.allclose(region.edges, edges, atol=0)
+    assert np.allclose(region.center, center, atol=0)
+    assert np.isclose(region.volume, volume, atol=0)
 
 
 def test_repr():  # TODO
@@ -218,7 +218,7 @@ def test_eq(p1_1, p1_2, p2):
         [(0, 0, 0), (3, 3, 3), (10, 10, 10)],
     ],
 )
-def test_allclose(p1_1, p1_2, p2):
+def test_allclose(p1_1, p1_2, p2, atol=0):
     region1 = df.Region(p1=p1_1, p2=p2)
     region2 = df.Region(p1=p1_1, p2=p2)
     region3 = df.Region(p1=p1_2, p2=p2)
@@ -226,21 +226,21 @@ def test_allclose(p1_1, p1_2, p2):
     assert isinstance(region1, df.Region)
     assert isinstance(region2, df.Region)
     assert isinstance(region3, df.Region)
-    assert region1.allclose(region2)
-    assert not region1.allclose(region3)
-    assert not region2.allclose(region3)
+    assert region1.allclose(region2, atol=0)
+    assert not region1.allclose(region3, atol=0)
+    assert not region2.allclose(region3, atol=0)
 
 
 def test_tolerance_factor():  # TODO
     p1 = (0, 0, 0)
     p2 = (100e-9, 100e-9, 100e-9)
     region = df.Region(p1=p1, p2=p2)
-    assert np.isclose(region.tolerance_factor, 1e-12)
+    assert np.isclose(region.tolerance_factor, 1e-12, atol=0)
 
     region = df.Region(p1=p1, p2=p2, tolerance_factor=1e-3)
-    assert np.isclose(region.tolerance_factor, 1e-3)
+    assert np.isclose(region.tolerance_factor, 1e-3, atol=0)
     region.tolerance_factor = 1e-6
-    assert np.isclose(region.tolerance_factor, 1e-6)
+    assert np.isclose(region.tolerance_factor, 1e-6, atol=0)
 
 
 @pytest.mark.parametrize("factor", [None, 1.0])
@@ -351,26 +351,26 @@ def test_multiplier(region, multiplier):  # TODO
 def test_scale(region_3d):  # TODO
     res = region_3d.scale(2)
     assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (-100e-9, -100e-9, 0))
-    assert np.allclose(res.pmax, (100e-9, 100e-9, 40e-9))
-    assert np.allclose(res.edges, (200e-9, 200e-9, 40e-9))
+    assert np.allclose(res.pmin, (-100e-9, -100e-9, 0), atol=0)
+    assert np.allclose(res.pmax, (100e-9, 100e-9, 40e-9), atol=0)
+    assert np.allclose(res.edges, (200e-9, 200e-9, 40e-9), atol=0)
 
     res = region_3d.scale(0.5)
     assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (-25e-9, -25e-9, 0))
-    assert np.allclose(res.pmax, (25e-9, 25e-9, 10e-9))
-    assert np.allclose(res.edges, (50e-9, 50e-9, 10e-9))
+    assert np.allclose(res.pmin, (-25e-9, -25e-9, 0), atol=0)
+    assert np.allclose(res.pmax, (25e-9, 25e-9, 10e-9), atol=0)
+    assert np.allclose(res.edges, (50e-9, 50e-9, 10e-9), atol=0)
 
     res = region_3d.scale((1, 0.1, 4))
     assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (-50e-9, -5e-9, 0))
-    assert np.allclose(res.pmax, (50e-9, 5e-9, 80e-9))
-    assert np.allclose(res.edges, (100e-9, 10e-9, 80e-9))
+    assert np.allclose(res.pmin, (-50e-9, -5e-9, 0), atol=0)
+    assert np.allclose(res.pmax, (50e-9, 5e-9, 80e-9), atol=0)
+    assert np.allclose(res.edges, (100e-9, 10e-9, 80e-9), atol=0)
 
     region_3d.scale(2, inplace=True)
-    assert np.allclose(region_3d.pmin, (-100e-9, -100e-9, 0))
-    assert np.allclose(region_3d.pmax, (100e-9, 100e-9, 40e-9))
-    assert np.allclose(region_3d.edges, (200e-9, 200e-9, 40e-9))
+    assert np.allclose(region_3d.pmin, (-100e-9, -100e-9, 0), atol=0)
+    assert np.allclose(region_3d.pmax, (100e-9, 100e-9, 40e-9), atol=0)
+    assert np.allclose(region_3d.edges, (200e-9, 200e-9, 40e-9), atol=0)
 
     with pytest.raises(ValueError):
         region_3d.scale((1, 2))
@@ -385,14 +385,14 @@ def test_scale(region_3d):  # TODO
 def test_translate(region_3d):  # TODO
     res = region_3d.translate((50e-9, 0, -10e-9))
     assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (0, -50e-9, -10e-9))
-    assert np.allclose(res.pmax, (100e-9, 50e-9, 10e-9))
-    assert np.allclose(res.edges, (100e-9, 100e-9, 20e-9))
+    assert np.allclose(res.pmin, (0, -50e-9, -10e-9), atol=0)
+    assert np.allclose(res.pmax, (100e-9, 50e-9, 10e-9), atol=0)
+    assert np.allclose(res.edges, (100e-9, 100e-9, 20e-9), atol=0)
 
     region_3d.translate((50e-9, 0, -10e-9), inplace=True)
-    assert np.allclose(region_3d.pmin, (0, -50e-9, -10e-9))
-    assert np.allclose(region_3d.pmax, (100e-9, 50e-9, 10e-9))
-    assert np.allclose(region_3d.edges, (100e-9, 100e-9, 20e-9))
+    assert np.allclose(region_3d.pmin, (0, -50e-9, -10e-9), atol=0)
+    assert np.allclose(region_3d.pmax, (100e-9, 50e-9, 10e-9), atol=0)
+    assert np.allclose(region_3d.edges, (100e-9, 100e-9, 20e-9), atol=0)
 
     with pytest.raises(ValueError):
         region_3d.translate((3, 3))
