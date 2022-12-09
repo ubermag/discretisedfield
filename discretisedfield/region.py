@@ -254,7 +254,9 @@ class Region(_RegionIO):
                 dims = ["x", "y", "z"][: self.ndim]
             else:
                 dims = [f"x{i}" for i in range(self.ndim)]
-        elif isinstance(dims, (tuple, list, np.ndarray)):
+        elif isinstance(dims, (tuple, list, np.ndarray, str)):
+            if isinstance(dims, str):
+                dims = [dims]
             if len(dims) != self.ndim:
                 raise ValueError(
                     "dims must have the same length as p1 and p2."
@@ -271,6 +273,12 @@ class Region(_RegionIO):
             )
 
         self._dims = tuple(dims)
+
+    def _dim2index(self, dim):
+        try:
+            return self.dims.index(dim)
+        except ValueError:
+            raise ValueError(f"'{dim}' not in region.dims={self.dims}.")
 
     @property
     def units(self):

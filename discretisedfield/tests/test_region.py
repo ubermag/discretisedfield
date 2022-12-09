@@ -404,6 +404,7 @@ def test_translate(region_3d):  # TODO
 @pytest.mark.parametrize(
     "p1, p2, custom_units, default_units",
     [
+        [0, 1, "a", "m"],
         [0, 1, ["a"], ["m"]],
         [(0, 0), (1, 1), list("ab"), list("mm")],
         [(0, 0, 0), (1, 1, 1), list("abc"), list("mmm")],
@@ -430,17 +431,16 @@ def test_units(p1, p2, custom_units, default_units):
     [
         ([0], [1], ["m", "m", "m", "m"], ValueError),
         ([0], [1], [1], TypeError),
-        ([0], [1], "m", TypeError),
         ([0], [1], 5, TypeError),
         ([0, 0], [1, 2], ["m"], ValueError),
         ([0, 0], [1, 2], ["m", "m", "m", "m"], ValueError),
         ([0, 0], [1, 2], ["m", 1], TypeError),
-        ([0, 0], [1, 2], "m", TypeError),
+        ([0, 0], [1, 2], "m", ValueError),
         ([0, 0], [1, 2], 5, TypeError),
         ([0, 0, 0], [1, 2, 3], ["m"], ValueError),
         ([0, 0, 0], [1, 2, 3], ["m", "m", "m", "m"], ValueError),
         ([0, 0, 0], [1, 2, 3], ["m", 1, "m"], TypeError),
-        ([0, 0, 0], [1, 2, 3], "m", TypeError),
+        ([0, 0, 0], [1, 2, 3], "m", ValueError),
         ([0, 0, 0], [1, 2, 3], 5, TypeError),
     ],
 )
@@ -456,6 +456,7 @@ def test_units_errors(p1, p2, units, error):
 @pytest.mark.parametrize(
     "p1, p2, custom_dims, default_dims",
     [
+        [0, 1, "a", "x"],
         [0, 1, ["a"], ["x"]],
         [(0, 0), (1, 1), list("ab"), list("xy")],
         [(0, 0, 0), (1, 1, 1), ["ab", "cd", "e"], list("xyz")],
