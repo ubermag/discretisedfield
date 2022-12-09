@@ -1,4 +1,5 @@
 import collections
+import contextlib
 import copy
 import functools
 import itertools
@@ -189,6 +190,10 @@ class Mesh(_MeshIO):
             )
 
         if cell is not None and n is None:
+            # scalar data types for 1d regions
+            if isinstance(cell, (int, float)):
+                cell = [cell]
+
             if not isinstance(cell, (tuple, list, np.ndarray)):
                 raise TypeError(
                     "Cell must be either a tuple, a list, or a numpy.ndarray."
@@ -212,6 +217,9 @@ class Mesh(_MeshIO):
             self._n = np.divide(self.region.edges, cell).round().astype(int)
 
         elif n is not None and cell is None:
+            # scalar data types for 1d regions
+            if isinstance(n, (int, float)):
+                n = [n]
             if not isinstance(n, (tuple, list, np.ndarray)):
                 raise TypeError("n must be either a tuple, a list or a numpy.ndarray.")
             if len(n) != self.region.ndim:
@@ -1242,12 +1250,10 @@ class Mesh(_MeshIO):
         50.0
 
         """
-        for axis, i in dfu.axesdict.items():
-            if attr == f"d{axis}":
-                return self.cell[i]
-        else:
-            msg = f"Object has no attribute {attr}."
-            raise AttributeError(msg)
+        if len(attr) > 1:
+            with contextlib.suppress(ValueError):
+                return self.cell[self.region._dim2index(attr[1:])]
+        raise AttributeError(f"Object has no attribute {attr}.")
 
     def __dir__(self):
         """Extension of the ``dir(self)`` list.
@@ -1261,7 +1267,7 @@ class Mesh(_MeshIO):
             Avalilable attributes.
 
         """
-        return dir(self.__class__) + [f"d{i}" for i in dfu.axesdict.keys()]
+        return dir(self.__class__) + [f"d{i}" for i in self.region.dims]
 
     @property
     def dV(self):
