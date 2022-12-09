@@ -590,7 +590,7 @@ class Region(_RegionIO):
         True
 
         """
-        if isinstance(other, collections.abc.Iterable):
+        if isinstance(other, (numbers.Real, collections.abc.Iterable)):
             tol = np.min(self.edges) * self.tolerance_factor
             return np.all(
                 np.logical_and(

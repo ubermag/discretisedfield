@@ -244,32 +244,74 @@ def test_tolerance_factor():  # TODO
 
 
 @pytest.mark.parametrize("factor", [None, 1.0])
-def test_contains(factor):  # TODO
-    p1 = (0, 10e-9, 0)
-    p2 = (10e-9, 0, 20e-9)
-    region = df.Region(p1=p1, p2=p2)
-
+def test_contains_1d(factor):
+    region = df.Region(p1=0, p2=20e-9)
     assert isinstance(region, df.Region)
+
     if factor is not None:
         region.tolerance_factor = factor
     tol = np.min(region.edges) * region.tolerance_factor
     tol_in = tol / 2
     tol_out = tol * 2
-    assert (0, 0, 0) in region
-    assert (-tol_in, 0, 0) in region
-    assert (0, -tol_in, 0) in region
-    assert (0, 0, -tol_in) in region
-    assert (10e-9, 10e-9, 20e-9) in region
-    assert (10e-9 + tol_in, 10e-9, 10e-9) in region
-    assert (10e-9, 10e-9 + tol_in, 10e-9) in region
-    assert (1e-9, 3e-9, 20e-9 + tol_in) in region
 
-    assert (-tol_out, 0, 0) not in region
-    assert (0, -tol_out, 0) not in region
-    assert (0, 0, -tol_out) not in region
-    assert (10e-9 + tol_out, 10e-9, 20e-9) not in region
-    assert (10e-9, 10e-9 + tol_out, 20e-9) not in region
-    assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
+    assert 0 in region
+    assert 20e-9 in region
+
+    assert -tol_in in region
+    assert -tol_out not in region
+
+    assert 20e-9 + tol_in in region
+    assert 20e-9 + tol_out not in region
+
+
+@pytest.mark.parametrize("factor", [None, 1.0])
+@pytest.mark.parametrize(
+    "p1, p2",
+    [
+        [(0,), (20e-9,)],
+        [(0, 10e-9), (20e-9, 0)],
+        [(0, 10e-9, 0), (10e-9, 0, 20e-9)],
+        [(0, 10e-9, 0, -10e-9), (10e-9, 0, 20e-9, 30e-9)],
+    ],
+)
+def test_contains(factor, p1, p2):
+    region = df.Region(p1=p1, p2=p2)
+    assert isinstance(region, df.Region)
+
+    if factor is not None:
+        region.tolerance_factor = factor
+    tol = np.min(region.edges) * region.tolerance_factor
+    tol_in = tol / 2
+    tol_out = tol * 2
+
+    assert p1 in region
+    assert p2 in region
+
+    for i in range(region.ndim):
+        point = list(region.pmin)
+        point[i] -= tol_in
+        assert point in region
+
+        point = list(region.pmin)
+        point[i] -= tol_out
+        assert point not in region
+
+    for i in range(region.ndim):
+        point = list(region.pmax)
+        point[i] += tol_in
+        assert point in region
+
+        point = list(region.pmax)
+        point[i] += tol_out
+        assert point not in region
+
+    point = list(region.center)
+    point[-1] = region.pmax[-1] + tol_in
+    assert point in region
+
+    point = list(region.center)
+    point[-1] = region.pmax[-1] + tol_out
+    assert point not in region
 
 
 def test_facing_surface():  # TODO
