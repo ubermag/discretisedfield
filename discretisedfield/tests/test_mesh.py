@@ -462,31 +462,35 @@ def test_indices_coordinates_iter(p1, p2, n, length):
         assert all([1 <= i <= 9 for i in point])
 
 
-def test_eq():  # TODO later
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    n = (1, 1, 1)
-    mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
-    # NOTE: Why do we need to test mesh1 type here?
-    # assert isinstance(mesh1, df.Mesh)
-    mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
-    # assert isinstance(mesh2, df.Mesh)
+@pytest.mark.parametrize(
+    "p1_1, p1_2, p2, n1, n2",
+    [
+        [5e-9, 6e-9, 10e-9, 5, 3],
+        [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],
+        [(0, 0, 0), (3, 3, 3), (10, 10, 10), (5, 5, 5), (5, 5, 3)],
+        [(0, 0, 0, 0), (3, 3, 3, 3), (10, 10, 10, 10), (5, 5, 5, 5), (5, 5, 5, 3)],
+    ],
+)
+def test_eq(p1_1, p1_2, p2, n1, n2):
+    mesh1 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh2 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh3 = df.Mesh(p1=p1_2, p2=p2, n=n1)
+    mesh4 = df.Mesh(p1=p1_1, p2=p2, n=n2)
 
+    assert isinstance(mesh1, df.Mesh)
+    assert isinstance(mesh2, df.Mesh)
+    assert isinstance(mesh3, df.Mesh)
     assert mesh1 == mesh2
     assert not mesh1 != mesh2
+    assert mesh1 != mesh3
+    assert not mesh1 == mesh3
+    assert mesh1 != mesh4
+    assert not mesh1 == mesh4
+    assert mesh3 != mesh4
+    assert not mesh3 == mesh4
+
     assert mesh1 != 1
     assert not mesh2 == "mesh2"
-
-    p1 = (0, 0, 0)
-    p2 = (10 + 1e-12, 10 + 2e-13, 10 + 3e-12)
-    n = (1, 1, 1)
-    mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
-    # assert isinstance(mesh3, df.Mesh)
-
-    assert not mesh1 == mesh3
-    assert not mesh2 == mesh3
-    assert mesh1 != mesh3
-    assert mesh2 != mesh3
 
 
 def test_allclose():  # TODO later
