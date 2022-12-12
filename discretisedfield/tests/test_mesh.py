@@ -538,7 +538,13 @@ def test_allclose(p1_1, p1_2, p2, n1, n2):
         mesh1.allclose(mesh3, rtol="1")
 
 
-def test_repr():  # TODO later
+def test_repr():
+    mesh = df.Mesh(p1=0, p2=10, n=5)
+
+    rstr = "Mesh(Region(pmin=[0], pmax=[10], dims=['x'], units=['m']), n=[5])"
+    assert repr(mesh) == rstr
+    assert re.match(html_re, mesh._repr_html_(), re.DOTALL)
+
     p1 = (-1, -4, 11)
     p2 = (15, 10.1, 12.5)
     cell = (1, 0.1, 0.5)
