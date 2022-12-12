@@ -1345,7 +1345,7 @@ class Mesh(_MeshIO):
         dn = dfu.assemble_index(0, 3, {self.attributes["planeaxis"]: 1})
         return df.Field(self, dim=3, value=dn, norm=norm)
 
-    def scale(self, factor, inplace=False):
+    def scale(self, factor, reference_point=None, inplace=False):
         """Scale the underlying region and all subregions.
 
         This method scales mesh.region and all subregions by multiplying ``pmin`` and
@@ -1360,9 +1360,14 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        factor : numbers.Number or array-like of numbers.Number
+        factor : numbers.Real or array-like of numbers.Real
 
             Factor to scale the region.
+
+        reference_point : array_like, optional
+
+            The position of the reference point is fixed when scaling the region. If not
+            specified the region is scaled about its ``center``.
 
         inplace : bool, optional
 
@@ -1434,14 +1439,18 @@ class Mesh(_MeshIO):
         ~discretisedfield.Region.scale
 
         """
+        sr_ref = self.region.center if reference_point is None else reference_point
         if inplace:
-            self.region.scale(factor, inplace=True)
+            self.region.scale(factor, inplace=True, reference_point=reference_point)
             for sr in self.subregions.values():
-                sr.scale(factor, inplace=True)
+                sr.scale(factor, inplace=True, reference_point=sr_ref)
             return self
         else:
-            region = self.region.scale(factor)
-            subregions = {key: sr.scale(factor) for key, sr in self.subregions.items()}
+            region = self.region.scale(factor, reference_point=reference_point)
+            subregions = {
+                key: sr.scale(factor, reference_point=sr_ref)
+                for key, sr in self.subregions.items()
+            }
             return self.__class__(
                 region=region, n=self.n, bc=self.bc, subregions=subregions
             )
