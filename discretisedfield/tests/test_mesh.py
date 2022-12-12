@@ -989,8 +989,8 @@ def test_is_aligned():
         mesh5.is_aligned(mesh6, "1e-12")
 
 
-def test_getitem():  # TODO
-    # Subregions disctionary
+def test_getitem():
+    # Subregions dictionary
     p1 = (0, 0, 0)
     p2 = (100, 50, 10)
     cell = (5, 5, 5)
@@ -999,8 +999,6 @@ def test_getitem():  # TODO
         "r2": df.Region(p1=(50, 0, 0), p2=(100, 50, 10)),
     }
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
-    # NOTE: Why do we need to check mesh type here?
-    # assert isinstance(mesh, df.Mesh)
 
     submesh1 = mesh["r1"]
     assert isinstance(submesh1, df.Mesh)
@@ -1021,7 +1019,6 @@ def test_getitem():  # TODO
     p2 = (10, 10, 10)
     cell = (1, 1, 1)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    # assert isinstance(mesh, df.Mesh)
 
     submesh = mesh[df.Region(p1=(0.1, 2.2, 4.01), p2=(4.9, 3.8, 5.7))]
     assert isinstance(submesh, df.Mesh)
@@ -1031,20 +1028,20 @@ def test_getitem():  # TODO
     assert np.all(submesh.n == (5, 2, 2))
     assert mesh[mesh.region].allclose(mesh, atol=0)
 
-    p1 = (20e-9, 0, 15e-9)
-    p2 = (-25e-9, 100e-9, -5e-9)
-    cell = (5e-9, 5e-9, 5e-9)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    # assert isinstance(mesh, df.Mesh)
+    with pytest.raises(ValueError):
+        submesh = mesh[df.Region(p1=(1, 2, 1), p2=(200, 79, 14))]
 
-    submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9), p2=(-9e-9, 79e-9, 14e-9))]
+    p1 = 20e-9
+    p2 = -25e-9
+    cell = 5e-9
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    submesh = mesh[df.Region(p1=(11e-9,), p2=(-9e-9,))]
     assert isinstance(submesh, df.Mesh)
-    assert np.allclose(submesh.region.pmin, (-10e-9, 20e-9, 0), atol=1e-15, rtol=1e-5)
-    assert np.allclose(
-        submesh.region.pmax, (15e-9, 80e-9, 15e-9), atol=1e-15, rtol=1e-5
-    )
+    assert np.allclose(submesh.region.pmin, -10e-9, atol=0)
+    assert np.allclose(submesh.region.pmax, 15e-9, atol=0)
     assert np.allclose(submesh.cell, cell, atol=0)
-    assert np.all(submesh.n == (5, 12, 3))
+    assert np.array_equal(submesh.n, [5])
     assert mesh[mesh.region].allclose(mesh, atol=0)
 
     with pytest.raises(ValueError):
@@ -1441,6 +1438,7 @@ def test_save_load_subregions(p1, p2, cell, tmp_path):
     assert test_mesh.subregions == sr
 
 
+@pytest.mark.xfail(reason="needs nd field")
 def test_coordinate_field(valid_mesh):  # TODO
     cfield = valid_mesh.coordinate_field()
     assert isinstance(cfield, df.Field)
