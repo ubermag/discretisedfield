@@ -898,7 +898,7 @@ def test_or():
         assert mesh1 | mesh1 is True
 
 
-def test_is_aligned():  # TODO
+def test_is_aligned():
     p1 = (-50e-9, -25e-9, 0)
     p2 = (50e-9, 25e-9, 5e-9)
     cell = (5e-9, 5e-9, 5e-9)
@@ -938,6 +938,47 @@ def test_is_aligned():  # TODO
         cell=(5e-9, 5e-9, 5e-9),
     )
 
+    assert mesh5.is_aligned(mesh6, tol)
+    assert not mesh5.is_aligned(mesh7, tol)
+
+    p1 = -50e-9
+    p2 = 50e-9
+    cell = 5e-9
+    mesh1 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+    p1 = (-45e-9,)
+    p2 = 10e-9
+    cell = 5e-9
+    mesh2 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+    p1 = -42e-9
+    p2 = 13e-9
+    cell = 5e-9
+    mesh3 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+    p1 = -50e-9
+    p2 = 50e-9
+    cell = 2.5e-9
+    mesh4 = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+    assert mesh1.is_aligned(mesh2)
+    assert not mesh1.is_aligned(mesh3)
+    assert not mesh1.is_aligned(mesh4)
+    assert mesh1.is_aligned(mesh1)
+
+    # Test tolerance
+    tol = 1e-12
+    mesh5 = df.Mesh(p1=0, p2=20e-9, cell=5e-9)
+    mesh6 = df.Mesh(
+        p1=1e-13,
+        p2=20e-9 + 1e-13,
+        cell=5e-9,
+    )
+    mesh7 = df.Mesh(
+        p1=1e-10,
+        p2=20e-9 + 1e-10,
+        cell=5e-9,
+    )
     assert mesh5.is_aligned(mesh6, tol)
     assert not mesh5.is_aligned(mesh7, tol)
 
