@@ -3,6 +3,7 @@ import contextlib
 import copy
 import functools
 import itertools
+import numbers
 import warnings
 from numbers import Integral, Number
 
@@ -191,7 +192,7 @@ class Mesh(_MeshIO):
 
         if cell is not None and n is None:
             # scalar data types for 1d regions
-            if isinstance(cell, (int, float)):
+            if isinstance(cell, numbers.Real):
                 cell = [cell]
 
             if not isinstance(cell, (tuple, list, np.ndarray)):
@@ -218,7 +219,7 @@ class Mesh(_MeshIO):
 
         elif n is not None and cell is None:
             # scalar data types for 1d regions
-            if isinstance(n, (int, float)):
+            if isinstance(n, numbers.Real):
                 n = [n]
             if not isinstance(n, (tuple, list, np.ndarray)):
                 raise TypeError("n must be either a tuple, a list or a numpy.ndarray.")
@@ -1044,7 +1045,7 @@ class Mesh(_MeshIO):
             raise TypeError(
                 f"Expected argument of type discretisedfield.Mesh but got {type(other)}"
             )
-        if not isinstance(tolerance, (int, float)):
+        if not isinstance(tolerance, numbers.Real):
             raise TypeError(
                 "Expected tolerance to be either a float or an integer but got"
                 f" {type(tolerance)}"
@@ -1842,7 +1843,7 @@ class Mesh(_MeshIO):
         if self.region.dims != other.region.dims:
             raise ValueError("The mesh dimensions do not match.")
 
-        if (not isinstance(rtol, (int, float))) or (not isinstance(atol, (int, float))):
+        if (not isinstance(rtol, numbers.Real)) or (not isinstance(atol, numbers.Real)):
             raise TypeError(
                 "Expected both rtol and atol to be either int or float but got"
                 f" {type(rtol)} and {type(atol)}, respectively."
