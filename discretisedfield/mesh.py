@@ -950,6 +950,60 @@ class Mesh(_MeshIO):
 
         return plane_mesh
 
+    def sel(self, *args, **kwargs):
+        if len(args) > 1 or len(kwargs) > 1:
+            raise ValueError("Select method only accepts one dimension at a time.")
+
+        if args and not kwargs:
+            dim = args[0]
+            range_ = None
+        elif not args and kwargs:
+            dim, range_ = list(kwargs.items())[0]
+        else:
+            raise ValueError("No argument passed.")
+
+        dim_index = self.region._dim2index(dim)
+
+        if range_ is not None:
+            if isinstance(range_, numbers.Real):
+                # TODO: Some book-keeping in future.
+                no_book_keeping = True
+            elif isinstance(range_, (tuple, list, np.ndarray)):
+                if len(range_) != 2 and not all(
+                    isinstance(point, numbers.Real) for point in range_
+                ):
+                    raise ValueError(
+                        "The points along the selected dimension must have two"
+                        " real values."
+                    )
+            else:
+                raise TypeError(
+                    "The value passed to selected dimension must either a tuple, list,"
+                    " array or real number."
+                )
+
+        if range_ is None or no_book_keeping:
+            p_1 = [
+                self.region.pmin[i] for i in range(self.region.ndim) if i != dim_index
+            ]
+            p_2 = [
+                self.region.pmax[i] for i in range(self.region.ndim) if i != dim_index
+            ]
+            n = [self.n[i] for i in range(self.region.ndim) if i != dim_index]
+        else:
+            step = self.cell[dim_index] / 2.0
+            p_1, p_2 = self.region.pmin, self.region.pmax
+
+            p_1[dim_index] = min(range_)
+            p_2[dim_index] = max(range_)
+
+            p_1[dim_index] = self.index2point(self.point2index(p_1))[dim_index] - step
+            p_2[dim_index] = self.index2point(self.point2index(p_2))[dim_index] + step
+
+            n = self.n
+
+        return self.__class__(p1=p_1, p2=p_2, n=n)
+
     def __or__(self, other):
         # """Depricated method to check if meshes are aligned: use ``is_aligned``"""
 
