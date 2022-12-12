@@ -828,6 +828,9 @@ class Region(_RegionIO):
         array([12,  8, 15])
 
         """
+        # allow scalar values for 1d regions
+        if isinstance(vector, (int, float)):
+            vector = [vector]
         if not isinstance(vector, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(vector)} for translate.")
         elif len(vector) != self.ndim:
@@ -841,8 +844,8 @@ class Region(_RegionIO):
                     f"Unsupported element {elem} of type {type(elem)} for translate."
                 )
         if inplace:
-            np.add(self.pmin, vector, out=self.pmin)
-            np.add(self.pmax, vector, out=self.pmax)
+            self._pmin = np.add(self.pmin, vector)
+            self._pmax = np.add(self.pmax, vector)
             return self
         else:
             return self.__class__(

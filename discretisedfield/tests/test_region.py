@@ -467,23 +467,61 @@ def test_invalid_scale(p1, p2, factor, error):
         region.scale(factor)
 
 
-def test_translate(region_3d):  # TODO
-    res = region_3d.translate((50e-9, 0, -10e-9))
+@pytest.mark.parametrize(
+    "p1, p2, vector, pmin, pmax, center, edges",
+    [
+        [10, 0, -10, -10, 0, -5, 10],
+        [0, 10, [1.5], 1.5, 11.5, 6.5, 10],
+        [(-3, -3.5), (3, 3.5), (1.5, 2), (-1.5, -1.5), (4.5, 5.5), (1.5, 2), (6, 7)],
+        [
+            (-50e-9, -50e-9, 0),
+            (50e-9, 50e-9, 20e-9),
+            (50e-9, 0, -10e-9),
+            (0, -50e-9, -10e-9),
+            (100e-9, 50e-9, 10e-9),
+            (50e-9, 0, 0),
+            (100e-9, 100e-9, 20e-9),
+        ],
+        [
+            (-10e-9, 0, 10e-9, 20e-9),
+            (0, 1, 20e-9, 50e-9),
+            (0, 50e-9, 50e-9, 80e-9),
+            (-10e-9, 50e-9, 60e-9, 100e-9),
+            (0, 1 + 50e-9, 70e-9, 130e-9),
+            (-5e-9, 0.5 + 25e-9, 65e-9, 115e-9),
+            (10e-9, 1, 10e-9, 30e-9),
+        ],
+    ],
+)
+def test_translate(p1, p2, vector, pmin, pmax, center, edges):
+    region = df.Region(p1=p1, p2=p2)
+    res = region.translate(vector)
     assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (0, -50e-9, -10e-9), atol=0)
-    assert np.allclose(res.pmax, (100e-9, 50e-9, 10e-9), atol=0)
-    assert np.allclose(res.edges, (100e-9, 100e-9, 20e-9), atol=0)
+    assert np.allclose(res.pmin, pmin, atol=0)
+    assert np.allclose(res.pmax, pmax, atol=0)
+    assert np.allclose(res.center, center, atol=0)
+    assert np.allclose(res.edges, edges, atol=0)
 
-    region_3d.translate((50e-9, 0, -10e-9), inplace=True)
-    assert np.allclose(region_3d.pmin, (0, -50e-9, -10e-9), atol=0)
-    assert np.allclose(region_3d.pmax, (100e-9, 50e-9, 10e-9), atol=0)
-    assert np.allclose(region_3d.edges, (100e-9, 100e-9, 20e-9), atol=0)
+    region.translate(vector, inplace=True)
+    assert np.allclose(region.pmin, pmin, atol=0)
+    assert np.allclose(region.pmax, pmax, atol=0)
+    assert np.allclose(region.center, center, atol=0)
+    assert np.allclose(region.edges, edges, atol=0)
 
-    with pytest.raises(ValueError):
-        region_3d.translate((3, 3))
 
-    with pytest.raises(TypeError):
-        region_3d.translate(3)
+@pytest.mark.parametrize(
+    "p1, p2, vector, error",
+    [
+        [0, 10, (1, 2), ValueError],
+        [(0, 0), (10, 10), (1, 2, 3), ValueError],
+        [(0, 0, 0), (10, 10, 10), (3, 3), ValueError],
+        [(0, 0, 0), (10, 10, 10), 3, ValueError],
+    ],
+)
+def test_invalid_translate(p1, p2, vector, error):
+    region = df.Region(p1=p1, p2=p2)
+    with pytest.raises(error):
+        region.translate(vector)
 
 
 @pytest.mark.parametrize(
