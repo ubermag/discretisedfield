@@ -657,11 +657,7 @@ class Field(_FieldIO):
         if direction is None:
             return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
         elif isinstance(direction, (tuple, list)):
-            if not all(d in self.mesh.region.dims for d in direction):
-                raise ValueError(
-                    f"Invalid direction. Directions must be in {self.mesh.region.dims}."
-                )
-            elif len(direction) != len(set(direction)):
+            if len(direction) != len(set(direction)):
                 raise ValueError("Duplicate directions are not allowed.")
             # Mean over all directions explicitly.
             if sorted(direction) == sorted(self.mesh.region.dims):
@@ -674,18 +670,14 @@ class Field(_FieldIO):
                 axis = np.zeros(len(direction), dtype=int)
                 for i, d in enumerate(direction):
                     mesh = mesh.plane(d)
-                    axis[i] = self.mesh.region.dims.index(d)
+                    axis[i] = self.mesh.region._dim2index(d)
                 # Keepdims is needed for the current 3D behaviour
                 array = array.mean(axis=tuple(axis), keepdims=True)
                 return self.__class__(
                     mesh, nvdim=self.nvdim, value=array, unit=self.unit
                 )
         elif isinstance(direction, str):
-            if direction not in self.mesh.region.dims:
-                raise ValueError(
-                    f"Invalid direction. Direction must be in {self.mesh.region.dims}."
-                )
-            axis = self.mesh.region.dims.index(direction)
+            axis = self.mesh.region._dim2index(direction)
             return self.__class__(
                 self.mesh.plane(direction),
                 nvdim=self.nvdim,
@@ -1944,13 +1936,7 @@ class Field(_FieldIO):
         # differential operators using slicing. This is not the most efficient
         # way, and we should consider using ndimage.convolve in the future.
 
-        if direction not in self.mesh.region.dims:
-            raise ValueError(
-                f"Direction {direction} is not valid. "
-                "It must be one of the following: "
-                f"{self.mesh.region.dims}."
-            )
-        direction_idx = self.mesh.region.dims.index(direction)
+        direction_idx = self.mesh.region._dim2index(direction)
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
@@ -2547,12 +2533,10 @@ class Field(_FieldIO):
             return sum_ * dV
         elif not isinstance(direction, str):
             raise TypeError("'direction' must be of type str.")
-        elif direction not in self.mesh.region.dims:
-            raise ValueError(f"{direction=} not in {self.mesh.region.dims}.")
 
         mesh = self.mesh
 
-        axis = mesh.region.dims.index(direction)
+        axis = mesh.region._dim2index(direction)
         if cumulative:
             tmp_array = self.array / 2
             left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
