@@ -493,39 +493,49 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     assert not mesh2 == "mesh2"
 
 
-def test_allclose():  # TODO later
-    p1 = (0, 0, 0)
-    p2 = (1e-8, 1e-8, 1e-8)
-    n = (1, 1, 1)
-    mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
-    mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
+@pytest.mark.parametrize(
+    "p1_1, p1_2, p2, n1, n2",
+    [
+        [5e-9, 6e-9, 10e-9, 5, 3],
+        [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],
+        [(0, 0, 0), (3e-9, 3e-9, 3e-9), (10e-9, 10e-9, 10e-9), (5, 5, 5), (5, 5, 3)],
+        [
+            (0, 0, 0, 0),
+            (3e-9, 3e-9, 3e-9, 3e-9),
+            (10e-9, 10e-9, 10e-9, 10e-9),
+            (5, 5, 5, 5),
+            (5, 5, 5, 3),
+        ],
+    ],
+)
+def test_allclose(p1_1, p1_2, p2, n1, n2):
+    mesh1 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh2 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh3 = df.Mesh(p1=p1_2, p2=p2, n=n1)
+    mesh4 = df.Mesh(p1=p1_1, p2=p2, n=n2)
+
+    assert isinstance(mesh1, df.Mesh)
+    assert isinstance(mesh2, df.Mesh)
+    assert isinstance(mesh3, df.Mesh)
 
     assert mesh1.allclose(mesh2, atol=0)
+    assert not mesh1.allclose(mesh3, atol=0)
+    assert mesh1.allclose(mesh2, atol=1e-8)
+    assert mesh1.allclose(mesh3, atol=1e-8)
 
-    p1 = (0, 0, 0)
-    p2 = (1e-8 + 1e-12, 1e-8 + 2e-13, 1e-8 + 3e-12)
-    n = (1, 1, 1)
-    atol = 1e-13
-    rtol = 1e-2
-    mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
+    assert mesh1.allclose(mesh3, rtol=1)
 
-    assert mesh1.allclose(mesh3, rtol=rtol, atol=atol)
-    assert not mesh1.allclose(mesh3, atol=atol)
-
-    p2 = (1e-8 + 1e-9, 1e-8 + 2e-10, 1e-8 + 3e-11)
-    mesh4 = df.Mesh(p1=p1, p2=p2, n=n)
-
-    assert not mesh1.allclose(mesh4, rtol=rtol, atol=atol)
-    assert mesh1.allclose(mesh4, atol=1e-7)
+    with pytest.raises(ValueError):
+        mesh3.allclose(mesh4, atol=0)
 
     with pytest.raises(TypeError):
-        mesh1.allclose(df.Region(p1=p1, p2=p2), atol=0)
+        mesh1.allclose(mesh1.region)
 
     with pytest.raises(TypeError):
-        mesh1.allclose(mesh3, rtol=rtol, atol="20")
+        mesh1.allclose(mesh3, atol="20")
 
     with pytest.raises(TypeError):
-        mesh1.allclose(mesh3, rtol="1", atol=atol)
+        mesh1.allclose(mesh3, rtol="1")
 
 
 def test_repr():  # TODO later

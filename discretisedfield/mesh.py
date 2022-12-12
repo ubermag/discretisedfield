@@ -520,7 +520,7 @@ class Mesh(_MeshIO):
         array([1., 3., 5., 7., 9.])
 
         """
-        points = collections.namedtuple("points", ["x", "y", "z"])
+        points = collections.namedtuple("points", self.region.dims)
 
         return points(
             *(
