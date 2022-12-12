@@ -561,9 +561,6 @@ def test_repr():
     assert re.match(html_re, mesh._repr_html_(), re.DOTALL)
 
 
-# TODO review all tests from here on
-
-
 @pytest.mark.parametrize(
     "p1, p2, n, point_1, expected_1, expected_min, expected_max",
     [
