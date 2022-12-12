@@ -699,8 +699,8 @@ class Mesh(_MeshIO):
                 raise TypeError(f"The elements of index {index=} must be integer.")
         else:
             raise TypeError(
-                f"The index is of the wrong type {index=}. It must be an integer (1D)"
-                " or a tuple/list/array of integers."
+                f"The index is of the wrong type {type(index)=}. It must be an integer"
+                " (1D) or a tuple/list/array of integers."
             )
 
         if len(index) != self.region.ndim:
@@ -751,8 +751,26 @@ class Mesh(_MeshIO):
         .. seealso:: :py:func:`~discretisedfield.Mesh.index2point`
 
         """
+        if isinstance(point, (tuple, list, np.ndarray)):
+            if any(not isinstance(i, numbers.Real) for i in point):
+                raise TypeError(
+                    f"The elements of point {point=} must be of type numbers.Real."
+                )
+        elif isinstance(point, numbers.Real):
+            point = [point]
+        else:
+            raise TypeError(
+                f"The point is of the wrong type {type(point)=}. It must be an integer"
+                " (1D) or a tuple/list/array of integers."
+            )
+
+        if len(point) != self.region.ndim:
+            raise ValueError(
+                f"Wrong dimensional point. {point=} but {self.region.ndim=}."
+            )
+
         if point not in self.region:
-            raise ValueError(f"Point {point} is outside mesh.region={self.region}.")
+            raise ValueError(f"Point {point} is outside the region {self.region=}.")
 
         index = ((point - self.region.pmin) / self.cell - 0.5).round().astype(int)
         # If index is rounded to the out-of-range values.

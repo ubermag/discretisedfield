@@ -642,50 +642,94 @@ def test_index2point_invalid(p1, p2, n, point, error):
         mesh.index2point(point)
 
 
-def test_point2index():
-    p1 = (-10e-9, -5e-9, 10e-9)
-    p2 = (10e-9, 5e-9, 0)
-    cell = (1e-9, 5e-9, 1e-9)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    assert isinstance(mesh, df.Mesh)
-
-    # (0, 0, 0) cell
-    assert mesh.point2index((-10e-9, -5e-9, 0)) == (0, 0, 0)
-    assert mesh.point2index((-9.5e-9, -2.5e-9, 0.5e-9)) == (0, 0, 0)
-    assert mesh.point2index((-9.01e-9, -0.1e-9, 0.9e-9)) == (0, 0, 0)
-
-    # (19, 1, 9) cell
-    assert mesh.point2index((10e-9, 5e-9, 10e-9)) == (19, 1, 9)
-    assert mesh.point2index((9.5e-9, 2.5e-9, 9.5e-9)) == (19, 1, 9)
-    assert mesh.point2index((9.1e-9, 0.1e-9, 9.1e-9)) == (19, 1, 9)
-
-    # vicinity of (0, 0, 0) point
-    assert mesh.point2index((1e-16, 1e-16, 0.99e-16)) == (10, 1, 0)
-    assert mesh.point2index((-1e-16, -1e-16, 0.01e-16)) == (9, 0, 0)
-
-    # Points outside the mesh.
-    p1 = (-10, 5, 0)
-    p2 = (10, -5, 10e-9)
-    n = (10, 5, 5)
+@pytest.mark.parametrize(
+    "p1, p2, n, point_1, expected_1",
+    [
+        [(0.0,), (-30e-9,), np.array([3]), (2,), (-5e-9,)],
+        [
+            (0.0, 0.0),
+            (30.0, 40.0),
+            np.array([3, 4]),
+            (2, 2),
+            (25.0, 25.0),
+        ],
+        [
+            (0, 0, 0),
+            (30, 40, 50),
+            np.array([3, 4, 5]),
+            (2, 2, 3),
+            (25, 25, 35),
+        ],
+        [
+            (0, 0, 0, -50.0),
+            (30, 40, 50, 150.0),
+            np.array([3, 4, 5, 5]),
+            (2, 2, 3, 1),
+            (25, 25, 35, 10.0),
+        ],
+    ],
+)
+def test_point2index_valid(p1, p2, n, point_1, expected_1):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
-    tol = 1e-12  # picometer tolerance
-    with pytest.raises(ValueError):
-        mesh.point2index((-10 - tol, 0, 5))
-    with pytest.raises(ValueError):
-        mesh.point2index((-5, -5 - tol, 5))
-    with pytest.raises(ValueError):
-        mesh.point2index((-5, 0, -tol))
-    with pytest.raises(ValueError):
-        mesh.point2index((10 + tol, 0, 5))
-    with pytest.raises(ValueError):
-        mesh.point2index((6, 5 + tol, 5))
-    with pytest.raises(ValueError):
-        mesh.point2index((0, 0, 10e-9 + tol))
+    assert np.array_equal(mesh.point2index(mesh.region.pmin), (0,) * mesh.region.ndim)
+    assert np.array_equal(
+        mesh.point2index(mesh.region.pmin + mesh.cell / 2), (0,) * mesh.region.ndim
+    )
+    assert np.array_equal(
+        mesh.point2index(mesh.region.pmin + 3 * mesh.cell / 4), (0,) * mesh.region.ndim
+    )
+    assert np.array_equal(mesh.point2index(mesh.region.pmax), n - 1)
+    assert np.array_equal(mesh.point2index(mesh.region.pmax - mesh.cell / 2), n - 1)
+    assert np.array_equal(mesh.point2index(mesh.region.pmax - 3 * mesh.cell / 4), n - 1)
+    assert np.array_equal(mesh.point2index(expected_1), point_1)
+
+
+@pytest.mark.parametrize(
+    "p1, p2, n, point, error",
+    [
+        [0, 1, 3, 5, ValueError],
+        [0, 1, 3, -1, ValueError],
+        [0, 1, 3, "string", TypeError],
+        [(0, 0), (1, 1), (3, 3), (2, 5), ValueError],
+        [(0, 0), (1, 1), (3, 3), (-1, 2), ValueError],
+        [(0, 0), (1, 1), (3, 3), (2, -1), ValueError],
+        [(0, 0), (1, 1), (3, 3), (2, "string"), TypeError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2.0, 2.0, 5.0), ValueError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, -1, 2), ValueError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (1.0, 2.0, -1.0), ValueError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, "string"), TypeError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, 2, 3), ValueError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2, 1, 5), ValueError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2, 2, -2), ValueError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2, 2, "string"), TypeError],
+        [0, 1, 3, (2, 2), ValueError],
+        [(0, 0), (1, 1), (3, 3), (2, 2, 2), ValueError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, 2, 2), ValueError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2), ValueError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), 2, ValueError],
+    ],
+)
+def test_point2index_invalid(p1, p2, n, point, error):
+    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    with pytest.raises(error):
+        mesh.point2index(point)
 
 
 def test_index2point_point2index_mutually_inverse():
+    p1 = 15
+    p2 = -1
+    cell = 1
+    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+    assert isinstance(mesh, df.Mesh)
+
+    for p in [-0.5, 14.5]:
+        assert np.allclose(mesh.index2point(mesh.point2index(p)), p, atol=0)
+
+    for i in [0, 1]:
+        assert all(mesh.point2index(mesh.index2point(i)) == i)
+
     p1 = (15, -4, 12.5)
     p2 = (-1, 10.1, 11)
     cell = (1, 0.1, 0.5)
@@ -696,7 +740,7 @@ def test_index2point_point2index_mutually_inverse():
         assert np.allclose(mesh.index2point(mesh.point2index(p)), p, atol=0)
 
     for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]:
-        assert mesh.point2index(mesh.index2point(i)) == i
+        assert all(mesh.point2index(mesh.index2point(i)) == i)
 
 
 def test_region2slice():
