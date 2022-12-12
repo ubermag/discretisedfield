@@ -1143,28 +1143,34 @@ def test_scale():
 
 
 def test_translate():
+    p1 = -50
+    p2 = 50
+    cell = 1
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    n = 100
+    assert np.all(mesh.n == n)
+
+    res = mesh.translate(3.2)
+    assert isinstance(res, df.Mesh)
+    assert np.allclose(res.region.pmin, -46.8, atol=0)
+    assert np.allclose(res.region.pmax, 53.2, atol=0)
+    assert np.allclose(res.region.edges, 100, atol=0)
+    assert np.all(mesh.n == n)
+    assert np.allclose(mesh.cell, cell, atol=0)
+
+    mesh.translate(-5, inplace=True)
+    assert np.allclose(mesh.region.pmin, -55, atol=0)
+    assert np.allclose(mesh.region.pmax, 45, atol=0)
+    assert np.allclose(mesh.region.edges, 100, atol=0)
+    assert np.all(mesh.n == n)
+    assert np.allclose(mesh.cell, cell, atol=0)
+
     p1 = (-50e-9, -50e-9, 0)
     p2 = (50e-9, 50e-9, 20e-9)
     cell = (1e-9, 1e-9, 2e-9)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
     n = (100, 100, 10)  # for tests
     assert np.all(mesh.n == n)
-
-    res = mesh.translate((50e-9, 0, -10e-9))
-    assert isinstance(res, df.Mesh)
-    assert np.allclose(res.region.pmin, (0, -50e-9, -10e-9), atol=0)
-    assert np.allclose(res.region.pmax, (100e-9, 50e-9, 10e-9), atol=0)
-    assert np.allclose(res.region.edges, (100e-9, 100e-9, 20e-9), atol=0)
-    assert np.all(mesh.n == n)
-    assert np.allclose(mesh.cell, cell, atol=0)
-
-    mesh.translate((50e-9, 0, -10e-9), inplace=True)
-    assert np.allclose(mesh.region.pmin, (0, -50e-9, -10e-9), atol=0)
-    assert np.allclose(mesh.region.pmax, (100e-9, 50e-9, 10e-9), atol=0)
-    assert np.allclose(mesh.region.edges, (100e-9, 100e-9, 20e-9), atol=0)
-    assert np.all(mesh.n == n)
-    assert np.allclose(mesh.cell, cell, atol=0)
-
     subregions = {
         "sr1": df.Region(p1=(0, 0, 0), p2=(10e-9, 10e-9, 20e-9)),
         "sr2": df.Region(p1=p1, p2=p2),
