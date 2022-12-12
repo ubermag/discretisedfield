@@ -1385,6 +1385,7 @@ def test_save_load_subregions(p1, p2, cell, tmp_path):
     assert test_mesh.subregions == sr
 
 
+@pytest.mark.xfail(reason="needs nd field")
 def test_coordinate_field(valid_mesh):  # TODO
     cfield = valid_mesh.coordinate_field()
     assert isinstance(cfield, df.Field)
