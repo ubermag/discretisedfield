@@ -790,6 +790,13 @@ def test_region2slice():
 
 
 def test_points():
+    p1 = 0
+    p2 = 10
+    cell = 2
+    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+    assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
+
     p1 = (0, 0, 4)
     p2 = (10, 6, 0)
     cell = (2, 2, 1)
@@ -798,6 +805,16 @@ def test_points():
     assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
     assert np.allclose(mesh.points.y, [1.0, 3.0, 5.0], atol=0)
     assert np.allclose(mesh.points.z, [0.5, 1.5, 2.5, 3.5], atol=0)
+
+    p1 = (0, 0, 4, 4)
+    p2 = (10, 6, 0, 0)
+    cell = (2, 2, 1, 1)
+    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+
+    assert np.allclose(mesh.points.x0, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
+    assert np.allclose(mesh.points.x1, [1.0, 3.0, 5.0], atol=0)
+    assert np.allclose(mesh.points.x2, [0.5, 1.5, 2.5, 3.5], atol=0)
+    assert np.allclose(mesh.points.x3, [0.5, 1.5, 2.5, 3.5], atol=0)
 
 
 def test_vertices():
