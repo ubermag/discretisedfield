@@ -454,7 +454,7 @@ class Mesh(_MeshIO):
 
         """
         for index in itertools.product(*map(range, reversed(self.n))):
-            yield tuple(reversed(index))
+            yield np.array(list(reversed(index)), dtype=int)
 
     def __iter__(self):
         """Generator yielding coordinates of discretisation cells.

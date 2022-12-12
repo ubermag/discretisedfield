@@ -432,26 +432,32 @@ def test_len(p1, p2, cell, length):
     assert len(mesh) == length
 
 
-def test_indices_coordinates_iter():  # TODO later
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    n = (5, 5, 5)
+@pytest.mark.parametrize(
+    "p1, p2, n, length",
+    [
+        [(0,), (10,), (5,), 5],
+        [(0, 0), (10, 10), (5, 5), 25],
+        [(0, 0, 0), (10, 10, 10), (5, 5, 5), 125],
+        [(0, 0, 0, 0), (10, 10, 10, 10), (5, 5, 5, 5), 625],
+    ],
+)
+def test_indices_coordinates_iter(p1, p2, n, length):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
     assert isinstance(mesh.indices, types.GeneratorType)
-    assert len(list(mesh.indices)) == 125
+    assert len(list(mesh.indices)) == length
     for index in mesh.indices:
-        assert isinstance(index, tuple)
-        assert len(index) == 3
-        assert all(isinstance(i, int) for i in index)
+        assert isinstance(index, np.ndarray)
+        assert len(index) == mesh.region.ndim
+        assert all(isinstance(i, numbers.Integral) for i in index)
         assert all([0 <= i <= 4 for i in index])
 
     assert isinstance(mesh.__iter__(), types.GeneratorType)
-    assert len(list(mesh)) == 125
+    assert len(list(mesh)) == length
     for point in mesh:
-        assert isinstance(point, tuple)
-        assert len(point) == 3
+        assert isinstance(point, np.ndarray)
+        assert len(point) == mesh.region.ndim
         assert all(isinstance(i, numbers.Real) for i in point)
         assert all([1 <= i <= 9 for i in point])
 
