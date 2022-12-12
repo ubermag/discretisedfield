@@ -6,7 +6,6 @@ import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield.plotting as dfp
-import discretisedfield.util as dfu
 
 from . import html
 from .io import _RegionIO
@@ -87,9 +86,9 @@ class Region(_RegionIO):
             p1, p2 = pmin, pmax
 
         # scalar data types for 1d regions
-        if isinstance(p1, (int, float)):
+        if isinstance(p1, numbers.Real):
             p1 = [p1]
-        if isinstance(p2, (int, float)):
+        if isinstance(p2, numbers.Real):
             p2 = [p2]
 
         if not isinstance(p1, (tuple, list, np.ndarray)) or not isinstance(
@@ -590,7 +589,7 @@ class Region(_RegionIO):
         True
 
         """
-        if isinstance(other, collections.abc.Iterable):
+        if isinstance(other, (numbers.Real, collections.abc.Iterable)):
             tol = np.min(self.edges) * self.tolerance_factor
             return np.all(
                 np.logical_and(
@@ -655,11 +654,11 @@ class Region(_RegionIO):
         if not isinstance(other, self.__class__):
             raise TypeError(f"Cannot find facing surface for {type(other)}.")
 
-        for i in range(3):
+        for i in range(self.ndim):
             if self.pmin[i] >= other.pmax[i]:
-                return (dfu.raxesdict[i], other, self)
+                return (self.dims[i], other, self)
             if other.pmin[i] >= self.pmax[i]:
-                return (dfu.raxesdict[i], self, other)
+                return (self.dims[i], self, other)
         else:
             msg = "Cannot find facing surface."
             raise ValueError(msg)
@@ -672,11 +671,11 @@ class Region(_RegionIO):
     def scale(self, factor, inplace=False):
         """Scale the region.
 
-        This method scales the region by multiplying ``pmin`` and ``pmax`` with
-        ``factor``. If ``factor`` is a number the same scaling is applied along all
-        dimensions. If ``factor`` is array-like its length must match ``region.ndim``
-        and different factors are applied along the different directions (based on their
-        order). A new object is created unless ``inplace=True`` is specified.
+        This method scales the region about its ``center`` point. If ``factor`` is a
+        number the same scaling is applied along all dimensions. If ``factor`` is
+        array-like its length must match ``region.ndim`` and different factors are
+        applied along the different directions (based on their order). A new object is
+        created unless ``inplace=True`` is specified.
 
         Parameters
         ----------
@@ -710,20 +709,20 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale(5)
         >>> res.pmin
-        array([0, 0, 0])
+        array([-20, -20, -20])
         >>> res.pmax
-        array([50, 50, 50])
+        array([30, 30, 30])
 
         2. Scale the region inplace.
 
         >>> import discretisedfield as df
-        >>> p1 = (0, 0, 0)
+        >>> p1 = (-10, -10, -10)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> region.scale(5, inplace=True)
         Region(...)
         >>> region.pmin
-        array([0, 0, 0])
+        array([-50, -50, -50])
         >>> region.pmax
         array([50, 50, 50])
 
@@ -735,9 +734,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale((2, 3, 4))
         >>> res.pmin
-        array([0, 0, 0])
+        array([ -5, -10, -15])
         >>> res.pmax
-        array([20, 30, 40])
+        array([15, 20, 25])
 
         """
         if isinstance(factor, numbers.Number):
@@ -757,13 +756,16 @@ class Region(_RegionIO):
                     )
 
         if inplace:
-            np.multiply(self.pmin, factor, out=self.pmin)
-            np.multiply(self.pmax, factor, out=self.pmax)
+            # create a copy of center because it is re-computed based on pmin and pmax
+            center = self.center.copy()
+            new_egde_length = np.multiply(self.edges, factor)
+            self._pmin = center - new_egde_length / 2
+            self._pmax = center + new_egde_length / 2
             return self
         else:
             return self.__class__(
-                p1=np.multiply(self.pmin, factor),
-                p2=np.multiply(self.pmax, factor),
+                p1=self.center - np.multiply(self.edges, factor) / 2,
+                p2=self.center + np.multiply(self.edges, factor) / 2,
                 dims=self.dims,
                 units=self.units,
             )
@@ -825,6 +827,9 @@ class Region(_RegionIO):
         array([12,  8, 15])
 
         """
+        # allow scalar values for 1d regions
+        if isinstance(vector, numbers.Real):
+            vector = [vector]
         if not isinstance(vector, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(vector)} for translate.")
         elif len(vector) != self.ndim:
@@ -838,8 +843,8 @@ class Region(_RegionIO):
                     f"Unsupported element {elem} of type {type(elem)} for translate."
                 )
         if inplace:
-            np.add(self.pmin, vector, out=self.pmin)
-            np.add(self.pmax, vector, out=self.pmax)
+            self._pmin = np.add(self.pmin, vector)
+            self._pmax = np.add(self.pmax, vector)
             return self
         else:
             return self.__class__(

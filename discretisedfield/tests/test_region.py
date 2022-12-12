@@ -244,97 +244,182 @@ def test_tolerance_factor():  # TODO
 
 
 @pytest.mark.parametrize("factor", [None, 1.0])
-def test_contains(factor):  # TODO
-    p1 = (0, 10e-9, 0)
-    p2 = (10e-9, 0, 20e-9)
-    region = df.Region(p1=p1, p2=p2)
-
+def test_contains_1d(factor):
+    region = df.Region(p1=0, p2=20e-9)
     assert isinstance(region, df.Region)
+
     if factor is not None:
         region.tolerance_factor = factor
     tol = np.min(region.edges) * region.tolerance_factor
     tol_in = tol / 2
     tol_out = tol * 2
-    assert (0, 0, 0) in region
-    assert (-tol_in, 0, 0) in region
-    assert (0, -tol_in, 0) in region
-    assert (0, 0, -tol_in) in region
-    assert (10e-9, 10e-9, 20e-9) in region
-    assert (10e-9 + tol_in, 10e-9, 10e-9) in region
-    assert (10e-9, 10e-9 + tol_in, 10e-9) in region
-    assert (1e-9, 3e-9, 20e-9 + tol_in) in region
 
-    assert (-tol_out, 0, 0) not in region
-    assert (0, -tol_out, 0) not in region
-    assert (0, 0, -tol_out) not in region
-    assert (10e-9 + tol_out, 10e-9, 20e-9) not in region
-    assert (10e-9, 10e-9 + tol_out, 20e-9) not in region
-    assert (10e-9, 10e-9, 20e-9 + tol_out) not in region
+    assert 0 in region
+    assert 20e-9 in region
+
+    assert -tol_in in region
+    assert -tol_out not in region
+
+    assert 20e-9 + tol_in in region
+    assert 20e-9 + tol_out not in region
 
 
-def test_facing_surface():  # TODO
-    # x-direction
-    p11 = (0, 0, 0)
-    p12 = (10e-9, 50e-9, 20e-9)
+@pytest.mark.parametrize("factor", [None, 1.0])
+@pytest.mark.parametrize(
+    "p1, p2",
+    [
+        [(0,), (20e-9,)],
+        [(0, 10e-9), (20e-9, 0)],
+        [(0, 10e-9, 0), (10e-9, 0, 20e-9)],
+        [(0, 10e-9, 0, -10e-9), (10e-9, 0, 20e-9, 30e-9)],
+    ],
+)
+def test_contains(factor, p1, p2):
+    region = df.Region(p1=p1, p2=p2)
+    assert isinstance(region, df.Region)
+
+    if factor is not None:
+        region.tolerance_factor = factor
+    tol = np.min(region.edges) * region.tolerance_factor
+    tol_in = tol / 2
+    tol_out = tol * 2
+
+    assert p1 in region
+    assert p2 in region
+
+    for i in range(region.ndim):
+        point = list(region.pmin)
+        point[i] -= tol_in
+        assert point in region
+
+        point = list(region.pmin)
+        point[i] -= tol_out
+        assert point not in region
+
+    for i in range(region.ndim):
+        point = list(region.pmax)
+        point[i] += tol_in
+        assert point in region
+
+        point = list(region.pmax)
+        point[i] += tol_out
+        assert point not in region
+
+    point = list(region.center)
+    point[-1] = region.pmax[-1] + tol_in
+    assert point in region
+
+    point = list(region.center)
+    point[-1] = region.pmax[-1] + tol_out
+    assert point not in region
+
+
+@pytest.mark.parametrize(
+    "p11, p12, p21, p22, expected",
+    [
+        # 1D
+        [(0,), (10e-9,), (20e-9,), (40e-9,), "x"],
+        # 2D
+        [(0, 0), (10e-9, 50e-9), (20e-9, 0), (30e-9, 50e-9), "x"],
+        [(0, 0), (10e-9, 50e-9), (0, -50e-9), (10e-9, -10e-9), "y"],
+        # 3D
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (20e-9, 0, 0), (30e-9, 50e-9, 20e-9), "x"],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, -50e-9, 0), (10e-9, -10e-9, 20e-9), "y"],
+        [(0, 0, 0), (100e-9, 50e-9, 20e-9), (0, 0, 20e-9), (100e-9, 50e-9, 30e-9), "z"],
+        # 4D
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (20e-9, 0, 0, 0),
+            (30e-9, 50e-9, 20e-9, 30e-9),
+            "x0",
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, -50e-9, 0, 0),
+            (10e-9, -10e-9, 20e-9, 30e-9),
+            "x1",
+        ],
+        [
+            (0, 0, 0, 0),
+            (100e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 20e-9, 0),
+            (100e-9, 50e-9, 30e-9, 30e-9),
+            "x2",
+        ],
+        [
+            (0, 0, 0, 0),
+            (100e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 30e-9),
+            (100e-9, 50e-9, 20e-9, 40e-9),
+            "x3",
+        ],
+    ],
+)
+def test_facing_surface(p11, p12, p21, p22, expected):
     region1 = df.Region(p1=p11, p2=p12)
-
-    p21 = (20e-9, 0, 0)
-    p22 = (30e-9, 50e-9, 20e-9)
     region2 = df.Region(p1=p21, p2=p22)
 
     res = region1.facing_surface(region2)
 
-    assert res[0] == "x"
-    assert res[1] == region1
-    assert res[2] == region2
+    assert res[0] == expected
+    if (
+        region1.pmin[region1._dim2index(res[0])]
+        < region2.pmin[region2._dim2index(res[0])]
+    ):
+        assert res[1] == region1
+        assert res[2] == region2
+    else:
+        assert res[1] == region2
+        assert res[2] == region1
     assert region1.facing_surface(region2) == region2.facing_surface(region1)
 
-    # y-direction
-    p11 = (0, 0, 0)
-    p12 = (10e-9, 50e-9, 20e-9)
-    region1 = df.Region(p1=p11, p2=p12)
 
-    p21 = (0, -50e-9, 0)
-    p22 = (10e-9, -10e-9, 20e-9)
-    region2 = df.Region(p1=p21, p2=p22)
-
-    res = region1.facing_surface(region2)
-
-    assert res[0] == "y"
-    assert res[1] == region2
-    assert res[2] == region1
-    assert region1.facing_surface(region2) == region2.facing_surface(region1)
-
-    # z-direction
-    p11 = (0, 0, 0)
-    p12 = (100e-9, 50e-9, 20e-9)
-    region1 = df.Region(p1=p11, p2=p12)
-
-    p21 = (0, 0, 20e-9)
-    p22 = (100e-9, 50e-9, 30e-9)
-    region2 = df.Region(p1=p21, p2=p22)
-
-    res = region1.facing_surface(region2)
-
-    assert res[0] == "z"
-    assert res[1] == region1
-    assert res[2] == region2
-    assert region1.facing_surface(region2) == region2.facing_surface(region1)
-
+@pytest.mark.parametrize(
+    "p11, p12, p21, p22",
+    [
+        [(0,), (10e-9,), (0,), (40e-9,)],
+        [(0, 0), (10e-9, 50e-9), (0, 0), (10e-9, 70e-9)],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, 0, 0), (70e-9, 50e-9, 70e-9)],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, 0, 0), (10e-9, 70e-9, 20e-9)],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, 0, 0), (70e-9, 50e-9, 20e-9)],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (70e-9, 50e-9, 20e-9, 30e-9),
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (10e-9, 70e-9, 20e-9, 30e-9),
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 70e-9, 30e-9),
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 70e-9),
+        ],
+    ],
+)
+def test_facing_surface_error(p11, p12, p21, p22):
     # Exceptions
-    p11 = (0, 0, 0)
-    p12 = (100e-9, 50e-9, 20e-9)
     region1 = df.Region(p1=p11, p2=p12)
-
-    p21 = (0, 0, 10e-9)
-    p22 = (100e-9, 50e-9, 30e-9)
     region2 = df.Region(p1=p21, p2=p22)
 
     with pytest.raises(ValueError):
-        res = region1.facing_surface(region2)
+        region1.facing_surface(region2)
 
     with pytest.raises(TypeError):
-        res = region1.facing_surface(5)
+        region1.facing_surface(5)
 
 
 @pytest.mark.parametrize(
@@ -344,61 +429,142 @@ def test_facing_surface():  # TODO
         [df.Region(p1=(0, 0), p2=(1e-5, 1e-4)), 1e-6],
     ],
 )
-def test_multiplier(region, multiplier):  # TODO
+def test_multiplier(region, multiplier):  # TODO remove
     assert region.multiplier == multiplier
 
 
-def test_scale(region_3d):  # TODO
-    res = region_3d.scale(2)
+@pytest.mark.parametrize(
+    "p1, p2, factor, pmin, pmax, edges",
+    [
+        [-5, 5, 2, -10, 10, 20],
+        [0, 10, 2, -5, 15, 20],
+        [0, 10, (2,), -5, 15, 20],
+        [
+            (0, 10e-9),
+            (20e-9, 50e-9),
+            0.5,
+            (5e-9, 20e-9),
+            (15e-9, 40e-9),
+            (10e-9, 20e-9),
+        ],
+        [
+            (-50e-9, -50e-9, 0),
+            (50e-9, 50e-9, 20e-9),
+            2,
+            (-100e-9, -100e-9, -10e-9),
+            (100e-9, 100e-9, 30e-9),
+            (200e-9, 200e-9, 40e-9),
+        ],
+        [
+            (-50e-9, -50e-9, 0),
+            (50e-9, 50e-9, 20e-9),
+            0.5,
+            (-25e-9, -25e-9, 5e-9),
+            (25e-9, 25e-9, 15e-9),
+            (50e-9, 50e-9, 10e-9),
+        ],
+        [
+            (-50e-9, -50e-9, 0),
+            (50e-9, 50e-9, 20e-9),
+            (1, 0.1, 4),
+            (-50e-9, -5e-9, -30e-9),
+            (50e-9, 5e-9, 50e-9),
+            (100e-9, 10e-9, 80e-9),
+        ],
+        [
+            (0, 10, -20, -30),
+            (20, -10, 0, -20),
+            2.5,
+            (-15, -25, -35, -37.5),
+            (35, 25, 15, -12.5),
+            (50, 50, 50, 25),
+        ],
+    ],
+)
+def test_scale(p1, p2, factor, pmin, pmax, edges):
+    region = df.Region(p1=p1, p2=p2)
+    res = region.scale(factor)
     assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (-100e-9, -100e-9, 0), atol=0)
-    assert np.allclose(res.pmax, (100e-9, 100e-9, 40e-9), atol=0)
-    assert np.allclose(res.edges, (200e-9, 200e-9, 40e-9), atol=0)
+    assert np.allclose(res.pmin, pmin, atol=0)
+    assert np.allclose(res.pmax, pmax, atol=0)
+    assert np.allclose(res.edges, edges, atol=0)
 
-    res = region_3d.scale(0.5)
+    region.scale(factor, inplace=True)
+    assert np.allclose(region.pmin, pmin, atol=0)
+    assert np.allclose(region.pmax, pmax, atol=0)
+    assert np.allclose(region.edges, edges, atol=0)
+
+
+@pytest.mark.parametrize(
+    "p1, p2, factor, error",
+    [
+        [1, 2, "two", TypeError],
+        [1, 2, (2, 2), ValueError],
+        [(0, 0, 0), (10, 10, 10), (1, 2), ValueError],
+        [(0, 0, 0), (10, 10, 10), (1, "two", 3), TypeError],
+    ],
+)
+def test_invalid_scale(p1, p2, factor, error):
+    region = df.Region(p1=p1, p2=p2)
+    with pytest.raises(error):
+        region.scale(factor)
+
+
+@pytest.mark.parametrize(
+    "p1, p2, vector, pmin, pmax, center, edges",
+    [
+        [10, 0, -10, -10, 0, -5, 10],
+        [0, 10, [1.5], 1.5, 11.5, 6.5, 10],
+        [(-3, -3.5), (3, 3.5), (1.5, 2), (-1.5, -1.5), (4.5, 5.5), (1.5, 2), (6, 7)],
+        [
+            (-50e-9, -50e-9, 0),
+            (50e-9, 50e-9, 20e-9),
+            (50e-9, 0, -10e-9),
+            (0, -50e-9, -10e-9),
+            (100e-9, 50e-9, 10e-9),
+            (50e-9, 0, 0),
+            (100e-9, 100e-9, 20e-9),
+        ],
+        [
+            (-10e-9, 0, 10e-9, 20e-9),
+            (0, 1, 20e-9, 50e-9),
+            (0, 50e-9, 50e-9, 80e-9),
+            (-10e-9, 50e-9, 60e-9, 100e-9),
+            (0, 1 + 50e-9, 70e-9, 130e-9),
+            (-5e-9, 0.5 + 25e-9, 65e-9, 115e-9),
+            (10e-9, 1, 10e-9, 30e-9),
+        ],
+    ],
+)
+def test_translate(p1, p2, vector, pmin, pmax, center, edges):
+    region = df.Region(p1=p1, p2=p2)
+    res = region.translate(vector)
     assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (-25e-9, -25e-9, 0), atol=0)
-    assert np.allclose(res.pmax, (25e-9, 25e-9, 10e-9), atol=0)
-    assert np.allclose(res.edges, (50e-9, 50e-9, 10e-9), atol=0)
+    assert np.allclose(res.pmin, pmin, atol=0)
+    assert np.allclose(res.pmax, pmax, atol=0)
+    assert np.allclose(res.center, center, atol=0)
+    assert np.allclose(res.edges, edges, atol=0)
 
-    res = region_3d.scale((1, 0.1, 4))
-    assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (-50e-9, -5e-9, 0), atol=0)
-    assert np.allclose(res.pmax, (50e-9, 5e-9, 80e-9), atol=0)
-    assert np.allclose(res.edges, (100e-9, 10e-9, 80e-9), atol=0)
-
-    region_3d.scale(2, inplace=True)
-    assert np.allclose(region_3d.pmin, (-100e-9, -100e-9, 0), atol=0)
-    assert np.allclose(region_3d.pmax, (100e-9, 100e-9, 40e-9), atol=0)
-    assert np.allclose(region_3d.edges, (200e-9, 200e-9, 40e-9), atol=0)
-
-    with pytest.raises(ValueError):
-        region_3d.scale((1, 2))
-
-    with pytest.raises(TypeError):
-        region_3d.scale((1, "two", 3))
-
-    with pytest.raises(TypeError):
-        res = region_3d.scale("two")
+    region.translate(vector, inplace=True)
+    assert np.allclose(region.pmin, pmin, atol=0)
+    assert np.allclose(region.pmax, pmax, atol=0)
+    assert np.allclose(region.center, center, atol=0)
+    assert np.allclose(region.edges, edges, atol=0)
 
 
-def test_translate(region_3d):  # TODO
-    res = region_3d.translate((50e-9, 0, -10e-9))
-    assert isinstance(res, df.Region)
-    assert np.allclose(res.pmin, (0, -50e-9, -10e-9), atol=0)
-    assert np.allclose(res.pmax, (100e-9, 50e-9, 10e-9), atol=0)
-    assert np.allclose(res.edges, (100e-9, 100e-9, 20e-9), atol=0)
-
-    region_3d.translate((50e-9, 0, -10e-9), inplace=True)
-    assert np.allclose(region_3d.pmin, (0, -50e-9, -10e-9), atol=0)
-    assert np.allclose(region_3d.pmax, (100e-9, 50e-9, 10e-9), atol=0)
-    assert np.allclose(region_3d.edges, (100e-9, 100e-9, 20e-9), atol=0)
-
-    with pytest.raises(ValueError):
-        region_3d.translate((3, 3))
-
-    with pytest.raises(TypeError):
-        region_3d.translate(3)
+@pytest.mark.parametrize(
+    "p1, p2, vector, error",
+    [
+        [0, 10, (1, 2), ValueError],
+        [(0, 0), (10, 10), (1, 2, 3), ValueError],
+        [(0, 0, 0), (10, 10, 10), (3, 3), ValueError],
+        [(0, 0, 0), (10, 10, 10), 3, ValueError],
+    ],
+)
+def test_invalid_translate(p1, p2, vector, error):
+    region = df.Region(p1=p1, p2=p2)
+    with pytest.raises(error):
+        region.translate(vector)
 
 
 @pytest.mark.parametrize(

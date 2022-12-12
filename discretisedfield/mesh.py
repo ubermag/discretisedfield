@@ -3,6 +3,7 @@ import contextlib
 import copy
 import functools
 import itertools
+import numbers
 import warnings
 from numbers import Integral, Number
 
@@ -191,7 +192,7 @@ class Mesh(_MeshIO):
 
         if cell is not None and n is None:
             # scalar data types for 1d regions
-            if isinstance(cell, (int, float)):
+            if isinstance(cell, numbers.Real):
                 cell = [cell]
 
             if not isinstance(cell, (tuple, list, np.ndarray)):
@@ -218,7 +219,7 @@ class Mesh(_MeshIO):
 
         elif n is not None and cell is None:
             # scalar data types for 1d regions
-            if isinstance(n, (int, float)):
+            if isinstance(n, numbers.Real):
                 n = [n]
             if not isinstance(n, (tuple, list, np.ndarray)):
                 raise TypeError("n must be either a tuple, a list or a numpy.ndarray.")
@@ -692,11 +693,10 @@ class Mesh(_MeshIO):
 
         """
         if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
-            msg = f"Index {index=} out of range."
-            raise ValueError(msg)
+            raise ValueError(f"Index {index=} out of range.")
 
-        point = np.add(self.region.pmin, np.multiply(np.add(index, 0.5), self.cell))
-        return dfu.array2tuple(point)
+        point = self.region.pmin + np.add(index, 0.5) * self.cell
+        return point
 
     def point2index(self, point, /):
         """Convert point to the index of a cell which contains that point.
@@ -736,18 +736,13 @@ class Mesh(_MeshIO):
 
         """
         if point not in self.region:
-            msg = f"Point {point} is outside mesh.region={self.region}."
-            raise ValueError(msg)
+            raise ValueError(f"Point {point} is outside mesh.region={self.region}.")
 
-        index = (
-            np.subtract(np.divide(np.subtract(point, self.region.pmin), self.cell), 0.5)
-            .round()
-            .astype(int)
-        )
+        index = ((point - self.region.pmin) / self.cell - 0.5).round().astype(int)
         # If index is rounded to the out-of-range values.
-        index = np.clip(index, 0, np.subtract(self.n, 1))
+        index = np.clip(index, 0, self.n - 1)
 
-        return dfu.array2tuple(index)
+        return index
 
     def region2slices(self, region):
         """Slices of indices that correspond to cells contained in the region.
@@ -1050,7 +1045,7 @@ class Mesh(_MeshIO):
             raise TypeError(
                 f"Expected argument of type discretisedfield.Mesh but got {type(other)}"
             )
-        if not isinstance(tolerance, (int, float)):
+        if not isinstance(tolerance, numbers.Real):
             raise TypeError(
                 "Expected tolerance to be either a float or an integer but got"
                 f" {type(tolerance)}"
@@ -1848,7 +1843,7 @@ class Mesh(_MeshIO):
         if self.region.dims != other.region.dims:
             raise ValueError("The mesh dimensions do not match.")
 
-        if (not isinstance(rtol, (int, float))) or (not isinstance(atol, (int, float))):
+        if (not isinstance(rtol, numbers.Real)) or (not isinstance(atol, numbers.Real)):
             raise TypeError(
                 "Expected both rtol and atol to be either int or float but got"
                 f" {type(rtol)} and {type(atol)}, respectively."
