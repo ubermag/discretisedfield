@@ -188,6 +188,16 @@ def test_pmin_pmax_edges_center_volume(p1, p2, pmin, pmax, edges, center, volume
                 " dims=['x', 'y', 'z'], units=['m', 'm', 'm'])"
             ),
         ],
+        [
+            (0, 0, 0, 0),
+            (1e-6, 1e-3, 1, 1e3),
+            None,
+            None,
+            (
+                "Region(pmin=[0.0, 0.0, 0.0, 0.0], pmax=[1e-06, 0.001, 1.0, 1000.0],"
+                " dims=['x0', 'x1', 'x2', 'x3'], units=['m', 'm', 'm', 'm'])"
+            ),
+        ],
     ],
 )
 def test_repr(p1, p2, units, dims, rstr):
