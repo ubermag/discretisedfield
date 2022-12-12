@@ -395,6 +395,7 @@ def test_multiplier(region, multiplier):  # TODO remove
     [
         [-5, 5, 2, -10, 10, 20],
         [0, 10, 2, -5, 15, 20],
+        [0, 10, (2,), -5, 15, 20],
         [
             (0, 10e-9),
             (20e-9, 50e-9),
