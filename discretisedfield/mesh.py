@@ -992,7 +992,7 @@ class Mesh(_MeshIO):
             p_2 = [
                 self.region.pmax[i] for i in range(self.region.ndim) if i != dim_index
             ]
-            n = [self.n[i] for i in range(self.region.ndim) if i != dim_index]
+            cell = [self.cell[i] for i in range(self.region.ndim) if i != dim_index]
 
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
@@ -1005,12 +1005,12 @@ class Mesh(_MeshIO):
                     sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
         else:
             step = self.cell[dim_index] / 2.0
-            p_1, p_2 = self.region.pmin, self.region.pmax
+            p_1, p_2 = self.region.pmin.copy(), self.region.pmax.copy()
             p_1[dim_index] = min(range_)
             p_2[dim_index] = max(range_)
             p_1[dim_index] = self.index2point(self.point2index(p_1))[dim_index] - step
             p_2[dim_index] = self.index2point(self.point2index(p_2))[dim_index] + step
-            n = self.n
+            cell = self.cell
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
                     sel_axis_max_of_min = max(p_1[dim_index], min(range_))
@@ -1023,7 +1023,7 @@ class Mesh(_MeshIO):
                         sub_p_2[dim_index] = sel_axis_min_of_max
                         sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
 
-        return self.__class__(p1=p_1, p2=p_2, n=n, subregions=sub_region)
+        return self.__class__(p1=p_1, p2=p_2, cell=cell, subregions=sub_region)
 
     def __or__(self, other):
         # """Depricated method to check if meshes are aligned: use ``is_aligned``"""
