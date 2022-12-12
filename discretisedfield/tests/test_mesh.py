@@ -1057,7 +1057,7 @@ def test_getitem():
         [(-1.0, 2.0, 7.0, 10.0), (5.0, 9.0, 4.0, 3.0), (1, 1, 0.5, 1)],
     ],
 )
-def test_pad(p1, p2, cell):  # TODO
+def test_pad(p1, p2, cell):
     region = df.Region(p1=p1, p2=p2)
     mesh = df.Mesh(region=region, cell=cell)
 
