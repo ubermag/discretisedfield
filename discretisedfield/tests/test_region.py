@@ -428,6 +428,14 @@ def test_multiplier(region, multiplier):  # TODO remove
             (50e-9, 5e-9, 50e-9),
             (100e-9, 10e-9, 80e-9),
         ],
+        [
+            (0, 10, -20, -30),
+            (20, -10, 0, -20),
+            2.5,
+            (-15, -25, -35, -37.5),
+            (35, 25, 15, -12.5),
+            (50, 50, 50, 25),
+        ],
     ],
 )
 def test_scale(p1, p2, factor, pmin, pmax, edges):

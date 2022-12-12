@@ -760,8 +760,8 @@ class Region(_RegionIO):
             # create a copy of center because it is re-computed based on pmin and pmax
             center = self.center.copy()
             new_egde_length = np.multiply(self.edges, factor)
-            self.pmin[:] = center - new_egde_length / 2
-            self.pmax[:] = center + new_egde_length / 2
+            self._pmin = center - new_egde_length / 2
+            self._pmax = center + new_egde_length / 2
             return self
         else:
             return self.__class__(
