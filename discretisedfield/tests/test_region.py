@@ -702,10 +702,16 @@ def test_pmin_pmax(region_3d):
         region_3d.pmax = (100e-9, 100e-9, 40e-9)
 
 
-def test_mpl(region_3d, tmp_path):  # TODO
+@pytest.mark.parametrize("p1, p2", [[0, 1], [(0, 0), (1, 1)], [(0, 0, 0), (1, 1, 1)]])
+def test_mpl(p1, p2, tmp_path):
+    region = df.Region(p1=p1, p2=p2)
+
+    if region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
+
     # Check if it runs.
-    region_3d.mpl()
-    region_3d.mpl(
+    region.mpl()
+    region.mpl(
         figsize=(10, 10),
         multiplier=1e-9,
         color=plot_util.cp_hex[1],
@@ -714,12 +720,18 @@ def test_mpl(region_3d, tmp_path):  # TODO
         linestyle="dashed",
     )
 
-    region_3d.mpl(filename=tmp_path / "figure.pdf")
+    region.mpl(filename=tmp_path / "figure.pdf")
 
     plt.close("all")
 
 
-def test_k3d(region_3d):  # TODO
+@pytest.mark.parametrize("p1, p2", [[0, 1], [(0, 0), (1, 1)], [(0, 0, 0), (1, 1, 1)]])
+def test_k3d(p1, p2):
+    region = df.Region(p1=p1, p2=p2)
+
+    if region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
+
     # Check if runs.
-    region_3d.k3d()
-    region_3d.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
+    region.k3d()
+    region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
