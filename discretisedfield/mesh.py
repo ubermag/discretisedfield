@@ -561,7 +561,7 @@ class Mesh(_MeshIO):
         array([ 0.,  2.,  4.,  6.,  8., 10.])
 
         """
-        vertices = collections.namedtuple("vertices", ["x", "y", "z"])
+        vertices = collections.namedtuple("vertices", self.region.dims)
 
         return vertices(
             *(

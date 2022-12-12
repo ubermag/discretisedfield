@@ -818,6 +818,13 @@ def test_points():
 
 
 def test_vertices():
+    p1 = 0
+    p2 = 5
+    cell = 1
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    assert np.allclose(mesh.vertices.x, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], atol=0)
+
     p1 = (0, 1, 0)
     p2 = (5, 0, 6)
     cell = (1, 1, 2)
@@ -826,6 +833,16 @@ def test_vertices():
     assert np.allclose(mesh.vertices.x, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], atol=0)
     assert np.allclose(mesh.vertices.y, [0.0, 1.0], atol=0)
     assert np.allclose(mesh.vertices.z, [0.0, 2.0, 4.0, 6.0], atol=0)
+
+    p1 = (0, 1, 0, 0)
+    p2 = (5, 0, 6, 6)
+    cell = (1, 1, 2, 2)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    assert np.allclose(mesh.vertices.x0, [0.0, 1.0, 2.0, 3.0, 4.0, 5.0], atol=0)
+    assert np.allclose(mesh.vertices.x1, [0.0, 1.0], atol=0)
+    assert np.allclose(mesh.vertices.x2, [0.0, 2.0, 4.0, 6.0], atol=0)
+    assert np.allclose(mesh.vertices.x3, [0.0, 2.0, 4.0, 6.0], atol=0)
 
 
 def test_line():
