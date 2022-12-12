@@ -158,32 +158,52 @@ def test_pmin_pmax_edges_center_volume(p1, p2, pmin, pmax, edges, center, volume
     assert np.isclose(region.volume, volume, atol=0)
 
 
-def test_repr():  # TODO
-    p1 = (-1, -4, 11)
-    p2 = (15, 10.1, 12.5)
-    region = df.Region(p1=p1, p2=p2)
+@pytest.mark.parametrize(
+    "p1, p2, units, dims, rstr",
+    [
+        [
+            -10e-9,
+            10e-9,
+            "nm",
+            "a",
+            "Region(pmin=[-1e-08], pmax=[1e-08], dims=['a'], units=['nm'])",
+        ],
+        [
+            (0, -10e-9),
+            (100e-9, 10e-9),
+            ["nm", "s"],
+            ["space", "time"],
+            (
+                "Region(pmin=[0.0, -1e-08], pmax=[1e-07, 1e-08], dims=['space',"
+                " 'time'], units=['nm', 's'])"
+            ),
+        ],
+        [
+            (-1, -4, 11),
+            (15, 10.1, 12.5),
+            None,
+            None,
+            (
+                "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+                " dims=['x', 'y', 'z'], units=['m', 'm', 'm'])"
+            ),
+        ],
+        [
+            (0, 0, 0, 0),
+            (1e-6, 1e-3, 1, 1e3),
+            None,
+            None,
+            (
+                "Region(pmin=[0.0, 0.0, 0.0, 0.0], pmax=[1e-06, 0.001, 1.0, 1000.0],"
+                " dims=['x0', 'x1', 'x2', 'x3'], units=['m', 'm', 'm', 'm'])"
+            ),
+        ],
+    ],
+)
+def test_repr(p1, p2, units, dims, rstr):
+    region = df.Region(p1=p1, p2=p2, units=units, dims=dims)
 
     assert isinstance(region, df.Region)
-    rstr = (
-        "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
-        " dims=['x', 'y', 'z'], units=['m', 'm', 'm'])"
-    )
-    assert repr(region) == rstr
-    assert re.match(html_re, region._repr_html_())
-
-    region.units = ["nm", "nm", "s"]
-    rstr = (
-        "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
-        " dims=['x', 'y', 'z'], units=['nm', 'nm', 's'])"
-    )
-    assert repr(region) == rstr
-    assert re.match(html_re, region._repr_html_())
-
-    region.dims = ["time", "space", "c"]
-    rstr = (
-        "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
-        " dims=['time', 'space', 'c'], units=['nm', 'nm', 's'])"
-    )
     assert repr(region) == rstr
     assert re.match(html_re, region._repr_html_())
 
@@ -702,10 +722,16 @@ def test_pmin_pmax(region_3d):
         region_3d.pmax = (100e-9, 100e-9, 40e-9)
 
 
-def test_mpl(region_3d, tmp_path):  # TODO
+@pytest.mark.parametrize("p1, p2", [[0, 1], [(0, 0), (1, 1)], [(0, 0, 0), (1, 1, 1)]])
+def test_mpl(p1, p2, tmp_path):
+    region = df.Region(p1=p1, p2=p2)
+
+    if region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
+
     # Check if it runs.
-    region_3d.mpl()
-    region_3d.mpl(
+    region.mpl()
+    region.mpl(
         figsize=(10, 10),
         multiplier=1e-9,
         color=plot_util.cp_hex[1],
@@ -714,12 +740,18 @@ def test_mpl(region_3d, tmp_path):  # TODO
         linestyle="dashed",
     )
 
-    region_3d.mpl(filename=tmp_path / "figure.pdf")
+    region.mpl(filename=tmp_path / "figure.pdf")
 
     plt.close("all")
 
 
-def test_k3d(region_3d):  # TODO
+@pytest.mark.parametrize("p1, p2", [[0, 1], [(0, 0), (1, 1)], [(0, 0, 0), (1, 1, 1)]])
+def test_k3d(p1, p2):
+    region = df.Region(p1=p1, p2=p2)
+
+    if region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
+
     # Check if runs.
-    region_3d.k3d()
-    region_3d.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
+    region.k3d()
+    region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)

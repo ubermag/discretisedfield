@@ -432,55 +432,65 @@ def test_len(p1, p2, cell, length):
     assert len(mesh) == length
 
 
-def test_indices_coordinates_iter():  # TODO later
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    n = (5, 5, 5)
+@pytest.mark.parametrize(
+    "p1, p2, n, length",
+    [
+        [(0,), (10,), (5,), 5],
+        [(0.0, 0.0), (10.0, 5.0), (5, 3), 5 * 3],
+        [(0, 0, 0), (1e-5, 1e-5, 2e-5), (2, 5, 3), 2 * 5 * 3],
+        [(0, 0, 0, 0), (10.0, 5.0, 2.0, 10), (5, 4, 3, 2), 5 * 4 * 3 * 2],
+    ],
+)
+def test_indices_coordinates_iter(p1, p2, n, length):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
     assert isinstance(mesh.indices, types.GeneratorType)
-    assert len(list(mesh.indices)) == 125
+    assert len(list(mesh.indices)) == length
     for index in mesh.indices:
-        assert isinstance(index, tuple)
-        assert len(index) == 3
-        assert all(isinstance(i, int) for i in index)
-        assert all([0 <= i <= 4 for i in index])
+        assert isinstance(index, np.ndarray)
+        assert len(index) == mesh.region.ndim
+        assert all(isinstance(i, numbers.Integral) for i in index)
+        assert all([0 <= i <= j for i, j in zip(index, n)])
 
     assert isinstance(mesh.__iter__(), types.GeneratorType)
-    assert len(list(mesh)) == 125
+    assert len(list(mesh)) == length
     for point in mesh:
-        assert isinstance(point, tuple)
-        assert len(point) == 3
+        assert isinstance(point, np.ndarray)
+        assert len(point) == mesh.region.ndim
         assert all(isinstance(i, numbers.Real) for i in point)
-        assert all([1 <= i <= 9 for i in point])
+        assert all([0 <= i <= j for i, j in zip(point, p2)])
 
 
-def test_eq():  # TODO later
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    n = (1, 1, 1)
-    mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
-    # NOTE: Why do we need to test mesh1 type here?
-    # assert isinstance(mesh1, df.Mesh)
-    mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
-    # assert isinstance(mesh2, df.Mesh)
+@pytest.mark.parametrize(
+    "p1_1, p1_2, p2, n1, n2",
+    [
+        [5e-9, 6e-9, 10e-9, 5, 3],
+        [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],
+        [(0, 0, 0), (3, 3, 3), (10, 10, 10), (5, 5, 5), (5, 5, 3)],
+        [(0, 0, 0, 0), (3, 3, 3, 3), (10, 10, 10, 10), (5, 5, 5, 5), (5, 5, 5, 3)],
+    ],
+)
+def test_eq(p1_1, p1_2, p2, n1, n2):
+    mesh1 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh2 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh3 = df.Mesh(p1=p1_2, p2=p2, n=n1)
+    mesh4 = df.Mesh(p1=p1_1, p2=p2, n=n2)
 
+    assert isinstance(mesh1, df.Mesh)
+    assert isinstance(mesh2, df.Mesh)
+    assert isinstance(mesh3, df.Mesh)
     assert mesh1 == mesh2
     assert not mesh1 != mesh2
+    assert mesh1 != mesh3
+    assert not mesh1 == mesh3
+    assert mesh1 != mesh4
+    assert not mesh1 == mesh4
+    assert mesh3 != mesh4
+    assert not mesh3 == mesh4
+
     assert mesh1 != 1
     assert not mesh2 == "mesh2"
-
-    p1 = (0, 0, 0)
-    p2 = (10 + 1e-12, 10 + 2e-13, 10 + 3e-12)
-    n = (1, 1, 1)
-    mesh3 = df.Mesh(p1=p1, p2=p2, n=n)
-    # assert isinstance(mesh3, df.Mesh)
-
-    assert not mesh1 == mesh3
-    assert not mesh2 == mesh3
-    assert mesh1 != mesh3
-    assert mesh2 != mesh3
 
 
 def test_allclose():  # TODO later
@@ -952,6 +962,9 @@ def test_dS():  # TODO: remove
 
 
 def test_mpl(valid_mesh, tmp_path):
+    if valid_mesh.region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
+
     valid_mesh.mpl()
     valid_mesh.mpl(box_aspect=[1, 2, 3])
 
@@ -960,6 +973,8 @@ def test_mpl(valid_mesh, tmp_path):
 
 
 def test_k3d(valid_mesh):
+    if valid_mesh.region.ndim != 3:
+        pytest.xfail(reason="plotting only supports 3d")
     valid_mesh.k3d()
     valid_mesh.plane("x").k3d()
 

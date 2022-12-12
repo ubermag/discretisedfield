@@ -100,6 +100,7 @@ def test_field():
 def test_init_scalar_valid_args(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
     assert isinstance(f, df.Field)
+    assert f.array.shape == (*valid_mesh.n, 1)
 
     assert isinstance(f.mesh, df.Mesh)
     assert isinstance(f.nvdim, int)

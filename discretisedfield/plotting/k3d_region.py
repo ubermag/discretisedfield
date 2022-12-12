@@ -8,6 +8,8 @@ import discretisedfield.util as dfu
 
 class K3dRegion:
     def __init__(self, region):
+        if region.ndim != 3:
+            raise RuntimeError("Only 3d regions can be plotted.")
         self.region = region
 
     def __call__(
