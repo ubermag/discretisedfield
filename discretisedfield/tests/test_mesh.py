@@ -558,38 +558,88 @@ def test_repr():  # TODO later
 # TODO review all tests from here on
 
 
-def test_index2point():
-    p1 = (15, -4, 12.5)
-    p2 = (-1, 10.1, 11)
-    cell = (1, 0.1, 0.5)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+@pytest.mark.parametrize(
+    "p1, p2, n, point_1, expected_1, expected_min, expected_max",
+    [
+        [(0.0,), (-30e-9,), np.array([3]), (2), (-5e-9,), (-25e-9,), (-5e-9,)],
+        [
+            (0.0, 0.0),
+            (30.0, 40.0),
+            np.array([3, 4]),
+            (2, 2),
+            (25.0, 25.0),
+            (5.0, 5.0),
+            (25.0, 35.0),
+        ],
+        [
+            (0, 0, 0),
+            (30, 40, 50),
+            np.array([3, 4, 5]),
+            (2, 2, 3),
+            (25, 25, 35),
+            (5, 5, 5),
+            (25, 35, 45),
+        ],
+        [
+            (0, 0, 0, -50.0),
+            (30, 40, 50, 150.0),
+            np.array([3, 4, 5, 5]),
+            (2, 2, 3, 1),
+            (25, 25, 35, 10.0),
+            (5, 5, 5, -30),
+            (25, 35, 45, 130),
+        ],
+    ],
+)
+def test_index2point_valid(p1, p2, n, point_1, expected_1, expected_min, expected_max):
+    mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
-    assert np.allclose(mesh.index2point((5, 10, 1)), (4.5, -2.95, 11.75), atol=0)
+    assert np.allclose(mesh.index2point(point_1), expected_1, atol=0)
 
     # Correct minimum index
-    assert isinstance(mesh.index2point((0, 0, 0)), tuple)
-    assert np.allclose(mesh.index2point((0, 0, 0)), (-0.5, -3.95, 11.25), atol=0)
-
-    # Below minimum index
-    with pytest.raises(ValueError):
-        mesh.index2point((-1, 0, 0))
-    with pytest.raises(ValueError):
-        mesh.index2point((0, -1, 0))
-    with pytest.raises(ValueError):
-        mesh.index2point((0, 0, -1))
+    assert isinstance(mesh.index2point((0,) * mesh.region.ndim), np.ndarray)
+    assert np.allclose(mesh.index2point((0,) * mesh.region.ndim), expected_min, atol=0)
 
     # Correct maximum index
-    assert isinstance(mesh.index2point((15, 140, 2)), tuple)
-    assert np.allclose(mesh.index2point((15, 140, 2)), (14.5, 10.05, 12.25), atol=0)
+    assert isinstance(mesh.index2point(n - 1), np.ndarray)
+    assert np.allclose(mesh.index2point(n - 1), expected_max, atol=0)
 
-    # Above maximum index
-    with pytest.raises(ValueError):
-        mesh.index2point((16, 0, 0))
-    with pytest.raises(ValueError):
-        mesh.index2point((0, 141, 0))
-    with pytest.raises(ValueError):
-        mesh.index2point((0, 0, 3))
+
+@pytest.mark.parametrize(
+    "p1, p2, n, point, error",
+    [
+        [0, 1, 3, 3, IndexError],
+        [0, 1, 3, -1, IndexError],
+        [0, 1, 3, "string", TypeError],
+        [0, 1, 3, 0.0, TypeError],
+        [(0, 0), (1, 1), (3, 3), (2, 3), IndexError],
+        [(0, 0), (1, 1), (3, 3), (-1, 2), IndexError],
+        [(0, 0), (1, 1), (3, 3), (2, -1), IndexError],
+        [(0, 0), (1, 1), (3, 3), (2, "string"), TypeError],
+        [(0, 0), (1, 1), (3, 3), (2, 2.0), TypeError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, 3), IndexError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, -1, 2), IndexError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (1, 2, -1), IndexError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, "string"), TypeError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, 2.0), TypeError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, 2, 3), IndexError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2.0, 2.0, 2.0), TypeError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2, 1, 3), IndexError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2, 2, -2), IndexError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2, 2, "string"), TypeError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2, 2, 2.0), TypeError],
+        [0, 1, 3, (2, 2), IndexError],
+        [(0, 0), (1, 1), (3, 3), (2, 2, 2), IndexError],
+        [(0, 0, 0), (1, 1, 1), (3, 3, 3), (2, 2, 2, 2), IndexError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), (2, 2), IndexError],
+        [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), 2, IndexError],
+    ],
+)
+def test_index2point_invalid(p1, p2, n, point, error):
+    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    with pytest.raises(error):
+        mesh.index2point(point)
 
 
 def test_point2index():

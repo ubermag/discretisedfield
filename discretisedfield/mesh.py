@@ -692,8 +692,24 @@ class Mesh(_MeshIO):
         .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
         """
+        if isinstance(index, numbers.Integral):
+            index = [index]
+        elif isinstance(index, (np.ndarray, list, tuple)):
+            if any(not isinstance(i, numbers.Integral) for i in index):
+                raise TypeError(f"The elements of index {index=} must be integer.")
+        else:
+            raise TypeError(
+                f"The index is of the wrong type {index=}. It must be an integer (1D)"
+                " or a tuple/list/array of integers."
+            )
+
+        if len(index) != self.region.ndim:
+            raise IndexError(
+                f"Wrong dimensional index. {index=} but {self.region.ndim=}."
+            )
+
         if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
-            raise ValueError(f"Index {index=} out of range.")
+            raise IndexError(f"Index {index=} out of range.")
 
         point = self.region.pmin + np.add(index, 0.5) * self.cell
         return point
