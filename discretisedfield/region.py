@@ -86,9 +86,9 @@ class Region(_RegionIO):
             p1, p2 = pmin, pmax
 
         # scalar data types for 1d regions
-        if isinstance(p1, (int, float)):
+        if isinstance(p1, numbers.Real):
             p1 = [p1]
-        if isinstance(p2, (int, float)):
+        if isinstance(p2, numbers.Real):
             p2 = [p2]
 
         if not isinstance(p1, (tuple, list, np.ndarray)) or not isinstance(
@@ -828,7 +828,7 @@ class Region(_RegionIO):
 
         """
         # allow scalar values for 1d regions
-        if isinstance(vector, (int, float)):
+        if isinstance(vector, numbers.Real):
             vector = [vector]
         if not isinstance(vector, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(vector)} for translate.")
