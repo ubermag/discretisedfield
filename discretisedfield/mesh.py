@@ -951,6 +951,7 @@ class Mesh(_MeshIO):
         return plane_mesh
 
     def sel(self, *args, **kwargs):
+        no_book_keeping = False
         if len(args) > 1 or len(kwargs) > 1:
             raise ValueError("Select method only accepts one dimension at a time.")
 
