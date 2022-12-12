@@ -1230,11 +1230,11 @@ class Mesh(_MeshIO):
         array([12, 12, 11])
 
         """
+        pmin = self.region.pmin.copy()
+        pmax = self.region.pmax.copy()
         # Convert to np.ndarray to allow operations on them.
-        pmin = np.array(self.region.pmin)
-        pmax = np.array(self.region.pmax)
         for direction in pad_width.keys():
-            axis = dfu.axesdict[direction]
+            axis = self.region._dim2index(direction)
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 

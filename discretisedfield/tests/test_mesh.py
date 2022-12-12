@@ -842,7 +842,7 @@ def test_vertices():
     assert np.allclose(mesh.vertices.x3, [0.0, 2.0, 4.0, 6.0], atol=0)
 
 
-def test_line():  # TODO
+def test_line():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (1, 1, 1)
@@ -1051,32 +1051,88 @@ def test_getitem():  # TODO
         submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9), p2=(200e-9, 79e-9, 14e-9))]
 
 
-def test_pad():  # TODO
-    p1 = (-1, 2, 7)
-    p2 = (5, 9, 4)
-    cell = (1, 1, 1)
+@pytest.mark.parametrize(
+    "p1, p2, cell",
+    [
+        [0, 10, 1],
+        [(0, 0), (5.0, 7.0), (1, 1)],
+        [(-1, 2, 7), (5, 9, 4), (1, 1, 1)],
+        [(-1.0, 2.0, 7.0, 10.0), (5.0, 9.0, 4.0, 3.0), (1, 1, 0.5, 1)],
+    ],
+)
+def test_pad(p1, p2, cell):  # TODO
     region = df.Region(p1=p1, p2=p2)
     mesh = df.Mesh(region=region, cell=cell)
 
-    padded_mesh = mesh.pad({"x": (0, 1)})
-    assert np.allclose(padded_mesh.region.pmin, (-1, 2, 4), atol=0)
-    assert np.allclose(padded_mesh.region.pmax, (6, 9, 7), atol=0)
-    assert np.all(padded_mesh.n == (7, 7, 3))
+    for dim in mesh.region.dims:
+        padded_mesh = mesh.pad({dim: (1, 1)})
+        # Add cell to pmin and pmax to get the correct padded region
+        idx = mesh.region._dim2index(dim)
+        temp = mesh.region.pmin.copy()
+        if mesh.region.ndim == 1:
+            temp = temp - cell
+        else:
+            temp[idx] = temp[idx] - cell[idx]
+        assert np.allclose(padded_mesh.region.pmin, temp, atol=0)
+        temp = mesh.region.pmax.copy()
+        if mesh.region.ndim == 1:
+            temp = temp + cell
+        else:
+            temp[idx] = temp[idx] + cell[idx]
+        assert np.allclose(padded_mesh.region.pmax, temp, atol=0)
+        temp = mesh.n.copy()
+        if mesh.region.ndim == 1:
+            temp = temp + 2
+        else:
+            temp[idx] = temp[idx] + 2
+        assert np.all(padded_mesh.n == temp)
 
-    padded_mesh = mesh.pad({"y": (1, 1)})
-    assert np.allclose(padded_mesh.region.pmin, (-1, 1, 4), atol=0)
-    assert np.allclose(padded_mesh.region.pmax, (5, 10, 7), atol=0)
-    assert np.all(padded_mesh.n == (6, 9, 3))
+    for dim in mesh.region.dims:
+        padded_mesh = mesh.pad({dim: (0, 1)})
+        # Add cell to pmin and pmax to get the correct padded region
+        idx = mesh.region._dim2index(dim)
+        assert np.allclose(padded_mesh.region.pmin, mesh.region.pmin, atol=0)
+        temp = mesh.region.pmax.copy()
+        if mesh.region.ndim == 1:
+            temp = temp + cell
+        else:
+            temp[idx] = temp[idx] + cell[idx]
+        assert np.allclose(padded_mesh.region.pmax, temp, atol=0)
+        temp = mesh.n.copy()
+        if mesh.region.ndim == 1:
+            temp = temp + 1
+        else:
+            temp[idx] = temp[idx] + 1
+        assert np.all(padded_mesh.n == temp)
 
-    padded_mesh = mesh.pad({"z": (2, 3)})
-    assert np.allclose(padded_mesh.region.pmin, (-1, 2, 2), atol=0)
-    assert np.allclose(padded_mesh.region.pmax, (5, 9, 10), atol=0)
-    assert np.all(padded_mesh.n == (6, 7, 8))
+    for dim in mesh.region.dims:
+        padded_mesh = mesh.pad({dim: (2, 3)})
+        # Add cell to pmin and pmax to get the correct padded region
+        idx = mesh.region._dim2index(dim)
+        temp = mesh.region.pmin.copy()
+        if mesh.region.ndim == 1:
+            temp = temp - 2 * cell
+        else:
+            temp[idx] = temp[idx] - 2 * cell[idx]
+        assert np.allclose(padded_mesh.region.pmin, temp, atol=0)
+        temp = mesh.region.pmax.copy()
+        if mesh.region.ndim == 1:
+            temp = temp + 3 * cell
+        else:
+            temp[idx] = temp[idx] + 3 * cell[idx]
+        assert np.allclose(padded_mesh.region.pmax, temp, atol=0)
+        temp = mesh.n.copy()
+        if mesh.region.ndim == 1:
+            temp = temp + 5
+        else:
+            temp[idx] = temp[idx] + 5
+        assert np.all(padded_mesh.n == temp)
 
-    padded_mesh = mesh.pad({"x": (1, 1), "y": (1, 1), "z": (1, 1)})
-    assert np.allclose(padded_mesh.region.pmin, (-2, 1, 3), atol=0)
-    assert np.allclose(padded_mesh.region.pmax, (6, 10, 8), atol=0)
-    assert np.all(padded_mesh.n == (8, 9, 5))
+    pad_directions = {dim: (1, 1) for dim in mesh.region.dims}
+    padded_mesh = mesh.pad(pad_directions)
+    assert np.allclose(padded_mesh.region.pmin, mesh.region.pmin - cell, atol=0)
+    assert np.allclose(padded_mesh.region.pmax, mesh.region.pmax + cell, atol=0)
+    assert np.all(padded_mesh.n == mesh.n + 2 * np.ones_like(mesh.n))
 
 
 @pytest.mark.parametrize(
