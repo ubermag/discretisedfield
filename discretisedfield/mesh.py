@@ -1843,6 +1843,9 @@ class Mesh(_MeshIO):
         if self.region.dims != other.region.dims:
             raise ValueError("The mesh dimensions do not match.")
 
+        if any(self.n != other.n):
+            raise ValueError("The number of cells in each dimention do not match.")
+
         if (not isinstance(rtol, numbers.Real)) or (not isinstance(atol, numbers.Real)):
             raise TypeError(
                 "Expected both rtol and atol to be either int or float but got"
