@@ -1173,43 +1173,28 @@ def test_coordinate_field(valid_mesh):  # TODO
     assert np.allclose(cfield.array[0, 0, :, 2], valid_mesh.points.z, atol=0)
 
 
-# ------------------ sel method test draft -----------------------------------------
-# def test_sel():
-#     p1 = (0, 0, 0)
-#     p2 = (20, 20, 20)
-#     cell = (2, 2, 2)
-#     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-#     for dim in mesh.region.dims:
-#         sub_mesh = mesh.sel(f"{dim}")
-#         assert isinstance(sub_mesh, df.Mesh)
-#         assert sub_mesh.region.ndim == mesh.region.ndim - 1
-#         assert np.allclose(
-#             sub_mesh.region.pmin,
-#             mesh.region.pmin[mesh.region.dims != dim],
-#         )
-#         assert np.allclose(
-#             sub_mesh.region.pmax,
-#             mesh.region.pmax[mesh.region.dims != dim],
-#         )
+def test_sel():
+    p1 = (0, 0, 0)
+    p2 = (20, 20, 20)
+    cell = (2, 2, 2)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    for dim in mesh.region.dims:
+        sub_mesh = mesh.sel(f"{dim}")
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim - 1
+        bool_ = [i != dim for i in mesh.region.dims]
+        assert np.allclose(
+            sub_mesh.region.pmin,
+            mesh.region.pmin[bool_],
+        )
+        assert np.allclose(
+            sub_mesh.region.pmax,
+            mesh.region.pmax[bool_],
+        )
 
-#     sub_mesh = mesh.sel(x=3.1)
-#     assert isinstance(sub_mesh, df.Mesh)
-#     assert sub_mesh.region.ndim == mesh.region.ndim - 1
-#     assert np.allclose(
-#         sub_mesh.region.pmin, mesh.region.pmin[mesh.region.dims != "x"]
-#     )
-#     assert np.allclose(
-#         sub_mesh.region.pmax, mesh.region.pmax[mesh.region.dims != "x"]
-#     )
-
-#     sub_mesh = mesh.sel(x=4, z=14)
-#     assert isinstance(sub_mesh, df.Mesh)
-#     assert sub_mesh.region.ndim == mesh.region.ndim - 2
-#     assert np.allclose(
-#         sub_mesh.region.pmin,
-#         mesh.region.pmin[mesh.region.dims != "x" and mesh.region.dims != "z"],
-#     )
-#     assert np.allclose(
-#         sub_mesh.region.pmax,
-#         mesh.region.pmax[mesh.region.dims != "x" and mesh.region.dims != "z"],
-#     )
+    sub_mesh = mesh.sel(x=3.1)
+    assert isinstance(sub_mesh, df.Mesh)
+    assert sub_mesh.region.ndim == mesh.region.ndim - 1
+    bool_ = [i != "x" for i in mesh.region.dims]
+    assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_])
+    assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_])
