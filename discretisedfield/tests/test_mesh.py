@@ -1198,3 +1198,19 @@ def test_sel():
     bool_ = [i != "x" for i in mesh.region.dims]
     assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_])
     assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_])
+
+    sub_mesh = mesh.sel(x=(3.6, 7.8))
+    assert isinstance(sub_mesh, df.Mesh)
+    assert sub_mesh.region.ndim == mesh.region.ndim
+    assert np.isclose(sub_mesh.region.pmax[0], 8.0, atol=0)
+    assert np.isclose(sub_mesh.region.pmin[0], 2.0, atol=0)
+    assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_])
+    assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_])
+
+    sub_region = {
+        "in": df.Region(p1=(2, 2, 2), p2=(8, 8, 8)),
+        "out": df.Region(p1=(0, 0, 0), p2=(2, 2, 2)),
+        "half": df.Region(p1=(4, 4, 4), p2=(12, 12, 12)),
+    }
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=sub_region)
+    print(mesh.sel(x=(3.6, 7.8)))
