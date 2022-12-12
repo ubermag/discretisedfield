@@ -1018,7 +1018,7 @@ class Mesh(_MeshIO):
                     if sel_axis_max_of_min > sel_axis_min_of_max:
                         continue
                     else:
-                        sub_p_1, sub_p_2 = subreg.pmin, subreg.pmax
+                        sub_p_1, sub_p_2 = subreg.pmin.copy(), subreg.pmax.copy()
                         sub_p_1[dim_index] = sel_axis_max_of_min
                         sub_p_2[dim_index] = sel_axis_min_of_max
                         sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
