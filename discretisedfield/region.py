@@ -680,7 +680,7 @@ class Region(_RegionIO):
 
         Parameters
         ----------
-        factor : numbers.Number or array-like of numbers.Number
+        factor : numbers.Real or array-like of numbers.Real
 
             Factor to scale the region.
 
@@ -745,7 +745,7 @@ class Region(_RegionIO):
         array([15, 20, 25])
 
         """
-        if isinstance(factor, numbers.Number):
+        if isinstance(factor, numbers.Real):
             pass
         elif not isinstance(factor, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(factor)} for scale.")
@@ -756,7 +756,7 @@ class Region(_RegionIO):
             )
         else:
             for elem in factor:
-                if not isinstance(elem, numbers.Number):
+                if not isinstance(elem, numbers.Real):
                     raise TypeError(
                         f"Unsupported element {elem} of type {type(elem)} for scale."
                     )
