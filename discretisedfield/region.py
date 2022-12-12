@@ -757,13 +757,16 @@ class Region(_RegionIO):
                     )
 
         if inplace:
-            np.multiply(self.pmin, factor, out=self.pmin)
-            np.multiply(self.pmax, factor, out=self.pmax)
+            # create a copy of center because it is re-computed based on pmin and pmax
+            center = self.center.copy()
+            new_egde_length = np.multiply(self.edges, factor)
+            self.pmin[:] = center - new_egde_length / 2
+            self.pmax[:] = center + new_egde_length / 2
             return self
         else:
             return self.__class__(
-                p1=np.multiply(self.pmin, factor),
-                p2=np.multiply(self.pmax, factor),
+                p1=self.center - np.multiply(self.edges, factor),
+                p2=self.center + np.multiply(self.edges, factor),
                 dims=self.dims,
                 units=self.units,
             )
