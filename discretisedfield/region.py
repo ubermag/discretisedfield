@@ -6,7 +6,6 @@ import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield.plotting as dfp
-import discretisedfield.util as dfu
 
 from . import html
 from .io import _RegionIO
@@ -655,11 +654,11 @@ class Region(_RegionIO):
         if not isinstance(other, self.__class__):
             raise TypeError(f"Cannot find facing surface for {type(other)}.")
 
-        for i in range(3):
+        for i in range(self.ndim):
             if self.pmin[i] >= other.pmax[i]:
-                return (dfu.raxesdict[i], other, self)
+                return (self.dims[i], other, self)
             if other.pmin[i] >= self.pmax[i]:
-                return (dfu.raxesdict[i], self, other)
+                return (self.dims[i], self, other)
         else:
             msg = "Cannot find facing surface."
             raise ValueError(msg)
