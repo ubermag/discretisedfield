@@ -750,6 +750,18 @@ def test_index2point_point2index_mutually_inverse():
 
 
 def test_region2slice():
+    p1 = 0
+    p2 = 4
+    cell = 1
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    assert isinstance(mesh, df.Mesh)
+    assert mesh.region2slices(df.Region(p1=p1, p2=p2)) == (slice(0, 4, None),)
+    assert mesh.region2slices(df.Region(p1=0, p2=1)) == (slice(0, 1, None),)
+    assert mesh.region2slices(df.Region(p1=2, p2=3)) == (slice(2, 3, None),)
+
+    with pytest.raises(ValueError):
+        mesh.region2slices(df.Region(p1=(-1), p2=(3)))
+
     p1 = (0, 0, -2)
     p2 = (4, 5, 4)
     cell = (1, 1, 1)
@@ -772,6 +784,9 @@ def test_region2slice():
     )
     with pytest.raises(ValueError):
         mesh.region2slices(df.Region(p1=(-1, 3, -1), p2=(3, 5, 0)))
+
+    with pytest.raises(ValueError):
+        mesh.region2slices(df.Region(p1=(-1, 3), p2=(3, 5)))
 
 
 def test_points():

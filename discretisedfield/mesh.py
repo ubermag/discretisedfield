@@ -807,9 +807,9 @@ class Mesh(_MeshIO):
         (slice(0, 10, None), slice(0, 5, None), slice(0, 1, None))
         """
 
-        i1 = self.point2index(np.array(region.pmin) + np.array(self.cell) / 2)
-        i2 = self.point2index(np.array(region.pmax) - np.array(self.cell) / 2)
-        return tuple(slice(i1[i], i2[i] + 1) for i in range(3))
+        i1 = self.point2index(region.pmin + self.cell / 2)
+        i2 = self.point2index(region.pmax - self.cell / 2)
+        return tuple(slice(i1[i], i2[i] + 1) for i in range(self.region.ndim))
 
     def line(self, *, p1, p2, n):
         """Line generator.
