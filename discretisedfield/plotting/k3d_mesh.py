@@ -160,7 +160,7 @@ class K3dMesh:
             for i, subregion in enumerate(self.mesh.subregions.values()):
                 if self.mesh.index2point(index) in subregion:
                     # +1 to avoid 0 value - invisible voxel
-                    plot_array[index] = (i % len(color)) + 1
+                    plot_array[tuple(index)] = (i % len(color)) + 1
                     break
         # swap axes for k3d.voxels and astypr to avoid k3d warning
         plot_array = np.swapaxes(plot_array, 0, 2).astype(np.uint8)
