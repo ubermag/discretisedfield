@@ -845,7 +845,7 @@ def test_vertices():
     assert np.allclose(mesh.vertices.x3, [0.0, 2.0, 4.0, 6.0], atol=0)
 
 
-def test_line():
+def test_line():  # TODO
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (1, 1, 1)
@@ -901,7 +901,7 @@ def test_or():
         assert mesh1 | mesh1 is True
 
 
-def test_is_aligned():
+def test_is_aligned():  # TODO
     p1 = (-50e-9, -25e-9, 0)
     p2 = (50e-9, 25e-9, 5e-9)
     cell = (5e-9, 5e-9, 5e-9)
@@ -951,7 +951,7 @@ def test_is_aligned():
         mesh5.is_aligned(mesh6, "1e-12")
 
 
-def test_getitem():
+def test_getitem():  # TODO
     # Subregions disctionary
     p1 = (0, 0, 0)
     p2 = (100, 50, 10)
@@ -1013,7 +1013,7 @@ def test_getitem():
         submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9), p2=(200e-9, 79e-9, 14e-9))]
 
 
-def test_pad():
+def test_pad():  # TODO
     p1 = (-1, 2, 7)
     p2 = (5, 9, 4)
     cell = (1, 1, 1)
