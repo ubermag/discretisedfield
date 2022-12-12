@@ -671,11 +671,11 @@ class Region(_RegionIO):
     def scale(self, factor, inplace=False):
         """Scale the region.
 
-        This method scales the region by multiplying ``pmin`` and ``pmax`` with
-        ``factor``. If ``factor`` is a number the same scaling is applied along all
-        dimensions. If ``factor`` is array-like its length must match ``region.ndim``
-        and different factors are applied along the different directions (based on their
-        order). A new object is created unless ``inplace=True`` is specified.
+        This method scales the region about its ``center`` point. If ``factor`` is a
+        number the same scaling is applied along all dimensions. If ``factor`` is
+        array-like its length must match ``region.ndim`` and different factors are
+        applied along the different directions (based on their order). A new object is
+        created unless ``inplace=True`` is specified.
 
         Parameters
         ----------
@@ -709,20 +709,20 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale(5)
         >>> res.pmin
-        array([0, 0, 0])
+        array([-20, -20, -20])
         >>> res.pmax
-        array([50, 50, 50])
+        array([30, 30, 30])
 
         2. Scale the region inplace.
 
         >>> import discretisedfield as df
-        >>> p1 = (0, 0, 0)
+        >>> p1 = (-10, -10, -10)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> region.scale(5, inplace=True)
         Region(...)
         >>> region.pmin
-        array([0, 0, 0])
+        array([-50, -50, -50])
         >>> region.pmax
         array([50, 50, 50])
 
@@ -734,9 +734,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale((2, 3, 4))
         >>> res.pmin
-        array([0, 0, 0])
+        array([ -5, -10, -15])
         >>> res.pmax
-        array([20, 30, 40])
+        array([15, 20, 25])
 
         """
         if isinstance(factor, numbers.Number):
@@ -756,13 +756,16 @@ class Region(_RegionIO):
                     )
 
         if inplace:
-            np.multiply(self.pmin, factor, out=self.pmin)
-            np.multiply(self.pmax, factor, out=self.pmax)
+            # create a copy of center because it is re-computed based on pmin and pmax
+            center = self.center.copy()
+            new_egde_length = np.multiply(self.edges, factor)
+            self.pmin[:] = center - new_egde_length / 2
+            self.pmax[:] = center + new_egde_length / 2
             return self
         else:
             return self.__class__(
-                p1=np.multiply(self.pmin, factor),
-                p2=np.multiply(self.pmax, factor),
+                p1=self.center - np.multiply(self.edges, factor) / 2,
+                p2=self.center + np.multiply(self.edges, factor) / 2,
                 dims=self.dims,
                 units=self.units,
             )
