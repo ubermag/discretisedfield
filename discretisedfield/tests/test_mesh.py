@@ -1102,21 +1102,6 @@ def test_dV(p1, p2, cell, dV):
     assert np.isclose(mesh.dV, dV, atol=0)
 
 
-def test_dS():  # TODO: remove
-    p1 = (0, 0, 0)
-    p2 = (100, 80, 10)
-    cell = (1, 2, 2.5)
-    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-
-    assert np.allclose(mesh.plane("x").dS.mean(), (5, 0, 0), atol=0)
-    assert np.allclose(mesh.plane("y").dS.mean(), (0, 2.5, 0), atol=0)
-    assert np.allclose(mesh.plane("z").dS.mean(), (0, 0, 2), atol=0)
-
-    # Exception
-    with pytest.raises(ValueError):
-        mesh.dS
-
-
 def test_mpl(valid_mesh, tmp_path):
     if valid_mesh.region.ndim != 3:
         pytest.xfail(reason="plotting only supports 3d")
