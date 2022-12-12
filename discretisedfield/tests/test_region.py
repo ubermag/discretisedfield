@@ -158,32 +158,42 @@ def test_pmin_pmax_edges_center_volume(p1, p2, pmin, pmax, edges, center, volume
     assert np.isclose(region.volume, volume, atol=0)
 
 
-def test_repr():  # TODO
-    p1 = (-1, -4, 11)
-    p2 = (15, 10.1, 12.5)
-    region = df.Region(p1=p1, p2=p2)
+@pytest.mark.parametrize(
+    "p1, p2, units, dims, rstr",
+    [
+        [
+            -10e-9,
+            10e-9,
+            "nm",
+            "a",
+            "Region(pmin=[-1e-08], pmax=[1e-08], dims=['a'], units=['nm'])",
+        ],
+        [
+            (0, -10e-9),
+            (100e-9, 10e-9),
+            ["nm", "s"],
+            ["space", "time"],
+            (
+                "Region(pmin=[0.0, -1e-08], pmax=[1e-07, 1e-08], dims=['space',"
+                " 'time'], units=['nm', 's'])"
+            ),
+        ],
+        [
+            (-1, -4, 11),
+            (15, 10.1, 12.5),
+            None,
+            None,
+            (
+                "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
+                " dims=['x', 'y', 'z'], units=['m', 'm', 'm'])"
+            ),
+        ],
+    ],
+)
+def test_repr(p1, p2, units, dims, rstr):
+    region = df.Region(p1=p1, p2=p2, units=units, dims=dims)
 
     assert isinstance(region, df.Region)
-    rstr = (
-        "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
-        " dims=['x', 'y', 'z'], units=['m', 'm', 'm'])"
-    )
-    assert repr(region) == rstr
-    assert re.match(html_re, region._repr_html_())
-
-    region.units = ["nm", "nm", "s"]
-    rstr = (
-        "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
-        " dims=['x', 'y', 'z'], units=['nm', 'nm', 's'])"
-    )
-    assert repr(region) == rstr
-    assert re.match(html_re, region._repr_html_())
-
-    region.dims = ["time", "space", "c"]
-    rstr = (
-        "Region(pmin=[-1.0, -4.0, 11.0], pmax=[15.0, 10.1, 12.5],"
-        " dims=['time', 'space', 'c'], units=['nm', 'nm', 's'])"
-    )
     assert repr(region) == rstr
     assert re.match(html_re, region._repr_html_())
 
