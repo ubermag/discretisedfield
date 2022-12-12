@@ -314,69 +314,112 @@ def test_contains(factor, p1, p2):
     assert point not in region
 
 
-def test_facing_surface():  # TODO
-    # x-direction
-    p11 = (0, 0, 0)
-    p12 = (10e-9, 50e-9, 20e-9)
+@pytest.mark.parametrize(
+    "p11, p12, p21, p22, expected",
+    [
+        # 1D
+        [(0,), (10e-9,), (20e-9,), (40e-9,), "x"],
+        # 2D
+        [(0, 0), (10e-9, 50e-9), (20e-9, 0), (30e-9, 50e-9), "x"],
+        [(0, 0), (10e-9, 50e-9), (0, -50e-9), (10e-9, -10e-9), "y"],
+        # 3D
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (20e-9, 0, 0), (30e-9, 50e-9, 20e-9), "x"],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, -50e-9, 0), (10e-9, -10e-9, 20e-9), "y"],
+        [(0, 0, 0), (100e-9, 50e-9, 20e-9), (0, 0, 20e-9), (100e-9, 50e-9, 30e-9), "z"],
+        # 4D
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (20e-9, 0, 0, 0),
+            (30e-9, 50e-9, 20e-9, 30e-9),
+            "x0",
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, -50e-9, 0, 0),
+            (10e-9, -10e-9, 20e-9, 30e-9),
+            "x1",
+        ],
+        [
+            (0, 0, 0, 0),
+            (100e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 20e-9, 0),
+            (100e-9, 50e-9, 30e-9, 30e-9),
+            "x2",
+        ],
+        [
+            (0, 0, 0, 0),
+            (100e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 30e-9),
+            (100e-9, 50e-9, 20e-9, 40e-9),
+            "x3",
+        ],
+    ],
+)
+def test_facing_surface(p11, p12, p21, p22, expected):
     region1 = df.Region(p1=p11, p2=p12)
-
-    p21 = (20e-9, 0, 0)
-    p22 = (30e-9, 50e-9, 20e-9)
     region2 = df.Region(p1=p21, p2=p22)
 
     res = region1.facing_surface(region2)
 
-    assert res[0] == "x"
-    assert res[1] == region1
-    assert res[2] == region2
+    assert res[0] == expected
+    if (
+        region1.pmin[region1._dim2index(res[0])]
+        < region2.pmin[region2._dim2index(res[0])]
+    ):
+        assert res[1] == region1
+        assert res[2] == region2
+    else:
+        assert res[1] == region2
+        assert res[2] == region1
     assert region1.facing_surface(region2) == region2.facing_surface(region1)
 
-    # y-direction
-    p11 = (0, 0, 0)
-    p12 = (10e-9, 50e-9, 20e-9)
-    region1 = df.Region(p1=p11, p2=p12)
 
-    p21 = (0, -50e-9, 0)
-    p22 = (10e-9, -10e-9, 20e-9)
-    region2 = df.Region(p1=p21, p2=p22)
-
-    res = region1.facing_surface(region2)
-
-    assert res[0] == "y"
-    assert res[1] == region2
-    assert res[2] == region1
-    assert region1.facing_surface(region2) == region2.facing_surface(region1)
-
-    # z-direction
-    p11 = (0, 0, 0)
-    p12 = (100e-9, 50e-9, 20e-9)
-    region1 = df.Region(p1=p11, p2=p12)
-
-    p21 = (0, 0, 20e-9)
-    p22 = (100e-9, 50e-9, 30e-9)
-    region2 = df.Region(p1=p21, p2=p22)
-
-    res = region1.facing_surface(region2)
-
-    assert res[0] == "z"
-    assert res[1] == region1
-    assert res[2] == region2
-    assert region1.facing_surface(region2) == region2.facing_surface(region1)
-
+@pytest.mark.parametrize(
+    "p11, p12, p21, p22",
+    [
+        [(0,), (10e-9,), (0,), (40e-9,)],
+        [(0, 0), (10e-9, 50e-9), (0, 0), (10e-9, 70e-9)],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, 0, 0), (70e-9, 50e-9, 70e-9)],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, 0, 0), (10e-9, 70e-9, 20e-9)],
+        [(0, 0, 0), (10e-9, 50e-9, 20e-9), (0, 0, 0), (70e-9, 50e-9, 20e-9)],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (70e-9, 50e-9, 20e-9, 30e-9),
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (10e-9, 70e-9, 20e-9, 30e-9),
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 70e-9, 30e-9),
+        ],
+        [
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 30e-9),
+            (0, 0, 0, 0),
+            (10e-9, 50e-9, 20e-9, 70e-9),
+        ],
+    ],
+)
+def test_facing_surface_error(p11, p12, p21, p22):
     # Exceptions
-    p11 = (0, 0, 0)
-    p12 = (100e-9, 50e-9, 20e-9)
     region1 = df.Region(p1=p11, p2=p12)
-
-    p21 = (0, 0, 10e-9)
-    p22 = (100e-9, 50e-9, 30e-9)
     region2 = df.Region(p1=p21, p2=p22)
 
     with pytest.raises(ValueError):
-        res = region1.facing_surface(region2)
+        region1.facing_surface(region2)
 
     with pytest.raises(TypeError):
-        res = region1.facing_surface(5)
+        region1.facing_surface(5)
 
 
 @pytest.mark.parametrize(
