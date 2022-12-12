@@ -1347,11 +1347,14 @@ def test_save_load_subregions(p1, p2, cell, tmp_path):
 def test_coordinate_field(valid_mesh):  # TODO
     cfield = valid_mesh.coordinate_field()
     assert isinstance(cfield, df.Field)
-    manually = df.Field(valid_mesh, dim=3, value=lambda p: p)
+    manually = df.Field(valid_mesh, dim=valid_mesh.region.ndim, value=lambda p: p)
     assert cfield.allclose(manually, atol=0)
-    assert np.allclose(cfield.array[:, 0, 0, 0], valid_mesh.points.x, atol=0)
-    assert np.allclose(cfield.array[0, :, 0, 1], valid_mesh.points.y, atol=0)
-    assert np.allclose(cfield.array[0, 0, :, 2], valid_mesh.points.z, atol=0)
+    for dim in range(valid_mesh.region.ndim):
+        index = [
+            0,
+        ] * valid_mesh.region.ndim
+        index[valid_mesh.region._dim2index(dim)] = slice(None)
+        assert np.allclose(cfield.array[index], getattr(valid_mesh.points, dim), atol=0)
 
 
 # ------------------ sel method test draft -----------------------------------------
