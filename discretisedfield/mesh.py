@@ -983,12 +983,11 @@ class Mesh(_MeshIO):
                     "The value passed to selected dimension must be a tuple, list,"
                     " array or real number."
                 )
+        else:
+            selected_value = self.region.center[dim_index]
 
         sub_region = dict()
-
         if range_ is None or isinstance(range_, numbers.Real):
-            if range_ is None:
-                selected_value = self.region.center[dim_index]
             idxs = [i for i in range(self.region.ndim) if i != dim_index]
             p_1 = list()
             p_2 = list()
