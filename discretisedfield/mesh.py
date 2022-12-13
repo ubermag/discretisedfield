@@ -971,6 +971,7 @@ class Mesh(_MeshIO):
             if isinstance(range_, numbers.Real):
                 # TODO: Some book-keeping in future.
                 no_book_keeping = True
+                selected_value = range_
             elif isinstance(range_, (tuple, list, np.ndarray)):
                 if len(range_) != 2 and not all(
                     isinstance(point, numbers.Real) for point in range_
@@ -998,13 +999,19 @@ class Mesh(_MeshIO):
 
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
-                    sub_p_1 = [
-                        subreg.pmin[i] for i in range(subreg.ndim) if i != dim_index
-                    ]
-                    sub_p_2 = [
-                        subreg.pmax[i] for i in range(subreg.ndim) if i != dim_index
-                    ]
-                    sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
+                    if (
+                        selected_value >= subreg.pmax[dim_index]
+                        or selected_value <= subreg.pmin[dim_index]
+                    ):
+                        continue
+                    else:
+                        sub_p_1 = [
+                            subreg.pmin[i] for i in range(subreg.ndim) if i != dim_index
+                        ]
+                        sub_p_2 = [
+                            subreg.pmax[i] for i in range(subreg.ndim) if i != dim_index
+                        ]
+                        sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
         else:
             step = self.cell[dim_index] / 2.0
             p_1, p_2 = self.region.pmin.copy(), self.region.pmax.copy()
