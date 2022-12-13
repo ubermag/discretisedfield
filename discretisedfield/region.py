@@ -105,6 +105,9 @@ class Region(_RegionIO):
                 f" {len(p1)=} and {len(p2)=}."
             )
 
+        if len(p1) == 0:
+            raise ValueError("p1 and p2 must not be empty.")
+
         if not all(isinstance(i, numbers.Real) for i in p1):
             raise TypeError("p1 can only contain elements of type numbers.Real.")
 
