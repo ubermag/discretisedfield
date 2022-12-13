@@ -989,13 +989,19 @@ class Mesh(_MeshIO):
         sub_region = dict()
 
         if range_ is None or no_book_keeping:
-            p_1 = [
-                self.region.pmin[i] for i in range(self.region.ndim) if i != dim_index
-            ]
-            p_2 = [
-                self.region.pmax[i] for i in range(self.region.ndim) if i != dim_index
-            ]
-            cell = [self.cell[i] for i in range(self.region.ndim) if i != dim_index]
+            idxs = [i for i in range(self.region.ndim) if i != dim_index]
+            p_1 = list()
+            p_2 = list()
+            cell = list()
+            dims = list()
+            units = list()
+            for j in idxs:
+                p_1.append(self.region.pmin[j])
+                p_2.append(self.region.pmax[j])
+                cell.append(self.cell[j])
+                dims.append(self.region.dims[j])
+                units.append(self.region.units[j])
+            tol = self.region.tolerance_factor
 
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
@@ -1005,13 +1011,23 @@ class Mesh(_MeshIO):
                     ):
                         continue
                     else:
-                        sub_p_1 = [
-                            subreg.pmin[i] for i in range(subreg.ndim) if i != dim_index
-                        ]
-                        sub_p_2 = [
-                            subreg.pmax[i] for i in range(subreg.ndim) if i != dim_index
-                        ]
-                        sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
+                        sub_p_1 = list()
+                        sub_p_2 = list()
+                        sub_dims = list()
+                        sub_units = list()
+                        for j in idxs:
+                            sub_p_1.append(subreg.pmin[j])
+                            sub_p_2.append(subreg.pmax[j])
+                            sub_dims.append(subreg.dims[j])
+                            sub_units.append(subreg.units[j])
+                        sub_tol = subreg.tolerance_factor
+                        sub_region[key] = df.Region(
+                            p1=sub_p_1,
+                            p2=sub_p_2,
+                            dims=sub_dims,
+                            units=sub_units,
+                            tolerance_factor=sub_tol,
+                        )
         else:
             step = self.cell[dim_index] / 2.0
             p_1, p_2 = self.region.pmin.copy(), self.region.pmax.copy()
@@ -1022,6 +1038,9 @@ class Mesh(_MeshIO):
             p_1[dim_index] = min_val
             p_2[dim_index] = max_val
             cell = self.cell
+            dims = self.region.dims
+            units = self.region.units
+            tol = self.region.tolerance_factor
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
                     sub_reg_p_min = subreg.pmin[dim_index]
@@ -1032,9 +1051,21 @@ class Mesh(_MeshIO):
                         sub_p_1, sub_p_2 = subreg.pmin.copy(), subreg.pmax.copy()
                         sub_p_1[dim_index] = max(min_val, sub_reg_p_min)
                         sub_p_2[dim_index] = min(max_val, sub_reg_p_max)
-                        sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
+                        sub_region[key] = df.Region(
+                            p1=sub_p_1,
+                            p2=sub_p_2,
+                            dims=subreg.dims,
+                            units=subreg.units,
+                            tolerance_factor=subreg.tolerance_factor,
+                        )
 
-        return self.__class__(p1=p_1, p2=p_2, cell=cell, subregions=sub_region)
+        return self.__class__(
+            region=df.Region(
+                p1=p_1, p2=p_2, dims=dims, units=units, tolerance_factor=tol
+            ),
+            cell=cell,
+            subregions=sub_region,
+        )
 
     def __or__(self, other):
         # """Depricated method to check if meshes are aligned: use ``is_aligned``"""
