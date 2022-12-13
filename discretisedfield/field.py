@@ -1822,7 +1822,7 @@ class Field(_FieldIO):
         """
         d = {}
         for key, value in pad_width.items():
-            d[self.mesh.region._dim2index(key)] = value
+            d[dfu.axesdict[key]] = value
         padding_sequence = dfu.assemble_index((0, 0), len(self.array.shape), d)
 
         padded_array = np.pad(self.array, padding_sequence, mode=mode, **kwargs)
@@ -2609,14 +2609,7 @@ class Field(_FieldIO):
         points = list(self.mesh.line(p1=p1, p2=p2, n=n))
         values = [self(p) for p in points]
 
-        return df.Line(
-            points=points,
-            values=values,
-            point_columns=self.mesh.region.dims,
-            value_columns=[f"v{dim}" for dim in self.vdims]
-            if self.vdims is not None
-            else "v",
-        )  # TODO scalar fields have no vdim
+        return df.Line(points=points, values=values)
 
     def plane(self, *args, n=None, **kwargs):
         """Extracts field on the plane mesh.
@@ -3130,7 +3123,7 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.attributes["realspace_mesh"]
         if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
-            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
         values = []
         for idx in range(self.nvdim):
@@ -3178,7 +3171,7 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.attributes["realspace_mesh"]
         if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
-            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
         values = []
         for idx in range(self.nvdim):
@@ -3231,7 +3224,7 @@ class Field(_FieldIO):
         # TODO: Using PlaneMesh will simplify the code a lot here.
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
         if self.mesh.attributes["isplane"]:
-            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
+            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
 
         mesh.attributes["realspace_mesh"] = self.mesh
         mesh.attributes["fourierspace"] = True
