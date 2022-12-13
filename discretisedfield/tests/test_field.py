@@ -408,6 +408,7 @@ def test_unit(test_field):
         df.Field(mesh, nvdim=1, unit=1)
 
 
+# TODO Sam
 def test_value():
     p1 = (0, 0, 0)
     p2 = (10e-9, 10e-9, 10e-9)
@@ -427,10 +428,10 @@ def test_average():
         f.average
 
 
+# TODO Sam
 @pytest.mark.parametrize("norm_value", [1, 2.1, 50, 1e-3, np.pi])
 @pytest.mark.parametrize("value, dtype", iters + vfuncs)
 def test_norm(valid_mesh, value, dtype, norm_value):
-    valid_mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
     f = df.Field(valid_mesh, nvdim=3, value=(2, 2, 2))
 
     assert np.allclose(f.norm.array, 2 * np.sqrt(3))
@@ -486,6 +487,7 @@ def test_norm_zero_field():
     assert np.all(f.norm.array == 0)
 
 
+# TODO Sam
 def test_orientation():
     p1 = (-5e-9, -5e-9, -5e-9)
     p2 = (5e-9, 5e-9, 5e-9)
@@ -514,6 +516,7 @@ def test_orientation():
         f.orientation
 
 
+# TODO Martin
 def test_call():
     p1 = (-5e-9, -5e-9, -5e-9)
     p2 = (5e-9, 5e-9, 5e-9)
@@ -586,6 +589,7 @@ def test_mean():
         f.mean(direction=["x", "y", "z", "z"])
 
 
+# TODO Martin
 def test_field_component(valid_mesh):
     f = df.Field(valid_mesh, nvdim=3, value=(1, 2, 3))
     assert all(isinstance(getattr(f, i), df.Field) for i in "xyz")
@@ -601,13 +605,14 @@ def test_field_component(valid_mesh):
         f.x.nvdim
 
 
-def test_get_attribute_exception(valid_mesh):
-    f = df.Field(valid_mesh, nvdim=3)
+def test_get_attribute_exception(mesh_3d):
+    f = df.Field(mesh_3d, nvdim=3)
     with pytest.raises(AttributeError) as excinfo:
         f.__getattr__("nonexisting_attribute")
-    assert "has no attribute" in str(excinfo.value)
+        assert "has no attribute" in str(excinfo.value)
 
 
+# TODO Check and update (Martin and Sam, low priority)
 def test_dir(valid_mesh):
     f = df.Field(valid_mesh, nvdim=3, value=(5, 6, -9))
     assert all(attr in dir(f) for attr in ["x", "y", "z", "div"])
@@ -629,6 +634,8 @@ def test_eq():
     f3 = df.Field(mesh, nvdim=1, value=3.1)
     f4 = df.Field(mesh, nvdim=3, value=(1, -6, 0))
     f5 = df.Field(mesh, nvdim=3, value=(1, -6, 0))
+    f6 = df.Field(mesh, nvdim=3, value=(1, -6, 0), vdims=list("abc"))
+    f7 = df.Field(mesh, nvdim=3, value=(1, -6, 0), unit="A/m")
 
     assert f1 == f2
     assert not f1 != f2
@@ -640,8 +647,11 @@ def test_eq():
     assert not f4 != f5
     assert not f1 == 0.2
     assert f1 != 0.2
+    assert f5 != f6
+    assert f5 != f7
 
 
+# TODO Hans
 def test_allclose():
     p1 = (-5e-9, -5e-9, -5e-9)
     p2 = (15e-9, 5e-9, 5e-9)
@@ -690,6 +700,8 @@ def test_point_neg():
     assert f == +(-(-f))
 
 
+# #######################
+# TODO Sam, mesh_3d, all maths methods
 def test_pow():
     p1 = (0, 0, 0)
     p2 = (15e-9, 6e-9, 6e-9)
@@ -1034,6 +1046,10 @@ def test_cross():
         res = f1.cross(f2)
 
 
+# END TODO
+# ###############################x
+
+# TODO Martin
 def test_lshift():
     p1 = (0, 0, 0)
     p2 = (10e6, 10e6, 10e6)
@@ -1102,6 +1118,7 @@ def test_all_operators():
     assert res.mean() == 3
 
 
+# TODO Sam
 def test_pad():
     p1 = (0, 0, 0)
     p2 = (10, 8, 2)
@@ -1741,6 +1758,7 @@ def test_laplace():
     assert np.allclose(f.laplace.mean(), (4, 4, 6))
 
 
+# TODO Martin, needs mesh.sel
 def test_integrate():
     # Volume integral.
     p1 = (0, 0, 0)
@@ -1855,6 +1873,7 @@ def test_integrate():
         f.integrate(1)
 
 
+# TODO Sam
 def test_abs():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
@@ -1895,6 +1914,7 @@ def test_plane(valid_mesh, direction):
     assert len(list(plane)) == 9
 
 
+# TODO Martin
 def test_resample(test_field):
     resampled = test_field.resample(n=(10, 15, 20))
     assert np.allclose(resampled.mesh.n, (10, 15, 20))
@@ -1912,6 +1932,7 @@ def test_resample(test_field):
         test_field.resample((0, 1, 2))
 
 
+# TODO Martin
 def test_getitem():
     p1 = (0, 0, 0)
     p2 = (90, 50, 10)
@@ -1949,6 +1970,7 @@ def test_getitem():
     assert f[subregion].array.shape == (2, 3, 1, 3)
 
 
+# TODO Sam
 def test_angle():
     p1 = (0, 0, 0)
     p2 = (8e-9, 2e-9, 2e-9)
@@ -1961,6 +1983,8 @@ def test_angle():
     assert np.allclose(f.angle((0.0, 1.0, 0.0)).mean(), np.pi / 2)
 
 
+# ######################################
+# TODO Martin
 def test_write_read_ovf(tmp_path):
     representations = ["txt", "bin4", "bin8"]
     filename = "testfile.ovf"
@@ -2189,6 +2213,10 @@ def test_write_read_invalid_extension():
         df.Field.from_file(filename)
 
 
+##################################
+
+
+# TODO Sam and Martin (low priority)
 def test_fft():
     p1 = (-10, -10, -5)
     p2 = (10, 10, 5)
@@ -2230,6 +2258,8 @@ def test_fft():
     assert f.integrate("z").allclose(f.rfftn.plane(z=0).ifftn.real)
 
 
+# ##################################
+# TODO Martin, needs mesh.sel
 def test_mpl_scalar(test_field):
     # No axes
     for comp in test_field.vdims:
@@ -2900,6 +2930,9 @@ def test_plot_large_sample():
     field.k3d.vector()
 
 
+# ##################################
+
+
 def test_complex(test_field):
     mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
 
@@ -2926,6 +2959,7 @@ def test_complex(test_field):
     assert df.Field(mesh, nvdim=1, value=np.pi / 4).allclose(field.phase)
 
 
+# TODO Hans
 def test_numpy_ufunc(test_field):
     assert np.allclose(np.sin(test_field).array, np.sin(test_field.array))
     assert np.sum([test_field, test_field]).allclose(test_field + test_field)
@@ -2939,6 +2973,8 @@ def test_numpy_ufunc(test_field):
     assert np.allclose(np.exp(field.orientation).array, np.exp(field.orientation.array))
 
 
+# ##############################
+# TODO Swapneel
 @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", vfuncs)
 def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
