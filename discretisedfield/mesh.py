@@ -696,7 +696,7 @@ class Mesh(_MeshIO):
             index = [index]
         elif isinstance(index, (np.ndarray, list, tuple)):
             if any(not isinstance(i, numbers.Integral) for i in index):
-                raise TypeError(f"The elements of index {index=} must be integer.")
+                raise TypeError(f"The elements of {index=} must be integer.")
         else:
             raise TypeError(
                 f"The index is of the wrong type {type(index)=}. It must be an integer"
