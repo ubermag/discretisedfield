@@ -1034,7 +1034,8 @@ def test_getitem():
     assert np.all(submesh.n == (5, 2, 2))
     assert mesh[mesh.region].allclose(mesh, atol=0)
 
-    with pytest.raises(ValueError):  # subregion extending beyond mesh
+    with pytest.raises(ValueError):
+        # subregion extending beyond mesh
         # (p1 is in mesh region, but p2 is outside)
         submesh = mesh[df.Region(p1=(1, 2, 1), p2=(200, 79, 14))]
 
@@ -1068,9 +1069,8 @@ def test_pad(p1, p2, cell):
     region = df.Region(p1=p1, p2=p2)
     mesh = df.Mesh(region=region, cell=cell)
 
-    for (
-        dim
-    ) in mesh.region.dims:  # adding one padding on either side, and for each dimension
+    for dim in mesh.region.dims:
+        # adding one padding on either side, and for each dimension
         padded_mesh = mesh.pad({dim: (1, 1)})
         # Add cell to pmin and pmax to get the correct padded region
         idx = mesh.region._dim2index(dim)
@@ -1093,9 +1093,8 @@ def test_pad(p1, p2, cell):
             temp[idx] = temp[idx] + 2
         assert np.all(padded_mesh.n == temp)
 
-    for (
-        dim
-    ) in mesh.region.dims:  # adding padding only on pmax side, and for each dimension
+    for dim in mesh.region.dims:
+        # adding padding only on pmax side, and for each dimension
         padded_mesh = mesh.pad({dim: (0, 1)})
         # Add cell to pmin and pmax to get the correct padded region
         idx = mesh.region._dim2index(dim)
@@ -1113,11 +1112,8 @@ def test_pad(p1, p2, cell):
             temp[idx] = temp[idx] + 1
         assert np.all(padded_mesh.n == temp)
 
-    for (
-        dim
-    ) in (
-        mesh.region.dims
-    ):  # adding two layers on pmin side and 3 on pmax, for each dimension
+    for dim in mesh.region.dims:
+        # adding two layers on pmin side and 3 on pmax, for each dimension
         padded_mesh = mesh.pad({dim: (2, 3)})
         # Add cell to pmin and pmax to get the correct padded region
         idx = mesh.region._dim2index(dim)
