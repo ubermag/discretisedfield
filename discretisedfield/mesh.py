@@ -973,7 +973,7 @@ class Mesh(_MeshIO):
                 no_book_keeping = True
                 selected_value = range_
             elif isinstance(range_, (tuple, list, np.ndarray)):
-                if len(range_) != 2 and not all(
+                if len(range_) != 2 or not all(
                     isinstance(point, numbers.Real) for point in range_
                 ):
                     raise ValueError(
@@ -989,6 +989,8 @@ class Mesh(_MeshIO):
         sub_region = dict()
 
         if range_ is None or no_book_keeping:
+            if range_ is None:
+                selected_value = self.region.center[dim_index]
             idxs = [i for i in range(self.region.ndim) if i != dim_index]
             p_1 = list()
             p_2 = list()
