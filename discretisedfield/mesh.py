@@ -1511,6 +1511,44 @@ class Mesh(_MeshIO):
         """
         return np.product(self.cell)
 
+    @property
+    def dS(self):
+        """Surface vector field.
+
+        If the mesh is sliced, ``dS`` is a vector field with vectors
+        perpendicular to the surface and with magnitude equal to the
+        discretisation cell surface.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Surface vector field.
+
+        Examples
+        --------
+        1. Surface vector field.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (1, 2, 4)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> dS = mesh.plane('z').dS
+        >>> dS.mean()
+        array([0., 0., 2.])
+
+        """
+        if not self.attributes["isplane"]:
+            msg = "The mesh must be sliced before dS can be computed."
+            raise ValueError(msg)
+
+        norm = self.cell[self.attributes["axis1"]] * self.cell[self.attributes["axis2"]]
+        dn = dfu.assemble_index(0, 3, {self.attributes["planeaxis"]: 1})
+        return df.Field(self, dim=3, value=dn, norm=norm)
+
     def scale(self, factor, reference_point=None, inplace=False):
         """Scale the underlying region and all subregions.
 
