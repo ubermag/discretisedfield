@@ -928,7 +928,7 @@ class Mesh(_MeshIO):
 
             # Only planeaxis is provided via args and the point is defined as
             # the center of the sample.
-            planeaxis = dfu.axesdict[args[0]]
+            planeaxis = self.region._dim2index(args[0])
             point = self.region.center[planeaxis]
         elif kwargs and not args:
             if len(kwargs) != 1:
@@ -936,7 +936,7 @@ class Mesh(_MeshIO):
                 raise ValueError(msg)
 
             planeaxis, point = list(kwargs.items())[0]
-            planeaxis = dfu.axesdict[planeaxis]
+            planeaxis = self.region._dim2index(planeaxis)
 
             # Check if point is outside the mesh region.
             test_point = list(self.region.center)  # make it mutable
@@ -950,7 +950,7 @@ class Mesh(_MeshIO):
 
         # Get indices of in-plane axes.
         axis1, axis2 = tuple(
-            filter(lambda val: val != planeaxis, dfu.axesdict.values())
+            filter(lambda val: val != planeaxis, range(self.region.ndim))
         )
 
         if n is None:
@@ -1705,7 +1705,7 @@ class Mesh(_MeshIO):
 
         """
         if isinstance(axis, str):
-            axis = dfu.axesdict[axis]
+            axis = self.region._dim2index(axis)
 
         if multiplier is None:
             multiplier = uu.si_multiplier(self.region.edges[axis])
@@ -1714,7 +1714,10 @@ class Mesh(_MeshIO):
         slider_max = self.index2point(np.subtract(self.n, 1))[axis]
         slider_step = self.cell[axis]
         if description is None:
-            description = f"{dfu.raxesdict[axis]} ({uu.rsi_prefixes[multiplier]}m)"
+            description = (
+                f"{self.region.dims[axis]} ({uu.rsi_prefixes[multiplier]}"
+                f"{self.region.units[axis]})"
+            )
 
         values = np.arange(slider_min, slider_max + 1e-20, slider_step)
         labels = np.around(values / multiplier, decimals=3)
@@ -1772,7 +1775,7 @@ class Mesh(_MeshIO):
             raise ValueError(msg)
 
         return widget_cls(
-            options=list(dfu.axesdict.keys()),
+            options=self.region.dims,
             value="z",
             description=description,
             disabled=False,
