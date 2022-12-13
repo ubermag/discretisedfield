@@ -1206,7 +1206,7 @@ def test_sel_single(p1, p2, dims, cell):
         assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_], atol=0)
         assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_], atol=0)
         assert sub_mesh.region.dims == tuple([d for d in mesh.region.dims if d != dim])
-        assert sub_mesh.cell == mesh.cell[bool_]
+        assert np.all(sub_mesh.cell == mesh.cell[bool_])
 
     # Sel single plane of mesh (>1d) with no subregions
     for dim in mesh.region.dims:
@@ -1218,7 +1218,7 @@ def test_sel_single(p1, p2, dims, cell):
         assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_], atol=0)
         assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_], atol=0)
         assert sub_mesh.region.dims == tuple([d for d in mesh.region.dims if d != dim])
-        assert sub_mesh.cell == mesh.cell[bool_]
+        assert np.all(sub_mesh.cell == mesh.cell[bool_])
 
 
 @pytest.mark.parametrize(
@@ -1264,11 +1264,6 @@ def test_sel_range(p1, p2, dims, cell):
         assert all(sub_mesh.n[bool_] == mesh.n[bool_])
         assert sub_mesh.n[idx] == 1
 
-        # Wrong order
-        with pytest.raises(ValueError):
-            options = {dim: (12.5, 10.0)}
-            mesh.sel(**options)
-
         # Too many values
         with pytest.raises(ValueError):
             options = {dim: (12.5, 29.5, 3.5)}
@@ -1302,17 +1297,14 @@ def test_sel_subregions():
 
     # reduce to single layer
     sub_mesh = mesh.sel("x0")
-    assert [i for i in sorted(sub_mesh.subregions)] == ["half", "in"]
-    assert sub_mesh.subregions["in"].ndim == 2
+    assert [i for i in sorted(sub_mesh.subregions)] == ["half"]
     assert sub_mesh.subregions["half"].ndim == 2
-    assert np.allclose(sub_mesh.subregions["in"].pmin, [2, 2], atol=0)
     assert np.allclose(sub_mesh.subregions["half"].pmin, [4, 4], atol=0)
-    assert np.allclose(sub_mesh.subregions["in"].pmax, [8, 8], atol=0)
-    assert np.allclose(sub_mesh.subregions["half"].pmax, [8, 8], atol=0)
+    assert np.allclose(sub_mesh.subregions["half"].pmax, [12, 12], atol=0)
 
     # No subregions in selection
     sub_region = {
-        "out1": df.Region(p1=(7, 7, 7), p2=(9, 9, 9)),
+        "out1": df.Region(p1=(6, 6, 6), p2=(10, 10, 10)),
         "out2": df.Region(p1=(0, 0, 0), p2=(2, 2, 2)),
     }
     mesh = df.Mesh(region=region, cell=cell, subregions=sub_region)
