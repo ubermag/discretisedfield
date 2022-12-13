@@ -1,7 +1,11 @@
 import cmath
+import collections
 
 import numpy as np
 import ubermagutil.units as uu
+
+axesdict = collections.OrderedDict(x=0, y=1, z=2)
+raxesdict = {value: key for key, value in axesdict.items()}
 
 
 def array2tuple(array):

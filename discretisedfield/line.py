@@ -7,6 +7,8 @@ import pandas as pd
 import ubermagutil.typesystem as ts
 import ubermagutil.units as uu
 
+import discretisedfield.util as dfu
+
 
 @ts.typesystem(
     dim=ts.Scalar(expected_type=int, positive=True, const=True),
@@ -51,11 +53,11 @@ class Line:
 
     point_columns : list
 
-        Point column names.
+        Point column names. Defaults to None.
 
     value_columns : list
 
-        Value column names.
+        Value column names. Defaults to None.
 
     Raises
     ------
@@ -89,7 +91,7 @@ class Line:
 
     """
 
-    def __init__(self, points, values, point_columns, value_columns):
+    def __init__(self, points, values, point_columns=None, value_columns=None):
         if len(points) != len(values):
             msg = (
                 f"The number of points ({len(points)}) must be the same "
@@ -111,14 +113,16 @@ class Line:
 
         self.data = pd.DataFrame()
         self.data["r"] = np.linalg.norm(points - points[0, :], axis=1)
-        for i, column in enumerate(point_columns):
+        for i, column in enumerate(self.point_columns):
             self.data[column] = points[..., i]
-        for i, column in zip(range(values.shape[-1]), value_columns):
+        for i, column in zip(range(values.shape[-1]), self.value_columns):
             self.data[column] = values[..., i]
 
-        # TODO this should be done in the setter
-        self._point_columns = list(point_columns)
-        self._value_columns = list(value_columns)
+        if point_columns is not None:
+            self.point_columns = point_columns
+
+        if value_columns is not None:
+            self.value_columns = value_columns
 
     @property
     def point_columns(self):
@@ -162,7 +166,10 @@ class Line:
         Index(['r', 'p0', 'p1', 'p2', 'v'], dtype='object')
 
         """
-        return self._point_columns
+        if not hasattr(self, "_point_columns"):
+            return [f"p{i}" for i in dfu.axesdict.keys()]
+        else:
+            return self._point_columns
 
     @point_columns.setter
     def point_columns(self, val):
@@ -171,7 +178,7 @@ class Line:
             raise ValueError(msg)
 
         self.data = self.data.rename(dict(zip(self.point_columns, val)), axis=1)
-        self._point_columns = list(val)
+        self._point_columns = val
 
     @property
     def value_columns(self):
@@ -216,7 +223,13 @@ class Line:
         Index(['r', 'px', 'py', 'pz', 'my_interesting_value'], dtype='object')
 
         """
-        return self._value_columns
+        if not hasattr(self, "_value_columns"):
+            if self.dim == 1:
+                return ["v"]
+            else:
+                return [f"v{i}" for i in list(dfu.axesdict.keys())[: self.dim]]
+        else:
+            return self._value_columns
 
     @value_columns.setter
     def value_columns(self, val):
@@ -225,7 +238,7 @@ class Line:
             raise ValueError(msg)
 
         self.data = self.data.rename(dict(zip(self.value_columns, val)), axis=1)
-        self._value_columns = list(val)
+        self._value_columns = val
 
     @property
     def length(self):

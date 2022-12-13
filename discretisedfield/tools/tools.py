@@ -124,11 +124,7 @@ def topological_charge_density(field, /, method="continuous"):
         return (
             1
             / (4 * np.pi)
-            * of.dot(
-                of.diff(field.mesh.region.dims[axis1]).cross(
-                    of.diff(field.mesh.region.dims[axis2])
-                )
-            )
+            * of.dot(of.diff(dfu.raxesdict[axis1]).cross(of.diff(dfu.raxesdict[axis2])))
         )
 
     elif method == "berg-luescher":
@@ -438,7 +434,7 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
         msg = f"Cannot compute spin angles for a field with {field.nvdim=}."
         raise ValueError(msg)
 
-    if direction not in field.mesh.region.dims:
+    if direction not in dfu.axesdict.keys():
         msg = f"Cannot compute spin angles for direction {direction=}."
         raise ValueError(msg)
 

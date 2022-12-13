@@ -8,6 +8,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
+import discretisedfield.util as dfu
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
 
@@ -45,7 +46,7 @@ class MplField(Mpl):
 
         self.planeaxis = field.mesh.attributes["planeaxis"]
         self.planeaxis_point = {
-            self.field.mesh.region.dims[
+            dfu.raxesdict[
                 self.field.mesh.attributes["planeaxis"]
             ]: self.field.mesh.attributes["point"]
         }
@@ -151,8 +152,7 @@ class MplField(Mpl):
             vector_field = self.field
             scalar_field = getattr(self.field, self.field.vdims[self.planeaxis])
             scalar_kw.setdefault(
-                "colorbar_label",
-                f"{self.field.mesh.region.dims[self.planeaxis]}-component",
+                "colorbar_label", f"{dfu.raxesdict[self.planeaxis]}-component"
             )
 
         scalar_kw.setdefault("filter_field", self.field.norm)
@@ -819,8 +819,8 @@ class MplField(Mpl):
             rf" ({uu.rsi_prefixes[multiplier]}"
             rf'{self.field.mesh.attributes["unit"]})'
         )
-        ax.set_xlabel(self.field.mesh.region.dims[self.axis1] + unit)
-        ax.set_ylabel(self.field.mesh.region.dims[self.axis2] + unit)
+        ax.set_xlabel(dfu.raxesdict[self.axis1] + unit)
+        ax.set_ylabel(dfu.raxesdict[self.axis2] + unit)
 
     def _extent(self, multiplier):
         # TODO Requires refactoring of df.Mesh
