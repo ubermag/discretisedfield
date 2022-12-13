@@ -982,7 +982,7 @@ class Mesh(_MeshIO):
                     )
             else:
                 raise TypeError(
-                    "The value passed to selected dimension must either a tuple, list,"
+                    "The value passed to selected dimension must be a tuple, list,"
                     " array or real number."
                 )
 
