@@ -1240,14 +1240,14 @@ def test_sel_range(p1, p2, dims, cell):
         assert isinstance(sub_mesh, df.Mesh)
         assert sub_mesh.region.ndim == mesh.region.ndim
         bool_ = [i != dim for i in mesh.region.dims]
-        idx = mesh.region._dims2idx(dim)
+        idx = mesh.region._dim2index(dim)
         assert np.isclose(sub_mesh.region.pmax[idx], 30.0, atol=0)
         assert np.isclose(sub_mesh.region.pmin[idx], 10.0, atol=0)
         assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_], atol=0)
         assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_], atol=0)
         assert sub_mesh.region.dims == mesh.region.dims
-        assert sub_mesh.cell[bool_] == mesh.cell[bool_]
-        assert sub_mesh.cell[idx] == 2
+        assert all(sub_mesh.n[bool_] == mesh.n[bool_])
+        assert sub_mesh.n[idx] == 2
 
         # Single layer
         options = {dim: (12.5, 13.5)}
@@ -1255,23 +1255,26 @@ def test_sel_range(p1, p2, dims, cell):
         assert isinstance(sub_mesh, df.Mesh)
         assert sub_mesh.region.ndim == mesh.region.ndim
         bool_ = [i != dim for i in mesh.region.dims]
-        idx = mesh.region._dims2idx(dim)
+        idx = mesh.region._dim2index(dim)
         assert np.isclose(sub_mesh.region.pmax[idx], 20.0, atol=0)
         assert np.isclose(sub_mesh.region.pmin[idx], 10.0, atol=0)
         assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_], atol=0)
         assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_], atol=0)
         assert sub_mesh.region.dims == mesh.region.dims
-        assert sub_mesh.cell[bool_] == mesh.cell[bool_]
-        assert sub_mesh.cell[idx] == 1
+        assert all(sub_mesh.n[bool_] == mesh.n[bool_])
+        assert sub_mesh.n[idx] == 1
 
+        # Wrong order
         with pytest.raises(ValueError):
             options = {dim: (12.5, 10.0)}
             mesh.sel(**options)
 
+        # Too many values
         with pytest.raises(ValueError):
-            options = {dim: (12.5, 29.5, 40.5)}
+            options = {dim: (12.5, 29.5, 3.5)}
             mesh.sel(**options)
 
+        # Out of bounds
         with pytest.raises(ValueError):
             options = {dim: (12.5, 1000)}
             mesh.sel(**options)
@@ -1280,15 +1283,16 @@ def test_sel_range(p1, p2, dims, cell):
 def test_sel_subregions():
     p1 = (0, 0, 0)
     p2 = (20, 20, 20)
+    region = df.Region(p1=p1, p2=p2, dims=["x0", "x1", "x2"])
     cell = (2, 2, 2)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, dims=["x0", "x1", "x2"])
+    mesh = df.Mesh(region=region, cell=cell)
 
     sub_region = {
         "in": df.Region(p1=(2, 2, 2), p2=(8, 8, 8)),
         "out": df.Region(p1=(0, 0, 0), p2=(2, 2, 2)),
         "half": df.Region(p1=(4, 4, 4), p2=(12, 12, 12)),
     }
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=sub_region)
+    mesh = df.Mesh(region=region, cell=cell, subregions=sub_region)
     sub_mesh = mesh.sel(x0=(3.6, 7.8))
     assert [i for i in sorted(sub_mesh.subregions)] == ["half", "in"]
     assert np.isclose(sub_mesh.subregions["in"].pmin[0], 2.0, atol=0)
@@ -1311,7 +1315,7 @@ def test_sel_subregions():
         "out1": df.Region(p1=(7, 7, 7), p2=(9, 9, 9)),
         "out2": df.Region(p1=(0, 0, 0), p2=(2, 2, 2)),
     }
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=sub_region)
+    mesh = df.Mesh(region=region, cell=cell, subregions=sub_region)
     sub_mesh = mesh.sel(x0=(4.5, 5.1))
     assert sub_mesh.subregions == {}
     sub_mesh = mesh.sel("x0")
