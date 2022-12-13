@@ -277,7 +277,7 @@ class Region(_RegionIO):
         try:
             return self.dims.index(dim)
         except ValueError:
-            raise ValueError(f"'{dim}' not in region.dims={self.dims}.")
+            raise ValueError(f"'{dim}' not in region.dims={self.dims}.") from None
 
     @property
     def units(self):
