@@ -1191,6 +1191,7 @@ def test_sel():
             sub_mesh.region.pmax,
             mesh.region.pmax[bool_],
         )
+        assert sub_mesh.region.dims == [d for d in mesh.region.dims if d != dim]
 
     sub_mesh = mesh.sel(x=3.1)
     assert isinstance(sub_mesh, df.Mesh)
