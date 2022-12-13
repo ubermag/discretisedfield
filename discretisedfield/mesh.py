@@ -951,7 +951,6 @@ class Mesh(_MeshIO):
         return plane_mesh
 
     def sel(self, *args, **kwargs):
-        no_book_keeping = False
         if len(args) > 1 or len(kwargs) > 1:
             raise ValueError("Select method only accepts one dimension at a time.")
 
@@ -970,7 +969,6 @@ class Mesh(_MeshIO):
         if range_ is not None:
             if isinstance(range_, numbers.Real):
                 # TODO: Some book-keeping in future.
-                no_book_keeping = True
                 selected_value = range_
             elif isinstance(range_, (tuple, list, np.ndarray)):
                 if len(range_) != 2 or not all(
@@ -988,7 +986,7 @@ class Mesh(_MeshIO):
 
         sub_region = dict()
 
-        if range_ is None or no_book_keeping:
+        if range_ is None or isinstance(range_, numbers.Real):
             if range_ is None:
                 selected_value = self.region.center[dim_index]
             idxs = [i for i in range(self.region.ndim) if i != dim_index]
