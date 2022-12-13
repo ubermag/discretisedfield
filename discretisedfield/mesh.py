@@ -961,7 +961,9 @@ class Mesh(_MeshIO):
         elif not args and kwargs:
             dim, range_ = list(kwargs.items())[0]
         else:
-            raise ValueError("No argument passed.")
+            raise ValueError(
+                "Either one positional argument or a keyword argument can be passed."
+            )
 
         dim_index = self.region._dim2index(dim)
 
@@ -1014,7 +1016,6 @@ class Mesh(_MeshIO):
             p_2[dim_index] = max_val
             cell = self.cell
             if self.subregions is not None:
-
                 for key, subreg in self.subregions.items():
                     sub_reg_p_min = subreg.pmin[dim_index]
                     sub_reg_p_max = subreg.pmax[dim_index]
