@@ -949,7 +949,7 @@ class Field(_FieldIO):
 
           1. They are defined on the same mesh.
 
-          2. They have the same dimension (``nvdim``).
+          2. They have the same number of value dimensions (``nvdim``).
 
           3. They both contain the same values in ``array``.
 

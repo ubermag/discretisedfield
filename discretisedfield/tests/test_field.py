@@ -647,8 +647,8 @@ def test_eq():
     assert not f4 != f5
     assert not f1 == 0.2
     assert f1 != 0.2
-    assert f5 != f6
-    assert f5 != f7
+    assert f5 == f6
+    assert f5 == f7
 
 
 # TODO Hans
