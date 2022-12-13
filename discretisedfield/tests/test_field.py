@@ -1831,6 +1831,99 @@ def test_plane(valid_mesh, direction):
     assert len(list(plane)) == 9
 
 
+@pytest.mark.parametrize(
+    "mesh, nvdim, value, range_",
+    [
+        [df.Mesh(p1=0, p2=10, n=10), 1, lambda p: p, (0, 2)],
+        [df.Mesh(p1=(-10e-9, -5e-9), p2=(10e-9, 5e-9), n=(1, 1)), 3, (0, 1, 2), 0],
+        [df.Mesh(p1=(0, 0, 0), p2=(30e-9, 20e-9, 10e-9), n=(7, 5, 3)), 2, (1, 2), None],
+    ],
+)
+def test_sel(mesh, nvdim, value, range_):
+    f = df.Field(mesh, nvdim=nvdim, value=value)
+    for dim in f.mesh.region.dims:
+        f_sel = f.sel(dim) if range_ is None else f.sel(**{dim: range_})
+        assert f_sel.mesh == f.sel(dim).mesh
+        assert f_sel.nvdim == f.nvdim
+        assert f_sel.vdims == f.vdims
+        assert f_sel.unit == f.unit
+        assert f_sel.array.shape == (*f.sel(dim).mesh.n, f.nvdim)
+
+
+def test_sel_subregions():
+    mesh = df.Mesh(
+        p1=(-50e-9, -20e-9, 0),
+        p2=(50e-9, 40e-9, 30e-9),
+        cell=(1e-9, 2e-9, 3e-9),
+        subregions={
+            "sr_x": df.Region(p1=(-50e-9, -20e-9, 0), p2=(0, 40e-9, 30e-9)),
+            "sr_y": df.Region(p1=(-50e-9, 0, 0), p2=(50e-9, 40e-9, 30e-9)),
+            "total": df.Region(p1=(-50e-9, -20e-9, 0), p2=(50e-9, 40e-9, 30e-9)),
+        },
+    )
+    f = df.Field(mesh, nvdim=4, value=lambda p: [*p, 4])
+
+    f_sel = f.sel(x=(-50e-9, 0))
+    assert f_sel == f["sr_x"]
+    assert f_sel.mesh.subregions == 2
+    assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
+    assert f_sel.mesh == f.sel(x=(-50e-9, 0)).mesh
+    assert f_sel.nvdim == f.nvdim
+    assert f_sel.vdims == f.vdims
+    assert f_sel.unit == f.unit
+    assert f_sel.array.shape == (*f.sel(x=(-50e-9, 0)).mesh.n, f.nvdim)
+
+    f_sel = f.sel(y=(0, 40e-9))
+    assert f_sel == f["sr_x"]
+    assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
+    assert f_sel.mesh == f.sel(y=(0, 40e-9)).mesh
+    assert f_sel.nvdim == f.nvdim
+    assert f_sel.vdims == f.vdims
+    assert f_sel.unit == f.unit
+    assert f_sel.array.shape == (*f.sel(y=(0, 40e-9)).mesh.n, f.nvdim)
+
+    f_sel = f.sel(z=(0, 30e-9))
+    assert f_sel == f
+    assert f_sel == f["total"]
+    assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
+    assert f_sel.mesh == f.sel(z=(0, 30e-9)).mesh
+    assert f_sel.nvdim == f.nvdim
+    assert f_sel.vdims == f.vdims
+    assert f_sel.unit == f.unit
+    assert f_sel.array.shape == (*f.sel(z=(0, 30e-9)).mesh.n, f.nvdim)
+
+    assert f.sel(x=4.5e-9).sel(y=5.5e-9).sel(z=6.5e-9) == f((4.5e-9, 5.5e-9, 6.5e-9))
+    assert f.sel("x").sel("y").sel("z") == f(f.mesh.region.center)
+
+    mesh = df.Mesh(p1=0, p2=10, n=5, subregions={"sr": df.Region(p1=0, p2=2)})
+    f = df.Field(mesh, nvdim=2, value=lambda p: (p, p**2))
+
+    f_sel = f.sel(x=(2, 4))
+    assert f_sel.mesh == f.sel(x=(2, 4)).mesh
+    assert f_sel.nvdim == f.nvdim
+    assert f_sel.vdims == f.vdims
+    assert f_sel.unit == f.unit
+    assert f_sel.array.shape == (*f.sel(x=(2, 4)).mesh.n, f.nvdim)
+    assert len(f_sel.mesh.subregions) == 0
+
+    f_sel = f.sel(x=3)
+    assert f_sel == f((3,))
+
+
+def test_sel_invalid(test_field):
+    with pytest.raises(ValueError):
+        test_field.sel("a")  # invalid dimension name
+
+    with pytest.raises(ValueError):
+        test_field.sel(x=20)  # outside the region
+
+    with pytest.raises(ValueError):
+        test_field.sel(x=(0, 20))  # outside the region
+
+    with pytest.raises(TypeError):
+        test_field.sel(z=slice(0, 5e-9))
+
+
 def test_resample(test_field):
     resampled = test_field.resample(n=(10, 15, 20))
     assert np.allclose(resampled.mesh.n, (10, 15, 20))
