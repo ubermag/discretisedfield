@@ -569,7 +569,7 @@ def test_repr():
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, point_1, expected_1, expected_min, expected_max",
+    "p1, p2, n, index, expected_1, expected_min, expected_max",
     [
         [(0.0,), (-30e-9,), np.array([3]), (2), (-5e-9,), (-25e-9,), (-5e-9,)],
         [
@@ -601,11 +601,11 @@ def test_repr():
         ],
     ],
 )
-def test_index2point_valid(p1, p2, n, point_1, expected_1, expected_min, expected_max):
+def test_index2point_valid(p1, p2, n, index, expected_1, expected_min, expected_max):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
-    assert np.allclose(mesh.index2point(point_1), expected_1, atol=0)
+    assert np.allclose(mesh.index2point(index), expected_1, atol=0)
 
     # Correct minimum index
     assert isinstance(mesh.index2point((0,) * mesh.region.ndim), np.ndarray)
@@ -617,12 +617,13 @@ def test_index2point_valid(p1, p2, n, point_1, expected_1, expected_min, expecte
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, point, error",
+    "p1, p2, n, index, error",
     [
         [0, 1, 3, 3, IndexError],
         [0, 1, 3, -1, IndexError],
         [0, 1, 3, "string", TypeError],
         [0, 1, 3, 0.0, TypeError],
+        [0, 5, 5, slice(0, 3), TypeError],
         [(0, 0), (1, 1), (3, 3), (2, 3), IndexError],
         [(0, 0), (1, 1), (3, 3), (-1, 2), IndexError],
         [(0, 0), (1, 1), (3, 3), (2, -1), IndexError],
@@ -646,14 +647,14 @@ def test_index2point_valid(p1, p2, n, point_1, expected_1, expected_min, expecte
         [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), 2, IndexError],
     ],
 )
-def test_index2point_invalid(p1, p2, n, point, error):
+def test_index2point_invalid(p1, p2, n, index, error):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     with pytest.raises(error):
-        mesh.index2point(point)
+        mesh.index2point(index)
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, point_1, expected_1",
+    "p1, p2, n, point, expected",
     [
         [(0.0,), (-30e-9,), np.array([3]), (2,), (-5e-9,)],
         [
@@ -679,7 +680,7 @@ def test_index2point_invalid(p1, p2, n, point, error):
         ],
     ],
 )
-def test_point2index_valid(p1, p2, n, point_1, expected_1):
+def test_point2index_valid(p1, p2, n, point, expected):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
@@ -693,7 +694,7 @@ def test_point2index_valid(p1, p2, n, point_1, expected_1):
     assert np.array_equal(mesh.point2index(mesh.region.pmax), n - 1)
     assert np.array_equal(mesh.point2index(mesh.region.pmax - mesh.cell / 2), n - 1)
     assert np.array_equal(mesh.point2index(mesh.region.pmax - 3 * mesh.cell / 4), n - 1)
-    assert np.array_equal(mesh.point2index(expected_1), point_1)
+    assert np.array_equal(mesh.point2index(expected), point)
 
 
 @pytest.mark.parametrize(
@@ -702,6 +703,7 @@ def test_point2index_valid(p1, p2, n, point_1, expected_1):
         [0, 1, 3, 5, ValueError],
         [0, 1, 3, -1, ValueError],
         [0, 1, 3, "string", TypeError],
+        [0, 50e-9, 5, slice(0, 20e-9), TypeError],
         [(0, 0), (1, 1), (3, 3), (2, 5), ValueError],
         [(0, 0), (1, 1), (3, 3), (-1, 2), ValueError],
         [(0, 0), (1, 1), (3, 3), (2, -1), ValueError],
