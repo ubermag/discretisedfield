@@ -1173,40 +1173,115 @@ def test_coordinate_field(valid_mesh):  # TODO
     assert np.allclose(cfield.array[0, 0, :, 2], valid_mesh.points.z, atol=0)
 
 
-def test_sel():
-    p1 = (0, 0, 0)
-    p2 = (20, 20, 20)
-    cell = (2, 2, 2)
+def test_sel_string_1D():
+    # Sel center of 1D mesh with no subregions
+    p1 = 0
+    p2 = 100
+    cell = 10
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    with pytest.raises(ValueError):
+        mesh.sel("x")
+
+    with pytest.raises(ValueError):
+        mesh.sel(x=50)
+
+
+@pytest.mark.parametrize(
+    "p1, p2, dims, cell",
+    [
+        ([0, 0], [100, 50], list("ab"), (10, 5)),
+        ([0, 0, 0], [100, 60, 30], list("abc"), (10, 10, 5)),
+        ([0, 0, 0, 0], [100, 60, 30, 30], None, (10, 10, 5, 5)),
+    ],
+)
+def test_sel_single(p1, p2, dims, cell):
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    # Sel center of mesh (>1d) with no subregions
+    mesh = df.Mesh(region=region, cell=cell)
     for dim in mesh.region.dims:
         sub_mesh = mesh.sel(f"{dim}")
         assert isinstance(sub_mesh, df.Mesh)
         assert sub_mesh.region.ndim == mesh.region.ndim - 1
         bool_ = [i != dim for i in mesh.region.dims]
-        assert np.allclose(
-            sub_mesh.region.pmin,
-            mesh.region.pmin[bool_],
-        )
-        assert np.allclose(
-            sub_mesh.region.pmax,
-            mesh.region.pmax[bool_],
-        )
-        assert sub_mesh.region.dims == [d for d in mesh.region.dims if d != dim]
+        assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == tuple([d for d in mesh.region.dims if d != dim])
+        assert sub_mesh.cell == mesh.cell[bool_]
 
-    sub_mesh = mesh.sel(x=3.1)
-    assert isinstance(sub_mesh, df.Mesh)
-    assert sub_mesh.region.ndim == mesh.region.ndim - 1
-    bool_ = [i != "x" for i in mesh.region.dims]
-    assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_])
-    assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_])
+    # Sel single plane of mesh (>1d) with no subregions
+    for dim in mesh.region.dims:
+        options = {dim: 10}
+        sub_mesh = mesh.sel(**options)
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim - 1
+        bool_ = [i != dim for i in mesh.region.dims]
+        assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == tuple([d for d in mesh.region.dims if d != dim])
+        assert sub_mesh.cell == mesh.cell[bool_]
 
-    sub_mesh = mesh.sel(x=(3.6, 7.8))
-    assert isinstance(sub_mesh, df.Mesh)
-    assert sub_mesh.region.ndim == mesh.region.ndim
-    assert np.isclose(sub_mesh.region.pmax[0], 8.0, atol=0)
-    assert np.isclose(sub_mesh.region.pmin[0], 2.0, atol=0)
-    assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_])
-    assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_])
+
+@pytest.mark.parametrize(
+    "p1, p2, dims, cell",
+    [
+        [0, 100, list("a"), 10],
+        [(0, 0), (100, 50), list("ab"), (10, 10)],
+        [(0, 0, 0), (100, 60, 50), list("abc"), (10, 10, 10)],
+        [(0, 0, 0, 0), (100, 60, 50, 40), None, (10, 10, 10, 10)],
+    ],
+)
+def test_sel_range(p1, p2, dims, cell):
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    # Sel range of mesh with no subregions
+    mesh = df.Mesh(region=region, cell=cell)
+    for dim in mesh.region.dims:
+        options = {dim: (12.5, 29.5)}
+        sub_mesh = mesh.sel(**options)
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim
+        bool_ = [i != dim for i in mesh.region.dims]
+        idx = mesh.region._dims2idx(dim)
+        assert np.isclose(sub_mesh.region.pmax[idx], 30.0, atol=0)
+        assert np.isclose(sub_mesh.region.pmin[idx], 10.0, atol=0)
+        assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == mesh.region.dims
+        assert sub_mesh.cell[bool_] == mesh.cell[bool_]
+        assert sub_mesh.cell[idx] == 2
+
+        # Single layer
+        options = {dim: (12.5, 13.5)}
+        sub_mesh = mesh.sel(**options)
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim
+        bool_ = [i != dim for i in mesh.region.dims]
+        idx = mesh.region._dims2idx(dim)
+        assert np.isclose(sub_mesh.region.pmax[idx], 20.0, atol=0)
+        assert np.isclose(sub_mesh.region.pmin[idx], 10.0, atol=0)
+        assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == mesh.region.dims
+        assert sub_mesh.cell[bool_] == mesh.cell[bool_]
+        assert sub_mesh.cell[idx] == 1
+
+        with pytest.raises(ValueError):
+            options = {dim: (12.5, 10.0)}
+            mesh.sel(**options)
+
+        with pytest.raises(ValueError):
+            options = {dim: (12.5, 29.5, 40.5)}
+            mesh.sel(**options)
+
+        with pytest.raises(ValueError):
+            options = {dim: (12.5, 1000)}
+            mesh.sel(**options)
+
+
+def test_sel_subregions():
+    p1 = (0, 0, 0)
+    p2 = (20, 20, 20)
+    cell = (2, 2, 2)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, dims=["x0", "x1", "x2"])
 
     sub_region = {
         "in": df.Region(p1=(2, 2, 2), p2=(8, 8, 8)),
@@ -1214,9 +1289,30 @@ def test_sel():
         "half": df.Region(p1=(4, 4, 4), p2=(12, 12, 12)),
     }
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=sub_region)
-    sub_mesh = mesh.sel(x=(3.6, 7.8))
+    sub_mesh = mesh.sel(x0=(3.6, 7.8))
     assert [i for i in sorted(sub_mesh.subregions)] == ["half", "in"]
     assert np.isclose(sub_mesh.subregions["in"].pmin[0], 2.0, atol=0)
     assert np.isclose(sub_mesh.subregions["in"].pmax[0], 8.0, atol=0)
     assert np.isclose(sub_mesh.subregions["half"].pmin[0], 4.0, atol=0)
     assert np.isclose(sub_mesh.subregions["half"].pmax[0], 8.0, atol=0)
+
+    # reduce to single layer
+    sub_mesh = mesh.sel("x0")
+    assert [i for i in sorted(sub_mesh.subregions)] == ["half", "in"]
+    assert sub_mesh.subregions["in"].ndim == 2
+    assert sub_mesh.subregions["half"].ndim == 2
+    assert np.allclose(sub_mesh.subregions["in"].pmin, [2, 2], atol=0)
+    assert np.allclose(sub_mesh.subregions["half"].pmin, [4, 4], atol=0)
+    assert np.allclose(sub_mesh.subregions["in"].pmax, [8, 8], atol=0)
+    assert np.allclose(sub_mesh.subregions["half"].pmax, [8, 8], atol=0)
+
+    # No subregions in selection
+    sub_region = {
+        "out1": df.Region(p1=(7, 7, 7), p2=(9, 9, 9)),
+        "out2": df.Region(p1=(0, 0, 0), p2=(2, 2, 2)),
+    }
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=sub_region)
+    sub_mesh = mesh.sel(x0=(4.5, 5.1))
+    assert sub_mesh.subregions == {}
+    sub_mesh = mesh.sel("x0")
+    assert sub_mesh.subregions == {}
