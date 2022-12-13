@@ -3573,13 +3573,13 @@ class Field(_FieldIO):
 
 @functools.singledispatch
 def _as_array(val, mesh, nvdim, dtype):
-    raise TypeError("Unsupported type {type(val)}.")
+    raise TypeError(f"Unsupported type {type(val)}.")
 
 
 # to avoid str being interpreted as iterable
 @_as_array.register(str)
 def _(val, mesh, nvdim, dtype):
-    raise TypeError("Unsupported type {type(val)}.")
+    raise TypeError(f"Unsupported type {type(val)}.")
 
 
 @_as_array.register(numbers.Complex)
