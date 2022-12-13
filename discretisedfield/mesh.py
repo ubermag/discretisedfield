@@ -205,6 +205,14 @@ class Mesh(_MeshIO):
                 raise TypeError("The values of cell must be numbers.")
             elif not all(i > 0 for i in cell):
                 raise ValueError("The values of cell must be positive numbers.")
+            # Check if the cell size exceeds the region size
+            if (
+                df.Region(p1=self.region.pmin, p2=self.region.pmin + cell)
+                not in self.region
+            ):
+                raise ValueError(
+                    f"The cell size ({cell=}) exceeds the region size ({self.region=})."
+                )
             # Check if the mesh region is an aggregate of the discretisation cell.
             tol = np.min(cell) * 1e-3  # tolerance
             rem = np.remainder(self.region.edges, cell)

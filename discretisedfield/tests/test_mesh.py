@@ -92,6 +92,7 @@ def test_init_valid_args(p1, p2, n, cell):
         # 1d
         [0, 2e-10, (1, 1), None, ValueError],
         [0, 2e-10, None, (1e-10, 1e-10), ValueError],
+        [0, 1e-3, None, 1, ValueError],
         [(5e-9,), (2e-10,), -1, None, ValueError],
         [(5e-9,), -2e-10, None, -1e-9, ValueError],
         [(5e-9,), -2e-10, "seven cells", None, TypeError],
