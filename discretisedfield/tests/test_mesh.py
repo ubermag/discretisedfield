@@ -1035,7 +1035,7 @@ def test_getitem():
     assert mesh[mesh.region].allclose(mesh, atol=0)
 
     with pytest.raises(ValueError):  # subregion extending beyond mesh
-                                     # (p1 is in mesh region, but p2 is outside)
+        # (p1 is in mesh region, but p2 is outside)
         submesh = mesh[df.Region(p1=(1, 2, 1), p2=(200, 79, 14))]
 
     p1 = 20e-9
