@@ -19,3 +19,10 @@ valid_mesh_args = [
 def valid_mesh(request):
     p1, p2, n, cell = request.param
     return df.Mesh(p1=p1, p2=p2, n=n, cell=cell)
+
+
+@pytest.fixture
+def mesh_3d():
+    return df.Mesh(
+        p1=(0, 0, -10e-9), p2=(50e-9, 30e-9, 20e-9), cell=(10e-9, 10e-9, 5e-9)
+    )
