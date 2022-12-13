@@ -1008,19 +1008,22 @@ class Mesh(_MeshIO):
             p_1, p_2 = self.region.pmin.copy(), self.region.pmax.copy()
             p_1[dim_index] = min(range_)
             p_2[dim_index] = max(range_)
-            p_1[dim_index] = self.index2point(self.point2index(p_1))[dim_index] - step
-            p_2[dim_index] = self.index2point(self.point2index(p_2))[dim_index] + step
+            min_val = self.index2point(self.point2index(p_1))[dim_index] - step
+            max_val = self.index2point(self.point2index(p_2))[dim_index] + step
+            p_1[dim_index] = min_val
+            p_2[dim_index] = max_val
             cell = self.cell
             if self.subregions is not None:
+
                 for key, subreg in self.subregions.items():
-                    sel_axis_max_of_min = max(p_1[dim_index], min(range_))
-                    sel_axis_min_of_max = min(p_2[dim_index], max(range_))
-                    if sel_axis_max_of_min > sel_axis_min_of_max:
+                    sub_reg_p_min = subreg.pmin[dim_index]
+                    sub_reg_p_max = subreg.pmax[dim_index]
+                    if sub_reg_p_min >= max_val or min_val >= sub_reg_p_max:
                         continue
                     else:
                         sub_p_1, sub_p_2 = subreg.pmin.copy(), subreg.pmax.copy()
-                        sub_p_1[dim_index] = sel_axis_max_of_min
-                        sub_p_2[dim_index] = sel_axis_min_of_max
+                        sub_p_1[dim_index] = max(min_val, sub_reg_p_min)
+                        sub_p_2[dim_index] = min(max_val, sub_reg_p_max)
                         sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
 
         return self.__class__(p1=p_1, p2=p_2, cell=cell, subregions=sub_region)
