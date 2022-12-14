@@ -1274,6 +1274,11 @@ def test_sel_range(p1, p2, dims, cell):
             options = {dim: (12.5, 1000)}
             mesh.sel(**options)
 
+        # Wrong value type
+        with pytest.raises(TypeError):
+            options = {dim: (12.5, f"{dim}")}
+            mesh.sel(**options)
+
 
 def test_sel_subregions():
     p1 = (0, 0, 0)

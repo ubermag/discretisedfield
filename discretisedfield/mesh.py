@@ -1025,12 +1025,15 @@ class Mesh(_MeshIO):
                 # TODO: Some book-keeping in future.
                 selected_value = range_
             elif isinstance(range_, (tuple, list, np.ndarray)):
-                if len(range_) != 2 or not all(
-                    isinstance(point, numbers.Real) for point in range_
-                ):
+                if len(range_) != 2:
                     raise ValueError(
                         "The points along the selected dimension must have two"
-                        " real values."
+                        " real numbers."
+                    )
+                elif not all(isinstance(point, numbers.Real) for point in range_):
+                    raise TypeError(
+                        f"The elements of {type(range_)} passed as the value of keyword"
+                        " argument must be real numbers."
                     )
             else:
                 raise TypeError(
