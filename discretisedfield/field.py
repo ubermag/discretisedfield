@@ -2147,6 +2147,8 @@ class Field(_FieldIO):
 
     @classmethod
     def _split_array(self, array, valid):
+        # 70.3 µs ± 719 ns
+        # 100 element array
         return [
             np.array(list(grp))
             for k, grp in itertools.groupby(
@@ -2157,6 +2159,8 @@ class Field(_FieldIO):
 
     @classmethod
     def _split_array_2(self, array, valid):
+        # 15.3 µs ± 63.1 ns
+        # 100 element array
         loc = np.where(np.invert(valid))[0]
         loc = np.concatenate(([-1], loc, [len(array)]))
         return [

@@ -1624,7 +1624,7 @@ def test_split_array(fun, valid):
     split_list = fun(array, valid)
 
     assert isinstance(split_list, list)
-    # assert all([isinstance(sublist, np.ndarray) for sublist in split_list])
+    assert all([isinstance(sublist, np.ndarray) for sublist in split_list])
 
     # Check total number of elements
     assert sum([len(sublist) for sublist in split_list]) == sum(valid)
