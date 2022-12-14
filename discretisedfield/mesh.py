@@ -951,7 +951,60 @@ class Mesh(_MeshIO):
         return plane_mesh
 
     def sel(self, *args, **kwargs):
-        no_book_keeping = False
+        """Select a part of the mesh.
+
+        If one of the axis from ``region.dims`` is passed as a string, a mesh of a
+        reduced dimension along the axis and perpendicular to it is extracted,
+        intersecting the axis at its center. Alternatively, if a keyword (representing
+        the axis) argument is passed with a real number value (e.g. ``x=1e-9``), a mesh
+        of reduced dimensions intersects the axis at a point 'nearest' to the provided
+        value is returned. If instead a tuple, list or a numpy array of length 2 is
+        passed as a value containing two real numbers (e.g. ``x=(1e-9, 7e-9)``), a sub
+        mesh is returned with minimum and maximum points along the selected axis,
+        'nearest' to the minimum and maximum of the selected values, respectively.
+
+        Parameters
+        ----------
+        args :
+
+            A string corresponding to the selection axis that belongs to
+            ``region.dims``.
+
+        kwarg :
+
+            A key corresponding to the selection axis that belongs to ``region.dims``.
+            The values are either a ``numbers.Real`` or list, tuple, numpy array of
+            length 2 containing ``numbers.Real`` which represents a point or a range of
+            points to be selected from the mesh.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            An extracted mesh.
+
+        Examples
+        --------
+        1. Extracting the mesh at a specific point (``y=1``).
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> plane_mesh = mesh.sel(y=1)
+
+        2. Extracting the xy-plane mesh at the mesh region center.
+
+        >>> plane_mesh = mesh.sel('z')
+
+        3. Specifying a range of points along axis ``x`` to be selected from mesh.
+
+        >>> plane_mesh = mesh.sel(x=(2, 4))
+
+        """
         if len(args) > 1 or len(kwargs) > 1:
             raise ValueError("Select method only accepts one dimension at a time.")
 
@@ -961,48 +1014,76 @@ class Mesh(_MeshIO):
         elif not args and kwargs:
             dim, range_ = list(kwargs.items())[0]
         else:
-            raise ValueError("No argument passed.")
+            raise ValueError(
+                "Either one positional argument or a keyword argument can be passed."
+            )
 
         dim_index = self.region._dim2index(dim)
 
         if range_ is not None:
             if isinstance(range_, numbers.Real):
                 # TODO: Some book-keeping in future.
-                no_book_keeping = True
+                selected_value = range_
             elif isinstance(range_, (tuple, list, np.ndarray)):
-                if len(range_) != 2 and not all(
-                    isinstance(point, numbers.Real) for point in range_
-                ):
+                if len(range_) != 2:
                     raise ValueError(
                         "The points along the selected dimension must have two"
-                        " real values."
+                        " real numbers."
+                    )
+                elif not all(isinstance(point, numbers.Real) for point in range_):
+                    raise TypeError(
+                        f"The elements of {type(range_)} passed as the value of keyword"
+                        " argument must be real numbers."
                     )
             else:
                 raise TypeError(
-                    "The value passed to selected dimension must either a tuple, list,"
+                    "The value passed to selected dimension must be a tuple, list,"
                     " array or real number."
                 )
+        else:
+            selected_value = self.region.center[dim_index]
 
         sub_region = dict()
-
-        if range_ is None or no_book_keeping:
-            p_1 = [
-                self.region.pmin[i] for i in range(self.region.ndim) if i != dim_index
-            ]
-            p_2 = [
-                self.region.pmax[i] for i in range(self.region.ndim) if i != dim_index
-            ]
-            cell = [self.cell[i] for i in range(self.region.ndim) if i != dim_index]
+        if range_ is None or isinstance(range_, numbers.Real):
+            idxs = [i for i in range(self.region.ndim) if i != dim_index]
+            p_1 = list()
+            p_2 = list()
+            cell = list()
+            dims = list()
+            units = list()
+            for j in idxs:
+                p_1.append(self.region.pmin[j])
+                p_2.append(self.region.pmax[j])
+                cell.append(self.cell[j])
+                dims.append(self.region.dims[j])
+                units.append(self.region.units[j])
+            tol = self.region.tolerance_factor
 
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
-                    sub_p_1 = [
-                        subreg.pmin[i] for i in range(subreg.ndim) if i != dim_index
-                    ]
-                    sub_p_2 = [
-                        subreg.pmax[i] for i in range(subreg.ndim) if i != dim_index
-                    ]
-                    sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
+                    if (
+                        selected_value >= subreg.pmax[dim_index]
+                        or selected_value <= subreg.pmin[dim_index]
+                    ):
+                        continue
+                    else:
+                        sub_p_1 = list()
+                        sub_p_2 = list()
+                        sub_dims = list()
+                        sub_units = list()
+                        for j in idxs:
+                            sub_p_1.append(subreg.pmin[j])
+                            sub_p_2.append(subreg.pmax[j])
+                            sub_dims.append(subreg.dims[j])
+                            sub_units.append(subreg.units[j])
+                        sub_tol = subreg.tolerance_factor
+                        sub_region[key] = df.Region(
+                            p1=sub_p_1,
+                            p2=sub_p_2,
+                            dims=sub_dims,
+                            units=sub_units,
+                            tolerance_factor=sub_tol,
+                        )
         else:
             step = self.cell[dim_index] / 2.0
             p_1, p_2 = self.region.pmin.copy(), self.region.pmax.copy()
@@ -1013,8 +1094,10 @@ class Mesh(_MeshIO):
             p_1[dim_index] = min_val
             p_2[dim_index] = max_val
             cell = self.cell
+            dims = self.region.dims
+            units = self.region.units
+            tol = self.region.tolerance_factor
             if self.subregions is not None:
-
                 for key, subreg in self.subregions.items():
                     sub_reg_p_min = subreg.pmin[dim_index]
                     sub_reg_p_max = subreg.pmax[dim_index]
@@ -1024,9 +1107,21 @@ class Mesh(_MeshIO):
                         sub_p_1, sub_p_2 = subreg.pmin.copy(), subreg.pmax.copy()
                         sub_p_1[dim_index] = max(min_val, sub_reg_p_min)
                         sub_p_2[dim_index] = min(max_val, sub_reg_p_max)
-                        sub_region[key] = df.Region(p1=sub_p_1, p2=sub_p_2)
+                        sub_region[key] = df.Region(
+                            p1=sub_p_1,
+                            p2=sub_p_2,
+                            dims=subreg.dims,
+                            units=subreg.units,
+                            tolerance_factor=subreg.tolerance_factor,
+                        )
 
-        return self.__class__(p1=p_1, p2=p_2, cell=cell, subregions=sub_region)
+        return self.__class__(
+            region=df.Region(
+                p1=p_1, p2=p_2, dims=dims, units=units, tolerance_factor=tol
+            ),
+            cell=cell,
+            subregions=sub_region,
+        )
 
     def __or__(self, other):
         # """Depricated method to check if meshes are aligned: use ``is_aligned``"""
