@@ -9,6 +9,7 @@ import k3d
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import sympy as sp
 import xarray as xr
 
 import discretisedfield as df
@@ -1511,6 +1512,185 @@ def test_derivative_single_cell():
     assert np.allclose(f.plane("x").diff("x").mean(), (0, 0, 0))
     assert np.allclose(f.plane("y").diff("y").mean(), (0, 0, 0))
     assert np.allclose(f.diff("z").mean(), (0, 0, 0))
+
+
+# @pytest.mark.parameterize(
+#     "order, array, diff_mean, diff_min, diff_max",
+#     [
+#         [
+#             1,
+#             np.array([0]),
+#             0,
+#             0,
+#             0,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1]),
+#             1,
+#             1,
+#             1,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1, 2]),
+#             1,
+#             1,
+#             1,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1, 2, 3]),
+#             1,
+#             1,
+#             1,
+#         ],
+#         [
+#             1,
+#             np.array([1]),
+#             0,
+#             0,
+#             0,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1]) * 2,
+#             2,
+#             2,
+#             2,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1, 2]) * 2,
+#             2,
+#             2,
+#             2,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1, 2, 3]) * 2,
+#             2,
+#             2,
+#             2,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1]),
+#             1,
+#             1,
+#             1,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1, 4]),
+#             1,
+#             1,
+#             1,
+#         ],
+#         [
+#             1,
+#             np.array([0, 1, 4, 9]),
+#             2,
+#             2,
+#             2,
+#         ],
+#     ],
+# )
+# def test_1d_derivative(order, array, diff_mean, diff_min, diff_max):
+#     diff_1d = df.Field._1d_diff(order, array)
+#     assert len(diff_1d) == len(array)
+#     assert np.allclose(np.mean(diff_1d), diff_mean)
+#     assert np.allclose(diff_1d[0], diff_min)
+#     assert np.allclose(diff_1d[-1], diff_max)
+
+
+@pytest.mark.parametrize("array_len", [1, 2, 3, 4, 5])
+@pytest.mark.parametrize("dx", [1, 2, 0.5])
+@pytest.mark.parametrize("order", [1, 2])
+@pytest.mark.parametrize(
+    "func",
+    [
+        lambda x: x,
+        lambda x: x * x,
+        lambda x: 1 / (x + 1),
+        lambda x: x * x * x,
+        lambda x: sp.sin(2 * sp.pi * x / 10),
+    ],
+)
+def test_1d_derivative_sympy(func, order, array_len, dx):
+    # Create array with sympy function
+    x = sp.symbols("x")
+    fx = func(x)
+    lam_f = sp.lambdify(x, fx, "numpy")
+
+    x_array = np.arange(array_len) * dx
+    y_array = lam_f(x_array)
+
+    # Calculate derivative
+    diff_array = df.Field._1d_diff(order, y_array, dx)
+
+    if order == 1:
+        if array_len == 1:
+            assert np.allclose(diff_array, 0)
+        elif array_len == 2:
+            # Accuracy is 1
+            sp_expected = float(
+                sp.apply_finite_diff(order, x_array, y_array, x_array[0])
+            )
+            print(sp_expected)
+            print(diff_array)
+            assert np.allclose(diff_array, sp_expected)
+        elif array_len > 3:
+            # Accuracy is 2
+            sp_expected = float(
+                sp.apply_finite_diff(order, x_array[:3], y_array[:3], x_array[0])
+            )
+            assert np.allclose(diff_array[0], sp_expected)
+            sp_expected = float(
+                sp.apply_finite_diff(order, x_array[-3:], y_array[-3:], x_array[-1])
+            )
+            assert np.allclose(diff_array[-1], sp_expected)
+            # test middle values
+            cent = int(array_len / 2)
+            sp_expected = float(
+                sp.apply_finite_diff(
+                    order,
+                    x_array[cent - 1 : cent + 2],
+                    y_array[cent - 1 : cent + 2],
+                    x_array[cent],
+                )
+            )
+            assert np.allclose(diff_array[cent], sp_expected)
+    elif order == 2:
+        if array_len == 1 or array_len == 2:
+            assert np.allclose(diff_array, 0)
+        elif array_len == 3:
+            # Accuracy of 2nd order is 1
+            sp_expected = float(
+                sp.apply_finite_diff(order, x_array, y_array, x_array[0])
+            )
+            assert np.allclose(diff_array, sp_expected)
+        elif array_len > 4:
+            # Accuracy of 2nd order is 2
+            sp_expected = float(
+                sp.apply_finite_diff(order, x_array[:4], y_array[:4], x_array[0])
+            )
+            assert np.allclose(diff_array[0], sp_expected)
+            sp_expected = float(
+                sp.apply_finite_diff(order, x_array[-4:], y_array[-4:], x_array[-1])
+            )
+            assert np.allclose(diff_array[-1], sp_expected)
+            # test middle values
+            cent = int(array_len / 2)
+            sp_expected = float(
+                sp.apply_finite_diff(
+                    order,
+                    x_array[cent - 1 : cent + 2],
+                    y_array[cent - 1 : cent + 2],
+                    x_array[cent],
+                )
+            )
+            assert np.allclose(diff_array[cent], sp_expected)
 
 
 def test_grad():

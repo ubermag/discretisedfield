@@ -2098,6 +2098,38 @@ class Field(_FieldIO):
             unit=self.unit,
         )
 
+    @classmethod
+    def _1d_diff(self, order, array, dx):
+        if order not in (1, 2):
+            msg = f"Derivative of the {order} order is not implemented."
+            raise NotImplementedError(msg)
+        if len(array) < order + 1:
+            return np.zeros_like(array)
+
+        if order == 1:
+            # Second order accuracy is in the center of the array and
+            # first order at the boundaries
+            derivative_array = np.gradient(array, dx, edge_order=1)
+            if len(array) > 3:
+                # Second order accuracy at the boundaries
+                derivative_array = np.gradient(array, dx, edge_order=2)
+
+        elif order == 2:
+            derivative_array = np.convolve(array, [1, -2, 1], "same")
+            if len(array) > 4:
+                derivative_array[0] = (
+                    2 * array[0] - 5 * array[1] + 4 * array[2] - array[3]
+                )
+                derivative_array[-1] = (
+                    2 * array[-1] - 5 * array[-2] + 4 * array[-3] - array[-4]
+                )
+            else:
+                derivative_array[0] = array[0] - 2 * array[1] + array[2]
+                derivative_array[-1] = array[-1] - 2 * array[-2] + array[-3]
+            derivative_array = derivative_array / dx**2
+
+        return derivative_array
+
     @property
     def grad(self):
         r"""Gradient.
