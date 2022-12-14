@@ -1605,21 +1605,21 @@ def test_1d_derivative_sympy(func, order, array_len, dx):
             assert np.allclose(diff_array[cent], sp_expected)
 
 
-@pytest.mark.parametrize(
-    "order, array_len, dx, error",
-    [
-        [0, 1, 1, NotImplementedError],
-        [3, 1, 1, NotImplementedError],
-        [4, 1, 1, NotImplementedError],
-        ["a", 1, 1, TypeError],
-        [1, 1, 0, ValueError],
-        [1, 1, -1, ValueError],
-        [1, 0, 1, ValueError],
-    ],
-)
-def test_1d_derivative_invalid(order, array_len, dx, error):
-    with pytest.raises(error):
-        df.Field._1d_diff(order, np.zeros(array_len), dx)
+# @pytest.mark.parametrize(
+#     "order, array_len, dx, error",
+#     [
+#         [0, 1, 1, NotImplementedError],
+#         [3, 1, 1, NotImplementedError],
+#         [4, 1, 1, NotImplementedError],
+#         ["a", 1, 1, TypeError],
+#         [1, 1, 0, ValueError],
+#         [1, 1, -1, ValueError],
+#         [1, 0, 1, ValueError],
+#     ],
+# )
+# def test_1d_derivative_invalid(order, array_len, dx, error):
+#     with pytest.raises(error):
+#         df.Field._1d_diff(order, np.zeros(array_len), dx)
 
 
 def test_grad():
