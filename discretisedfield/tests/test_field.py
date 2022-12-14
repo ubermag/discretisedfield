@@ -1605,6 +1605,7 @@ def test_1d_derivative_sympy(func, order, array_len, dx):
             assert np.allclose(diff_array[cent], sp_expected)
 
 
+@pytest.mark.parametrize("fun", [df.Field._split_array, df.Field._split_array_2])
 @pytest.mark.parametrize(
     "valid",
     [
@@ -1618,9 +1619,9 @@ def test_1d_derivative_sympy(func, order, array_len, dx):
         [True, False, True, False, True],
     ],
 )
-def test_split_array(valid):
+def test_split_array(fun, valid):
     array = np.arange(len(valid))
-    split_list = df.Field._split_array(array, valid)
+    split_list = fun(array, valid)
 
     assert isinstance(split_list, list)
     # assert all([isinstance(sublist, np.ndarray) for sublist in split_list])

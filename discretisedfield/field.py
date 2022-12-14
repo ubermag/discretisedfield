@@ -2155,6 +2155,16 @@ class Field(_FieldIO):
             if k
         ]
 
+    @classmethod
+    def _split_array_2(self, array, valid):
+        loc = np.where(np.invert(valid))[0]
+        loc = np.concatenate(([-1], loc, [len(array)]))
+        return [
+            array[loc[i] + 1 : loc[i + 1]]
+            for i in range(len(loc) - 1)
+            if loc[i + 1] != loc[i] + 1
+        ]
+
     @property
     def grad(self):
         r"""Gradient.
