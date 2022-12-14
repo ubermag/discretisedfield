@@ -1682,6 +1682,24 @@ def test_split_diff_combine():
     assert len(out) == len(array)
 
 
+def test_diff_new():
+    p1 = (0, 0, 0)
+    p2 = (10, 10, 10)
+    cell = (2, 2, 2)
+
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    def value_fun(point):
+        x, y, z = point
+        return (x, y, z)
+
+    f = df.Field(mesh, nvdim=3, value=value_fun)
+
+    assert np.allclose(f.diff_new("x").mean(), (1, 0, 0))
+    assert np.allclose(f.diff_new("y").mean(), (0, 1, 0))
+    assert np.allclose(f.diff_new("z").mean(), (0, 0, 1))
+
+
 # @pytest.mark.parametrize(
 #     "order, array_len, dx, error",
 #     [
