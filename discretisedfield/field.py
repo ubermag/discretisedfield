@@ -2100,9 +2100,19 @@ class Field(_FieldIO):
 
     @classmethod
     def _1d_diff(self, order, array, dx):
+        if not isinstance(order, numbers.Number):
+            raise TypeError("Order must be a number.")
         if order not in (1, 2):
             msg = f"Derivative of the {order} order is not implemented."
             raise NotImplementedError(msg)
+        if not isinstance(array, np.ndarray):
+            raise TypeError("Array must be a numpy array.")
+        if len(array) < 1:
+            raise ValueError("Array must have at least one element.")
+        if not isinstance(dx, numbers.Number):
+            raise TypeError("dx must be a number.")
+        if dx <= 0:
+            raise ValueError("dx must be positive.")
         if len(array) < order + 1:
             return np.zeros_like(array)
 
