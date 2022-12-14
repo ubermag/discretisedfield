@@ -951,6 +951,60 @@ class Mesh(_MeshIO):
         return plane_mesh
 
     def sel(self, *args, **kwargs):
+        """Select a part of the mesh.
+
+        If one of the axis from ``region.dims`` is passed as a string, a mesh of a
+        reduced dimension along the axis and perpendicular to it is extracted,
+        intersecting the axis at its center. Alternatively, if a keyword (representing
+        the axis) argument is passed with a real number value (e.g. ``x=1e-9``), a mesh
+        of reduced dimensions intersects the axis at a point 'nearest' to the provided
+        value is returned. If instead a tuple, list or a numpy array of length 2 is
+        passed as a value containing two real numbers (e.g. ``x=(1e-9, 7e-9)``), a sub
+        mesh is returned with minimum and maximum points along the selected axis,
+        'nearest' to the minimum and maximum of the selected values, respectively.
+
+        Parameters
+        ----------
+        args :
+
+            A string corresponding to the selection axis that belongs to
+            ``region.dims``.
+
+        kwarg :
+
+            A key corresponding to the selection axis that belongs to ``region.dims``.
+            The values are either a ``numbers.Real`` or list, tuple, numpy array of
+            length 2 containing ``numbers.Real`` which represents a point or a range of
+            points to be selected from the mesh.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            An extracted mesh.
+
+        Examples
+        --------
+        1. Extracting the mesh at a specific point (``y=1``).
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> plane_mesh = mesh.sel(y=1)
+
+        2. Extracting the xy-plane mesh at the mesh region center.
+
+        >>> plane_mesh = mesh.sel('z')
+
+        3. Specifying a range of points along axis ``x`` to be selected from mesh.
+
+        >>> plane_mesh = mesh.sel(x=(2, 4))
+
+        """
         if len(args) > 1 or len(kwargs) > 1:
             raise ValueError("Select method only accepts one dimension at a time.")
 
