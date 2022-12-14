@@ -1605,6 +1605,40 @@ def test_1d_derivative_sympy(func, order, array_len, dx):
             assert np.allclose(diff_array[cent], sp_expected)
 
 
+@pytest.mark.parametrize(
+    "valid",
+    [
+        [True, True, True],
+        [True, True, False],
+        [True, False, True],
+        [False, True, True],
+        [False, False, False],
+        [True, True, False, True],
+        [True, True, False, False, True],
+        [True, False, True, False, True],
+    ],
+)
+def test_split_array(valid):
+    array = np.arange(len(valid))
+    split_list = df.Field._split_array(array, valid)
+
+    assert isinstance(split_list, list)
+    assert all([isinstance(sublist, np.ndarray) for sublist in split_list])
+
+    # Check total number of elements
+    assert sum([len(sublist) for sublist in split_list]) == sum(valid)
+
+    # Check all elements are present
+    flat_list = [num for sublist in split_list for num in sublist]
+    assert np.array_equal(flat_list, array[valid])
+
+    # Check Missing elements
+    missing = [i for i, x in enumerate(valid) if not x]
+
+    # Check that missing elements are not in any sublist
+    assert all([num not in flat_list for num in missing])
+
+
 # @pytest.mark.parametrize(
 #     "order, array_len, dx, error",
 #     [
