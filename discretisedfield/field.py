@@ -1,5 +1,6 @@
 import collections
 import functools
+import itertools
 import numbers
 import warnings
 
@@ -2143,6 +2144,16 @@ class Field(_FieldIO):
             derivative_array = derivative_array / dx**2
 
         return derivative_array
+
+    @classmethod
+    def _split_array(self, array, valid):
+        return [
+            np.array(list(grp))
+            for k, grp in itertools.groupby(
+                array, key=lambda _, ig=iter(valid): next(ig)
+            )
+            if k
+        ]
 
     @property
     def grad(self):
