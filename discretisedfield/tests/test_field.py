@@ -1675,6 +1675,13 @@ def test_split_array_on_idx(valid):
     assert all([num not in flat_list for num in missing])
 
 
+def test_split_diff_combine():
+    valid = [True, True, False, True, True, False, True]
+    array = np.arange(len(valid))
+    out = df.Field._split_diff_combine(array, valid, 1, 1)
+    assert len(out) == len(array)
+
+
 # @pytest.mark.parametrize(
 #     "order, array_len, dx, error",
 #     [

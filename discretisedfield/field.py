@@ -2178,6 +2178,7 @@ class Field(_FieldIO):
             if loc[i + 1] != loc[i] + 1
         ]
 
+    @classmethod
     def _split_diff_combine(self, array, valid, order, dx):
         idx = np.where(np.invert(valid))[0]
         split = self._split_array_on_idx(array, idx)
