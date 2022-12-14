@@ -2103,7 +2103,8 @@ class Field(_FieldIO):
         r"""Gradient.
 
         This method computes the gradient of a scalar (``nvdim=1``) field and
-        returns a vector field:
+        returns a vector field with the same number of dimensions as the space
+        on which the scalar field is defined (``ndim``):
 
         .. math::
 
