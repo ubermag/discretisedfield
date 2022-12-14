@@ -2169,6 +2169,52 @@ class Field(_FieldIO):
             if loc[i + 1] != loc[i] + 1
         ]
 
+    @classmethod
+    def _split_array_on_idx(self, array, loc):
+        loc = np.concatenate(([-1], loc, [len(array)]))
+        return [
+            array[loc[i] + 1 : loc[i + 1]]
+            for i in range(len(loc) - 1)
+            if loc[i + 1] != loc[i] + 1
+        ]
+
+    def _split_diff_combine(self, array, valid, order, dx):
+        idx = np.where(np.invert(valid))[0]
+        split = self._split_array_on_idx(array, idx)
+        diff = [self._1d_diff(order, arr, dx) for arr in split]
+        out = np.zeros_like(array)
+        out[valid] = np.concatenate(diff)
+        return out
+
+    def diff_new(self, direction, order=1):
+        r"""New derivative method."""
+        # restrict2valid=True
+        if order not in (1, 2):
+            msg = f"Derivative of the {order} order is not implemented."
+            raise NotImplementedError(msg)
+
+        direction_idx = self.mesh.region._dim2index(direction)
+        out = np.zeros_like(self.array)
+        for idx in self.mesh.sel(direction).indices:
+            idx = list(idx)
+            idx[direction_idx] = slice(None)
+            valid_arr = self.valid[tuple(idx)]
+            for dim in range(self.nvdim):
+                out[tuple(idx), dim] = df.Field._split_diff_combine(
+                    self.array[tuple(idx), dim],
+                    valid_arr,
+                    order,
+                    self.mesh.cell[direction_idx],
+                )
+
+        return self.__class__(
+            self.mesh,
+            nvdim=self.nvdim,
+            value=out,
+            vdims=self.vdims,
+            unit=self.unit,
+        )
+
     @property
     def grad(self):
         r"""Gradient.
