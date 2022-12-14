@@ -41,8 +41,8 @@ class Field(_FieldIO):
 
     nvdim : int
 
-        Dimension of the field's value. For instance, if `dim=3` the field is a
-        three-dimensional vector field and for `dim=1` the field is a scalar
+        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is a
+        three-dimensional vector field and for `nvdim=1` the field is a scalar
         field.
 
     value : array_like, callable, dict, optional
@@ -1006,7 +1006,7 @@ class Field(_FieldIO):
 
           1. Defined on the same mesh.
 
-          2. Have the same dimension (``nvdim``).
+          2. Have the same number of value dimension (``nvdim``).
 
           3. All values in are within relative (``rtol``) and absolute
           (``atol``) tolerances.
@@ -1401,11 +1401,11 @@ class Field(_FieldIO):
 
         It can be applied between:
 
-        1. Two fields with equal vector dimentions,
+        1. Two fields with equal vector dimensions ``nvdim``,
 
-        2. A field of any dimension and ``numbers.Complex``,
+        2. A field of any dimension ``nvdim`` and ``numbers.Complex``,
 
-        3. A field of any dimension and a scalar (``nvdim=1``) field.
+        3. A field of any dimension ``nvdim`` and a scalar (``nvdim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
         defined on the same mesh.
@@ -1471,11 +1471,11 @@ class Field(_FieldIO):
 
         It can be applied between:
 
-        1. Two fields with equal vector dimentions,
+        1. Two fields with equal vector dimensions ``nvdim``,
 
-        2. A field of any dimension and ``numbers.Complex``,
+        2. A field of any dimension ``nvdim`` and ``numbers.Complex``,
 
-        3. A field of any dimension and a scalar (``nvdim=1``) field.
+        3. A field of any dimension ``nvdim`` and a scalar (``nvdim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
         defined on the same mesh.
@@ -1680,7 +1680,7 @@ class Field(_FieldIO):
         ----------
         fields : list
 
-            List of ``discretisedfield.Field`` objects with ``nvdim=1``.
+            List of ``discretisedfield.Field`` objects, each with ``nvdim=1``.
 
         Returns
         -------
