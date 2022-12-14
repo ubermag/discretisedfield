@@ -2126,8 +2126,10 @@ class Field(_FieldIO):
                 derivative_array = np.gradient(array, dx, edge_order=2)
 
         elif order == 2:
+            # The derivative is computed using the central difference
             derivative_array = np.convolve(array, [1, -2, 1], "same")
             if len(array) > 4:
+                # Second order accuracy at the boundaries
                 derivative_array[0] = (
                     2 * array[0] - 5 * array[1] + 4 * array[2] - array[3]
                 )
@@ -2135,6 +2137,7 @@ class Field(_FieldIO):
                     2 * array[-1] - 5 * array[-2] + 4 * array[-3] - array[-4]
                 )
             else:
+                # First order accuracy at the boundaries
                 derivative_array[0] = array[0] - 2 * array[1] + array[2]
                 derivative_array[-1] = array[-1] - 2 * array[-2] + array[-3]
             derivative_array = derivative_array / dx**2
