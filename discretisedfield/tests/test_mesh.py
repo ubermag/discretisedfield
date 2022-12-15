@@ -1313,7 +1313,7 @@ def test_sel_subregions():
 
     # reduce to single layer
     sub_mesh = mesh.sel("x0")
-    assert [i for i in sorted(sub_mesh.subregions)] == ["half"]
+    assert sorted(sub_mesh.subregions) == ["half"]
     assert sub_mesh.subregions["half"].ndim == 2
     assert np.allclose(sub_mesh.subregions["half"].pmin, [4, 4], atol=0)
     assert np.allclose(sub_mesh.subregions["half"].pmax, [12, 12], atol=0)
