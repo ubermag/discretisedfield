@@ -3654,7 +3654,6 @@ def _(val, mesh, nvdim, dtype):
             )
         subval = val["default"]
         for idx in np.argwhere(np.isnan(array[..., 0])):
-            print(idx, array.shape, mesh.region.ndim, mesh.n)
             # only spatial indices required -> array[..., 0]
             array[tuple(idx)] = subval(mesh.index2point(idx))
 
