@@ -3641,7 +3641,7 @@ def _(val, mesh, nvdim, dtype):
             submesh = mesh[subregion]
             subval = val[subregion]
         except KeyError:
-            continue
+            continue  # subregion not in val when implicitly set via "default"
         else:
             slices = mesh.region2slices(submesh.region)
             array[slices] = _as_array(subval, submesh, nvdim, dtype)
