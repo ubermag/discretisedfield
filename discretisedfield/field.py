@@ -2194,12 +2194,14 @@ class Field(_FieldIO):
             msg = f"Derivative of the {order} order is not implemented."
             raise NotImplementedError(msg)
 
+        valid = np.ones_like(self.array, dtype=bool)  # TODO remove
+
         direction_idx = self.mesh.region._dim2index(direction)
         out = np.zeros_like(self.array)
-        for idx in self.mesh.sel(direction).indices:
+        for idx in self.mesh.plane(direction).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
-            valid_arr = self.valid[tuple(idx)]
+            valid_arr = valid[tuple(idx)]  # TODO change to self.valid
             for dim in range(self.nvdim):
                 out[tuple(idx), dim] = df.Field._split_diff_combine(
                     self.array[tuple(idx), dim],
