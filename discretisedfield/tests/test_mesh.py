@@ -1255,6 +1255,7 @@ def test_scale():
     assert np.allclose(res.subregions["sr"].pmin, -5, atol=0)
     assert np.allclose(res.subregions["sr"].pmax, 5, atol=0)
 
+    # example 2: 1d mesh, 1 subregion, with given reference_point
     mesh = df.Mesh(p1=0, p2=10, cell=1, subregions={"sr": df.Region(p1=1, p2=5)})
     n = 10
     assert np.all(mesh.n == n)
@@ -1269,6 +1270,7 @@ def test_scale():
     assert np.allclose(mesh.subregions["sr"].pmin, 8.8, atol=0)
     assert np.allclose(mesh.subregions["sr"].pmax, 18.8, atol=0)
 
+    # example 3: 2d mesh, no subregions
     p1 = (-50e-9, 0)
     p2 = (50e-9, 20e-9)
     cell = (1e-9, 2e-9)
@@ -1293,6 +1295,7 @@ def test_scale():
     assert np.allclose(mesh.cell, (2e-9, 1e-9), atol=0)
     assert mesh.subregions == {}
 
+    # example 4: 3d mesh, 2 subregions (partial overlap), inplace=True
     p1 = (-50e-9, -50e-9, 0)
     p2 = (50e-9, 50e-9, 20e-9)
     cell = (1e-9, 1e-9, 2e-9)
