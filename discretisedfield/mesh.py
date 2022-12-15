@@ -999,6 +999,10 @@ class Mesh(_MeshIO):
         ('x', 'y', 'z')
         ...
         >>> plane_mesh = mesh.sel(y=1)
+        >>> plane_mesh.region.ndim
+        2
+        >>> plane_mesh.region.dims
+        ('x', 'z')
 
         2. Extracting the xy-plane mesh at the mesh region center.
 
