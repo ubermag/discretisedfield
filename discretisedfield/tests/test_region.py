@@ -154,7 +154,8 @@ def test_pmin_pmax_edges_center_volume(p1, p2, pmin, pmax, edges, center, volume
     assert np.allclose(region.pmin, pmin, atol=0)
     assert np.allclose(region.pmax, pmax, atol=0)
     assert np.allclose(region.edges, edges, atol=0)
-    assert np.allclose(region.center, center, atol=0)
+    assert np.allclose(region.centre, center, atol=0)
+    assert np.allclose(region.center, center, atol=0)  # British and US spelling
     assert np.isclose(region.volume, volume, atol=0)
 
 

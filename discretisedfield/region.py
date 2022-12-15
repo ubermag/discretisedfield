@@ -416,9 +416,7 @@ class Region(_RegionIO):
 
     @property
     def centre(self):
-        raise AttributeError(
-            "This attribute is now called 'center'.",
-        )
+        return self.center
 
     @property
     def volume(self):

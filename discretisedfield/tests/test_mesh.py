@@ -92,6 +92,7 @@ def test_init_valid_args(p1, p2, n, cell):
         # 1d
         [0, 2e-10, (1, 1), None, ValueError],
         [0, 2e-10, None, (1e-10, 1e-10), ValueError],
+        [0, 1e-3, None, 1, ValueError],
         [(5e-9,), (2e-10,), -1, None, ValueError],
         [(5e-9,), -2e-10, None, -1e-9, ValueError],
         [(5e-9,), -2e-10, "seven cells", None, TypeError],
@@ -496,12 +497,18 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
 @pytest.mark.parametrize(
     "p1_1, p1_2, p2, n1, n2",
     [
-        [5e-9, 6e-9, 10e-9, 5, 3],
+        [5e-9, 6e-9, 10e-9, 5, 3],  # 1d
         # TODO the next test currently fails because of problems with atol=0 and
         # zero values in the test data; this has to be fixed in Mesh
-        [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],
-        [(0, 0, 0), (3e-9, 3e-9, 3e-9), (10e-9, 10e-9, 10e-9), (5, 5, 5), (5, 5, 3)],
-        [
+        [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],  # 2d
+        [  # 3d
+            (0, 0, 0),
+            (3e-9, 3e-9, 3e-9),
+            (10e-9, 10e-9, 10e-9),
+            (5, 5, 5),
+            (5, 5, 3),
+        ],
+        [  # 4d
             (0, 0, 0, 0),
             (3e-9, 3e-9, 3e-9, 3e-9),
             (10e-9, 10e-9, 10e-9, 10e-9),
@@ -565,7 +572,7 @@ def test_repr():
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, point_1, expected_1, expected_min, expected_max",
+    "p1, p2, n, index, expected_1, expected_min, expected_max",
     [
         [(0.0,), (-30e-9,), np.array([3]), (2), (-5e-9,), (-25e-9,), (-5e-9,)],
         [
@@ -597,11 +604,11 @@ def test_repr():
         ],
     ],
 )
-def test_index2point_valid(p1, p2, n, point_1, expected_1, expected_min, expected_max):
+def test_index2point_valid(p1, p2, n, index, expected_1, expected_min, expected_max):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
-    assert np.allclose(mesh.index2point(point_1), expected_1, atol=0)
+    assert np.allclose(mesh.index2point(index), expected_1, atol=0)
 
     # Correct minimum index
     assert isinstance(mesh.index2point((0,) * mesh.region.ndim), np.ndarray)
@@ -613,12 +620,13 @@ def test_index2point_valid(p1, p2, n, point_1, expected_1, expected_min, expecte
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, point, error",
+    "p1, p2, n, index, error",
     [
         [0, 1, 3, 3, IndexError],
         [0, 1, 3, -1, IndexError],
         [0, 1, 3, "string", TypeError],
         [0, 1, 3, 0.0, TypeError],
+        [0, 5, 5, slice(0, 3), TypeError],
         [(0, 0), (1, 1), (3, 3), (2, 3), IndexError],
         [(0, 0), (1, 1), (3, 3), (-1, 2), IndexError],
         [(0, 0), (1, 1), (3, 3), (2, -1), IndexError],
@@ -642,14 +650,14 @@ def test_index2point_valid(p1, p2, n, point_1, expected_1, expected_min, expecte
         [(0, 0, 0, 0), (1, 1, 1, 1), (3, 3, 3, 3), 2, IndexError],
     ],
 )
-def test_index2point_invalid(p1, p2, n, point, error):
+def test_index2point_invalid(p1, p2, n, index, error):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     with pytest.raises(error):
-        mesh.index2point(point)
+        mesh.index2point(index)
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, point_1, expected_1",
+    "p1, p2, n, point, expected",
     [
         [(0.0,), (-30e-9,), np.array([3]), (2,), (-5e-9,)],
         [
@@ -675,7 +683,7 @@ def test_index2point_invalid(p1, p2, n, point, error):
         ],
     ],
 )
-def test_point2index_valid(p1, p2, n, point_1, expected_1):
+def test_point2index_valid(p1, p2, n, point, expected):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
     assert isinstance(mesh, df.Mesh)
 
@@ -689,7 +697,7 @@ def test_point2index_valid(p1, p2, n, point_1, expected_1):
     assert np.array_equal(mesh.point2index(mesh.region.pmax), n - 1)
     assert np.array_equal(mesh.point2index(mesh.region.pmax - mesh.cell / 2), n - 1)
     assert np.array_equal(mesh.point2index(mesh.region.pmax - 3 * mesh.cell / 4), n - 1)
-    assert np.array_equal(mesh.point2index(expected_1), point_1)
+    assert np.array_equal(mesh.point2index(expected), point)
 
 
 @pytest.mark.parametrize(
@@ -698,6 +706,7 @@ def test_point2index_valid(p1, p2, n, point_1, expected_1):
         [0, 1, 3, 5, ValueError],
         [0, 1, 3, -1, ValueError],
         [0, 1, 3, "string", TypeError],
+        [0, 50e-9, 5, slice(0, 20e-9), TypeError],
         [(0, 0), (1, 1), (3, 3), (2, 5), ValueError],
         [(0, 0), (1, 1), (3, 3), (-1, 2), ValueError],
         [(0, 0), (1, 1), (3, 3), (2, -1), ValueError],
@@ -1035,6 +1044,8 @@ def test_getitem():
     assert mesh[mesh.region].allclose(mesh, atol=0)
 
     with pytest.raises(ValueError):
+        # subregion extending beyond mesh
+        # (p1 is in mesh region, but p2 is outside)
         submesh = mesh[df.Region(p1=(1, 2, 1), p2=(200, 79, 14))]
 
     p1 = 20e-9
@@ -1068,6 +1079,7 @@ def test_pad(p1, p2, cell):
     mesh = df.Mesh(region=region, cell=cell)
 
     for dim in mesh.region.dims:
+        # adding one padding on either side, and for each dimension
         padded_mesh = mesh.pad({dim: (1, 1)})
         # Add cell to pmin and pmax to get the correct padded region
         idx = mesh.region._dim2index(dim)
@@ -1091,6 +1103,7 @@ def test_pad(p1, p2, cell):
         assert np.all(padded_mesh.n == temp)
 
     for dim in mesh.region.dims:
+        # adding padding only on pmax side, and for each dimension
         padded_mesh = mesh.pad({dim: (0, 1)})
         # Add cell to pmin and pmax to get the correct padded region
         idx = mesh.region._dim2index(dim)
@@ -1109,6 +1122,7 @@ def test_pad(p1, p2, cell):
         assert np.all(padded_mesh.n == temp)
 
     for dim in mesh.region.dims:
+        # adding two layers on pmin side and 3 on pmax, for each dimension
         padded_mesh = mesh.pad({dim: (2, 3)})
         # Add cell to pmin and pmax to get the correct padded region
         idx = mesh.region._dim2index(dim)
@@ -1462,43 +1476,162 @@ def test_coordinate_field(valid_mesh):  # TODO
         assert np.allclose(cfield.array[index], getattr(valid_mesh.points, dim), atol=0)
 
 
-# ------------------ sel method test draft -----------------------------------------
-# def test_sel():
-#     p1 = (0, 0, 0)
-#     p2 = (20, 20, 20)
-#     cell = (2, 2, 2)
-#     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-#     for dim in mesh.region.dims:
-#         sub_mesh = mesh.sel(f"{dim}")
-#         assert isinstance(sub_mesh, df.Mesh)
-#         assert sub_mesh.region.ndim == mesh.region.ndim - 1
-#         assert np.allclose(
-#             sub_mesh.region.pmin,
-#             mesh.region.pmin[mesh.region.dims != dim],
-#         )
-#         assert np.allclose(
-#             sub_mesh.region.pmax,
-#             mesh.region.pmax[mesh.region.dims != dim],
-#         )
+def test_sel_string_1D():
+    # Sel center of 1D mesh with no subregions
+    p1 = 0
+    p2 = 100
+    cell = 10
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    # 0 dimensional regions/meshes are not "allowed"
+    with pytest.raises(ValueError):
+        mesh.sel("x")
 
-#     sub_mesh = mesh.sel(x=3.1)
-#     assert isinstance(sub_mesh, df.Mesh)
-#     assert sub_mesh.region.ndim == mesh.region.ndim - 1
-#     assert np.allclose(
-#         sub_mesh.region.pmin, mesh.region.pmin[mesh.region.dims != "x"]
-#     )
-#     assert np.allclose(
-#         sub_mesh.region.pmax, mesh.region.pmax[mesh.region.dims != "x"]
-#     )
+    with pytest.raises(ValueError):
+        mesh.sel(x=50)
 
-#     sub_mesh = mesh.sel(x=4, z=14)
-#     assert isinstance(sub_mesh, df.Mesh)
-#     assert sub_mesh.region.ndim == mesh.region.ndim - 2
-#     assert np.allclose(
-#         sub_mesh.region.pmin,
-#         mesh.region.pmin[mesh.region.dims != "x" and mesh.region.dims != "z"],
-#     )
-#     assert np.allclose(
-#         sub_mesh.region.pmax,
-#         mesh.region.pmax[mesh.region.dims != "x" and mesh.region.dims != "z"],
-#     )
+
+@pytest.mark.parametrize(
+    "p1, p2, dims, cell",
+    [
+        ([0, 0], [100, 50], list("ab"), (10, 5)),
+        ([0, 0, 0], [100, 60, 30], list("abc"), (10, 10, 5)),
+        ([0, 0, 0, 0], [100, 60, 30, 30], None, (10, 10, 5, 5)),
+    ],
+)
+def test_sel_single(p1, p2, dims, cell):
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    # Sel center of mesh (>1d) with no subregions
+    mesh = df.Mesh(region=region, cell=cell)
+    for dim in mesh.region.dims:
+        sub_mesh = mesh.sel(dim)
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim - 1
+        bool_ = [i != dim for i in mesh.region.dims]
+        assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == tuple(d for d in mesh.region.dims if d != dim)
+        assert np.all(sub_mesh.cell == mesh.cell[bool_])
+
+    # Sel single plane of mesh (>1d) with no subregions
+    for dim in mesh.region.dims:
+        options = {dim: 10}
+        sub_mesh = mesh.sel(**options)
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim - 1
+        bool_ = [i != dim for i in mesh.region.dims]
+        assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == tuple([d for d in mesh.region.dims if d != dim])
+        assert np.all(sub_mesh.cell == mesh.cell[bool_])
+        with pytest.raises(ValueError):
+            mesh.sel(dim, 10)
+        with pytest.raises(ValueError):
+            mesh.sel(dim, **options)
+        with pytest.raises(ValueError):
+            mesh.sel()
+        with pytest.raises(ValueError):
+            mesh.sel(10)
+            # out-of-bounds test
+            with pytest.raises(ValueError):
+                mesh.sel(**{dim: 200})
+
+
+@pytest.mark.parametrize(
+    "p1, p2, dims, cell",
+    [
+        [0, 100, list("a"), 10],
+        [(0, 0), (100, 50), list("ab"), (10, 10)],
+        [(0, 0, 0), (100, 60, 50), list("abc"), (10, 10, 10)],
+        [(0, 0, 0, 0), (100, 60, 50, 40), None, (10, 10, 10, 10)],
+    ],
+)
+def test_sel_range(p1, p2, dims, cell):
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    # Sel range of mesh with no subregions
+    mesh = df.Mesh(region=region, cell=cell)
+    for dim in mesh.region.dims:
+        options = {dim: (12.5, 29.5)}
+        sub_mesh = mesh.sel(**options)
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim
+        bool_ = [i != dim for i in mesh.region.dims]
+        idx = mesh.region._dim2index(dim)
+        assert np.isclose(sub_mesh.region.pmax[idx], 30.0, atol=0)
+        assert np.isclose(sub_mesh.region.pmin[idx], 10.0, atol=0)
+        assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == mesh.region.dims
+        assert all(sub_mesh.n[bool_] == mesh.n[bool_])
+        assert sub_mesh.n[idx] == 2
+
+        # Single layer
+        options = {dim: np.array([2.5, 13.5])}
+        sub_mesh = mesh.sel(**options)
+        assert isinstance(sub_mesh, df.Mesh)
+        assert sub_mesh.region.ndim == mesh.region.ndim
+        bool_ = [i != dim for i in mesh.region.dims]
+        idx = mesh.region._dim2index(dim)
+        assert np.isclose(sub_mesh.region.pmax[idx], 20.0, atol=0)
+        assert np.isclose(sub_mesh.region.pmin[idx], 0.0, atol=0)
+        assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_], atol=0)
+        assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_], atol=0)
+        assert sub_mesh.region.dims == mesh.region.dims
+        assert all(sub_mesh.n[bool_] == mesh.n[bool_])
+        assert sub_mesh.n[idx] == 2
+
+        # Too many values
+        with pytest.raises(ValueError):
+            options = {dim: (12.5, 29.5, 3.5)}
+            mesh.sel(**options)
+
+        # Out of bounds
+        with pytest.raises(ValueError):
+            options = {dim: (12.5, 1000)}
+            mesh.sel(**options)
+
+        # Wrong value type
+        with pytest.raises(TypeError):
+            options = {dim: (12.5, dim)}
+            mesh.sel(**options)
+
+
+def test_sel_subregions():
+    p1 = (0, 0, 0)
+    p2 = (20, 20, 20)
+    region = df.Region(p1=p1, p2=p2, dims=["x0", "x1", "x2"])
+    cell = (2, 2, 2)
+    mesh = df.Mesh(region=region, cell=cell)
+
+    sub_region = {
+        "in": df.Region(p1=(2, 2, 2), p2=(8, 8, 8)),
+        "out": df.Region(p1=(0, 0, 0), p2=(2, 2, 2)),
+        "half": df.Region(p1=(4, 4, 4), p2=(12, 12, 12)),
+    }
+    mesh = df.Mesh(region=region, cell=cell, subregions=sub_region)
+    sub_mesh = mesh.sel(x0=(3.6, 7.8))
+    assert sorted(sub_mesh.subregions) == ["half", "in"]
+    assert np.isclose(sub_mesh.subregions["in"].pmin[0], 2.0, atol=0)
+    assert np.isclose(sub_mesh.subregions["in"].pmax[0], 8.0, atol=0)
+    assert np.isclose(sub_mesh.subregions["half"].pmin[0], 4.0, atol=0)
+    assert np.isclose(sub_mesh.subregions["half"].pmax[0], 8.0, atol=0)
+
+    # reduce to single layer
+    sub_mesh = mesh.sel("x0")
+    assert sorted(sub_mesh.subregions) == ["half"]
+    assert sub_mesh.subregions["half"].ndim == 2
+    assert np.allclose(sub_mesh.subregions["half"].pmin, [4, 4], atol=0)
+    assert np.allclose(sub_mesh.subregions["half"].pmax, [12, 12], atol=0)
+
+    # No subregions in selection
+    sub_region = {
+        "out1": df.Region(p1=(6, 6, 6), p2=(10, 10, 10)),
+        "out2": df.Region(p1=(0, 0, 0), p2=(2, 2, 2)),
+    }
+    mesh = df.Mesh(region=region, cell=cell, subregions=sub_region)
+    sub_mesh = mesh.sel(x0=(4.5, 5.1))
+    assert sub_mesh.subregions == {}
+    sub_mesh = mesh.sel("x0")
+    assert sub_mesh.subregions == {}
+
+    # cell boundary and cell midpoint return the same selection
+    assert mesh.sel(x0=6) == mesh.sel(x0=7)
