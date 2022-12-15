@@ -1085,20 +1085,12 @@ class Mesh(_MeshIO):
                     else:
                         sub_p_1 = list()
                         sub_p_2 = list()
-                        sub_dims = list()
-                        sub_units = list()
                         for j in idxs:
                             sub_p_1.append(subreg.pmin[j])
                             sub_p_2.append(subreg.pmax[j])
-                            sub_dims.append(subreg.dims[j])
-                            sub_units.append(subreg.units[j])
-                        sub_tol = subreg.tolerance_factor
                         sub_region[key] = df.Region(
                             p1=sub_p_1,
                             p2=sub_p_2,
-                            dims=sub_dims,
-                            units=sub_units,
-                            tolerance_factor=sub_tol,
                         )
         else:
             step = self.cell[dim_index] / 2.0
