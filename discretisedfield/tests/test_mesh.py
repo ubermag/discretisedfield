@@ -1227,6 +1227,9 @@ def test_sel_single(p1, p2, dims, cell):
             mesh.sel()
         with pytest.raises(ValueError):
             mesh.sel(10)
+            # out-of-bounds test
+            with pytest.raises(ValueError):
+                mesh.sel(**{dim: 200})
 
 
 @pytest.mark.parametrize(
