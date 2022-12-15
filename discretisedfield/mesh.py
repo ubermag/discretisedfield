@@ -1118,9 +1118,6 @@ class Mesh(_MeshIO):
                         sub_region[key] = df.Region(
                             p1=sub_p_1,
                             p2=sub_p_2,
-                            dims=subreg.dims,
-                            units=subreg.units,
-                            tolerance_factor=subreg.tolerance_factor,
                         )
 
         return self.__class__(
