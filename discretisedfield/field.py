@@ -3424,7 +3424,7 @@ class Field(_FieldIO):
         geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
         if self.nvdim > 1:
-            data_array_dims = axes + ["comp"]
+            data_array_dims = axes + ("comp",)
             if self.vdims is not None:
                 data_array_coords["comp"] = self.vdims
             field_array = self.array
@@ -3544,7 +3544,7 @@ class Field(_FieldIO):
                 " a vector field."
             )
 
-        if xa.attrs["nvdim"] < 1 or isinstance(xa.attrs["nvdim"], int):
+        if xa.attrs["nvdim"] < 1 or not isinstance(xa.attrs["nvdim"], int):
             raise ValueError(
                 '"nvdim" attribute must be a positive integer greater or equal to 1.'
             )
