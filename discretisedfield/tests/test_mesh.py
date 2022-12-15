@@ -1220,7 +1220,7 @@ def test_sel_single(p1, p2, dims, cell):
         assert sub_mesh.region.dims == tuple([d for d in mesh.region.dims if d != dim])
         assert np.all(sub_mesh.cell == mesh.cell[bool_])
         with pytest.raises(ValueError):
-            mesh.sel(f"{dim}", 10)
+            mesh.sel(dim, 10)
         with pytest.raises(ValueError):
             mesh.sel(f"{dim}", **options)
         with pytest.raises(ValueError):
