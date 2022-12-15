@@ -1261,7 +1261,7 @@ def test_sel_range(p1, p2, dims, cell):
         assert sub_mesh.n[idx] == 2
 
         # Single layer
-        options = {dim: (12.5, 13.5)}
+        options = {dim: np.ndarray([2.5, 13.5])}
         sub_mesh = mesh.sel(**options)
         assert isinstance(sub_mesh, df.Mesh)
         assert sub_mesh.region.ndim == mesh.region.ndim
