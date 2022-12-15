@@ -205,6 +205,14 @@ class Mesh(_MeshIO):
                 raise TypeError("The values of cell must be numbers.")
             elif not all(i > 0 for i in cell):
                 raise ValueError("The values of cell must be positive numbers.")
+            # Check if the cell size exceeds the region size
+            if (
+                df.Region(p1=self.region.pmin, p2=self.region.pmin + cell)
+                not in self.region
+            ):
+                raise ValueError(
+                    f"The cell size ({cell=}) exceeds the region size ({self.region=})."
+                )
             # Check if the mesh region is an aggregate of the discretisation cell.
             tol = np.min(cell) * 1e-3  # tolerance
             rem = np.remainder(self.region.edges, cell)
@@ -520,7 +528,7 @@ class Mesh(_MeshIO):
         array([1., 3., 5., 7., 9.])
 
         """
-        points = collections.namedtuple("points", ["x", "y", "z"])
+        points = collections.namedtuple("points", self.region.dims)
 
         return points(
             *(
@@ -561,7 +569,7 @@ class Mesh(_MeshIO):
         array([ 0.,  2.,  4.,  6.,  8., 10.])
 
         """
-        vertices = collections.namedtuple("vertices", ["x", "y", "z"])
+        vertices = collections.namedtuple("vertices", self.region.dims)
 
         return vertices(
             *(
@@ -692,8 +700,24 @@ class Mesh(_MeshIO):
         .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
         """
+        if isinstance(index, numbers.Integral):
+            index = [index]
+        elif isinstance(index, (np.ndarray, list, tuple)):
+            if any(not isinstance(i, numbers.Integral) for i in index):
+                raise TypeError(f"The elements of {index=} must be integer.")
+        else:
+            raise TypeError(
+                f"The index is of the wrong type {type(index)=}. It must be an integer"
+                " (1D) or a tuple/list/array of integers."
+            )
+
+        if len(index) != self.region.ndim:
+            raise IndexError(
+                f"Wrong dimensional index. {index=} but {self.region.ndim=}."
+            )
+
         if np.logical_or(np.less(index, 0), np.greater_equal(index, self.n)).any():
-            raise ValueError(f"Index {index=} out of range.")
+            raise IndexError(f"Index {index=} out of range.")
 
         point = self.region.pmin + np.add(index, 0.5) * self.cell
         return point
@@ -735,8 +759,26 @@ class Mesh(_MeshIO):
         .. seealso:: :py:func:`~discretisedfield.Mesh.index2point`
 
         """
+        if isinstance(point, (tuple, list, np.ndarray)):
+            if any(not isinstance(i, numbers.Real) for i in point):
+                raise TypeError(
+                    f"The elements of point {point=} must be of type numbers.Real."
+                )
+        elif isinstance(point, numbers.Real):
+            point = [point]
+        else:
+            raise TypeError(
+                f"The point is of the wrong type {type(point)=}. It must be an integer"
+                " (1D) or a tuple/list/array of integers."
+            )
+
+        if len(point) != self.region.ndim:
+            raise ValueError(
+                f"Wrong dimensional point. {point=} but {self.region.ndim=}."
+            )
+
         if point not in self.region:
-            raise ValueError(f"Point {point} is outside mesh.region={self.region}.")
+            raise ValueError(f"Point {point} is outside the region {self.region=}.")
 
         index = ((point - self.region.pmin) / self.cell - 0.5).round().astype(int)
         # If index is rounded to the out-of-range values.
@@ -773,9 +815,9 @@ class Mesh(_MeshIO):
         (slice(0, 10, None), slice(0, 5, None), slice(0, 1, None))
         """
 
-        i1 = self.point2index(np.array(region.pmin) + np.array(self.cell) / 2)
-        i2 = self.point2index(np.array(region.pmax) - np.array(self.cell) / 2)
-        return tuple(slice(i1[i], i2[i] + 1) for i in range(3))
+        i1 = self.point2index(region.pmin + self.cell / 2)
+        i2 = self.point2index(region.pmax - self.cell / 2)
+        return tuple(slice(i1[i], i2[i] + 1) for i in range(self.region.ndim))
 
     def line(self, *, p1, p2, n):
         """Line generator.
@@ -1196,11 +1238,11 @@ class Mesh(_MeshIO):
         array([12, 12, 11])
 
         """
+        pmin = self.region.pmin.copy()
+        pmax = self.region.pmax.copy()
         # Convert to np.ndarray to allow operations on them.
-        pmin = np.array(self.region.pmin)
-        pmax = np.array(self.region.pmax)
         for direction in pad_width.keys():
-            axis = dfu.axesdict[direction]
+            axis = self.region._dim2index(direction)
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
@@ -1329,7 +1371,7 @@ class Mesh(_MeshIO):
         dn = dfu.assemble_index(0, 3, {self.attributes["planeaxis"]: 1})
         return df.Field(self, dim=3, value=dn, norm=norm)
 
-    def scale(self, factor, inplace=False):
+    def scale(self, factor, reference_point=None, inplace=False):
         """Scale the underlying region and all subregions.
 
         This method scales mesh.region and all subregions by multiplying ``pmin`` and
@@ -1344,9 +1386,14 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        factor : numbers.Number or array-like of numbers.Number
+        factor : numbers.Real or array-like of numbers.Real
 
             Factor to scale the region.
+
+        reference_point : array_like, optional
+
+            The position of the reference point is fixed when scaling the region. If not
+            specified the region is scaled about its ``center``.
 
         inplace : bool, optional
 
@@ -1418,14 +1465,18 @@ class Mesh(_MeshIO):
         ~discretisedfield.Region.scale
 
         """
+        sr_ref = self.region.center if reference_point is None else reference_point
         if inplace:
-            self.region.scale(factor, inplace=True)
+            self.region.scale(factor, inplace=True, reference_point=reference_point)
             for sr in self.subregions.values():
-                sr.scale(factor, inplace=True)
+                sr.scale(factor, inplace=True, reference_point=sr_ref)
             return self
         else:
-            region = self.region.scale(factor)
-            subregions = {key: sr.scale(factor) for key, sr in self.subregions.items()}
+            region = self.region.scale(factor, reference_point=reference_point)
+            subregions = {
+                key: sr.scale(factor, reference_point=sr_ref)
+                for key, sr in self.subregions.items()
+            }
             return self.__class__(
                 region=region, n=self.n, bc=self.bc, subregions=subregions
             )
@@ -1842,6 +1893,9 @@ class Mesh(_MeshIO):
 
         if self.region.dims != other.region.dims:
             raise ValueError("The mesh dimensions do not match.")
+
+        if any(self.n != other.n):
+            raise ValueError("The number of cells in each dimention do not match.")
 
         if (not isinstance(rtol, numbers.Real)) or (not isinstance(atol, numbers.Real)):
             raise TypeError(
