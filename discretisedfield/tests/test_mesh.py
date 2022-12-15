@@ -1241,6 +1241,7 @@ def test_k3d_mpl_subregions(tmp_path):
 
 
 def test_scale():
+    # example 1: 1d mesh, 1 subregion
     mesh = df.Mesh(p1=0, p2=10, cell=1, subregions={"sr": df.Region(p1=1, p2=5)})
     n = 10
     assert np.all(mesh.n == n)
