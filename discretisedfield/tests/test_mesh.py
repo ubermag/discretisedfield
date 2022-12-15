@@ -1331,4 +1331,4 @@ def test_sel_subregions():
     assert sub_mesh.subregions == {}
 
     # cell boundary and cell midpoint return the same selection
-    assert mesh.sel(x=6) == mesh.sel(x=7)
+    assert mesh.sel(x0=6) == mesh.sel(x0=7)
