@@ -1222,7 +1222,7 @@ def test_sel_single(p1, p2, dims, cell):
         with pytest.raises(ValueError):
             mesh.sel(dim, 10)
         with pytest.raises(ValueError):
-            mesh.sel(f"{dim}", **options)
+            mesh.sel(dim, **options)
         with pytest.raises(ValueError):
             mesh.sel()
         with pytest.raises(ValueError):
