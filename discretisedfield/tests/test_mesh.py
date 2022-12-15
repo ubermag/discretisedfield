@@ -1305,7 +1305,7 @@ def test_sel_subregions():
     }
     mesh = df.Mesh(region=region, cell=cell, subregions=sub_region)
     sub_mesh = mesh.sel(x0=(3.6, 7.8))
-    assert [i for i in sorted(sub_mesh.subregions)] == ["half", "in"]
+    assert sorted(sub_mesh.subregions) == ["half", "in"]
     assert np.isclose(sub_mesh.subregions["in"].pmin[0], 2.0, atol=0)
     assert np.isclose(sub_mesh.subregions["in"].pmax[0], 8.0, atol=0)
     assert np.isclose(sub_mesh.subregions["half"].pmin[0], 4.0, atol=0)
