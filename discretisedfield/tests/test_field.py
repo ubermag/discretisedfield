@@ -2881,7 +2881,7 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     fxa = f.to_xarray()
     assert isinstance(fxa, xr.DataArray)
     assert f.nvdim == fxa["comp"].size
-    assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
+    assert sorted([*fxa.attrs]) == ["cell", "nvdim", "pmax", "pmin", "units"]
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
@@ -2897,7 +2897,7 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
     fxa = f.to_xarray()
     assert isinstance(fxa, xr.DataArray)
-    assert sorted([*fxa.attrs]) == ["cell", "pmax", "pmin", "units"]
+    assert sorted([*fxa.attrs]) == ["cell", "nvdim", "pmax", "pmin", "units"]
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
@@ -2985,7 +2985,7 @@ def test_from_xarray_valid_args(test_field):
             comp=["x", "y", "z"],
         ),
         name="mag",
-        attrs=dict(units="A/m"),
+        attrs=dict(units="A/m", nvdim=3),
     )
 
     good_darray2 = xr.DataArray(
@@ -2995,7 +2995,7 @@ def test_from_xarray_valid_args(test_field):
             x=np.arange(0, 20), y=np.arange(0, 20), z=[5.0], comp=["x", "y", "z"]
         ),
         name="mag",
-        attrs=dict(units="A/m", cell=[1.0, 1.0, 1.0]),
+        attrs=dict(units="A/m", cell=[1.0, 1.0, 1.0], nvdim=3),
     )
 
     good_darray3 = xr.DataArray(
@@ -3010,6 +3010,7 @@ def test_from_xarray_valid_args(test_field):
             cell=[1.0, 1.0, 1.0],
             p1=[1.0, 1.0, 1.0],
             p2=[21.0, 21.0, 2.0],
+            nvdim=3,
         ),
     )
 
@@ -3043,7 +3044,7 @@ def test_from_xarray_invalid_args_and_DataArrays():
             comp=["x", "y", "z"],
         ),
         name="mag",
-        attrs=dict(units="A/m"),
+        attrs=dict(units="A/m", nvdim=3),
     )
 
     bad_dim_no2 = xr.DataArray(
@@ -3051,7 +3052,7 @@ def test_from_xarray_invalid_args_and_DataArrays():
         dims=["x", "y"],
         coords=dict(x=np.arange(0, 20), y=np.arange(0, 20)),
         name="mag",
-        attrs=dict(units="A/m"),
+        attrs=dict(units="A/m", nvdim=3),
     )
 
     bad_dim3 = xr.DataArray(
@@ -3059,7 +3060,7 @@ def test_from_xarray_invalid_args_and_DataArrays():
         dims=["a", "b", "c"],
         coords=dict(a=np.arange(0, 20), b=np.arange(0, 20), c=np.arange(0, 5)),
         name="mag",
-        attrs=dict(units="A/m"),
+        attrs=dict(units="A/m", nvdim=3),
     )
 
     bad_dim4 = xr.DataArray(
@@ -3072,7 +3073,7 @@ def test_from_xarray_invalid_args_and_DataArrays():
             c=["x", "y", "z"],
         ),
         name="mag",
-        attrs=dict(units="A/m"),
+        attrs=dict(units="A/m", nvdim=3),
     )
 
     bad_attrs = xr.DataArray(
@@ -3098,7 +3099,7 @@ def test_from_xarray_invalid_args_and_DataArrays():
                 dims=["x", "y", "z", "comp"],
                 coords=coord_dict,
                 name="mag",
-                attrs=dict(units="A/m"),
+                attrs=dict(units="A/m", nvdim=3),
             )
 
     for arg in args:
