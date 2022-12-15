@@ -279,6 +279,7 @@ def test_set_with_callable_vector(valid_mesh, func, dtype):
 
 
 def test_set_with_dict():
+    # 3d space with two subregions; one constant and one callable value
     p1 = (0, 0, 0)
     p2 = (10e-9, 10e-9, 10e-9)
     n = (5, 5, 5)
@@ -294,19 +295,22 @@ def test_set_with_dict():
     assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
     assert np.allclose(field((8e-9, 2.5e-9, 9e-9)), (9e-9, 3e-9, 9e-9), atol=0)
 
+    # subregions do not span the entire space
     subregions = {"r1": df.Region(p1=(0, 0, 0), p2=(4e-9, 10e-9, 10e-9))}
     mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
-
     with pytest.raises(KeyError):
         field = df.Field(mesh, nvdim=3, value={"r1": (0, 0, 1)})
 
+    # subregions do not span the entire space but there is a "default"
     field = df.Field(mesh, nvdim=3, value={"r1": (0, 0, 1), "default": (1, 1, 1)})
     assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
     assert np.all(field((8e-9, 2e-9, 9e-9)) == (1, 1, 1))
 
+    # no values for subregions, only "default"
     field = df.Field(mesh, nvdim=3, value={"default": (1, 1, 1)})
     assert np.all(field.array == (1, 1, 1))
 
+    # 1d space with one subregion and callable default
     p1 = 0
     p2 = 10e-9
     n = 5
