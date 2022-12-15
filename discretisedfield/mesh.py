@@ -993,6 +993,10 @@ class Mesh(_MeshIO):
         >>> p2 = (5, 5, 5)
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.region.ndim
+        3
+        >>> mesh.region.dims
+        ('x', 'y', 'z')
         ...
         >>> plane_mesh = mesh.sel(y=1)
 
