@@ -771,7 +771,7 @@ class Field(_FieldIO):
         array([1., 3., 4.])
 
         """
-        return self.array[self.mesh.point2index(point)]
+        return self.array[tuple(self.mesh.point2index(point))]
 
     def __getattr__(self, attr):
         """Extract the component of the vector field.
