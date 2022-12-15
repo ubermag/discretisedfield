@@ -1205,7 +1205,7 @@ def test_sel_single(p1, p2, dims, cell):
         bool_ = [i != dim for i in mesh.region.dims]
         assert np.allclose(sub_mesh.region.pmin, mesh.region.pmin[bool_], atol=0)
         assert np.allclose(sub_mesh.region.pmax, mesh.region.pmax[bool_], atol=0)
-        assert sub_mesh.region.dims == tuple([d for d in mesh.region.dims if d != dim])
+        assert sub_mesh.region.dims == tuple(d for d in mesh.region.dims if d != dim)
         assert np.all(sub_mesh.cell == mesh.cell[bool_])
 
     # Sel single plane of mesh (>1d) with no subregions
