@@ -1079,7 +1079,7 @@ class Mesh(_MeshIO):
                 for key, subreg in self.subregions.items():
                     if (
                         selected_value >= subreg.pmax[dim_index]
-                        or selected_value <= subreg.pmin[dim_index]
+                        or selected_value < subreg.pmin[dim_index]
                     ):
                         continue
                     else:
