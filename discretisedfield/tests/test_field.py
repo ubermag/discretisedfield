@@ -380,6 +380,7 @@ def test_vdims(valid_mesh):
     assert f12.y == f2
 
     f123 = f1 << f2 << f3
+    # check value at one point
     assert np.allclose(f123.array[(0,) * valid_mesh.region.ndim, :], [1, 2, 3])
     assert f123.x == f1
     assert f123.y == f2
