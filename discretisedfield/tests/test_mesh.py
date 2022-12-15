@@ -497,6 +497,8 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     "p1_1, p1_2, p2, n1, n2",
     [
         [5e-9, 6e-9, 10e-9, 5, 3],
+        # TODO the next test currently fails because of problems with atol=0 and
+        # zero values in the test data; this has to be fixed in Mesh
         [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],
         [(0, 0, 0), (3e-9, 3e-9, 3e-9), (10e-9, 10e-9, 10e-9), (5, 5, 5), (5, 5, 3)],
         [
@@ -509,8 +511,9 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     ],
 )
 def test_allclose(p1_1, p1_2, p2, n1, n2):
+    eps = 1e-12
     mesh1 = df.Mesh(p1=p1_1, p2=p2, n=n1)
-    mesh2 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh2 = df.Mesh(p1=np.array(p1_1) * 1, p2=np.array(p2) * (1 + eps), n=n1)
     mesh3 = df.Mesh(p1=p1_2, p2=p2, n=n1)
     mesh4 = df.Mesh(p1=p1_1, p2=p2, n=n2)
 
@@ -787,6 +790,7 @@ def test_region2slice():
 
 
 def test_points():
+    # 1d example (ndim=1)
     p1 = 0
     p2 = 10
     cell = 2
@@ -794,6 +798,7 @@ def test_points():
 
     assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
 
+    # 3d example (ndim=3)
     p1 = (0, 0, 4)
     p2 = (10, 6, 0)
     cell = (2, 2, 1)
@@ -803,6 +808,7 @@ def test_points():
     assert np.allclose(mesh.points.y, [1.0, 3.0, 5.0], atol=0)
     assert np.allclose(mesh.points.z, [0.5, 1.5, 2.5, 3.5], atol=0)
 
+    # 4d example (ndim=4)
     p1 = (0, 0, 4, 4)
     p2 = (10, 6, 0, 0)
     cell = (2, 2, 1, 1)

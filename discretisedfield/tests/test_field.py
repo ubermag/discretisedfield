@@ -289,9 +289,7 @@ def test_set_with_dict():
     }
     mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
 
-    field = df.Field(
-        mesh, nvdim=3, value={"r1": (0, 0, 1), "r2": lambda c: c, "r1:r2": (0, 0, 5)}
-    )
+    field = df.Field(mesh, nvdim=3, value={"r1": (0, 0, 1), "r2": lambda c: c})
     assert np.all(field((3e-9, 7e-9, 9e-9)) == (0, 0, 1))
     assert np.allclose(field((8e-9, 2.5e-9, 9e-9)), (9e-9, 3e-9, 9e-9), atol=0)
 
