@@ -1887,7 +1887,7 @@ class Mesh(_MeshIO):
             raise ValueError("The mesh dimensions do not match.")
 
         if any(self.n != other.n):
-            raise ValueError("The number of cells in each dimention do not match.")
+            raise ValueError("The number of cells in each dimension do not match.")
 
         if (not isinstance(rtol, numbers.Real)) or (not isinstance(atol, numbers.Real)):
             raise TypeError(
