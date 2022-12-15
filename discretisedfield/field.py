@@ -771,7 +771,7 @@ class Field(_FieldIO):
         array([1., 3., 4.])
 
         """
-        return self.array[self.mesh.point2index(point)]
+        return self.array[tuple(self.mesh.point2index(point))]
 
     def __getattr__(self, attr):
         """Extract the component of the vector field.
@@ -949,7 +949,7 @@ class Field(_FieldIO):
 
           1. They are defined on the same mesh.
 
-          2. They have the same dimension (``nvdim``).
+          2. They have the same number of value dimensions (``nvdim``).
 
           3. They both contain the same values in ``array``.
 
@@ -1752,7 +1752,7 @@ class Field(_FieldIO):
         return self.__class__(
             self.mesh,
             nvdim=len(array_list),
-            value=np.stack(array_list, axis=3),
+            value=np.stack(array_list, axis=-1),
             vdims=vdims,
         )
 
@@ -3573,13 +3573,13 @@ class Field(_FieldIO):
 
 @functools.singledispatch
 def _as_array(val, mesh, nvdim, dtype):
-    raise TypeError("Unsupported type {type(val)}.")
+    raise TypeError(f"Unsupported type {type(val)}.")
 
 
 # to avoid str being interpreted as iterable
 @_as_array.register(str)
 def _(val, mesh, nvdim, dtype):
-    raise TypeError("Unsupported type {type(val)}.")
+    raise TypeError(f"Unsupported type {type(val)}.")
 
 
 @_as_array.register(numbers.Complex)
@@ -3599,7 +3599,7 @@ def _(val, mesh, nvdim, dtype):
     # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, nvdim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
-        array[index] = val(point)
+        array[tuple(index)] = val(point)
     return array
 
 
@@ -3613,7 +3613,10 @@ def _(val, mesh, nvdim, dtype):
         )
     value = (
         val.to_xarray()
-        .sel(x=mesh.points.x, y=mesh.points.y, z=mesh.points.z, method="nearest")
+        .sel(
+            **{dim: getattr(mesh.points, dim) for dim in mesh.region.dims},
+            method="nearest",
+        )
         .data
     )
     if nvdim == 1:
@@ -3638,7 +3641,7 @@ def _(val, mesh, nvdim, dtype):
             submesh = mesh[subregion]
             subval = val[subregion]
         except KeyError:
-            continue
+            continue  # subregion not in val when implicitly set via "default"
         else:
             slices = mesh.region2slices(submesh.region)
             array[slices] = _as_array(subval, submesh, nvdim, dtype)
@@ -3650,8 +3653,8 @@ def _(val, mesh, nvdim, dtype):
                 "Key 'default' required if not all subregion keys are specified."
             )
         subval = val["default"]
-        for ix, iy, iz in np.argwhere(np.isnan(array[..., 0])):
+        for idx in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
-            array[ix, iy, iz] = subval(mesh.index2point((ix, iy, iz)))
+            array[tuple(idx)] = subval(mesh.index2point(idx))
 
     return array

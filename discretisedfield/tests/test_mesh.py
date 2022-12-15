@@ -498,6 +498,8 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     "p1_1, p1_2, p2, n1, n2",
     [
         [5e-9, 6e-9, 10e-9, 5, 3],  # 1d
+        # TODO the next test currently fails because of problems with atol=0 and
+        # zero values in the test data; this has to be fixed in Mesh
         [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],  # 2d
         [  # 3d
             (0, 0, 0),
@@ -516,8 +518,9 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     ],
 )
 def test_allclose(p1_1, p1_2, p2, n1, n2):
+    eps = 1e-12
     mesh1 = df.Mesh(p1=p1_1, p2=p2, n=n1)
-    mesh2 = df.Mesh(p1=p1_1, p2=p2, n=n1)
+    mesh2 = df.Mesh(p1=np.array(p1_1) * 1, p2=np.array(p2) * (1 + eps), n=n1)
     mesh3 = df.Mesh(p1=p1_2, p2=p2, n=n1)
     mesh4 = df.Mesh(p1=p1_1, p2=p2, n=n2)
 
@@ -764,7 +767,7 @@ def test_region2slice():
     assert mesh.region2slices(df.Region(p1=p1, p2=p2)) == (slice(0, 4, None),)
     assert mesh.region2slices(df.Region(p1=0, p2=1)) == (slice(0, 1, None),)
     assert mesh.region2slices(df.Region(p1=2, p2=3)) == (slice(2, 3, None),)
-
+    # check error is raised if region is greater than the mesh's region
     with pytest.raises(ValueError):
         mesh.region2slices(df.Region(p1=(-1), p2=(3)))
 
@@ -796,6 +799,7 @@ def test_region2slice():
 
 
 def test_points():
+    # 1d example (ndim=1)
     p1 = 0
     p2 = 10
     cell = 2
@@ -803,6 +807,7 @@ def test_points():
 
     assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
 
+    # 3d example (ndim=3)
     p1 = (0, 0, 4)
     p2 = (10, 6, 0)
     cell = (2, 2, 1)
@@ -812,6 +817,7 @@ def test_points():
     assert np.allclose(mesh.points.y, [1.0, 3.0, 5.0], atol=0)
     assert np.allclose(mesh.points.z, [0.5, 1.5, 2.5, 3.5], atol=0)
 
+    # 4d example (ndim=4)
     p1 = (0, 0, 4, 4)
     p2 = (10, 6, 0, 0)
     cell = (2, 2, 1, 1)
@@ -1255,6 +1261,7 @@ def test_k3d_mpl_subregions(tmp_path):
 
 
 def test_scale():
+    # example 1: 1d mesh, 1 subregion
     mesh = df.Mesh(p1=0, p2=10, cell=1, subregions={"sr": df.Region(p1=1, p2=5)})
     n = 10
     assert np.all(mesh.n == n)
@@ -1269,6 +1276,7 @@ def test_scale():
     assert np.allclose(res.subregions["sr"].pmin, -5, atol=0)
     assert np.allclose(res.subregions["sr"].pmax, 5, atol=0)
 
+    # example 2: 1d mesh, 1 subregion, with given reference_point
     mesh = df.Mesh(p1=0, p2=10, cell=1, subregions={"sr": df.Region(p1=1, p2=5)})
     n = 10
     assert np.all(mesh.n == n)
@@ -1283,6 +1291,7 @@ def test_scale():
     assert np.allclose(mesh.subregions["sr"].pmin, 8.8, atol=0)
     assert np.allclose(mesh.subregions["sr"].pmax, 18.8, atol=0)
 
+    # example 3: 2d mesh, no subregions
     p1 = (-50e-9, 0)
     p2 = (50e-9, 20e-9)
     cell = (1e-9, 2e-9)
@@ -1307,6 +1316,7 @@ def test_scale():
     assert np.allclose(mesh.cell, (2e-9, 1e-9), atol=0)
     assert mesh.subregions == {}
 
+    # example 4: 3d mesh, 2 subregions (partial overlap), inplace=True
     p1 = (-50e-9, -50e-9, 0)
     p2 = (50e-9, 50e-9, 20e-9)
     cell = (1e-9, 1e-9, 2e-9)
