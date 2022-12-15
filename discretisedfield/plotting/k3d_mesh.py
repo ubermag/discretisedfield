@@ -157,7 +157,7 @@ class K3dMesh:
 
         plot_array = np.zeros(self.mesh.n)
         for index in self.mesh.indices:
-            # colour all voxels in the same subregion with the same colour 
+            # colour all voxels in the same subregion with the same colour
             # to make it easier to identify subregions
             for i, subregion in enumerate(self.mesh.subregions.values()):
                 if self.mesh.index2point(index) in subregion:
