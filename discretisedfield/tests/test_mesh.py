@@ -1199,7 +1199,7 @@ def test_sel_single(p1, p2, dims, cell):
     # Sel center of mesh (>1d) with no subregions
     mesh = df.Mesh(region=region, cell=cell)
     for dim in mesh.region.dims:
-        sub_mesh = mesh.sel(f"{dim}")
+        sub_mesh = mesh.sel(dim)
         assert isinstance(sub_mesh, df.Mesh)
         assert sub_mesh.region.ndim == mesh.region.ndim - 1
         bool_ = [i != dim for i in mesh.region.dims]
