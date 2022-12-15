@@ -3,7 +3,6 @@ import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield.plotting.util as plot_util
-import discretisedfield.util as dfu
 
 
 class K3dMesh:
@@ -73,8 +72,6 @@ class K3dMesh:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f"({uu.rsi_prefixes[multiplier]}m)"
-
         plot_array = np.ones(tuple(reversed(self.mesh.n))).astype(np.uint8)
         plot_array[0, 0, -1] = 2  # mark the discretisation cell
 
@@ -91,7 +88,10 @@ class K3dMesh:
             plot_array, color_map=color, bounds=bounds, outlines=False, **kwargs
         )
 
-        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
+        plot.axes = [
+            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
+        ]
 
     def subregions(
         self, *, plot=None, color=plot_util.cp_int, multiplier=None, **kwargs
@@ -153,8 +153,6 @@ class K3dMesh:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.mesh.region.edges)
 
-        unit = f"({uu.rsi_prefixes[multiplier]}m)"
-
         plot_array = np.zeros(self.mesh.n)
         for index in self.mesh.indices:
             # colour all voxels in the same subregion with the same colour
@@ -180,4 +178,7 @@ class K3dMesh:
             plot_array, color_map=color, bounds=bounds, outlines=False, **kwargs
         )
 
-        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
+        plot.axes = [
+            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
+        ]
