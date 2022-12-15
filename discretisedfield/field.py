@@ -3613,7 +3613,10 @@ def _(val, mesh, nvdim, dtype):
         )
     value = (
         val.to_xarray()
-        .sel(x=mesh.points.x, y=mesh.points.y, z=mesh.points.z, method="nearest")
+        .sel(
+            **{dim: getattr(mesh.points, dim) for dim in mesh.region.dims},
+            method="nearest",
+        )
         .data
     )
     if nvdim == 1:
