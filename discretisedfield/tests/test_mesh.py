@@ -1287,7 +1287,7 @@ def test_sel_range(p1, p2, dims, cell):
 
         # Wrong value type
         with pytest.raises(TypeError):
-            options = {dim: (12.5, f"{dim}")}
+            options = {dim: (12.5, dim)}
             mesh.sel(**options)
 
 
