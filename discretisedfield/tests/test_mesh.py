@@ -755,7 +755,7 @@ def test_region2slice():
     assert mesh.region2slices(df.Region(p1=p1, p2=p2)) == (slice(0, 4, None),)
     assert mesh.region2slices(df.Region(p1=0, p2=1)) == (slice(0, 1, None),)
     assert mesh.region2slices(df.Region(p1=2, p2=3)) == (slice(2, 3, None),)
-
+    # check error is raised if region is greater than the mesh's region
     with pytest.raises(ValueError):
         mesh.region2slices(df.Region(p1=(-1), p2=(3)))
 
