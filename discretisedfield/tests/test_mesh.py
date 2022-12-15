@@ -1179,6 +1179,7 @@ def test_sel_string_1D():
     p2 = 100
     cell = 10
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    # 0 dimensional regions/meshes are not "allowed"
     with pytest.raises(ValueError):
         mesh.sel("x")
 
