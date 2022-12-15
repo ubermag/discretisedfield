@@ -1262,19 +1262,19 @@ def test_sel_range(p1, p2, dims, cell):
         assert sub_mesh.n[idx] == 2
 
         # Single layer
-        options = {dim: np.ndarray([2.5, 13.5])}
+        options = {dim: np.array([2.5, 13.5])}
         sub_mesh = mesh.sel(**options)
         assert isinstance(sub_mesh, df.Mesh)
         assert sub_mesh.region.ndim == mesh.region.ndim
         bool_ = [i != dim for i in mesh.region.dims]
         idx = mesh.region._dim2index(dim)
         assert np.isclose(sub_mesh.region.pmax[idx], 20.0, atol=0)
-        assert np.isclose(sub_mesh.region.pmin[idx], 10.0, atol=0)
+        assert np.isclose(sub_mesh.region.pmin[idx], 0.0, atol=0)
         assert np.allclose(sub_mesh.region.pmin[bool_], mesh.region.pmin[bool_], atol=0)
         assert np.allclose(sub_mesh.region.pmax[bool_], mesh.region.pmax[bool_], atol=0)
         assert sub_mesh.region.dims == mesh.region.dims
         assert all(sub_mesh.n[bool_] == mesh.n[bool_])
-        assert sub_mesh.n[idx] == 1
+        assert sub_mesh.n[idx] == 2
 
         # Too many values
         with pytest.raises(ValueError):
