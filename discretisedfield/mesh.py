@@ -1014,7 +1014,11 @@ class Mesh(_MeshIO):
 
         3. Specifying a range of points along axis ``x`` to be selected from mesh.
 
-        >>> plane_mesh = mesh.sel(x=(2, 4))
+        >>> selected_mesh = mesh.sel(x=(2, 4))
+        >>> selected_mesh.region.ndim
+        3
+        >>> selected_mesh.region.dims
+        ('x', 'y', 'z')
 
         """
         if len(args) > 1 or len(kwargs) > 1:
