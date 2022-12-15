@@ -24,6 +24,9 @@ html_re = (
     r"</ul>"
 )
 
+# Test inputs for initialising fields in the form [value, dtype]
+
+# scalar functions: take a length-n tuple and return a scalar
 sfuncs = [
     [lambda c: 1, np.float64],
     [lambda c: -2.4, np.float64],
@@ -31,6 +34,7 @@ sfuncs = [
     [lambda c: 1 + 2j, np.complex128],
     [lambda c: sum(c) + 1, np.float64],
 ]
+# vector functions: take a length-n tuple and return a length-3 vector
 vfuncs = [
     [lambda c: (1, 2, 0), np.float64],
     [lambda c: (-2.4, 1e-3, 9), np.float64],
@@ -38,7 +42,7 @@ vfuncs = [
     [lambda c: (0, 1j, 1), np.complex128],
     [lambda c: (sum(c), np.min(c), np.max(c)), np.float64],
 ]
-
+# scalar constants
 consts = [
     [0, None],
     [-5.0, None],
@@ -48,6 +52,7 @@ consts = [
     [random.random(), None],
     [1 + 1j, None],
 ]
+# vector constants
 iters = [
     [(0, 0, 1), None],
     [(0, -5.1, np.pi), None],
