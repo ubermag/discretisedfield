@@ -232,7 +232,7 @@ class _FieldIO_OVF:
 
         return cls(
             mesh,
-            dim=header["valuedim"],
+            nvdim=header["valuedim"],
             value=array.reshape(r_tuple).transpose(t_tuple),
             vdims=vdims,
             unit=unit,
