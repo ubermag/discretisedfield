@@ -70,7 +70,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
         line = f.line(p1=p1, p2=(10e-9, 15e-9, 1e-9), n=200)
         check_line(line)
@@ -152,7 +152,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
         line = f.line(p1=(1e-9, 1e-9, 0.1e-9), p2=(4e-9, 5e-9, 1e-9), n=20)
 
@@ -192,7 +192,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
         line = f.line(p1=(1e-9, 1e-9, 0.1e-9), p2=(4e-9, 5e-9, 1e-9), n=20)
 

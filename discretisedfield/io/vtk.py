@@ -79,7 +79,7 @@ class _FieldIO_VTK:
         with contextlib.suppress(FileNotFoundError):
             mesh.load_subregions(filename)
 
-        return cls(mesh, dim=dim, value=value, vdims=vdims)
+        return cls(mesh, nvdim=dim, value=value, vdims=vdims)
 
     @classmethod
     def _from_vtk_legacy(cls, filename):
@@ -125,7 +125,7 @@ class _FieldIO_VTK:
         mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
         with contextlib.suppress(FileNotFoundError):
             mesh.load_subregions(filename)
-        field = df.Field(mesh, dim=dim)
+        field = df.Field(mesh, nvdim=dim)
 
         # Find where data starts.
         for i, line in enumerate(lines):
