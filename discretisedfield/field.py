@@ -138,9 +138,9 @@ class Field(_FieldIO):
         self._mesh = mesh
 
         if not isinstance(nvdim, numbers.Integral):
-            raise TypeError("'dim' must be of type int.")
+            raise TypeError("'nvdim' must be of type int.")
         elif nvdim < 1:
-            raise ValueError("'dim' must be greater than zero.")
+            raise ValueError("'nvdim' must be greater than zero.")
         self._nvdim = nvdim
 
         self.dtype = dtype
