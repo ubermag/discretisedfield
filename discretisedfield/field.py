@@ -1,7 +1,6 @@
 import collections
 import functools
 import numbers
-import warnings
 
 import numpy as np
 import xarray as xr
@@ -686,12 +685,7 @@ class Field(_FieldIO):
 
     @property
     def average(self):
-        warnings.warn(
-            "The average property is deprecated. Please use the mean function.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mean()
+        raise ValueError("This property has been remove, please use the mean function.")
 
     def __repr__(self):
         """Representation string.
