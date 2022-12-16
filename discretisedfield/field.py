@@ -2512,12 +2512,6 @@ class Field(_FieldIO):
                 )
             sum_ = np.sum(self.array, axis=tuple(range(self.mesh.region.ndim)))
             dV = np.prod(self.mesh.cell)
-            # NOTE the next 3 lines can be removed when the mesh is n dimensional
-            if self.mesh.attributes["isplane"]:
-                dV = (
-                    self.mesh.cell[self.mesh.attributes["axis1"]]
-                    * self.mesh.cell[self.mesh.attributes["axis2"]]
-                )
             return sum_ * dV
         elif not isinstance(direction, str):
             raise TypeError("'direction' must be of type str.")
@@ -2532,17 +2526,11 @@ class Field(_FieldIO):
             tmp_array[right_cells] += np.cumsum(self.array, axis=axis)[left_cells]
             res_array = tmp_array * mesh.cell[axis]
         else:
-            # NOTE reduce dimension n -> n-1:
-            # - remove keepdims
-            # - replace mesh.plane
-            #   - either mesh.sel
-            #   - or manually
-            res_array = np.sum(self.array, axis=axis, keepdims=True) * mesh.cell[axis]
-            mesh = mesh.plane(direction)
+            res_array = np.sum(self.array, axis=axis) * mesh.cell[axis]
+            mesh = mesh.sel(direction)
 
-        # NOTE what should this method return for ndim == 0?
-        # if mesh.region.ndim == 0:
-        #     return res_array
+        if mesh.region.ndim == 0:
+            return res_array
 
         return self.__class__(mesh, nvdim=self.nvdim, value=res_array, vdims=self.vdims)
 

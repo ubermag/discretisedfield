@@ -1767,8 +1767,7 @@ def test_laplace():
 
 
 # TODO Martin, needs mesh.sel
-def test_integrate():
-    # Volume integral.
+def test_integrate_volume():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (0.5, 0.5, 0.5)
@@ -1794,7 +1793,7 @@ def test_integrate():
     assert np.allclose(f.integrate(), (0, 0, 0))
     assert np.allclose(f.integrate(), (0, 0, 0))
 
-    # Surface integral.
+def test_integrate_surface():
     p1 = (0, 0, 0)
     p2 = (10, 5, 3)
     cell = (0.5, 0.5, 0.5)
@@ -1820,6 +1819,7 @@ def test_integrate():
     # The value on the right-hand-site is the expected result.
     assert f.plane("z").plane("x").dot([1, 0, 0]).integrate() != -5
 
+def test_integrate_surface():
     # Directional integral
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
@@ -1848,6 +1848,7 @@ def test_integrate():
         f.integrate("x").integrate("y").integrate("z").mean(), f.integrate()
     )
 
+def test_integrate_surface():
     # Cumulative integral
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
@@ -1870,6 +1871,12 @@ def test_integrate():
         assert np.allclose(f.integrate(d, cumulative=True).diff(d).array, f.array)
         assert np.allclose(f.diff(d).integrate(d, cumulative=True).array, f.array)
 
+def test_integrate_exceptions():
+    p1 = (0, 0, 0)
+    p2 = (10, 10, 10)
+    cell = (0.5, 0.5, 0.5)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
     # Exceptions
     with pytest.raises(ValueError):
         f.integrate(cumulative=True)
