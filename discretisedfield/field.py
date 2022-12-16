@@ -138,12 +138,6 @@ class Field(_FieldIO):
             raise TypeError("'mesh' must be of class discretisedfield.Mesh.")
         self._mesh = mesh
 
-        if nvdim is None and "dim" in kwargs:
-            nvdim = kwargs.pop("dim")
-            warnings.warn(
-                "Use of 'dim' is deprecated; use 'nvdim' instead.", DeprecationWarning
-            )
-
         if not isinstance(nvdim, numbers.Integral):
             raise TypeError("'dim' must be of type int.")
         elif nvdim < 1:
