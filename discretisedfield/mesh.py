@@ -2101,7 +2101,7 @@ class Mesh(_MeshIO):
 
         """
 
-        field = df.Field(self, dim=self.region.ndim)
+        field = df.Field(self, nvdim=self.region.ndim)
         for i, dim in enumerate(self.region.dims):
             points = self.points  # avoid re-computing points
             field.array[..., i] = getattr(points, dim).reshape(
