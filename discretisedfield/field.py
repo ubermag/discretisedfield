@@ -3577,7 +3577,8 @@ class Field(_FieldIO):
         )
 
         if any("units" not in xa[i].attrs for i in dims_list):
-            mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+            region = df.Region(p1=p1, p2=p2, dims=dims_list)
+            mesh = df.Mesh(region=region, cell=cell)
         else:
             region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in dims_list])
             mesh = df.Mesh(region=region, cell=cell)
