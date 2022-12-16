@@ -2987,7 +2987,14 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     fxa = f.to_xarray()
     assert isinstance(fxa, xr.DataArray)
     assert f.nvdim == fxa["comp"].size
-    assert sorted([*fxa.attrs]) == ["cell", "nvdim", "pmax", "pmin", "units"]
+    assert sorted([*fxa.attrs]) == [
+        "cell",
+        "nvdim",
+        "pmax",
+        "pmin",
+        "tolerance_factor",
+        "units",
+    ]
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
@@ -3003,7 +3010,14 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
     fxa = f.to_xarray()
     assert isinstance(fxa, xr.DataArray)
-    assert sorted([*fxa.attrs]) == ["cell", "nvdim", "pmax", "pmin", "units"]
+    assert sorted([*fxa.attrs]) == [
+        "cell",
+        "nvdim",
+        "pmax",
+        "pmin",
+        "tolerance_factor",
+        "units",
+    ]
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
