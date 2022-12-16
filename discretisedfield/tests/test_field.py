@@ -2981,9 +2981,6 @@ def test_numpy_ufunc(test_field):
     assert np.allclose(np.exp(field.orientation).array, np.exp(field.orientation.array))
 
 
-# ##############################
-# TODO Swapneel
-# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", vfuncs)
 def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
@@ -3001,7 +2998,6 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     assert np.array_equal(f.array, fxa.values)
 
 
-# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", sfuncs)
 def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
@@ -3018,7 +3014,6 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
 
 
-# @pytest.mark.skip(reason="WIP on a different branch")
 def test_to_xarray_6d_field(test_field):
     f6d = test_field << test_field
     f6d_xa = f6d.to_xarray()
@@ -3041,7 +3036,6 @@ def test_to_xarray_6d_field(test_field):
     assert f3d_xa_2.attrs["units"] == "A/m"
 
 
-# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize(
     "name, unit",
     [
@@ -3060,7 +3054,6 @@ def test_to_xarray_invalid_args(name, unit, test_field):
         test_field.to_xarray(name, unit)
 
 
-# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", vfuncs)
 def test_from_xarray_valid_args_vector(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
@@ -3069,7 +3062,6 @@ def test_from_xarray_valid_args_vector(valid_mesh, value, dtype):
     assert f_new == f
 
 
-# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", sfuncs)
 def test_from_xarray_valid_args_scalar(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
@@ -3078,7 +3070,6 @@ def test_from_xarray_valid_args_scalar(valid_mesh, value, dtype):
     assert f_new == f
 
 
-# @pytest.mark.skip(reason="WIP on a different branch")
 def test_from_xarray_valid_args(test_field):
     f_plane = test_field.plane("z")
     f_plane_xa = f_plane.to_xarray()
@@ -3137,7 +3128,6 @@ def test_from_xarray_valid_args(test_field):
     assert isinstance(fg_3, df.Field)
 
 
-# @pytest.mark.skip(reason="WIP on a different branch")
 def test_from_xarray_invalid_args_and_DataArrays():
     args = [
         int(),
