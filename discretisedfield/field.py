@@ -41,8 +41,8 @@ class Field(_FieldIO):
 
     nvdim : int
 
-        Dimension of the field's value. For instance, if `dim=3` the field is a
-        three-dimensional vector field and for `dim=1` the field is a scalar
+        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is a
+        three-dimensional vector field and for `nvdim=1` the field is a scalar
         field.
 
     value : array_like, callable, dict, optional
@@ -657,11 +657,7 @@ class Field(_FieldIO):
         if direction is None:
             return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
         elif isinstance(direction, (tuple, list)):
-            if not all(d in self.mesh.region.dims for d in direction):
-                raise ValueError(
-                    f"Invalid direction. Directions must be in {self.mesh.region.dims}."
-                )
-            elif len(direction) != len(set(direction)):
+            if len(direction) != len(set(direction)):
                 raise ValueError("Duplicate directions are not allowed.")
             # Mean over all directions explicitly.
             if sorted(direction) == sorted(self.mesh.region.dims):
@@ -674,18 +670,14 @@ class Field(_FieldIO):
                 axis = np.zeros(len(direction), dtype=int)
                 for i, d in enumerate(direction):
                     mesh = mesh.plane(d)
-                    axis[i] = self.mesh.region.dims.index(d)
+                    axis[i] = self.mesh.region._dim2index(d)
                 # Keepdims is needed for the current 3D behaviour
                 array = array.mean(axis=tuple(axis), keepdims=True)
                 return self.__class__(
                     mesh, nvdim=self.nvdim, value=array, unit=self.unit
                 )
         elif isinstance(direction, str):
-            if direction not in self.mesh.region.dims:
-                raise ValueError(
-                    f"Invalid direction. Direction must be in {self.mesh.region.dims}."
-                )
-            axis = self.mesh.region.dims.index(direction)
+            axis = self.mesh.region._dim2index(direction)
             return self.__class__(
                 self.mesh.plane(direction),
                 nvdim=self.nvdim,
@@ -779,7 +771,7 @@ class Field(_FieldIO):
         array([1., 3., 4.])
 
         """
-        return self.array[self.mesh.point2index(point)]
+        return self.array[tuple(self.mesh.point2index(point))]
 
     def __getattr__(self, attr):
         """Extract the component of the vector field.
@@ -957,7 +949,7 @@ class Field(_FieldIO):
 
           1. They are defined on the same mesh.
 
-          2. They have the same dimension (``nvdim``).
+          2. They have the same number of value dimensions (``nvdim``).
 
           3. They both contain the same values in ``array``.
 
@@ -1014,7 +1006,7 @@ class Field(_FieldIO):
 
           1. Defined on the same mesh.
 
-          2. Have the same dimension (``nvdim``).
+          2. Have the same number of value dimension (``nvdim``).
 
           3. All values in are within relative (``rtol``) and absolute
           (``atol``) tolerances.
@@ -1409,11 +1401,11 @@ class Field(_FieldIO):
 
         It can be applied between:
 
-        1. Two fields with equal vector dimentions,
+        1. Two fields with equal vector dimensions ``nvdim``,
 
-        2. A field of any dimension and ``numbers.Complex``,
+        2. A field of any dimension ``nvdim`` and ``numbers.Complex``,
 
-        3. A field of any dimension and a scalar (``nvdim=1``) field.
+        3. A field of any dimension ``nvdim`` and a scalar (``nvdim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
         defined on the same mesh.
@@ -1479,11 +1471,11 @@ class Field(_FieldIO):
 
         It can be applied between:
 
-        1. Two fields with equal vector dimentions,
+        1. Two fields with equal vector dimensions ``nvdim``,
 
-        2. A field of any dimension and ``numbers.Complex``,
+        2. A field of any dimension ``nvdim`` and ``numbers.Complex``,
 
-        3. A field of any dimension and a scalar (``nvdim=1``) field.
+        3. A field of any dimension ``nvdim`` and a scalar (``nvdim=1``) field.
 
         If both operands are ``discretisedfield.Field`` objects, they must be
         defined on the same mesh.
@@ -1688,7 +1680,7 @@ class Field(_FieldIO):
         ----------
         fields : list
 
-            List of ``discretisedfield.Field`` objects with ``nvdim=1``.
+            List of ``discretisedfield.Field`` objects, each with ``nvdim=1``.
 
         Returns
         -------
@@ -1760,7 +1752,7 @@ class Field(_FieldIO):
         return self.__class__(
             self.mesh,
             nvdim=len(array_list),
-            value=np.stack(array_list, axis=3),
+            value=np.stack(array_list, axis=-1),
             vdims=vdims,
         )
 
@@ -1830,7 +1822,7 @@ class Field(_FieldIO):
         """
         d = {}
         for key, value in pad_width.items():
-            d[dfu.axesdict[key]] = value
+            d[self.mesh.region._dim2index(key)] = value
         padding_sequence = dfu.assemble_index((0, 0), len(self.array.shape), d)
 
         padded_array = np.pad(self.array, padding_sequence, mode=mode, **kwargs)
@@ -1944,13 +1936,7 @@ class Field(_FieldIO):
         # differential operators using slicing. This is not the most efficient
         # way, and we should consider using ndimage.convolve in the future.
 
-        if direction not in self.mesh.region.dims:
-            raise ValueError(
-                f"Direction {direction} is not valid. "
-                "It must be one of the following: "
-                f"{self.mesh.region.dims}."
-            )
-        direction_idx = self.mesh.region.dims.index(direction)
+        direction_idx = self.mesh.region._dim2index(direction)
 
         # If there are no neighbouring cells in the specified direction, zero
         # field is returned.
@@ -2117,7 +2103,8 @@ class Field(_FieldIO):
         r"""Gradient.
 
         This method computes the gradient of a scalar (``nvdim=1``) field and
-        returns a vector field:
+        returns a vector field with the same number of dimensions as the space
+        on which the scalar field is defined (``ndim``):
 
         .. math::
 
@@ -2547,12 +2534,10 @@ class Field(_FieldIO):
             return sum_ * dV
         elif not isinstance(direction, str):
             raise TypeError("'direction' must be of type str.")
-        elif direction not in self.mesh.region.dims:
-            raise ValueError(f"{direction=} not in {self.mesh.region.dims}.")
 
         mesh = self.mesh
 
-        axis = mesh.region.dims.index(direction)
+        axis = mesh.region._dim2index(direction)
         if cumulative:
             tmp_array = self.array / 2
             left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
@@ -2625,7 +2610,14 @@ class Field(_FieldIO):
         points = list(self.mesh.line(p1=p1, p2=p2, n=n))
         values = [self(p) for p in points]
 
-        return df.Line(points=points, values=values)
+        return df.Line(
+            points=points,
+            values=values,
+            point_columns=self.mesh.region.dims,
+            value_columns=[f"v{dim}" for dim in self.vdims]
+            if self.vdims is not None
+            else "v",
+        )  # TODO scalar fields have no vdim
 
     def plane(self, *args, n=None, **kwargs):
         """Extracts field on the plane mesh.
@@ -3139,7 +3131,7 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.attributes["realspace_mesh"]
         if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
-            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
+            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
 
         values = []
         for idx in range(self.nvdim):
@@ -3187,7 +3179,7 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.attributes["realspace_mesh"]
         if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
-            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
+            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
 
         values = []
         for idx in range(self.nvdim):
@@ -3240,7 +3232,7 @@ class Field(_FieldIO):
         # TODO: Using PlaneMesh will simplify the code a lot here.
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
         if self.mesh.attributes["isplane"]:
-            mesh = mesh.plane(dfu.raxesdict[self.mesh.attributes["planeaxis"]])
+            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
 
         mesh.attributes["realspace_mesh"] = self.mesh
         mesh.attributes["fourierspace"] = True
@@ -3598,13 +3590,13 @@ class Field(_FieldIO):
 
 @functools.singledispatch
 def _as_array(val, mesh, nvdim, dtype):
-    raise TypeError("Unsupported type {type(val)}.")
+    raise TypeError(f"Unsupported type {type(val)}.")
 
 
 # to avoid str being interpreted as iterable
 @_as_array.register(str)
 def _(val, mesh, nvdim, dtype):
-    raise TypeError("Unsupported type {type(val)}.")
+    raise TypeError(f"Unsupported type {type(val)}.")
 
 
 @_as_array.register(numbers.Complex)
@@ -3624,7 +3616,7 @@ def _(val, mesh, nvdim, dtype):
     # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, nvdim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
-        array[index] = val(point)
+        array[tuple(index)] = val(point)
     return array
 
 
@@ -3638,7 +3630,10 @@ def _(val, mesh, nvdim, dtype):
         )
     value = (
         val.to_xarray()
-        .sel(x=mesh.points.x, y=mesh.points.y, z=mesh.points.z, method="nearest")
+        .sel(
+            **{dim: getattr(mesh.points, dim) for dim in mesh.region.dims},
+            method="nearest",
+        )
         .data
     )
     if nvdim == 1:
@@ -3663,7 +3658,7 @@ def _(val, mesh, nvdim, dtype):
             submesh = mesh[subregion]
             subval = val[subregion]
         except KeyError:
-            continue
+            continue  # subregion not in val when implicitly set via "default"
         else:
             slices = mesh.region2slices(submesh.region)
             array[slices] = _as_array(subval, submesh, nvdim, dtype)
@@ -3675,8 +3670,8 @@ def _(val, mesh, nvdim, dtype):
                 "Key 'default' required if not all subregion keys are specified."
             )
         subval = val["default"]
-        for ix, iy, iz in np.argwhere(np.isnan(array[..., 0])):
+        for idx in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
-            array[ix, iy, iz] = subval(mesh.index2point((ix, iy, iz)))
+            array[tuple(idx)] = subval(mesh.index2point(idx))
 
     return array

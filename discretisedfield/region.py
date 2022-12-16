@@ -6,7 +6,6 @@ import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield.plotting as dfp
-import discretisedfield.util as dfu
 
 from . import html
 from .io import _RegionIO
@@ -86,12 +85,18 @@ class Region(_RegionIO):
                 )
             p1, p2 = pmin, pmax
 
+        # scalar data types for 1d regions
+        if isinstance(p1, numbers.Real):
+            p1 = [p1]
+        if isinstance(p2, numbers.Real):
+            p2 = [p2]
+
         if not isinstance(p1, (tuple, list, np.ndarray)) or not isinstance(
             p2, (tuple, list, np.ndarray)
         ):
             raise TypeError(
-                "p1 and p2 must be of type tuple, list, or np.ndarray. Not"
-                f" p1={type(p1)} and p2={type(p2)}."
+                "p1 and p2 must be real numbers (1d) or sequences of real numbers. Not"
+                f" {type(p1)=} and {type(p2)=}."
             )
 
         if len(p1) != len(p2):
@@ -100,15 +105,11 @@ class Region(_RegionIO):
                 f" {len(p1)=} and {len(p2)=}."
             )
 
-        if not all(isinstance(i, numbers.Number) for i in p1):
-            raise TypeError("p1 can only contain elements of type numbers.Number.")
+        if not all(isinstance(i, numbers.Real) for i in p1):
+            raise TypeError("p1 can only contain elements of type numbers.Real.")
 
-        if not all(isinstance(i, numbers.Number) for i in p2):
-            raise TypeError("p2 can only contain elements of type numbers.Number.")
-
-        # TODO: Remove for ndim != 3 functionality.
-        if len(p1) != 3:
-            raise NotImplementedError("Only 3D regions are supported at the moment.")
+        if not all(isinstance(i, numbers.Real) for i in p2):
+            raise TypeError("p2 can only contain elements of type numbers.Real.")
 
         self._pmin = np.minimum(p1, p2)
         self._pmax = np.maximum(p1, p2)
@@ -248,11 +249,13 @@ class Region(_RegionIO):
     def dims(self, dims):
         # TODO: Think about correct defaults
         if dims is None:
-            if self.ndim == 3:
-                dims = ["x", "y", "z"]
+            if self.ndim <= 3:
+                dims = ["x", "y", "z"][: self.ndim]
             else:
                 dims = [f"x{i}" for i in range(self.ndim)]
-        elif isinstance(dims, (tuple, list, np.ndarray)):
+        elif isinstance(dims, (tuple, list, np.ndarray, str)):
+            if isinstance(dims, str):
+                dims = [dims]
             if len(dims) != self.ndim:
                 raise ValueError(
                     "dims must have the same length as p1 and p2."
@@ -260,6 +263,8 @@ class Region(_RegionIO):
                 )
             if not all(isinstance(dim, str) for dim in dims):
                 raise TypeError("dims can only contain elements of type str.")
+            if len(dims) != len(set(dims)):
+                raise ValueError("dims must be unique.")
         else:
             raise TypeError(
                 "dims must be of type tuple, list, or None (for default behaviour)."
@@ -267,6 +272,12 @@ class Region(_RegionIO):
             )
 
         self._dims = tuple(dims)
+
+    def _dim2index(self, dim):
+        try:
+            return self.dims.index(dim)
+        except ValueError:
+            raise ValueError(f"'{dim}' not in region.dims={self.dims}.") from None
 
     @property
     def units(self):
@@ -298,7 +309,9 @@ class Region(_RegionIO):
     def units(self, units):
         if units is None:
             units = ["m"] * self.ndim
-        elif isinstance(units, (tuple, list, np.ndarray)):
+        elif isinstance(units, (tuple, list, np.ndarray, str)):
+            if isinstance(units, str):
+                units = [units]
             if len(units) != self.ndim:
                 raise ValueError(
                     "units must have the same length as p1 and p2."
@@ -403,9 +416,7 @@ class Region(_RegionIO):
 
     @property
     def centre(self):
-        raise AttributeError(
-            "This attribute is now called 'center'.",
-        )
+        return self.center
 
     @property
     def volume(self):
@@ -576,7 +587,7 @@ class Region(_RegionIO):
         True
 
         """
-        if isinstance(other, collections.abc.Iterable):
+        if isinstance(other, (numbers.Real, collections.abc.Iterable)):
             tol = np.min(self.edges) * self.tolerance_factor
             return np.all(
                 np.logical_and(
@@ -641,11 +652,11 @@ class Region(_RegionIO):
         if not isinstance(other, self.__class__):
             raise TypeError(f"Cannot find facing surface for {type(other)}.")
 
-        for i in range(3):
+        for i in range(self.ndim):
             if self.pmin[i] >= other.pmax[i]:
-                return (dfu.raxesdict[i], other, self)
+                return (self.dims[i], other, self)
             if other.pmin[i] >= self.pmax[i]:
-                return (dfu.raxesdict[i], self, other)
+                return (self.dims[i], self, other)
         else:
             msg = "Cannot find facing surface."
             raise ValueError(msg)
@@ -655,20 +666,26 @@ class Region(_RegionIO):
         """Compute multiplier for the region."""
         return uu.si_max_multiplier(self.edges)
 
-    def scale(self, factor, inplace=False):
+    def scale(self, factor, reference_point=None, inplace=False):
         """Scale the region.
 
-        This method scales the region by multiplying ``pmin`` and ``pmax`` with
-        ``factor``. If ``factor`` is a number the same scaling is applied along all
-        dimensions. If ``factor`` is array-like its length must match ``region.ndim``
-        and different factors are applied along the different directions (based on their
-        order). A new object is created unless ``inplace=True`` is specified.
+        This method scales the region about its ``center`` point or a
+        ``reference_point`` if provided. If ``factor`` is a number the same scaling is
+        applied along all dimensions. If ``factor`` is array-like its length must match
+        ``region.ndim`` and different factors are applied along the different directions
+        (based on their order). A new object is created unless ``inplace=True`` is
+        specified.
 
         Parameters
         ----------
-        factor : numbers.Number or array-like of numbers.Number
+        factor : numbers.Real or array-like of numbers.Real
 
             Factor to scale the region.
+
+        reference_point : array_like, optional
+
+            The position of the reference point is fixed when scaling the region. If not
+            specified the region is scaled about its ``center``.
 
         inplace : bool, optional
 
@@ -696,20 +713,20 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale(5)
         >>> res.pmin
-        array([0, 0, 0])
+        array([-20, -20, -20])
         >>> res.pmax
-        array([50, 50, 50])
+        array([30, 30, 30])
 
         2. Scale the region inplace.
 
         >>> import discretisedfield as df
-        >>> p1 = (0, 0, 0)
+        >>> p1 = (-10, -10, -10)
         >>> p2 = (10, 10, 10)
         >>> region = df.Region(p1=p1, p2=p2)
         >>> region.scale(5, inplace=True)
         Region(...)
         >>> region.pmin
-        array([0, 0, 0])
+        array([-50, -50, -50])
         >>> region.pmax
         array([50, 50, 50])
 
@@ -721,12 +738,12 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale((2, 3, 4))
         >>> res.pmin
-        array([0, 0, 0])
+        array([ -5, -10, -15])
         >>> res.pmax
-        array([20, 30, 40])
+        array([15, 20, 25])
 
         """
-        if isinstance(factor, numbers.Number):
+        if isinstance(factor, numbers.Real):
             pass
         elif not isinstance(factor, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(factor)} for scale.")
@@ -737,22 +754,38 @@ class Region(_RegionIO):
             )
         else:
             for elem in factor:
-                if not isinstance(elem, numbers.Number):
+                if not isinstance(elem, numbers.Real):
                     raise TypeError(
                         f"Unsupported element {elem} of type {type(elem)} for scale."
                     )
 
+        if reference_point is None:
+            reference_point = self.center
+        elif isinstance(reference_point, numbers.Real):
+            reference_point = [reference_point]
+        elif not isinstance(reference_point, (tuple, list, np.ndarray)):
+            raise TypeError(
+                "'reference_point' must be a sequence (or a real number for 1d) or"
+                f" None (for default behaviour). Not {type(reference_point)=}."
+            )
+
+        if len(reference_point) != self.ndim:
+            raise ValueError(
+                f"The 'reference_point' must contain {self.ndim} elements, not"
+                f" {len(reference_point)=}."
+            )
+        elif any(not isinstance(i, numbers.Real) for i in reference_point):
+            raise ValueError("Elements of 'reference_point' must be real numbers.")
+
+        pmin = reference_point - (reference_point - self.pmin) * factor
+        pmax = pmin + self.edges * factor
+
         if inplace:
-            np.multiply(self.pmin, factor, out=self.pmin)
-            np.multiply(self.pmax, factor, out=self.pmax)
+            self._pmin = pmin
+            self._pmax = pmax
             return self
         else:
-            return self.__class__(
-                p1=np.multiply(self.pmin, factor),
-                p2=np.multiply(self.pmax, factor),
-                dims=self.dims,
-                units=self.units,
-            )
+            return self.__class__(p1=pmin, p2=pmax, dims=self.dims, units=self.units)
 
     def translate(self, vector, inplace=False):
         """Translate the region.
@@ -811,6 +844,9 @@ class Region(_RegionIO):
         array([12,  8, 15])
 
         """
+        # allow scalar values for 1d regions
+        if isinstance(vector, numbers.Real):
+            vector = [vector]
         if not isinstance(vector, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(vector)} for translate.")
         elif len(vector) != self.ndim:
@@ -824,8 +860,8 @@ class Region(_RegionIO):
                     f"Unsupported element {elem} of type {type(elem)} for translate."
                 )
         if inplace:
-            np.add(self.pmin, vector, out=self.pmin)
-            np.add(self.pmax, vector, out=self.pmax)
+            self._pmin = np.add(self.pmin, vector)
+            self._pmax = np.add(self.pmax, vector)
             return self
         else:
             return self.__class__(

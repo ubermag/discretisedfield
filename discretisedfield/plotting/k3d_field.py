@@ -5,7 +5,6 @@ import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield.plotting.util as plot_util
-import discretisedfield.util as dfu
 
 
 class K3dField:
@@ -111,10 +110,6 @@ class K3dField:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (
-            rf" ({uu.rsi_prefixes[multiplier]}" rf'{self.data.mesh.attributes["unit"]})'
-        )
-
         if interactive_field is not None:
             plot.camera_auto_fit = False
 
@@ -151,7 +146,12 @@ class K3dField:
             plot_array, color_map=color, bounds=bounds, outlines=False, **kwargs
         )
 
-        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
+        plot.axes = [
+            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            for dim, unit in zip(
+                self.data.mesh.region.dims, self.data.mesh.region.units
+            )
+        ]
 
     def scalar(
         self,
@@ -255,10 +255,6 @@ class K3dField:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (
-            rf" ({uu.rsi_prefixes[multiplier]}" rf'{self.data.mesh.attributes["unit"]})'
-        )
-
         if interactive_field is not None:
             plot.camera_auto_fit = False
 
@@ -308,7 +304,12 @@ class K3dField:
             plot_array, color_map=cmap_int, bounds=bounds, outlines=False, **kwargs
         )
 
-        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
+        plot.axes = [
+            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            for dim, unit in zip(
+                self.data.mesh.region.dims, self.data.mesh.region.units
+            )
+        ]
 
     def vector(
         self,
@@ -439,10 +440,6 @@ class K3dField:
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
 
-        unit = (
-            rf" ({uu.rsi_prefixes[multiplier]}" rf'{self.data.mesh.attributes["unit"]})'
-        )
-
         if interactive_field is not None:
             plot.camera_auto_fit = False
 
@@ -517,7 +514,12 @@ class K3dField:
                 coordinates, color=plot_util.cp_int[0], point_size=point_size
             )
 
-        plot.axes = [i + r"\,\text{{{}}}".format(unit) for i in dfu.axesdict.keys()]
+        plot.axes = [
+            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            for dim, unit in zip(
+                self.data.mesh.region.dims, self.data.mesh.region.units
+            )
+        ]
 
     def __dir__(self):
         dirlist = dir(self.__class__)
