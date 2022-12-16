@@ -2998,6 +2998,7 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
+    assert np.allclose(fxa.attrs["tolerance_factor"], f.mesh.region.tolerance_factor)
     for i in f.mesh.region.dims:
         assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
@@ -3021,6 +3022,7 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
+    assert np.allclose(fxa.attrs["tolerance_factor"], f.mesh.region.tolerance_factor)
     for i in f.mesh.region.dims:
         assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
