@@ -41,7 +41,8 @@ class Field(_FieldIO):
 
     nvdim : int
 
-        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is a
+        Number of Value DIMensions of the field. For instance, if `nvdim=3`
+        the field is a
         three-dimensional vector field and for `nvdim=1` the field is a scalar
         field.
 
@@ -133,6 +134,7 @@ class Field(_FieldIO):
         vdims=None,
         dtype=None,
         unit=None,
+        valid=True,
         **kwargs,
     ):
         if not isinstance(mesh, df.Mesh):
@@ -160,6 +162,8 @@ class Field(_FieldIO):
 
         self._vdims = None  # required in here for correct initialisation
         self.vdims = vdims
+
+        self.valid = valid
 
     @property
     def mesh(self):
@@ -488,6 +492,16 @@ class Field(_FieldIO):
                 where=self.norm.array != 0.0,
             )
             self.array *= _as_array(val, self.mesh, nvdim=1, dtype=None)
+
+    @property
+    def valid(self):
+        """Valid."""
+        return self._valid
+
+    @valid.setter
+    def valid(self, val):
+        if val is not None:
+            self._valid = _as_array(val, self.mesh, nvdim=1, dtype=bool)
 
     def __abs__(self):
         """Absolute value of the field.
