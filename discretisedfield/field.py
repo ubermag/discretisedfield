@@ -3580,7 +3580,7 @@ class Field(_FieldIO):
             region = df.Region(p1=p1, p2=p2, dims=dims_list)
             mesh = df.Mesh(region=region, cell=cell)
         else:
-            region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in dims_list])
+            region = df.Region(p1=p1, p2=p2, dims=dims_list, units=[xa[i].units for i in dims_list])
             mesh = df.Mesh(region=region, cell=cell)
 
         comp = xa.comp.values if "comp" in xa.coords else None
