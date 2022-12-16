@@ -1,6 +1,7 @@
 import collections
 import functools
 import numbers
+import warnings
 
 import numpy as np
 import ubermagutil.units as uu
@@ -1075,3 +1076,11 @@ class Region(_RegionIO):
             "units": self.units,
             "tolerance_factor": self.tolerance_factor,
         }
+
+    def random_point(self):
+        r"""Return a random point in the region."""
+        warnings.warn(
+            "This method will be removed and should not be used anymore.",
+            DeprecationWarning,
+        )
+        return tuple(np.random.random(self.ndim) * self.edges + self.pmin)
