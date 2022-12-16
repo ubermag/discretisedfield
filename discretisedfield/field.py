@@ -3435,6 +3435,7 @@ class Field(_FieldIO):
                 pmin=self.mesh.region.pmin,
                 pmax=self.mesh.region.pmax,
                 nvdim=self.nvdim,
+                tolerance_factor=self.mesh.region.tolerance_factor,
             ),
         )
 
@@ -3536,10 +3537,10 @@ class Field(_FieldIO):
                 " a vector field."
             )
 
-        if xa.attrs["nvdim"] < 1 or not isinstance(xa.attrs["nvdim"], int):
-            raise ValueError(
-                '"nvdim" attribute must be a positive integer greater or equal to 1.'
-            )
+        if xa.attrs["nvdim"] < 1:
+            raise ValueError('"nvdim" attribute must be greater or equal to 1.')
+        elif not isinstance(xa.attrs["nvdim"], int):
+            raise TypeError("The value of nvdim must be an integer.")
 
         if xa.attrs["nvdim"] > 1 and "comp" not in xa.dims:
             raise ValueError(
@@ -3558,7 +3559,7 @@ class Field(_FieldIO):
         try:
             cell = xa.attrs["cell"]
         except KeyError:
-            if any(len_ == 1 for len_ in xa.values.shape[:3]):
+            if any(len_ == 1 for len_ in xa.values.shape[:-1]):
                 raise KeyError(
                     "DataArray must have a 'cell' attribute if any "
                     "of the geometric directions has a single cell."
@@ -3580,8 +3581,13 @@ class Field(_FieldIO):
             region = df.Region(p1=p1, p2=p2, dims=dims_list)
             mesh = df.Mesh(region=region, cell=cell)
         else:
-            region = df.Region(p1=p1, p2=p2, dims=dims_list, units=[xa[i].units for i in dims_list])
+            region = df.Region(
+                p1=p1, p2=p2, dims=dims_list, units=[xa[i].units for i in dims_list]
+            )
             mesh = df.Mesh(region=region, cell=cell)
+
+        if "tolerance_factor" in xa.attrs:
+            mesh.region.tolerance_factor = xa.attrs["tolerance_factor"]
 
         comp = xa.comp.values if "comp" in xa.coords else None
         nvdim = xa.attrs["nvdim"]
