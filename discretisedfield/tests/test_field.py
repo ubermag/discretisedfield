@@ -416,6 +416,81 @@ def test_unit(test_field):
         df.Field(mesh, nvdim=1, unit=1)
 
 
+@pytest.mark.parametrize(
+    "nvdim",
+    [1, 2, 3, 4],
+)
+def test_valid_single_value(valid_mesh, nvdim):
+    # Default
+    f = df.Field(
+        valid_mesh,
+        nvdim=nvdim,
+    )
+    assert f.valid.shape == (*valid_mesh.n, 1)
+    assert f.valid.dtype == bool
+    assert all(f.valid)
+
+    # Constant
+    f = df.Field(valid_mesh, nvdim=nvdim, valid=True)
+    assert f.valid.shape == (*valid_mesh.n, 1)
+    assert all(f.valid)
+
+    f = df.Field(valid_mesh, nvdim=nvdim, valid=False)
+    assert f.valid.shape == (*valid_mesh.n, 1)
+    assert f.valid.dtype == bool
+    assert all(not f.valid)
+
+
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize(
+    "nvdim",
+    [1, 2, 3, 4],
+)
+def test_valid_set_on_norm(ndim, nvdim, norm):
+    mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
+
+    def norm_func(point):
+        if all(point < 5):
+            return 5.0
+        else:
+            return 0
+
+    # Default
+    f = df.Field(mesh, nvdim=nvdim, norm=norm, valid="norm")
+    assert f.valid.shape == (*mesh.n, 1)
+    assert f.valid.dtype == bool
+    for idx in f.mesh.indices:
+        if all(f.mesh.point2index(idx) < 5):
+            assert f.valid[idx]
+        else:
+            assert not f.valid[idx]
+
+
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize(
+    "nvdim",
+    [1, 2, 3, 4],
+)
+def test_valid_set_(ndim, nvdim):
+    mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
+
+    def valid_func(point):
+        if all(point < 5):
+            return 5.0
+        else:
+            return 0
+
+    # Default
+    f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
+    assert f.valid.shape == (*mesh.n, 1)
+    assert f.valid.dtype == bool
+    for idx in f.mesh.indices:
+        if all(f.mesh.point2index(idx) < 5):
+            assert f.valid[idx]
+        else:
+            assert not f.valid[idx]
+
+
 # TODO Sam
 def test_value():
     p1 = (0, 0, 0)
