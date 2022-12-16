@@ -41,8 +41,8 @@ class Field(_FieldIO):
 
     nvdim : int
 
-        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is a
-        three-dimensional vector field and for `nvdim=1` the field is a scalar
+        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is
+        a three-dimensional vector field and for `nvdim=1` the field is a scalar
         field.
 
     value : array_like, callable, dict, optional
@@ -3583,8 +3583,9 @@ class Field(_FieldIO):
             mesh = df.Mesh(region=region, cell=cell)
 
         comp = xa.comp.values if "comp" in xa.coords else None
-        val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
-        nvdim = 1 if xa.ndim == 3 else val.shape[-1]
+        nvdim = xa.attrs["nvdim"]
+        val = np.expand_dims(xa.values, axis=-1) if nvdim == 1 else xa.values
+        # print(val.shape)
         return cls(mesh=mesh, nvdim=nvdim, value=val, vdims=comp, dtype=xa.values.dtype)
 
 
