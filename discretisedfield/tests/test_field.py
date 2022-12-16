@@ -428,17 +428,17 @@ def test_valid_single_value(valid_mesh, nvdim):
     )
     assert f.valid.shape == (*valid_mesh.n, 1)
     assert f.valid.dtype == bool
-    assert all(f.valid)
+    assert np.all(f.valid)
 
     # Constant
     f = df.Field(valid_mesh, nvdim=nvdim, valid=True)
     assert f.valid.shape == (*valid_mesh.n, 1)
-    assert all(f.valid)
+    assert np.all(f.valid)
 
     f = df.Field(valid_mesh, nvdim=nvdim, valid=False)
     assert f.valid.shape == (*valid_mesh.n, 1)
     assert f.valid.dtype == bool
-    assert all(not f.valid)
+    assert np.all(~f.valid)
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
@@ -446,24 +446,23 @@ def test_valid_single_value(valid_mesh, nvdim):
     "nvdim",
     [1, 2, 3, 4],
 )
-def test_valid_set_on_norm(ndim, nvdim, norm):
+def test_valid_set_on_norm(ndim, nvdim):
     mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
 
     def norm_func(point):
-        if all(point < 5):
+        if np.all(point < 5):
             return 5.0
         else:
             return 0
 
-    # Default
-    f = df.Field(mesh, nvdim=nvdim, norm=norm, valid="norm")
+    f = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim, norm=norm_func, valid="norm")
     assert f.valid.shape == (*mesh.n, 1)
     assert f.valid.dtype == bool
     for idx in f.mesh.indices:
-        if all(f.mesh.point2index(idx) < 5):
-            assert f.valid[idx]
+        if all(f.mesh.index2point(idx) < 5):
+            assert f.valid[tuple(idx)][0]
         else:
-            assert not f.valid[idx]
+            assert not f.valid[tuple(idx)][0]
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
@@ -471,8 +470,24 @@ def test_valid_set_on_norm(ndim, nvdim, norm):
     "nvdim",
     [1, 2, 3, 4],
 )
-def test_valid_set_(ndim, nvdim):
+def test_valid_set_call(ndim, nvdim):
     mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
+
+    def valid_func(point):
+        if all(point < 5):
+            return True
+        else:
+            return False
+
+    # Default
+    f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
+    assert f.valid.shape == (*mesh.n, 1)
+    assert f.valid.dtype == bool
+    for idx in f.mesh.indices:
+        if all(f.mesh.index2point(idx) < 5):
+            assert f.valid[tuple(idx)][0]
+        else:
+            assert not f.valid[tuple(idx)][0]
 
     def valid_func(point):
         if all(point < 5):
@@ -480,15 +495,32 @@ def test_valid_set_(ndim, nvdim):
         else:
             return 0
 
-    # Default
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
     assert f.valid.shape == (*mesh.n, 1)
     assert f.valid.dtype == bool
     for idx in f.mesh.indices:
-        if all(f.mesh.point2index(idx) < 5):
-            assert f.valid[idx]
+        if all(f.mesh.index2point(idx) < 5):
+            assert f.valid[tuple(idx)][0]
         else:
-            assert not f.valid[idx]
+            assert not f.valid[tuple(idx)][0]
+
+
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize(
+    "nvdim",
+    [1, 2, 3, 4],
+)
+def test_valid_array(ndim, nvdim):
+    mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
+
+    def val_func(point):
+        return point[0]
+
+    f = df.Field(mesh, nvdim=1, value=val_func)
+    expected_valid = f.array < 5
+
+    f = df.Field(mesh, nvdim=nvdim, valid=expected_valid)
+    assert np.all(expected_valid == f.valid)
 
 
 # TODO Sam

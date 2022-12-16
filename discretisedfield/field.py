@@ -501,7 +501,11 @@ class Field(_FieldIO):
     @valid.setter
     def valid(self, val):
         if val is not None:
-            self._valid = _as_array(val, self.mesh, nvdim=1, dtype=bool)
+            if val == "norm":
+                out = ~np.isclose(self.norm.array, 0)
+                self._valid = _as_array(out, self.mesh, nvdim=1, dtype=bool)
+            else:
+                self._valid = _as_array(val, self.mesh, nvdim=1, dtype=bool)
 
     def __abs__(self):
         """Absolute value of the field.
