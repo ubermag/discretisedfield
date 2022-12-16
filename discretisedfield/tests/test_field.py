@@ -429,13 +429,6 @@ def test_value():
     assert np.allclose(f.mean(), (1, 1, 1))
 
 
-def test_average():
-    mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
-    f = df.Field(mesh, nvdim=3, value=(2, 2, 2))
-    with pytest.warns(DeprecationWarning):
-        f.average
-
-
 # TODO Sam
 @pytest.mark.parametrize("norm_value", [1, 2.1, 50, 1e-3, np.pi])
 @pytest.mark.parametrize("value, dtype", iters + vfuncs)
