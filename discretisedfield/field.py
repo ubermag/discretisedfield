@@ -1,7 +1,6 @@
 import collections
 import functools
 import numbers
-import warnings
 
 import numpy as np
 import xarray as xr
@@ -42,8 +41,7 @@ class Field(_FieldIO):
     nvdim : int
 
         Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is
-        a three-dimensional vector field and for `nvdim=1` the field is a scalar
-        field.
+        a three-dimensional vector field and for `nvdim=1` the field is a scalar field.
 
     value : array_like, callable, dict, optional
 
@@ -138,12 +136,6 @@ class Field(_FieldIO):
         if not isinstance(mesh, df.Mesh):
             raise TypeError("'mesh' must be of class discretisedfield.Mesh.")
         self._mesh = mesh
-
-        if nvdim is None and "dim" in kwargs:
-            nvdim = kwargs.pop("dim")
-            warnings.warn(
-                "Use of 'dim' is deprecated; use 'nvdim' instead.", DeprecationWarning
-            )
 
         if not isinstance(nvdim, numbers.Integral):
             raise TypeError("'dim' must be of type int.")
@@ -693,12 +685,7 @@ class Field(_FieldIO):
 
     @property
     def average(self):
-        warnings.warn(
-            "The average property is deprecated. Please use the mean function.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mean()
+        raise ValueError("This property has been remove, please use the mean method.")
 
     def __repr__(self):
         """Representation string.
