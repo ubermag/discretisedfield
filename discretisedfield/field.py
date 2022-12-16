@@ -41,9 +41,8 @@ class Field(_FieldIO):
 
     nvdim : int
 
-        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is a
-        three-dimensional vector field and for `nvdim=1` the field is a scalar
-        field.
+        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is
+        a three-dimensional vector field and for `nvdim=1` the field is a scalar field.
 
     value : array_like, callable, dict, optional
 
