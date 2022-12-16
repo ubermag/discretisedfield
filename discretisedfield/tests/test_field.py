@@ -2983,7 +2983,7 @@ def test_numpy_ufunc(test_field):
 
 # ##############################
 # TODO Swapneel
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", vfuncs)
 def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
@@ -2994,14 +2994,14 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
-    for i in "xyz":
+    for i in f.mesh.region.dims:
         assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
     assert all(fxa["comp"].values == f.vdims)
     assert np.array_equal(f.array, fxa.values)
 
 
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", sfuncs)
 def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
@@ -3011,14 +3011,14 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["cell"], f.mesh.cell)
     assert np.allclose(fxa.attrs["pmin"], f.mesh.region.pmin)
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
-    for i in "xyz":
+    for i in f.mesh.region.dims:
         assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
     assert "comp" not in fxa.dims
     assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
 
 
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 def test_to_xarray_6d_field(test_field):
     f6d = test_field << test_field
     f6d_xa = f6d.to_xarray()
@@ -3041,7 +3041,7 @@ def test_to_xarray_6d_field(test_field):
     assert f3d_xa_2.attrs["units"] == "A/m"
 
 
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize(
     "name, unit",
     [
@@ -3060,7 +3060,7 @@ def test_to_xarray_invalid_args(name, unit, test_field):
         test_field.to_xarray(name, unit)
 
 
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", vfuncs)
 def test_from_xarray_valid_args_vector(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
@@ -3069,7 +3069,7 @@ def test_from_xarray_valid_args_vector(valid_mesh, value, dtype):
     assert f_new == f
 
 
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 @pytest.mark.parametrize("value, dtype", sfuncs)
 def test_from_xarray_valid_args_scalar(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=1, value=value, dtype=dtype)
@@ -3078,7 +3078,7 @@ def test_from_xarray_valid_args_scalar(valid_mesh, value, dtype):
     assert f_new == f
 
 
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 def test_from_xarray_valid_args(test_field):
     f_plane = test_field.plane("z")
     f_plane_xa = f_plane.to_xarray()
@@ -3137,7 +3137,7 @@ def test_from_xarray_valid_args(test_field):
     assert isinstance(fg_3, df.Field)
 
 
-@pytest.mark.skip(reason="WIP on a different branch")
+# @pytest.mark.skip(reason="WIP on a different branch")
 def test_from_xarray_invalid_args_and_DataArrays():
     args = [
         int(),
@@ -3148,20 +3148,6 @@ def test_from_xarray_invalid_args_and_DataArrays():
         xr.Dataset(),
         np.empty((20, 20, 20, 3)),
     ]
-
-    bad_dim_no = xr.DataArray(
-        np.ones((20, 20, 20, 5, 3), dtype=float),
-        dims=["x", "y", "z", "a", "comp"],
-        coords=dict(
-            x=np.arange(0, 20),
-            y=np.arange(0, 20),
-            z=np.arange(0, 20),
-            a=np.arange(0, 5),
-            comp=["x", "y", "z"],
-        ),
-        name="mag",
-        attrs=dict(units="A/m", nvdim=3),
-    )
 
     bad_dim_no2 = xr.DataArray(
         np.ones((20, 20), dtype=float),
@@ -3221,8 +3207,6 @@ def test_from_xarray_invalid_args_and_DataArrays():
     for arg in args:
         with pytest.raises(TypeError):
             df.Field.from_xarray(arg)
-    with pytest.raises(ValueError):
-        df.Field.from_xarray(bad_dim_no)
     with pytest.raises(ValueError):
         df.Field.from_xarray(bad_dim_no2)
     with pytest.raises(ValueError):
