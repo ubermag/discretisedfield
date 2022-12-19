@@ -421,7 +421,27 @@ def test_value(valid_mesh, nvdim):
     f = df.Field(valid_mesh, nvdim=nvdim)
     f.update_field_values(np.arange(nvdim) + 1)
 
+    # Set with array
     assert np.allclose(f.mean(), np.arange(nvdim) + 1)
+
+    # Set with scalar
+    f.update_field_values(np.array([1]))
+    assert np.allclose(f.mean(), np.array([1]))
+
+    f.update_field_values(1.0)
+    assert np.allclose(f.mean(), 1.0)
+
+    # Array with wrong shape
+    with pytest.raises(ValueError):
+        f.update_field_values(np.arange(nvdim + 1))
+
+    if nvdim > 2:
+        with pytest.raises(ValueError):
+            f.update_field_values(np.arange(nvdim - 1))
+
+    # Set with wrong type
+    with pytest.raises(TypeError):
+        f.update_field_values("string")
 
 
 # TODO Sam
