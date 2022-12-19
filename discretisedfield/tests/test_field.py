@@ -1120,16 +1120,24 @@ def test_all_operators():
     assert res.mean() == 3
 
 
-# TODO Sam
-def test_pad():
-    p1 = (0, 0, 0)
-    p2 = (10, 8, 2)
-    cell = (1, 1, 1)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-    field = df.Field(mesh, nvdim=1, value=1)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+@pytest.mark.parametrize(
+    "mode", ["constant", "reflect", "symmetric", "median"]
+)  # Selection of possible modes
+def test_pad(valid_mesh, nvdim, mode):
+    field = df.Field(valid_mesh, nvdim=nvdim, value=(1,) * nvdim)
 
-    pf = field.pad({"x": (1, 1)}, mode="constant")  # zeros padded
-    assert pf.array.shape == (12, 8, 2, 1)
+    for dim in valid_mesh.region.dims:
+        pf = field.pad({dim: (1, 1)}, mode=mode)
+        pad_size = valid_mesh.n.copy()
+        pad_size[valid_mesh.region._dim2index(dim)] += 2
+        assert pf.array.shape == (*pad_size, nvdim)
+        index = [
+            (0, 0),
+        ] * (valid_mesh.region.ndim + 1)
+        index[valid_mesh.region._dim2index(dim)] = (1, 1)
+        nppad = np.pad(field.array, index, mode=mode)
+        assert np.allclose(pf.array, nppad)
 
 
 def test_derivative():
