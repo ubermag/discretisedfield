@@ -556,9 +556,6 @@ class Field(_FieldIO):
         array([1.])
 
         """
-        if self.nvdim == 1:
-            msg = f"Cannot compute orientation field for a nvdim={self.nvdim} field."
-            raise ValueError(msg)
 
         orientation_array = np.divide(
             self.array,

@@ -490,33 +490,32 @@ def test_norm_zero_field():
     assert np.all(f.norm.array == 0)
 
 
-# TODO Sam
-def test_orientation():
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_orientation(valid_mesh, nvdim):
+    # No zero-norm cells
+    inital_value = np.zeros(nvdim)
+    inital_value[-1] = 2
+    f = df.Field(valid_mesh, nvdim=nvdim, value=inital_value)
+    assert isinstance(f.orientation, df.Field)
+    assert np.allclose(f.orientation.mean(), inital_value / 2)
+
+
+def test_orientation_func():
+    # Test with zero-norm cells
     p1 = (-5e-9, -5e-9, -5e-9)
     p2 = (5e-9, 5e-9, 5e-9)
     cell = (1e-9, 1e-9, 1e-9)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-    # No zero-norm cells
-    f = df.Field(mesh, nvdim=3, value=(2, 0, 0))
-    assert isinstance(f.orientation, df.Field)
-    assert np.allclose(f.orientation.mean(), (1, 0, 0))
-
-    # With zero-norm cells
     def value_fun(point):
-        x, y, z = point
-        if x <= 0:
+        if point[0] <= mesh.region.center[0]:
             return (0, 0, 0)
         else:
             return (3, 0, 4)
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
-    assert np.allclose(f.orientation((-1.5e-9, 3e-9, 0)), (0, 0, 0))
-    assert np.allclose(f.orientation((1.5e-9, 3e-9, 0)), (0.6, 0, 0.8))
-
-    f = df.Field(mesh, nvdim=1, value=0)
-    with pytest.raises(ValueError):
-        f.orientation
+    assert np.allclose(f.orientation(mesh.region.center - mesh.cell), (0, 0, 0))
+    assert np.allclose(f.orientation(mesh.region.center + mesh.cell), (0.6, 0, 0.8))
 
 
 # TODO Martin
