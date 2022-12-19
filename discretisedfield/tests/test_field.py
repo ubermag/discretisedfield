@@ -1883,21 +1883,24 @@ def test_integrate():
         f.integrate(1)
 
 
-# TODO Sam
-def test_abs():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (1, 1, 1)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+def test_abs(valid_mesh):
+    f = df.Field(valid_mesh, nvdim=1, value=-1)
+    assert abs(f).mean() == 1
 
-    f = df.Field(mesh, nvdim=1, value=-1)
-    abs(f).mean() == 1
+    f = df.Field(valid_mesh, nvdim=3, value=(-1, -1, -1))
+    assert np.allclose(abs(f).mean(), (1, 1, 1))
 
-    f = df.Field(mesh, nvdim=3, value=(-1, -1, -1))
-    np.allclose(abs(f).mean(), (1, 1, 1))
+    f = df.Field(valid_mesh, nvdim=4, value=(-1, -1, -1, -2))
+    assert np.allclose(abs(f).mean(), (1, 1, 1, 2))
 
-    f = df.Field(mesh, nvdim=1, value=-1j)
-    abs(f).mean() == 1
+    f = df.Field(valid_mesh, nvdim=1, value=-1j)
+    assert np.allclose(abs(f).mean(), 1)
+
+    f = df.Field(valid_mesh, nvdim=4, value=(-1j, -1j, -1j, -2j))
+    assert np.allclose(abs(f).mean(), (1, 1, 1, 2))
+
+    f = df.Field(valid_mesh, nvdim=1, value=1 - 1j)
+    assert np.allclose(abs(f).mean(), np.sqrt(2))
 
 
 def test_line():
