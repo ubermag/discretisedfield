@@ -532,11 +532,6 @@ class Field(_FieldIO):
 
             Orientation field.
 
-        Raises
-        ------
-        ValueError
-
-            If the field is has ``nvdim=1``.
 
         Examples
         --------
