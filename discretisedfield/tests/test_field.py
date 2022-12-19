@@ -416,17 +416,12 @@ def test_unit(test_field):
         df.Field(mesh, nvdim=1, unit=1)
 
 
-# TODO Sam
-def test_value():
-    p1 = (0, 0, 0)
-    p2 = (10e-9, 10e-9, 10e-9)
-    n = (5, 5, 5)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_value(valid_mesh, nvdim):
+    f = df.Field(valid_mesh, nvdim=nvdim)
+    f.update_field_values(np.arange(nvdim) + 1)
 
-    f = df.Field(mesh, nvdim=3)
-    f.update_field_values((1, 1, 1))
-
-    assert np.allclose(f.mean(), (1, 1, 1))
+    assert np.allclose(f.mean(), np.arange(nvdim) + 1)
 
 
 # TODO Sam
