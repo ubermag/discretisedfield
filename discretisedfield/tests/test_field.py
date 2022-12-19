@@ -444,36 +444,23 @@ def test_value(valid_mesh, nvdim):
         f.update_field_values("string")
 
 
-# TODO Sam
-@pytest.mark.parametrize("norm_value", [1, 2.1, 50, 1e-3, np.pi])
-@pytest.mark.parametrize("value, dtype", iters + vfuncs)
-def test_norm(valid_mesh, value, dtype, norm_value):
-    f = df.Field(valid_mesh, nvdim=3, value=(2, 2, 2))
+@pytest.mark.parametrize("norm_value", [1, 2.1, 1e-3])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_norm(valid_mesh, nvdim, norm_value):
+    f = df.Field(valid_mesh, nvdim=nvdim, value=(2,) * nvdim)
 
-    assert np.allclose(f.norm.array, 2 * np.sqrt(3))
+    assert np.allclose(f.norm.array, 2 * np.sqrt(nvdim))
     assert np.allclose(f.array, 2)
 
     f.norm = 1
     assert np.allclose(f.norm.array, 1)
-    assert np.allclose(f.array, 1 / np.sqrt(3))
+    assert np.allclose(f.array, 1 / np.sqrt(nvdim))
 
-    f = df.Field(valid_mesh, nvdim=3, value=value, norm=norm_value, dtype=dtype)
+    f = df.Field(valid_mesh, nvdim=nvdim, value=(3.0,) * nvdim, norm=norm_value)
 
-    # TODO: Why is this included?
-    # Compute norm.
-    norm = f.array[..., 0] ** 2
-    norm += f.array[..., 1] ** 2
-    norm += f.array[..., 2] ** 2
-    norm = np.sqrt(norm)
-
-    assert np.all(norm.shape == f.mesh.n)
+    assert np.all(valid_mesh.n == f.mesh.n)
     assert f.norm.array.shape == (*tuple(f.mesh.n), 1)
-    assert np.all(abs(f.norm.array - norm_value) < 1e-12)
-
-    # Exception
-    valid_mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(1, 1, 1))
-    f = df.Field(valid_mesh, nvdim=1, value=-5)
-    f.norm = 5
+    assert np.allclose(f.norm.array, norm_value)
 
 
 def test_norm_is_not_preserved():
