@@ -3592,6 +3592,11 @@ def _(val, mesh, nvdim, dtype):
         raise ValueError(
             f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
         )
+    if isinstance(val, collections.abc.Iterable) and np.shape(val)[-1] != nvdim:
+        raise ValueError(
+            f"Wrong dimension {len(val)} provided for value; expected dimension is"
+            f" {nvdim}"
+        )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
     return np.full((*mesh.n, nvdim), val, dtype=dtype)
 
