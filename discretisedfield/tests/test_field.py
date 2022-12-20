@@ -806,48 +806,43 @@ def test_add_subtract(mesh_3d):
         f1 -= f2
 
 
-def test_mul_truediv():
-    p1 = (0, 0, 0)
-    p2 = (5e-9, 5e-9, 5e-9)
-    cell = (1e-9, 5e-9, 1e-9)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
+def test_mul_truediv(mesh_3d):
     # Scalar fields
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    f2 = df.Field(mesh, nvdim=1, value=-2)
+    f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
+    f2 = df.Field(mesh_3d, nvdim=1, value=-2)
     res = f1 * f2
-    assert res.mean() == -2.4
+    assert np.allclose(res.mean(), -2.4)
     res = f1 / f2
-    assert res.mean() == -0.6
+    assert np.allclose(res.mean(), -0.6)
     f1 *= f2
-    assert f1.mean() == -2.4
+    assert np.allclose(f1.mean(), -2.4)
     f1 /= f2
-    assert f1.mean() == 1.2
+    assert np.allclose(f1.mean(), 1.2)
 
     # Scalar field with a constant
-    f = df.Field(mesh, nvdim=1, value=5)
+    f = df.Field(mesh_3d, nvdim=1, value=5)
     res = f * 2
-    assert res.mean() == 10
+    assert np.allclose(res.mean(), 10)
     res = 3 * f
-    assert res.mean() == 15
+    assert np.allclose(res.mean(), 15)
     res = f * (1, 2, 3)
     assert np.allclose(res.mean(), (5, 10, 15))
     res = (1, 2, 3) * f
     assert np.allclose(res.mean(), (5, 10, 15))
     res = f / 2
-    assert res.mean() == 2.5
+    assert np.allclose(res.mean(), 2.5)
     res = 10 / f
-    assert res.mean() == 2
+    assert np.allclose(res.mean(), 2)
     res = (5, 10, 15) / f
     assert np.allclose(res.mean(), (1, 2, 3))
     f *= 10
-    assert f.mean() == 50
+    assert np.allclose(f.mean(), 50)
     f /= 10
-    assert f.mean() == 5
+    assert np.allclose(f.mean(), 5)
 
     # Scalar field with a vector field
-    f1 = df.Field(mesh, nvdim=1, value=2)
-    f2 = df.Field(mesh, nvdim=3, value=(-1, -3, 5))
+    f1 = df.Field(mesh_3d, nvdim=1, value=2)
+    f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, 5))
     res = f1 * f2  # __mul__
     assert np.allclose(res.mean(), (-2, -6, 10))
     res = f2 * f1  # __rmul__
@@ -862,7 +857,7 @@ def test_mul_truediv():
     assert np.allclose(res.mean(), (-2, -2 / 3, 2 / 5))
 
     # Vector field with a scalar
-    f = df.Field(mesh, nvdim=3, value=(1, 2, 0))
+    f = df.Field(mesh_3d, nvdim=3, value=(1, 2, 0))
     res = f * 2
     assert np.allclose(res.mean(), (2, 4, 0))
     res = 5 * f
@@ -877,8 +872,8 @@ def test_mul_truediv():
     assert np.allclose(res.mean(), (10, 5, np.inf))
 
     # Further checks
-    f1 = df.Field(mesh, nvdim=1, value=2)
-    f2 = df.Field(mesh, nvdim=3, value=(-1, -3, -5))
+    f1 = df.Field(mesh_3d, nvdim=1, value=2)
+    f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, -5))
     assert f1 * f2 == f2 * f1
     assert 1.3 * f2 == f2 * 1.3
     assert -5 * f2 == f2 * (-5)
@@ -889,8 +884,8 @@ def test_mul_truediv():
     assert np.allclose((f2 / f2).mean(), (1, 1, 1))
 
     # Exceptions
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    f2 = df.Field(mesh, nvdim=3, value=(-1, -3, -5))
+    f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
+    f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, -5))
     with pytest.raises(TypeError):
         res = f2 * "a"
     with pytest.raises(TypeError):
