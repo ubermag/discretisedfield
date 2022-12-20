@@ -702,8 +702,6 @@ def test_point_neg():
     assert f == +(-(-f))
 
 
-# #######################
-# TODO Sam, mesh_3d, all maths methods
 def test_pow(mesh_3d):
     # Scalar field
     f = df.Field(mesh_3d, nvdim=1, value=2)
@@ -1034,9 +1032,6 @@ def test_cross(mesh_3d):
     with pytest.raises(ValueError):
         res = f1.cross(f2)
 
-
-# END TODO
-# ###############################x
 
 # TODO Martin
 def test_lshift():
