@@ -910,37 +910,39 @@ def test_mul_truediv(mesh_3d):
         f1 /= f2
 
 
-def test_dot():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-    # Zero vectors
-    f1 = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_dot(mesh_3d, nvdim):
+    f1 = df.Field(mesh_3d, nvdim=nvdim, value=(0,) * nvdim)
     res = f1.dot(f1)
     assert res.nvdim == 1
-    assert res.mean() == 0
+    assert np.allclose(res.mean(), 0)
 
-    # Orthogonal vectors
-    f1 = df.Field(mesh, nvdim=3, value=(1, 0, 0))
-    f2 = df.Field(mesh, nvdim=3, value=(0, 1, 0))
-    f3 = df.Field(mesh, nvdim=3, value=(0, 0, 1))
-    assert (f1.dot(f3)).mean() == 0
-    assert (f1.dot(f2)).mean() == 0
-    assert (f2.dot(f3)).mean() == 0
-    assert (f1.dot(f1)).mean() == 1
-    assert (f2.dot(f2)).mean() == 1
-    assert (f3.dot(f3)).mean() == 1
+    # Check norm computed using dot product
+    assert f1.norm == (f1.dot(f1)) ** (0.5)
 
-    # Check if commutative
-    assert f1.dot(f2) == f2.dot(f1)
+    # Create a list of othogonal fields
+    fields = []
+    for i in range(nvdim):
+        v = np.zeros(nvdim)
+        v[i] = 1
+        temp = df.Field(mesh_3d, nvdim=nvdim, value=v)
+        fields.append(temp)
+
+    # Check if orthogonal and commutative
+    for i in range(nvdim):
+        for j in range(nvdim):
+            assert fields[i].dot(fields[j]).mean() == 0 if i != j else 1
+            assert np.allclose(
+                fields[i].dot(fields[j]).mean(), fields[j].dot(fields[i]).mean()
+            )
 
     # Vector field with a constant
-    f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-    res = f.dot([1, 1, 1])
-    assert res.mean() == 6
+    f = df.Field(mesh_3d, nvdim=nvdim, value=np.arange(nvdim))
+    res = f.dot(np.ones(nvdim))
+    assert np.allclose(res.mean(), np.sum(np.arange(nvdim)))
 
+
+def test_dot_3d(mesh_3d):
     # Spatially varying vectors
     def value_fun1(point):
         x, y, z = point
@@ -950,29 +952,26 @@ def test_dot():
         x, y, z = point
         return (z, x, y)
 
-    f1 = df.Field(mesh, nvdim=3, value=value_fun1)
-    f2 = df.Field(mesh, nvdim=3, value=value_fun2)
+    f1 = df.Field(mesh_3d, nvdim=3, value=value_fun1)
+    f2 = df.Field(mesh_3d, nvdim=3, value=value_fun2)
 
     # Check if commutative
     assert f1.dot(f2) == f2.dot(f1)
 
     # The dot product should be x*z + y*x + z*y
-    assert (f1.dot(f2))((1, 1, 1)) == 3
-    assert (f1.dot(f2))((3, 1, 1)) == 7
-    assert (f1.dot(f2))((5, 7, 1)) == 47
-
-    # Check norm computed using dot product
-    assert f1.norm == (f1.dot(f1)) ** (0.5)
+    assert np.allclose((f1.dot(f2))((1e-8, 1e-8, 1e-8)), 3e-16)
+    assert np.allclose((f1.dot(f2))((3e-8, 1e-8, 1e-8)), 7e-16)
+    assert np.allclose((f1.dot(f2))((5e-8, 3e-8, 1e-8)), 23e-16)
 
     # Exceptions
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    f2 = df.Field(mesh, nvdim=3, value=(-1, -3, -5))
+    f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
+    f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, -5))
     with pytest.raises(ValueError):
-        res = f1.dot(f2)
+        f1.dot(f2)
     with pytest.raises(ValueError):
-        res = f1.dot(f2)
+        f1.dot(f2)
     with pytest.raises(TypeError):
-        res = f1.dot(3)
+        f1.dot(3)
 
     # Fields defined on different meshes
     mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
@@ -980,7 +979,7 @@ def test_dot():
     f1 = df.Field(mesh1, nvdim=3, value=(1, 2, 3))
     f2 = df.Field(mesh2, nvdim=3, value=(3, 2, 1))
     with pytest.raises(ValueError):
-        res = f1.dot(f2)
+        f1.dot(f2)
 
 
 def test_cross():
