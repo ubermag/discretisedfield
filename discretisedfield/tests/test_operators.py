@@ -9,7 +9,7 @@ def test_integrate():
     cell = (1, 1, 1)
     region = df.Region(p1=p1, p2=p2)
     mesh = df.Mesh(region=region, cell=cell)
-    field = df.Field(mesh, dim=3, value=(1, -2, 3))
+    field = df.Field(mesh, nvdim=3, value=(1, -2, 3))
 
     assert np.allclose(df.integrate(field), (1000, -2000, 3000))
     assert np.allclose(df.integrate(field * 2), (2000, -4000, 6000))

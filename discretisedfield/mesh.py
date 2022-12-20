@@ -1,7 +1,6 @@
 import collections
 import contextlib
 import copy
-import functools
 import itertools
 import numbers
 import warnings
@@ -164,6 +163,8 @@ class Mesh(_MeshIO):
     ValueError: ...
 
     """
+
+    __slots__ = ["_region", "_n", "_bc", "_subregions", "_attributes"]
 
     def __init__(
         self,
@@ -539,7 +540,7 @@ class Mesh(_MeshIO):
             )
         )
 
-    @functools.cached_property
+    @property
     def vertices(self):
         """Vertices of the cells of the mesh along the three directions.
 
@@ -2101,7 +2102,7 @@ class Mesh(_MeshIO):
 
         """
 
-        field = df.Field(self, dim=self.region.ndim)
+        field = df.Field(self, nvdim=self.region.ndim)
         for i, dim in enumerate(self.region.dims):
             points = self.points  # avoid re-computing points
             field.array[..., i] = getattr(points, dim).reshape(

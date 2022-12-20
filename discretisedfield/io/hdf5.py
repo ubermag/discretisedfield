@@ -8,6 +8,8 @@ import discretisedfield as df
 
 
 class _RegionIO_HDF5:
+    __slots__ = []
+
     _h5_attrs = ("pmin", "pmax", "dims", "ndim", "units", "tolerance_factor")
 
     def _h5_save(self, h5_region: h5py.Group):
@@ -20,6 +22,8 @@ class _RegionIO_HDF5:
 
 
 class _MeshIO_HDF5:
+    __slots__ = []
+
     def _h5_save(self, h5_mesh: h5py.Group):
         h5_region = h5_mesh.create_group("region")
         self.region._h5_save(h5_region)
@@ -49,6 +53,8 @@ class _MeshIO_HDF5:
 
 
 class _FieldIO_HDF5:
+    __slots__ = []
+
     def _to_hdf5(self, filename):
         """Save a single field in a new hdf5 file."""
         utc_now = datetime.datetime.utcnow().isoformat(timespec="seconds")

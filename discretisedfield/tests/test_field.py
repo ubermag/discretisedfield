@@ -432,7 +432,7 @@ def test_value():
 def test_average():
     mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
     f = df.Field(mesh, nvdim=3, value=(2, 2, 2))
-    with pytest.warns(DeprecationWarning):
+    with pytest.raises(AttributeError):
         f.average
 
 

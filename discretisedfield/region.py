@@ -1,5 +1,4 @@
 import collections
-import functools
 import numbers
 import warnings
 
@@ -70,6 +69,7 @@ class Region(_RegionIO):
     ValueError: ...
 
     """
+    __slots__ = ["_pmin", "_pmax", "_dims", "_units", "_tolerance_factor"]
 
     def __init__(
         self, p1=None, p2=None, dims=None, units=None, tolerance_factor=1e-12, **kwargs
@@ -189,7 +189,7 @@ class Region(_RegionIO):
         """
         return self._pmax
 
-    @functools.cached_property
+    @property
     def ndim(self):
         r"""Number of dimensions.
 
