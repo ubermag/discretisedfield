@@ -729,16 +729,14 @@ def test_pow(mesh_3d):
     res = f**f
     assert res.mean() == 4
 
+    with pytest.raises(TypeError):
+        res = f ** (1, 2)
 
-def test_add_subtract():
-    p1 = (0, 0, 0)
-    p2 = (5e-9, 10e-9, -5e-9)
-    n = (2, 2, 1)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
+def test_add_subtract(mesh_3d):
     # Scalar fields
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    f2 = df.Field(mesh, nvdim=1, value=-0.2)
+    f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
+    f2 = df.Field(mesh_3d, nvdim=1, value=-0.2)
     res = f1 + f2
     assert res.mean() == 1
     res = f1 - f2
@@ -749,8 +747,8 @@ def test_add_subtract():
     assert f1.mean() == 1.2
 
     # Vector fields
-    f1 = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-    f2 = df.Field(mesh, nvdim=3, value=(-1, -3, -5))
+    f1 = df.Field(mesh_3d, nvdim=3, value=(1, 2, 3))
+    f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, -5))
     res = f1 + f2
     assert np.allclose(res.mean(), (0, -1, -2))
     res = f1 - f2
@@ -768,8 +766,8 @@ def test_add_subtract():
     assert f1 + f2 - f1 == f2 + (0, 0, 0)
 
     # Constants
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    f2 = df.Field(mesh, nvdim=3, value=(-1, -3, -5))
+    f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
+    f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, -5))
     res = f1 + 2
     assert res.mean() == 3.2
     res = f1 - 1.2
