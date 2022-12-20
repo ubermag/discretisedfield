@@ -982,22 +982,17 @@ def test_dot_3d(mesh_3d):
         f1.dot(f2)
 
 
-def test_cross():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
+def test_cross(mesh_3d):
     # Zero vectors
-    f1 = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+    f1 = df.Field(mesh_3d, nvdim=3, value=(0, 0, 0))
     res = f1.cross(f1)
     assert res.nvdim == 3
     assert np.allclose(res.mean(), (0, 0, 0))
 
     # Orthogonal vectors
-    f1 = df.Field(mesh, nvdim=3, value=(1, 0, 0))
-    f2 = df.Field(mesh, nvdim=3, value=(0, 1, 0))
-    f3 = df.Field(mesh, nvdim=3, value=(0, 0, 1))
+    f1 = df.Field(mesh_3d, nvdim=3, value=(1, 0, 0))
+    f2 = df.Field(mesh_3d, nvdim=3, value=(0, 1, 0))
+    f3 = df.Field(mesh_3d, nvdim=3, value=(0, 0, 1))
     assert np.allclose((f1.cross(f2)).mean(), (0, 0, 1))
     assert np.allclose((f1.cross(f3)).mean(), (0, -1, 0))
     assert np.allclose((f2.cross(f3)).mean(), (1, 0, 0))
@@ -1013,19 +1008,19 @@ def test_cross():
     assert f1.cross(f3) == -(f3.cross(f1))
     assert f2.cross(f3) == -(f3.cross(f2))
 
-    f1 = df.Field(mesh, nvdim=3, value=lambda point: (point[0], point[1], point[2]))
-    f2 = df.Field(mesh, nvdim=3, value=lambda point: (point[2], point[0], point[1]))
+    f1 = df.Field(mesh_3d, nvdim=3, value=lambda point: (point[0], point[1], point[2]))
+    f2 = df.Field(mesh_3d, nvdim=3, value=lambda point: (point[2], point[0], point[1]))
 
     # The cross product should be
     # (y**2-x*z, z**2-x*y, x**2-y*z)
-    assert np.allclose((f1.cross(f2))((1, 1, 1)), (0, 0, 0))
-    assert np.allclose((f1.cross(f2))((3, 1, 1)), (-2, -2, 8))
-    assert np.allclose((f2.cross(f1))((3, 1, 1)), (2, 2, -8))
-    assert np.allclose((f1.cross(f2))((5, 7, 1)), (44, -34, 18))
+    assert np.allclose((f1.cross(f2))((1e-8, 1e-8, 1e-8)), (0, 0, 0))
+    assert np.allclose((f1.cross(f2))((3e-8, 1e-8, 1e-8)), (-2e-16, -2e-16, 8e-16))
+    assert np.allclose((f2.cross(f1))((3e-8, 1e-8, 1e-8)), (2e-16, 2e-16, -8e-16))
+    assert np.allclose((f1.cross(f2))((5e-8, 3e-8, 1e-8)), (4e-16, -14e-16, 22e-16))
 
     # Exceptions
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    f2 = df.Field(mesh, nvdim=3, value=(-1, -3, -5))
+    f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
+    f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, -5))
     with pytest.raises(TypeError):
         res = f1.cross(2)
     with pytest.raises(ValueError):
