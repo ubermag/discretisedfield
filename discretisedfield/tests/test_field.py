@@ -1983,17 +1983,21 @@ def test_getitem():
     assert f[subregion].array.shape == (2, 3, 1, 3)
 
 
-# TODO Sam
-def test_angle():
-    p1 = (0, 0, 0)
-    p2 = (8e-9, 2e-9, 2e-9)
-    cell = (2e-9, 2e-9, 2e-9)
-    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
-
-    f = df.Field(mesh, nvdim=3, value=(1.0, 0.0, 0.0))
-
-    assert np.allclose(f.angle((1.0, 0.0, 0.0)).mean(), 0.0)
-    assert np.allclose(f.angle((0.0, 1.0, 0.0)).mean(), np.pi / 2)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_angle(valid_mesh, nvdim):
+    v = np.zeros(nvdim)
+    v[0] = 1.0
+    f = df.Field(valid_mesh, nvdim=nvdim, value=v)
+    for i in range(nvdim):
+        v = np.zeros(nvdim)
+        v[i] = 1.0
+        assert f.angle(v).array.shape == (*valid_mesh.n, 1)
+        assert f.angle(v).nvdim == 1
+        assert f.angle(v).unit == "rad"
+        if i == 0:
+            assert np.allclose(f.angle(v).mean(), 0.0)
+        else:
+            assert np.allclose(f.angle(v).mean(), np.pi / 2)
 
 
 # ######################################

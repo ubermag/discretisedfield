@@ -2872,7 +2872,7 @@ class Field(_FieldIO):
             self._check_same_mesh_and_field_dim(vector)
         elif self.nvdim == 1 and isinstance(vector, numbers.Complex):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
-        elif self.nvdim != 1 and isinstance(vector, (tuple, list, np.ndarray)):
+        elif isinstance(vector, (tuple, list, np.ndarray)):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
         else:
             msg = (
@@ -2882,8 +2882,7 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
-
-        return self.__class__(self.mesh, nvdim=1, value=angle_array)
+        return self.__class__(self.mesh, nvdim=1, value=angle_array, unit="rad")
 
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
