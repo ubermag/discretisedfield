@@ -704,26 +704,26 @@ def test_point_neg():
 
 # #######################
 # TODO Sam, mesh_3d, all maths methods
-def test_pow():
-    p1 = (0, 0, 0)
-    p2 = (15e-9, 6e-9, 6e-9)
-    cell = (3e-9, 3e-9, 3e-9)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
+def test_pow(mesh_3d):
     # Scalar field
-    f = df.Field(mesh, nvdim=1, value=2)
+    f = df.Field(mesh_3d, nvdim=1, value=2)
     res = f**2
     assert res.mean() == 4
     res = f ** (-1)
     assert res.mean() == 0.5
 
     # Attempt vector field
-    f = df.Field(mesh, nvdim=3, value=(1, 2, -2))
+    f = df.Field(mesh_3d, nvdim=3, value=(1, 2, -2))
     res = f**2
     assert np.allclose(res.mean(), (1, 4, 4))
 
+    # 4D field
+    f = df.Field(mesh_3d, nvdim=4, value=(1, 2, -2, 3))
+    res = f**2
+    assert np.allclose(res.mean(), (1, 4, 4, 9))
+
     # Attempt to raise to non numbers.Real
-    f = df.Field(mesh, nvdim=1, value=2)
+    f = df.Field(mesh_3d, nvdim=1, value=2)
     with pytest.raises(TypeError):
         res = f ** "a"
     res = f**f
