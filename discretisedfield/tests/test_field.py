@@ -741,13 +741,13 @@ def test_add_subtract(mesh_3d):
     f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
     f2 = df.Field(mesh_3d, nvdim=1, value=-0.2)
     res = f1 + f2
-    assert res.mean() == 1
+    assert np.allclose(res.mean(), 1)
     res = f1 - f2
-    assert res.mean() == 1.4
+    assert np.allclose(res.mean(), 1.4)
     f1 += f2
-    assert f1.mean() == 1
+    assert np.allclose(f1.mean(), 1)
     f1 -= f2
-    assert f1.mean() == 1.2
+    assert np.allclose(f1.mean(), 1.2)
 
     # Vector fields
     f1 = df.Field(mesh_3d, nvdim=3, value=(1, 2, 3))
@@ -772,13 +772,13 @@ def test_add_subtract(mesh_3d):
     f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
     f2 = df.Field(mesh_3d, nvdim=3, value=(-1, -3, -5))
     res = f1 + 2
-    assert res.mean() == 3.2
+    assert np.allclose(res.mean(), 3.2)
     res = f1 - 1.2
-    assert res.mean() == 0
+    assert np.allclose(res.mean(), 0)
     f1 += 2.5
-    assert f1.mean() == 3.7
+    assert np.allclose(f1.mean(), 3.7)
     f1 -= 3.7
-    assert f1.mean() == 0
+    assert np.allclose(f1.mean(), 0)
     res = f2 + (1, 3, 5)
     assert np.allclose(res.mean(), (0, 0, 0))
     res = f2 - (1, 2, 3)
