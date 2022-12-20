@@ -425,11 +425,17 @@ def test_value(valid_mesh, nvdim):
     assert np.allclose(f.mean(), np.arange(nvdim) + 1)
 
     # Set with scalar
-    f.update_field_values(np.array([1]))
-    assert np.allclose(f.mean(), np.array([1]))
+    if nvdim == 1:
+        f.update_field_values(3.0)
+        assert np.allclose(f.mean(), 3.0)
 
-    f.update_field_values(1.0)
-    assert np.allclose(f.mean(), 1.0)
+        f.update_field_values(np.array([2]))
+        assert np.allclose(f.mean(), np.array([2]))
+    else:
+        with pytest.raises(ValueError):
+            f.update_field_values(3.0)
+        with pytest.raises(ValueError):
+            f.update_field_values(np.array([2]))
 
     # Array with wrong shape
     with pytest.raises(ValueError):
@@ -721,14 +727,13 @@ def test_pow(mesh_3d):
     assert np.allclose(res.mean(), (1, 4, 4, 9))
 
     # Attempt to raise to non numbers.Real
-    f = df.Field(mesh_3d, nvdim=1, value=2)
     with pytest.raises(TypeError):
         res = f ** "a"
     res = f**f
-    assert res.mean() == 4
+    assert np.allclose(res.mean(), (1, 4, 0.25, 27))
 
     with pytest.raises(TypeError):
-        res = f ** (1, 2)
+        f ** ((1,) * 5)
 
 
 def test_add_subtract(mesh_3d):
