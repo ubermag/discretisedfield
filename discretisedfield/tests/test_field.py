@@ -723,7 +723,7 @@ def test_pow(mesh_3d):
     res = f ** (-1)
     assert res.mean() == 0.5
 
-    # Attempt vector field
+    # Vector field
     f = df.Field(mesh_3d, nvdim=3, value=(1, 2, -2))
     res = f**2
     assert np.allclose(res.mean(), (1, 4, 4))
