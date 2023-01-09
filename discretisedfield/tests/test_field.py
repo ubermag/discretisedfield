@@ -723,7 +723,7 @@ def test_pow(mesh_3d):
     res = f ** (-1)
     assert res.mean() == 0.5
 
-    # Attempt vector field
+    # Vector field
     f = df.Field(mesh_3d, nvdim=3, value=(1, 2, -2))
     res = f**2
     assert np.allclose(res.mean(), (1, 4, 4))
@@ -735,7 +735,7 @@ def test_pow(mesh_3d):
 
     # Attempt to raise to non numbers.Real
     with pytest.raises(TypeError):
-        res = f ** "a"
+        f ** "a"
     res = f**f
     assert np.allclose(res.mean(), (1, 4, 0.25, 27))
 
@@ -922,6 +922,7 @@ def test_mul_truediv(mesh_3d):
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_dot(mesh_3d, nvdim):
+    # Zero vectors
     f1 = df.Field(mesh_3d, nvdim=nvdim, value=(0,) * nvdim)
     res = f1.dot(f1)
     assert res.nvdim == 1
