@@ -58,6 +58,7 @@ def test_init_valid_args(p1, p2, ndim):
 @pytest.mark.parametrize(
     "p1,p2,error",
     [
+        [[], [], ValueError],
         [("1", 0, 0), (1, 1, 1), TypeError],
         [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9), TypeError],
         [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9), ValueError],
