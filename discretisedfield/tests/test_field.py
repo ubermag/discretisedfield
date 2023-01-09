@@ -450,6 +450,13 @@ def test_value(valid_mesh, nvdim):
         f.update_field_values("string")
 
 
+def test_average():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
+    f = df.Field(mesh, nvdim=3, value=(2, 2, 2))
+    with pytest.raises(AttributeError):
+        f.average
+
+
 @pytest.mark.parametrize("norm_value", [1, 2.1, 1e-3])
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_norm(valid_mesh, nvdim, norm_value):

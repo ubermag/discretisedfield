@@ -10,6 +10,8 @@ import discretisedfield as df
 
 
 class _FieldIO_VTK:
+    __slots__ = []
+
     def _to_vtk(self, filename, representation="bin", save_subregions=True):
         filename = pathlib.Path(filename)
         if representation == "xml":

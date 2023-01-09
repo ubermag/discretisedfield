@@ -1,7 +1,6 @@
 import collections
 import contextlib
 import copy
-import functools
 import itertools
 import numbers
 import warnings
@@ -164,6 +163,8 @@ class Mesh(_MeshIO):
     ValueError: ...
 
     """
+
+    __slots__ = ["_region", "_n", "_bc", "_subregions", "_attributes"]
 
     def __init__(
         self,
@@ -539,7 +540,7 @@ class Mesh(_MeshIO):
             )
         )
 
-    @functools.cached_property
+    @property
     def vertices(self):
         """Vertices of the cells of the mesh along the three directions.
 
