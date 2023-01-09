@@ -971,9 +971,9 @@ def test_dot_3d(mesh_3d):
     assert f1.dot(f2) == f2.dot(f1)
 
     # The dot product should be x*z + y*x + z*y
-    assert np.allclose((f1.dot(f2))((1e-8, 1e-8, 1e-8)), 3e-16)
-    assert np.allclose((f1.dot(f2))((3e-8, 1e-8, 1e-8)), 7e-16)
-    assert np.allclose((f1.dot(f2))((5e-8, 3e-8, 1e-8)), 23e-16)
+    assert np.allclose((f1.dot(f2))((1e-8, 1e-8, 1e-8)), 3e-16, atol=0)
+    assert np.allclose((f1.dot(f2))((3e-8, 1e-8, 1e-8)), 7e-16, atol=0)
+    assert np.allclose((f1.dot(f2))((5e-8, 3e-8, 1e-8)), 23e-16, atol=0)
 
     # Exceptions
     f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
@@ -1026,9 +1026,9 @@ def test_cross(mesh_3d):
     # The cross product should be
     # (y**2-x*z, z**2-x*y, x**2-y*z)
     assert np.allclose((f1.cross(f2))((1e-8, 1e-8, 1e-8)), (0, 0, 0))
-    assert np.allclose((f1.cross(f2))((3e-8, 1e-8, 1e-8)), (-2e-16, -2e-16, 8e-16))
-    assert np.allclose((f2.cross(f1))((3e-8, 1e-8, 1e-8)), (2e-16, 2e-16, -8e-16))
-    assert np.allclose((f1.cross(f2))((5e-8, 3e-8, 1e-8)), (4e-16, -14e-16, 22e-16))
+    assert np.allclose((f1.cross(f2))((3e-8, 1e-8, 1e-8)), (-2e-16, -2e-16, 8e-16), atol=0)
+    assert np.allclose((f2.cross(f1))((3e-8, 1e-8, 1e-8)), (2e-16, 2e-16, -8e-16), atol=0)
+    assert np.allclose((f1.cross(f2))((5e-8, 3e-8, 1e-8)), (4e-16, -14e-16, 22e-16), atol=0)
 
     # Exceptions
     f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
