@@ -1103,6 +1103,13 @@ class Mesh(_MeshIO):
 
         sub_region = dict()
         if range_ is None or isinstance(range_, numbers.Real):
+            if (
+                selected_value < self.region.pmin[dim_index]
+                or selected_value >= self.region.pmax[dim_index]
+            ):
+                raise ValueError(
+                    f"Selected value {selected_value} is outside the mesh region."
+                )
             idxs = [i for i in range(self.region.ndim) if i != dim_index]
             p_1 = list()
             p_2 = list()
