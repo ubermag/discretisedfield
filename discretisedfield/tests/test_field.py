@@ -1025,10 +1025,21 @@ def test_cross(mesh_3d):
 
     # The cross product should be
     # (y**2-x*z, z**2-x*y, x**2-y*z)
-    assert np.allclose((f1.cross(f2))((1e-8, 1e-8, 1e-8)), (0, 0, 0))
-    assert np.allclose((f1.cross(f2))((3e-8, 1e-8, 1e-8)), (-2e-16, -2e-16, 8e-16), atol=0)
-    assert np.allclose((f2.cross(f1))((3e-8, 1e-8, 1e-8)), (2e-16, 2e-16, -8e-16), atol=0)
-    assert np.allclose((f1.cross(f2))((5e-8, 3e-8, 1e-8)), (4e-16, -14e-16, 22e-16), atol=0)
+    assert np.allclose(
+        (f1.cross(f2))((35e-9, 15e-9, 7.5e-9)),
+        (-3.75e-17, -4.6875e-16, 1.1125e-15),
+        atol=0,
+    )
+    assert np.allclose(
+        (f2.cross(f1))((35e-9, 15e-9, 7.5e-9)),
+        (3.75e-17, 4.6875e-16, -1.1125e-15),
+        atol=0,
+    )
+    assert np.allclose(
+        (f1.cross(f2))((45e-9, 25e-9, 12.5e-9)),
+        (6.25e-17, -9.6875e-16, 1.7125e-15),
+        atol=0,
+    )
 
     # Exceptions
     f1 = df.Field(mesh_3d, nvdim=1, value=1.2)
