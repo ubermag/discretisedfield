@@ -6,6 +6,8 @@ from discretisedfield.plotting.mpl import Mpl
 
 class MplRegion(Mpl):
     def __init__(self, region):
+        if region.ndim != 3:
+            raise RuntimeError("Only 3d regions can be plotted.")
         self.region = region
 
     def __call__(

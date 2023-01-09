@@ -8,7 +8,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
-import discretisedfield.util as dfu
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
 
@@ -46,7 +45,7 @@ class MplField(Mpl):
 
         self.planeaxis = field.mesh.attributes["planeaxis"]
         self.planeaxis_point = {
-            dfu.raxesdict[
+            self.field.mesh.region.dims[
                 self.field.mesh.attributes["planeaxis"]
             ]: self.field.mesh.attributes["point"]
         }
@@ -121,7 +120,7 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+            >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
             >>> field.plane(z=50, n=(5, 5)).mpl()
 
         .. seealso::
@@ -152,7 +151,8 @@ class MplField(Mpl):
             vector_field = self.field
             scalar_field = getattr(self.field, self.field.vdims[self.planeaxis])
             scalar_kw.setdefault(
-                "colorbar_label", f"{dfu.raxesdict[self.planeaxis]}-component"
+                "colorbar_label",
+                f"{self.field.mesh.region.dims[self.planeaxis]}-component",
             )
 
         scalar_kw.setdefault("filter_field", self.field.norm)
@@ -276,7 +276,7 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=1, value=2)
+            >>> field = df.Field(mesh, nvdim=1, value=2)
             ...
             >>> field.plane('y').mpl.scalar()
 
@@ -375,7 +375,7 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+            >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
             ...
             >>> field.plane('z').mpl.lightness()
 
@@ -438,7 +438,7 @@ class MplField(Mpl):
 
         lightness_plane = lightness_field.plane(**self.planeaxis_point)
         if lightness_plane.mesh != self.field.mesh:
-            lightness_plane = df.Field(self.field.mesh, dim=1, value=lightness_plane)
+            lightness_plane = df.Field(self.field.mesh, nvdim=1, value=lightness_plane)
         lightness = lightness_plane.array.reshape(self.n)
 
         rgb = plot_util.hls2rgb(
@@ -593,7 +593,7 @@ class MplField(Mpl):
             >>> p2 = (100, 100, 100)
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-            >>> field = df.Field(mesh, dim=3, value=(1.1, 2.1, 3.1))
+            >>> field = df.Field(mesh, nvdim=3, value=(1.1, 2.1, 3.1))
             ...
             >>> field.plane('y').mpl.vector()
 
@@ -651,7 +651,7 @@ class MplField(Mpl):
             if use_color:
                 color_plane = color_field.plane(**self.planeaxis_point)
                 if color_plane.mesh != self.field.mesh:
-                    color_plane = df.Field(self.field.mesh, dim=1, value=color_plane)
+                    color_plane = df.Field(self.field.mesh, nvdim=1, value=color_plane)
                 quiver_args.append(color_plane.array.reshape(self.n).transpose())
 
         cp = ax.quiver(*quiver_args, pivot="mid", **kwargs)
@@ -769,7 +769,7 @@ class MplField(Mpl):
             >>> def init_value(point):
             ...     x, y, z = point
             ...     return math.sin(x) + math.sin(y)
-            >>> field = df.Field(mesh, dim=1, value=init_value)
+            >>> field = df.Field(mesh, nvdim=1, value=init_value)
             >>> field.plane('z').mpl.contour()
 
         """
@@ -810,7 +810,7 @@ class MplField(Mpl):
 
         filter_plane = filter_field.plane(**self.planeaxis_point)
         if filter_plane.mesh != self.field.mesh:
-            filter_plane = df.Field(self.field.mesh, dim=1, value=filter_plane)
+            filter_plane = df.Field(self.field.mesh, nvdim=1, value=filter_plane)
 
         values[filter_plane.array.reshape(self.n) == 0] = np.nan
 
@@ -819,8 +819,8 @@ class MplField(Mpl):
             rf" ({uu.rsi_prefixes[multiplier]}"
             rf'{self.field.mesh.attributes["unit"]})'
         )
-        ax.set_xlabel(dfu.raxesdict[self.axis1] + unit)
-        ax.set_ylabel(dfu.raxesdict[self.axis2] + unit)
+        ax.set_xlabel(self.field.mesh.region.dims[self.axis1] + unit)
+        ax.set_ylabel(self.field.mesh.region.dims[self.axis2] + unit)
 
     def _extent(self, multiplier):
         # TODO Requires refactoring of df.Mesh
