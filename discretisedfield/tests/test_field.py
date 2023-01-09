@@ -471,7 +471,7 @@ def test_norm(valid_mesh, nvdim, norm_value):
 
     f = df.Field(valid_mesh, nvdim=nvdim, value=(3.0,) * nvdim, norm=norm_value)
 
-    assert np.all(valid_mesh.n == f.mesh.n)
+    assert np.all(valid_mesh.n == f.norm.mesh.n)
     assert f.norm.array.shape == (*tuple(f.mesh.n), 1)
     assert np.allclose(f.norm.array, norm_value)
 
