@@ -2606,6 +2606,148 @@ class Field(_FieldIO):
             else "v",
         )  # TODO scalar fields have no vdim
 
+    def sel(self, *args, **kwargs):
+        """Select a part of the field.
+
+        If one of the axis from ``region.dims`` is passed as a string, a field of a
+        reduced dimension along the axis and perpendicular to it is extracted,
+        intersecting the axis at its center. Alternatively, if a keyword (representing
+        the axis) argument is passed with a real number value (e.g. ``x=1e-9``), a field
+        of reduced dimensions intersects the axis at a point 'nearest' to the provided
+        value is returned. If the mesh is already 1 dimentional a numpy array of the
+        field values is returned.
+
+        If instead a tuple, list or a numpy array of length 2 is
+        passed as a value containing two real numbers (e.g. ``x=(1e-9, 7e-9)``), a sub
+        field is returned with minimum and maximum points along the selected axis,
+        'nearest' to the minimum and maximum of the selected values, respectively.
+
+        Parameters
+        ----------
+        args :
+
+            A string corresponding to the selection axis that belongs to
+            ``region.dims``.
+
+        kwarg :
+
+            A key corresponding to the selection axis that belongs to ``region.dims``.
+            The values are either a ``numbers.Real`` or list, tuple, numpy array of
+            length 2 containing ``numbers.Real`` which represents a point or a range of
+            points to be selected from the mesh.
+
+        Returns
+        -------
+        discretisedfield.Field or numpy.ndarray
+
+            An extracted field.
+
+        Examples
+        --------
+        1. Extracting the mesh at a specific point (``y=1``).
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+        >>> plane_field = field.sel(y=1)
+        >>> plane_field.mesh.region.ndim
+        2
+        >>> plane_field.mesh.region.dims
+        ('x', 'z')
+        >>> plane_field.mean()
+        array([1., 2., 3.])
+
+        2. Extracting the xy-plane mesh at the mesh region center.
+
+        >>> plane_field = field.sel('z')
+        >>> plane_field.mesh.region.ndim
+        2
+        >>> plane_field.mesh.region.dims
+        ('x', 'y')
+        >>> plane_field.mean()
+        array([1., 2., 3.])
+
+        3. Specifying a range of points along axis ``x`` to be selected from mesh.
+
+        >>> selected_field = field.sel(x=(2, 4))
+        >>> selected_field.mesh.region.ndim
+        3
+        >>> selected_field.mesh.region.dims
+        ('x', 'y', 'z')
+
+        4. Extracting the mesh at a specific point on a 1D mesh.
+        >>> mesh = df.Mesh(p1=0, p2=5, cell=1)
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+        >>> field.sel('x')
+        array([1., 2., 3.])
+
+        """
+        # Extract input arguments
+        if len(args) > 1 or len(kwargs) > 1:
+            raise ValueError("Select method only accepts one dimension at a time.")
+
+        if args and not kwargs:
+            dim = args[0]
+            range_ = None
+        elif not args and kwargs:
+            dim, range_ = list(kwargs.items())[0]
+        else:
+            raise ValueError(
+                "Either one positional argument or a keyword argument can be passed."
+            )
+
+        dim_index = self.mesh.region._dim2index(dim)
+        keep_dim = True
+
+        # Check input arguments
+        if range_ is not None:
+            if isinstance(range_, numbers.Real):
+                selected_value = range_
+                keep_dim = False
+            elif isinstance(range_, (tuple, list, np.ndarray)):
+                if len(range_) != 2:
+                    raise ValueError(
+                        "The points along the selected dimension must have two"
+                        " real numbers."
+                    )
+                elif not all(isinstance(point, numbers.Real) for point in range_):
+                    raise TypeError(
+                        f"The elements of {type(range_)} passed as the value of keyword"
+                        " argument must be real numbers."
+                    )
+            else:
+                raise TypeError(
+                    "The value passed to selected dimension must be a tuple, list,"
+                    " array or real number."
+                )
+        else:
+            selected_value = self.mesh.region.center[dim_index]
+            keep_dim = False
+
+        # 1D case
+        if self.mesh.region.ndim == 1 and not keep_dim:
+            idx = (np.abs(getattr(self.mesh.points, dim) - selected_value)).argmin()
+            return self.array[idx, :]
+
+        # General D case
+        mesh = self.mesh.sel(*args, **kwargs)
+
+        if keep_dim:
+            array = self[mesh.region].array
+        else:
+            idx = (np.abs(getattr(self.mesh.points, dim) - selected_value)).argmin()
+            array = self.array[
+                dfu.assemble_index(
+                    slice(None), self.mesh.region.ndim + 1, {dim_index: idx}
+                )
+            ]
+
+        return self.__class__(mesh, nvdim=self.nvdim, value=array, vdims=self.vdims)
+
     def plane(self, *args, n=None, **kwargs):
         """Extracts field on the plane mesh.
 
@@ -2812,7 +2954,9 @@ class Field(_FieldIO):
         """
         submesh = self.mesh[item]
 
-        index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
+        index_min = self.mesh.point2index(
+            submesh.index2point((0,) * submesh.region.ndim)
+        )
         index_max = np.add(index_min, submesh.n)
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
         return self.__class__(
