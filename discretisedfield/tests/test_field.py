@@ -1,3 +1,4 @@
+import itertools
 import os
 import random
 import re
@@ -940,12 +941,12 @@ def test_dot(mesh_3d, nvdim):
         fields.append(temp)
 
     # Check if orthogonal and commutative
-    for i in range(nvdim):
-        for j in range(nvdim):
-            assert fields[i].dot(fields[j]).mean() == 0 if i != j else 1
-            assert np.allclose(
-                fields[i].dot(fields[j]).mean(), fields[j].dot(fields[i]).mean()
-            )
+
+    for i, j in itertools.product(range(nvdim), range(nvdim)):
+        assert fields[i].dot(fields[j]).mean() == 0 if i != j else 1
+        assert np.allclose(
+            fields[i].dot(fields[j]).mean(), fields[j].dot(fields[i]).mean()
+        )
 
     # Vector field with a constant
     f = df.Field(mesh_3d, nvdim=nvdim, value=np.arange(nvdim))
