@@ -688,7 +688,7 @@ class Field(_FieldIO):
     @property
     def average(self):
         raise AttributeError(
-            "This property has been remove, please use the mean method."
+            "This property has been removed, please use the mean method."
         )
 
     def __repr__(self):
