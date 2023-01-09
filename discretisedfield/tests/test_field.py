@@ -735,7 +735,7 @@ def test_pow(mesh_3d):
 
     # Attempt to raise to non numbers.Real
     with pytest.raises(TypeError):
-        res = f ** "a"
+        f ** "a"
     res = f**f
     assert np.allclose(res.mean(), (1, 4, 0.25, 27))
 
