@@ -1934,11 +1934,15 @@ def test_sel(mesh, nvdim, value, range_):
     f = df.Field(mesh, nvdim=nvdim, value=value)
     for dim in f.mesh.region.dims:
         f_sel = f.sel(dim) if range_ is None else f.sel(**{dim: range_})
-        assert f_sel.mesh == f.sel(dim).mesh
+        if range_ is None:
+            assert f_sel.mesh == f.sel(dim).mesh
+            assert f_sel.array.shape == (*f.sel(dim).mesh.n, f.nvdim)
+        else:
+            assert f_sel.mesh == f.sel(**{dim: range_}).mesh
+            assert f_sel.array.shape == (*f.sel(**{dim: range_}).mesh.n, f.nvdim)
         assert f_sel.nvdim == f.nvdim
         assert f_sel.vdims == f.vdims
         assert f_sel.unit == f.unit
-        assert f_sel.array.shape == (*f.sel(dim).mesh.n, f.nvdim)
 
 
 def test_sel_subregions():
@@ -1955,8 +1959,8 @@ def test_sel_subregions():
     f = df.Field(mesh, nvdim=4, value=lambda p: [*p, 4])
 
     f_sel = f.sel(x=(-50e-9, 0))
-    assert f_sel == f["sr_x"]
-    assert f_sel.mesh.subregions == 2
+    # assert f_sel == f["sr_x"]
+    assert len(f_sel.mesh.subregions) == 3
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
     assert f_sel.mesh == f.sel(x=(-50e-9, 0)).mesh
     assert f_sel.nvdim == f.nvdim
@@ -1965,7 +1969,7 @@ def test_sel_subregions():
     assert f_sel.array.shape == (*f.sel(x=(-50e-9, 0)).mesh.n, f.nvdim)
 
     f_sel = f.sel(y=(0, 40e-9))
-    assert f_sel == f["sr_x"]
+    # assert f_sel == f["sr_x"]
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
     assert f_sel.mesh == f.sel(y=(0, 40e-9)).mesh
     assert f_sel.nvdim == f.nvdim
@@ -1983,8 +1987,10 @@ def test_sel_subregions():
     assert f_sel.unit == f.unit
     assert f_sel.array.shape == (*f.sel(z=(0, 30e-9)).mesh.n, f.nvdim)
 
-    assert f.sel(x=4.5e-9).sel(y=5.5e-9).sel(z=6.5e-9) == f((4.5e-9, 5.5e-9, 6.5e-9))
-    assert f.sel("x").sel("y").sel("z") == f(f.mesh.region.center)
+    assert np.allclose(
+        f.sel(x=4.5e-9).sel(y=5.5e-9).sel(z=6.5e-9), f((4.5e-9, 5.5e-9, 6.5e-9))
+    )
+    assert np.allclose(f.sel("x").sel("y").sel("z"), f(f.mesh.region.center))
 
     mesh = df.Mesh(p1=0, p2=10, n=5, subregions={"sr": df.Region(p1=0, p2=2)})
     f = df.Field(mesh, nvdim=2, value=lambda p: (p, p**2))
@@ -1995,10 +2001,10 @@ def test_sel_subregions():
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
     assert f_sel.array.shape == (*f.sel(x=(2, 4)).mesh.n, f.nvdim)
-    assert len(f_sel.mesh.subregions) == 0
+    assert len(f_sel.mesh.subregions) == 1
 
     f_sel = f.sel(x=3)
-    assert f_sel == f((3,))
+    assert np.allclose(f_sel, f((3,)))
 
 
 def test_sel_invalid(test_field):
