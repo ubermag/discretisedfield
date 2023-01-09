@@ -922,6 +922,7 @@ def test_mul_truediv(mesh_3d):
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_dot(mesh_3d, nvdim):
+    # Zero vectors
     f1 = df.Field(mesh_3d, nvdim=nvdim, value=(0,) * nvdim)
     res = f1.dot(f1)
     assert res.nvdim == 1
