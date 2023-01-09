@@ -1417,8 +1417,8 @@ class Mesh(_MeshIO):
         array([12, 12, 11])
 
         """
-        pmin = self.region.pmin.copy()
-        pmax = self.region.pmax.copy()
+        pmin = self.region.pmin.astype(float)
+        pmax = self.region.pmax.astype(float)
         # Convert to np.ndarray to allow operations on them.
         for direction in pad_width.keys():
             axis = self.region._dim2index(direction)

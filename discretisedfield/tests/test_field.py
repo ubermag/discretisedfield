@@ -1147,6 +1147,39 @@ def test_pad(valid_mesh, nvdim, mode):
         assert np.allclose(pf.array, nppad)
 
 
+def test_pad_explicit():
+    mesh = df.Mesh(p1=(0.0), p2=(1.0), n=(5))
+    f = mesh.coordinate_field()
+
+    pad_f = f.pad({"x": (1, 1)}, mode="constant")
+    assert np.allclose(pad_f.array[0, 0], 0)
+    assert np.allclose(pad_f.array[-1, 0], 0)
+
+    pad_f = f.pad({"x": (1, 1)}, mode="symmetric")
+    assert np.allclose(pad_f.array[0, 0], 0.1)
+    assert np.allclose(pad_f.array[-1, 0], 0.9)
+
+    mesh = df.Mesh(p1=(0.0, 0.0, 0.0), p2=(1.0, 1.0, 1.0), n=(5, 5, 5))
+    f = mesh.coordinate_field()
+
+    pad_f = f.pad({"z": (1, 1)}, mode="constant")
+    assert np.allclose(pad_f.array[:, :, 0, 2], 0)
+    assert np.allclose(pad_f.array[:, :, -1, 2], 0)
+
+    pad_f = f.pad({"z": (1, 2)}, mode="symmetric")
+    assert np.allclose(pad_f.array[:, :, 0, 2], 0.1)
+    assert np.allclose(pad_f.array[:, :, -1, 2], 0.7)
+    assert np.allclose(pad_f.array[:, :, -2, 2], 0.9)
+
+    pad_f = f.pad({"z": (1, 2), "x": (1, 0)}, mode="symmetric")
+    assert np.allclose(pad_f.array[:, :, 0, 2], 0.1)
+    assert np.allclose(pad_f.array[:, :, -1, 2], 0.7)
+    assert np.allclose(pad_f.array[:, :, -2, 2], 0.9)
+    assert np.allclose(pad_f.array[0, :, :, 0], 0.1)
+    assert np.allclose(pad_f.array[-1, :, :, 0], 0.9)
+    assert np.allclose(pad_f.array[-2, :, :, 0], 0.7)
+
+
 def test_derivative():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
