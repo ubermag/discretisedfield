@@ -13,6 +13,8 @@ import discretisedfield as df
 
 
 class _FieldIO_OVF:
+    __slots__ = []
+
     def _to_ovf(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):

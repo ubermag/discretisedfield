@@ -122,6 +122,8 @@ class Field(_FieldIO):
 
     """
 
+    __slots__ = ["_mesh", "_nvdim", "_vdims", "_unit", "_array", "dtype"]
+
     def __init__(
         self,
         mesh,
@@ -138,9 +140,9 @@ class Field(_FieldIO):
         self._mesh = mesh
 
         if not isinstance(nvdim, numbers.Integral):
-            raise TypeError("'dim' must be of type int.")
+            raise TypeError("'nvdim' must be of type int.")
         elif nvdim < 1:
-            raise ValueError("'dim' must be greater than zero.")
+            raise ValueError("'nvdim' must be greater than zero.")
         self._nvdim = nvdim
 
         self.dtype = dtype
@@ -685,7 +687,9 @@ class Field(_FieldIO):
 
     @property
     def average(self):
-        raise ValueError("This property has been remove, please use the mean method.")
+        raise AttributeError(
+            "This property has been removed, please use the mean method."
+        )
 
     def __repr__(self):
         """Representation string.
