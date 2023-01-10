@@ -503,7 +503,7 @@ class Field(_FieldIO):
             if valid == "norm":
                 valid = ~np.isclose(self.norm.array, 0)
         else:
-            valid = np.ones_like(self.array, dtype=bool)
+            valid = True
 
         self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)
 
