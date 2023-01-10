@@ -534,11 +534,6 @@ class Field(_FieldIO):
 
             Orientation field.
 
-        Raises
-        ------
-        ValueError
-
-            If the field is has ``nvdim=1``.
 
         Examples
         --------
@@ -558,9 +553,6 @@ class Field(_FieldIO):
         array([1.])
 
         """
-        if self.nvdim == 1:
-            msg = f"Cannot compute orientation field for a nvdim={self.nvdim} field."
-            raise ValueError(msg)
 
         orientation_array = np.divide(
             self.array,
@@ -2884,7 +2876,7 @@ class Field(_FieldIO):
             self._check_same_mesh_and_field_dim(vector)
         elif self.nvdim == 1 and isinstance(vector, numbers.Complex):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
-        elif self.nvdim != 1 and isinstance(vector, (tuple, list, np.ndarray)):
+        elif isinstance(vector, (tuple, list, np.ndarray)):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
         else:
             msg = (
@@ -2894,8 +2886,7 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
-
-        return self.__class__(self.mesh, nvdim=1, value=angle_array)
+        return self.__class__(self.mesh, nvdim=1, value=angle_array, unit="rad")
 
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
@@ -3604,6 +3595,11 @@ def _(val, mesh, nvdim, dtype):
     if isinstance(val, numbers.Complex) and nvdim > 1 and val != 0:
         raise ValueError(
             f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
+        )
+    if isinstance(val, collections.abc.Iterable) and np.shape(val)[-1] != nvdim:
+        raise ValueError(
+            f"Wrong dimension {len(val)} provided for value; expected dimension is"
+            f" {nvdim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
     return np.full((*mesh.n, nvdim), val, dtype=dtype)
