@@ -150,13 +150,13 @@ class Field(_FieldIO):
 
         self.unit = unit
 
+        self.valid = True  # required in here for correct initialisation
         self.update_field_values(value)
         self.norm = norm
+        self.valid = valid
 
         self._vdims = None  # required in here for correct initialisation
         self.vdims = vdims
-
-        self.valid = valid
 
     @property
     def mesh(self):
@@ -473,7 +473,9 @@ class Field(_FieldIO):
         """
         res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
-        return self.__class__(self.mesh, nvdim=1, value=res, unit=self.unit)
+        return self.__class__(
+            self.mesh, nvdim=1, value=res, unit=self.unit, valid=self.valid
+        )
 
     @norm.setter
     def norm(self, val):
@@ -540,7 +542,11 @@ class Field(_FieldIO):
 
         """
         return self.__class__(
-            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), unit=self.unit
+            self.mesh,
+            nvdim=self.nvdim,
+            value=np.abs(self.array),
+            unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -591,6 +597,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=orientation_array,
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     def mean(self, direction=None):
@@ -686,7 +693,12 @@ class Field(_FieldIO):
                 # Keepdims is needed for the current 3D behaviour
                 array = array.mean(axis=tuple(axis), keepdims=True)
                 return self.__class__(
-                    mesh, nvdim=self.nvdim, value=array, unit=self.unit
+                    mesh,
+                    nvdim=self.nvdim,
+                    value=array,
+                    unit=self.unit,
+                    vdims=self.vdims,
+                    valid=self.valid,
                 )
         elif isinstance(direction, str):
             axis = self.mesh.region._dim2index(direction)
@@ -696,6 +708,7 @@ class Field(_FieldIO):
                 value=self.array.mean(axis=axis, keepdims=True),
                 vdims=self.vdims,
                 unit=self.unit,
+                valid=self.valid,
             )
         else:
             raise ValueError(
@@ -861,7 +874,11 @@ class Field(_FieldIO):
         if self.vdims is not None and attr in self.vdims:
             attr_array = self.array[..., self.vdims.index(attr), np.newaxis]
             return self.__class__(
-                mesh=self.mesh, nvdim=1, value=attr_array, unit=self.unit
+                mesh=self.mesh,
+                nvdim=1,
+                value=attr_array,
+                unit=self.unit,
+                valid=self.valid,
             )
         else:
             msg = f"Object has no attribute {attr}."
@@ -1101,8 +1118,10 @@ class Field(_FieldIO):
             )
 
     def _apply_operator(self, other, function, operator):
+        valid = self.valid.copy()
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
+            valid = np.logical_and(valid, other.valid)
             other = other.array
         elif isinstance(other, numbers.Complex):
             pass
@@ -1131,6 +1150,7 @@ class Field(_FieldIO):
             nvdim=res_array.shape[-1],
             value=res_array,
             vdims=vdims,
+            valid=valid,
         )
 
     def __pos__(self):
@@ -1219,6 +1239,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=-self.array,
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     def __pow__(self, other):
@@ -1585,8 +1606,10 @@ class Field(_FieldIO):
         array([5.])
 
         """
+        valid = self.valid.copy()
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
+            valid = np.logical_and(valid, other.valid)
             other = other.array
         elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
@@ -1596,7 +1619,9 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         res_array = np.einsum("...l,...l->...", self.array, other)
-        return df.Field(self.mesh, nvdim=1, value=res_array[..., np.newaxis])
+        return df.Field(
+            self.mesh, nvdim=1, value=res_array[..., np.newaxis], valid=valid
+        )
 
     def __matmul__(self, other):
         return self.dot(other)
@@ -1647,6 +1672,7 @@ class Field(_FieldIO):
         array([ 0., -1.,  0.])
 
         """
+        valid = self.valid.copy()
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
             if self.nvdim != 3 or other.nvdim != 3:
@@ -1655,6 +1681,7 @@ class Field(_FieldIO):
                     f" {other.nvdim=} fields."
                 )
                 raise ValueError(msg)
+            valid = np.logical_and(valid, other.valid)
             other = other.array
         elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
@@ -1668,6 +1695,7 @@ class Field(_FieldIO):
             nvdim=3,
             value=np.cross(self.array, other),
             vdims=self.vdims,
+            valid=valid,
         )
 
     def __and__(self, other):
@@ -1732,10 +1760,12 @@ class Field(_FieldIO):
         True
 
         """
+        valid = self.valid.copy()
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
                 msg = "Cannot apply operator << on fields defined on different meshes."
                 raise ValueError(msg)
+            valid = np.logical_and(valid, other.valid)
         elif isinstance(other, numbers.Complex):
             return self << self.__class__(self.mesh, nvdim=1, value=other)
         elif isinstance(other, (tuple, list, np.ndarray)):
@@ -1763,6 +1793,7 @@ class Field(_FieldIO):
             nvdim=len(array_list),
             value=np.stack(array_list, axis=-1),
             vdims=vdims,
+            valid=valid,
         )
 
     def __rlshift__(self, other):
@@ -1958,6 +1989,7 @@ class Field(_FieldIO):
                 nvdim=self.nvdim,
                 vdims=self.vdims,
                 unit=self.unit,
+                valid=self.valid,
             )
 
         # Preparation (padding) for computing the derivative, depending on the
@@ -2105,6 +2137,7 @@ class Field(_FieldIO):
             value=derivative_array,
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -2683,6 +2716,7 @@ class Field(_FieldIO):
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         if n is not None:
             value = self
+            valid = self.__class__(self.mesh, nvdim=1, value=self.valid)
         else:
             p_axis = plane_mesh.attributes["planeaxis"]
             plane_idx = self.mesh.point2index(plane_mesh.region.center)[p_axis]
@@ -2691,12 +2725,14 @@ class Field(_FieldIO):
                 for i, axis_len in enumerate(self.array.shape)
             )
             value = self.array[slices]
+            valid = self.valid[slices]
         return self.__class__(
             plane_mesh,
             nvdim=self.nvdim,
             value=value,
             vdims=self.vdims,
             unit=self.unit,
+            valid=valid,
         )
 
     def resample(self, n):
@@ -2760,6 +2796,7 @@ class Field(_FieldIO):
             vdims=self.vdims,
             unit=self.unit,
             dtype=self.dtype,
+            valid=self.__class__(self.mesh, nvdim=1, value=self.valid),
         )
 
     def __getitem__(self, item):
@@ -2843,6 +2880,7 @@ class Field(_FieldIO):
             value=self.array[tuple(slices)],
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid[tuple(slices)],
         )
 
     def project(self, direction):
@@ -2898,8 +2936,10 @@ class Field(_FieldIO):
         array([1.57079633])
 
         """
+        valid = self.valid.copy()
         if isinstance(vector, self.__class__):
             self._check_same_mesh_and_field_dim(vector)
+            valid = np.logical_and(valid, vector.valid)
         elif self.nvdim == 1 and isinstance(vector, numbers.Complex):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
         elif isinstance(vector, (tuple, list, np.ndarray)):
@@ -2912,7 +2952,9 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
-        return self.__class__(self.mesh, nvdim=1, value=angle_array, unit="rad")
+        return self.__class__(
+            self.mesh, nvdim=1, value=angle_array, unit="rad", valid=valid
+        )
 
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
@@ -3256,6 +3298,7 @@ class Field(_FieldIO):
             value=self.array.real,
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -3267,6 +3310,7 @@ class Field(_FieldIO):
             value=self.array.imag,
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -3277,6 +3321,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=np.angle(self.array),
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     @property
@@ -3287,6 +3332,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=np.abs(self.array),
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     @property
@@ -3298,6 +3344,7 @@ class Field(_FieldIO):
             value=self.array.conjugate(),
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     # TODO check and write tests
