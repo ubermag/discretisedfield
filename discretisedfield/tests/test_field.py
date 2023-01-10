@@ -1962,30 +1962,30 @@ def test_sel_subregions():
     assert f_sel == f["sr_x"]
     assert len(f_sel.mesh.subregions) == 3
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
-    assert f_sel.mesh == f.mesh.sel(x=(-50e-9, 0))
+    assert f_sel.mesh == f.mesh.sel(x=(-50e-9, -0.5e-9))
     assert f_sel.nvdim == f.nvdim
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
-    assert f_sel.array.shape == (*f.sel(x=(-50e-9, 0)).mesh.n, f.nvdim)
+    assert f_sel.array.shape == (*f.mesh.sel(x=(-50e-9, -0.5e-9)).n, f.nvdim)
 
     f_sel = f.sel(y=(0, 40e-9))
     assert f_sel == f["sr_y"]
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
-    assert f_sel.mesh == f.sel(y=(0, 40e-9)).mesh
+    assert f_sel.mesh == f.mesh.sel(y=(0, 40e-9))
     assert f_sel.nvdim == f.nvdim
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
-    assert f_sel.array.shape == (*f.sel(y=(0, 40e-9)).mesh.n, f.nvdim)
+    assert f_sel.array.shape == (*f.mesh.sel(y=(0, 40e-9)).n, f.nvdim)
 
     f_sel = f.sel(z=(0, 30e-9))
     assert f_sel == f
     assert f_sel == f["total"]
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
-    assert f_sel.mesh == f.sel(z=(0, 30e-9)).mesh
+    assert f_sel.mesh == f.mesh.sel(z=(0, 30e-9))
     assert f_sel.nvdim == f.nvdim
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
-    assert f_sel.array.shape == (*f.sel(z=(0, 30e-9)).mesh.n, f.nvdim)
+    assert f_sel.array.shape == (*f.mesh.sel(z=(0, 30e-9)).n, f.nvdim)
 
     assert np.allclose(
         f.sel(x=4.5e-9).sel(y=5.5e-9).sel(z=6.5e-9), f((4.5e-9, 5.5e-9, 6.5e-9))
@@ -1996,11 +1996,11 @@ def test_sel_subregions():
     f = df.Field(mesh, nvdim=2, value=lambda p: (p, p**2))
 
     f_sel = f.sel(x=(2, 4))
-    assert f_sel.mesh == f.sel(x=(2, 4)).mesh
+    assert f_sel.mesh == f.mesh.sel(x=(2, 4))
     assert f_sel.nvdim == f.nvdim
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
-    assert f_sel.array.shape == (*f.sel(x=(2, 4)).mesh.n, f.nvdim)
+    assert f_sel.array.shape == (*f.mesh.sel(x=(2, 4)).n, f.nvdim)
     assert len(f_sel.mesh.subregions) == 1
 
     f_sel = f.sel(x=3)
