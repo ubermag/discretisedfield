@@ -649,25 +649,22 @@ class Field(_FieldIO):
             if sorted(direction) == sorted(self.mesh.region.dims):
                 return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
             else:
-                # NOTE: this is a temporary solution until mesh.sel is implemented.
-                # Hence, this is not the most efficient way to do it.
+                # Multiple directions mean
                 mesh = self.mesh
-                array = self.array
                 axis = np.zeros(len(direction), dtype=int)
                 for i, d in enumerate(direction):
-                    mesh = mesh.plane(d)
+                    mesh = mesh.sel(d)
                     axis[i] = self.mesh.region._dim2index(d)
-                # Keepdims is needed for the current 3D behaviour
-                array = array.mean(axis=tuple(axis), keepdims=True)
+                array = self.array.mean(axis=tuple(axis))
                 return self.__class__(
                     mesh, nvdim=self.nvdim, value=array, unit=self.unit
                 )
         elif isinstance(direction, str):
             axis = self.mesh.region._dim2index(direction)
             return self.__class__(
-                self.mesh.plane(direction),
+                self.mesh.sel(direction),
                 nvdim=self.nvdim,
-                value=self.array.mean(axis=axis, keepdims=True),
+                value=self.array.mean(axis=axis),
                 vdims=self.vdims,
                 unit=self.unit,
             )
