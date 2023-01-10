@@ -554,12 +554,11 @@ def test_call():
         f((0, 0))
 
 
-@pytest.mark.xfail(reason="needs mesh.sel")
 def test_mean():
     tol = 1e-12
 
     p1 = (-5e-9, -5e-9, -5e-9)
-    p2 = (5e-9, 5e-9, 5e-9)
+    p2 = (5e-9, 4e-9, 3e-9)
     cell = (1e-9, 1e-9, 1e-9)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
@@ -570,18 +569,42 @@ def test_mean():
     assert np.allclose(f.mean(), (0, 1, 2))
 
     # Test with direction
-    assert np.allclose(f.mean(direction="x").array, (0, 1, 2))
-    assert np.allclose(f.mean(direction="y").array, (0, 1, 2))
-    assert np.allclose(f.mean(direction="z").array, (0, 1, 2))
+    out = f.mean(direction="x")
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("y", "z")
+    assert np.array_equal(out.mesh.n, (9, 8))
+    out = f.mean(direction="y")
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("x", "z")
+    assert np.array_equal(out.mesh.n, (10, 8))
+    out = f.mean(direction="z")
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("x", "y")
+    assert np.array_equal(out.mesh.n, (10, 9))
 
     with pytest.raises(ValueError):
         f.mean(direction="a")
 
-    assert np.allclose(f.mean(direction=["x", "y"]).array, (0, 1, 2))
-    assert np.allclose(f.mean(direction=["y", "x"]).array, (0, 1, 2))
-    assert np.allclose(f.mean(direction=["x", "z"]).array, (0, 1, 2))
-    assert np.allclose(f.mean(direction=["y", "z"]).array, (0, 1, 2))
-    assert np.allclose(f.mean(direction=("y", "z")).array, (0, 1, 2))
+    out = f.mean(direction=["x", "y"])
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("z",)
+    assert np.array_equal(out.mesh.n, [8])
+    out = f.mean(direction=["y", "z"])
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("x",)
+    assert np.array_equal(out.mesh.n, [10])
+    out = f.mean(direction=["x", "z"])
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("y",)
+    assert np.array_equal(out.mesh.n, [9])
+    out = f.mean(direction=["z", "y"])
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("x",)
+    assert np.array_equal(out.mesh.n, [10])
+    out = f.mean(direction=("x", "y"))
+    assert np.allclose(out.array, (0, 1, 2))
+    assert out.mesh.region.dims == ("z",)
+    assert np.array_equal(out.mesh.n, [8])
 
     with pytest.raises(ValueError):
         f.mean(direction=["x", "a"])
