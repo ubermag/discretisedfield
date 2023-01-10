@@ -460,6 +460,7 @@ def test_valid_set_on_norm(ndim, nvdim):
     assert f.valid.dtype == bool
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
+            # Use [0] to examine single element numpy array
             assert f.valid[tuple(idx)][0]
         else:
             assert not f.valid[tuple(idx)][0]
