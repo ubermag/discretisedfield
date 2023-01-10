@@ -2716,7 +2716,7 @@ class Field(_FieldIO):
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         if n is not None:
             value = self
-            valid = self.__class__(self.mesh, nvdim=1, value=self.valid)
+            valid = self.__class__(self.mesh, nvdim=1, value=self.valid, dtype=bool)
         else:
             p_axis = plane_mesh.attributes["planeaxis"]
             plane_idx = self.mesh.point2index(plane_mesh.region.center)[p_axis]
@@ -2796,7 +2796,7 @@ class Field(_FieldIO):
             vdims=self.vdims,
             unit=self.unit,
             dtype=self.dtype,
-            valid=self.__class__(self.mesh, nvdim=1, value=self.valid),
+            valid=self.__class__(self.mesh, nvdim=1, value=self.valid, dtype=bool),
         )
 
     def __getitem__(self, item):
