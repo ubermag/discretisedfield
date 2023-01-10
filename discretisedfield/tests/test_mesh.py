@@ -706,41 +706,25 @@ def test_point2index_valid(p1, p2, n, point, expected):
 def test_point2index_boundaries():
     mesh = df.Mesh(p1=0, p2=10, cell=1)
 
-    point = 0.9
-    assert mesh.point2index(point) == 0
-
-    point = 1.0
-    assert mesh.point2index(point) == 1
-
-    point = 1.1
-    assert mesh.point2index(point) == 1
+    assert mesh.point2index(0.9) == 0
+    assert mesh.point2index(1.0) == 1
+    assert mesh.point2index(1.1) == 1
 
     # Check with even values as well
-
-    point = 1.9
-    assert mesh.point2index(point) == 1
-
-    point = 2.0
-    assert mesh.point2index(point) == 2
-
-    point = 2.1
-    assert mesh.point2index(point) == 2
+    assert mesh.point2index(1.9) == 1
+    assert mesh.point2index(2.0) == 2
+    assert mesh.point2index(2.1) == 2
 
     # Check inclusive boundaries
-    point = 0
-    assert mesh.point2index(point) == 0
-
-    point = 10
-    assert mesh.point2index(point) == 9
+    assert mesh.point2index(0) == 0
+    assert mesh.point2index(10) == 9
 
     # Check out of bounds
-    point = -10
     with pytest.raises(ValueError):
-        mesh.point2index(point)
+        mesh.point2index(-10)
 
-    point = 20
     with pytest.raises(ValueError):
-        mesh.point2index(point)
+        mesh.point2index(20)
 
 
 @pytest.mark.parametrize(
