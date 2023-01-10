@@ -726,6 +726,13 @@ class Mesh(_MeshIO):
     def point2index(self, point, /):
         """Convert point to the index of a cell which contains that point.
 
+        This method uses half-open intervals for each cell,
+        inclusive of the start point but exclusive of the endpoints.
+        i.e. for each cell [).
+        The exception to this is the very last cell contained in the region
+        which has a closed interval i.e. [] and is inclusive of both the
+        lower and upper bounds of the cell.
+
         Parameters
         ----------
         point : (3,) array_like
@@ -1294,7 +1301,8 @@ class Mesh(_MeshIO):
         with key ``item``. Alternatively, a ``discretisedfield.Region``
         object can be passed and a minimum-sized mesh containing it will be
         returned. The resulting mesh has the same discretisation cell as the
-        original mesh.
+        original mesh. This method uses closed intervals, inclusive of endpoints
+        i.e. [], for extracting the new mesh.
 
         Parameters
         ----------
