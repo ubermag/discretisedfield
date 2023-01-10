@@ -122,7 +122,7 @@ class Field(_FieldIO):
 
     """
 
-    __slots__ = ["_mesh", "_nvdim", "_vdims", "_unit", "_array", "dtype"]
+    __slots__ = ["_mesh", "_nvdim", "_vdims", "_unit", "_array", "_valid", "dtype"]
 
     def __init__(
         self,
