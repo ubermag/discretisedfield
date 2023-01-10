@@ -486,7 +486,15 @@ class Field(_FieldIO):
 
     @property
     def valid(self):
-        """Valid."""
+        """Valid field values.
+
+        This property is used to mask invalid field values.
+        This can be achieved by passing ``numpy.ndarray`` of
+        the same shape as the field array with boolean values,
+        the string ``"norm"`` (which masks zero values), or
+        None (which sets all values to True).
+
+        """
         return self._valid
 
     @valid.setter
@@ -494,7 +502,10 @@ class Field(_FieldIO):
         if valid is not None:
             if valid == "norm":
                 valid = ~np.isclose(self.norm.array, 0)
-            self._valid = _as_array(out, self.mesh, nvdim=1, dtype=bool)
+        else:
+            valid = np.ones_like(self.array, dtype=bool)
+
+        self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)
 
     def __abs__(self):
         """Absolute value of the field.
