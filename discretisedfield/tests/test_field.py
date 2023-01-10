@@ -1958,18 +1958,18 @@ def test_sel_subregions():
     )
     f = df.Field(mesh, nvdim=4, value=lambda p: [*p, 4])
 
-    f_sel = f.sel(x=(-50e-9, 0))
-    # assert f_sel == f["sr_x"]
+    f_sel = f.sel(x=(-50e-9, -0.5e-9))
+    assert f_sel == f["sr_x"]
     assert len(f_sel.mesh.subregions) == 3
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
-    assert f_sel.mesh == f.sel(x=(-50e-9, 0)).mesh
+    assert f_sel.mesh == f.mesh.sel(x=(-50e-9, 0))
     assert f_sel.nvdim == f.nvdim
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
     assert f_sel.array.shape == (*f.sel(x=(-50e-9, 0)).mesh.n, f.nvdim)
 
     f_sel = f.sel(y=(0, 40e-9))
-    # assert f_sel == f["sr_x"]
+    assert f_sel == f["sr_y"]
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
     assert f_sel.mesh == f.sel(y=(0, 40e-9)).mesh
     assert f_sel.nvdim == f.nvdim
