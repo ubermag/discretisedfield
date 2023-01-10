@@ -2027,7 +2027,6 @@ def test_sel_subregions():
     f = df.Field(mesh, nvdim=4, value=lambda p: [*p, 4])
 
     f_sel = f.sel(x=(-50e-9, -0.5e-9))
-    assert f_sel == f["sr_x"]
     assert len(f_sel.mesh.subregions) == 3
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
     assert f_sel.mesh == f.mesh.sel(x=(-50e-9, -0.5e-9))
@@ -2035,25 +2034,32 @@ def test_sel_subregions():
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
     assert f_sel.array.shape == (*f.mesh.sel(x=(-50e-9, -0.5e-9)).n, f.nvdim)
+    # f.__getitem__ does not preserve subregions
+    f_sel.mesh.subregions = {}
+    assert f_sel.allclose(f["sr_x"])
 
     f_sel = f.sel(y=(0, 40e-9))
-    assert f_sel == f["sr_y"]
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
     assert f_sel.mesh == f.mesh.sel(y=(0, 40e-9))
     assert f_sel.nvdim == f.nvdim
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
     assert f_sel.array.shape == (*f.mesh.sel(y=(0, 40e-9)).n, f.nvdim)
+    # f.__getitem__ does not preserve subregions
+    f_sel.mesh.subregions = {}
+    assert f_sel.allclose(f["sr_y"])
 
     f_sel = f.sel(z=(0, 30e-9))
     assert f_sel == f
-    assert f_sel == f["total"]
     assert sorted(f_sel.mesh.subregions) == ["sr_x", "sr_y", "total"]
     assert f_sel.mesh == f.mesh.sel(z=(0, 30e-9))
     assert f_sel.nvdim == f.nvdim
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
     assert f_sel.array.shape == (*f.mesh.sel(z=(0, 30e-9)).n, f.nvdim)
+    # f.__getitem__ does not preserve subregions
+    f_sel.mesh.subregions = {}
+    assert f_sel.allclose(f["total"])
 
     assert np.allclose(
         f.sel(x=4.5e-9).sel(y=5.5e-9).sel(z=6.5e-9), f((4.5e-9, 5.5e-9, 6.5e-9))
@@ -2069,7 +2075,7 @@ def test_sel_subregions():
     assert f_sel.vdims == f.vdims
     assert f_sel.unit == f.unit
     assert f_sel.array.shape == (*f.mesh.sel(x=(2, 4)).n, f.nvdim)
-    assert len(f_sel.mesh.subregions) == 1
+    assert len(f_sel.mesh.subregions) == 0
 
     f_sel = f.sel(x=3)
     assert np.allclose(f_sel, f((3,)))

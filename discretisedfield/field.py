@@ -2681,7 +2681,6 @@ class Field(_FieldIO):
         """
         dim, dim_index, _, sel_index = self.mesh._sel_convert_input(*args, **kwargs)
 
-        print(sel_index)
         array = self.array[
             dfu.assemble_index(
                 slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
@@ -2691,12 +2690,10 @@ class Field(_FieldIO):
         try:
             mesh = self.mesh.sel(*args, **kwargs)
         except ValueError as e:
-            if "p1 and p2 must not be empty" not in e:
+            if "p1 and p2 must not be empty" not in str(e):
                 raise
             return array  # 1 dim case
         else:  # n dim case
-            print(mesh.n)
-            print(array.shape)
             return self.__class__(
                 mesh, nvdim=self.nvdim, value=array, vdims=self.vdims, unit=self.unit
             )
