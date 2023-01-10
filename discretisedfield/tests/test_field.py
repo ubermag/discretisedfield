@@ -520,6 +520,34 @@ def test_valid_array(ndim, nvdim):
     assert np.all(expected_valid == f.valid)
 
 
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize(
+    "nvdim",
+    [1, 2, 3, 4],
+)
+def test_valid_operators(ndim, nvdim):
+    mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
+
+    def val_func(point):
+        return point[0]
+
+    f1 = df.Field(mesh, nvdim=1, value=val_func)
+    expected_valid = f1.array < 5
+    f2 = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim, valid=expected_valid)
+
+    f3 = f1 + f2
+    assert np.array_equal(f3.valid, np.logical_and(f1.valid, f2.valid))
+
+    f3 = f1 - f2
+    assert np.array_equal(f3.valid, np.logical_and(f1.valid, f2.valid))
+
+    f3 = f1 * f2
+    assert np.array_equal(f3.valid, np.logical_and(f1.valid, f2.valid))
+
+    f3 = f1 / f2
+    assert np.array_equal(f3.valid, np.logical_and(f1.valid, f2.valid))
+
+
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_value(valid_mesh, nvdim):
     f = df.Field(valid_mesh, nvdim=nvdim)
