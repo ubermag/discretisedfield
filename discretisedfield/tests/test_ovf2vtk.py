@@ -17,7 +17,7 @@ def test_ovf2vtk(tmp_path, capfd):
         c = 1e9
         return c * x, c * y, c * z
 
-    f = df.Field(mesh, dim=3, value=value_fun)
+    f = df.Field(mesh, nvdim=3, value=value_fun)
 
     # Output filename provided.
     omffilename_1 = str(tmp_path / "test-ovf2vtk1.omf")

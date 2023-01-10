@@ -1,5 +1,4 @@
 import collections
-import functools
 import numbers
 import warnings
 
@@ -70,6 +69,7 @@ class Region(_RegionIO):
     ValueError: ...
 
     """
+    __slots__ = ["_pmin", "_pmax", "_dims", "_units", "_tolerance_factor"]
 
     def __init__(
         self, p1=None, p2=None, dims=None, units=None, tolerance_factor=1e-12, **kwargs
@@ -105,6 +105,9 @@ class Region(_RegionIO):
                 "The length of p1 and p2 must be the same. Not"
                 f" {len(p1)=} and {len(p2)=}."
             )
+
+        if len(p1) == 0:
+            raise ValueError("p1 and p2 must not be empty.")
 
         if not all(isinstance(i, numbers.Real) for i in p1):
             raise TypeError("p1 can only contain elements of type numbers.Real.")
@@ -189,7 +192,7 @@ class Region(_RegionIO):
         """
         return self._pmax
 
-    @functools.cached_property
+    @property
     def ndim(self):
         r"""Number of dimensions.
 
