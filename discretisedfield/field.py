@@ -3611,7 +3611,10 @@ def _(val, mesh, nvdim, dtype):
     # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, nvdim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
-        array[tuple(index)] = val(point)
+        # Conversion to array and reshaping is required for numpy >= 1.24
+        # and for certain inputs, e.g. a tuple of numpy arrays which can e.g. occur
+        # for 1d vector fields.
+        array[tuple(index)] = np.asarray(val(point)).reshape(nvdim)
     return array
 
 
@@ -3667,6 +3670,7 @@ def _(val, mesh, nvdim, dtype):
         subval = val["default"]
         for idx in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
-            array[tuple(idx)] = subval(mesh.index2point(idx))
+            # conversion to array and reshaping similar to "callable" implementation
+            array[tuple(idx)] = np.asarray(subval(mesh.index2point(idx))).reshape(nvdim)
 
     return array

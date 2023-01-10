@@ -321,7 +321,7 @@ def test_set_with_dict():
     field = df.Field(
         mesh,
         nvdim=3,
-        value={"r1": (0, 0, 1 + 2j), "default": lambda c: (c, 0, 0)},
+        value={"r1": (0, 0, 1 + 2j), "default": lambda c: (c[0], 0, 0)},
         dtype=np.complex128,
     )
     assert np.all(field(3e-9) == (0, 0, 1 + 2j))
