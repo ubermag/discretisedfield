@@ -474,10 +474,7 @@ def test_valid_set_call(ndim, nvdim):
     mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
 
     def valid_func(point):
-        if all(point < 5):
-            return True
-        else:
-            return False
+        return all(point < 5)
 
     # Default
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
