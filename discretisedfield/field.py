@@ -1118,7 +1118,7 @@ class Field(_FieldIO):
             )
 
     def _apply_operator(self, other, function, operator):
-        valid = self.valid.copy()
+        valid = self.valid
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
             valid = np.logical_and(valid, other.valid)
@@ -1606,7 +1606,7 @@ class Field(_FieldIO):
         array([5.])
 
         """
-        valid = self.valid.copy()
+        valid = self.valid
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
             valid = np.logical_and(valid, other.valid)
@@ -1672,7 +1672,7 @@ class Field(_FieldIO):
         array([ 0., -1.,  0.])
 
         """
-        valid = self.valid.copy()
+        valid = self.valid
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
             if self.nvdim != 3 or other.nvdim != 3:
@@ -1760,7 +1760,7 @@ class Field(_FieldIO):
         True
 
         """
-        valid = self.valid.copy()
+        valid = self.valid
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
                 msg = "Cannot apply operator << on fields defined on different meshes."
@@ -2936,7 +2936,7 @@ class Field(_FieldIO):
         array([1.57079633])
 
         """
-        valid = self.valid.copy()
+        valid = self.valid
         if isinstance(vector, self.__class__):
             self._check_same_mesh_and_field_dim(vector)
             valid = np.logical_and(valid, vector.valid)
