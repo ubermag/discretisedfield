@@ -2746,7 +2746,9 @@ class Field(_FieldIO):
                 )
             ]
 
-        return self.__class__(mesh, nvdim=self.nvdim, value=array, vdims=self.vdims)
+        return self.__class__(
+            mesh, nvdim=self.nvdim, value=array, vdims=self.vdims, unit=self.unit
+        )
 
     def plane(self, *args, n=None, **kwargs):
         """Extracts field on the plane mesh.
