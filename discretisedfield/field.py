@@ -2511,27 +2511,28 @@ class Field(_FieldIO):
                     "A cumulative integral can only computed along one direction."
                 )
             sum_ = np.sum(self.array, axis=tuple(range(self.mesh.region.ndim)))
-            dV = np.prod(self.mesh.cell)
-            return sum_ * dV
+            return sum_ * self.mesh.dV
         elif not isinstance(direction, str):
             raise TypeError("'direction' must be of type str.")
 
-        mesh = self.mesh
+        axis = self.mesh.region._dim2index(direction)
 
-        axis = mesh.region._dim2index(direction)
         if cumulative:
+            # Sum all cell values up to (excuding) point x and add half the cell value
+            # of the cell containing point x then multiply by the cell size.
             tmp_array = self.array / 2
             left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
             right_cells = dfu.assemble_index(slice(None), 3, {axis: slice(1, None)})
             tmp_array[right_cells] += np.cumsum(self.array, axis=axis)[left_cells]
-            res_array = tmp_array * mesh.cell[axis]
+            res_array = tmp_array * self.mesh.cell[axis]
         else:
-            res_array = np.sum(self.array, axis=axis) * mesh.cell[axis]
-            mesh = mesh.sel(direction)
+            res_array = np.sum(self.array, axis=axis) * self.mesh.cell[axis]
 
-        if mesh.region.ndim == 0:
+        if self.mesh.region.ndim == 1 and not cumulative:
+            # no 0-dimensional region and mesh
             return res_array
 
+        mesh = self.mesh if cumulative else self.mesh.sel(direction)
         return self.__class__(mesh, nvdim=self.nvdim, value=res_array, vdims=self.vdims)
 
     def line(self, p1, p2, n=100):
