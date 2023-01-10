@@ -1043,7 +1043,7 @@ class Field(_FieldIO):
             )
             raise TypeError(msg)
 
-        if self.mesh == other.mesh and self.nvdim == other.nvdim:
+        if self.mesh.allclose(other.mesh) and self.nvdim == other.nvdim:
             return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
         else:
             return False
