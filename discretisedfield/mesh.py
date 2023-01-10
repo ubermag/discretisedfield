@@ -1064,53 +1064,10 @@ class Mesh(_MeshIO):
         ('x', 'y', 'z')
 
         """
-        if len(args) > 1 or len(kwargs) > 1:
-            raise ValueError("Select method only accepts one dimension at a time.")
-
-        if args and not kwargs:
-            dim = args[0]
-            range_ = None
-        elif not args and kwargs:
-            dim, range_ = list(kwargs.items())[0]
-        else:
-            raise ValueError(
-                "Either one positional argument or a keyword argument can be passed."
-            )
-
-        dim_index = self.region._dim2index(dim)
-
-        if range_ is not None:
-            if isinstance(range_, numbers.Real):
-                # TODO: Some book-keeping in future.
-                selected_value = range_
-            elif isinstance(range_, (tuple, list, np.ndarray)):
-                if len(range_) != 2:
-                    raise ValueError(
-                        "The points along the selected dimension must have two"
-                        " real numbers."
-                    )
-                elif not all(isinstance(point, numbers.Real) for point in range_):
-                    raise TypeError(
-                        f"The elements of {type(range_)} passed as the value of keyword"
-                        " argument must be real numbers."
-                    )
-            else:
-                raise TypeError(
-                    "The value passed to selected dimension must be a tuple, list,"
-                    " array or real number."
-                )
-        else:
-            selected_value = self.region.center[dim_index]
+        dim, dim_index, selection, _ = self._sel_convert_input(*args, **kwargs)
 
         sub_region = dict()
-        if range_ is None or isinstance(range_, numbers.Real):
-            if (
-                selected_value < self.region.pmin[dim_index]
-                or selected_value >= self.region.pmax[dim_index]
-            ):
-                raise ValueError(
-                    f"Selected value {selected_value} is outside the mesh region."
-                )
+        if isinstance(selection, numbers.Real):
             idxs = [i for i in range(self.region.ndim) if i != dim_index]
             p_1 = list()
             p_2 = list()
@@ -1123,13 +1080,12 @@ class Mesh(_MeshIO):
                 cell.append(self.cell[j])
                 dims.append(self.region.dims[j])
                 units.append(self.region.units[j])
-            tol = self.region.tolerance_factor
 
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
                     if (
-                        selected_value >= subreg.pmax[dim_index]
-                        or selected_value < subreg.pmin[dim_index]
+                        selection > subreg.pmax[dim_index]
+                        or selection < subreg.pmin[dim_index]
                     ):
                         continue
                     else:
@@ -1145,16 +1101,13 @@ class Mesh(_MeshIO):
         else:
             step = self.cell[dim_index] / 2.0
             p_1, p_2 = self.region.pmin.copy(), self.region.pmax.copy()
-            p_1[dim_index] = min(range_)
-            p_2[dim_index] = max(range_)
-            min_val = self.index2point(self.point2index(p_1))[dim_index] - step
-            max_val = self.index2point(self.point2index(p_2))[dim_index] + step
+            min_val = selection[0] - step
+            max_val = selection[1] + step
             p_1[dim_index] = min_val
             p_2[dim_index] = max_val
             cell = self.cell
             dims = self.region.dims
             units = self.region.units
-            tol = self.region.tolerance_factor
             if self.subregions is not None:
                 for key, subreg in self.subregions.items():
                     sub_reg_p_min = subreg.pmin[dim_index]
@@ -1172,11 +1125,94 @@ class Mesh(_MeshIO):
 
         return self.__class__(
             region=df.Region(
-                p1=p_1, p2=p_2, dims=dims, units=units, tolerance_factor=tol
+                p1=p_1,
+                p2=p_2,
+                dims=dims,
+                units=units,
+                tolerance_factor=self.region.tolerance_factor,
             ),
             cell=cell,
             subregions=sub_region,
         )
+
+    def _sel_convert_input(self, *args, **kwargs):
+        """Convert input of 'sel' into (dim, dim_index, selection, selection_index).
+
+        The value(s) in selection are cell centre points. If a range is selected a list
+        is returned for selection and a slice for selection_index. The upper boundary
+        for selection_index is increased by 1 to "make the slice inclusive".
+
+        """
+        if len(args) > 1 or len(kwargs) > 1:
+            raise ValueError("Select method only accepts one dimension at a time.")
+
+        if args and not kwargs:
+            dim = args[0]
+            range_ = None
+        elif not args and kwargs:
+            dim, range_ = list(kwargs.items())[0]
+        else:
+            raise ValueError(
+                "Either one positional argument or a keyword argument can be passed."
+            )
+
+        dim_index = self.region._dim2index(dim)
+
+        # Check input arguments
+        if range_ is not None:
+            if isinstance(range_, numbers.Real):
+                if (
+                    range_ < self.region.pmin[dim_index]
+                    or range_ > self.region.pmax[dim_index]
+                ):
+                    raise ValueError(
+                        f"Selected value {range_} is outside the mesh region."
+                    )
+                test_point = self.region.pmin.copy()
+                test_point[dim_index] = range_
+                selection = self.index2point(self.point2index(test_point))[dim_index]
+                selection_index = self.point2index(test_point)[dim_index]
+            elif isinstance(range_, (tuple, list, np.ndarray)):
+                if len(range_) != 2:
+                    raise ValueError(
+                        "The points along the selected dimension must have two"
+                        " real numbers."
+                    )
+                elif not all(isinstance(point, numbers.Real) for point in range_):
+                    raise TypeError(
+                        f"The elements of {type(range_)} passed as the value of keyword"
+                        " argument must be real numbers."
+                    )
+                selection = list()
+                selection_index = list()
+                for point in sorted(range_):
+                    if (
+                        point < self.region.pmin[dim_index]
+                        or point > self.region.pmax[dim_index]
+                    ):
+                        raise ValueError(
+                            f"Selected value {point} is outside the mesh region."
+                        )
+                    test_point = self.region.pmin.copy()
+                    test_point[dim_index] = point
+                    selection.append(
+                        self.index2point(self.point2index(test_point))[dim_index]
+                    )
+                    selection_index.append(self.point2index(test_point)[dim_index])
+                # increase upper boundary to "make slice inclusive"
+                selection_index = slice(selection_index[0], selection_index[1] + 1)
+            else:
+                raise TypeError(
+                    "The value passed to selected dimension must be a tuple, list,"
+                    " array or real number."
+                )
+        else:
+            selection = self.index2point(self.point2index(self.region.center))[
+                dim_index
+            ]
+            selection_index = self.point2index(self.region.center)[dim_index]
+
+        return dim, dim_index, selection, selection_index
 
     def __or__(self, other):
         # """Depricated method to check if meshes are aligned: use ``is_aligned``"""

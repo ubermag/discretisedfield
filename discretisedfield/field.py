@@ -2682,69 +2682,27 @@ class Field(_FieldIO):
         array([1., 2., 3.])
 
         """
-        # Extract input arguments
-        if len(args) > 1 or len(kwargs) > 1:
-            raise ValueError("Select method only accepts one dimension at a time.")
+        dim, dim_index, _, sel_index = self.mesh._sel_convert_input(*args, **kwargs)
 
-        if args and not kwargs:
-            dim = args[0]
-            range_ = None
-        elif not args and kwargs:
-            dim, range_ = list(kwargs.items())[0]
-        else:
-            raise ValueError(
-                "Either one positional argument or a keyword argument can be passed."
+        print(sel_index)
+        array = self.array[
+            dfu.assemble_index(
+                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
             )
+        ]
 
-        dim_index = self.mesh.region._dim2index(dim)
-        keep_dim = True
-
-        # Check input arguments
-        if range_ is not None:
-            if isinstance(range_, numbers.Real):
-                selected_value = range_
-                keep_dim = False
-            elif isinstance(range_, (tuple, list, np.ndarray)):
-                if len(range_) != 2:
-                    raise ValueError(
-                        "The points along the selected dimension must have two"
-                        " real numbers."
-                    )
-                elif not all(isinstance(point, numbers.Real) for point in range_):
-                    raise TypeError(
-                        f"The elements of {type(range_)} passed as the value of keyword"
-                        " argument must be real numbers."
-                    )
-            else:
-                raise TypeError(
-                    "The value passed to selected dimension must be a tuple, list,"
-                    " array or real number."
-                )
-        else:
-            selected_value = self.mesh.region.center[dim_index]
-            keep_dim = False
-
-        # 1D case
-        if self.mesh.region.ndim == 1 and not keep_dim:
-            idx = (np.abs(getattr(self.mesh.points, dim) - selected_value)).argmin()
-            return self.array[idx, :]
-
-        # General D case
-        mesh = self.mesh.sel(*args, **kwargs)
-
-        if keep_dim:
-            array = self[mesh.region].array
-        else:
-            idx = (np.abs(getattr(self.mesh.points, dim) - selected_value)).argmin()
-            array = self.array[
-                dfu.assemble_index(
-                    slice(None), self.mesh.region.ndim + 1, {dim_index: idx}
-                )
-            ]
-
-        return self.__class__(
-            mesh, nvdim=self.nvdim, value=array, vdims=self.vdims, unit=self.unit
-        )
+        try:
+            mesh = self.mesh.sel(*args, **kwargs)
+        except ValueError as e:
+            if "p1 and p2 must not be empty" not in e:
+                raise
+            return array  # 1 dim case
+        else:  # n dim case
+            print(mesh.n)
+            print(array.shape)
+            return self.__class__(
+                mesh, nvdim=self.nvdim, value=array, vdims=self.vdims, unit=self.unit
+            )
 
     def plane(self, *args, n=None, **kwargs):
         """Extracts field on the plane mesh.
