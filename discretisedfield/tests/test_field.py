@@ -1791,7 +1791,6 @@ def test_integrate_volume():
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
     assert np.allclose(f.integrate(), (0, 0, 0))
-    assert np.allclose(f.integrate(), (0, 0, 0))
 
 
 def test_integrate_surface():
@@ -1801,28 +1800,27 @@ def test_integrate_surface():
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     f = df.Field(mesh, nvdim=1, value=0)
-    assert f.plane("x").integrate() == 0
+    assert f.sel("x").integrate() == 0
 
     f = df.Field(mesh, nvdim=1, value=2)
-    assert f.plane("x").integrate() == 30
-    assert f.plane("y").integrate() == 60
-    assert f.plane("z").integrate() == 100
+    assert f.sel("x").integrate() == 30
+    assert f.sel("y").integrate() == 60
+    assert f.sel("z").integrate() == 100
 
     f = df.Field(mesh, nvdim=3, value=(-1, 0, 3))
-    assert f.plane("x").dot([1, 0, 0]).integrate() == -15
-    assert f.plane("y").dot([0, 1, 0]).integrate() == 0
-    assert f.plane("z").dot([0, 0, 1]).integrate() == 150
+    assert f.sel("x").dot([1, 0, 0]).integrate() == -15
+    assert f.sel("y").dot([0, 1, 0]).integrate() == 0
+    assert f.sel("z").dot([0, 0, 1]).integrate() == 150
 
     # TODO change when n dimensional meshes are supported
     # The next line currently fails because we cannot detect consecutive
     # .plane methods. Therefore, the calculated cell volume is wrong.
     # The test should "fail" once n dimensional meshes are implemented.
     # The value on the right-hand-site is the expected result.
-    assert f.plane("z").plane("x").dot([1, 0, 0]).integrate() != -5
+    assert f.sel("z").sel("x").dot([1, 0, 0]).integrate() != -5
 
 
-def test_integrate_surface():
-    # Directional integral
+def test_integrate_directional():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (0.5, 0.5, 0.5)
@@ -1851,8 +1849,7 @@ def test_integrate_surface():
     )
 
 
-def test_integrate_surface():
-    # Cumulative integral
+def test_integrate_cumulative():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (0.5, 0.5, 0.5)
@@ -1881,14 +1878,14 @@ def test_integrate_exceptions():
     cell = (0.5, 0.5, 0.5)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
     f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
-    # Exceptions
-    with pytest.raises(ValueError):
+
+    with pytest.raises(ValueError):  # cumulative without specifying a direction
         f.integrate(cumulative=True)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # invalid direction name
         f.integrate(direction="a")
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError):  # invalid direction type
         f.integrate(1)
 
 
