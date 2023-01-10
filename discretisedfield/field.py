@@ -649,25 +649,22 @@ class Field(_FieldIO):
             if sorted(direction) == sorted(self.mesh.region.dims):
                 return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
             else:
-                # NOTE: this is a temporary solution until mesh.sel is implemented.
-                # Hence, this is not the most efficient way to do it.
+                # Multiple directions mean
                 mesh = self.mesh
-                array = self.array
                 axis = np.zeros(len(direction), dtype=int)
                 for i, d in enumerate(direction):
-                    mesh = mesh.plane(d)
+                    mesh = mesh.sel(d)
                     axis[i] = self.mesh.region._dim2index(d)
-                # Keepdims is needed for the current 3D behaviour
-                array = array.mean(axis=tuple(axis), keepdims=True)
+                array = self.array.mean(axis=tuple(axis))
                 return self.__class__(
                     mesh, nvdim=self.nvdim, value=array, unit=self.unit
                 )
         elif isinstance(direction, str):
             axis = self.mesh.region._dim2index(direction)
             return self.__class__(
-                self.mesh.plane(direction),
+                self.mesh.sel(direction),
                 nvdim=self.nvdim,
-                value=self.array.mean(axis=axis, keepdims=True),
+                value=self.array.mean(axis=axis),
                 vdims=self.vdims,
                 unit=self.unit,
             )
@@ -3715,7 +3712,10 @@ def _(val, mesh, nvdim, dtype):
     # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, nvdim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
-        array[tuple(index)] = val(point)
+        # Conversion to array and reshaping is required for numpy >= 1.24
+        # and for certain inputs, e.g. a tuple of numpy arrays which can e.g. occur
+        # for 1d vector fields.
+        array[tuple(index)] = np.asarray(val(point)).reshape(nvdim)
     return array
 
 
@@ -3771,6 +3771,7 @@ def _(val, mesh, nvdim, dtype):
         subval = val["default"]
         for idx in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
-            array[tuple(idx)] = subval(mesh.index2point(idx))
+            # conversion to array and reshaping similar to "callable" implementation
+            array[tuple(idx)] = np.asarray(subval(mesh.index2point(idx))).reshape(nvdim)
 
     return array

@@ -726,6 +726,13 @@ class Mesh(_MeshIO):
     def point2index(self, point, /):
         """Convert point to the index of a cell which contains that point.
 
+        This method uses half-open intervals for each cell,
+        inclusive of the start point but exclusive of the endpoints.
+        i.e. for each cell [).
+        The exception to this is the very last cell contained in the region
+        which has a closed interval i.e. [] and is inclusive of both the
+        lower and upper bounds of the cell.
+
         Parameters
         ----------
         point : (3,) array_like
@@ -781,7 +788,7 @@ class Mesh(_MeshIO):
         if point not in self.region:
             raise ValueError(f"Point {point} is outside the region {self.region=}.")
 
-        index = ((point - self.region.pmin) / self.cell - 0.5).round().astype(int)
+        index = np.floor((point - self.region.pmin) / self.cell).astype(int)
         # If index is rounded to the out-of-range values.
         index = np.clip(index, 0, self.n - 1)
 
@@ -1337,7 +1344,8 @@ class Mesh(_MeshIO):
         with key ``item``. Alternatively, a ``discretisedfield.Region``
         object can be passed and a minimum-sized mesh containing it will be
         returned. The resulting mesh has the same discretisation cell as the
-        original mesh.
+        original mesh. This method uses closed intervals, inclusive of endpoints
+        i.e. [], for extracting the new mesh.
 
         Parameters
         ----------
@@ -1406,7 +1414,10 @@ class Mesh(_MeshIO):
 
         hc = np.divide(self.cell, 2)  # half-cell
         p1 = np.subtract(self.index2point(self.point2index(item.pmin)), hc)
-        p2 = np.add(self.index2point(self.point2index(item.pmax)), hc)
+
+        # Calculate p2 index manually as point2index will give [) and we want [].
+        p2_idx = (np.ceil((item.pmax - self.region.pmin) / self.cell) - 1).astype(int)
+        p2 = np.add(self.index2point(p2_idx), hc)
 
         return self.__class__(
             region=df.Region(p1=p1, p2=p2), cell=self.cell, attributes=self.attributes
