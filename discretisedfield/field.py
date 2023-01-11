@@ -1,6 +1,5 @@
 import collections
 import functools
-import itertools
 import numbers
 
 import numpy as np
@@ -2198,31 +2197,10 @@ class Field(_FieldIO):
         return derivative_array
 
     @classmethod
-    def _split_array(self, array, valid):
-        # 70.3 µs ± 719 ns
-        # 100 element array
-        return [
-            np.array(list(grp))
-            for k, grp in itertools.groupby(
-                array, key=lambda _, ig=iter(valid): next(ig)
-            )
-            if k
-        ]
-
-    @classmethod
-    def _split_array_2(self, array, valid):
-        # 15.3 µs ± 63.1 ns
-        # 100 element array
-        loc = np.where(np.invert(valid))[0]
-        loc = np.concatenate(([-1], loc, [len(array)]))
-        return [
-            array[loc[i] + 1 : loc[i + 1]]
-            for i in range(len(loc) - 1)
-            if loc[i + 1] != loc[i] + 1
-        ]
-
-    @classmethod
     def _split_array_on_idx(self, array, loc):
+        """Split a 1D array on based on contiguous valid values.
+        For a 100 element array, this method is 15.3 µs ± 63.1 ns
+        compared to itertools.groupby which is 70.3 µs ± 719 ns."""
         loc = np.concatenate(([-1], loc, [len(array)]))
         return [
             array[loc[i] + 1 : loc[i + 1]]
@@ -2232,6 +2210,11 @@ class Field(_FieldIO):
 
     @classmethod
     def _split_diff_combine(self, array, valid, order, dx):
+        """Split a 1D array on based on contiguous valid values,
+        compute the derivative, and recombine the array."""
+        # Find indices of invalid cells. The [0] is needed because
+        # np.where returns a tuple of ndarray and we are only ever
+        # in the case where we have a single element tuple.
         idx = np.where(np.invert(valid))[0]
         split = self._split_array_on_idx(array, idx)
         diff = [self._1d_diff(order, arr, dx) for arr in split]
@@ -2241,17 +2224,34 @@ class Field(_FieldIO):
 
     def diff_new(self, direction, order=1, restrict2valid=True):
         r"""New derivative method."""
+        # Check order of derivative
         if order not in (1, 2):
             msg = f"Derivative of the {order} order is not implemented."
             raise NotImplementedError(msg)
 
         direction_idx = self.mesh.region._dim2index(direction)
         out = np.zeros_like(self.array)
+        # Use only valid values for the derivative if restrict2valid is True
+        # or use all values if restrict2valid is False
         valid = self.valid if restrict2valid else np.ones_like(self.valid, dtype=bool)
-        for idx in self.mesh.plane(direction).indices:
+
+        # Loop over all cells in the plane perpendicular to the direction of the
+        # derivative. Use sel method in a way that keeps the dimensionality but
+        # only returns a single layer in the direction of the derivative
+        for idx in self.mesh.sel(
+            **{
+                direction: (
+                    self.mesh.region.pmin[direction_idx],
+                    self.mesh.region.pmin[direction_idx]
+                    + self.mesh.cell[direction_idx],
+                )
+            }
+        ).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
             valid_arr = valid[tuple([*idx, 0])]
+            # Loop over all value dimensions of the vector field and
+            # compute the derivative for each value dimension.
             for dim in range(self.nvdim):
                 out[tuple([*idx, dim])] = df.Field._split_diff_combine(
                     self.array[tuple([*idx, dim])],

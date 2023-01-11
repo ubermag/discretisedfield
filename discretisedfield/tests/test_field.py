@@ -1984,6 +1984,8 @@ def test_diff_new():
 
 
 def test_diff_new_temp():
+    # Temporary test to check that the new diff function gives the
+    # same result as the old one
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (2, 2, 2)
