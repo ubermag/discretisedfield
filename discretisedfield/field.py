@@ -10,6 +10,7 @@ from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
+from discretisedfield.operators import _split_diff_combine
 from discretisedfield.plotting.util import hv_key_dim
 
 from . import html
@@ -2150,78 +2151,6 @@ class Field(_FieldIO):
             valid=self.valid,
         )
 
-    @classmethod
-    def _1d_diff(self, order, array, dx):
-        # if not isinstance(order, numbers.Number):
-        #     raise TypeError("Order must be a number.")
-        # if order not in (1, 2):
-        #     msg = f"Derivative of the {order} order is not implemented."
-        #     raise NotImplementedError(msg)
-        # if not isinstance(array, np.ndarray):
-        #     raise TypeError("Array must be a numpy array.")
-        # if len(array) < 1:
-        #     raise ValueError("Array must have at least one element.")
-        # if not isinstance(dx, numbers.Number):
-        #     raise TypeError("dx must be a number.")
-        # if dx <= 0:
-        #     raise ValueError("dx must be positive.")
-
-        if len(array) < order + 1:
-            return np.zeros_like(array)
-
-        if order == 1:
-            # Second order accuracy is in the center of the array and
-            # first order at the boundaries
-            derivative_array = np.gradient(array, dx, edge_order=1)
-            if len(array) > 3:
-                # Second order accuracy at the boundaries
-                derivative_array = np.gradient(array, dx, edge_order=2)
-
-        elif order == 2:
-            # The derivative is computed using the central difference
-            derivative_array = np.convolve(array, [1, -2, 1], "same")
-            if len(array) > 4:
-                # Second order accuracy at the boundaries
-                derivative_array[0] = (
-                    2 * array[0] - 5 * array[1] + 4 * array[2] - array[3]
-                )
-                derivative_array[-1] = (
-                    2 * array[-1] - 5 * array[-2] + 4 * array[-3] - array[-4]
-                )
-            else:
-                # First order accuracy at the boundaries
-                derivative_array[0] = array[0] - 2 * array[1] + array[2]
-                derivative_array[-1] = array[-1] - 2 * array[-2] + array[-3]
-            derivative_array = derivative_array / dx**2
-
-        return derivative_array
-
-    @classmethod
-    def _split_array_on_idx(self, array, loc):
-        """Split a 1D array on based on contiguous valid values.
-        For a 100 element array, this method is 15.3 µs ± 63.1 ns
-        compared to itertools.groupby which is 70.3 µs ± 719 ns."""
-        loc = np.concatenate(([-1], loc, [len(array)]))
-        return [
-            array[loc[i] + 1 : loc[i + 1]]
-            for i in range(len(loc) - 1)
-            if loc[i + 1] != loc[i] + 1
-        ]
-
-    @classmethod
-    def _split_diff_combine(self, array, valid, order, dx):
-        """Split a 1D array on based on contiguous valid values,
-        compute the derivative, and recombine the array."""
-        # Find indices of invalid cells. The [0] is needed because
-        # np.where returns a tuple of ndarray and we are only ever
-        # in the case where we have a single element tuple.
-        idx = np.where(np.invert(valid))[0]
-        split = self._split_array_on_idx(array, idx)
-        diff = [self._1d_diff(order, arr, dx) for arr in split]
-        out = np.zeros_like(array)
-        out[valid] = np.concatenate(diff)
-        return out
-
     def diff_new(self, direction, order=1, restrict2valid=True):
         r"""New derivative method."""
         # Check order of derivative
@@ -2253,7 +2182,7 @@ class Field(_FieldIO):
             # Loop over all value dimensions of the vector field and
             # compute the derivative for each value dimension.
             for dim in range(self.nvdim):
-                out[tuple([*idx, dim])] = df.Field._split_diff_combine(
+                out[tuple([*idx, dim])] = _split_diff_combine(
                     self.array[tuple([*idx, dim])],
                     valid_arr,
                     order,
