@@ -2152,7 +2152,129 @@ class Field(_FieldIO):
         )
 
     def diff(self, direction, order=1, restrict2valid=True):
-        r"""New derivative method."""
+        """Directional derivative.
+
+        This method computes a directional derivative of the field and returns
+        a field. The direction in which the derivative is computed is passed
+        via ``direction`` argument, which can be any element of ``region.dims``.
+        The order of the computed derivative can be 1 or 2 and it is specified
+        using argument ``order`` and it defaults to 1.
+
+        This method uses second order accurate finite difference stencils by default
+        unless the field is defined on a mesh with too few cells in the differential
+        direction. In this case the first order accurate finite difference stencils
+        are used at the boundaries and the second order accurate finite difference
+        stencils are used in the interior.
+
+        Directional derivative cannot be computed if less or equal discretisation
+        cells exists in a specified direction than the order.
+        In that case, a zero field is returned.
+
+        By default, the directional derivative is computed only across contiguous
+        areas of the field where the field is valid. This behaviour can be
+        changed to compute the directional derivative across the whole field
+        by setting ``restrict2valid`` to ``False``.
+
+        Computing of the directional derivative depends
+        strongly on the boundary condition specified in the mesh on which the
+        field is defined on. More precisely, the values of the derivatives at
+        the boundary are different for periodic, Neumann, dirichlet, or no boundary
+        conditions. For details on boundary conditions, please refer to the
+        ``disretisedfield.Mesh`` class. The derivatives are computed using
+        central differences inside the sample and using forward/backward
+        differences at the boundaries.
+
+        Parameters
+        ----------
+        direction : str
+
+            The direction in which the derivative is computed. It can be
+            ``'x'``, ``'y'``, or ``'z'``.
+
+        order : int
+
+            The order of the derivative. It can be 1 or 2 and it defaults to 1.
+
+        restrict2valid : bool
+
+            If ``True``, the directional derivative is computed only across
+            contiguous areas of the field where the field is valid. If ``False``,
+            the directional derivative is computed across the whole field.
+            The default value is ``True``.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Directional derivative.
+
+        Raises
+        ------
+        NotImplementedError
+
+            If order ``n`` higher than 2 is asked for.
+
+        Example
+        -------
+        1. Compute the first-order directional derivative of a scalar field in
+        the y-direction of a spatially varying field. For the field we choose
+        :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the
+        derivative in the y-direction to be to be a constant scalar field
+        :math:`df/dy = 3`.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100e-9, 100e-9, 10e-9)
+        >>> cell = (10e-9, 10e-9, 10e-9)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        ...
+        >>> def value_fun(point):
+        ...     x, y, z = point
+        ...     return 2*x + 3*y + -5*z
+        ...
+        >>> f = df.Field(mesh, nvdim=1, value=value_fun)
+        >>> f.diff('y').mean()  # first-order derivative by default
+        array([3.])
+
+        2. Try to compute the second-order directional derivative of the vector
+        field which has only one discretisation cell in the z-direction. For
+        the field we choose :math:`f(x, y, z) = (2x, 3y, -5z)`. Accordingly, we
+        expect the directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
+        :math:`df/dy=(0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because
+        there is only one discretisation cell in the z-direction, the
+        derivative cannot be computed and a zero field is returned.
+
+        >>> import numpy as np
+        >>> def value_fun(point):
+        ...     x, y, z = point
+        ...     return (2*x, 3*y, -5*z)
+        ...
+        >>> f = df.Field(mesh, nvdim=3, value=value_fun)
+        >>> np.allclose(f.diff('x', order=1).mean(), [2, 0, 0])
+        True
+        >>> np.allclose(f.diff('y', order=1).mean(), [0, 3, 0])
+        True
+        >>> f.diff('z', order=1).mean()  # derivative cannot be calculated
+        array([0., 0., 0.])
+
+        3. Compute the second-order directional derivative of a scalar field with
+        which is only valid below x=5.
+
+        >>> def value_fun(point):
+        ...     x = point
+        ...     return x
+        ...
+        >>> def valid_fun(point):
+        ...     x = point
+        ...     return x < 5
+        ...
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=1)
+        >>> f = df.Field(mesh, nvdim=1, value=value_fun, valid=valid_fun)
+        >>> f.diff('x', order=1)
+        array([1., 1., 1., 1., 1., 0., 0., 0., 0., 0.])
+
+        """
         # Check order of derivative
         if order not in (1, 2):
             msg = f"Derivative of the {order} order is not implemented."
@@ -2178,7 +2300,7 @@ class Field(_FieldIO):
         ).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
-            valid_arr = valid[tuple([*idx, 0])]
+            valid_arr = valid[tuple(idx)]
             # Loop over all value dimensions of the vector field and
             # compute the derivative for each value dimension.
             for dim in range(self.nvdim):
