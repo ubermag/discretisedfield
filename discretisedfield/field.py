@@ -2280,6 +2280,14 @@ class Field(_FieldIO):
             msg = f"Derivative of the {order} order is not implemented."
             raise NotImplementedError(msg)
 
+        # Boundary conditions
+        if direction in self.mesh.bc:  # PBC
+            bc = "pbc"
+        elif self.mesh.bc == "":
+            bc = None
+        else:
+            bc = self.mesh.bc
+
         direction_idx = self.mesh.region._dim2index(direction)
         out = np.zeros_like(self.array)
         # Use only valid values for the derivative if restrict2valid is True
@@ -2309,6 +2317,7 @@ class Field(_FieldIO):
                     valid_arr,
                     order,
                     self.mesh.cell[direction_idx],
+                    bc,
                 )
 
         return self.__class__(

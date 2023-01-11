@@ -12,7 +12,13 @@ from .field_rotator import FieldRotator
 from .interact import interact
 from .line import Line
 from .mesh import Mesh
-from .operators import _1d_diff, _split_array_on_idx, _split_diff_combine, integrate
+from .operators import (
+    _1d_diff,
+    _pad_array,
+    _split_array_on_idx,
+    _split_diff_combine,
+    integrate,
+)
 from .region import Region
 
 # Enable default plotting style.
