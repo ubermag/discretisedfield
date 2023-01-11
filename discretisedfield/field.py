@@ -1,6 +1,7 @@
 import collections
 import functools
 import numbers
+import warnings
 
 import numpy as np
 import xarray as xr
@@ -143,7 +144,7 @@ class Field(_FieldIO):
         dtype=None,
         unit=None,
         valid=True,
-        dim_mapping=None,
+        vdim_mapping=None,
         **kwargs,
     ):
         if not isinstance(mesh, df.Mesh):
@@ -173,7 +174,7 @@ class Field(_FieldIO):
         self._vdims = None  # required in here for correct initialisation
         self.vdims = vdims
 
-        self.dim_mapping = dim_mapping
+        self.vdim_mapping = vdim_mapping
 
     @property
     def mesh(self):
@@ -529,21 +530,21 @@ class Field(_FieldIO):
         self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)
 
     @property
-    def dim_mapping(self):
+    def vdim_mapping(self):
         """Map vdims to dims."""
         return self._dim_mapping
 
-    @dim_mapping.setter
-    def dim_mapping(self, mapping):
+    @vdim_mapping.setter
+    def vdim_mapping(self, mapping):
         if mapping is None:
             if self.nvdim == 1:
                 pass
             elif self.nvdim == self.mesh.region.ndim:
                 mapping = dict(zip(self.vdims, self.mesh.region.dims))
             else:
-                raise ValueError(
-                    "Automatic mapping is not possible for {self.nvdim=} and"
-                    " {self.mesh.region.dim=}."
+                warnings.warn(
+                    f"Automatic mapping is not possible for {self.nvdim=} and"
+                    f" {self.mesh.region.ndim=}. Set 'vdim_mapping' manually."
                 )
         elif not isinstance(mapping, dict):
             raise TypeError(f"Invalid {type(mapping)=}; must be of type 'dict'.")
@@ -554,8 +555,9 @@ class Field(_FieldIO):
 
     @property
     def _r_dim_mapping(self):
-        """Reversed dim mapping for use in plotting."""
-        return {val: key for key, val in self.dim_mapping.items()}
+        """Map dims to vdims."""
+        reversed_mapping = {val: key for key, val in self.vdim_mapping.items()}
+        return {dim: reversed_mapping.get(dim, None) for dim in self.mesh.region.dims}
 
     def __abs__(self):
         """Absolute value of the field.
@@ -2802,6 +2804,7 @@ class Field(_FieldIO):
                 vdims=self.vdims,
                 unit=self.unit,
                 valid=valid,
+                vdim_mapping=self.vdim_mapping,
             )
 
     def plane(self, *args, n=None, **kwargs):
@@ -2940,6 +2943,7 @@ class Field(_FieldIO):
             unit=self.unit,
             dtype=self.dtype,
             valid=self.__class__(self.mesh, nvdim=1, value=self.valid, dtype=bool),
+            vdim_mapping=self.vdim_mapping,
         )
 
     def __getitem__(self, item):
