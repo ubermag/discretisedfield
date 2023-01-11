@@ -703,6 +703,30 @@ def test_point2index_valid(p1, p2, n, point, expected):
     assert np.array_equal(mesh.point2index(expected), point)
 
 
+def test_point2index_boundaries():
+    mesh = df.Mesh(p1=0, p2=10, cell=1)
+
+    assert mesh.point2index(0.9) == 0
+    assert mesh.point2index(1.0) == 1
+    assert mesh.point2index(1.1) == 1
+
+    # Check with even values as well
+    assert mesh.point2index(1.9) == 1
+    assert mesh.point2index(2.0) == 2
+    assert mesh.point2index(2.1) == 2
+
+    # Check inclusive boundaries
+    assert mesh.point2index(0) == 0
+    assert mesh.point2index(10) == 9
+
+    # Check out of bounds
+    with pytest.raises(ValueError):
+        mesh.point2index(-10)
+
+    with pytest.raises(ValueError):
+        mesh.point2index(20)
+
+
 @pytest.mark.parametrize(
     "p1, p2, n, point, error",
     [
@@ -1066,6 +1090,13 @@ def test_getitem():
 
     with pytest.raises(ValueError):
         submesh = mesh[df.Region(p1=(11e-9, 22e-9, 1e-9), p2=(200e-9, 79e-9, 14e-9))]
+
+
+def test_getitem_boundaries():
+    subregion = df.Region(p1=2, p2=6)
+    mesh = df.Mesh(p1=0, p2=10, cell=1, subregions={"a": subregion})
+
+    assert mesh[subregion] == mesh["a"]
 
 
 @pytest.mark.parametrize(
@@ -1477,6 +1508,23 @@ def test_coordinate_field(valid_mesh):  # TODO
         ] * valid_mesh.region.ndim
         index[valid_mesh.region._dim2index(dim)] = slice(None)
         assert np.allclose(cfield.array[index], getattr(valid_mesh.points, dim), atol=0)
+
+
+def test_sel_convert_intput():
+    # 3d
+    p1 = (0, 0, 0)
+    p2 = (5, 10, 10)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 2))
+
+    # dim, dim_index, selection, selection_index
+    assert mesh._sel_convert_input("x") == ("x", 0, 2.5, 2)
+    assert mesh._sel_convert_input(y=4.1) == ("y", 1, 4.5, 4)
+    assert mesh._sel_convert_input(y=(0, 2)) == ("y", 1, [0.5, 2.5], slice(0, 3))
+    assert mesh._sel_convert_input(z=(2, 5)) == ("z", 2, [3, 5], slice(1, 3))
+
+    # 1d
+    mesh = df.Mesh(p1=0, p2=10e-9, n=5)
+    assert mesh._sel_convert_input("x") == ("x", 0, 5e-9, 2)
 
 
 def test_sel_string_1D():
