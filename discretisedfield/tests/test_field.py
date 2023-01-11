@@ -1959,7 +1959,7 @@ def test_split_array_on_idx(valid):
 
 
 def test_split_diff_combine():
-    valid = [True, True, False, True, True, False, True]
+    valid = [True, True, False, False, True, True, False, True]
     array = np.arange(len(valid))
     out = df.Field._split_diff_combine(array, valid, 1, 1)
     assert len(out) == len(array)
@@ -1981,6 +1981,24 @@ def test_diff_new():
     assert np.allclose(f.diff_new("x").mean(), (1, 0, 0))
     assert np.allclose(f.diff_new("y").mean(), (0, 1, 0))
     assert np.allclose(f.diff_new("z").mean(), (0, 0, 1))
+
+
+def test_diff_new_temp():
+    p1 = (0, 0, 0)
+    p2 = (10, 10, 10)
+    cell = (2, 2, 2)
+
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    def value_fun(point):
+        x, y, z = point
+        return (x, y, z)
+
+    f = df.Field(mesh, nvdim=3, value=value_fun)
+
+    assert np.allclose(f.diff("x").array, f.diff_new("x", restrict2valid=False).array)
+    assert np.allclose(f.diff("y").array, f.diff_new("y", restrict2valid=False).array)
+    assert np.allclose(f.diff("z").array, f.diff_new("z", restrict2valid=False).array)
 
 
 # @pytest.mark.parametrize(
