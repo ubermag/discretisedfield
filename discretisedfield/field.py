@@ -2514,8 +2514,9 @@ class Field(_FieldIO):
             # Sum all cell values up to (excuding) point x and add half the cell value
             # of the cell containing point x then multiply by the cell size.
             tmp_array = self.array / 2
-            left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
-            right_cells = dfu.assemble_index(slice(None), 3, {axis: slice(1, None)})
+            ndim = self.mesh.region.ndim
+            left_cells = dfu.assemble_index(slice(None), ndim, {axis: slice(None, -1)})
+            right_cells = dfu.assemble_index(slice(None), ndim, {axis: slice(1, None)})
             tmp_array[right_cells] += np.cumsum(self.array, axis=axis)[left_cells]
             res_array = tmp_array * self.mesh.cell[axis]
         else:
