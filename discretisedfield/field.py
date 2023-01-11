@@ -2759,6 +2759,12 @@ class Field(_FieldIO):
             )
         ]
 
+        valid = self.valid[
+            dfu.assemble_index(
+                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
+            )
+        ]
+
         try:
             mesh = self.mesh.sel(*args, **kwargs)
         except ValueError as e:
@@ -2767,7 +2773,12 @@ class Field(_FieldIO):
             return array  # 1 dim case
         else:  # n dim case
             return self.__class__(
-                mesh, nvdim=self.nvdim, value=array, vdims=self.vdims, unit=self.unit
+                mesh,
+                nvdim=self.nvdim,
+                value=array,
+                vdims=self.vdims,
+                unit=self.unit,
+                valid=valid,
             )
 
     def plane(self, *args, n=None, **kwargs):
