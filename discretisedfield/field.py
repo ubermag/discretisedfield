@@ -522,8 +522,10 @@ class Field(_FieldIO):
                 valid = ~np.isclose(self.norm.array, 0)
         else:
             valid = True
-
-        self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)
+        # Using _as_array creates an array with shape (*mesh.n, 1).
+        # We only want a shape of mesh.n so we can directly use it
+        # to index field.array i.e. field.array[field.valid].
+        self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)[..., 0]
 
     def __abs__(self):
         """Absolute value of the field.
@@ -709,7 +711,6 @@ class Field(_FieldIO):
                     value=array,
                     unit=self.unit,
                     vdims=self.vdims,
-                    valid=self.valid,
                 )
         elif isinstance(direction, str):
             axis = self.mesh.region._dim2index(direction)
@@ -719,7 +720,6 @@ class Field(_FieldIO):
                 value=self.array.mean(axis=axis),
                 vdims=self.vdims,
                 unit=self.unit,
-                valid=self.valid,
             )
         else:
             raise ValueError(
@@ -2623,39 +2623,29 @@ class Field(_FieldIO):
                     "A cumulative integral can only computed along one direction."
                 )
             sum_ = np.sum(self.array, axis=tuple(range(self.mesh.region.ndim)))
-            dV = np.prod(self.mesh.cell)
-            # NOTE the next 3 lines can be removed when the mesh is n dimensional
-            if self.mesh.attributes["isplane"]:
-                dV = (
-                    self.mesh.cell[self.mesh.attributes["axis1"]]
-                    * self.mesh.cell[self.mesh.attributes["axis2"]]
-                )
-            return sum_ * dV
+            return sum_ * self.mesh.dV
         elif not isinstance(direction, str):
             raise TypeError("'direction' must be of type str.")
 
-        mesh = self.mesh
+        axis = self.mesh.region._dim2index(direction)
 
-        axis = mesh.region._dim2index(direction)
         if cumulative:
+            # Sum all cell values up to (excuding) point x and add half the cell value
+            # of the cell containing point x then multiply by the cell size.
             tmp_array = self.array / 2
-            left_cells = dfu.assemble_index(slice(None), 3, {axis: slice(None, -1)})
-            right_cells = dfu.assemble_index(slice(None), 3, {axis: slice(1, None)})
+            ndim = self.mesh.region.ndim
+            left_cells = dfu.assemble_index(slice(None), ndim, {axis: slice(None, -1)})
+            right_cells = dfu.assemble_index(slice(None), ndim, {axis: slice(1, None)})
             tmp_array[right_cells] += np.cumsum(self.array, axis=axis)[left_cells]
-            res_array = tmp_array * mesh.cell[axis]
+            res_array = tmp_array * self.mesh.cell[axis]
         else:
-            # NOTE reduce dimension n -> n-1:
-            # - remove keepdims
-            # - replace mesh.plane
-            #   - either mesh.sel
-            #   - or manually
-            res_array = np.sum(self.array, axis=axis, keepdims=True) * mesh.cell[axis]
-            mesh = mesh.plane(direction)
+            res_array = np.sum(self.array, axis=axis) * self.mesh.cell[axis]
 
-        # NOTE what should this method return for ndim == 0?
-        # if mesh.region.ndim == 0:
-        #     return res_array
+        if self.mesh.region.ndim == 1 and not cumulative:
+            # no 0-dimensional region and mesh
+            return res_array
 
+        mesh = self.mesh if cumulative else self.mesh.sel(direction)
         return self.__class__(mesh, nvdim=self.nvdim, value=res_array, vdims=self.vdims)
 
     def line(self, p1, p2, n=100):
@@ -2800,17 +2790,12 @@ class Field(_FieldIO):
         """
         dim, dim_index, _, sel_index = self.mesh._sel_convert_input(*args, **kwargs)
 
-        array = self.array[
-            dfu.assemble_index(
-                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
-            )
-        ]
+        slices = dfu.assemble_index(
+            slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
+        )
+        array = self.array[slices]
 
-        valid = self.valid[
-            dfu.assemble_index(
-                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
-            )
-        ]
+        valid = self.valid[slices[:-1]]
 
         try:
             mesh = self.mesh.sel(*args, **kwargs)
@@ -2892,7 +2877,7 @@ class Field(_FieldIO):
                 for i, axis_len in enumerate(self.array.shape)
             )
             value = self.array[slices]
-            valid = self.valid[slices]
+            valid = self.valid[slices[:-1]]
         return self.__class__(
             plane_mesh,
             nvdim=self.nvdim,
@@ -3838,13 +3823,19 @@ def _(val, mesh, nvdim, dtype):
         raise ValueError(
             f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
         )
-    if isinstance(val, collections.abc.Iterable) and np.shape(val)[-1] != nvdim:
+    if isinstance(val, collections.abc.Iterable) and not (
+        np.shape(val)[-1] == nvdim
+        or (np.array_equal(np.shape(val), mesh.n) and nvdim == 1)
+    ):
         raise ValueError(
             f"Wrong dimension {len(val)} provided for value; expected dimension is"
             f" {nvdim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    return np.full((*mesh.n, nvdim), val, dtype=dtype)
+    if np.array_equal(np.shape(val), mesh.n):
+        return np.expand_dims(val, axis=-1)
+    else:
+        return np.full((*mesh.n, nvdim), val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
