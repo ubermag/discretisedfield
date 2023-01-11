@@ -1510,6 +1510,23 @@ def test_coordinate_field(valid_mesh):  # TODO
         assert np.allclose(cfield.array[index], getattr(valid_mesh.points, dim), atol=0)
 
 
+def test_sel_convert_intput():
+    # 3d
+    p1 = (0, 0, 0)
+    p2 = (5, 10, 10)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 2))
+
+    # dim, dim_index, selection, selection_index
+    assert mesh._sel_convert_input("x") == ("x", 0, 2.5, 2)
+    assert mesh._sel_convert_input(y=4.1) == ("y", 1, 4.5, 4)
+    assert mesh._sel_convert_input(y=(0, 2)) == ("y", 1, [0.5, 2.5], slice(0, 3))
+    assert mesh._sel_convert_input(z=(2, 5)) == ("z", 2, [3, 5], slice(1, 3))
+
+    # 1d
+    mesh = df.Mesh(p1=0, p2=10e-9, n=5)
+    assert mesh._sel_convert_input("x") == ("x", 0, 5e-9, 2)
+
+
 def test_sel_string_1D():
     # Sel center of 1D mesh with no subregions
     p1 = 0
