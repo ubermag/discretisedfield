@@ -504,6 +504,63 @@ def test_norm_zero_field():
     assert np.all(f.norm.array == 0)
 
 
+@pytest.mark.parametrize(
+    "p1, p2, n, nvdim, dim_mapping, dim_mapping_check",
+    [
+        # no mapping for scalar fields
+        [0, 1, 5, 1, None, None],
+        [(0, 0), (1, 1), (5, 5), 1, None, None],
+        # default mapping for vector fields
+        [(0, 0), (1, 1), (5, 5), 2, None, {d: d for d in "xy"}],
+        [(0, 0, 0), (1, 1, 1), (5, 5, 5), 3, None, {d: d for d in "xyz"}],
+        [(0,) * 4, (1,) * 4, (5,) * 4, 4, None, {f"v{i}": f"x{i}" for i in range(4)}],
+        # manual mapping for dim - vdim mismatch
+        [0, 1, 5, 2, {"x": "x", "y": None}, {"x": "x", "y": None}],
+        [
+            (0, 0),
+            (1, 1),
+            (5, 5),
+            3,
+            {"x": "x", "y": "y", "z": "z"},  # simulates sel 3d -> 2d
+            {"x": "x", "y": "y", "z": "z"},
+        ],
+    ],
+)
+def test_dim_mapping(p1, p2, n, nvdim, dim_mapping, dim_mapping_check):
+    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+    field = df.Field(mesh, nvdim=nvdim, dim_mapping=dim_mapping)
+    assert field.dim_mapping == dim_mapping_check
+
+
+def test_r_dim_mapping():
+    mesh = df.Mesh(p1=(0,) * 3, p2=(1,) * 3, n=(10,) * 3)
+    field = df.Field(mesh, nvdim=3)
+
+    assert field.dim_mapping == {d: d for d in "xyz"}
+    assert field._r_dim_mapping == {d: d for d in "xyz"}
+
+    field.dim_mapping = {"x": "a", "y": "b", "z": "c"}
+    assert field._r_dim_mapping == {"a": "x", "b": "y", "c": "z"}
+
+    field.dim_mapping = {"x": "x", "y": None, "z": None}
+    assert field._r_dim_mapping == {"x": "x", None: "z"}
+
+
+@pytest.mark.parametrize(
+    "nvdim, dim_mapping, error",
+    [
+        [3, None, ValueError],  # length mismatch
+        [2, {"a": "x", "b": "y"}, ValueError],  # invalid vdim
+        [2, {"x": "x"}, ValueError],  # missing vdim
+        [2, ("x", "y"), TypeError],  # invalid mapping type
+    ],
+)
+def test_dim_mapping_error(nvdim, dim_mapping, error):
+    mesh = df.Mesh(p1=(0, 0), p2=(1, 1), n=(5, 5))
+    with pytest.raises(error):
+        df.Field(mesh, nvdim=nvdim, dim_mapping=dim_mapping)
+
+
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_orientation(valid_mesh, nvdim):
     # No zero-norm cells

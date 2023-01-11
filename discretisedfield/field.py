@@ -122,7 +122,15 @@ class Field(_FieldIO):
 
     """
 
-    __slots__ = ["_mesh", "_nvdim", "_vdims", "_unit", "_array", "dtype"]
+    __slots__ = [
+        "_array",
+        "_dim_mapping",
+        "_mesh",
+        "_nvdim",
+        "_unit",
+        "_vdims",
+        "dtype",
+    ]
 
     def __init__(
         self,
@@ -133,6 +141,7 @@ class Field(_FieldIO):
         vdims=None,
         dtype=None,
         unit=None,
+        dim_mapping=None,
         **kwargs,
     ):
         if not isinstance(mesh, df.Mesh):
@@ -154,6 +163,8 @@ class Field(_FieldIO):
 
         self._vdims = None  # required in here for correct initialisation
         self.vdims = vdims
+
+        self.dim_mapping = dim_mapping
 
     @property
     def mesh(self):
@@ -482,6 +493,35 @@ class Field(_FieldIO):
                 where=self.norm.array != 0.0,
             )
             self.array *= _as_array(val, self.mesh, nvdim=1, dtype=None)
+
+    @property
+    def dim_mapping(self):
+        """Map vdims to dims."""
+        return self._dim_mapping
+
+    @dim_mapping.setter
+    def dim_mapping(self, mapping):
+        if mapping is None:
+            if self.nvdim == 1:
+                pass
+            elif self.nvdim == self.mesh.region.ndim:
+                mapping = dict(zip(self.vdims, self.mesh.region.dims))
+            else:
+                raise ValueError(
+                    "Automatic mapping is not possible for {self.nvdim=} and"
+                    " {self.mesh.region.dim=}."
+                )
+        elif not isinstance(mapping, dict):
+            raise TypeError(f"Invalid {type(mapping)=}; must be of type 'dict'.")
+        elif sorted(mapping.keys()) != sorted(self.vdims):
+            raise ValueError(f"Invalid {mapping.keys()=}; keys must be {self.vdims}.")
+
+        self._dim_mapping = mapping
+
+    @property
+    def _r_dim_mapping(self):
+        """Reversed dim mapping for use in plotting."""
+        return {val: key for key, val in self.dim_mapping.items()}
 
     def __abs__(self):
         """Absolute value of the field.
