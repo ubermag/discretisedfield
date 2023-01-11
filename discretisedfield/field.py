@@ -2239,19 +2239,19 @@ class Field(_FieldIO):
         out[valid] = np.concatenate(diff)
         return out
 
-    def diff_new(self, direction, order=1):
+    def diff_new(self, direction, order=1, restrict2valid=True):
         r"""New derivative method."""
-        # restrict2valid=True
         if order not in (1, 2):
             msg = f"Derivative of the {order} order is not implemented."
             raise NotImplementedError(msg)
 
         direction_idx = self.mesh.region._dim2index(direction)
         out = np.zeros_like(self.array)
+        valid = self.valid if restrict2valid else np.ones_like(self.valid, dtype=bool)
         for idx in self.mesh.plane(direction).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
-            valid_arr = self.valid[tuple([*idx, 0])]
+            valid_arr = valid[tuple([*idx, 0])]
             for dim in range(self.nvdim):
                 out[tuple([*idx, dim])] = df.Field._split_diff_combine(
                     self.array[tuple([*idx, dim])],
