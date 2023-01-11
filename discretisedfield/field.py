@@ -2302,7 +2302,7 @@ class Field(_FieldIO):
                 direction: (
                     self.mesh.region.pmin[direction_idx],
                     self.mesh.region.pmin[direction_idx]
-                    + self.mesh.cell[direction_idx],
+                    + self.mesh.cell[direction_idx] / 2,
                 )
             }
         ).indices:
