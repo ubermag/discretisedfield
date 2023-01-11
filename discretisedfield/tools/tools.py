@@ -105,19 +105,16 @@ def topological_charge_density(field, /, method="continuous"):
         msg = f"Cannot compute topological charge density for {field.nvdim=} field."
         raise ValueError(msg)
 
-    if not field.mesh.attributes["isplane"]:
-        msg = (
-            "The field must be sliced before the topological "
-            "charge density can be computed."
+    if field.mesh.region.ndim != 2:
+        raise ValueError(
+            "The topological charge density can only be computed on fields with 2"
+            f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
-        raise ValueError(msg)
 
     if method not in ["continuous", "berg-luescher"]:
         msg = "Method can be either continuous or berg-luescher"
         raise ValueError(msg)
 
-    axis1 = field.mesh.attributes["axis1"]
-    axis2 = field.mesh.attributes["axis2"]
     of = field.orientation  # unit field - orientation field
 
     if method == "continuous":
@@ -125,13 +122,17 @@ def topological_charge_density(field, /, method="continuous"):
             1
             / (4 * np.pi)
             * of.dot(
-                of.diff(field.mesh.region.dims[axis1]).cross(
-                    of.diff(field.mesh.region.dims[axis2])
+                of.diff(field.mesh.region.dims[0]).cross(
+                    of.diff(field.mesh.region.dims[1])
                 )
             )
         )
 
     elif method == "berg-luescher":
+        raise NotImplementedError()
+        # remove hard-coded 3d -> should be 2d; replace axis1 and axis2
+        axis1 = field.mesh.attributes["axis1"]
+        axis2 = field.mesh.attributes["axis2"]
         q = df.Field(field.mesh, nvdim=1)
 
         # Area of a single triangle
