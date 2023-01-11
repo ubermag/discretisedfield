@@ -2666,24 +2666,22 @@ def test_fft():
     assert f.integrate("z").allclose(f.rfftn.plane(z=0).ifftn.real)
 
 
-# ##################################
-# TODO Martin, needs mesh.sel
 def test_mpl_scalar(test_field):
     # No axes
     for comp in test_field.vdims:
-        getattr(test_field, comp).plane("x", n=(3, 4)).mpl.scalar()
+        getattr(test_field, comp).sel("x").resample((3, 4)).mpl.scalar()
 
     # Axes
     fig = plt.figure()
     ax = fig.add_subplot(111)
     for comp in test_field.vdims:
-        getattr(test_field, comp).plane("x", n=(3, 4)).mpl.scalar(ax=ax)
+        getattr(test_field, comp).sel("x").mpl.scalar(ax=ax)
 
     # All arguments
     for comp in test_field.vdims:
-        getattr(test_field, comp).plane("x").mpl.scalar(
+        getattr(test_field, comp).sel("x").mpl.scalar(
             figsize=(10, 10),
-            filter_field=test_field.norm,
+            filter_field=test_field.norm.sel("x"),
             colorbar=True,
             colorbar_label="something",
             multiplier=1e-6,
@@ -2695,16 +2693,16 @@ def test_mpl_scalar(test_field):
     filename = "testfigure.pdf"
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpfilename = os.path.join(tmpdir, filename)
-        test_field.a.plane("x", n=(3, 4)).mpl.scalar(filename=tmpfilename)
+        test_field.a.sel("x").mpl.scalar(filename=tmpfilename)
 
     # Exceptions
     with pytest.raises(ValueError):
         test_field.a.mpl.scalar()  # not sliced
     with pytest.raises(ValueError):
-        test_field.plane("z").mpl.scalar()  # vector field
+        test_field.sel("z").mpl.scalar()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
-        test_field.a.plane("z").mpl.scalar(filter_field=test_field)
+        test_field.a.sel("z").mpl.scalar(filter_field=test_field)
     plt.close("all")
 
 
@@ -2714,46 +2712,46 @@ def test_mpl_lightess(test_field):
         filename = os.path.join(os.path.dirname(__file__), "test_sample", i)
 
         field = df.Field.from_file(filename)
-        for plane in ["z"]:  # TODO test all directions "xyz" (check samples first)
-            field.plane(plane).mpl.lightness()
-            field.plane(plane).mpl.lightness(
-                lightness_field=-field.z, filter_field=field.norm
+        for plane in "xyz":  # TODO test all directions "xyz" (check samples first)
+            field.sel(plane).mpl.lightness()
+            field.sel(plane).mpl.lightness(
+                lightness_field=-field.z.sel(plane), filter_field=field.norm.sel(plane)
             )
         fig, ax = plt.subplots()
-        field.plane("z").mpl.lightness(
+        field.sel("z").mpl.lightness(
             ax=ax, clim=[0, 0.5], colorwheel_xlabel="mx", colorwheel_ylabel="my"
         )
         # Saving plot
         filename = "testfigure.pdf"
         with tempfile.TemporaryDirectory() as tmpdir:
             tmpfilename = os.path.join(tmpdir, filename)
-            field.plane("z").mpl.lightness(filename=tmpfilename)
+            field.sel("z").mpl.lightness(filename=tmpfilename)
 
     # Exceptions
     with pytest.raises(ValueError):
         test_field.mpl.lightness()  # not sliced
     with pytest.raises(ValueError):
         # wrong filter field
-        test_field.plane("z").mpl.lightness(filter_field=test_field)
+        test_field.sel("z").mpl.lightness(filter_field=test_field)
     with pytest.raises(ValueError):
         # wrong lightness field
-        test_field.plane("z").mpl.lightness(lightness_field=test_field)
+        test_field.sel("z").mpl.lightness(lightness_field=test_field)
     plt.close("all")
 
 
 def test_mpl_vector(test_field):
     # No axes
-    test_field.plane("x", n=(3, 4)).mpl.vector()
+    test_field.sel("x").resample((3, 4)).mpl.vector()
 
     # Axes
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    test_field.plane("x", n=(3, 4)).mpl.vector(ax=ax)
+    test_field.sel("x").mpl.vector(ax=ax)
 
     # All arguments
-    test_field.plane("x").mpl.vector(
+    test_field.sel("x").mpl.vector(
         figsize=(10, 10),
-        color_field=test_field.b,
+        color_field=test_field.b.sel("x"),
         colorbar=True,
         colorbar_label="something",
         multiplier=1e-6,
@@ -2762,7 +2760,7 @@ def test_mpl_vector(test_field):
     )
 
     # 2d vector field
-    plane_2d = test_field.plane("z").a << test_field.plane("z").b
+    plane_2d = test_field.sel("z").a << test_field.sel("z").b
     plane_2d.vdims = ["a", "b"]
     with pytest.raises(ValueError):
         plane_2d.mpl.vector()
@@ -2776,33 +2774,33 @@ def test_mpl_vector(test_field):
     filename = "testfigure.pdf"
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpfilename = os.path.join(tmpdir, filename)
-        test_field.plane("x", n=(3, 4)).mpl.vector(filename=tmpfilename)
+        test_field.sel("x").mpl.vector(filename=tmpfilename)
 
     # Exceptions
     with pytest.raises(ValueError):
         test_field.mpl.vector()  # not sliced
     with pytest.raises(ValueError):
-        test_field.b.plane("z").mpl.vector()  # scalar field
+        test_field.b.sel("z").mpl.vector()  # scalar field
     with pytest.raises(ValueError):
         # wrong color field
-        test_field.plane("z").mpl.vector(color_field=test_field)
+        test_field.sel("z").mpl.vector(color_field=test_field)
 
     plt.close("all")
 
 
 def test_mpl_contour(test_field):
     # No axes
-    test_field.plane("z").c.mpl.contour()
+    test_field.sel("z").c.mpl.contour()
 
     # Axes
     fig, ax = plt.subplots()
-    test_field.plane("z").c.mpl.contour(ax=ax)
+    test_field.sel("z").c.mpl.contour(ax=ax)
 
     # All arguments
-    test_field.plane("z").c.mpl.contour(
+    test_field.sel("z").c.mpl.contour(
         figsize=(10, 10),
         multiplier=1e-6,
-        filter_field=test_field.norm,
+        filter_field=test_field.norm.sel("z"),
         colorbar=True,
         colorbar_label="something",
     )
@@ -2811,38 +2809,38 @@ def test_mpl_contour(test_field):
     filename = "testfigure.pdf"
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpfilename = os.path.join(tmpdir, filename)
-        test_field.plane("z").c.mpl.contour(filename=tmpfilename)
+        test_field.sel("z").c.mpl.contour(filename=tmpfilename)
 
     # Exceptions
     with pytest.raises(ValueError):
         test_field.mpl.contour()  # not sliced
     with pytest.raises(ValueError):
-        test_field.plane("z").mpl.contour()  # vector field
+        test_field.sel("z").mpl.contour()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
-        test_field.plane("z").c.mpl.contour(filter_field=test_field)
+        test_field.sel("z").c.mpl.contour(filter_field=test_field)
 
     plt.close("all")
 
 
 def test_mpl(test_field):
     # No axes
-    test_field.plane("x", n=(3, 4)).mpl()
+    test_field.sel("x").resample((3, 4)).mpl()
 
     # Axes
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    test_field.a.plane("x", n=(3, 4)).mpl(ax=ax)
+    test_field.a.sel("x").mpl(ax=ax)
 
-    test_field.c.plane("x").mpl(
+    test_field.c.sel("x").mpl(
         figsize=(12, 6),
         scalar_kw={
-            "filter_field": test_field.norm,
+            "filter_field": test_field.norm.sel("x"),
             "colorbar_label": "scalar",
             "cmap": "twilight",
         },
         vector_kw={
-            "color_field": test_field.b,
+            "color_field": test_field.b.sel("x"),
             "use_color": True,
             "colorbar": True,
             "colorbar_label": "vector",
@@ -2856,7 +2854,7 @@ def test_mpl(test_field):
     filename = "testfigure.pdf"
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpfilename = os.path.join(tmpdir, filename)
-        test_field.plane("x", n=(3, 4)).mpl(filename=tmpfilename)
+        test_field.sel("x").mpl(filename=tmpfilename)
 
     # Exception
     with pytest.raises(ValueError):
