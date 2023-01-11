@@ -125,11 +125,11 @@ class Field(_FieldIO):
 
     __slots__ = [
         "_array",
-        "_dim_mapping",
         "_mesh",
         "_nvdim",
         "_unit",
         "_valid",
+        "_vdim_mapping",
         "_vdims",
         "dtype",
     ]
@@ -532,7 +532,7 @@ class Field(_FieldIO):
     @property
     def vdim_mapping(self):
         """Map vdims to dims."""
-        return self._dim_mapping
+        return self._vdim_mapping
 
     @vdim_mapping.setter
     def vdim_mapping(self, mapping):
@@ -546,12 +546,13 @@ class Field(_FieldIO):
                     f"Automatic mapping is not possible for {self.nvdim=} and"
                     f" {self.mesh.region.ndim=}. Set 'vdim_mapping' manually."
                 )
+                mapping = {}
         elif not isinstance(mapping, dict):
             raise TypeError(f"Invalid {type(mapping)=}; must be of type 'dict'.")
         elif sorted(mapping.keys()) != sorted(self.vdims):
             raise ValueError(f"Invalid {mapping.keys()=}; keys must be {self.vdims}.")
 
-        self._dim_mapping = mapping
+        self._vdim_mapping = mapping
 
     @property
     def _r_dim_mapping(self):
