@@ -1796,9 +1796,9 @@ def test_diff_single_cell():
     assert np.allclose(f.diff("z").mean(), (0, 0, 0))
 
 
-def test_diff_new():
+def test_diff_valid():
     p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
+    p2 = (20, 10, 10)
     cell = (2, 2, 2)
 
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
@@ -1807,11 +1807,65 @@ def test_diff_new():
         x, y, z = point
         return (x, y, z)
 
-    f = df.Field(mesh, nvdim=3, value=value_fun)
+    def valid_fun(point):
+        x, y, z = point
+        if x > 6:
+            return False
+        else:
+            return True
 
-    assert np.allclose(f.diff("x").mean(), (1, 0, 0))
-    assert np.allclose(f.diff("y").mean(), (0, 1, 0))
-    assert np.allclose(f.diff("z").mean(), (0, 0, 1))
+    f = df.Field(mesh, nvdim=3, value=value_fun, valid=valid_fun)
+
+    assert np.allclose(f.diff("x").array[:3, ...], (1, 0, 0))
+    assert np.allclose(f.diff("x").array[3:, ...], (0, 0, 0))
+    assert np.allclose(f.diff("x", restrict2valid=False).array, (1, 0, 0))
+    assert np.allclose(f.diff("y").array[:3, ...], (0, 1, 0))
+    assert np.allclose(f.diff("y").array[3:, ...], (0, 0, 0))
+    assert np.allclose(f.diff("y", restrict2valid=False).array, (0, 1, 0))
+    assert np.allclose(f.diff("z").array[:3, ...], (0, 0, 1))
+    assert np.allclose(f.diff("z").array[3:, ...], (0, 0, 0))
+    assert np.allclose(f.diff("z", restrict2valid=False).array, (0, 0, 1))
+
+    def valid_fun(point):
+        x, y, z = point
+        if x > 2 and x < 8:
+            return True
+        else:
+            return False
+
+    f = df.Field(mesh, nvdim=3, value=value_fun, valid=valid_fun)
+    assert np.allclose(f.diff("x").array[1:4, ...], (1, 0, 0))
+    assert np.allclose(f.diff("x").array[0, ...], (0, 0, 0))
+    assert np.allclose(f.diff("x").array[4:, ...], (0, 0, 0))
+    assert np.allclose(f.diff("x", restrict2valid=False).array, (1, 0, 0))
+    assert np.allclose(f.diff("y").array[1:4, ...], (0, 1, 0))
+    assert np.allclose(f.diff("y").array[0, ...], (0, 0, 0))
+    assert np.allclose(f.diff("y").array[4:, ...], (0, 0, 0))
+    assert np.allclose(f.diff("y", restrict2valid=False).array, (0, 1, 0))
+    assert np.allclose(f.diff("z").array[1:4, ...], (0, 0, 1))
+    assert np.allclose(f.diff("z").array[0, ...], (0, 0, 0))
+    assert np.allclose(f.diff("z").array[4:, ...], (0, 0, 0))
+    assert np.allclose(f.diff("z", restrict2valid=False).array, (0, 0, 1))
+
+    def valid_fun(point):
+        x, y, z = point
+        if x > 4 and x < 8 and y < 5:
+            return False
+        elif x > 12 and x < 15:
+            return False
+        else:
+            return True
+
+    f = df.Field(mesh, nvdim=3, value=value_fun, valid=valid_fun)
+    assert np.allclose(f.diff("x").array[f.valid[..., 0]], (1, 0, 0))
+    assert np.allclose(f.diff("x").array[~f.valid[..., 0]], (0, 0, 0))
+    assert np.allclose(f.diff("x", restrict2valid=False).array, (1, 0, 0))
+    assert np.allclose(f.diff("y").array[f.valid[..., 0]], (0, 1, 0))
+    assert np.allclose(f.diff("y").array[~f.valid[..., 0]], (0, 0, 0))
+    assert np.allclose(f.diff("y", restrict2valid=False).array, (0, 1, 0))
+    assert np.allclose(f.diff("z").array[f.valid[..., 0]], (0, 0, 1))
+    assert np.allclose(f.diff("z").array[~f.valid[..., 0]], (0, 0, 0))
+    assert np.allclose(f.diff("z", restrict2valid=False).array, (0, 0, 1))
 
 
 def test_grad():
