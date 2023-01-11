@@ -158,7 +158,12 @@ class Field(_FieldIO):
 
         self.unit = unit
 
-        self.valid = True  # required in here for correct initialisation
+        # This is required for correct initialisation when also using a
+        # norm. The norm setter requires the norm property
+        # (which requires valid). However, valid cannot be set
+        # before the norm is set as the valid setter has the option
+        # to set valid based on the norm.
+        self.valid = True
         self.update_field_values(value)
         self.norm = norm
         self.valid = valid
