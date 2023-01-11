@@ -708,7 +708,6 @@ class Field(_FieldIO):
                     value=array,
                     unit=self.unit,
                     vdims=self.vdims,
-                    valid=self.valid,
                 )
         elif isinstance(direction, str):
             axis = self.mesh.region._dim2index(direction)
@@ -718,7 +717,6 @@ class Field(_FieldIO):
                 value=self.array.mean(axis=axis),
                 vdims=self.vdims,
                 unit=self.unit,
-                valid=self.valid,
             )
         else:
             raise ValueError(
