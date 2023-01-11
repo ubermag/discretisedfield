@@ -6,7 +6,6 @@ import numpy as np
 import ubermagutil.units as uu
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 
@@ -37,23 +36,13 @@ class MplField(Mpl):
     """
 
     def __init__(self, field):
-        if not field.mesh.attributes["isplane"]:
-            msg = "The field must be sliced before it can be plotted."
-            raise ValueError(msg)
+        if field.mesh.region.ndim != 2:
+            raise ValueError(
+                "Only fields on 2d meshes can be plotted with matplotlib, not"
+                f" {field.mesh.region.ndim=}."
+            )
 
         self.field = field
-
-        self.planeaxis = field.mesh.attributes["planeaxis"]
-        self.planeaxis_point = {
-            self.field.mesh.region.dims[
-                self.field.mesh.attributes["planeaxis"]
-            ]: self.field.mesh.attributes["point"]
-        }
-        self.axis1 = self.field.mesh.attributes["axis1"]
-        self.axis2 = self.field.mesh.attributes["axis2"]
-        # TODO: After refactoring code, maybe n can become
-        # part of PlaneMesh.
-        self.n = (self.field.mesh.n[self.axis1], self.field.mesh.n[self.axis2])
 
     def __call__(
         self,
@@ -149,10 +138,17 @@ class MplField(Mpl):
 
         else:
             vector_field = self.field
-            scalar_field = getattr(self.field, self.field.vdims[self.planeaxis])
+            # find vector components pointing along the two axes 0 and 1
+            vdims = [
+                self.field._r_dim_mapping[self.field.mesh.region.dims[0]],
+                self.field._r_dim_mapping[self.field.mesh.region.dims[1]],
+            ]
+            # find the third vector component for the scalar plot
+            scalar_vdim = (set(self.field.vdims) - set(vdims)).pop()
+            scalar_field = getattr(self.field, scalar_vdim)
             scalar_kw.setdefault(
                 "colorbar_label",
-                f"{self.field.mesh.region.dims[self.planeaxis]}-component",
+                f"{scalar_vdim}-component",
             )
 
         scalar_kw.setdefault("filter_field", self.field.norm)
@@ -181,7 +177,7 @@ class MplField(Mpl):
         r"""Plot the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be a scalar field
+        ``field.sel('z')``). In addition, field must be a scalar field
         (``nvdim=1``). Otherwise, ``ValueError`` is raised. ``mpl.scalar`` adds
         the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
         ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
@@ -284,15 +280,14 @@ class MplField(Mpl):
 
         """
         if self.field.nvdim > 1:
-            msg = f"Cannot plot {self.field.nvdim=} field."
-            raise ValueError(msg)
+            raise ValueError(f"Cannot plot {self.field.nvdim=} field.")
 
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
         extent = self._extent(multiplier)
 
-        values = self.field.array.copy().reshape(self.n)
+        values = self.field.array.copy().reshape(self.field.mesh.n)
         self._filter_values(filter_field, values)
 
         if symmetric_clim and "clim" not in kwargs.keys():
@@ -401,7 +396,14 @@ class MplField(Mpl):
             )
         elif self.field.nvdim == 3:
             if lightness_field is None:
-                lightness_field = getattr(self.field, self.field.vdims[self.planeaxis])
+                # find vector components pointing along the two axes 0 and 1
+                vdims = [
+                    self.field._r_dim_mapping[self.field.mesh.region.dims[0]],
+                    self.field._r_dim_mapping[self.field.mesh.region.dims[1]],
+                ]
+                # find the third vector component for lightness
+                lightness_vdim = (set(self.field.vdims) - set(vdims)).pop()
+                lightness_field = getattr(self.field, lightness_vdim)
             if filter_field is None:
                 filter_field = self.field.norm
             return self.field.angle((1.0, 0.0, 0.0)).mpl.lightness(
@@ -429,17 +431,19 @@ class MplField(Mpl):
 
         if lightness_field is None:
             lightness_field = self.field.norm
-        else:
-            if lightness_field.nvdim != 1:
-                msg = f"Cannot use {lightness_field.nvdim=} lightness_field."
-                raise ValueError(msg)
+        elif lightness_field.nvdim != 1:
+            raise ValueError(f"Cannot use {lightness_field.nvdim=} lightness_field.")
+        elif lightness_field.mesh.region.ndim != 2:
+            raise ValueError(
+                "'lightness_field' must be defined on a 2d mesh, not"
+                f" {lightness_field.mesh.region.ndim=}."
+            )
 
-        values = self.field.array.copy().reshape(self.n)
+        values = self.field.array.copy().reshape(self.field.mesh.n)
 
-        lightness_plane = lightness_field.plane(**self.planeaxis_point)
-        if lightness_plane.mesh != self.field.mesh:
-            lightness_plane = df.Field(self.field.mesh, nvdim=1, value=lightness_plane)
-        lightness = lightness_plane.array.reshape(self.n)
+        if not np.array_equal(lightness_field.mesh.n, self.field.mesh.n):
+            lightness_field = lightness_field.resample(self.field.mesh.n)
+        lightness = lightness_field.array.reshape(self.field.mesh.n)
 
         rgb = plot_util.hls2rgb(
             hue=values, lightness=lightness, saturation=None, lightness_clim=clim
@@ -600,28 +604,34 @@ class MplField(Mpl):
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
         """
-        if self.field.nvdim != 3 and vdims is None:
-            raise ValueError(f"vdims are required for {self.field.nvdim=} field.")
+        if vdims is None and self.field.vdim_mapping is None:
+            raise ValueError("'vdims' is required for a field without 'vdim_mapping'.")
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points1 = self.field.mesh.points[self.axis1] / multiplier
-        points2 = self.field.mesh.points[self.axis2] / multiplier
+        points1 = self.field.mesh.points[0] / multiplier
+        points2 = self.field.mesh.points[1] / multiplier
 
-        values = self.field.array.copy().reshape(self.n + (self.field.nvdim,))
+        values = self.field.array.copy()
         self._filter_values(self.field.norm, values)
 
         if vdims is None:
-            arrow_x = self.axis1
-            arrow_y = self.axis2
-        else:
-            if len(vdims) != 2:
-                raise ValueError(f"{vdims=} must contain two elements.")
-            arrow_x = self.field.vdims.index(vdims[0]) if vdims[0] else None
-            arrow_y = self.field.vdims.index(vdims[1]) if vdims[1] else None
-            if arrow_x is None and arrow_y is None:
-                raise ValueError(f"At least one element of {vdims=} must be not None.")
+            # find vector components pointing along the two axes 0 and 1
+            vdims = [
+                self.field._r_dim_mapping[self.field.mesh.region.dims[0]],
+                self.field._r_dim_mapping[self.field.mesh.region.dims[1]],
+            ]
+            print(self.field.mesh.region.dims)
+            print(self.field._r_dim_mapping)
+            print(vdims, self.field.vdims)
+        elif len(vdims) != 2:
+            raise ValueError(f"{vdims=} must contain two elements.")
+
+        arrow_x = self.field.vdims.index(vdims[0]) if vdims[0] else None
+        arrow_y = self.field.vdims.index(vdims[1]) if vdims[1] else None
+        if arrow_x is None and arrow_y is None:
+            raise ValueError(f"At least one element of {vdims=} must be not None.")
 
         quiver_args = [
             points1,
@@ -629,30 +639,38 @@ class MplField(Mpl):
             np.transpose(
                 values[..., arrow_x]
                 if arrow_x is not None
-                else np.zeros_like(values[..., 0])
+                else np.zeros(self.field.mesh.n)
             ),
             np.transpose(
                 values[..., arrow_y]
                 if arrow_y is not None
-                else np.zeros_like(values[..., 0])
+                else np.zeros(self.field.mesh.n)
             ),
         ]
 
+        if use_color and color_field is None:
+            if self.field.nvdim != 3:
+                warnings.warn(
+                    "Automatic coloring is only supported for 3d"
+                    f' fields. Ignoring "{use_color=}".'
+                )
+                use_color = False
+            else:
+                # find the third vector component for colouring
+                color_vdim = (set(self.field.vdims) - set(vdims)).pop()
+                color_field = getattr(self.field, color_vdim)
+
         if use_color:
-            if color_field is None:
-                if self.field.nvdim == 2:
-                    warnings.warn(
-                        "Automatic coloring is only supported for 3d"
-                        f' fields. Ignoring "{use_color=}".'
-                    )
-                    use_color = False
-                else:
-                    color_field = getattr(self.field, self.field.vdims[self.planeaxis])
-            if use_color:
-                color_plane = color_field.plane(**self.planeaxis_point)
-                if color_plane.mesh != self.field.mesh:
-                    color_plane = df.Field(self.field.mesh, nvdim=1, value=color_plane)
-                quiver_args.append(color_plane.array.reshape(self.n).transpose())
+            if color_field.nvdim != 1:
+                raise ValueError(f"Cannot use {color_field.nvdim=}.")
+            if color_field.mesh.region.ndim != 2:
+                raise ValueError(
+                    "'color_field' must be defined on a 2d mesh, not"
+                    f" {color_field.mesh.region.ndim=}."
+                )
+            if not np.array_equal(color_field.mesh.n, self.field.mesh.n):
+                color_field = color_field.resample(self.field.mesh.n)
+            quiver_args.append(color_field.array.reshape(self.field.mesh.n).transpose())
 
         cp = ax.quiver(*quiver_args, pivot="mid", **kwargs)
 
@@ -774,17 +792,16 @@ class MplField(Mpl):
 
         """
         if self.field.nvdim != 1:
-            msg = f"Cannot plot nvdim={self.field.nvdim} field."
-            raise ValueError(msg)
+            raise ValueError(f"Cannot plot nvdim={self.field.nvdim} field.")
 
         ax = self._setup_axes(ax, figsize)
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points1 = self.field.mesh.points[self.axis1] / multiplier
-        points2 = self.field.mesh.points[self.axis2] / multiplier
+        points1 = self.field.mesh.points[0] / multiplier
+        points2 = self.field.mesh.points[1] / multiplier
 
-        values = self.field.array.copy().reshape(self.n)
+        values = self.field.array.copy().reshape(self.field.mesh.n)
         self._filter_values(filter_field, values)
 
         cp = ax.contour(points1, points2, np.transpose(values), **kwargs)
@@ -805,34 +822,36 @@ class MplField(Mpl):
             return values
 
         if filter_field.nvdim != 1:
-            msg = f"Cannot use {filter_field.nvdim=}."
-            raise ValueError(msg)
+            raise ValueError(f"Cannot use {filter_field.nvdim=}.")
+        if filter_field.mesh.region.ndim != 2:
+            raise ValueError(
+                "'filter_field' must be defined on a 2d mesh, not"
+                f" {filter_field.mesh.region.ndim=}."
+            )
 
-        filter_plane = filter_field.plane(**self.planeaxis_point)
-        if filter_plane.mesh != self.field.mesh:
-            filter_plane = df.Field(self.field.mesh, nvdim=1, value=filter_plane)
+        if not np.array_equal(filter_field.mesh.n, self.field.mesh.n):
+            filter_field = filter_field.resample(self.field.mesh.n)
 
-        values[filter_plane.array.reshape(self.n) == 0] = np.nan
+        values[filter_field.array.reshape(self.field.mesh.n) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
         unit = (
             rf" ({uu.rsi_prefixes[multiplier]}"
             rf'{self.field.mesh.attributes["unit"]})'
         )
-        ax.set_xlabel(self.field.mesh.region.dims[self.axis1] + unit)
-        ax.set_ylabel(self.field.mesh.region.dims[self.axis2] + unit)
+        ax.set_xlabel(self.field.mesh.region.dims[0] + unit)
+        ax.set_ylabel(self.field.mesh.region.dims[1] + unit)
 
     def _extent(self, multiplier):
-        # TODO Requires refactoring of df.Mesh
-        # rescaled_region = self.field.mesh.region.rescale(multiplier)
-        # pmin = rescaled_region.pmin
-        # pmax = rescaled_region.pmax
-        # TODO: After refactoring code, maybe extent can become
-        # part of PlaneMesh.
-        pmin = np.divide(self.field.mesh.region.pmin, multiplier)
-        pmax = np.divide(self.field.mesh.region.pmax, multiplier)
+        # Rescale about the origin to not keep the old centre point.
+        # Example: Region(0, 50e-9) should become Region(0, 50) in nm and not being
+        # centred around 25e-9.
+        reference_point = (0, 0)  # 2d point because plotting requires 2d meshes
+        rescaled_region = self.field.mesh.region.scale(1 / multiplier, reference_point)
+        pmin = rescaled_region.pmin
+        pmax = rescaled_region.pmax
 
-        return [pmin[self.axis1], pmax[self.axis1], pmin[self.axis2], pmax[self.axis2]]
+        return [pmin[0], pmax[0], pmin[1], pmax[1]]
 
     def __dir__(self):
         dirlist = dir(self.__class__)
