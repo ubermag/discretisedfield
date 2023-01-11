@@ -1887,7 +1887,7 @@ class Field(_FieldIO):
             unit=self.unit,
         )
 
-    def diff(self, direction, order=1):
+    def diff_old(self, direction, order=1):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -2151,7 +2151,7 @@ class Field(_FieldIO):
             valid=self.valid,
         )
 
-    def diff_new(self, direction, order=1, restrict2valid=True):
+    def diff(self, direction, order=1, restrict2valid=True):
         r"""New derivative method."""
         # Check order of derivative
         if order not in (1, 2):

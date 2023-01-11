@@ -1334,7 +1334,7 @@ def test_pad_explicit():
     assert np.allclose(pad_f.array[-2, :, :, 0], 0.7)
 
 
-def test_derivative():
+def test_diff():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (2, 2, 2)
@@ -1476,7 +1476,7 @@ def test_derivative():
         f.diff("q")
 
 
-def test_derivative_small():
+def test_diff_small():
     p1 = (0, 0, 0)
     p2 = (3, 3, 3)
     n = (3, 3, 3)
@@ -1631,7 +1631,7 @@ def test_derivative_small():
     assert np.allclose(f.diff("z", order=2)((1.5, 1.5, 3.5)), (0, 0, 6))
 
 
-def test_derivative_pbc():
+def test_diff_pbc():
     p1 = (0.0, 0.0, 0.0)
     p2 = (12.0, 8.0, 6.0)
     cell = (2, 2, 2)
@@ -1685,7 +1685,7 @@ def test_derivative_pbc():
     assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 32)
 
 
-def test_derivative_neumann():
+def test_diff_neumann():
     p1 = (0.0, 0.0, 0.0)
     p2 = (12.0, 8.0, 6.0)
     cell = (2, 2, 2)
@@ -1724,7 +1724,7 @@ def test_derivative_neumann():
     assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
 
-def test_derivative_dirichlet():
+def test_diff_dirichlet():
     p1 = (0.0, 0.0, 0.0)
     p2 = (12.0, 8.0, 6.0)
     cell = (2, 2, 2)
@@ -1763,7 +1763,7 @@ def test_derivative_dirichlet():
     assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 1.75)
 
 
-def test_derivative_single_cell():
+def test_diff_single_cell():
     p1 = (0, 0, 0)
     p2 = (10, 10, 2)
     cell = (2, 2, 2)
@@ -1809,46 +1809,9 @@ def test_diff_new():
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
 
-    assert np.allclose(f.diff_new("x").mean(), (1, 0, 0))
-    assert np.allclose(f.diff_new("y").mean(), (0, 1, 0))
-    assert np.allclose(f.diff_new("z").mean(), (0, 0, 1))
-
-
-def test_diff_new_temp():
-    # Temporary test to check that the new diff function gives the
-    # same result as the old one
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
-
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-    def value_fun(point):
-        x, y, z = point
-        return (x, y, z)
-
-    f = df.Field(mesh, nvdim=3, value=value_fun)
-
-    assert np.allclose(f.diff("x").array, f.diff_new("x", restrict2valid=False).array)
-    assert np.allclose(f.diff("y").array, f.diff_new("y", restrict2valid=False).array)
-    assert np.allclose(f.diff("z").array, f.diff_new("z", restrict2valid=False).array)
-
-
-# @pytest.mark.parametrize(
-#     "order, array_len, dx, error",
-#     [
-#         [0, 1, 1, NotImplementedError],
-#         [3, 1, 1, NotImplementedError],
-#         [4, 1, 1, NotImplementedError],
-#         ["a", 1, 1, TypeError],
-#         [1, 1, 0, ValueError],
-#         [1, 1, -1, ValueError],
-#         [1, 0, 1, ValueError],
-#     ],
-# )
-# def test_1d_derivative_invalid(order, array_len, dx, error):
-#     with pytest.raises(error):
-#         df.Field._1d_diff(order, np.zeros(array_len), dx)
+    assert np.allclose(f.diff("x").mean(), (1, 0, 0))
+    assert np.allclose(f.diff("y").mean(), (0, 1, 0))
+    assert np.allclose(f.diff("z").mean(), (0, 0, 1))
 
 
 def test_grad():
