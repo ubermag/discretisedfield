@@ -60,6 +60,10 @@ def test_split_diff_combine():
     out = df._split_diff_combine(array, valid, 1, 1)
     assert len(out) == len(array)
 
+    valid = [False, False, False, False, False, False, False, False]
+    out = df._split_diff_combine(array, valid, 1, 1)
+    assert len(out) == len(array)
+
 
 @pytest.mark.parametrize("array_len", [1, 2, 3, 4, 5])
 @pytest.mark.parametrize("dx", [1, 2, 0.5])

@@ -74,5 +74,8 @@ def _split_diff_combine(array, valid, order, dx):
     split = _split_array_on_idx(array, idx)
     diff = [_1d_diff(order, arr, dx) for arr in split]
     out = np.zeros_like(array)
-    out[valid] = np.concatenate(diff)
-    return out
+    if len(diff) == 0:
+        return out
+    else:
+        out[valid] = np.concatenate(diff)
+        return out
