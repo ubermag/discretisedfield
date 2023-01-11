@@ -1977,6 +1977,9 @@ def test_integrate_exceptions():
     with pytest.raises(TypeError):  # invalid direction type
         f.integrate(1)
 
+    with pytest.raises(TypeError):
+        f.integrate(direction=["x", "y"])
+
 
 def test_abs(valid_mesh):
     f = df.Field(valid_mesh, nvdim=1, value=-1)
