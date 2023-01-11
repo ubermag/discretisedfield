@@ -122,6 +122,8 @@ class Field(_FieldIO):
 
     """
 
+    __slots__ = ["_mesh", "_nvdim", "_vdims", "_unit", "_array", "dtype"]
+
     def __init__(
         self,
         mesh,
@@ -138,9 +140,9 @@ class Field(_FieldIO):
         self._mesh = mesh
 
         if not isinstance(nvdim, numbers.Integral):
-            raise TypeError("'dim' must be of type int.")
+            raise TypeError("'nvdim' must be of type int.")
         elif nvdim < 1:
-            raise ValueError("'dim' must be greater than zero.")
+            raise ValueError("'nvdim' must be greater than zero.")
         self._nvdim = nvdim
 
         self.dtype = dtype
@@ -532,11 +534,6 @@ class Field(_FieldIO):
 
             Orientation field.
 
-        Raises
-        ------
-        ValueError
-
-            If the field is has ``nvdim=1``.
 
         Examples
         --------
@@ -556,9 +553,6 @@ class Field(_FieldIO):
         array([1.])
 
         """
-        if self.nvdim == 1:
-            msg = f"Cannot compute orientation field for a nvdim={self.nvdim} field."
-            raise ValueError(msg)
 
         orientation_array = np.divide(
             self.array,
@@ -655,25 +649,22 @@ class Field(_FieldIO):
             if sorted(direction) == sorted(self.mesh.region.dims):
                 return self.array.mean(axis=tuple(range(self.mesh.region.ndim)))
             else:
-                # NOTE: this is a temporary solution until mesh.sel is implemented.
-                # Hence, this is not the most efficient way to do it.
+                # Multiple directions mean
                 mesh = self.mesh
-                array = self.array
                 axis = np.zeros(len(direction), dtype=int)
                 for i, d in enumerate(direction):
-                    mesh = mesh.plane(d)
+                    mesh = mesh.sel(d)
                     axis[i] = self.mesh.region._dim2index(d)
-                # Keepdims is needed for the current 3D behaviour
-                array = array.mean(axis=tuple(axis), keepdims=True)
+                array = self.array.mean(axis=tuple(axis))
                 return self.__class__(
                     mesh, nvdim=self.nvdim, value=array, unit=self.unit
                 )
         elif isinstance(direction, str):
             axis = self.mesh.region._dim2index(direction)
             return self.__class__(
-                self.mesh.plane(direction),
+                self.mesh.sel(direction),
                 nvdim=self.nvdim,
-                value=self.array.mean(axis=axis, keepdims=True),
+                value=self.array.mean(axis=axis),
                 vdims=self.vdims,
                 unit=self.unit,
             )
@@ -685,7 +676,9 @@ class Field(_FieldIO):
 
     @property
     def average(self):
-        raise ValueError("This property has been remove, please use the mean method.")
+        raise AttributeError(
+            "This property has been removed, please use the mean method."
+        )
 
     def __repr__(self):
         """Representation string.
@@ -1050,7 +1043,7 @@ class Field(_FieldIO):
             )
             raise TypeError(msg)
 
-        if self.mesh == other.mesh and self.nvdim == other.nvdim:
+        if self.mesh.allclose(other.mesh) and self.nvdim == other.nvdim:
             return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
         else:
             return False
@@ -2595,6 +2588,105 @@ class Field(_FieldIO):
             else "v",
         )  # TODO scalar fields have no vdim
 
+    def sel(self, *args, **kwargs):
+        """Select a part of the field.
+
+        If one of the axis from ``region.dims`` is passed as a string, a field of a
+        reduced dimension along the axis and perpendicular to it is extracted,
+        intersecting the axis at its center. Alternatively, if a keyword (representing
+        the axis) argument is passed with a real number value (e.g. ``x=1e-9``), a field
+        of reduced dimensions intersects the axis at a point 'nearest' to the provided
+        value is returned. If the mesh is already 1 dimentional a numpy array of the
+        field values is returned.
+
+        If instead a tuple, list or a numpy array of length 2 is
+        passed as a value containing two real numbers (e.g. ``x=(1e-9, 7e-9)``), a sub
+        field is returned with minimum and maximum points along the selected axis,
+        'nearest' to the minimum and maximum of the selected values, respectively.
+
+        Parameters
+        ----------
+        args :
+
+            A string corresponding to the selection axis that belongs to
+            ``region.dims``.
+
+        kwarg :
+
+            A key corresponding to the selection axis that belongs to ``region.dims``.
+            The values are either a ``numbers.Real`` or list, tuple, numpy array of
+            length 2 containing ``numbers.Real`` which represents a point or a range of
+            points to be selected from the mesh.
+
+        Returns
+        -------
+        discretisedfield.Field or numpy.ndarray
+
+            An extracted field.
+
+        Examples
+        --------
+        1. Extracting the mesh at a specific point (``y=1``).
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (5, 5, 5)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+        >>> plane_field = field.sel(y=1)
+        >>> plane_field.mesh.region.ndim
+        2
+        >>> plane_field.mesh.region.dims
+        ('x', 'z')
+        >>> plane_field.mean()
+        array([1., 2., 3.])
+
+        2. Extracting the xy-plane mesh at the mesh region center.
+
+        >>> plane_field = field.sel('z')
+        >>> plane_field.mesh.region.ndim
+        2
+        >>> plane_field.mesh.region.dims
+        ('x', 'y')
+        >>> plane_field.mean()
+        array([1., 2., 3.])
+
+        3. Specifying a range of points along axis ``x`` to be selected from mesh.
+
+        >>> selected_field = field.sel(x=(2, 4))
+        >>> selected_field.mesh.region.ndim
+        3
+        >>> selected_field.mesh.region.dims
+        ('x', 'y', 'z')
+
+        4. Extracting the mesh at a specific point on a 1D mesh.
+        >>> mesh = df.Mesh(p1=0, p2=5, cell=1)
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+        >>> field.sel('x')
+        array([1., 2., 3.])
+
+        """
+        dim, dim_index, _, sel_index = self.mesh._sel_convert_input(*args, **kwargs)
+
+        array = self.array[
+            dfu.assemble_index(
+                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
+            )
+        ]
+
+        try:
+            mesh = self.mesh.sel(*args, **kwargs)
+        except ValueError as e:
+            if "p1 and p2 must not be empty" not in str(e):
+                raise
+            return array  # 1 dim case
+        else:  # n dim case
+            return self.__class__(
+                mesh, nvdim=self.nvdim, value=array, vdims=self.vdims, unit=self.unit
+            )
+
     def plane(self, *args, n=None, **kwargs):
         """Extracts field on the plane mesh.
 
@@ -2801,7 +2893,9 @@ class Field(_FieldIO):
         """
         submesh = self.mesh[item]
 
-        index_min = self.mesh.point2index(submesh.index2point((0, 0, 0)))
+        index_min = self.mesh.point2index(
+            submesh.index2point((0,) * submesh.region.ndim)
+        )
         index_max = np.add(index_min, submesh.n)
         slices = [slice(i, j) for i, j in zip(index_min, index_max)]
         return self.__class__(
@@ -2869,7 +2963,7 @@ class Field(_FieldIO):
             self._check_same_mesh_and_field_dim(vector)
         elif self.nvdim == 1 and isinstance(vector, numbers.Complex):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
-        elif self.nvdim != 1 and isinstance(vector, (tuple, list, np.ndarray)):
+        elif isinstance(vector, (tuple, list, np.ndarray)):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
         else:
             msg = (
@@ -2879,8 +2973,7 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
-
-        return self.__class__(self.mesh, nvdim=1, value=angle_array)
+        return self.__class__(self.mesh, nvdim=1, value=angle_array, unit="rad")
 
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
@@ -3385,14 +3478,14 @@ class Field(_FieldIO):
             msg = "Unit argument must be a string."
             raise TypeError(msg)
 
-        axes = ["x", "y", "z"]
+        axes = self.mesh.region.dims
 
         data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
 
         geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
         if self.nvdim > 1:
-            data_array_dims = axes + ["comp"]
+            data_array_dims = axes + ("comp",)
             if self.vdims is not None:
                 data_array_coords["comp"] = self.vdims
             field_array = self.array
@@ -3410,6 +3503,8 @@ class Field(_FieldIO):
                 cell=self.mesh.cell,
                 pmin=self.mesh.region.pmin,
                 pmax=self.mesh.region.pmax,
+                nvdim=self.nvdim,
+                tolerance_factor=self.mesh.region.tolerance_factor,
             ),
         )
 
@@ -3503,19 +3598,28 @@ class Field(_FieldIO):
 
         """
         if not isinstance(xa, xr.DataArray):
-            raise TypeError("Argument must be a xr.DataArray.")
+            raise TypeError("Argument must be a xarray.DataArray.")
 
-        if xa.ndim not in [3, 4]:
-            raise ValueError(
-                "DataArray dimensions must be 3 for a scalar and 4 for a vector field."
+        if "nvdim" not in xa.attrs:
+            raise KeyError(
+                'The DataArray must have an attribute "nvdims" to identify a scalar or'
+                " a vector field."
             )
 
-        if xa.ndim == 3 and sorted(xa.dims) != ["x", "y", "z"]:
-            raise ValueError("The dimensions must be 'x', 'y', and 'z'.")
-        elif xa.ndim == 4 and sorted(xa.dims) != ["comp", "x", "y", "z"]:
-            raise ValueError("The dimensions must be 'x', 'y', 'z',and 'comp'.")
+        if xa.attrs["nvdim"] < 1:
+            raise ValueError('"nvdim" attribute must be greater or equal to 1.')
+        elif not isinstance(xa.attrs["nvdim"], int):
+            raise TypeError("The value of nvdim must be an integer.")
 
-        for i in "xyz":
+        if xa.attrs["nvdim"] > 1 and "comp" not in xa.dims:
+            raise ValueError(
+                'The DataArray must have a dimension "comp" when "nvdim" attribute is'
+                " greater than 1."
+            )
+
+        dims_list = [dim for dim in xa.dims if dim != "comp"]
+
+        for i in dims_list:
             if xa[i].values.size > 1 and not np.allclose(
                 np.diff(xa[i].values), np.diff(xa[i].values).mean()
             ):
@@ -3524,34 +3628,40 @@ class Field(_FieldIO):
         try:
             cell = xa.attrs["cell"]
         except KeyError:
-            if any(len_ == 1 for len_ in xa.values.shape[:3]):
+            if any(len_ == 1 for len_ in xa.values.shape[:-1]):
                 raise KeyError(
                     "DataArray must have a 'cell' attribute if any "
                     "of the geometric directions has a single cell."
                 ) from None
-            cell = [np.diff(xa[i].values).mean() for i in "xyz"]
+            cell = [np.diff(xa[i].values).mean() for i in dims_list]
 
         p1 = (
             xa.attrs["pmin"]
             if "pmin" in xa.attrs
-            else [xa[i].values[0] - c / 2 for i, c in zip("xyz", cell)]
+            else [xa[i].values[0] - c / 2 for i, c in zip(dims_list, cell)]
         )
         p2 = (
             xa.attrs["pmax"]
             if "pmax" in xa.attrs
-            else [xa[i].values[-1] + c / 2 for i, c in zip("xyz", cell)]
+            else [xa[i].values[-1] + c / 2 for i, c in zip(dims_list, cell)]
         )
 
-        if any("units" not in xa[i].attrs for i in "xyz"):
-            mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        if any("units" not in xa[i].attrs for i in dims_list):
+            region = df.Region(p1=p1, p2=p2, dims=dims_list)
+            mesh = df.Mesh(region=region, cell=cell)
         else:
-            print(xa["x"].units)
-            region = df.Region(p1=p1, p2=p2, units=[xa[i].units for i in "xyz"])
+            region = df.Region(
+                p1=p1, p2=p2, dims=dims_list, units=[xa[i].units for i in dims_list]
+            )
             mesh = df.Mesh(region=region, cell=cell)
 
+        if "tolerance_factor" in xa.attrs:
+            mesh.region.tolerance_factor = xa.attrs["tolerance_factor"]
+
         comp = xa.comp.values if "comp" in xa.coords else None
-        val = np.expand_dims(xa.values, axis=-1) if xa.ndim == 3 else xa.values
-        nvdim = 1 if xa.ndim == 3 else val.shape[-1]
+        nvdim = xa.attrs["nvdim"]
+        val = np.expand_dims(xa.values, axis=-1) if nvdim == 1 else xa.values
+        # print(val.shape)
         return cls(mesh=mesh, nvdim=nvdim, value=val, vdims=comp, dtype=xa.values.dtype)
 
 
@@ -3573,6 +3683,11 @@ def _(val, mesh, nvdim, dtype):
         raise ValueError(
             f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
         )
+    if isinstance(val, collections.abc.Iterable) and np.shape(val)[-1] != nvdim:
+        raise ValueError(
+            f"Wrong dimension {len(val)} provided for value; expected dimension is"
+            f" {nvdim}"
+        )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
     return np.full((*mesh.n, nvdim), val, dtype=dtype)
 
@@ -3583,7 +3698,10 @@ def _(val, mesh, nvdim, dtype):
     # dtype must be specified by the user for complex values
     array = np.empty((*mesh.n, nvdim), dtype=dtype)
     for index, point in zip(mesh.indices, mesh):
-        array[tuple(index)] = val(point)
+        # Conversion to array and reshaping is required for numpy >= 1.24
+        # and for certain inputs, e.g. a tuple of numpy arrays which can e.g. occur
+        # for 1d vector fields.
+        array[tuple(index)] = np.asarray(val(point)).reshape(nvdim)
     return array
 
 
@@ -3639,6 +3757,7 @@ def _(val, mesh, nvdim, dtype):
         subval = val["default"]
         for idx in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
-            array[tuple(idx)] = subval(mesh.index2point(idx))
+            # conversion to array and reshaping similar to "callable" implementation
+            array[tuple(idx)] = np.asarray(subval(mesh.index2point(idx))).reshape(nvdim)
 
     return array
