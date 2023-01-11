@@ -521,8 +521,10 @@ class Field(_FieldIO):
                 valid = ~np.isclose(self.norm.array, 0)
         else:
             valid = True
-
-        self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)
+        # Using _as_array creates an array with shape (*mesh.n, 1).
+        # We only want a shape of mesh.n so we can directly use it
+        # to index field.array i.e. field.array[field.valid].
+        self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)[..., 0]
 
     def __abs__(self):
         """Absolute value of the field.
@@ -2741,17 +2743,12 @@ class Field(_FieldIO):
         """
         dim, dim_index, _, sel_index = self.mesh._sel_convert_input(*args, **kwargs)
 
-        array = self.array[
-            dfu.assemble_index(
-                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
-            )
-        ]
+        slices = dfu.assemble_index(
+            slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
+        )
+        array = self.array[slices]
 
-        valid = self.valid[
-            dfu.assemble_index(
-                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
-            )
-        ]
+        valid = self.valid[slices[:-1]]
 
         try:
             mesh = self.mesh.sel(*args, **kwargs)
@@ -2833,7 +2830,7 @@ class Field(_FieldIO):
                 for i, axis_len in enumerate(self.array.shape)
             )
             value = self.array[slices]
-            valid = self.valid[slices]
+            valid = self.valid[slices[:-1]]
         return self.__class__(
             plane_mesh,
             nvdim=self.nvdim,
@@ -3779,13 +3776,19 @@ def _(val, mesh, nvdim, dtype):
         raise ValueError(
             f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
         )
-    if isinstance(val, collections.abc.Iterable) and np.shape(val)[-1] != nvdim:
+    if isinstance(val, collections.abc.Iterable) and not (
+        np.shape(val)[-1] == nvdim
+        or (np.array_equal(np.shape(val), mesh.n) and nvdim == 1)
+    ):
         raise ValueError(
             f"Wrong dimension {len(val)} provided for value; expected dimension is"
             f" {nvdim}"
         )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    return np.full((*mesh.n, nvdim), val, dtype=dtype)
+    if np.array_equal(np.shape(val), mesh.n):
+        return np.expand_dims(val, axis=-1)
+    else:
+        return np.full((*mesh.n, nvdim), val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
