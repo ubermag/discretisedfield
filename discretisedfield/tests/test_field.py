@@ -1831,8 +1831,8 @@ def test_laplace():
     assert np.allclose(f.laplace.mean(), (4, 4, 6))
 
 
-# TODO Martin, needs mesh.sel
 def test_integrate_volume():
+    # 3d mesh
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (0.5, 0.5, 0.5)
@@ -1847,15 +1847,17 @@ def test_integrate_volume():
     f = df.Field(mesh, nvdim=3, value=(-1, 0, 3))
     assert np.allclose(f.integrate(), (-1000, 0, 3000))
 
-    def value_fun(point):
-        x, y, z = point
-        if x <= 5:
-            return (-1, -2, -3)
-        else:
-            return (1, 2, 3)
+    # 1d mesh
+    mesh = df.Mesh(p1=-10e-9, p2=10e-9, n=10)
 
-    f = df.Field(mesh, nvdim=3, value=value_fun)
-    assert np.allclose(f.integrate(), (0, 0, 0))
+    def value_fun(point):
+        if point <= 0:
+            return (-1, -2)
+        else:
+            return (1, 2)
+
+    f = df.Field(mesh, nvdim=2, value=value_fun)
+    assert np.allclose(f.integrate(), (0, 0))
 
 
 def test_integrate_surface():
@@ -1864,6 +1866,7 @@ def test_integrate_surface():
     cell = (0.5, 0.5, 0.5)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
+    # 2d integral on a plane: ∫ f ds
     f = df.Field(mesh, nvdim=1, value=0)
     assert f.sel("x").integrate() == 0
 
@@ -1872,17 +1875,19 @@ def test_integrate_surface():
     assert f.sel("y").integrate() == 60
     assert f.sel("z").integrate() == 100
 
+    # surface integral with vector ds: ∫ f • ds
     f = df.Field(mesh, nvdim=3, value=(-1, 0, 3))
     assert f.sel("x").dot([1, 0, 0]).integrate() == -15
     assert f.sel("y").dot([0, 1, 0]).integrate() == 0
     assert f.sel("z").dot([0, 0, 1]).integrate() == 150
 
-    # TODO change when n dimensional meshes are supported
-    # The next line currently fails because we cannot detect consecutive
-    # .plane methods. Therefore, the calculated cell volume is wrong.
-    # The test should "fail" once n dimensional meshes are implemented.
-    # The value on the right-hand-site is the expected result.
-    assert f.sel("z").sel("x").dot([1, 0, 0]).integrate() != -5
+    # 1d integral along a line in y
+    assert f.sel("z").sel("x").dot([1, 0, 0]).integrate() == -5
+
+    # 4d field -> 3d integral
+    mesh = df.Mesh(p1=(0, 0, 0, 0), p2=(20, 15, 10, 5), cell=(0.5, 0.5, 0.5, 0.5))
+    f = df.Field(mesh, nvdim=2, value=(2, 3))
+    assert np.allclose(f.sel("x0").integrate(), (1500, 2250), atol=0)
 
 
 def test_integrate_directional():
@@ -1892,29 +1897,33 @@ def test_integrate_directional():
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
     f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
+    # 3d -> 2d
     res = f.integrate(direction="x")
     assert isinstance(res, df.Field)
     assert res.nvdim == 3
-    assert np.array_equal(res.mesh.n, (1, 20, 20))
+    assert np.array_equal(res.mesh.n, [20, 20])
     assert np.allclose(res.mean(), (10, 10, 10))
 
+    # 3d -> [2d ->] 1d
     res = f.integrate(direction="x").integrate(direction="y")
     assert isinstance(res, df.Field)
     assert res.nvdim == 3
-    assert np.array_equal(res.mesh.n, (1, 1, 20))
+    assert np.array_equal(res.mesh.n, [20])
     assert np.allclose(res.mean(), (100, 100, 100))
 
+    # 3d -> [2d -> 1d ->] 0d
     res = f.integrate("x").integrate("y").integrate("z")
-    assert res.nvdim == 3
-    assert np.array_equal(res.mesh.n, (1, 1, 1))
-    assert np.allclose(res.mean(), (1000, 1000, 1000))
+    assert isinstance(res, np.ndarray)
+    assert np.allclose(res, (1000, 1000, 1000))
 
+    # explicit and implicit 3d -> 0d
     assert np.allclose(
         f.integrate("x").integrate("y").integrate("z").mean(), f.integrate()
     )
 
 
 def test_integrate_cumulative():
+    # 3d mesh
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (0.5, 0.5, 0.5)
@@ -1924,7 +1933,7 @@ def test_integrate_cumulative():
     f_int = f.integrate(direction="x", cumulative=True)
     assert isinstance(f_int, df.Field)
     assert f_int.nvdim == 3
-    assert np.array_equal(f_int.mesh.n, (20, 20, 20))
+    assert f_int.mesh == f.mesh
     assert np.allclose(f_int.mean(), (5, 5, 5))
     assert np.allclose(f_int((0, 0, 0)), (0.25, 0.25, 0.25))
     assert np.allclose(f_int((0.9, 0.9, 0.9)), (0.75, 0.75, 0.75))
@@ -1935,6 +1944,21 @@ def test_integrate_cumulative():
         f = df.Field(mesh, nvdim=1, value=lambda p: p[i])
         assert np.allclose(f.integrate(d, cumulative=True).diff(d).array, f.array)
         assert np.allclose(f.diff(d).integrate(d, cumulative=True).array, f.array)
+
+    # 1d mesh
+    mesh = df.Mesh(p1=0, p2=10e-9, n=5)
+    field = df.Field(mesh, nvdim=1, value=lambda p: p)
+    assert np.allclose(
+        field.integrate("x", cumulative=True).array,
+        [1e-18, 5e-18, 13e-18, 24e-18, 41e-18],
+    )
+
+    # 2d mesh with one cell in integration direction
+    mesh = df.Mesh(p1=(0, 0), p2=(10, 1), cell=(1, 1))
+    f = df.Field(mesh, nvdim=2, value=(2, 2.5))
+    f_int = f.integrate("y", cumulative=True)
+    assert f_int.mesh == f.mesh
+    assert np.allclose(f_int.mean(), (1, 1.25))
 
 
 def test_integrate_exceptions():
