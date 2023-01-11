@@ -1265,7 +1265,7 @@ def test_k3d(valid_mesh):
     if valid_mesh.region.ndim != 3:
         pytest.xfail(reason="plotting only supports 3d")
     valid_mesh.k3d()
-    valid_mesh.plane("x").k3d()
+    valid_mesh.sel(x=(0, 1e-9)).k3d()
 
 
 def test_k3d_mpl_subregions(tmp_path):
