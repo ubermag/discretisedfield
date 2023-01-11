@@ -2462,17 +2462,17 @@ def test_fft():
     # Fourier slice theoreme
     for i in "xyz":
         plane = f.integrate(i)
-        assert plane.allclose(f.fftn.plane(**{i: 0}).ifftn.real)
+        assert plane.allclose(f.fftn.sel(**{i: 0}).ifftn.real)
         assert (
             df.Field(mesh, nvdim=3)
             .integrate(i)
-            .allclose(f.fftn.plane(**{i: 0}).ifftn.imag)
+            .allclose(f.fftn.sel(**{i: 0}).ifftn.imag)
         )
 
-    assert f.integrate("x").allclose(f.rfftn.plane(x=0).irfftn)
-    assert f.integrate("y").allclose(f.rfftn.plane(y=0).irfftn)
+    assert f.integrate("x").allclose(f.rfftn.sel(x=0).irfftn)
+    assert f.integrate("y").allclose(f.rfftn.sel(y=0).irfftn)
     # plane along z removes rfftn-freq axis => needs ifftn
-    assert f.integrate("z").allclose(f.rfftn.plane(z=0).ifftn.real)
+    assert f.integrate("z").allclose(f.rfftn.sel(z=0).ifftn.real)
 
 
 # ##################################
