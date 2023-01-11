@@ -535,24 +535,26 @@ class Field(_FieldIO):
         return self._vdim_mapping
 
     @vdim_mapping.setter
-    def vdim_mapping(self, mapping):
-        if mapping is None:
+    def vdim_mapping(self, vdim_mapping):
+        if vdim_mapping is None:
             if self.nvdim == 1:
                 pass
             elif self.nvdim == self.mesh.region.ndim:
-                mapping = dict(zip(self.vdims, self.mesh.region.dims))
+                vdim_mapping = dict(zip(self.vdims, self.mesh.region.dims))
             else:
                 warnings.warn(
                     f"Automatic mapping is not possible for {self.nvdim=} and"
                     f" {self.mesh.region.ndim=}. Set 'vdim_mapping' manually."
                 )
-                mapping = {}
-        elif not isinstance(mapping, dict):
-            raise TypeError(f"Invalid {type(mapping)=}; must be of type 'dict'.")
-        elif sorted(mapping.keys()) != sorted(self.vdims):
-            raise ValueError(f"Invalid {mapping.keys()=}; keys must be {self.vdims}.")
+                vdim_mapping = {}
+        elif not isinstance(vdim_mapping, dict):
+            raise TypeError(f"Invalid {type(vdim_mapping)=}; must be of type 'dict'.")
+        elif len(vdim_mapping) > 0 and sorted(vdim_mapping) != sorted(self.vdims):
+            raise ValueError(
+                f"Invalid {vdim_mapping.keys()=}; keys must be {self.vdims}."
+            )
 
-        self._vdim_mapping = mapping
+        self._vdim_mapping = vdim_mapping
 
     @property
     def _r_dim_mapping(self):
