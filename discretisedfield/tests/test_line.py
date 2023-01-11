@@ -36,26 +36,16 @@ def check_line(line):
 
 class TestLine:
     def test_init(self):
-        # Scalar values
         points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
         values = [-1, 2, -3]
-        line = df.Line(points=points, values=values)
+        line = df.Line(
+            points=points, values=values, point_columns=list("xyz"), value_columns=["a"]
+        )
         check_line(line)
 
         assert line.length == 2
         assert line.n == 3
         assert line.dim == 1
-
-        # Vector values
-        points = [(0, 0, 0), (1, 1, 1)]
-        values = [(0, 0, 1), (0, 1, 0)]
-
-        line = df.Line(points=points, values=values)
-        check_line(line)
-
-        assert abs(line.length - np.sqrt(3)) < 1e-12
-        assert line.n == 2
-        assert line.dim == 3
 
         # Setting the point and value columns.
         points = [(0, 0, 0), (1, 1, 1)]
@@ -80,7 +70,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
         line = f.line(p1=p1, p2=(10e-9, 15e-9, 1e-9), n=200)
         check_line(line)
@@ -98,13 +88,23 @@ class TestLine:
         points = [(0, 0, 0), (1, 0, 0)]
         values = [-1, 2, -3]
         with pytest.raises(ValueError):
-            line = df.Line(points=points, values=values)
+            line = df.Line(
+                points=points,
+                values=values,
+                point_columns=list("xyz"),
+                value_columns=["a"],
+            )
 
     def test_point_value_columns(self):
         # Scalar values
         points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
         values = [-1, 2, -3]
-        line = df.Line(points=points, values=values)
+        line = df.Line(
+            points=points,
+            values=values,
+            point_columns=["px", "py", "pz"],
+            value_columns=["v"],
+        )
 
         assert line.point_columns == ["px", "py", "pz"]
         assert line.value_columns == ["v"]
@@ -117,7 +117,12 @@ class TestLine:
         # Vector values.
         points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
         values = [(0, 1, 3), (-1, 0, 0), (-2.13, 0, 0)]
-        line = df.Line(points=points, values=values)
+        line = df.Line(
+            points=points,
+            values=values,
+            point_columns=["px", "py", "pz"],
+            value_columns=["vx", "vy", "vz"],
+        )
 
         assert line.point_columns == ["px", "py", "pz"]
         assert line.value_columns == ["vx", "vy", "vz"]
@@ -130,7 +135,12 @@ class TestLine:
         # Exceptions
         points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
         values = [(0, 1, 3), (-1, 0, 0), (-2.13, 0, 0)]
-        line = df.Line(points=points, values=values)
+        line = df.Line(
+            points=points,
+            values=values,
+            point_columns=["px", "py", "pz"],
+            value_columns=["v"],
+        )
 
         with pytest.raises(ValueError):
             line.point_columns = ["a", "b"]
@@ -142,7 +152,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
         line = f.line(p1=(1e-9, 1e-9, 0.1e-9), p2=(4e-9, 5e-9, 1e-9), n=20)
 
@@ -182,7 +192,7 @@ class TestLine:
         p2 = (10e-9, 15e-9, 2e-9)
         n = (10, 15, 2)
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        f = df.Field(mesh, dim=3, value=(1, 1, 1))
+        f = df.Field(mesh, nvdim=3, value=(1, 1, 1))
 
         line = f.line(p1=(1e-9, 1e-9, 0.1e-9), p2=(4e-9, 5e-9, 1e-9), n=20)
 

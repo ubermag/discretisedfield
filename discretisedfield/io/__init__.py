@@ -18,6 +18,8 @@ from .vtk import _FieldIO_VTK
 
 
 class _RegionIO(_RegionIO_HDF5):
+    __slots__ = []
+
     class _JSONEncoder(json.JSONEncoder):
         def default(self, o):
             if isinstance(o, df.Region):
@@ -33,6 +35,8 @@ class _RegionIO(_RegionIO_HDF5):
 
 
 class _MeshIO(_MeshIO_HDF5):
+    __slots__ = []
+
     def save_subregions(self, field_filename):
         """Save subregions to json file."""
         with pathlib.Path(self._subregion_filename(field_filename)).open(
@@ -54,6 +58,8 @@ class _MeshIO(_MeshIO_HDF5):
 
 
 class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
+    __slots__ = []
+
     def write(self, *args, **kwargs):
         raise AttributeError("This method has been renamed to 'to_file'.")
 

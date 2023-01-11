@@ -58,6 +58,7 @@ def test_init_valid_args(p1, p2, ndim):
 @pytest.mark.parametrize(
     "p1,p2,error",
     [
+        [[], [], ValueError],
         [("1", 0, 0), (1, 1, 1), TypeError],
         [(-1.5e-9, -5e-9, "a"), (1.5e-9, 15e-9, 16e-9), TypeError],
         [(-1.5e-9, -5e-9, 0), (1.5e-9, 16e-9), ValueError],
@@ -154,7 +155,8 @@ def test_pmin_pmax_edges_center_volume(p1, p2, pmin, pmax, edges, center, volume
     assert np.allclose(region.pmin, pmin, atol=0)
     assert np.allclose(region.pmax, pmax, atol=0)
     assert np.allclose(region.edges, edges, atol=0)
-    assert np.allclose(region.center, center, atol=0)
+    assert np.allclose(region.centre, center, atol=0)
+    assert np.allclose(region.center, center, atol=0)  # British and US spelling
     assert np.isclose(region.volume, volume, atol=0)
 
 
@@ -516,18 +518,48 @@ def test_scale(p1, p2, factor, pmin, pmax, edges):
 
 
 @pytest.mark.parametrize(
-    "p1, p2, factor, error",
+    "p1, p2, factor, reference_point, pmin, pmax",
     [
-        [1, 2, "two", TypeError],
-        [1, 2, (2, 2), ValueError],
-        [(0, 0, 0), (10, 10, 10), (1, 2), ValueError],
-        [(0, 0, 0), (10, 10, 10), (1, "two", 3), TypeError],
+        [0, 10, 2, None, -5, 15],
+        [0, 10, 2, 0, 0, 20],
+        [0, 10, 2, [10], -10, 10],
+        [
+            (-10e-9, -5e-9),
+            (20e-9, 25e-9),
+            (0.5, 2.5),
+            (0, 5e-9),
+            (-5e-9, -20e-9),
+            (10e-9, 55e-9),
+        ],
     ],
 )
-def test_invalid_scale(p1, p2, factor, error):
+def test_scale_reference(p1, p2, factor, reference_point, pmin, pmax):
+    region = df.Region(p1=p1, p2=p2)
+    res = region.scale(factor, reference_point=reference_point)
+    assert isinstance(res, df.Region)
+    assert np.allclose(res.pmin, pmin, atol=0)
+    assert np.allclose(res.pmax, pmax, atol=0)
+
+    region.scale(factor, reference_point=reference_point, inplace=True)
+    assert np.allclose(region.pmin, pmin, atol=0)
+    assert np.allclose(region.pmax, pmax, atol=0)
+
+
+@pytest.mark.parametrize(
+    "p1, p2, factor, reference_point, error",
+    [
+        [1, 2, "two", None, TypeError],
+        [1, 2, 1, (1, 1), ValueError],
+        [1, 2, (2, 2), None, ValueError],
+        [(0, 0, 0), (10, 10, 10), (1, 2), None, ValueError],
+        [(0, 0, 0), (10, 10, 10), (1, "two", 3), None, TypeError],
+        [(0, 0, 0), (10, 10, 10), (1, 2, 3), 1, ValueError],
+    ],
+)
+def test_invalid_scale(p1, p2, factor, reference_point, error):
     region = df.Region(p1=p1, p2=p2)
     with pytest.raises(error):
-        region.scale(factor)
+        region.scale(factor, reference_point=reference_point)
 
 
 @pytest.mark.parametrize(

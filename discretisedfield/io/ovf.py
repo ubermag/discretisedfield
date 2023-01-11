@@ -13,6 +13,8 @@ import discretisedfield as df
 
 
 class _FieldIO_OVF:
+    __slots__ = []
+
     def _to_ovf(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
@@ -232,7 +234,7 @@ class _FieldIO_OVF:
 
         return cls(
             mesh,
-            dim=header["valuedim"],
+            nvdim=header["valuedim"],
             value=array.reshape(r_tuple).transpose(t_tuple),
             vdims=vdims,
             unit=unit,

@@ -1,6 +1,6 @@
 import collections
-import functools
 import numbers
+import warnings
 
 import numpy as np
 import ubermagutil.units as uu
@@ -69,6 +69,7 @@ class Region(_RegionIO):
     ValueError: ...
 
     """
+    __slots__ = ["_pmin", "_pmax", "_dims", "_units", "_tolerance_factor"]
 
     def __init__(
         self, p1=None, p2=None, dims=None, units=None, tolerance_factor=1e-12, **kwargs
@@ -104,6 +105,9 @@ class Region(_RegionIO):
                 "The length of p1 and p2 must be the same. Not"
                 f" {len(p1)=} and {len(p2)=}."
             )
+
+        if len(p1) == 0:
+            raise ValueError("p1 and p2 must not be empty.")
 
         if not all(isinstance(i, numbers.Real) for i in p1):
             raise TypeError("p1 can only contain elements of type numbers.Real.")
@@ -188,7 +192,7 @@ class Region(_RegionIO):
         """
         return self._pmax
 
-    @functools.cached_property
+    @property
     def ndim(self):
         r"""Number of dimensions.
 
@@ -277,7 +281,7 @@ class Region(_RegionIO):
         try:
             return self.dims.index(dim)
         except ValueError:
-            raise ValueError(f"'{dim}' not in region.dims={self.dims}.")
+            raise ValueError(f"'{dim}' not in region.dims={self.dims}.") from None
 
     @property
     def units(self):
@@ -416,9 +420,7 @@ class Region(_RegionIO):
 
     @property
     def centre(self):
-        raise AttributeError(
-            "This attribute is now called 'center'.",
-        )
+        return self.center
 
     @property
     def volume(self):
@@ -668,20 +670,26 @@ class Region(_RegionIO):
         """Compute multiplier for the region."""
         return uu.si_max_multiplier(self.edges)
 
-    def scale(self, factor, inplace=False):
+    def scale(self, factor, reference_point=None, inplace=False):
         """Scale the region.
 
-        This method scales the region about its ``center`` point. If ``factor`` is a
-        number the same scaling is applied along all dimensions. If ``factor`` is
-        array-like its length must match ``region.ndim`` and different factors are
-        applied along the different directions (based on their order). A new object is
-        created unless ``inplace=True`` is specified.
+        This method scales the region about its ``center`` point or a
+        ``reference_point`` if provided. If ``factor`` is a number the same scaling is
+        applied along all dimensions. If ``factor`` is array-like its length must match
+        ``region.ndim`` and different factors are applied along the different directions
+        (based on their order). A new object is created unless ``inplace=True`` is
+        specified.
 
         Parameters
         ----------
-        factor : numbers.Number or array-like of numbers.Number
+        factor : numbers.Real or array-like of numbers.Real
 
             Factor to scale the region.
+
+        reference_point : array_like, optional
+
+            The position of the reference point is fixed when scaling the region. If not
+            specified the region is scaled about its ``center``.
 
         inplace : bool, optional
 
@@ -739,7 +747,7 @@ class Region(_RegionIO):
         array([15, 20, 25])
 
         """
-        if isinstance(factor, numbers.Number):
+        if isinstance(factor, numbers.Real):
             pass
         elif not isinstance(factor, (tuple, list, np.ndarray)):
             raise TypeError(f"Unsupported type {type(factor)} for scale.")
@@ -750,25 +758,38 @@ class Region(_RegionIO):
             )
         else:
             for elem in factor:
-                if not isinstance(elem, numbers.Number):
+                if not isinstance(elem, numbers.Real):
                     raise TypeError(
                         f"Unsupported element {elem} of type {type(elem)} for scale."
                     )
 
+        if reference_point is None:
+            reference_point = self.center
+        elif isinstance(reference_point, numbers.Real):
+            reference_point = [reference_point]
+        elif not isinstance(reference_point, (tuple, list, np.ndarray)):
+            raise TypeError(
+                "'reference_point' must be a sequence (or a real number for 1d) or"
+                f" None (for default behaviour). Not {type(reference_point)=}."
+            )
+
+        if len(reference_point) != self.ndim:
+            raise ValueError(
+                f"The 'reference_point' must contain {self.ndim} elements, not"
+                f" {len(reference_point)=}."
+            )
+        elif any(not isinstance(i, numbers.Real) for i in reference_point):
+            raise ValueError("Elements of 'reference_point' must be real numbers.")
+
+        pmin = reference_point - (reference_point - self.pmin) * factor
+        pmax = pmin + self.edges * factor
+
         if inplace:
-            # create a copy of center because it is re-computed based on pmin and pmax
-            center = self.center.copy()
-            new_egde_length = np.multiply(self.edges, factor)
-            self._pmin = center - new_egde_length / 2
-            self._pmax = center + new_egde_length / 2
+            self._pmin = pmin
+            self._pmax = pmax
             return self
         else:
-            return self.__class__(
-                p1=self.center - np.multiply(self.edges, factor) / 2,
-                p2=self.center + np.multiply(self.edges, factor) / 2,
-                dims=self.dims,
-                units=self.units,
-            )
+            return self.__class__(p1=pmin, p2=pmax, dims=self.dims, units=self.units)
 
     def translate(self, vector, inplace=False):
         """Translate the region.
@@ -1058,3 +1079,11 @@ class Region(_RegionIO):
             "units": self.units,
             "tolerance_factor": self.tolerance_factor,
         }
+
+    def random_point(self):
+        r"""Return a random point in the region."""
+        warnings.warn(
+            "This method will be removed and should not be used anymore.",
+            DeprecationWarning,
+        )
+        return tuple(np.random.random(self.ndim) * self.edges + self.pmin)

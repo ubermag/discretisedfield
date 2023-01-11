@@ -3,7 +3,6 @@ import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield.plotting.util as plot_util
-import discretisedfield.util as dfu
 
 
 class K3dRegion:
@@ -84,9 +83,6 @@ class K3dRegion:
 
     def _axis_labels(self, plot, multiplier):
         plot.axes = [
-            i
-            + r"\,\text{{{}}}".format(
-                f"({uu.rsi_prefixes[multiplier]}{self.region.units[dfu.axesdict[i]]})"
-            )
-            for i in dfu.axesdict.keys()
+            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            for dim, unit in zip(self.region.dims, self.region.units)
         ]
