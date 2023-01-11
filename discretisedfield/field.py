@@ -122,7 +122,15 @@ class Field(_FieldIO):
 
     """
 
-    __slots__ = ["_mesh", "_nvdim", "_vdims", "_unit", "_array", "dtype"]
+    __slots__ = [
+        "_array",
+        "_mesh",
+        "_nvdim",
+        "_unit",
+        "_valid",
+        "_vdims",
+        "dtype",
+    ]
 
     def __init__(
         self,
@@ -133,6 +141,7 @@ class Field(_FieldIO):
         vdims=None,
         dtype=None,
         unit=None,
+        valid=True,
         **kwargs,
     ):
         if not isinstance(mesh, df.Mesh):
@@ -149,8 +158,15 @@ class Field(_FieldIO):
 
         self.unit = unit
 
+        # This is required for correct initialisation when also using a
+        # norm. The norm setter requires the norm property
+        # (which requires valid). However, valid cannot be set
+        # before the norm is set as the valid setter has the option
+        # to set valid based on the norm.
+        self.valid = True
         self.update_field_values(value)
         self.norm = norm
+        self.valid = valid
 
         self._vdims = None  # required in here for correct initialisation
         self.vdims = vdims
@@ -470,7 +486,9 @@ class Field(_FieldIO):
         """
         res = np.linalg.norm(self.array, axis=-1, keepdims=True)
 
-        return self.__class__(self.mesh, nvdim=1, value=res, unit=self.unit)
+        return self.__class__(
+            self.mesh, nvdim=1, value=res, unit=self.unit, valid=self.valid
+        )
 
     @norm.setter
     def norm(self, val):
@@ -482,6 +500,29 @@ class Field(_FieldIO):
                 where=self.norm.array != 0.0,
             )
             self.array *= _as_array(val, self.mesh, nvdim=1, dtype=None)
+
+    @property
+    def valid(self):
+        """Valid field values.
+
+        This property is used to mask invalid field values.
+        This can be achieved by passing ``numpy.ndarray`` of
+        the same shape as the field array with boolean values,
+        the string ``"norm"`` (which masks zero values), or
+        None (which sets all values to True).
+
+        """
+        return self._valid
+
+    @valid.setter
+    def valid(self, valid):
+        if valid is not None:
+            if valid == "norm":
+                valid = ~np.isclose(self.norm.array, 0)
+        else:
+            valid = True
+
+        self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)
 
     def __abs__(self):
         """Absolute value of the field.
@@ -514,7 +555,11 @@ class Field(_FieldIO):
 
         """
         return self.__class__(
-            self.mesh, nvdim=self.nvdim, value=np.abs(self.array), unit=self.unit
+            self.mesh,
+            nvdim=self.nvdim,
+            value=np.abs(self.array),
+            unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -565,6 +610,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=orientation_array,
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     def mean(self, direction=None):
@@ -657,7 +703,12 @@ class Field(_FieldIO):
                     axis[i] = self.mesh.region._dim2index(d)
                 array = self.array.mean(axis=tuple(axis))
                 return self.__class__(
-                    mesh, nvdim=self.nvdim, value=array, unit=self.unit
+                    mesh,
+                    nvdim=self.nvdim,
+                    value=array,
+                    unit=self.unit,
+                    vdims=self.vdims,
+                    valid=self.valid,
                 )
         elif isinstance(direction, str):
             axis = self.mesh.region._dim2index(direction)
@@ -667,6 +718,7 @@ class Field(_FieldIO):
                 value=self.array.mean(axis=axis),
                 vdims=self.vdims,
                 unit=self.unit,
+                valid=self.valid,
             )
         else:
             raise ValueError(
@@ -832,7 +884,11 @@ class Field(_FieldIO):
         if self.vdims is not None and attr in self.vdims:
             attr_array = self.array[..., self.vdims.index(attr), np.newaxis]
             return self.__class__(
-                mesh=self.mesh, nvdim=1, value=attr_array, unit=self.unit
+                mesh=self.mesh,
+                nvdim=1,
+                value=attr_array,
+                unit=self.unit,
+                valid=self.valid,
             )
         else:
             msg = f"Object has no attribute {attr}."
@@ -1072,8 +1128,10 @@ class Field(_FieldIO):
             )
 
     def _apply_operator(self, other, function, operator):
+        valid = self.valid
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other, ignore_scalar=True)
+            valid = np.logical_and(valid, other.valid)
             other = other.array
         elif isinstance(other, numbers.Complex):
             pass
@@ -1102,6 +1160,7 @@ class Field(_FieldIO):
             nvdim=res_array.shape[-1],
             value=res_array,
             vdims=vdims,
+            valid=valid,
         )
 
     def __pos__(self):
@@ -1190,6 +1249,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=-self.array,
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     def __pow__(self, other):
@@ -1556,8 +1616,10 @@ class Field(_FieldIO):
         array([5.])
 
         """
+        valid = self.valid
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
+            valid = np.logical_and(valid, other.valid)
             other = other.array
         elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
@@ -1567,7 +1629,9 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         res_array = np.einsum("...l,...l->...", self.array, other)
-        return df.Field(self.mesh, nvdim=1, value=res_array[..., np.newaxis])
+        return df.Field(
+            self.mesh, nvdim=1, value=res_array[..., np.newaxis], valid=valid
+        )
 
     def __matmul__(self, other):
         return self.dot(other)
@@ -1618,6 +1682,7 @@ class Field(_FieldIO):
         array([ 0., -1.,  0.])
 
         """
+        valid = self.valid
         if isinstance(other, self.__class__):
             self._check_same_mesh_and_field_dim(other)
             if self.nvdim != 3 or other.nvdim != 3:
@@ -1626,6 +1691,7 @@ class Field(_FieldIO):
                     f" {other.nvdim=} fields."
                 )
                 raise ValueError(msg)
+            valid = np.logical_and(valid, other.valid)
             other = other.array
         elif not isinstance(other, (tuple, list, np.ndarray)):
             msg = (
@@ -1639,6 +1705,7 @@ class Field(_FieldIO):
             nvdim=3,
             value=np.cross(self.array, other),
             vdims=self.vdims,
+            valid=valid,
         )
 
     def __and__(self, other):
@@ -1703,10 +1770,12 @@ class Field(_FieldIO):
         True
 
         """
+        valid = self.valid
         if isinstance(other, self.__class__):
             if self.mesh != other.mesh:
                 msg = "Cannot apply operator << on fields defined on different meshes."
                 raise ValueError(msg)
+            valid = np.logical_and(valid, other.valid)
         elif isinstance(other, numbers.Complex):
             return self << self.__class__(self.mesh, nvdim=1, value=other)
         elif isinstance(other, (tuple, list, np.ndarray)):
@@ -1734,6 +1803,7 @@ class Field(_FieldIO):
             nvdim=len(array_list),
             value=np.stack(array_list, axis=-1),
             vdims=vdims,
+            valid=valid,
         )
 
     def __rlshift__(self, other):
@@ -1929,6 +1999,7 @@ class Field(_FieldIO):
                 nvdim=self.nvdim,
                 vdims=self.vdims,
                 unit=self.unit,
+                valid=self.valid,
             )
 
         # Preparation (padding) for computing the derivative, depending on the
@@ -2076,6 +2147,7 @@ class Field(_FieldIO):
             value=derivative_array,
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -2677,6 +2749,12 @@ class Field(_FieldIO):
             )
         ]
 
+        valid = self.valid[
+            dfu.assemble_index(
+                slice(None), self.mesh.region.ndim + 1, {dim_index: sel_index}
+            )
+        ]
+
         try:
             mesh = self.mesh.sel(*args, **kwargs)
         except ValueError as e:
@@ -2685,7 +2763,12 @@ class Field(_FieldIO):
             return array  # 1 dim case
         else:  # n dim case
             return self.__class__(
-                mesh, nvdim=self.nvdim, value=array, vdims=self.vdims, unit=self.unit
+                mesh,
+                nvdim=self.nvdim,
+                value=array,
+                vdims=self.vdims,
+                unit=self.unit,
+                valid=valid,
             )
 
     def plane(self, *args, n=None, **kwargs):
@@ -2743,6 +2826,7 @@ class Field(_FieldIO):
         plane_mesh = self.mesh.plane(*args, n=n, **kwargs)
         if n is not None:
             value = self
+            valid = self.__class__(self.mesh, nvdim=1, value=self.valid, dtype=bool)
         else:
             p_axis = plane_mesh.attributes["planeaxis"]
             plane_idx = self.mesh.point2index(plane_mesh.region.center)[p_axis]
@@ -2751,12 +2835,14 @@ class Field(_FieldIO):
                 for i, axis_len in enumerate(self.array.shape)
             )
             value = self.array[slices]
+            valid = self.valid[slices]
         return self.__class__(
             plane_mesh,
             nvdim=self.nvdim,
             value=value,
             vdims=self.vdims,
             unit=self.unit,
+            valid=valid,
         )
 
     def resample(self, n):
@@ -2820,6 +2906,7 @@ class Field(_FieldIO):
             vdims=self.vdims,
             unit=self.unit,
             dtype=self.dtype,
+            valid=self.__class__(self.mesh, nvdim=1, value=self.valid, dtype=bool),
         )
 
     def __getitem__(self, item):
@@ -2905,6 +2992,7 @@ class Field(_FieldIO):
             value=self.array[tuple(slices)],
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid[tuple(slices)],
         )
 
     def project(self, direction):
@@ -2960,8 +3048,10 @@ class Field(_FieldIO):
         array([1.57079633])
 
         """
+        valid = self.valid
         if isinstance(vector, self.__class__):
             self._check_same_mesh_and_field_dim(vector)
+            valid = np.logical_and(valid, vector.valid)
         elif self.nvdim == 1 and isinstance(vector, numbers.Complex):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
         elif isinstance(vector, (tuple, list, np.ndarray)):
@@ -2974,7 +3064,9 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
-        return self.__class__(self.mesh, nvdim=1, value=angle_array, unit="rad")
+        return self.__class__(
+            self.mesh, nvdim=1, value=angle_array, unit="rad", valid=valid
+        )
 
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
@@ -3318,6 +3410,7 @@ class Field(_FieldIO):
             value=self.array.real,
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -3329,6 +3422,7 @@ class Field(_FieldIO):
             value=self.array.imag,
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     @property
@@ -3339,6 +3433,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=np.angle(self.array),
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     @property
@@ -3349,6 +3444,7 @@ class Field(_FieldIO):
             nvdim=self.nvdim,
             value=np.abs(self.array),
             vdims=self.vdims,
+            valid=self.valid,
         )
 
     @property
@@ -3360,6 +3456,7 @@ class Field(_FieldIO):
             value=self.array.conjugate(),
             vdims=self.vdims,
             unit=self.unit,
+            valid=self.valid,
         )
 
     # TODO check and write tests
