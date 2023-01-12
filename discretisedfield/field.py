@@ -172,7 +172,9 @@ class Field(_FieldIO):
         self.norm = norm
         self.valid = valid
 
-        self._vdims = None  # required in here for correct initialisation
+        # required in here for correct initialisation:
+        self._vdims = None  # the vdims setter reads self.vdims
+        self._vdim_mapping = {}  # the vdims setter reads self.vdim_mapping
         self.vdims = vdims
 
         self.vdim_mapping = vdim_mapping
@@ -366,7 +368,17 @@ class Field(_FieldIO):
                         )
             vdims = list(vdims)
 
+        # setting vdim_mapping reads self.vdims -> self.vdims has to be updated before
+        # updating self.vdim_mapping
+        old_vdims = self._vdims
         self._vdims = vdims
+
+        if len(self.vdim_mapping) > 0 and vdims is not None and old_vdims is not None:
+            # update vdim mapping with new vdim names
+            self.vdim_mapping = {
+                new_vdim: self.vdim_mapping[old_vdim]
+                for new_vdim, old_vdim in zip(vdims, old_vdims)
+            }
 
     @property
     def array(self):
@@ -1860,7 +1872,7 @@ class Field(_FieldIO):
         vdim_mapping.update(other.vdim_mapping)
         if len(vdim_mapping) != len(array_list):
             # keys are missing or not unique -> the user has to set the mapping manually
-            vdim_mapping = {}
+            vdim_mapping = None
 
         return self.__class__(
             self.mesh,

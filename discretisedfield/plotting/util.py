@@ -88,6 +88,31 @@ def plot_box(ax, pmin, pmax, *args, **kwargs):
     plot_line(ax, (x2, y2, z1), (x2, y2, z2), *args, **kwargs)
 
 
+def inplane_angle(field, x, y):
+    """Compute the angle to the x axis of the in-plane part of the vector field.
+
+    The in-plane part is defined with two vdims x and y.
+    """
+    if field.nvdim == 1:
+        raise ValueError("This method can only be used for vector fields.")
+    if x is None and y is None:
+        raise ValueError("At least one of x and y most not be None.")
+    if x is not None and x not in field.vdims:
+        raise ValueError(f"{x} component is not part of {field.vdims=}")
+    if y is not None and y not in field.vdims:
+        raise ValueError(f"{y} component is not part of {field.vdims=}")
+
+    # TODO should we restrict the calculation to field.valid?
+    angle_array = np.arctan2(
+        getattr(field, y).array if x is not None else 0,
+        getattr(field, x).array if y is not None else 0,
+    )
+    angle_array[angle_array < 0] += 2 * np.pi
+    return field.__class__(
+        field.mesh, nvdim=1, value=angle_array, unit="rad", valid=field.valid
+    )
+
+
 def normalise_to_range(values, to_range, from_range=None, int_round=True):
     """Normalise values.
 
