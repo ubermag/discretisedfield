@@ -105,52 +105,59 @@ def topological_charge_density(field, /, method="continuous"):
         msg = f"Cannot compute topological charge density for {field.nvdim=} field."
         raise ValueError(msg)
 
-    if not field.mesh.attributes["isplane"]:
-        msg = (
-            "The field must be sliced before the topological "
-            "charge density can be computed."
+    if field.mesh.region.ndim != 2:
+        raise ValueError(
+            "The topological charge density can only be computed on fields with 2"
+            f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
-        raise ValueError(msg)
 
     if method not in ["continuous", "berg-luescher"]:
         msg = "Method can be either continuous or berg-luescher"
         raise ValueError(msg)
 
-    axis1 = field.mesh.attributes["axis1"]
-    axis2 = field.mesh.attributes["axis2"]
     of = field.orientation  # unit field - orientation field
 
+    # Spatial axes associated with the first and second vector
+    # dimensions.
+    axis1 = field.vdim_mapping[field.vdims[0]]
+    axis2 = field.vdim_mapping[field.vdims[1]]
+    axis1_idx = field.mesh.region._dim2index(axis1)
+    axis2_idx = field.mesh.region._dim2index(axis2)
+
     if method == "continuous":
-        return (
-            1
-            / (4 * np.pi)
-            * of.dot(
-                of.diff(field.mesh.region.dims[axis1]).cross(
-                    of.diff(field.mesh.region.dims[axis2])
-                )
-            )
-        )
+        return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
 
     elif method == "berg-luescher":
+
         q = df.Field(field.mesh, nvdim=1)
 
         # Area of a single triangle
-        area = 0.5 * field.mesh.cell[axis1] * field.mesh.cell[axis2]
+        area = 0.5 * field.mesh.cell[axis1_idx] * field.mesh.cell[axis2_idx]
 
-        for i, j in itertools.product(range(of.mesh.n[axis1]), range(of.mesh.n[axis2])):
-            index = dfu.assemble_index(0, 3, {axis1: i, axis2: j})
+        for i, j in itertools.product(
+            range(of.mesh.n[axis1_idx]), range(of.mesh.n[axis2_idx])
+        ):
+            index = dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j})
             v0 = of.array[index]
 
             # Extract 4 neighbouring vectors (if they exist)
             v1 = v2 = v3 = v4 = None
-            if i + 1 < of.mesh.n[axis1]:
-                v1 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j})]
-            if j + 1 < of.mesh.n[axis2]:
-                v2 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j + 1})]
+            if i + 1 < of.mesh.n[axis1_idx]:
+                v1 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j})
+                ]
+            if j + 1 < of.mesh.n[axis2_idx]:
+                v2 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j + 1})
+                ]
             if i - 1 >= 0:
-                v3 = of.array[dfu.assemble_index(0, 3, {axis1: i - 1, axis2: j})]
+                v3 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i - 1, axis2_idx: j})
+                ]
             if j - 1 >= 0:
-                v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j - 1})]
+                v4 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j - 1})
+                ]
 
             charge = 0
             triangle_count = 0
@@ -274,9 +281,11 @@ def topological_charge(field, /, method="continuous", absolute=False):
         msg = f"Cannot compute topological charge for {field.nvdim=} field."
         raise ValueError(msg)
 
-    if not field.mesh.attributes["isplane"]:
-        msg = "The field must be sliced before the topological charge can be computed."
-        raise ValueError(msg)
+    if field.mesh.region.ndim != 2:
+        raise ValueError(
+            "The topological charge can only be computed on fields with 2"
+            f" spatial dimensions, not {field.mesh.region.ndim=}."
+        )
 
     if method not in ["continuous", "berg-luescher"]:
         msg = "Method can be either continuous or berg-luescher"
@@ -290,18 +299,24 @@ def topological_charge(field, /, method="continuous", absolute=False):
             return float(q.integrate())
 
     elif method == "berg-luescher":
-        axis1 = field.mesh.attributes["axis1"]
-        axis2 = field.mesh.attributes["axis2"]
+        # Spatial axes associated with the first and second vector
+        # dimensions.
+        axis1 = field.vdim_mapping[field.vdims[0]]
+        axis2 = field.vdim_mapping[field.vdims[1]]
+        axis1_idx = field.mesh.region._dim2index(axis1)
+        axis2_idx = field.mesh.region._dim2index(axis2)
         of = field.orientation
 
         topological_charge = 0
         for i, j in itertools.product(
-            range(of.mesh.n[axis1] - 1), range(of.mesh.n[axis2] - 1)
+            range(of.mesh.n[axis1_idx] - 1), range(of.mesh.n[axis2_idx] - 1)
         ):
-            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j})]
-            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j})]
-            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j + 1})]
-            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j + 1})]
+            v1 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j})]
+            v2 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j})]
+            v3 = of.array[
+                dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j + 1})
+            ]
+            v4 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j + 1})]
 
             triangle1 = dfu.bergluescher_angle(v1, v2, v4)
             triangle2 = dfu.bergluescher_angle(v2, v3, v4)

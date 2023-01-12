@@ -7,7 +7,8 @@ import discretisedfield as df
 import discretisedfield.tools as dft
 
 
-def test_topological_charge():
+@pytest.mark.parametrize("method", ["continuous", "berg-luescher"])
+def test_topological_charge(method):
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (2, 2, 2)
@@ -17,16 +18,12 @@ def test_topological_charge():
     # -> Q(f) = 0
     f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
 
-    for method in ["continuous", "berg-luescher"]:
-        q = dft.topological_charge_density(f.plane("z"), method=method)
+    q = dft.topological_charge_density(f.sel("z"), method=method)
 
-        assert q.nvdim == 1
-        assert q.mean() == 0
-        for absolute in [True, False]:
-            assert (
-                dft.topological_charge(f.plane("z"), method=method, absolute=absolute)
-                == 0
-            )
+    assert q.nvdim == 1
+    assert q.mean() == 0
+    for absolute in [True, False]:
+        assert dft.topological_charge(f.sel("z"), method=method, absolute=absolute) == 0
 
     # Skyrmion (with PBC) from a file
     test_filename = os.path.join(
@@ -34,34 +31,31 @@ def test_topological_charge():
     )
     f = df.Field.from_file(test_filename)
 
-    for method in ["continuous", "berg-luescher"]:
-        q = dft.topological_charge_density(f.plane("z"), method=method)
+    q = dft.topological_charge_density(f.sel("z"), method=method)
 
-        assert q.nvdim == 1
-        assert q.mean() > 0
-        for absolute in [True, False]:
-            Q = dft.topological_charge(f.plane("z"), method=method, absolute=absolute)
-            assert abs(Q) < 1 and abs(Q - 1) < 0.15
+    assert q.nvdim == 1
+    assert q.mean() > 0
+    for absolute in [True, False]:
+        Q = dft.topological_charge(f.sel("z"), method=method, absolute=absolute)
+        assert abs(Q) < 1 and abs(Q - 1) < 0.15
 
     # Not sliced
     f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
     for function in ["topological_charge_density", "topological_charge"]:
-        for method in ["continuous", "berg-luescher"]:
-            with pytest.raises(ValueError):
-                getattr(dft, function)(f, method=method)
+        with pytest.raises(ValueError):
+            getattr(dft, function)(f, method=method)
 
     # Scalar field
     f = df.Field(mesh, nvdim=1, value=3.14)
     for function in ["topological_charge_density", "topological_charge"]:
-        for method in ["continuous", "berg-luescher"]:
-            with pytest.raises(ValueError):
-                getattr(dft, function)(f.plane("z"), method=method)
+        with pytest.raises(ValueError):
+            getattr(dft, function)(f.sel("z"), method=method)
 
     # Method does not exist
     f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
     for function in ["topological_charge_density", "topological_charge"]:
         with pytest.raises(ValueError):
-            getattr(dft, function)(f.plane("z"), method="wrong")
+            getattr(dft, function)(f.sel("z"), method="wrong")
 
 
 def test_emergent_magnetic_field():
