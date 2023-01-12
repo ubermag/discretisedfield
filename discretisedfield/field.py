@@ -3190,18 +3190,7 @@ class Field(_FieldIO):
         if y not in self.vdim_mapping.keys():
             raise ValueError(f"{y} component is not mapped to a spatial component.")
 
-        # Get component name
-        x_vdim = self.vdim_mapping[x]
-        y_vdim = self.vdim_mapping[y]
-
-        if not isinstance(x_vdim, str):
-            raise ValueError(f"{x} component is not mapped to a spatial component.")
-        if not isinstance(y_vdim, str):
-            raise ValueError(f"{y} component is not mapped to a spatial component.")
-
-        angle_array = np.arctan2(
-            getattr(self, y_vdim).array, getattr(self, x_vdim).array
-        )
+        angle_array = np.arctan2(getattr(self, y).array, getattr(self, x).array)
 
         # Place all values in [0, 2pi] range
         angle_array[angle_array < 0] += 2 * np.pi
