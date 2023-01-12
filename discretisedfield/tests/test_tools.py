@@ -56,6 +56,7 @@ def test_topological_charge(method):
     for function in ["topological_charge_density", "topological_charge"]:
         with pytest.raises(ValueError):
             getattr(dft, function)(f.sel("z"), method="wrong")
+            getattr(dft, function)(f.sel("z"), method="wrong")
 
 
 def test_emergent_magnetic_field():

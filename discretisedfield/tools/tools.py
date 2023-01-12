@@ -275,9 +275,11 @@ def topological_charge(field, /, method="continuous", absolute=False):
         msg = f"Cannot compute topological charge for {field.nvdim=} field."
         raise ValueError(msg)
 
-    if not field.mesh.attributes["isplane"]:
-        msg = "The field must be sliced before the topological charge can be computed."
-        raise ValueError(msg)
+    if field.mesh.region.ndim != 2:
+        raise ValueError(
+            "The topological charge can only be computed on fields with 2"
+            f" spatial dimensions, not {field.mesh.region.ndim=}."
+        )
 
     if method not in ["continuous", "berg-luescher"]:
         msg = "Method can be either continuous or berg-luescher"
