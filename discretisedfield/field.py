@@ -2277,8 +2277,7 @@ class Field(_FieldIO):
         """
         # Check order of derivative
         if order not in (1, 2):
-            msg = f"Derivative of the {order} order is not implemented."
-            raise NotImplementedError(msg)
+            raise NotImplementedError(f"Derivative of {order=} is not implemented.")
 
         # Boundary conditions
         if direction in self.mesh.bc:  # PBC
@@ -2297,23 +2296,16 @@ class Field(_FieldIO):
         # Loop over all cells in the plane perpendicular to the direction of the
         # derivative. Use sel method in a way that keeps the dimensionality but
         # only returns a single layer in the direction of the derivative
-        for idx in self.mesh.sel(
-            **{
-                direction: (
-                    self.mesh.region.pmin[direction_idx],
-                    self.mesh.region.pmin[direction_idx]
-                    + self.mesh.cell[direction_idx] / 2,
-                )
-            }
-        ).indices:
+        point = self.mesh.region.pmin[direction_idx] + self.mesh.cell[direction_idx] / 2
+        for idx in self.mesh.sel(**{direction: (point, point)}).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
             valid_arr = valid[tuple(idx)]
             # Loop over all value dimensions of the vector field and
             # compute the derivative for each value dimension.
             for dim in range(self.nvdim):
-                out[tuple([*idx, dim])] = _split_diff_combine(
-                    self.array[tuple([*idx, dim])],
+                out[tuple(*idx, dim)] = _split_diff_combine(
+                    self.array[tuple(*idx, dim)],
                     valid_arr,
                     order,
                     self.mesh.cell[direction_idx],

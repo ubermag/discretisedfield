@@ -30,6 +30,7 @@ def test_integrate():
         [True, True, False, True],
         [True, True, False, False, True],
         [True, False, True, False, True],
+        [False, False, False, True, True, False],
     ],
 )
 def test_split_array_on_idx(valid):
@@ -38,10 +39,10 @@ def test_split_array_on_idx(valid):
     split_list = df._split_array_on_idx(array, idx)
 
     assert isinstance(split_list, list)
-    assert all([isinstance(sublist, np.ndarray) for sublist in split_list])
+    assert all(isinstance(sublist, np.ndarray) for sublist in split_list)
 
     # Check total number of elements
-    assert sum([len(sublist) for sublist in split_list]) == sum(valid)
+    assert sum(len(sublist) for sublist in split_list) == sum(valid)
 
     # Check all elements are present
     flat_list = [num for sublist in split_list for num in sublist]
@@ -51,7 +52,7 @@ def test_split_array_on_idx(valid):
     missing = [i for i, x in enumerate(valid) if not x]
 
     # Check that missing elements are not in any sublist
-    assert all([num not in flat_list for num in missing])
+    assert all(num not in flat_list for num in missing)
 
 
 def test_split_diff_combine():

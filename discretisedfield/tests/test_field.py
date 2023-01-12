@@ -1797,6 +1797,7 @@ def test_diff_single_cell():
 
 
 def test_diff_valid():
+    # 3d mesh
     p1 = (0, 0, 0)
     p2 = (20, 10, 10)
     cell = (2, 2, 2)

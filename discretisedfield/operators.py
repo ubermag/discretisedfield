@@ -77,7 +77,7 @@ def _pad_array(array, bc):
 
 def _split_diff_combine(array, valid, order, dx, bc):
     """Split a 1D array (with spacing dx)
-    on based on contiguous valid values,
+    based on contiguous valid values,
     compute the derivative of certain order,
     and recombine the array."""
     # Find indices of invalid cells. The [0] is needed because
