@@ -3583,7 +3583,7 @@ class Field(_FieldIO):
         """Field value as ``xarray.DataArray``.
 
         The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``comp`` (only if ``field.nvdim > 1``). The coordinates
+        ``y``, ``z``, and ``vdims`` (only if ``field.nvdim > 1``). The coordinates
         of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.vdims``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
@@ -3636,12 +3636,12 @@ class Field(_FieldIO):
 
         >>> xa = field.to_xarray()
         >>> xa
-        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, comp: 3)>
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, vdims: 3)>
         ...
 
         3. Select values of `x` component
 
-        >>> xa.sel(comp='x')
+        >>> xa.sel(vdims='x')
         <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
         ...
 
@@ -3661,9 +3661,9 @@ class Field(_FieldIO):
         geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
         if self.nvdim > 1:
-            data_array_dims = axes + ("comp",)
+            data_array_dims = axes + ("vdims",)
             if self.vdims is not None:
-                data_array_coords["comp"] = self.vdims
+                data_array_coords["vdims"] = self.vdims
             field_array = self.array
         else:
             data_array_dims = axes
@@ -3698,11 +3698,11 @@ class Field(_FieldIO):
         The class method accepts an ``xarray.DataArray`` as an argument to
         return a ``discretisedfield.Field`` object. The DataArray must have
         either three (``x``, ``y``, and ``z`` for a scalar field) or four
-        (additionally ``comp`` for a vector field) dimensions corresponding to
+        (additionally ``vdims`` for a vector field) dimensions corresponding to
         geometric axes and components of the field, respectively. The
         coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
         discretisation along the respective axis and must have equally spaced
-        values. The coordinates of ``comp`` represent the field components
+        values. The coordinates of ``vdims`` represent the field components
         (e.g. ['x', 'y', 'z'] for a 3D vector field).
 
         The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
@@ -3739,7 +3739,7 @@ class Field(_FieldIO):
 
             - If ``DataArray.ndim`` is not 3 or 4.
             - If ``DataArray.dims`` are not either ``['x', 'y', 'z']`` or
-              ``['x', 'y', 'z', 'comp']``
+              ``['x', 'y', 'z', 'vdims']``
             - If coordinates of ``x``, ``y``, or ``z`` are not equally
               spaced
 
@@ -3751,17 +3751,17 @@ class Field(_FieldIO):
         >>> import numpy as np
         ...
         >>> xa = xr.DataArray(np.ones((20, 20, 20, 3), dtype=float),
-        ...                   dims = ['x', 'y', 'z', 'comp'],
+        ...                   dims = ['x', 'y', 'z', 'vdims'],
         ...                   coords = dict(x=np.arange(0, 20),
         ...                                 y=np.arange(0, 20),
         ...                                 z=np.arange(0, 20),
-        ...                                 comp=['x', 'y', 'z']),
+        ...                                 vdims=['x', 'y', 'z']),
         ...                   name = 'mag',
         ...                   attrs = dict(cell=[1., 1., 1.],
         ...                                p1=[1., 1., 1.],
         ...                                p2=[21., 21., 21.]))
         >>> xa
-        <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, comp: 3)>
+        <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, vdims: 3)>
         ...
 
         2. Create Field from DataArray
@@ -3789,13 +3789,13 @@ class Field(_FieldIO):
         elif not isinstance(xa.attrs["nvdim"], int):
             raise TypeError("The value of nvdim must be an integer.")
 
-        if xa.attrs["nvdim"] > 1 and "comp" not in xa.dims:
+        if xa.attrs["nvdim"] > 1 and "vdims" not in xa.dims:
             raise ValueError(
-                'The DataArray must have a dimension "comp" when "nvdim" attribute is'
+                'The DataArray must have a dimension "vdims" when "nvdim" attribute is'
                 " greater than 1."
             )
 
-        dims_list = [dim for dim in xa.dims if dim != "comp"]
+        dims_list = [dim for dim in xa.dims if dim != "vdims"]
 
         for i in dims_list:
             if xa[i].values.size > 1 and not np.allclose(
@@ -3836,12 +3836,14 @@ class Field(_FieldIO):
         if "tolerance_factor" in xa.attrs:
             mesh.region.tolerance_factor = xa.attrs["tolerance_factor"]
 
-        comp = xa.comp.values if "comp" in xa.coords else None
+        vdims = xa.vdims.values if "vdims" in xa.coords else None
         nvdim = xa.attrs["nvdim"]
         val = np.expand_dims(xa.values, axis=-1) if nvdim == 1 else xa.values
         # print(val.shape)
         # TODO load vdim_mapping
-        return cls(mesh=mesh, nvdim=nvdim, value=val, vdims=comp, dtype=xa.values.dtype)
+        return cls(
+            mesh=mesh, nvdim=nvdim, value=val, vdims=vdims, dtype=xa.values.dtype
+        )
 
 
 @functools.singledispatch
