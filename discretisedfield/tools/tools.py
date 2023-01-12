@@ -299,18 +299,24 @@ def topological_charge(field, /, method="continuous", absolute=False):
             return float(q.integrate())
 
     elif method == "berg-luescher":
-        axis1 = field.mesh.attributes["axis1"]
-        axis2 = field.mesh.attributes["axis2"]
+        # Spatial axes associated with the first and second vector
+        # dimensions.
+        axis1 = field.vdim_mapping[field.vdims[0]]
+        axis2 = field.vdim_mapping[field.vdims[1]]
+        axis1_idx = field.mesh.region._dim2index(axis1)
+        axis2_idx = field.mesh.region._dim2index(axis2)
         of = field.orientation
 
         topological_charge = 0
         for i, j in itertools.product(
-            range(of.mesh.n[axis1] - 1), range(of.mesh.n[axis2] - 1)
+            range(of.mesh.n[axis1_idx] - 1), range(of.mesh.n[axis2_idx] - 1)
         ):
-            v1 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j})]
-            v2 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j})]
-            v3 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j + 1})]
-            v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j + 1})]
+            v1 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j})]
+            v2 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j})]
+            v3 = of.array[
+                dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j + 1})
+            ]
+            v4 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j + 1})]
 
             triangle1 = dfu.bergluescher_angle(v1, v2, v4)
             triangle2 = dfu.bergluescher_angle(v2, v3, v4)
