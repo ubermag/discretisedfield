@@ -100,7 +100,7 @@ class K3dField:
 
         """
         if self.data.mesh.region.ndim != 3:
-            raise ValueError(
+            raise RuntimeError(
                 "Only fields with 3 spatial dimensions can be plotted not"
                 f" {self.data.mesh.region.ndim=}."
             )
@@ -246,7 +246,7 @@ class K3dField:
 
         """
         if self.data.mesh.region.ndim != 3:
-            raise ValueError(
+            raise RuntimeError(
                 "Only fields with 3 spatial dimensions can be plotted not"
                 f" {self.data.mesh.region.ndim=}."
             )
@@ -437,7 +437,7 @@ class K3dField:
 
         """
         if self.data.mesh.region.ndim != 3:
-            raise ValueError(
+            raise RuntimeError(
                 "Only fields with 3 spatial dimensions can be plotted not"
                 f" {self.data.mesh.region.ndim=}."
             )

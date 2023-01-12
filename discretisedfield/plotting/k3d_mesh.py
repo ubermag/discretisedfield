@@ -65,6 +65,12 @@ class K3dMesh:
         Plot(...)
 
         """
+        if self.mesh.region.ndim != 3:
+            raise ValueError(
+                "Only meshes with 3 spatial dimensions can be plotted not"
+                f" {self.data.mesh.region.ndim=}."
+            )
+
         if plot is None:
             plot = k3d.plot()
             plot.display()
@@ -146,6 +152,12 @@ class K3dMesh:
         Plot(...)
 
         """
+        if self.mesh.region.ndim != 3:
+            raise ValueError(
+                "Only meshes with 3 spatial dimensions can be plotted not"
+                f" {self.data.mesh.region.ndim=}."
+            )
+
         if plot is None:
             plot = k3d.plot()
             plot.display()
