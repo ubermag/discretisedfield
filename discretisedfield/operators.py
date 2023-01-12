@@ -33,6 +33,7 @@ def _1d_diff(order, array, dx):
 
     elif order == 2:
         # The derivative is computed using the central difference
+        # this stencil will give incorrect result at the boundary.
         derivative_array = np.convolve(array, [1, -2, 1], "same")
         if len(array) > 4:
             # Second order accuracy at the boundaries
