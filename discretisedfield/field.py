@@ -532,6 +532,10 @@ class Field(_FieldIO):
         self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)[..., 0]
 
     @property
+    def _valid_as_field(self):
+        return self.__class__(self.mesh, nvdim=1, value=self.valid, dtype=bool)
+
+    @property
     def vdim_mapping(self):
         """Map vdims to dims."""
         return self._vdim_mapping

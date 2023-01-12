@@ -430,14 +430,21 @@ def test_valid_single_value(valid_mesh, nvdim):
     assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert f.valid.dtype == bool
     assert np.all(f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert f.valid.dtype == f._valid_as_field.array.dtype
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     # Constant
     f = df.Field(valid_mesh, nvdim=nvdim, valid=True)
     assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert np.all(f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     f = df.Field(valid_mesh, nvdim=nvdim, valid=False)
     assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert f.valid.dtype == bool
     assert np.all(~f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
@@ -457,6 +464,8 @@ def test_valid_set_on_norm(ndim, nvdim):
     f = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim, norm=norm_func, valid="norm")
     assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
             # Use [0] to examine single element numpy array
@@ -480,6 +489,8 @@ def test_valid_set_call(ndim, nvdim):
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
     assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
             assert f.valid[tuple(idx)]
@@ -495,6 +506,8 @@ def test_valid_set_call(ndim, nvdim):
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
     assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
             assert f.valid[tuple(idx)]
@@ -518,6 +531,8 @@ def test_valid_array(ndim, nvdim):
 
     f = df.Field(mesh, nvdim=nvdim, valid=expected_valid)
     assert np.all(expected_valid == f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
