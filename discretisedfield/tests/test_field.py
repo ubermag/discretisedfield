@@ -417,10 +417,7 @@ def test_unit(test_field):
         df.Field(mesh, nvdim=1, unit=1)
 
 
-@pytest.mark.parametrize(
-    "nvdim",
-    [1, 2, 3, 4],
-)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_valid_single_value(valid_mesh, nvdim):
     # Default
     f = df.Field(
@@ -430,21 +427,25 @@ def test_valid_single_value(valid_mesh, nvdim):
     assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert f.valid.dtype == bool
     assert np.all(f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert f.valid.dtype == f._valid_as_field.array.dtype
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     # Constant
     f = df.Field(valid_mesh, nvdim=nvdim, valid=True)
     assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert np.all(f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     f = df.Field(valid_mesh, nvdim=nvdim, valid=False)
     assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert f.valid.dtype == bool
     assert np.all(~f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
-@pytest.mark.parametrize(
-    "nvdim",
-    [1, 2, 3, 4],
-)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_valid_set_on_norm(ndim, nvdim):
     mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
 
@@ -457,6 +458,8 @@ def test_valid_set_on_norm(ndim, nvdim):
     f = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim, norm=norm_func, valid="norm")
     assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
             # Use [0] to examine single element numpy array
@@ -466,10 +469,7 @@ def test_valid_set_on_norm(ndim, nvdim):
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
-@pytest.mark.parametrize(
-    "nvdim",
-    [1, 2, 3, 4],
-)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_valid_set_call(ndim, nvdim):
     mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
 
@@ -480,6 +480,8 @@ def test_valid_set_call(ndim, nvdim):
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
     assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
             assert f.valid[tuple(idx)]
@@ -495,6 +497,8 @@ def test_valid_set_call(ndim, nvdim):
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
     assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
             assert f.valid[tuple(idx)]
@@ -503,10 +507,7 @@ def test_valid_set_call(ndim, nvdim):
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
-@pytest.mark.parametrize(
-    "nvdim",
-    [1, 2, 3, 4],
-)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_valid_array(ndim, nvdim):
     mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
 
@@ -518,13 +519,12 @@ def test_valid_array(ndim, nvdim):
 
     f = df.Field(mesh, nvdim=nvdim, valid=expected_valid)
     assert np.all(expected_valid == f.valid)
+    assert f.mesh == f._valid_as_field.mesh
+    assert np.array_equal(f.valid, f._valid_as_field.array.squeeze(axis=-1))
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
-@pytest.mark.parametrize(
-    "nvdim",
-    [1, 2, 3, 4],
-)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_valid_operators(ndim, nvdim):
     mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
 
@@ -3421,7 +3421,7 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
     fxa = f.to_xarray()
     assert isinstance(fxa, xr.DataArray)
-    assert f.nvdim == fxa["comp"].size
+    assert f.nvdim == fxa["vdims"].size
     assert sorted([*fxa.attrs]) == [
         "cell",
         "nvdim",
@@ -3437,7 +3437,7 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     for i in f.mesh.region.dims:
         assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
-    assert all(fxa["comp"].values == f.vdims)
+    assert all(fxa["vdims"].values == f.vdims)
     assert np.array_equal(f.array, fxa.values)
 
 
@@ -3461,20 +3461,20 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     for i in f.mesh.region.dims:
         assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
-    assert "comp" not in fxa.dims
+    assert "vdims" not in fxa.dims
     assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
 
 
 def test_to_xarray_6d_field(test_field):
     f6d = test_field << test_field
     f6d_xa = f6d.to_xarray()
-    assert f6d_xa["comp"].size == 6
-    assert "comp" in f6d_xa.coords
-    assert [*f6d_xa["comp"].values] == [f"v{i}" for i in range(6)]
+    assert f6d_xa["vdims"].size == 6
+    assert "vdims" in f6d_xa.coords
+    assert [*f6d_xa["vdims"].values] == [f"v{i}" for i in range(6)]
     f6d.vdims = ["a", "c", "b", "e", "d", "f"]
     f6d_xa2 = f6d.to_xarray()
-    assert "comp" in f6d_xa2.coords
-    assert [*f6d_xa2["comp"].values] == ["a", "c", "b", "e", "d", "f"]
+    assert "vdims" in f6d_xa2.coords
+    assert [*f6d_xa2["vdims"].values] == ["a", "c", "b", "e", "d", "f"]
 
     # test name and units defaults
     f3d_xa = test_field.to_xarray()
@@ -3534,12 +3534,12 @@ def test_from_xarray_valid_args(test_field):
 
     good_darray1 = xr.DataArray(
         np.ones((20, 20, 5, 3)),
-        dims=["x", "y", "z", "comp"],
+        dims=["x", "y", "z", "vdims"],
         coords=dict(
             x=np.arange(0, 20),
             y=np.arange(0, 20),
             z=np.arange(0, 5),
-            comp=["x", "y", "z"],
+            vdims=["x", "y", "z"],
         ),
         name="mag",
         attrs=dict(units="A/m", nvdim=3),
@@ -3547,9 +3547,9 @@ def test_from_xarray_valid_args(test_field):
 
     good_darray2 = xr.DataArray(
         np.ones((20, 20, 1, 3)),
-        dims=["x", "y", "z", "comp"],
+        dims=["x", "y", "z", "vdims"],
         coords=dict(
-            x=np.arange(0, 20), y=np.arange(0, 20), z=[5.0], comp=["x", "y", "z"]
+            x=np.arange(0, 20), y=np.arange(0, 20), z=[5.0], vdims=["x", "y", "z"]
         ),
         name="mag",
         attrs=dict(units="A/m", cell=[1.0, 1.0, 1.0], nvdim=3),
@@ -3557,9 +3557,9 @@ def test_from_xarray_valid_args(test_field):
 
     good_darray3 = xr.DataArray(
         np.ones((20, 20, 1, 3)),
-        dims=["x", "y", "z", "comp"],
+        dims=["x", "y", "z", "vdims"],
         coords=dict(
-            x=np.arange(0, 20), y=np.arange(0, 20), z=[5.0], comp=["x", "y", "z"]
+            x=np.arange(0, 20), y=np.arange(0, 20), z=[5.0], vdims=["x", "y", "z"]
         ),
         name="mag",
         attrs=dict(
@@ -3621,9 +3621,9 @@ def test_from_xarray_invalid_args_and_DataArrays():
 
     bad_attrs = xr.DataArray(
         np.ones((20, 20, 1, 3), dtype=float),
-        dims=["x", "y", "z", "comp"],
+        dims=["x", "y", "z", "vdims"],
         coords=dict(
-            x=np.arange(0, 20), y=np.arange(0, 20), z=[5.0], comp=["x", "y", "z"]
+            x=np.arange(0, 20), y=np.arange(0, 20), z=[5.0], vdims=["x", "y", "z"]
         ),
         name="mag",
         attrs=dict(units="A/m"),
@@ -3635,11 +3635,11 @@ def test_from_xarray_invalid_args_and_DataArrays():
             coord_dict = {coord: rng.normal(size=20)}
             for other_coord in "xyz".translate({ord(coord): None}):
                 coord_dict[other_coord] = np.arange(0, 20)
-            coord_dict["comp"] = ["x", "y", "z"]
+            coord_dict["vdims"] = ["x", "y", "z"]
 
             yield xr.DataArray(
                 np.ones((20, 20, 20, 3), dtype=float),
-                dims=["x", "y", "z", "comp"],
+                dims=["x", "y", "z", "vdims"],
                 coords=coord_dict,
                 name="mag",
                 attrs=dict(units="A/m", nvdim=3),
