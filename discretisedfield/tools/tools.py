@@ -121,13 +121,13 @@ def topological_charge_density(field, /, method="continuous"):
     # dimensions.
     axis1 = field.vdim_mapping[field.vdims[0]]
     axis2 = field.vdim_mapping[field.vdims[1]]
+    axis1_idx = field.mesh.region._dim2index(axis1)
+    axis2_idx = field.mesh.region._dim2index(axis2)
 
     if method == "continuous":
         return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
 
     elif method == "berg-luescher":
-        axis1_idx = field.mesh.region._dim2index(axis1)
-        axis2_idx = field.mesh.region._dim2index(axis2)
 
         q = df.Field(field.mesh, nvdim=1)
 
