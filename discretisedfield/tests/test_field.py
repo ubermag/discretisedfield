@@ -1863,8 +1863,8 @@ def test_diff_single_cell():
     f = df.Field(mesh, nvdim=1, value=value_fun)
 
     # only one cell in the z-direction
-    assert f.plane("x").diff("x").mean() == 0
-    assert f.plane("y").diff("y").mean() == 0
+    assert f.sel(x=(0, 1)).diff("x").mean() == 0
+    assert f.sel(y=(0, 1)).diff("y").mean() == 0
     assert f.diff("z").mean() == 0
 
     # Vector field: f(x, y, z) = (x, y, z)
@@ -1876,8 +1876,8 @@ def test_diff_single_cell():
     f = df.Field(mesh, nvdim=3, value=value_fun)
 
     # only one cell in the z-direction
-    assert np.allclose(f.plane("x").diff("x").mean(), (0, 0, 0))
-    assert np.allclose(f.plane("y").diff("y").mean(), (0, 0, 0))
+    assert np.allclose(f.sel(x=(0, 1)).diff("x").mean(), (0, 0, 0))
+    assert np.allclose(f.sel(y=(0, 1)).diff("y").mean(), (0, 0, 0))
     assert np.allclose(f.diff("z").mean(), (0, 0, 0))
 
 
@@ -2314,18 +2314,6 @@ def test_line():
     assert line.dim == 3
 
 
-@pytest.mark.skip(reason="method will be removed")
-@pytest.mark.parametrize("direction", ["x", "y", "z"])
-def test_plane(valid_mesh, direction):
-    f = df.Field(valid_mesh, nvdim=1, value=3)
-    assert isinstance(f, df.Field)
-    plane = f.plane(direction, n=(3, 3))
-    assert isinstance(plane, df.Field)
-
-    assert len(list(plane.mesh)) == 9  # 3 x 3 cells
-    assert len(list(plane)) == 9
-
-
 @pytest.mark.parametrize(
     "mesh, nvdim, value, range_",
     [
@@ -2757,7 +2745,7 @@ def test_fft():
 
     # 2d fft
     for i in ["x", "y", "z"]:
-        plane = f.plane(i)
+        plane = f.sel(i)
         assert plane.allclose(plane.fftn.ifftn.real)
         assert df.Field(mesh, nvdim=3).plane(i).allclose(plane.fftn.ifftn.imag)
 
@@ -2773,10 +2761,10 @@ def test_fft():
             .allclose(f.fftn.plane(**{i: 0}).ifftn.imag)
         )
 
-    assert f.integrate("x").allclose(f.rfftn.plane(x=0).irfftn)
-    assert f.integrate("y").allclose(f.rfftn.plane(y=0).irfftn)
+    assert f.integrate("x").allclose(f.rfftn.sel(x=0).irfftn)
+    assert f.integrate("y").allclose(f.rfftn.sel(y=0).irfftn)
     # plane along z removes rfftn-freq axis => needs ifftn
-    assert f.integrate("z").allclose(f.rfftn.plane(z=0).ifftn.real)
+    assert f.integrate("z").allclose(f.rfftn.sel(z=0).ifftn.real)
 
 
 def test_mpl_scalar(test_field):
@@ -3000,7 +2988,7 @@ def test_hv_scalar(test_field):
 
         # additional kwargs and plane
         check_hv(
-            test_field.plane(normal).hv.scalar(kdims=kdims, clim=(-1, 1)),
+            test_field.sel(normal).hv.scalar(kdims=kdims, clim=(-1, 1)),
             ["DynamicMap [comp]", f"Image {kdim_str}"],
         )
 
@@ -3010,7 +2998,7 @@ def test_hv_scalar(test_field):
                 [f"DynamicMap [{normal}]", f"Image {kdim_str}"],
             )
             check_hv(
-                getattr(test_field, c).plane(normal).hv.scalar(kdims=kdims),
+                getattr(test_field, c).sel(normal).hv.scalar(kdims=kdims),
                 [f"Image {kdim_str}"],
             )
 
@@ -3028,7 +3016,7 @@ def test_hv_scalar(test_field):
 
     with pytest.raises(ValueError):
         check_hv(
-            test_field.plane("z").hv.scalar(kdims=["x", "y"], roi=test_field.norm),
+            test_field.sel("z").hv.scalar(kdims=["x", "y"], roi=test_field.norm),
             ...,
         )
 
@@ -3036,7 +3024,7 @@ def test_hv_scalar(test_field):
         check_hv(
             test_field[
                 df.Region(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, -1e-9))
-            ].hv.scalar(kdims=["x", "y"], roi=test_field.norm.plane(z=4e-9)),
+            ].hv.scalar(kdims=["x", "y"], roi=test_field.norm.sel(z=4e-9)),
             ...,
         )
 
@@ -3050,7 +3038,7 @@ def test_hv_vector(test_field):
             [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
         )
         check_hv(
-            test_field.plane(normal).hv.vector(kdims=kdims),
+            test_field.sel(normal).hv.vector(kdims=kdims),
             [f"VectorField {kdim_str}"],
         )
         check_hv(
@@ -3155,7 +3143,7 @@ def test_hv_contour(test_field):
 
         # additional kwargs
         check_hv(
-            test_field.plane(normal).hv.contour(kdims=kdims, clim=(-1, 1)).opts(**opts),
+            test_field.sel(normal).hv.contour(kdims=kdims, clim=(-1, 1)).opts(**opts),
             ["DynamicMap [comp]", f"Contours {kdim_str}"],
         )
 
@@ -3178,7 +3166,7 @@ def test_hv(test_field):
             test_field.a.hv(kdims=kdims),
             [f"DynamicMap [{normal}]", f"Image {kdim_str}"],
         )
-        check_hv(test_field.a.plane(normal).hv(kdims=kdims), [f"Image {kdim_str}"])
+        check_hv(test_field.a.sel(normal).hv(kdims=kdims), [f"Image {kdim_str}"])
 
         # 2d field
         field_2d = test_field.b << test_field.c
@@ -3191,7 +3179,7 @@ def test_hv(test_field):
             [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
         )
         check_hv(
-            field_2d.plane(normal).hv(kdims=kdims),
+            field_2d.sel(normal).hv(kdims=kdims),
             ["DynamicMap [comp]", f"Image {kdim_str}"],
         )
 
@@ -3213,7 +3201,7 @@ def test_hv(test_field):
             ],
         )
         check_hv(
-            test_field.plane(normal).hv(kdims=kdims),
+            test_field.sel(normal).hv(kdims=kdims),
             [f"Image {kdim_str}", f"VectorField {kdim_str}"],
         )
 
@@ -3249,12 +3237,12 @@ def test_hv(test_field):
         )
 
         check_hv(
-            field_4d.plane(normal).hv(kdims=kdims),
+            field_4d.sel(normal).hv(kdims=kdims),
             ["DynamicMap [comp]", f"Image {kdim_str}"],
         )
 
         check_hv(
-            field_4d.plane(normal).hv(
+            field_4d.sel(normal).hv(
                 kdims=kdims, vdims=["v2", "v1"], vector_kw={"cdim": "v4"}
             ),
             [
@@ -3263,6 +3251,17 @@ def test_hv(test_field):
                 f"VectorField {kdim_str}",
             ],
         )
+
+
+def test_k3d(valid_mesh):
+    f = df.Field(valid_mesh, nvdim=3, value=(1, 1, 1))
+    if f.mesh.region.ndim != 3:
+        with pytest.raises(RuntimeError):
+            f.k3d.vector()
+    else:
+        f.k3d.vector()
+        f.x.k3d.scalar()
+        f.norm.k3d.nonzero()
 
 
 def test_k3d_nonzero(test_field):
@@ -3276,12 +3275,13 @@ def test_k3d_nonzero(test_field):
     test_field.b.k3d.nonzero(color=0xFF00FF, multiplier=1e-6)
 
     # Interactive field
-    test_field.c.plane("z").k3d.nonzero(
+    range_ = (test_field.mesh.region.pmin[2], test_field.mesh.region.pmin[2])
+    test_field.c.sel(z=range_).k3d.nonzero(
         color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
     )
 
     # kwargs
-    test_field.a.plane("z").k3d.nonzero(
+    test_field.a.sel(z=range_).k3d.nonzero(
         color=0xFF00FF,
         multiplier=1e-6,
         interactive_field=test_field,
@@ -3291,12 +3291,12 @@ def test_k3d_nonzero(test_field):
     # Plot
     plot = k3d.plot()
     plot.display()
-    test_field.b.plane(z=0).k3d.nonzero(
+    test_field.b.sel(z=range_).k3d.nonzero(
         plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
     )
 
     # Continuation for interactive plot testing.
-    test_field.c.plane(z=1e-9).k3d.nonzero(
+    test_field.c.sel(z=range_).k3d.nonzero(
         plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
     )
 
@@ -3341,7 +3341,8 @@ def test_k3d_scalar(test_field):
     # Plot
     plot = k3d.plot()
     plot.display()
-    test_field.a.plane(z=0).k3d.scalar(
+    range_ = (test_field.mesh.region.pmin[2], test_field.mesh.region.pmin[2])
+    test_field.a.sel(z=range_).k3d.scalar(
         plot=plot,
         filter_field=test_field.norm,
         color=0xFF00FF,
@@ -3350,7 +3351,7 @@ def test_k3d_scalar(test_field):
     )
 
     # Continuation for interactive plot testing.
-    test_field.b.plane(z=1e-9).k3d.scalar(
+    test_field.b.sel(z=range_).k3d.scalar(
         plot=plot,
         filter_field=test_field.norm,
         color=0xFF00FF,
@@ -3416,7 +3417,8 @@ def test_k3d_vector(test_field):
     )
 
     # Interactive field
-    test_field.plane("z").k3d.vector(
+    range_ = (test_field.mesh.region.pmin[2], test_field.mesh.region.pmin[2])
+    test_field.sel(z=range_).k3d.vector(
         color_field=test_field.norm,
         cmap="hsv",
         head_size=3,
@@ -3430,10 +3432,10 @@ def test_k3d_vector(test_field):
     # Plot
     plot = k3d.plot()
     plot.display()
-    test_field.plane(z=0).k3d.vector(plot=plot, interactive_field=test_field)
+    test_field.sel(z=range_).k3d.vector(plot=plot, interactive_field=test_field)
 
     # Continuation for interactive plot testing.
-    test_field.plane(z=1e-9).k3d.vector(plot=plot, interactive_field=test_field)
+    test_field.sel(z=range_).k3d.vector(plot=plot, interactive_field=test_field)
 
     assert len(plot.objects) == 3
 
@@ -3607,7 +3609,7 @@ def test_from_xarray_valid_args_scalar(valid_mesh, value, dtype):
 
 
 def test_from_xarray_valid_args(test_field):
-    f_plane = test_field.plane("z")
+    f_plane = test_field.sel("z")
     f_plane_xa = f_plane.to_xarray()
     f_plane_new = df.Field.from_xarray(f_plane_xa)
     assert f_plane_new == f_plane

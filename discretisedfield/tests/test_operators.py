@@ -22,7 +22,7 @@ def test_integrate():
     assert np.allclose(df.integrate(field), (1000, -2000, 3000))
     assert np.allclose(df.integrate(field * 2), (2000, -4000, 6000))
 
-    assert df.integrate(field.plane("z").dot([0, 0, 1])) == 300
+    assert df.integrate(field.sel("z").dot([0, 0, 1])) == 300
 
 
 @pytest.mark.parametrize(

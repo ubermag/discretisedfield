@@ -11,6 +11,8 @@ class K3dField:
     """K3d plotting."""
 
     def __init__(self, data):
+        if data.mesh.region.ndim != 3:
+            raise RuntimeError("Only fields with 3 spatial dimensions can be plotted.")
         self.data = data
 
     def nonzero(
@@ -39,7 +41,7 @@ class K3dField:
 
         For interactive plots the field itself, before being sliced with the
         field, must be passed as ``interactive_field``. For example, if
-        ``field.x.plane('z')`` is plotted, ``interactive_field=field`` must be
+        ``field.x.sel(z=(0, 1))`` is plotted, ``interactive_field=field`` must be
         passed. In addition, ``k3d.plot`` object cannot be created internally
         and it must be passed and displayed by the user.
 
@@ -99,6 +101,7 @@ class K3dField:
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.voxels`
 
         """
+
         if self.data.nvdim != 1:
             msg = f"Cannot plot nvdim={self.data.nvdim} field."
             raise ValueError(msg)
@@ -182,7 +185,7 @@ class K3dField:
 
         For interactive plots the field itself, before being sliced with the
         field, must be passed as ``interactive_field``. For example, if
-        ``field.x.plane('z')`` is plotted, ``interactive_field=field`` must be
+        ``field.x.sel(z=(0, 1))`` is plotted, ``interactive_field=field`` must be
         passed. In addition, ``k3d.plot`` object cannot be created internally
         and it must be passed and displayed by the user.
 
@@ -239,6 +242,7 @@ class K3dField:
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.vector`
 
         """
+
         if self.data.nvdim != 1:
             msg = f"Cannot plot nvdim={self.data.nvdim} field."
             raise ValueError(msg)
@@ -351,7 +355,7 @@ class K3dField:
 
         For interactive plots the field itself, before being sliced with the
         field, must be passed as ``interactive_field``. For example, if
-        ``field.plane('z')`` is plotted, ``interactive_field=field`` must be
+        ``field.sel(z=(0, 1))`` is plotted, ``interactive_field=field`` must be
         passed. In addition, ``k3d.plot`` object cannot be created internally
         and it must be passed and displayed by the user.
 
@@ -424,6 +428,7 @@ class K3dField:
         Plot(...)
 
         """
+
         if self.data.nvdim != 3:
             msg = f"Cannot plot nvdim={self.data.nvdim} field."
             raise ValueError(msg)

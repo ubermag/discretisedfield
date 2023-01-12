@@ -782,8 +782,9 @@ def test_k3d(p1, p2):
     region = df.Region(p1=p1, p2=p2)
 
     if region.ndim != 3:
-        pytest.xfail(reason="plotting only supports 3d")
-
-    # Check if runs.
-    region.k3d()
-    region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
+        with pytest.raises(RuntimeError):
+            region.k3d()
+    else:
+        # Check if runs.
+        region.k3d()
+        region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
