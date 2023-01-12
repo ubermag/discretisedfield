@@ -35,7 +35,7 @@ def _1d_diff(order, array, dx):
         # The derivative is computed using the central difference
         # this stencil will give incorrect result at the boundary.
         derivative_array = np.convolve(array, [1, -2, 1], "same")
-        if len(array) > 4:
+        if len(array) >= 4:
             # Second order accuracy at the boundaries
             # These stencil coefficients are taken from FinDiff.
             derivative_array[0] = 2 * array[0] - 5 * array[1] + 4 * array[2] - array[3]
