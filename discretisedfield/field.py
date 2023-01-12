@@ -2318,6 +2318,7 @@ class Field(_FieldIO):
             value=out,
             vdims=self.vdims,
             unit=self.unit,
+            valid=valid,
         )
 
     @property
