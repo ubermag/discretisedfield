@@ -117,41 +117,47 @@ def topological_charge_density(field, /, method="continuous"):
 
     of = field.orientation  # unit field - orientation field
 
+    # Spatial axes associated with the first and second vector
+    # dimensions.
+    axis1 = field.vdim_mapping[field.vdims[0]]
+    axis2 = field.vdim_mapping[field.vdims[1]]
+
     if method == "continuous":
-        return (
-            1
-            / (4 * np.pi)
-            * of.dot(
-                of.diff(field.mesh.region.dims[0]).cross(
-                    of.diff(field.mesh.region.dims[1])
-                )
-            )
-        )
+        return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
 
     elif method == "berg-luescher":
-        raise NotImplementedError()
-        # remove hard-coded 3d -> should be 2d; replace axis1 and axis2
-        axis1 = field.mesh.attributes["axis1"]
-        axis2 = field.mesh.attributes["axis2"]
+        axis1_idx = field.mesh.region._dim2index(axis1)
+        axis2_idx = field.mesh.region._dim2index(axis2)
+
         q = df.Field(field.mesh, nvdim=1)
 
         # Area of a single triangle
-        area = 0.5 * field.mesh.cell[axis1] * field.mesh.cell[axis2]
+        area = 0.5 * field.mesh.cell[axis1_idx] * field.mesh.cell[axis2_idx]
 
-        for i, j in itertools.product(range(of.mesh.n[axis1]), range(of.mesh.n[axis2])):
-            index = dfu.assemble_index(0, 3, {axis1: i, axis2: j})
+        for i, j in itertools.product(
+            range(of.mesh.n[axis1_idx]), range(of.mesh.n[axis2_idx])
+        ):
+            index = dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j})
             v0 = of.array[index]
 
             # Extract 4 neighbouring vectors (if they exist)
             v1 = v2 = v3 = v4 = None
-            if i + 1 < of.mesh.n[axis1]:
-                v1 = of.array[dfu.assemble_index(0, 3, {axis1: i + 1, axis2: j})]
-            if j + 1 < of.mesh.n[axis2]:
-                v2 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j + 1})]
+            if i + 1 < of.mesh.n[axis1_idx]:
+                v1 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j})
+                ]
+            if j + 1 < of.mesh.n[axis2_idx]:
+                v2 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j + 1})
+                ]
             if i - 1 >= 0:
-                v3 = of.array[dfu.assemble_index(0, 3, {axis1: i - 1, axis2: j})]
+                v3 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i - 1, axis2_idx: j})
+                ]
             if j - 1 >= 0:
-                v4 = of.array[dfu.assemble_index(0, 3, {axis1: i, axis2: j - 1})]
+                v4 = of.array[
+                    dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j - 1})
+                ]
 
             charge = 0
             triangle_count = 0
