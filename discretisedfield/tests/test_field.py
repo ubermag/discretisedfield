@@ -1798,11 +1798,17 @@ def test_diff_single_cell():
 
 def test_diff_valid():
     # 1d mesh
-    mesh = df.Mesh(p1=-5e-9, p2=10e-9, n=10)
+    mesh = df.Mesh(p1=0e-9, p2=10e-9, n=10)
     valid = [True, False, False, True, True, True, False, True, False, False]
-    f = df.Field(mesh, nvdim=1, value=lambda p: (p[0] * 1e9)**2, valid=valid)
-    
-    # TODO add tests
+    f = df.Field(mesh, nvdim=1, value=lambda p: (p[0] * 1e9) ** 2, valid=valid)
+
+    assert np.allclose(f.diff("x").array[:3], 0)
+    assert np.allclose(f.diff("x").array[3:6, 0], 2 * f.mesh.points[0][3:6] * 1e18)
+    assert np.allclose(f.diff("x").array[6:], 0)
+    assert np.allclose(
+        f.diff("x", restrict2valid=False).array[..., 0], 2 * f.mesh.points[0] * 1e18
+    )
+
     # 3d mesh
     p1 = (0, 0, 0)
     p2 = (20, 10, 10)
