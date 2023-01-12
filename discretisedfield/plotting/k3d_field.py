@@ -11,6 +11,8 @@ class K3dField:
     """K3d plotting."""
 
     def __init__(self, data):
+        if data.mesh.region.ndim != 3:
+            raise RuntimeError("Only fields with 3 spatial dimensions can be plotted.")
         self.data = data
 
     def nonzero(
@@ -99,11 +101,6 @@ class K3dField:
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.voxels`
 
         """
-        if self.data.mesh.region.ndim != 3:
-            raise RuntimeError(
-                "Only fields with 3 spatial dimensions can be plotted not"
-                f" {self.data.mesh.region.ndim=}."
-            )
 
         if self.data.nvdim != 1:
             msg = f"Cannot plot nvdim={self.data.nvdim} field."
@@ -245,11 +242,6 @@ class K3dField:
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.vector`
 
         """
-        if self.data.mesh.region.ndim != 3:
-            raise RuntimeError(
-                "Only fields with 3 spatial dimensions can be plotted not"
-                f" {self.data.mesh.region.ndim=}."
-            )
 
         if self.data.nvdim != 1:
             msg = f"Cannot plot nvdim={self.data.nvdim} field."
@@ -436,11 +428,6 @@ class K3dField:
         Plot(...)
 
         """
-        if self.data.mesh.region.ndim != 3:
-            raise RuntimeError(
-                "Only fields with 3 spatial dimensions can be plotted not"
-                f" {self.data.mesh.region.ndim=}."
-            )
 
         if self.data.nvdim != 3:
             msg = f"Cannot plot nvdim={self.data.nvdim} field."
