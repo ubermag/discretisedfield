@@ -3136,7 +3136,7 @@ class Field(_FieldIO):
             self.mesh, nvdim=1, value=angle_array, unit="rad", valid=valid
         )
 
-    def arctan2(self):
+    def arctan2(self, y, x):
         """In-plane angle of a vector field.
 
         This method can only be used fields with two spatial dimentions.
@@ -3144,17 +3144,63 @@ class Field(_FieldIO):
         the in-plane compoenent of the vector field and the horizontal axis.
         The angle is computed in radians and all values are in :math:`(0,
         2\\pi)` range.
-        """
-        if self.mesh.region.ndim != 2:
-            raise ValueError(
-                "This method can only be used for fields with 2 spatial dimentions."
-            )
 
-        x_comp = self._r_dim_mapping[self.mesh.region.dims[0]]
-        y_comp = self._r_dim_mapping[self.mesh.region.dims[1]]
+        Parameters
+        ----------
+        y : str
+            Name of the y component from vdims.
+
+        x : str
+            Name of the x component from vdims.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Angle scalar field.
+
+        Raises
+        ------
+        ValueError
+
+            If ``x`` or ``y`` is not mapped to a spatial component.
+
+        Example
+        -------
+        1. Computing the angle of the field in xy-plane.
+
+        >>> import discretisedfield as df
+        >>> import numpy as np
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
+        ...
+        >>> field.angle('x', 'y').mean()
+        array([1.57079633])
+        """
+
+        if self.nvdim == 1:
+            raise ValueError("This method can only be used for vector fields.")
+
+        if x not in self.vdim_mapping.keys():
+            raise ValueError(f"{x} component is not mapped to a spatial component.")
+        if y not in self.vdim_mapping.keys():
+            raise ValueError(f"{y} component is not mapped to a spatial component.")
+
+        # Get component name
+        x_vdim = self.vdim_mapping[x]
+        y_vdim = self.vdim_mapping[y]
+
+        if not isinstance(x_vdim, str):
+            raise ValueError(f"{x} component is not mapped to a spatial component.")
+        if not isinstance(y_vdim, str):
+            raise ValueError(f"{y} component is not mapped to a spatial component.")
 
         angle_array = np.arctan2(
-            getattr(self, y_comp).array, getattr(self, x_comp).array
+            getattr(self, y_vdim).array, getattr(self, x_vdim).array
         )
 
         # Place all values in [0, 2pi] range

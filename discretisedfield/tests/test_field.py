@@ -2399,39 +2399,45 @@ def test_arctan2():
     # 2 value dimentions
     mesh = df.Mesh(p1=(0, 0), p2=(10, 10), cell=(1, 1))
     f = df.Field(mesh, nvdim=2, value=(1, 1))
-    assert np.allclose(f.arctan2().array, np.pi / 4)
+    assert np.allclose(f.arctan2("y", "x").array, np.pi / 4)
 
     f = df.Field(mesh, nvdim=2, value=(-1, 1))
-    assert np.allclose(f.arctan2().array, 3 * np.pi / 4)
+    assert np.allclose(f.arctan2("y", "x").array, 3 * np.pi / 4)
 
     f = df.Field(mesh, nvdim=2, value=(-1, -1))
-    assert np.allclose(f.arctan2().array, 5 * np.pi / 4)
+    assert np.allclose(f.arctan2("y", "x").array, 5 * np.pi / 4)
 
     f = df.Field(mesh, nvdim=2, value=(1, -1))
-    assert np.allclose(f.arctan2().array, 7 * np.pi / 4)
+    assert np.allclose(f.arctan2("y", "x").array, 7 * np.pi / 4)
 
     # 3 valid dimentions
     vdim_mapping = {"x": "x", "y": "y", "z": None}
     f = df.Field(mesh, nvdim=3, value=(1, 1, 1), vdim_mapping=vdim_mapping)
-    assert np.allclose(f.arctan2().array, np.pi / 4)
+    assert np.allclose(f.arctan2("y", "x").array, np.pi / 4)
 
-    f = df.Field(mesh, nvdim=3, value=(-1, 1, 1), vdim_mapping=vdim_mapping)
-    assert np.allclose(f.arctan2().array, 3 * np.pi / 4)
+    f = df.Field(mesh, nvdim=3, value=(-1, 1, -1), vdim_mapping=vdim_mapping)
+    assert np.allclose(f.arctan2("y", "x").array, 3 * np.pi / 4)
 
-    f = df.Field(mesh, nvdim=3, value=(-1, -1, 1), vdim_mapping=vdim_mapping)
-    assert np.allclose(f.arctan2().array, 5 * np.pi / 4)
+    f = df.Field(mesh, nvdim=3, value=(-1, -1, -1), vdim_mapping=vdim_mapping)
+    assert np.allclose(f.arctan2("y", "x").array, 5 * np.pi / 4)
 
     f = df.Field(mesh, nvdim=3, value=(1, -1, 1), vdim_mapping=vdim_mapping)
-    assert np.allclose(f.arctan2().array, 7 * np.pi / 4)
+    assert np.allclose(f.arctan2("y", "x").array, 7 * np.pi / 4)
 
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
-@pytest.mark.parametrize("ndim", [1, 3, 4])
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
 def test_arctan2_invalid(ndim, nvdim):
-    mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(1,) * ndim)
-    f = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim)
-    with pytest.raises(ValueError):
-        f.arctan2()
+    region = df.Region(
+        p1=(0,) * ndim, p2=(10,) * ndim, dims=["x", "y", "z", "a"][:ndim]
+    )
+    mesh = df.Mesh(region=region, cell=(1,) * ndim)
+    f = df.Field(
+        mesh, nvdim=nvdim, value=(1,) * nvdim, vdims=["x", "y", "z", "a"][:nvdim]
+    )
+    if nvdim != ndim:
+        with pytest.raises(ValueError):
+            f.arctan2("y", "x")
 
 
 # ######################################
