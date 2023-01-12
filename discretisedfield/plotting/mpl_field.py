@@ -622,9 +622,6 @@ class MplField(Mpl):
                 self.field._r_dim_mapping[self.field.mesh.region.dims[0]],
                 self.field._r_dim_mapping[self.field.mesh.region.dims[1]],
             ]
-            print(self.field.mesh.region.dims)
-            print(self.field._r_dim_mapping)
-            print(vdims, self.field.vdims)
         elif len(vdims) != 2:
             raise ValueError(f"{vdims=} must contain two elements.")
 
