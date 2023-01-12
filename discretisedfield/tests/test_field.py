@@ -2716,7 +2716,9 @@ def test_mpl_lightess(test_field):
         filename = os.path.join(os.path.dirname(__file__), "test_sample", i)
 
         field = df.Field.from_file(filename)
-        for plane in "xyz":  # TODO test all directions "xyz" (check samples first)
+        # TODO test all directions "xyz" (check samples first, presumably a single
+        # layer, causes problems with x and y "planes").
+        for plane in "z":
             field.sel(plane).mpl.lightness()
             field.sel(plane).mpl.lightness(
                 lightness_field=-field.z.sel(plane), filter_field=field.norm.sel(plane)
@@ -3334,7 +3336,7 @@ def test_plot_large_sample():
     value = (1e6, 1e6, 1e6)
     field = df.Field(mesh, nvdim=3, value=value)
 
-    field.plane("z").mpl()
+    field.sel("z").mpl()
     field.norm.k3d.nonzero()
     field.x.k3d.scalar()
     field.k3d.vector()
