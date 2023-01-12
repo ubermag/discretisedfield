@@ -639,8 +639,8 @@ def test_norm_zero_field():
     "p1, p2, n, nvdim, dim_mapping, dim_mapping_check",
     [
         # no mapping for scalar fields
-        [0, 1, 5, 1, None, None],
-        [(0, 0), (1, 1), (5, 5), 1, None, None],
+        [0, 1, 5, 1, None, {}],
+        [(0, 0), (1, 1), (5, 5), 1, None, {}],
         # default mapping for vector fields
         [(0, 0), (1, 1), (5, 5), 2, None, {d: d for d in "xy"}],
         [(0, 0, 0), (1, 1, 1), (5, 5, 5), 3, None, {d: d for d in "xyz"}],
