@@ -427,15 +427,15 @@ def test_valid_single_value(valid_mesh, nvdim):
         valid_mesh,
         nvdim=nvdim,
     )
-    assert f.valid.shape == (*valid_mesh.n, 1)
+    assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert f.valid.dtype == bool
     assert np.all(f.valid)
     # Constant
     f = df.Field(valid_mesh, nvdim=nvdim, valid=True)
-    assert f.valid.shape == (*valid_mesh.n, 1)
+    assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert np.all(f.valid)
     f = df.Field(valid_mesh, nvdim=nvdim, valid=False)
-    assert f.valid.shape == (*valid_mesh.n, 1)
+    assert np.array_equal(f.valid.shape, valid_mesh.n)
     assert f.valid.dtype == bool
     assert np.all(~f.valid)
 
@@ -455,14 +455,14 @@ def test_valid_set_on_norm(ndim, nvdim):
             return 0
 
     f = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim, norm=norm_func, valid="norm")
-    assert f.valid.shape == (*mesh.n, 1)
+    assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
             # Use [0] to examine single element numpy array
-            assert f.valid[tuple(idx)][0]
+            assert f.valid[tuple(idx)]
         else:
-            assert not f.valid[tuple(idx)][0]
+            assert not f.valid[tuple(idx)]
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
@@ -478,13 +478,13 @@ def test_valid_set_call(ndim, nvdim):
 
     # Default
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
-    assert f.valid.shape == (*mesh.n, 1)
+    assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
-            assert f.valid[tuple(idx)][0]
+            assert f.valid[tuple(idx)]
         else:
-            assert not f.valid[tuple(idx)][0]
+            assert not f.valid[tuple(idx)]
 
     def valid_func(point):
         if all(point < 5):
@@ -493,13 +493,13 @@ def test_valid_set_call(ndim, nvdim):
             return 0
 
     f = df.Field(mesh, nvdim=nvdim, valid=valid_func)
-    assert f.valid.shape == (*mesh.n, 1)
+    assert np.array_equal(f.valid.shape, mesh.n)
     assert f.valid.dtype == bool
     for idx in f.mesh.indices:
         if all(f.mesh.index2point(idx) < 5):
-            assert f.valid[tuple(idx)][0]
+            assert f.valid[tuple(idx)]
         else:
-            assert not f.valid[tuple(idx)][0]
+            assert not f.valid[tuple(idx)]
 
 
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
@@ -514,7 +514,7 @@ def test_valid_array(ndim, nvdim):
         return point[0]
 
     f = df.Field(mesh, nvdim=1, value=val_func)
-    expected_valid = f.array < 5
+    expected_valid = f.array[..., 0] < 5
 
     f = df.Field(mesh, nvdim=nvdim, valid=expected_valid)
     assert np.all(expected_valid == f.valid)
@@ -532,7 +532,7 @@ def test_valid_operators(ndim, nvdim):
         return point[0]
 
     f1 = df.Field(mesh, nvdim=1, value=val_func)
-    expected_valid = f1.array < 5
+    expected_valid = f1.array[..., 0] < 5
     f2 = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim, valid=expected_valid)
 
     f3 = f1 + f2
@@ -636,11 +636,11 @@ def test_norm_zero_field():
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, nvdim, dim_mapping, dim_mapping_check",
+    "p1, p2, n, nvdim, vdim_mapping, vdim_mapping_check",
     [
         # no mapping for scalar fields
-        [0, 1, 5, 1, None, None],
-        [(0, 0), (1, 1), (5, 5), 1, None, None],
+        [0, 1, 5, 1, None, {}],
+        [(0, 0), (1, 1), (5, 5), 1, None, {}],
         # default mapping for vector fields
         [(0, 0), (1, 1), (5, 5), 2, None, {d: d for d in "xy"}],
         [(0, 0, 0), (1, 1, 1), (5, 5, 5), 3, None, {d: d for d in "xyz"}],
@@ -657,39 +657,43 @@ def test_norm_zero_field():
         ],
     ],
 )
-def test_dim_mapping(p1, p2, n, nvdim, dim_mapping, dim_mapping_check):
+def test_vdim_mapping(p1, p2, n, nvdim, vdim_mapping, vdim_mapping_check):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    field = df.Field(mesh, nvdim=nvdim, dim_mapping=dim_mapping)
-    assert field.dim_mapping == dim_mapping_check
+    field = df.Field(mesh, nvdim=nvdim, vdim_mapping=vdim_mapping)
+    assert field.vdim_mapping == vdim_mapping_check
 
 
 def test_r_dim_mapping():
     mesh = df.Mesh(p1=(0,) * 3, p2=(1,) * 3, n=(10,) * 3)
     field = df.Field(mesh, nvdim=3)
 
-    assert field.dim_mapping == {d: d for d in "xyz"}
+    assert field.vdim_mapping == {d: d for d in "xyz"}
     assert field._r_dim_mapping == {d: d for d in "xyz"}
 
-    field.dim_mapping = {"x": "a", "y": "b", "z": "c"}
+    field.vdim_mapping = {"x": "a", "y": "b", "z": "c"}
+    # values do not match region dims -> no vector components along spatial x, y, z
+    assert field._r_dim_mapping == {"x": None, "y": None, "z": None}
+    # change region dims -> vector components along spatial a, b, c
+    field.mesh.region.dims = ["a", "b", "c"]
     assert field._r_dim_mapping == {"a": "x", "b": "y", "c": "z"}
 
-    field.dim_mapping = {"x": "x", "y": None, "z": None}
-    assert field._r_dim_mapping == {"x": "x", None: "z"}
+    field.mesh.region.dims = ["x", "y", "z"]
+    field.vdim_mapping = {"x": "x", "y": None, "z": None}
+    assert field._r_dim_mapping == {"x": "x", "y": None, "z": None}
 
 
 @pytest.mark.parametrize(
-    "nvdim, dim_mapping, error",
+    "nvdim, vdim_mapping, error",
     [
-        [3, None, ValueError],  # length mismatch
         [2, {"a": "x", "b": "y"}, ValueError],  # invalid vdim
         [2, {"x": "x"}, ValueError],  # missing vdim
         [2, ("x", "y"), TypeError],  # invalid mapping type
     ],
 )
-def test_dim_mapping_error(nvdim, dim_mapping, error):
+def test_vdim_mapping_error(nvdim, vdim_mapping, error):
     mesh = df.Mesh(p1=(0, 0), p2=(1, 1), n=(5, 5))
     with pytest.raises(error):
-        df.Field(mesh, nvdim=nvdim, dim_mapping=dim_mapping)
+        df.Field(mesh, nvdim=nvdim, vdim_mapping=vdim_mapping)
 
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
