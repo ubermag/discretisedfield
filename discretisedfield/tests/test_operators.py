@@ -109,8 +109,6 @@ def test_1d_derivative_sympy(func, order, array_len, dx):
             sp_expected = float(
                 sp.apply_finite_diff(order, x_array, y_array, x_array[0])
             )
-            print(sp_expected)
-            print(diff_array)
             assert np.allclose(diff_array, sp_expected)
         elif array_len > 3:
             # Accuracy is 2
