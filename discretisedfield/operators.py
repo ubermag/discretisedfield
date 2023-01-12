@@ -57,6 +57,11 @@ def _split_array_on_idx(array, loc):
     For a 100 element array, this method is 15.3 µs ± 63.1 ns
     compared to itertools.groupby which is 70.3 µs ± 719 ns."""
     loc = np.concatenate(([-1], loc, [len(array)]))
+    # loc[i] is the location of a False hence we want to start
+    # at the next element which is loc[i] + 1.
+    # We then create a slice to the next False element which
+    # is at loc[i + 1]. If the next False element is the same
+    # as the current one, we do not want to create a slice.
     return [
         array[loc[i] + 1 : loc[i + 1]]
         for i in range(len(loc) - 1)
