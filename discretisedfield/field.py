@@ -3776,19 +3776,17 @@ def _(val, mesh, nvdim, dtype):
         raise ValueError(
             f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
         )
-    if isinstance(val, collections.abc.Iterable) and not (
-        np.shape(val)[-1] == nvdim
-        or (np.array_equal(np.shape(val), mesh.n) and nvdim == 1)
-    ):
-        raise ValueError(
-            f"Wrong dimension {len(val)} provided for value; expected dimension is"
-            f" {nvdim}"
-        )
+
+    if isinstance(val, collections.abc.Iterable):
+        if nvdim == 1 and np.array_equal(np.shape(val), mesh.n):
+            return np.expand_dims(val, axis=-1)
+        elif np.shape(val)[-1] != nvdim:
+            raise ValueError(
+                f"Wrong dimension {len(val)} provided for value; expected dimension is"
+                f" {nvdim}."
+            )
     dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    if np.array_equal(np.shape(val), mesh.n):
-        return np.expand_dims(val, axis=-1)
-    else:
-        return np.full((*mesh.n, nvdim), val, dtype=dtype)
+    return np.full((*mesh.n, nvdim), val, dtype=dtype)
 
 
 @_as_array.register(collections.abc.Callable)
