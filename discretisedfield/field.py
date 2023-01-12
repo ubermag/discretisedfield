@@ -3131,8 +3131,37 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         angle_array = np.arccos((self.dot(vector) / (self.norm * vector.norm)).array)
+
         return self.__class__(
             self.mesh, nvdim=1, value=angle_array, unit="rad", valid=valid
+        )
+
+    def arctan2(self):
+        """In-plane angle of a vector field.
+
+        This method can only be used fields with two spatial dimentions.
+        This method then returns a scalar field which is an angle between
+        the in-plane compoenent of the vector field and the horizontal axis.
+        The angle is computed in radians and all values are in :math:`(0,
+        2\\pi)` range.
+        """
+        if self.mesh.region.ndim != 2:
+            raise ValueError(
+                "This method can only be used for fields with 2 spatial dimentions."
+            )
+
+        x_comp = self._r_dim_mapping[self.mesh.region.dims[0]]
+        y_comp = self._r_dim_mapping[self.mesh.region.dims[1]]
+
+        angle_array = np.arctan2(
+            getattr(self, y_comp).array, getattr(self, x_comp).array
+        )
+
+        # Place all values in [0, 2pi] range
+        angle_array[angle_array < 0] += 2 * np.pi
+
+        return self.__class__(
+            self.mesh, nvdim=1, value=angle_array, unit="rad", valid=self.valid
         )
 
     def to_vtk(self):
