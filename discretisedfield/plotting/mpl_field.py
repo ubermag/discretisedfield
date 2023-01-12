@@ -379,8 +379,10 @@ class MplField(Mpl):
             if lightness_field is None:
                 lightness_field = self.field.norm
             if filter_field is None:
-                filter_field = self.field.norm
-            return self.field.angle((1.0, 0.0, 0.0)).mpl.lightness(
+                filter_field = self.field._valid_as_field
+            x = self.field._r_dim_mapping[self.field.mesh.region.dims[0]]
+            y = self.field._r_dim_mapping[self.field.mesh.region.dims[1]]
+            return plot_util.inplane_angle(self.field, x, y).mpl.lightness(
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
@@ -405,8 +407,10 @@ class MplField(Mpl):
                 lightness_vdim = (set(self.field.vdims) - set(vdims)).pop()
                 lightness_field = getattr(self.field, lightness_vdim)
             if filter_field is None:
-                filter_field = self.field.norm
-            return self.field.angle((1.0, 0.0, 0.0)).mpl.lightness(
+                filter_field = self.field._valid_as_field
+            x = self.field._r_dim_mapping[self.field.mesh.region.dims[0]]
+            y = self.field._r_dim_mapping[self.field.mesh.region.dims[1]]
+            return plot_util.inplane_angle(self.field, x, y).mpl.lightness(
                 ax=ax,
                 figsize=figsize,
                 multiplier=multiplier,
@@ -424,7 +428,7 @@ class MplField(Mpl):
         ax = self._setup_axes(ax, figsize)
 
         if filter_field is None:
-            filter_field = self.field.norm
+            filter_field = self.field._valid_as_field
 
         multiplier = self._setup_multiplier(multiplier)
         extent = self._extent(multiplier)
