@@ -151,7 +151,7 @@ class MplField(Mpl):
                 f"{scalar_vdim}-component",
             )
 
-        scalar_kw.setdefault("filter_field", self.field.norm)
+        scalar_kw.setdefault("filter_field", self.field._valid_as_field)
 
         if scalar_field is not None:
             scalar_field.mpl.scalar(ax=ax, multiplier=multiplier, **scalar_kw)
@@ -288,6 +288,10 @@ class MplField(Mpl):
         extent = self._extent(multiplier)
 
         values = self.field.array.copy().reshape(self.field.mesh.n)
+
+        if filter_field is None:
+            filter_field = self.field._valid_as_field
+
         self._filter_values(filter_field, values)
 
         if symmetric_clim and "clim" not in kwargs.keys():
@@ -618,7 +622,7 @@ class MplField(Mpl):
         points2 = self.field.mesh.points[1] / multiplier
 
         values = self.field.array.copy()
-        self._filter_values(self.field.norm, values)
+        self._filter_values(self.field._valid_as_field, values)
 
         if vdims is None:
             # find vector components pointing along the two axes 0 and 1
@@ -803,6 +807,10 @@ class MplField(Mpl):
         points2 = self.field.mesh.points[1] / multiplier
 
         values = self.field.array.copy().reshape(self.field.mesh.n)
+
+        if filter_field is None:
+            filter_field = self.field._valid_as_field
+
         self._filter_values(filter_field, values)
 
         cp = ax.contour(points1, points2, np.transpose(values), **kwargs)
