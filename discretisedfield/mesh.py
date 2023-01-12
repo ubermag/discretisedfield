@@ -993,8 +993,13 @@ class Mesh(_MeshIO):
                             p2=sub_p_2,
                         )
         else:
-            step = self.cell[dim_index] / 2.0
-            p_1, p_2 = self.region.pmin.copy(), self.region.pmax.copy()
+            step = self.cell[dim_index] / 2
+            p_1 = self.region.pmin.copy().astype(
+                max(self.region.pmin.dtype, type(step))
+            )
+            p_2 = self.region.pmax.copy().astype(
+                max(self.region.pmax.dtype, type(step))
+            )
             min_val = selection[0] - step
             max_val = selection[1] + step
             p_1[dim_index] = min_val
@@ -1009,7 +1014,12 @@ class Mesh(_MeshIO):
                     if sub_reg_p_min >= max_val or min_val >= sub_reg_p_max:
                         continue
                     else:
-                        sub_p_1, sub_p_2 = subreg.pmin.copy(), subreg.pmax.copy()
+                        sub_p_1 = subreg.pmin.copy().astype(
+                            max(subreg.pmin.dtype, type(min_val))
+                        )
+                        sub_p_2 = subreg.pmax.copy().astype(
+                            max(subreg.pmax.dtype, type(max_val))
+                        )
                         sub_p_1[dim_index] = max(min_val, sub_reg_p_min)
                         sub_p_2[dim_index] = min(max_val, sub_reg_p_max)
                         sub_region[key] = df.Region(
@@ -1062,7 +1072,9 @@ class Mesh(_MeshIO):
                     raise ValueError(
                         f"Selected value {range_} is outside the mesh region."
                     )
-                test_point = self.region.pmin.copy()
+                test_point = self.region.pmin.copy().astype(
+                    max(self.region.pmin.dtype, type(range_))
+                )
                 test_point[dim_index] = range_
                 selection = self.index2point(self.point2index(test_point))[dim_index]
                 selection_index = self.point2index(test_point)[dim_index]
@@ -1087,7 +1099,9 @@ class Mesh(_MeshIO):
                         raise ValueError(
                             f"Selected value {point} is outside the mesh region."
                         )
-                    test_point = self.region.pmin.copy()
+                    test_point = self.region.pmin.copy().astype(
+                        max(self.region.pmin.dtype, type(point))
+                    )
                     test_point[dim_index] = point
                     selection.append(
                         self.index2point(self.point2index(test_point))[dim_index]
