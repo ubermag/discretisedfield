@@ -3,6 +3,12 @@ import pytest
 import sympy as sp
 
 import discretisedfield as df
+from discretisedfield.operators import (
+    _1d_diff,
+    _pad_array,
+    _split_array_on_idx,
+    _split_diff_combine,
+)
 
 
 def test_integrate():
@@ -36,7 +42,7 @@ def test_integrate():
 def test_split_array_on_idx(valid):
     array = np.arange(len(valid))
     idx = np.where(np.invert(valid))[0]
-    split_list = df._split_array_on_idx(array, idx)
+    split_list = _split_array_on_idx(array, idx)
 
     assert isinstance(split_list, list)
     assert all(isinstance(sublist, np.ndarray) for sublist in split_list)
@@ -58,11 +64,11 @@ def test_split_array_on_idx(valid):
 def test_split_diff_combine():
     valid = [True, True, False, False, True, True, False, True]
     array = np.arange(len(valid))
-    out = df._split_diff_combine(array, valid, 1, 1, None)
+    out = _split_diff_combine(array, valid, 1, 1, None)
     assert len(out) == len(array)
 
     valid = [False, False, False, False, False, False, False, False]
-    out = df._split_diff_combine(array, valid, 1, 1, None)
+    out = _split_diff_combine(array, valid, 1, 1, None)
     assert len(out) == len(array)
 
 
@@ -89,7 +95,7 @@ def test_1d_derivative_sympy(func, order, array_len, dx):
     y_array = lam_f(x_array)
 
     # Calculate derivative
-    diff_array = df._1d_diff(order, y_array, dx)
+    diff_array = _1d_diff(order, y_array, dx)
 
     assert diff_array.shape == y_array.shape
 
@@ -161,19 +167,19 @@ def test_pad_array():
     array = np.arange(10)
 
     # PBC
-    padded = df._pad_array(array, "pbc")
+    padded = _pad_array(array, "pbc")
     assert len(padded) == 12
     assert np.allclose(padded[0], array[-1])
     assert np.allclose(padded[-1], array[0])
 
     # Neumann
-    padded = df._pad_array(array, "neumann")
+    padded = _pad_array(array, "neumann")
     assert len(padded) == 12
     assert np.allclose(padded[0], array[0])
     assert np.allclose(padded[-1], array[-1])
 
     # Dirichlet
-    padded = df._pad_array(array, "dirichlet")
+    padded = _pad_array(array, "dirichlet")
     assert len(padded) == 12
     assert np.allclose(padded[0], 0)
     assert np.allclose(padded[-1], 0)
