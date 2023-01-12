@@ -3135,6 +3135,17 @@ def test_hv(test_field):
         )
 
 
+def test_k3d(valid_mesh):
+    f = df.Field(valid_mesh, nvdim=3, value=(1, 1, 1))
+    if f.mesh.region.ndim != 3:
+        with pytest.raises(RuntimeError):
+            f.k3d.vector()
+    else:
+        f.k3d.vector()
+        f.x.k3d.scalar()
+        f.norm.k3d.nonzero()
+
+
 def test_k3d_nonzero(test_field):
     # Default
     test_field.norm.k3d.nonzero()
