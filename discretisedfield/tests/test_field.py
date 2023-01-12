@@ -636,7 +636,7 @@ def test_norm_zero_field():
 
 
 @pytest.mark.parametrize(
-    "p1, p2, n, nvdim, dim_mapping, dim_mapping_check",
+    "p1, p2, n, nvdim, vdim_mapping, vdim_mapping_check",
     [
         # no mapping for scalar fields
         [0, 1, 5, 1, None, {}],
@@ -657,10 +657,10 @@ def test_norm_zero_field():
         ],
     ],
 )
-def test_vdim_mapping(p1, p2, n, nvdim, dim_mapping, dim_mapping_check):
+def test_vdim_mapping(p1, p2, n, nvdim, vdim_mapping, vdim_mapping_check):
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    field = df.Field(mesh, nvdim=nvdim, vdim_mapping=dim_mapping)
-    assert field.vdim_mapping == dim_mapping_check
+    field = df.Field(mesh, nvdim=nvdim, vdim_mapping=vdim_mapping)
+    assert field.vdim_mapping == vdim_mapping_check
 
 
 def test_r_dim_mapping():
@@ -683,17 +683,17 @@ def test_r_dim_mapping():
 
 
 @pytest.mark.parametrize(
-    "nvdim, dim_mapping, error",
+    "nvdim, vdim_mapping, error",
     [
         [2, {"a": "x", "b": "y"}, ValueError],  # invalid vdim
         [2, {"x": "x"}, ValueError],  # missing vdim
         [2, ("x", "y"), TypeError],  # invalid mapping type
     ],
 )
-def test_dim_mapping_error(nvdim, dim_mapping, error):
+def test_vdim_mapping_error(nvdim, vdim_mapping, error):
     mesh = df.Mesh(p1=(0, 0), p2=(1, 1), n=(5, 5))
     with pytest.raises(error):
-        df.Field(mesh, nvdim=nvdim, vdim_mapping=dim_mapping)
+        df.Field(mesh, nvdim=nvdim, vdim_mapping=vdim_mapping)
 
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
