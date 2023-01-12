@@ -41,7 +41,7 @@ class K3dField:
 
         For interactive plots the field itself, before being sliced with the
         field, must be passed as ``interactive_field``. For example, if
-        ``field.x.sel('z')`` is plotted, ``interactive_field=field`` must be
+        ``field.x.sel(z=(0, 1))`` is plotted, ``interactive_field=field`` must be
         passed. In addition, ``k3d.plot`` object cannot be created internally
         and it must be passed and displayed by the user.
 
@@ -185,7 +185,7 @@ class K3dField:
 
         For interactive plots the field itself, before being sliced with the
         field, must be passed as ``interactive_field``. For example, if
-        ``field.x.sel('z')`` is plotted, ``interactive_field=field`` must be
+        ``field.x.sel(z=(0, 1))`` is plotted, ``interactive_field=field`` must be
         passed. In addition, ``k3d.plot`` object cannot be created internally
         and it must be passed and displayed by the user.
 
@@ -355,7 +355,7 @@ class K3dField:
 
         For interactive plots the field itself, before being sliced with the
         field, must be passed as ``interactive_field``. For example, if
-        ``field.sel('z')`` is plotted, ``interactive_field=field`` must be
+        ``field.sel(z=(0, 1))`` is plotted, ``interactive_field=field`` must be
         passed. In addition, ``k3d.plot`` object cannot be created internally
         and it must be passed and displayed by the user.
 
