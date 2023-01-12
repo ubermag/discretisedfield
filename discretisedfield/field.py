@@ -2304,8 +2304,8 @@ class Field(_FieldIO):
             # Loop over all value dimensions of the vector field and
             # compute the derivative for each value dimension.
             for dim in range(self.nvdim):
-                out[tuple(*idx, dim)] = _split_diff_combine(
-                    self.array[tuple(*idx, dim)],
+                out[tuple([*idx, dim])] = _split_diff_combine(
+                    self.array[tuple([*idx, dim])],
                     valid_arr,
                     order,
                     self.mesh.cell[direction_idx],
