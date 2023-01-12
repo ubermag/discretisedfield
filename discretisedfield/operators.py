@@ -23,10 +23,11 @@ def _1d_diff(order, array, dx):
         return np.zeros_like(array)
 
     if order == 1:
-        # Second order accuracy is in the center of the array and
-        # first order at the boundaries.
-        derivative_array = np.gradient(array, dx, edge_order=1)
-        if len(array) > 3:
+        if len(array) < 3:
+            # Second order accuracy is in the center of the array and
+            # first order at the boundaries.
+            derivative_array = np.gradient(array, dx, edge_order=1)
+        else:
             # Second order accuracy at the boundaries.
             derivative_array = np.gradient(array, dx, edge_order=2)
 
