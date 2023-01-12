@@ -2428,13 +2428,10 @@ def test_arctan2():
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
 def test_arctan2_invalid(ndim, nvdim):
-    region = df.Region(
-        p1=(0,) * ndim, p2=(10,) * ndim, dims=["x", "y", "z", "a"][:ndim]
-    )
+    name_dims = ["x", "y", "z", "a"]
+    region = df.Region(p1=(0,) * ndim, p2=(10,) * ndim, dims=name_dims[:ndim])
     mesh = df.Mesh(region=region, cell=(1,) * ndim)
-    f = df.Field(
-        mesh, nvdim=nvdim, value=(1,) * nvdim, vdims=["x", "y", "z", "a"][:nvdim]
-    )
+    f = df.Field(mesh, nvdim=nvdim, value=(1,) * nvdim, vdims=name_dims[:nvdim])
     if nvdim != ndim:
         with pytest.raises(ValueError):
             f.arctan2("y", "x")
