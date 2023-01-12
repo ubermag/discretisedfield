@@ -66,10 +66,12 @@ def test_split_diff_combine():
     array = np.arange(len(valid))
     out = _split_diff_combine(array, valid, 1, 1, None)
     assert len(out) == len(array)
+    assert np.allclose(out, [1, 1, 0, 0, 1, 1, 0, 0])
 
     valid = [False, False, False, False, False, False, False, False]
     out = _split_diff_combine(array, valid, 1, 1, None)
     assert len(out) == len(array)
+    assert np.allclose(out, [0, 0, 0, 0, 0, 0, 0, 0])
 
 
 @pytest.mark.parametrize("array_len", [1, 2, 3, 4, 5])
