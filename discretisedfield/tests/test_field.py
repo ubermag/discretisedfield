@@ -696,6 +696,30 @@ def test_vdim_mapping_error(nvdim, vdim_mapping, error):
         df.Field(mesh, nvdim=nvdim, vdim_mapping=vdim_mapping)
 
 
+def test_vdims_vdim_mapping():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), n=(10, 10, 10))
+
+    # 3 vdims -> automatic mapping
+    f = df.Field(mesh, nvdim=3)
+    assert f.vdim_mapping == {d: d for d in "xyz"}
+    f.vdims = list("abc")
+    assert f.vdim_mapping == dict(zip("abc", "xyz"))
+
+    # 2 vdims with manual mapping
+    f = df.Field(mesh, nvdim=2, vdim_mapping={"x": "y", "y": "z"})
+    f.vdims = ["a", "b"]
+    assert f.vdim_mapping == {"a": "y", "b": "z"}
+
+    # 2 vdims -> no automatic mapping -> no default mapping
+    f = df.Field(mesh, nvdim=2)
+    assert f.vdim_mapping == {}
+    f.vdims = ["a", "b"]
+    assert f.vdim_mapping == {}
+    f.vdim_mapping = {"a": "x", "b": "y"}
+    f.vdims = ["v1", "v2"]
+    assert f.vdim_mapping == {"v1": "x", "v2": "y"}
+
+
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_orientation(valid_mesh, nvdim):
     # No zero-norm cells
@@ -2767,7 +2791,14 @@ def test_mpl_vector(test_field):
 
     # 2d vector field
     plane_2d = test_field.sel("z").a << test_field.sel("z").b
+    # automatic mapping between two spatial and two vector dimensions:
+    # __lshift__ resets vdims to ["x", "y"] and sets vdim_mapping
+    plane_2d.mpl.vector()
+    # renaming vdims does update vdim_mapping
     plane_2d.vdims = ["a", "b"]
+    plane_2d.mpl.vector()
+    # manually remove vdim_mapping
+    plane_2d.vdim_mapping = {}
     with pytest.raises(ValueError):
         plane_2d.mpl.vector()
     plane_2d.mpl.vector(vdims=["a", "b"])
