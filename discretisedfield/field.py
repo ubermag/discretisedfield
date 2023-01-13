@@ -3401,42 +3401,37 @@ class Field(_FieldIO):
 
     def _hv_data_selection(self, **kwargs):
         """Select field part as specified by the input arguments."""
-        comp = kwargs.pop("comp") if "comp" in kwargs else None
+        vdims = kwargs.pop("vdims") if "vdims" in kwargs else None
         res = self.to_xarray().sel(**kwargs, method="nearest")
-        if comp:
-            res = res.sel(comp=comp)
+        if vdims:
+            res = res.sel(vdims=vdims)
         return res
 
     def _hv_vdims_guess(self, kdims):
         """Try to find vector components matching the given kdims."""
-        mesh_dims = "xyz"
-        if len(mesh_dims) != self.nvdim:
-            return None
         vdims = []
         for dim in kdims:
-            if dim not in mesh_dims:  # hard-coded names in Mesh
-                return None
-            vdims.append(self.vdims[mesh_dims.index(dim)])
-        return vdims
+            vdims.append(self._r_dim_mapping[dim])
+        # the hv class expects two valid vdims or None
+        return None if None in vdims else vdims
 
     @property
     def _hv_key_dims(self):
         """Dict of key dimensions of the field.
 
-        Keys are the field dimensions (domain and vector space, e.g. x, y, z, comp) that
-        have length > 1. Values are named_tuples ``hv_key_dim(data, unit)`` that contain
-        the data (which has to fulfill len(data) > 1, typically as a numpy array or
-        list) and the unit of a string (empty string if there is no unit).
+        Keys are the field dimensions (domain and vector space, e.g. x, y, z, vdims)
+        that have length > 1. Values are named_tuples ``hv_key_dim(data, unit)`` that
+        contain the data (which has to fulfil len(data) > 1, typically as a numpy array
+        or list) and the unit of a string (empty string if there is no unit).
 
         """
-        mesh_dims = "xyz"
         key_dims = {
-            dim: hv_key_dim(coords, "m")
-            for dim in mesh_dims
+            dim: hv_key_dim(coords, unit)
+            for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
             if len(coords := getattr(self.mesh.points, dim)) > 1
         }
         if self.nvdim > 1:
-            key_dims["comp"] = hv_key_dim(self.vdims, "")
+            key_dims["vdims"] = hv_key_dim(self.vdims, "")
         return key_dims
 
     @property
