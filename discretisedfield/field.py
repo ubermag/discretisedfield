@@ -1968,7 +1968,7 @@ class Field(_FieldIO):
         )
 
     def _diff_old(self, direction, order=1):
-        """Drepricated directional derivative.
+        """Dreprecated directional derivative.
 
         This method uses second order accurate finite difference stencils by default
         unless the field is defined on a mesh with too few cells in the differential
