@@ -1951,8 +1951,9 @@ class Field(_FieldIO):
         for key, value in pad_width.items():
             d[self.mesh.region._dim2index(key)] = value
         padding_sequence = dfu.assemble_index((0, 0), len(self.array.shape), d)
-
         padded_array = np.pad(self.array, padding_sequence, mode=mode, **kwargs)
+
+        padding_sequence = dfu.assemble_index((0, 0), len(self.valid.shape), d)
         padded_valid = np.pad(self.valid, padding_sequence, mode=mode, **kwargs)
         padded_mesh = self.mesh.pad(pad_width)
 
@@ -2203,13 +2204,10 @@ class Field(_FieldIO):
         by setting ``restrict2valid`` to ``False``.
 
         Computing of the directional derivative depends
-        strongly on the boundary condition specified in the mesh on which the
-        field is defined on. More precisely, the values of the derivatives at
-        the boundary are different for periodic, Neumann, dirichlet, or no boundary
-        conditions. For details on boundary conditions, please refer to the
-        ``disretisedfield.Mesh`` class. The derivatives are computed using
-        central differences inside the sample and using forward/backward
-        differences at the boundaries.
+        strongly on the boundary condition specified. In this method,
+        only periodic boundary conditions are supported at the edges of the region
+        are supported. To enable periodic boundary conditions, set ``periodic`` to
+        ``True``.
 
         Parameters
         ----------
@@ -2313,8 +2311,9 @@ class Field(_FieldIO):
 
         direction_idx = self.mesh.region._dim2index(direction)
 
+        # If periodic is True, we pad the field
         if periodic:
-            field = self.pad({direction: (1, 1)}, mode="periodic")
+            field = self.pad({direction: (1, 1)}, mode="wrap")
         else:
             field = self
 
@@ -2344,13 +2343,20 @@ class Field(_FieldIO):
                     field.mesh.cell[direction_idx],
                 )
 
+        # Remove the padding if periodic is True
+        if periodic:
+            slices = dfu.assemble_index(
+                slice(None), field.mesh.region.ndim + 1, {direction_idx: slice(1, -1)}
+            )
+            out = out[slices]
+
         return self.__class__(
             self.mesh,
             nvdim=self.nvdim,
             value=out,
             vdims=self.vdims,
             unit=self.unit,
-            valid=valid,
+            valid=self.valid,
         )
 
     @property
