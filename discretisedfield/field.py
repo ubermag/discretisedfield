@@ -2317,9 +2317,8 @@ class Field(_FieldIO):
             field = self.pad({direction: (1, 1)}, mode="periodic")
         else:
             field = self.copy()
-            valid = (
-                self.valid if restrict2valid else np.ones_like(self.valid, dtype=bool)
-            )
+
+        valid = field.valid if restrict2valid else np.ones_like(field.valid, dtype=bool)
 
         bc = ""
         out = np.zeros_like(field.array)
