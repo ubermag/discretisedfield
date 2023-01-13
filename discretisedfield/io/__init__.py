@@ -60,9 +60,6 @@ class _MeshIO(_MeshIO_HDF5):
 class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
     __slots__ = []
 
-    def write(self, *args, **kwargs):
-        raise AttributeError("This method has been renamed to 'to_file'.")
-
     def to_file(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):

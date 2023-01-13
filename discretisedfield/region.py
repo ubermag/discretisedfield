@@ -607,6 +607,10 @@ class Region(_RegionIO):
         return False
 
     def __or__(self, other):
+        """Old implementation to find facing surfaces.
+
+        :meta private:
+        """
         raise AttributeError(
             "This operator has been removed. Please use the `facing_surface` method."
         )

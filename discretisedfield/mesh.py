@@ -165,6 +165,11 @@ class Mesh(_MeshIO):
 
     __slots__ = ["_region", "_n", "_bc", "_subregions"]
 
+    # removed attribute: new method/property
+    # implemented in __getattr__
+    # to exclude methods from tap completion and documentation
+    _removed_attributes = {"midpoints": "points"}
+
     def __init__(
         self,
         *,
@@ -479,9 +484,6 @@ class Mesh(_MeshIO):
         """
         for index in self.indices:
             yield self.index2point(index)
-
-    def midpoints(self):
-        raise AttributeError('Please use "points" instead.')
 
     @property
     def points(self):
@@ -1399,6 +1401,11 @@ class Mesh(_MeshIO):
         50.0
 
         """
+        if attr in self._removed_attributes:
+            raise AttributeError(
+                f"'{attr}' has been removed; use '{self._removed_attributes[attr]}'"
+                " instead."
+            )
         if len(attr) > 1 and attr[0] == "d":
             with contextlib.suppress(ValueError):
                 return self.cell[self.region._dim2index(attr[1:])]

@@ -135,6 +135,17 @@ class Field(_FieldIO):
         "dtype",
     ]
 
+    # removed attribute: new method/property
+    # implemented in __getattr__
+    # to exclude methods from tap completion and documentation
+    _removed_attributes = {
+        "average": "mean",
+        "integral": "integrate",
+        "project": "mean",
+        "value": "update_field_values",
+        "write": "to_file",  # method is in io.__init__
+    }
+
     def __init__(
         self,
         mesh,
@@ -789,12 +800,6 @@ class Field(_FieldIO):
                 f" {type(direction)}."
             )
 
-    @property
-    def average(self):
-        raise AttributeError(
-            "This property has been removed, please use the mean method."
-        )
-
     def __repr__(self):
         """Representation string.
 
@@ -944,6 +949,11 @@ class Field(_FieldIO):
         1
 
         """
+        if attr in self._removed_attributes:
+            raise AttributeError(
+                f"'{attr}' has been removed; use '{self._removed_attributes[attr]}'"
+                " instead."
+            )
         if self.vdims is not None and attr in self.vdims:
             attr_array = self.array[..., self.vdims.index(attr), np.newaxis]
             try:
@@ -959,8 +969,7 @@ class Field(_FieldIO):
                 vdim_mapping=vdim_mapping,
             )
         else:
-            msg = f"Object has no attribute {attr}."
-            raise AttributeError(msg)
+            raise AttributeError(f"Object has no attribute {attr}.")
 
     def __dir__(self):
         """Extension of the ``dir(self)`` list.
@@ -2695,9 +2704,6 @@ class Field(_FieldIO):
                 << getattr(self, z).laplace
             )
 
-    def integral(self, direction="xyz", improper=False):
-        raise AttributeError("This method has been renamed to 'integrate'.")
-
     def integrate(self, direction=None, cumulative=False):
         r"""Integral.
 
@@ -3173,11 +3179,6 @@ class Field(_FieldIO):
             unit=self.unit,
             valid=self.valid[tuple(slices)],
             vdim_mapping=self.vdim_mapping,
-        )
-
-    def project(self, direction):
-        raise AttributeError(
-            "The project method has been deprecated. Use mean instead."
         )
 
     def angle(self, vector):
