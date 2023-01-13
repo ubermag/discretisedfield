@@ -1953,6 +1953,7 @@ class Field(_FieldIO):
         padding_sequence = dfu.assemble_index((0, 0), len(self.array.shape), d)
 
         padded_array = np.pad(self.array, padding_sequence, mode=mode, **kwargs)
+        padded_valid = np.pad(self.valid, padding_sequence, mode=mode, **kwargs)
         padded_mesh = self.mesh.pad(pad_width)
 
         return self.__class__(
@@ -1962,6 +1963,7 @@ class Field(_FieldIO):
             vdims=self.vdims,
             unit=self.unit,
             vdim_mapping=self.vdim_mapping,
+            valid=padded_valid,
         )
 
     # TODO:
@@ -2309,29 +2311,39 @@ class Field(_FieldIO):
         if order not in (1, 2):
             raise NotImplementedError(f"Derivative of {order=} is not implemented.")
 
-        bc = ""
         direction_idx = self.mesh.region._dim2index(direction)
-        out = np.zeros_like(self.array)
+
+        if periodic:
+            field = self.pad({direction: (1, 1)}, mode="periodic")
+        else:
+            field = self.copy()
+            valid = (
+                self.valid if restrict2valid else np.ones_like(self.valid, dtype=bool)
+            )
+
+        bc = ""
+        out = np.zeros_like(field.array)
         # Use only valid values for the derivative if restrict2valid is True
         # or use all values if restrict2valid is False
-        valid = self.valid if restrict2valid else np.ones_like(self.valid, dtype=bool)
 
         # Loop over all cells in the plane perpendicular to the direction of the
         # derivative. Use sel method in a way that keeps the dimensionality but
         # only returns a single layer in the direction of the derivative
-        point = self.mesh.region.pmin[direction_idx] + self.mesh.cell[direction_idx] / 2
-        for idx in self.mesh.sel(**{direction: (point, point)}).indices:
+        point = (
+            field.mesh.region.pmin[direction_idx] + field.mesh.cell[direction_idx] / 2
+        )
+        for idx in field.mesh.sel(**{direction: (point, point)}).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
             valid_arr = valid[tuple(idx)]
             # Loop over all value dimensions of the vector field and
             # compute the derivative for each value dimension.
-            for dim in range(self.nvdim):
+            for dim in range(field.nvdim):
                 out[tuple([*idx, dim])] = _split_diff_combine(
-                    self.array[tuple([*idx, dim])],
+                    field.array[tuple([*idx, dim])],
                     valid_arr,
                     order,
-                    self.mesh.cell[direction_idx],
+                    field.mesh.cell[direction_idx],
                     bc,
                 )
 
