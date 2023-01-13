@@ -51,7 +51,7 @@ class Hv:
     _norm_filter = True
 
     def __init__(self, key_dims, callback, vdim_guess_callback=None):
-        # no tests for key_dims and callback as it is not directly used by users
+        # no tests for key_dims and callback as the class is not directly used by users
         if not hv.extension._loaded:
             hv.extension("bokeh", logo=False)
         self.key_dims = key_dims
@@ -73,7 +73,7 @@ class Hv:
          ``hv.vector``. Depending on the dimensionality of the object, it automatically
          determines the type of plot in the following order:
 
-        1. For scalar objects (no dimension with name ``'comp'``) only
+        1. For scalar objects (no dimension with name ``'vdims'``) only
            ``discretisedfield.plotting.Hv.scalar`` is used. The parameter ``vdims`` is
            ignored.
 
@@ -187,7 +187,7 @@ class Hv:
 
         vector_kw.setdefault("use_color", False)
 
-        if "comp" not in self.key_dims:
+        if "vdims" not in self.key_dims:
             return self.scalar(kdims=kdims, **scalar_kw)
 
         # try to guess vdims if not passed
@@ -195,7 +195,7 @@ class Hv:
             vdims = self.vdim_guess_callback(kdims)
 
         if vdims:
-            scalar_comps = list(set(self.key_dims["comp"].data) - set(vdims))
+            scalar_comps = list(set(self.key_dims["vdims"].data) - set(vdims))
             with contextlib.suppress(KeyError):
                 vector_kw.pop("vdims")
             vector = self.vector(kdims=kdims, vdims=vdims, **vector_kw)
@@ -204,18 +204,18 @@ class Hv:
             else:
                 key_dims = copy.deepcopy(self.key_dims)
                 if len(scalar_comps) > 1:
-                    key_dims["comp"] = hv_key_dim(scalar_comps, key_dims["comp"].unit)
+                    key_dims["vdims"] = hv_key_dim(scalar_comps, key_dims["vdims"].unit)
                     callback = self.callback
                 else:
-                    # manually remove component 'comp' from returned xarray to avoid
+                    # manually remove component 'vdims' from returned xarray to avoid
                     # a drop-down with one element (the out-of-plane component)
                     def callback(*args, **kwargs):
                         res = self.callback(*args, **kwargs)
-                        return res.sel(comp=scalar_comps[0]).drop_vars(
-                            "comp", errors="ignore"
+                        return res.sel(vdims=scalar_comps[0]).drop_vars(
+                            "vdims", errors="ignore"
                         )
 
-                    key_dims.pop("comp")
+                    key_dims.pop("vdims")
 
                 scalar = self.__class__(key_dims, callback).scalar(
                     kdims=kdims, **scalar_kw
@@ -230,7 +230,7 @@ class Hv:
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
         ``holoviews.Image`` objects. The plot shows the plane defined with the two
         spatial directions passed to ``kdims``. If a vector field is passed (that means
-        the field dimension 'comp' is greater than 1) an additional ``panel.Select``
+        the field dimension 'vdims' is greater than 1) an additional ``panel.Select``
         widget for the field components is created automatically. It is not necessary to
         create a cut-plane first.
 
@@ -442,7 +442,7 @@ class Hv:
             objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
             discretisedfield.Field objects).
 
-            If the object has no dimension ``comp`` that defines the vector components.
+            If the object has no dimension ``vdims`` that defines the vector components.
 
         Examples
         --------
@@ -461,15 +461,15 @@ class Hv:
 
         """
         self._check_kdims(kdims)
-        if "comp" not in self.key_dims:
+        if "vdims" not in self.key_dims:
             raise ValueError(
                 "The vector plot method can only operate on data with a"
-                " vector component called 'comp'."
+                " vector component called 'vdims'."
             )
         if cdim is not None:
             if not isinstance(cdim, str):
                 raise TypeError("cdim must be of type str")
-            elif cdim not in self.key_dims["comp"].data:
+            elif cdim not in self.key_dims["vdims"].data:
                 raise ValueError(f"The vector dimension {cdim} does not exist.")
 
         # try to guess vdims if not passed
@@ -485,7 +485,7 @@ class Hv:
         roi = self._setup_roi(roi, kdims)
         self._check_n(n)
 
-        dyn_kdims = [dim for dim in self.key_dims if dim not in kdims + ["comp"]]
+        dyn_kdims = [dim for dim in self.key_dims if dim not in kdims + ["vdims"]]
 
         kwargs.setdefault("data_aspect", 1)
 
@@ -500,24 +500,24 @@ class Hv:
             data = self._resample(data, kdims, n)
 
             vector_norm = xr.apply_ufunc(
-                np.linalg.norm, data, input_core_dims=[["comp"]], kwargs={"axis": -1}
+                np.linalg.norm, data, input_core_dims=[["vdims"]], kwargs={"axis": -1}
             )
             vector_vdims = ["angle", "mag"]
             vector_data = {}
             vector_data["mag"] = np.sqrt(
-                (data.sel(comp=arrow_x) ** 2 if arrow_x else 0)
-                + (data.sel(comp=arrow_y) ** 2 if arrow_y else 0)
+                (data.sel(vdims=arrow_x) ** 2 if arrow_x else 0)
+                + (data.sel(vdims=arrow_y) ** 2 if arrow_y else 0)
             )
             vector_data["angle"] = np.arctan2(
-                data.sel(comp=arrow_y) if arrow_y else 0,
-                data.sel(comp=arrow_x) if arrow_x else 0,
+                data.sel(vdims=arrow_y) if arrow_y else 0,
+                data.sel(vdims=arrow_x) if arrow_x else 0,
                 where=np.logical_and(vector_norm != 0, ~np.isnan(vector_norm)),
                 out=np.full(vector_norm.shape, np.nan),
             )
 
             if use_color and cdim is None:
-                if len(data.comp) == 3:
-                    cdim = (set(data.comp.to_numpy()) - set(vdims)).pop()
+                if len(data.vdims) == 3:
+                    cdim = (set(data.vdims.to_numpy()) - set(vdims)).pop()
                 else:
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
@@ -528,8 +528,8 @@ class Hv:
             if use_color:
                 vector_vdims.append("color_comp")
                 kwargs["color"] = "color_comp"
-                vector_data["color_comp"] = data.sel(comp=cdim).drop_vars(
-                    "comp", errors="ignore"
+                vector_data["color_comp"] = data.sel(vdims=cdim).drop_vars(
+                    "vdims", errors="ignore"
                 )
                 kwargs.setdefault("clabel", cdim)
                 kwargs.setdefault("colorbar", True)
@@ -664,7 +664,7 @@ class Hv:
         elif not isinstance(roi, xr.DataArray):
             raise TypeError(f"Unsupported type {type(roi)} for 'roi'.")
 
-        if "comp" in roi.dims:
+        if "vdims" in roi.dims:
             raise ValueError("Only scalar roi is supported.")
 
         for kdim in kdims:
@@ -699,15 +699,15 @@ class Hv:
         if callable(roi):
             roi_selection = copy.deepcopy(dyn_kdims)
             with contextlib.suppress(KeyError):
-                roi_selection.pop("comp")
+                roi_selection.pop("vdims")
             roi = roi(**roi_selection)
-            if "comp" in roi.dims:
+            if "vdims" in roi.dims:
                 roi = xr.apply_ufunc(
                     np.linalg.norm,
                     roi,
-                    input_core_dims=[["comp"]],
+                    input_core_dims=[["vdims"]],
                     kwargs={"axis": -1},
-                ).drop_vars("comp", errors="ignore")
+                ).drop_vars("vdims", errors="ignore")
             else:
                 roi = np.abs(roi)
 

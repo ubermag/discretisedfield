@@ -2979,17 +2979,17 @@ def test_hv_scalar(test_field):
         kdim_str = f"[{','.join(kdims)}]"
         check_hv(
             test_field.hv.scalar(kdims=kdims),
-            [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            [f"DynamicMap [{normal},vdims]", f"Image {kdim_str}"],
         )
         check_hv(
             test_field.hv.scalar(kdims=kdims, roi=test_field.norm),
-            [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            [f"DynamicMap [{normal},vdims]", f"Image {kdim_str}"],
         )
 
         # additional kwargs and plane
         check_hv(
             test_field.sel(normal).hv.scalar(kdims=kdims, clim=(-1, 1)),
-            ["DynamicMap [comp]", f"Image {kdim_str}"],
+            ["DynamicMap [vdims]", f"Image {kdim_str}"],
         )
 
         for c in test_field.vdims:
@@ -3056,9 +3056,9 @@ def test_hv_vector(test_field):
             [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
         )
 
-        for comp in test_field.vdims:
+        for vdim in test_field.vdims:
             check_hv(
-                test_field.hv.vector(kdims=kdims, cdim=comp),
+                test_field.hv.vector(kdims=kdims, cdim=vdim),
                 [f"DynamicMap [{normal}]", f"VectorField {kdim_str}"],
             )
 
@@ -3134,17 +3134,17 @@ def test_hv_contour(test_field):
         opts = dict(frame_width=300, frame_height=300)
         check_hv(
             test_field.hv.contour(kdims=kdims).opts(**opts),
-            [f"DynamicMap [{normal},comp]", f"Contours {kdim_str}"],
+            [f"DynamicMap [{normal},vdims]", f"Contours {kdim_str}"],
         )
         check_hv(
             test_field.hv.contour(kdims=kdims, roi=test_field.norm).opts(**opts),
-            [f"DynamicMap [{normal},comp]", f"Contours {kdim_str}"],
+            [f"DynamicMap [{normal},vdims]", f"Contours {kdim_str}"],
         )
 
         # additional kwargs
         check_hv(
             test_field.sel(normal).hv.contour(kdims=kdims, clim=(-1, 1)).opts(**opts),
-            ["DynamicMap [comp]", f"Contours {kdim_str}"],
+            ["DynamicMap [vdims]", f"Contours {kdim_str}"],
         )
 
         for c in test_field.vdims:
@@ -3172,7 +3172,7 @@ def test_hv(test_field):
         field_2d = test_field.b << test_field.c
         check_hv(
             field_2d.hv(kdims=kdims),
-            [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            [f"DynamicMap [{normal},vdims]", f"Image {kdim_str}"],
         )
         check_hv(
             field_2d.hv(kdims=kdims, vdims=["x", "y"]),
@@ -3180,7 +3180,7 @@ def test_hv(test_field):
         )
         check_hv(
             field_2d.sel(normal).hv(kdims=kdims),
-            ["DynamicMap [comp]", f"Image {kdim_str}"],
+            ["DynamicMap [vdims]", f"Image {kdim_str}"],
         )
 
         # 3d field
@@ -3224,13 +3224,13 @@ def test_hv(test_field):
         field_4d.vdims = ["v1", "v2", "v3", "v4"]
         check_hv(
             field_4d.hv(kdims=kdims),
-            [f"DynamicMap [{normal},comp]", f"Image {kdim_str}"],
+            [f"DynamicMap [{normal},vdims]", f"Image {kdim_str}"],
         )
 
         check_hv(
             field_4d.hv(kdims=kdims, vdims=["v2", "v1"]),
             [
-                f"DynamicMap [{normal},comp]",
+                f"DynamicMap [{normal},vdims]",
                 f"Image {kdim_str}",
                 f"VectorField {kdim_str}",
             ],
@@ -3238,7 +3238,7 @@ def test_hv(test_field):
 
         check_hv(
             field_4d.sel(normal).hv(kdims=kdims),
-            ["DynamicMap [comp]", f"Image {kdim_str}"],
+            ["DynamicMap [vdims]", f"Image {kdim_str}"],
         )
 
         check_hv(
@@ -3246,7 +3246,7 @@ def test_hv(test_field):
                 kdims=kdims, vdims=["v2", "v1"], vector_kw={"cdim": "v4"}
             ),
             [
-                "DynamicMap [comp]",
+                "DynamicMap [vdims]",
                 f"Image {kdim_str}",
                 f"VectorField {kdim_str}",
             ],
