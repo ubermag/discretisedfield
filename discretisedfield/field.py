@@ -1967,7 +1967,6 @@ class Field(_FieldIO):
             valid=padded_valid,
         )
 
-    # TODO:
     def _diff_old(self, direction, order=1):
         """Drepricated directional derivative.
 
