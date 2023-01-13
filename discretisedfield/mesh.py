@@ -1,6 +1,5 @@
 import collections
 import contextlib
-import copy
 import itertools
 import numbers
 import warnings
@@ -164,7 +163,7 @@ class Mesh(_MeshIO):
 
     """
 
-    __slots__ = ["_region", "_n", "_bc", "_subregions", "_attributes"]
+    __slots__ = ["_region", "_n", "_bc", "_subregions"]
 
     def __init__(
         self,
@@ -176,7 +175,6 @@ class Mesh(_MeshIO):
         cell=None,
         bc="",
         subregions=None,
-        attributes={"unit": "m"},
     ):
         # TODO NO MUTABLE DEFAULT
         if region is not None and p1 is None and p2 is None:
@@ -249,12 +247,6 @@ class Mesh(_MeshIO):
         self.bc = bc
 
         self.subregions = subregions
-
-        self.attributes = attributes
-        if "fourierspace" not in attributes.keys():
-            self.attributes["fourierspace"] = False
-        if "isplane" not in attributes.keys():
-            self.attributes["isplane"] = False
 
     @property
     def bc(self):
@@ -394,14 +386,6 @@ class Mesh(_MeshIO):
             )
             for name, sr in subregions.items()
         }
-
-    @property
-    def attributes(self):
-        return self._attributes
-
-    @attributes.setter
-    def attributes(self, attributes):
-        self._attributes = copy.deepcopy(attributes)
 
     def __len__(self):
         """Number of discretisation cells in the mesh.
@@ -1305,9 +1289,7 @@ class Mesh(_MeshIO):
 
         """
         if isinstance(item, str):
-            return self.__class__(
-                region=self.subregions[item], cell=self.cell, attributes=self.attributes
-            )
+            return self.__class__(region=self.subregions[item], cell=self.cell)
 
         if item not in self.region:
             msg = f"Subregion '{item}' is outside the mesh region '{self.region}'."
@@ -1320,9 +1302,7 @@ class Mesh(_MeshIO):
         p2_idx = (np.ceil((item.pmax - self.region.pmin) / self.cell) - 1).astype(int)
         p2 = np.add(self.index2point(p2_idx), hc)
 
-        return self.__class__(
-            region=df.Region(p1=p1, p2=p2), cell=self.cell, attributes=self.attributes
-        )
+        return self.__class__(region=df.Region(p1=p1, p2=p2), cell=self.cell)
 
     def pad(self, pad_width):
         """Mesh padding.
@@ -1380,9 +1360,7 @@ class Mesh(_MeshIO):
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
-        return self.__class__(
-            p1=pmin, p2=pmax, cell=self.cell, bc=self.bc, attributes=self.attributes
-        )
+        return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
 
     def __getattr__(self, attr):
         """Extracting the discretisation in a particular direction.

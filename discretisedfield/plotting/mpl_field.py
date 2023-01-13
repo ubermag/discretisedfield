@@ -844,12 +844,14 @@ class MplField(Mpl):
         values[filter_field.array.reshape(self.field.mesh.n) == 0] = np.nan
 
     def _axis_labels(self, ax, multiplier):
-        unit = (
-            rf" ({uu.rsi_prefixes[multiplier]}"
-            rf'{self.field.mesh.attributes["unit"]})'
+        ax.set_xlabel(
+            rf"{self.field.mesh.region.dims[0]}"
+            rf" ({uu.rsi_prefixes[multiplier]}{self.field.mesh.region.units[0]})"
         )
-        ax.set_xlabel(self.field.mesh.region.dims[0] + unit)
-        ax.set_ylabel(self.field.mesh.region.dims[1] + unit)
+        ax.set_ylabel(
+            rf"self.field.mesh.region.dims[1]"
+            rf" ({uu.rsi_prefixes[multiplier]}{self.field.mesh.region.units[1]})"
+        )
 
     def _extent(self, multiplier):
         # Rescale about the origin to not keep the old centre point.
