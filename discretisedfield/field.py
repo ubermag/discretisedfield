@@ -2316,11 +2316,10 @@ class Field(_FieldIO):
         if periodic:
             field = self.pad({direction: (1, 1)}, mode="periodic")
         else:
-            field = self.copy()
+            field = self
 
         valid = field.valid if restrict2valid else np.ones_like(field.valid, dtype=bool)
 
-        bc = ""
         out = np.zeros_like(field.array)
         # Use only valid values for the derivative if restrict2valid is True
         # or use all values if restrict2valid is False
@@ -2343,7 +2342,6 @@ class Field(_FieldIO):
                     valid_arr,
                     order,
                     field.mesh.cell[direction_idx],
-                    bc,
                 )
 
         return self.__class__(
