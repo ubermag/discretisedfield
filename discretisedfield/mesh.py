@@ -1908,15 +1908,14 @@ class Mesh(_MeshIO):
             disabled=False,
         )
 
-    def allclose(self, other, rtol=1e-05, atol=1e-08):
+    def allclose(self, other, rtol=None, atol=None):
         """Check if the mesh is close enough to the other based on a tolerance.
 
-        The midpoints (``discretisedfield.Mesh.points``) along all the dimensions for
-        both meshes are compared using ``numpy.allclose``. The value of relative
-        tolerance (``rtol``) and absolute tolerance (``atol``) are passed on to
-        ``numpy.allclose`` for the comparison. If the midpoints along all
-        dimensions are close enough, the method returns ``True``
-        otherwise it returns ``False``.
+        This methods compares the two underlying regions using ``Region.allclose`` and
+        the number of cells ``n`` of the two meshes. The value of relative tolerance
+        (``rtol``) and absolute tolerance (``atol``) are passed on to
+        ``Region.allclose`` for the comparison. If not provided a default value based on
+        the region size is used.
 
         Parameters
         ----------
@@ -1924,15 +1923,17 @@ class Mesh(_MeshIO):
 
             The other mesh used for comparison.
 
-        rtol : int, float, optional
+        rtol : numbers.Real, optional
 
-            Relative tolerance used to compare the mesh; passed on to ``numpy.allclose``
-            . It defaults to 1e-05.
+            Absolute tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the ``region.tolerance_factor``.
 
-        atol : int, float, optional
+        atol : numbers.Real, optional
 
-            Absolute tolerance used to compare the mesh; passed on to ``numpy.allclose``
-            . It defaults to 1e-08.
+            Relative tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the ``region.tolerance_factor``.
 
         Returns
         -------
@@ -1945,7 +1946,7 @@ class Mesh(_MeshIO):
         TypeError
 
             If the ``other`` argument is not of type ``discretisedfield.Mesh`` or if
-            ``rtol`` and ``atol`` arguments are not of type ``float`` or ``int``.
+            ``rtol`` and ``atol`` arguments are not of type ``numbers.Real``.
 
         ValueError
 
@@ -1978,24 +1979,9 @@ class Mesh(_MeshIO):
         if self.region.dims != other.region.dims:
             raise ValueError("The mesh dimensions do not match.")
 
-        if any(self.n != other.n):
-            raise ValueError("The number of cells in each dimension do not match.")
-
-        if (not isinstance(rtol, numbers.Real)) or (not isinstance(atol, numbers.Real)):
-            raise TypeError(
-                "Expected both rtol and atol to be either int or float but got"
-                f" {type(rtol)} and {type(atol)}, respectively."
-            )
-
-        return all(
-            np.allclose(
-                getattr(self.points, dim),
-                getattr(other.points, dim),
-                rtol=rtol,
-                atol=atol,
-            )
-            for dim in self.region.dims
-        )
+        return self.region.allclose(
+            other.region, rtol=rtol, atol=atol
+        ) and np.array_equal(self.n, other.n)
 
     def coordinate_field(self):
         """Create a field whose values are the mesh coordinates.

@@ -942,7 +942,7 @@ class Region(_RegionIO):
                 raise TypeError(f"{type(atol)=} is not a number.")
 
             if rtol is None:
-                rtol = np.min(self.edges) * self.tolerance_factor
+                rtol = self.tolerance_factor
             elif not isinstance(rtol, numbers.Number):
                 raise TypeError(f"{type(rtol)=} is not a number.")
 
