@@ -3435,7 +3435,6 @@ class Field(_FieldIO):
             key_dims["vdims"] = hv_key_dim(self.vdims, "")
         return key_dims
 
-    @property
     def fftn(self):
         """Fourier transform.
 
@@ -3460,7 +3459,6 @@ class Field(_FieldIO):
             # TODO vdim_mapping with fft_mesh dims
         )
 
-    @property
     def ifftn(self):
         """Inverse Fourier transform.
 
@@ -3485,7 +3483,6 @@ class Field(_FieldIO):
             # TODO vdim_mapping
         )
 
-    @property
     def rfftn(self):
         """Real Fourier transform.
 
@@ -3510,7 +3507,6 @@ class Field(_FieldIO):
             # TODO vdim_mapping
         )
 
-    @property
     def irfftn(self):
         """Inverse real Fourier transform.
 
