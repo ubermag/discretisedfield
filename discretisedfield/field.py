@@ -3550,7 +3550,7 @@ class Field(_FieldIO):
 
         Examples
         --------
-        1. Create a mesh and perform a FFT.
+        1. Create a mesh and perform a rFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
@@ -3610,7 +3610,7 @@ class Field(_FieldIO):
 
         Examples
         --------
-        1. Create a mesh and perform an iFFT.
+        1. Create a mesh and perform a irFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
