@@ -5,7 +5,6 @@ import sympy as sp
 import discretisedfield as df
 from discretisedfield.operators import (
     _1d_diff,
-    _pad_array,
     _split_array_on_idx,
     _split_diff_combine,
 )
@@ -64,12 +63,12 @@ def test_split_array_on_idx(valid):
 def test_split_diff_combine():
     valid = [True, True, False, False, True, True, False, True]
     array = np.arange(len(valid))
-    out = _split_diff_combine(array, valid, 1, 1, None)
+    out = _split_diff_combine(array, valid, 1, 1)
     assert len(out) == len(array)
     assert np.allclose(out, [1, 1, 0, 0, 1, 1, 0, 0])
 
     valid = [False, False, False, False, False, False, False, False]
-    out = _split_diff_combine(array, valid, 1, 1, None)
+    out = _split_diff_combine(array, valid, 1, 1)
     assert len(out) == len(array)
     assert np.allclose(out, [0, 0, 0, 0, 0, 0, 0, 0])
 
@@ -161,25 +160,3 @@ def test_1d_derivative_sympy(func, order, array_len, dx):
                 )
             )
             assert np.allclose(diff_array[cent], sp_expected)
-
-
-def test_pad_array():
-    array = np.arange(10)
-
-    # PBC
-    padded = _pad_array(array, "pbc")
-    assert len(padded) == 12
-    assert np.allclose(padded[0], array[-1])
-    assert np.allclose(padded[-1], array[0])
-
-    # Neumann
-    padded = _pad_array(array, "neumann")
-    assert len(padded) == 12
-    assert np.allclose(padded[0], array[0])
-    assert np.allclose(padded[-1], array[-1])
-
-    # Dirichlet
-    padded = _pad_array(array, "dirichlet")
-    assert len(padded) == 12
-    assert np.allclose(padded[0], 0)
-    assert np.allclose(padded[-1], 0)
