@@ -2178,7 +2178,7 @@ class Field(_FieldIO):
             vdim_mapping=self.vdim_mapping,
         )
 
-    def diff(self, direction, order=1, restrict2valid=True, periodic=False):
+    def diff(self, direction, order=1, restrict2valid=True, periodic_bc=False):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -2205,7 +2205,7 @@ class Field(_FieldIO):
         Computing of the directional derivative depends
         strongly on the boundary condition specified. In this method,
         only periodic boundary conditions are supported at the edges of the region
-        are supported. To enable periodic boundary conditions, set ``periodic`` to
+        are supported. To enable periodic boundary conditions, set ``periodic_bc`` to
         ``True``.
 
         Parameters
@@ -2226,7 +2226,7 @@ class Field(_FieldIO):
             the directional derivative is computed across the whole field.
             The default value is ``True``.
 
-        periodic : bool
+        periodic_bc : bool
 
             If ``True``, the directional derivative is computed using periodic
             boundary conditions at the edges of the region.
@@ -2311,23 +2311,21 @@ class Field(_FieldIO):
         direction_idx = self.mesh.region._dim2index(direction)
 
         # If periodic is True, we pad the field
-        if periodic:
+        if periodic_bc:
             field = self.pad({direction: (1, 1)}, mode="wrap")
         else:
             field = self
 
+        # Use only valid values for the derivative if restrict2valid is True
+        # or use all values if restrict2valid is False
         valid = field.valid if restrict2valid else np.ones_like(field.valid, dtype=bool)
 
         out = np.zeros_like(field.array)
-        # Use only valid values for the derivative if restrict2valid is True
-        # or use all values if restrict2valid is False
 
         # Loop over all cells in the plane perpendicular to the direction of the
         # derivative. Use sel method in a way that keeps the dimensionality but
         # only returns a single layer in the direction of the derivative
-        point = (
-            field.mesh.region.pmin[direction_idx] + field.mesh.cell[direction_idx] / 2
-        )
+        point = field.mesh.region.pmin[direction_idx]
         for idx in field.mesh.sel(**{direction: (point, point)}).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
@@ -2343,10 +2341,8 @@ class Field(_FieldIO):
                 )
 
         # Remove the padding if periodic is True
-        if periodic:
-            slices = dfu.assemble_index(
-                slice(None), field.mesh.region.ndim + 1, {direction_idx: slice(1, -1)}
-            )
+        if periodic_bc:
+            slices = field.mesh.region2slices(self.mesh.region)
             out = out[slices]
 
         return self.__class__(
@@ -2356,6 +2352,7 @@ class Field(_FieldIO):
             vdims=self.vdims,
             unit=self.unit,
             valid=self.valid,
+            vdim_mapping=self.vdim_mapping,
         )
 
     @property
