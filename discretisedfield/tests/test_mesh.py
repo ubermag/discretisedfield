@@ -519,13 +519,9 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
 )
 def test_allclose(p1_1, p1_2, p2, n1, n2):
     mesh1 = df.Mesh(p1=p1_1, p2=p2, n=n1)
-    mesh2 = df.Mesh(p1=np.array(p1_1) * 1, p2=np.array(p2) * (1 + 1e-13), n=n1)
+    mesh2 = df.Mesh(p1=np.array(p1_1), p2=np.array(p2) * (1 + 1e-13), n=n1)
     mesh3 = df.Mesh(p1=p1_2, p2=p2, n=n1)
     mesh4 = df.Mesh(p1=p1_1, p2=p2, n=n2)
-
-    assert isinstance(mesh1, df.Mesh)
-    assert isinstance(mesh2, df.Mesh)
-    assert isinstance(mesh3, df.Mesh)
 
     assert mesh1.allclose(mesh2)
 
@@ -567,7 +563,8 @@ def test_allclose_cell_accuracy():
         mesh1.region.tolerance_factor,
         mesh1.region.tolerance_factor * np.min(mesh1.cell),
     )
-    assert mesh1.allclose(mesh3)
+    assert not mesh1.allclose(mesh3)  # computed atol = 1e-29
+    assert mesh1.allclose(mesh3, atol=eps)
 
 
 def test_repr():
