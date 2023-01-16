@@ -2050,3 +2050,111 @@ class Mesh(_MeshIO):
             )
 
         return field
+
+    def fftn(self, rfft=False):
+        """FFT can be one of fftfreq, rfftfreq."""
+        p1 = []
+        p2 = []
+        n = []
+        for i in range(self.region.ndim):
+            if self.n[i] == 1:
+                p1.append(0)
+                p2.append(1 / self.cell[i])
+                n.append(1)
+            else:
+                freqs = np.fft.fftshift(np.fft.fftfreq(self.n[i], self.cell[i]))
+                # Shift the region boundaries to get the correct coordinates of
+                # mesh cells.
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+                n.append(len(freqs))
+
+        if rfft:
+            # last frequency is different for rfft
+            freqs = np.fft.rfftfreq(self.n[-1], self.cell[-1])
+            dfreq = (freqs[1] - freqs[0]) / 2
+            p1[-1] = min(freqs) - dfreq
+            p2[-1] = max(freqs) + dfreq
+            n[-1] = len(freqs)
+
+        kdims = ["k_" + d for d in self.region.dims]
+        kunits = ["(" + u + ")^-1" for u in self.region.units]
+        # TODO: ktol
+        region = df.Region(p1=p1, p2=p2, dims=kdims, units=kunits)
+        # TODO: subregions
+        mesh = df.Mesh(region=region, n=n)
+
+        return mesh
+
+    def ifftn(self, rfft=False, shape=None):
+        """FFT can be one of fftfreq, rfftfreq."""
+        if shape is not None:
+            if isinstance(shape, numbers.Number):
+                shape = (shape,)
+
+            if isinstance(shape, (tuple, list, np.ndarray)):
+                if not np.array_equal(shape[:-1], self.n[:-1]):
+                    raise ValueError(
+                        f"The shape apart from the last dimension must match {self.n=}."
+                    )
+            else:
+                raise TypeError(
+                    "Expected shape to be either int, tuple, list or np.ndarray but got"
+                    f" {type(shape)}."
+                )
+
+            if len(shape) != self.region.ndim:
+                raise ValueError(
+                    "The shape must have the same number of dimensions as the mesh"
+                    f" ({self.region.ndim=})."
+                )
+
+            if (
+                shape[-1] != (self.n[-1] - 1) * 2
+                and shape[-1] != (self.n[-1] - 1) * 2 + 1
+            ):
+                raise ValueError(
+                    "The last dimension of the shape must match"
+                    f" {(self.n[-1] - 1) * 2} or {(self.n[-1] - 1) * 2 + 1} not"
+                    f" {shape[-1]}."
+                )
+
+        p1 = []
+        p2 = []
+        n = []
+        for i in range(self.region.ndim):
+            if self.n[i] == 1:
+                p1.append(0)
+                p2.append(1 / self.cell[i])
+                n.append(1)
+            else:
+                freqs = np.fft.fftshift(np.fft.fftfreq(self.n[i], self.cell[i]))
+                # Shift the region boundaries to get the correct coordinates of
+                # mesh cells.
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+                n.append(len(freqs))
+
+        if rfft:
+            # last frequency is different for rfft
+            if shape is not None:
+                freqs = np.fft.fftshift(np.fft.fftfreq(shape[-1], self.cell[-1]))
+            else:
+                freqs = np.fft.fftshift(
+                    np.fft.fftfreq((self.n[-1] - 1) * 2, self.cell[-1])
+                )
+            dfreq = (freqs[1] - freqs[0]) / 2
+            p1[-1] = min(freqs) - dfreq
+            p2[-1] = max(freqs) + dfreq
+            n[-1] = len(freqs)
+
+        kdims = [d[2:] for d in self.region.dims]
+        kunits = [u[1:-4] for u in self.region.units]
+        # TODO: ktol
+        region = df.Region(p1=p1, p2=p2, dims=kdims, units=kunits)
+        # TODO: subregions
+        mesh = df.Mesh(region=region, n=n)
+
+        return mesh
