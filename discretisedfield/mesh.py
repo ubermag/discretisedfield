@@ -2201,4 +2201,6 @@ class Mesh(_MeshIO):
         # TODO: subregions
         mesh = df.Mesh(region=region, n=n)
 
+        mesh = mesh.translate(-mesh.region.center)
+
         return mesh
