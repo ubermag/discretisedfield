@@ -3444,19 +3444,31 @@ class Field(_FieldIO):
         -------
         discretisedfield.Field
         """
-        mesh = self._fft_mesh()
+        mesh = self.mesh.fftn()
 
-        values = []
-        for idx in range(self.nvdim):
-            ft = np.fft.fftshift(np.fft.fftn(self.array[..., idx].squeeze()))
-            values.append(ft.reshape(mesh.n))
+        axes = range(self.mesh.region.ndim)
+        ft = np.fft.fftshift(
+            np.fft.fftn(self.array, axes=axes),
+            axes=axes,
+        )
+
+        if self.vdims is not None:
+            ft_vdims = [f"ft_{vdim}" for vdim in self.vdims]
+
+            ft_vdim_mapping = {}
+            for vdim, ft_vdim in zip(self.vdims, ft_vdims):
+                ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
+        else:
+            ft_vdims = None
+            ft_vdim_mapping = None
 
         return self.__class__(
             mesh,
-            nvdim=len(values),
-            value=np.stack(values, axis=3),
-            vdims=self.vdims,
-            # TODO vdim_mapping with fft_mesh dims
+            nvdim=self.nvdim,
+            value=ft,
+            vdims=ft_vdims,
+            unit=self.unit,
+            vdim_mapping=ft_vdim_mapping,
         )
 
     def ifftn(self):
@@ -3466,116 +3478,95 @@ class Field(_FieldIO):
         -------
         discretisedfield.Field
         """
-        mesh = self.mesh.attributes["realspace_mesh"]
-        if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
-            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
+        mesh = self.mesh.ifftn()
 
-        values = []
-        for idx in range(self.nvdim):
-            ft = np.fft.ifftn(np.fft.ifftshift(self.array[..., idx].squeeze()))
-            values.append(ft.reshape(mesh.n))
+        axes = np.arange(self.mesh.region.ndim)
+        ft = np.fft.ifftn(
+            np.fft.ifftshift(self.array, axes=axes),
+            axes=axes,
+        )
+
+        if self.vdims is not None:
+            vdims = [ftvdim[3:] for ftvdim in self.vdims]
+
+            vdim_mapping = {}
+            for vdim, ft_vdim in zip(vdims, self.vdims):
+                vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
+        else:
+            vdims = None
+            vdim_mapping = None
 
         return self.__class__(
             mesh,
-            nvdim=len(values),
-            value=np.stack(values, axis=3),
-            vdims=self.vdims,
-            # TODO vdim_mapping
+            nvdim=self.nvdim,
+            value=ft,
+            vdims=vdims,
+            unit=self.unit,
+            vdim_mapping=vdim_mapping,
         )
 
     def rfftn(self):
-        """Real Fourier transform.
+        mesh = self.mesh.fftn(rfft=True)
 
-        Returns
-        -------
-        discretisedfield.Field
-        """
-        mesh = self._fft_mesh(rfft=True)
+        axes = np.arange(self.mesh.region.ndim)
+        ft = np.fft.fftshift(
+            np.fft.rfftn(self.array, axes=axes),
+            axes=axes,
+        )
 
-        values = []
-        for idx in range(self.nvdim):
-            array = self.array[..., idx].squeeze()
-            # no shifting for the last axis
-            ft = np.fft.fftshift(np.fft.rfftn(array), axes=range(len(array.shape) - 1))
-            values.append(ft.reshape(mesh.n))
+        if self.vdims is not None:
+            ft_vdims = [f"ft_{vdim}" for vdim in self.vdims]
+
+            ft_vdim_mapping = {}
+            for vdim, ft_vdim in zip(self.vdims, ft_vdims):
+                ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
+        else:
+            ft_vdims = None
+            ft_vdim_mapping = None
 
         return self.__class__(
             mesh,
-            nvdim=len(values),
-            value=np.stack(values, axis=3),
-            vdims=self.vdims,
-            # TODO vdim_mapping
+            nvdim=self.nvdim,
+            value=ft,
+            vdims=ft_vdims,
+            unit=self.unit,
+            vdim_mapping=ft_vdim_mapping,
         )
 
-    def irfftn(self):
+    def irfftn(self, shape=None):
         """Inverse real Fourier transform.
 
         Returns
         -------
         discretisedfield.Field
         """
-        mesh = self.mesh.attributes["realspace_mesh"]
-        if self.mesh.attributes["isplane"] and not mesh.attributes["isplane"]:
-            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
+        mesh = self.mesh.ifftn(rfft=True, shape=shape)
 
-        values = []
-        for idx in range(self.nvdim):
-            array = self.array[..., idx].squeeze()
-            ft = np.fft.irfftn(
-                np.fft.ifftshift(array, axes=range(len(array.shape) - 1)),
-                s=[i for i in mesh.n if i > 1],
-            )
-            values.append(ft.reshape(mesh.n))
+        axes = range(self.mesh.region.ndim)
+        ft = np.fft.irfftn(
+            np.fft.ifftshift(self.array, axes=axes),
+            axes=axes,
+            s=shape,
+        )
+
+        if self.vdims is not None:
+            vdims = [ftvdim[3:] for ftvdim in self.vdims]
+
+            vdim_mapping = {}
+            for vdim, ft_vdim in zip(vdims, self.vdims):
+                vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
+        else:
+            vdims = None
+            vdim_mapping = None
 
         return self.__class__(
             mesh,
-            nvdim=len(values),
-            value=np.stack(values, axis=3),
-            vdims=self.vdims,
-            # TODO vdim_mapping
+            nvdim=self.nvdim,
+            value=ft,
+            vdims=vdims,
+            unit=self.unit,
+            vdim_mapping=vdim_mapping,
         )
-
-    def _fft_mesh(self, rfft=False):
-        """FFT can be one of fftfreq, rfftfreq."""
-        p1 = []
-        p2 = []
-        n = []
-        for i in range(3):
-            if self.mesh.n[i] == 1:
-                p1.append(0)
-                p2.append(1 / self.mesh.cell[i])
-                n.append(1)
-            else:
-                freqs = np.fft.fftshift(
-                    np.fft.fftfreq(self.mesh.n[i], self.mesh.cell[i])
-                )
-                # Shift the region boundaries to get the correct coordinates of
-                # mesh cells.
-                dfreq = (freqs[1] - freqs[0]) / 2
-                p1.append(min(freqs) - dfreq)
-                p2.append(max(freqs) + dfreq)
-                n.append(len(freqs))
-
-        if rfft:
-            # last frequency is different for rfft
-            for i in [2, 1, 0]:
-                if self.mesh.n[i] > 1:
-                    freqs = np.fft.rfftfreq(self.mesh.n[i], self.mesh.cell[i])
-                    dfreq = (freqs[1] - freqs[0]) / 2
-                    p1[i] = min(freqs) - dfreq
-                    p2[i] = max(freqs) + dfreq
-                    n[i] = len(freqs)
-                    break
-
-        # TODO: Using PlaneMesh will simplify the code a lot here.
-        mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        if self.mesh.attributes["isplane"]:
-            mesh = mesh.plane(self.mesh.region.dims[self.mesh.attributes["planeaxis"]])
-
-        mesh.attributes["realspace_mesh"] = self.mesh
-        mesh.attributes["fourierspace"] = True
-        mesh.attributes["unit"] = rf'({mesh.attributes["unit"]})$^{{-1}}$'
-        return mesh
 
     @property
     def real(self):

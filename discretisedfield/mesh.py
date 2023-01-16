@@ -2114,7 +2114,7 @@ class Mesh(_MeshIO):
                 p2.append(max(freqs) + dfreq)
                 n.append(len(freqs))
 
-        if rfft:
+        if rfft and self.n[-1] != 1:
             # last frequency is different for rfft
             freqs = np.fft.rfftfreq(self.n[-1], self.cell[-1])
             dfreq = (freqs[1] - freqs[0]) / 2
@@ -2181,7 +2181,7 @@ class Mesh(_MeshIO):
                 p2.append(max(freqs) + dfreq)
                 n.append(len(freqs))
 
-        if rfft:
+        if rfft and self.n[-1] != 1:
             # last frequency is different for rfft
             if shape is not None:
                 freqs = np.fft.fftshift(np.fft.fftfreq(shape[-1], self.cell[-1]))
