@@ -2204,7 +2204,7 @@ class Field(_FieldIO):
 
         Computing of the directional derivative depends
         strongly on the boundary condition specified. In this method,
-        only periodic boundary conditions are supported at the edges of the region
+        only periodic boundary conditions at the edges of the region
         are supported. To enable periodic boundary conditions, set ``periodic_bc`` to
         ``True``.
 
