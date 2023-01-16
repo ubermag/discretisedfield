@@ -548,7 +548,7 @@ def test_allclose_cell_accuracy():
     n = int(1e13)
     mesh1 = df.Mesh(p1=0, p2=1, n=n)
     mesh2 = df.Mesh(p1=eps, p2=1 + eps, n=n)
-    # FIXME the two meshes are shifted by 10 cells but this cannot be dectected with
+    # NOTE the two meshes are shifted by 10 cells but this cannot be dectected with
     # the default tolerance settings
     assert mesh1.allclose(mesh2)
     # Setting atol=0 solves the problem
