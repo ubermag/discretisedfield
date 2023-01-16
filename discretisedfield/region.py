@@ -793,7 +793,13 @@ class Region(_RegionIO):
             self._pmax = pmax
             return self
         else:
-            return self.__class__(p1=pmin, p2=pmax, dims=self.dims, units=self.units)
+            return self.__class__(
+                p1=pmin,
+                p2=pmax,
+                dims=self.dims,
+                units=self.units,
+                tolerance_factor=self.tolerance_factor,
+            )
 
     def translate(self, vector, inplace=False):
         """Translate the region.
@@ -877,6 +883,7 @@ class Region(_RegionIO):
                 p2=np.add(self.pmax, vector),
                 dims=self.dims,
                 units=self.units,
+                tolerance_factor=self.tolerance_factor,
             )
 
     def allclose(

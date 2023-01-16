@@ -1304,7 +1304,16 @@ class Mesh(_MeshIO):
         p2_idx = (np.ceil((item.pmax - self.region.pmin) / self.cell) - 1).astype(int)
         p2 = np.add(self.index2point(p2_idx), hc)
 
-        return self.__class__(region=df.Region(p1=p1, p2=p2), cell=self.cell)
+        return self.__class__(
+            region=df.Region(
+                p1=p1,
+                p2=p2,
+                dims=self.region.dims,
+                units=self.region.units,
+                tolerance_factor=self.region.tolerance_factor,
+            ),
+            cell=self.cell,
+        )
 
     def pad(self, pad_width):
         """Mesh padding.
@@ -1362,7 +1371,17 @@ class Mesh(_MeshIO):
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
-        return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
+        return self.__class__(
+            region=df.Region(
+                p1=pmin,
+                p2=pmax,
+                dims=self.region.dims,
+                units=self.region.units,
+                tolerance_factor=self.region.tolerance_factor,
+            ),
+            cell=self.cell,
+            bc=self.bc,
+        )
 
     def __getattr__(self, attr):
         """Extracting the discretisation in a particular direction.
