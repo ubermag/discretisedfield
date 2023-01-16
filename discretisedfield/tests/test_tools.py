@@ -159,7 +159,7 @@ def test_demag_tensor():
     # - an additional minus sign in the tensor definiton
     # - the tensor is in fourier space
     # - the tensor is padded as required for the calculation of the demag field
-    rtensor = -tensor.ifftn.real[
+    rtensor = -tensor.ifftn().real[
         df.Region(p1=(-0.5 + 1e-12, -0.5 + 1e-12, -0.5), p2=(19.5, 9.5, 2.5))
     ]
     # the tensor computed with oommf is obtained with Oxs_SimpleDemag

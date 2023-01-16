@@ -3472,7 +3472,8 @@ class Field(_FieldIO):
 
             ft_vdim_mapping = {}
             for vdim, ft_vdim in zip(self.vdims, ft_vdims):
-                ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
+                if vdim in self.vdim_mapping.keys():
+                    ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
         else:
             ft_vdims = None
             ft_vdim_mapping = None
@@ -3523,7 +3524,8 @@ class Field(_FieldIO):
 
             vdim_mapping = {}
             for vdim, ft_vdim in zip(vdims, self.vdims):
-                vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
+                if ft_vdim in self.vdim_mapping.keys():
+                    vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
         else:
             vdims = None
             vdim_mapping = None
@@ -3574,7 +3576,8 @@ class Field(_FieldIO):
 
             ft_vdim_mapping = {}
             for vdim, ft_vdim in zip(self.vdims, ft_vdims):
-                ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
+                if vdim in self.vdim_mapping.keys():
+                    ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
         else:
             ft_vdims = None
             ft_vdim_mapping = None
@@ -3635,7 +3638,8 @@ class Field(_FieldIO):
 
             vdim_mapping = {}
             for vdim, ft_vdim in zip(vdims, self.vdims):
-                vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
+                if ft_vdim in self.vdim_mapping.keys():
+                    vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
         else:
             vdims = None
             vdim_mapping = None

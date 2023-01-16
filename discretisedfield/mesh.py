@@ -2052,7 +2052,7 @@ class Mesh(_MeshIO):
         return field
 
     def fftn(self, rfft=False):
-        """FFT
+        """Fourier transform
 
         N dimentional discrete FFT of the mesh.
 
@@ -2132,11 +2132,11 @@ class Mesh(_MeshIO):
         return mesh
 
     def ifftn(self, rfft=False, shape=None):
-        """iFFT
+        """Inverse Fourier transform
 
         N dimentional discrete inverse FFT of the mesh.
 
-        If rfft is ``True`` and shape is not ``None``, the shape of the original mesh
+        If rfft is ``True`` and shape is ``None``, the shape of the original mesh
         is assumed to be even in the last dimension.
 
         Parameters
@@ -2182,7 +2182,6 @@ class Mesh(_MeshIO):
         array([-5])
         >>> ifft_mesh.region.pmax
         array([5])
-
 
         """
         if shape is not None:
