@@ -735,6 +735,23 @@ def test_point2index_boundaries():
     assert mesh.point2index(0) == 0
     assert mesh.point2index(10) == 9
 
+    # Check with floating-point accuracy
+    point = -mesh.region.tolerance_factor
+    assert mesh.point2index(point) == 0
+
+    # tolerance_factor is internally multiplied by min(edges)=10
+    point = -20 * mesh.region.tolerance_factor
+    with pytest.raises(ValueError):
+        mesh.point2index(point)
+
+    point = 10 + mesh.region.tolerance_factor
+    assert mesh.point2index(point) == 9
+
+    point = 10 + 20 * mesh.region.tolerance_factor
+    print(point, point in mesh.region)
+    with pytest.raises(ValueError):
+        mesh.point2index(point)
+
     # Check out of bounds
     with pytest.raises(ValueError):
         mesh.point2index(-10)
