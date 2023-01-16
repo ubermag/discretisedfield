@@ -2052,7 +2052,51 @@ class Mesh(_MeshIO):
         return field
 
     def fftn(self, rfft=False):
-        """FFT can be one of fftfreq, rfftfreq."""
+        """FFTn
+
+        N dimentional discrete FFT of the mesh.
+
+        Parameters
+        ----------
+        rfft : bool, optional
+
+            If ``True``, the a real FFT is performed. Defaults to ``False``.
+
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Fourier transform of the mesh.
+
+
+        Examples
+        --------
+        1. Create a mesh and perform a FFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> fft_mesh = mesh.fftn()
+        >>> fft_mesh.n
+        array([5])
+        >>> fft_mesh.cell
+        array([0.1])
+        >>> fft_mesh.region.pmin
+        array([-0.25])
+        >>> fft_mesh.region.pmax
+        array([0.25])
+
+        1. Perform a real FFT.
+        >>> fft_mesh = mesh.fftn(rfft=True)
+        >>> fft_mesh.n
+        array([3])
+        >>> fft_mesh.cell
+        array([0.1])
+        >>> fft_mesh.region.pmin
+        array([-0.05])
+        >>> fft_mesh.region.pmax
+        array([0.25])
+
+        """
         p1 = []
         p2 = []
         n = []
