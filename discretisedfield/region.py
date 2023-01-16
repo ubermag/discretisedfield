@@ -592,13 +592,14 @@ class Region(_RegionIO):
 
         """
         if isinstance(other, (numbers.Real, collections.abc.Iterable)):
-            tol = np.min(self.edges) * self.tolerance_factor
+            atol = np.min(self.edges) * self.tolerance_factor
+            rtol = self.tolerance_factor
             return np.all(
                 np.logical_and(
                     np.less_equal(self.pmin, other)
-                    | np.isclose(self.pmin, other, rtol=tol, atol=tol),
+                    | np.isclose(self.pmin, other, rtol=rtol, atol=atol),
                     np.greater_equal(self.pmax, other)
-                    | np.isclose(self.pmax, other, rtol=tol, atol=tol),
+                    | np.isclose(self.pmax, other, rtol=rtol, atol=atol),
                 )
             )
         if isinstance(other, self.__class__):
