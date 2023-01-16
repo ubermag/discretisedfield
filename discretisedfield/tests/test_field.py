@@ -2738,33 +2738,33 @@ def test_fft():
     f = df.Field(mesh, nvdim=3, value=_init_random, norm=1)
 
     # 3d fft
-    assert f.allclose(f.fftn.ifftn.real)
-    assert df.Field(mesh, nvdim=3).allclose(f.fftn.ifftn.imag)
+    assert f.allclose(f.fftn().ifftn().real)
+    assert df.Field(mesh, nvdim=3).allclose(f.fftn().ifftn().imag)
 
-    assert f.allclose(f.rfftn.irfftn)
+    assert f.allclose(f.rfftn().irfftn())
 
     # 2d fft
     for i in ["x", "y", "z"]:
         plane = f.sel(i)
-        assert plane.allclose(plane.fftn.ifftn.real)
-        assert df.Field(mesh, nvdim=3).plane(i).allclose(plane.fftn.ifftn.imag)
+        assert plane.allclose(plane.fftn().ifftn().real)
+        assert df.Field(mesh, nvdim=3).plane(i).allclose(plane.fftn().ifftn().imag)
 
-        assert plane.allclose(plane.rfftn.irfftn)
+        assert plane.allclose(plane.rfftn().irfftn())
 
     # Fourier slice theoreme
     for i in "xyz":
         plane = f.integrate(i)
-        assert plane.allclose(f.fftn.plane(**{i: 0}).ifftn.real)
+        assert plane.allclose(f.fftn().plane(**{i: 0}).ifftn().real)
         assert (
             df.Field(mesh, nvdim=3)
             .integrate(i)
-            .allclose(f.fftn.plane(**{i: 0}).ifftn.imag)
+            .allclose(f.fftn().plane(**{i: 0}).ifftn().imag)
         )
 
-    assert f.integrate("x").allclose(f.rfftn.sel(x=0).irfftn)
-    assert f.integrate("y").allclose(f.rfftn.sel(y=0).irfftn)
+    assert f.integrate("x").allclose(f.rfftn().sel(x=0).irfftn())
+    assert f.integrate("y").allclose(f.rfftn().sel(y=0).irfftn())
     # plane along z removes rfftn-freq axis => needs ifftn
-    assert f.integrate("z").allclose(f.rfftn.sel(z=0).ifftn.real)
+    assert f.integrate("z").allclose(f.rfftn().sel(z=0).ifftn().real)
 
 
 def test_mpl_scalar(test_field):
