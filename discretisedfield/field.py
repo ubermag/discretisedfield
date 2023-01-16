@@ -3438,11 +3438,26 @@ class Field(_FieldIO):
     def fftn(self):
         """Fourier transform.
 
-        Computes 3D FFT for "normal" fields, 2D FFT if the field is sliced.
+        N dimentional discrete FFT of the field.
 
         Returns
         -------
         discretisedfield.Field
+
+            Fourier transformed field.
+
+        Examples
+        --------
+        1. Create a mesh and perform a FFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> fft_field = field.fftn()
+        >>> fft_field.nvdim
+        array([3])
+        >>> fft_field.vdims
+        ('ft_x', 'ft_y', 'ft_z')
+
         """
         mesh = self.mesh.fftn()
 
@@ -3474,9 +3489,26 @@ class Field(_FieldIO):
     def ifftn(self):
         """Inverse Fourier transform.
 
+        N dimentional discrete inverse FFT of the field.
+
         Returns
         -------
         discretisedfield.Field
+
+            Inverse Fourier transformed field.
+
+        Examples
+        --------
+        1. Create a mesh and perform an iFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> ifft_field = field.fftn().ifftn()
+        >>> ifft_field.nvdim
+        array([3])
+        >>> ifft_field.vdims
+        ('x', 'y', 'z')
+
         """
         mesh = self.mesh.ifftn()
 
@@ -3506,6 +3538,29 @@ class Field(_FieldIO):
         )
 
     def rfftn(self):
+        """Real Fourier transform.
+
+        N dimentional discrete real FFT of the field.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            Fourier transformed field.
+
+        Examples
+        --------
+        1. Create a mesh and perform a FFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> fft_field = field.fftn()
+        >>> fft_field.nvdim
+        array([3])
+        >>> fft_field.vdims
+        ('ft_x', 'ft_y', 'ft_z')
+
+        """
         mesh = self.mesh.fftn(rfft=True)
 
         axes = np.arange(self.mesh.region.ndim)
@@ -3536,9 +3591,35 @@ class Field(_FieldIO):
     def irfftn(self, shape=None):
         """Inverse real Fourier transform.
 
+        N dimentional discrete inverse real FFT of the field.
+
+        Shape is ``None``, the shape of the original mesh
+        is assumed to be even in the last dimension.
+
+        Parameters
+        ----------
+        shape : (tuple, np.ndarray, list), optional
+
+            Shape of the original mesh. Defaults to ``None``.
+
         Returns
         -------
         discretisedfield.Field
+
+            Inverse Fourier transformed field.
+
+        Examples
+        --------
+        1. Create a mesh and perform an iFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> ifft_field = field.fftn().ifftn()
+        >>> ifft_field.nvdim
+        array([3])
+        >>> ifft_field.vdims
+        ('x', 'y', 'z')
+
         """
         mesh = self.mesh.ifftn(rfft=True, shape=shape)
 

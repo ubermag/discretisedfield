@@ -2052,7 +2052,7 @@ class Mesh(_MeshIO):
         return field
 
     def fftn(self, rfft=False):
-        """FFTn
+        """FFT
 
         N dimentional discrete FFT of the mesh.
 
@@ -2132,7 +2132,59 @@ class Mesh(_MeshIO):
         return mesh
 
     def ifftn(self, rfft=False, shape=None):
-        """FFT can be one of fftfreq, rfftfreq."""
+        """iFFT
+
+        N dimentional discrete inverse FFT of the mesh.
+
+        If rfft is ``True`` and shape is not ``None``, the shape of the original mesh
+        is assumed to be even in the last dimension.
+
+        Parameters
+        ----------
+        rfft : bool, optional
+
+            If ``True``, the a real FFT is performed. Defaults to ``False``.
+
+        shape : (tuple, np.ndarray, list), optional
+
+            Shape of the original mesh. Defaults to ``None``.
+
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Inverse Fourier transform of the mesh.
+
+
+        Examples
+        --------
+        1. Create a mesh and perform an iFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> ifft_mesh = mesh.fftn().ifftn()
+        >>> ifft_mesh.n
+        array([5])
+        >>> ifft_mesh.cell
+        array([2])
+        >>> ifft_mesh.region.pmin
+        array([-5])
+        >>> ifft_mesh.region.pmax
+        array([5])
+
+        1. Perform a real iFFT.
+        >>> ifft_mesh = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+        >>> ifft_mesh.n
+        array([5])
+        >>> ifft_mesh.cell
+        array([2])
+        >>> ifft_mesh.region.pmin
+        array([-5])
+        >>> ifft_mesh.region.pmax
+        array([5])
+
+
+        """
         if shape is not None:
             if isinstance(shape, numbers.Number):
                 shape = (shape,)
