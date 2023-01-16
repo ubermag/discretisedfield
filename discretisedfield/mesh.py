@@ -2201,6 +2201,7 @@ class Mesh(_MeshIO):
         # TODO: subregions
         mesh = df.Mesh(region=region, n=n)
 
+        # Shift the center of the mesh to the origin.
         mesh = mesh.translate(-mesh.region.center)
 
         return mesh
