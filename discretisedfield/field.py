@@ -3614,7 +3614,7 @@ class Field(_FieldIO):
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
-        >>> ifft_field = field.fftn().ifftn()
+        >>> ifft_field = field.rfftn().irfftn(shape=mesh.n)
         >>> ifft_field.nvdim
         array([3])
         >>> ifft_field.vdims
