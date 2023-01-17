@@ -1705,8 +1705,8 @@ def test_fftn_mesh():
     assert mesh_fft.region.units == ("(m)^-1", "(m)^-1", "(m)^-1")
     assert np.array_equal(mesh_fft.n, (20, 20, 10))
     assert np.allclose(mesh_fft.cell, (0.05, 0.05, 0.1))
-    assert np.array_equal(mesh_fft.region.pmin, (-0.525, -0.525, -0.55))
-    assert np.array_equal(mesh_fft.region.pmax, (0.475, 0.475, 0.45))
+    assert np.allclose(mesh_fft.region.pmin, (-0.525, -0.525, -0.55))
+    assert np.allclose(mesh_fft.region.pmax, (0.475, 0.475, 0.45))
 
     mesh_fft = mesh.fftn(rfft=True)
 
@@ -1770,8 +1770,8 @@ def test_fftn_mesh():
     assert mesh_fft.region.units == ("(m)^-1",)
     assert np.array_equal(mesh_fft.n, (20,))
     assert np.allclose(mesh_fft.cell, 0.05)
-    assert np.array_equal(mesh_fft.region.pmin, (-0.525,))
-    assert np.array_equal(mesh_fft.region.pmax, (0.475,))
+    assert np.allclose(mesh_fft.region.pmin, (-0.525,))
+    assert np.allclose(mesh_fft.region.pmax, (0.475,))
 
     mesh_fft = mesh.fftn(rfft=True)
     assert mesh_fft.region.ndim == 1
@@ -1779,8 +1779,8 @@ def test_fftn_mesh():
     assert mesh_fft.region.units == ("(m)^-1",)
     assert np.array_equal(mesh_fft.n, (11,))
     assert np.allclose(mesh_fft.cell, 0.05)
-    assert np.array_equal(mesh_fft.region.pmin, (-0.025,))
-    assert np.array_equal(mesh_fft.region.pmax, (0.525,))
+    assert np.allclose(mesh_fft.region.pmin, (-0.025,))
+    assert np.allclose(mesh_fft.region.pmax, (0.525,))
 
     mesh_fft = mesh.fftn().ifftn()
     assert mesh_fft.region.ndim == 1

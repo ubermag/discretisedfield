@@ -2116,17 +2116,23 @@ class Mesh(_MeshIO):
 
         if rfft and self.n[-1] != 1:
             # last frequency is different for rfft
-            freqs = np.fft.rfftfreq(self.n[-1], self.cell[-1])
+            freqs = np.fft.fftshift(np.fft.rfftfreq(self.n[-1], self.cell[-1]))
             dfreq = (freqs[1] - freqs[0]) / 2
             p1[-1] = min(freqs) - dfreq
             p2[-1] = max(freqs) + dfreq
             n[-1] = len(freqs)
 
-        kdims = ["k_" + d for d in self.region.dims]
-        kunits = ["(" + u + ")^-1" for u in self.region.units]
-        # TODO: ktol
-        region = df.Region(p1=p1, p2=p2, dims=kdims, units=kunits)
-        # TODO: subregions
+        kdims = [f"k_{d}" for d in self.region.dims]
+        kunits = [f"({u})^-1" for u in self.region.units]
+        region = df.Region(
+            p1=p1,
+            p2=p2,
+            dims=kdims,
+            units=kunits,
+            tolerance_factor=self.region.tolerance_factor,
+        )
+        # Subregions cannot be kept as we loose the information about the
+        # translation and size of the original subregions.
         mesh = df.Mesh(region=region, n=n)
 
         return mesh
@@ -2189,6 +2195,11 @@ class Mesh(_MeshIO):
                 shape = (shape,)
 
             if isinstance(shape, (tuple, list, np.ndarray)):
+                if len(shape) != self.region.ndim:
+                    raise ValueError(
+                        "The shape must have the same number of dimensions as the mesh"
+                        f" ({self.region.ndim=})."
+                    )
                 if not np.array_equal(shape[:-1], self.n[:-1]):
                     raise ValueError(
                         f"The shape apart from the last dimension must match {self.n=}."
@@ -2198,13 +2209,6 @@ class Mesh(_MeshIO):
                     "Expected shape to be either int, tuple, list or np.ndarray but got"
                     f" {type(shape)}."
                 )
-
-            if len(shape) != self.region.ndim:
-                raise ValueError(
-                    "The shape must have the same number of dimensions as the mesh"
-                    f" ({self.region.ndim=})."
-                )
-
             if (
                 shape[-1] != (self.n[-1] - 1) * 2
                 and shape[-1] != (self.n[-1] - 1) * 2 + 1
@@ -2214,17 +2218,21 @@ class Mesh(_MeshIO):
                     f" {(self.n[-1] - 1) * 2} or {(self.n[-1] - 1) * 2 + 1} not"
                     f" {shape[-1]}."
                 )
+        else:
+            shape = self.n.copy()
+            if rfft:
+                shape[-1] = (self.n[-1] - 1) * 2
 
         p1 = []
         p2 = []
         n = []
         for i in range(self.region.ndim):
-            if self.n[i] == 1:
+            if shape[i] == 1:
                 p1.append(0)
                 p2.append(1 / self.cell[i])
                 n.append(1)
             else:
-                freqs = np.fft.fftshift(np.fft.fftfreq(self.n[i], self.cell[i]))
+                freqs = np.fft.fftshift(np.fft.fftfreq(shape[i], self.cell[i]))
                 # Shift the region boundaries to get the correct coordinates of
                 # mesh cells.
                 dfreq = (freqs[1] - freqs[0]) / 2
@@ -2232,27 +2240,22 @@ class Mesh(_MeshIO):
                 p2.append(max(freqs) + dfreq)
                 n.append(len(freqs))
 
-        if rfft and self.n[-1] != 1:
-            # last frequency is different for rfft
-            if shape is not None:
-                freqs = np.fft.fftshift(np.fft.fftfreq(shape[-1], self.cell[-1]))
-            else:
-                freqs = np.fft.fftshift(
-                    np.fft.fftfreq((self.n[-1] - 1) * 2, self.cell[-1])
-                )
-            dfreq = (freqs[1] - freqs[0]) / 2
-            p1[-1] = min(freqs) - dfreq
-            p2[-1] = max(freqs) + dfreq
-            n[-1] = len(freqs)
+        kdims = [d[2:] for d in self.region.dims if d[:2] == "k_"]
+        kunits = [
+            u[1:-4] for u in self.region.units if u[:1] == "(" and u[-4:] == ")^-1"
+        ]
 
-        kdims = [d[2:] for d in self.region.dims]
-        kunits = [u[1:-4] for u in self.region.units]
-        # TODO: ktol
-        region = df.Region(p1=p1, p2=p2, dims=kdims, units=kunits)
-        # TODO: subregions
+        region = df.Region(
+            p1=p1,
+            p2=p2,
+            dims=kdims,
+            units=kunits,
+            tolerance_factor=self.region.tolerance_factor,
+        )
+
         mesh = df.Mesh(region=region, n=n)
 
         # Shift the center of the mesh to the origin.
-        mesh = mesh.translate(-mesh.region.center)
+        mesh.translate(-mesh.region.center, inplace=True)
 
         return mesh
