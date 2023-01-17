@@ -3465,25 +3465,7 @@ class Field(_FieldIO):
             axes=axes,
         )
 
-        if self.vdims is not None:
-            ft_vdims = [f"ft_{vdim}" for vdim in self.vdims]
-
-            ft_vdim_mapping = {}
-            for vdim, ft_vdim in zip(self.vdims, ft_vdims):
-                if vdim in self.vdim_mapping.keys():
-                    ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
-        else:
-            ft_vdims = None
-            ft_vdim_mapping = None
-
-        return self.__class__(
-            mesh,
-            nvdim=self.nvdim,
-            value=ft,
-            vdims=ft_vdims,
-            unit=self.unit,
-            vdim_mapping=ft_vdim_mapping,
-        )
+        return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def ifftn(self):
         """N dimentional discrete inverse FFT of the field.
@@ -3515,25 +3497,7 @@ class Field(_FieldIO):
             axes=axes,
         )
 
-        if self.vdims is not None:
-            vdims = [ftvdim[3:] for ftvdim in self.vdims]
-
-            vdim_mapping = {}
-            for vdim, ft_vdim in zip(vdims, self.vdims):
-                if ft_vdim in self.vdim_mapping.keys():
-                    vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
-        else:
-            vdims = None
-            vdim_mapping = None
-
-        return self.__class__(
-            mesh,
-            nvdim=self.nvdim,
-            value=ft,
-            vdims=vdims,
-            unit=self.unit,
-            vdim_mapping=vdim_mapping,
-        )
+        return self._fftn(mesh=mesh, array=ft, ifftn=True)
 
     def rfftn(self):
         """N dimentional discrete real FFT of the field.
@@ -3565,26 +3529,7 @@ class Field(_FieldIO):
             axes=axes,
         )
 
-        # TODO: Put into private method.
-        if self.vdims is not None:
-            ft_vdims = [f"ft_{vdim}" for vdim in self.vdims]
-
-            ft_vdim_mapping = {}
-            for vdim, ft_vdim in zip(self.vdims, ft_vdims):
-                if vdim in self.vdim_mapping.keys():
-                    ft_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
-        else:
-            ft_vdims = None
-            ft_vdim_mapping = None
-
-        return self.__class__(
-            mesh,
-            nvdim=self.nvdim,
-            value=ft,
-            vdims=ft_vdims,
-            unit=self.unit,
-            vdim_mapping=ft_vdim_mapping,
-        )
+        return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def irfftn(self, shape=None):
         """N dimentional discrete inverse real FFT of the field.
@@ -3626,24 +3571,44 @@ class Field(_FieldIO):
             s=shape,
         )
 
-        if self.vdims is not None:
-            vdims = [ftvdim[3:] for ftvdim in self.vdims]
+        return self._fftn(mesh=mesh, array=ft, ifftn=True)
 
-            vdim_mapping = {}
-            for vdim, ft_vdim in zip(vdims, self.vdims):
-                if ft_vdim in self.vdim_mapping.keys():
-                    vdim_mapping[vdim] = self.vdim_mapping[ft_vdim][2:]
+    def _fftn(self, mesh, array, ifftn=False):
+        if ifftn:
+            if self.vdims is not None:
+                new_vdims = [ftvdim[3:] for ftvdim in self.vdims if ftvdim[:3] == "ft_"]
+
+                new_vdim_mapping = {}
+                for vdim, ft_vdim in zip(new_vdims, self.vdims):
+                    if ft_vdim in self.vdim_mapping.keys():
+                        new_vdim_mapping[vdim] = (
+                            self.vdim_mapping[ft_vdim][2:]
+                            if self.vdim_mapping[ft_vdim][:2] == "k_"
+                            else self.vdim_mapping[ft_vdim]
+                        )
+            else:
+                new_vdims = None
+                new_vdim_mapping = None
+
         else:
-            vdims = None
-            vdim_mapping = None
+            if self.vdims is not None:
+                new_vdims = [f"ft_{vdim}" for vdim in self.vdims]
+
+                new_vdim_mapping = {}
+                for vdim, ft_vdim in zip(self.vdims, new_vdims):
+                    if vdim in self.vdim_mapping.keys():
+                        new_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
+            else:
+                new_vdims = None
+                new_vdim_mapping = None
 
         return self.__class__(
             mesh,
             nvdim=self.nvdim,
-            value=ft,
-            vdims=vdims,
+            value=array,
+            vdims=new_vdims,
             unit=self.unit,
-            vdim_mapping=vdim_mapping,
+            vdim_mapping=new_vdim_mapping,
         )
 
     @property
