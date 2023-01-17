@@ -259,7 +259,7 @@ def test_set_with_callable_scalar(valid_mesh, func, dtype):
 
     rp = random_point(f)
     # Make sure to be at the centre of the cell
-    rp = f.mesh.index2point(tuple(f.mesh.point2index(rp)))
+    rp = f.mesh.index2point(f.mesh.point2index(rp))
     assert f(rp) == func(rp)
 
 
@@ -275,7 +275,7 @@ def test_set_with_callable_vector(valid_mesh, func, dtype):
         )
 
     rp = random_point(f)
-    rp = f.mesh.index2point(tuple(f.mesh.point2index(rp)))
+    rp = f.mesh.index2point(f.mesh.point2index(rp))
     assert np.all(f(rp) == func(rp))
 
 
