@@ -494,11 +494,10 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     assert not mesh2 == "mesh2"
 
 
-@pytest.mark.xfail()
 @pytest.mark.parametrize(
     "p1_1, p1_2, p2, n1, n2",
     [
-        [5e-9, 6e-9, 10e-9, 5, 3],  # 1d
+        [(5e-9,), (6e-9,), (10e-9,), 5, 3],  # 1d
         # TODO the next test currently fails because of problems with atol=0 and
         # zero values in the test data; this has to be fixed in Mesh
         [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],  # 2d
@@ -519,27 +518,20 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     ],
 )
 def test_allclose(p1_1, p1_2, p2, n1, n2):
-    eps = 1e-12
     mesh1 = df.Mesh(p1=p1_1, p2=p2, n=n1)
-    mesh2 = df.Mesh(p1=np.array(p1_1) * 1, p2=np.array(p2) * (1 + eps), n=n1)
+    mesh2 = df.Mesh(p1=np.array(p1_1), p2=np.array(p2) * (1 + 1e-13), n=n1)
     mesh3 = df.Mesh(p1=p1_2, p2=p2, n=n1)
     mesh4 = df.Mesh(p1=p1_1, p2=p2, n=n2)
 
-    assert isinstance(mesh1, df.Mesh)
-    assert isinstance(mesh2, df.Mesh)
-    assert isinstance(mesh3, df.Mesh)
+    assert mesh1.allclose(mesh2)
 
-    assert mesh1.allclose(mesh2, atol=0)
-    # allclose from failing due
-    # to a point at/near 0.0
-    assert not mesh1.allclose(mesh3, atol=0)
-    assert mesh1.allclose(mesh2, atol=1e-8)
+    # deviation ~1e-9 is considered too large with the default tolerance_factor
+    assert not mesh1.allclose(mesh3)
     assert mesh1.allclose(mesh3, atol=1e-8)
+    mesh1.region.tolerance_factor = 1
+    assert mesh1.allclose(mesh3)
 
-    assert mesh1.allclose(mesh3, rtol=1)
-
-    with pytest.raises(ValueError):
-        mesh3.allclose(mesh4, atol=0)
+    assert not mesh3.allclose(mesh4)  # different n
 
     with pytest.raises(TypeError):
         mesh1.allclose(mesh1.region)
@@ -549,6 +541,30 @@ def test_allclose(p1_1, p1_2, p2, n1, n2):
 
     with pytest.raises(TypeError):
         mesh1.allclose(mesh3, rtol="1")
+
+
+def test_allclose_cell_accuracy():
+    eps = 1e-12
+    n = int(1e13)
+    mesh1 = df.Mesh(p1=0, p2=1, n=n)
+    mesh2 = df.Mesh(p1=eps, p2=1 + eps, n=n)
+    # NOTE the two meshes are shifted by 10 cells but this cannot be dectected with
+    # the default tolerance settings
+    assert mesh1.allclose(mesh2)
+    # Setting atol=0 solves the problem
+    assert not mesh1.allclose(mesh2, atol=0)
+    # changing region.tolerance_factor so that the final tolerance is cell * 1e-3
+    # "properly" fixes the problem
+    mesh1.region.tolerance_factor = 1e-3 * min(mesh1.cell) / min(mesh1.region.edges)
+    assert not mesh1.allclose(mesh2)
+
+    mesh3 = df.Mesh(p1=eps / 10, p2=1, n=n)
+    print(
+        mesh1.region.tolerance_factor,
+        mesh1.region.tolerance_factor * np.min(mesh1.cell),
+    )
+    assert not mesh1.allclose(mesh3)  # computed atol = 1e-29
+    assert mesh1.allclose(mesh3, atol=eps)
 
 
 def test_repr():
@@ -718,6 +734,23 @@ def test_point2index_boundaries():
     # Check inclusive boundaries
     assert mesh.point2index(0) == 0
     assert mesh.point2index(10) == 9
+
+    # Check with floating-point accuracy
+    point = -mesh.region.tolerance_factor
+    assert mesh.point2index(point) == 0
+
+    # tolerance_factor is internally multiplied by min(edges)=10
+    point = -20 * mesh.region.tolerance_factor
+    with pytest.raises(ValueError):
+        mesh.point2index(point)
+
+    point = 10 + mesh.region.tolerance_factor
+    assert mesh.point2index(point) == 9
+
+    point = 10 + 20 * mesh.region.tolerance_factor
+    print(point, point in mesh.region)
+    with pytest.raises(ValueError):
+        mesh.point2index(point)
 
     # Check out of bounds
     with pytest.raises(ValueError):

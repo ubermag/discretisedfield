@@ -1112,7 +1112,6 @@ class Field(_FieldIO):
             and np.array_equal(self.array, other.array)
         )
 
-    # TODO The mesh comparison has no tolerance.
     def allclose(self, other, rtol=1e-5, atol=1e-8):
         """Allclose method.
 
@@ -1961,8 +1960,10 @@ class Field(_FieldIO):
         for key, value in pad_width.items():
             d[self.mesh.region._dim2index(key)] = value
         padding_sequence = dfu.assemble_index((0, 0), len(self.array.shape), d)
-
         padded_array = np.pad(self.array, padding_sequence, mode=mode, **kwargs)
+
+        padding_sequence = dfu.assemble_index((0, 0), len(self.valid.shape), d)
+        padded_valid = np.pad(self.valid, padding_sequence, mode=mode, **kwargs)
         padded_mesh = self.mesh.pad(pad_width)
 
         return self.__class__(
@@ -1972,16 +1973,11 @@ class Field(_FieldIO):
             vdims=self.vdims,
             unit=self.unit,
             vdim_mapping=self.vdim_mapping,
+            valid=padded_valid,
         )
 
-    def diff_old(self, direction, order=1):
-        """Directional derivative.
-
-        This method computes a directional derivative of the field and returns
-        a field. The direction in which the derivative is computed is passed
-        via ``direction`` argument, which can be ``'x'``, ``'y'``, or ``'z'``.
-        The order of the computed derivative can be 1 or 2 and it is specified
-        using argument ``order`` and it defaults to 1.
+    def _diff_old(self, direction, order=1):
+        """Dreprecated directional derivative.
 
         This method uses second order accurate finite difference stencils by default
         unless the field is defined on a mesh with too few cells in the differential
@@ -1989,17 +1985,12 @@ class Field(_FieldIO):
         are used at the boundaries and the second order accurate finite difference
         stencils are used in the interior.
 
-        Directional derivative cannot be computed if less or equal discretisation
-        cells exists in a specified direction than the order.
-        In that case, a zero field is
-        returned. Computing of the directional derivative depends
+        Computing of the directional derivative depends
         strongly on the boundary condition specified in the mesh on which the
         field is defined on. More precisely, the values of the derivatives at
         the boundary are different for periodic, Neumann, dirichlet, or no boundary
         conditions. For details on boundary conditions, please refer to the
-        ``disretisedfield.Mesh`` class. The derivatives are computed using
-        central differences inside the sample and using forward/backward
-        differences at the boundaries.
+        ``disretisedfield.Mesh`` class.
 
         Parameters
         ----------
@@ -2023,50 +2014,6 @@ class Field(_FieldIO):
         NotImplementedError
 
             If order ``n`` higher than 2 is asked for.
-
-        Example
-        -------
-        1. Compute the first-order directional derivative of a scalar field in
-        the y-direction of a spatially varying field. For the field we choose
-        :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the
-        derivative in the y-direction to be to be a constant scalar field
-        :math:`df/dy = 3`.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (100e-9, 100e-9, 10e-9)
-        >>> cell = (10e-9, 10e-9, 10e-9)
-        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        ...
-        >>> def value_fun(point):
-        ...     x, y, z = point
-        ...     return 2*x + 3*y + -5*z
-        ...
-        >>> f = df.Field(mesh, nvdim=1, value=value_fun)
-        >>> f.diff('y').mean()  # first-order derivative by default
-        array([3.])
-
-        2. Try to compute the second-order directional derivative of the vector
-        field which has only one discretisation cell in the z-direction. For
-        the field we choose :math:`f(x, y, z) = (2x, 3y, -5z)`. Accordingly, we
-        expect the directional derivatives to be: :math:`df/dx = (2, 0, 0)`,
-        :math:`df/dy=(0, 3, 0)`, :math:`df/dz = (0, 0, -5)`. However, because
-        there is only one discretisation cell in the z-direction, the
-        derivative cannot be computed and a zero field is returned.
-
-        >>> import numpy as np
-        >>> def value_fun(point):
-        ...     x, y, z = point
-        ...     return (2*x, 3*y, -5*z)
-        ...
-        >>> f = df.Field(mesh, nvdim=3, value=value_fun)
-        >>> np.allclose(f.diff('x', order=1).mean(), [2, 0, 0])
-        True
-        >>> np.allclose(f.diff('y', order=1).mean(), [0, 3, 0])
-        True
-        >>> f.diff('z', order=1).mean()  # derivative cannot be calculated
-        array([0., 0., 0.])
 
         """
         # We tried using FinDiff for calculating the derivatives, but there
@@ -2240,7 +2187,7 @@ class Field(_FieldIO):
             vdim_mapping=self.vdim_mapping,
         )
 
-    def diff(self, direction, order=1, restrict2valid=True):
+    def diff(self, direction, order=1, restrict2valid=True, periodic_bc=False):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -2265,13 +2212,10 @@ class Field(_FieldIO):
         by setting ``restrict2valid`` to ``False``.
 
         Computing of the directional derivative depends
-        strongly on the boundary condition specified in the mesh on which the
-        field is defined on. More precisely, the values of the derivatives at
-        the boundary are different for periodic, Neumann, dirichlet, or no boundary
-        conditions. For details on boundary conditions, please refer to the
-        ``disretisedfield.Mesh`` class. The derivatives are computed using
-        central differences inside the sample and using forward/backward
-        differences at the boundaries.
+        strongly on the boundary condition specified. In this method,
+        only periodic boundary conditions at the edges of the region
+        are supported. To enable periodic boundary conditions, set ``periodic_bc`` to
+        ``True``.
 
         Parameters
         ----------
@@ -2290,6 +2234,11 @@ class Field(_FieldIO):
             contiguous areas of the field where the field is valid. If ``False``,
             the directional derivative is computed across the whole field.
             The default value is ``True``.
+
+        periodic_bc : bool
+
+            If ``True``, the directional derivative is computed using periodic
+            boundary conditions at the edges of the region.
 
         Returns
         -------
@@ -2368,38 +2317,42 @@ class Field(_FieldIO):
         if order not in (1, 2):
             raise NotImplementedError(f"Derivative of {order=} is not implemented.")
 
-        # Boundary conditions
-        if direction in self.mesh.bc:  # PBC
-            bc = "pbc"
-        elif self.mesh.bc == "":
-            bc = None
-        else:
-            bc = self.mesh.bc
-
         direction_idx = self.mesh.region._dim2index(direction)
-        out = np.zeros_like(self.array)
+
+        # If periodic is True, we pad the field
+        if periodic_bc:
+            field = self.pad({direction: (1, 1)}, mode="wrap")
+        else:
+            field = self
+
         # Use only valid values for the derivative if restrict2valid is True
         # or use all values if restrict2valid is False
-        valid = self.valid if restrict2valid else np.ones_like(self.valid, dtype=bool)
+        valid = field.valid if restrict2valid else np.ones_like(field.valid, dtype=bool)
+
+        out = np.zeros_like(field.array)
 
         # Loop over all cells in the plane perpendicular to the direction of the
         # derivative. Use sel method in a way that keeps the dimensionality but
         # only returns a single layer in the direction of the derivative
-        point = self.mesh.region.pmin[direction_idx] + self.mesh.cell[direction_idx] / 2
-        for idx in self.mesh.sel(**{direction: (point, point)}).indices:
+        point = field.mesh.region.pmin[direction_idx]
+        for idx in field.mesh.sel(**{direction: (point, point)}).indices:
             idx = list(idx)
             idx[direction_idx] = slice(None)
             valid_arr = valid[tuple(idx)]
             # Loop over all value dimensions of the vector field and
             # compute the derivative for each value dimension.
-            for dim in range(self.nvdim):
+            for dim in range(field.nvdim):
                 out[tuple([*idx, dim])] = _split_diff_combine(
-                    self.array[tuple([*idx, dim])],
+                    field.array[tuple([*idx, dim])],
                     valid_arr,
                     order,
-                    self.mesh.cell[direction_idx],
-                    bc,
+                    field.mesh.cell[direction_idx],
                 )
+
+        # Remove the padding if periodic is True
+        if periodic_bc:
+            slices = field.mesh.region2slices(self.mesh.region)
+            out = out[slices]
 
         return self.__class__(
             self.mesh,
@@ -2407,7 +2360,8 @@ class Field(_FieldIO):
             value=out,
             vdims=self.vdims,
             unit=self.unit,
-            valid=valid,
+            valid=self.valid,
+            vdim_mapping=self.vdim_mapping,
         )
 
     @property

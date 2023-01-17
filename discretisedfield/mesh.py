@@ -616,6 +616,79 @@ class Mesh(_MeshIO):
         else:
             return False
 
+    def allclose(self, other, rtol=None, atol=None):
+        """Check if the mesh is close enough to the other based on a tolerance.
+
+        This methods compares the two underlying regions using ``Region.allclose`` and
+        the number of cells ``n`` of the two meshes. The value of relative tolerance
+        (``rtol``) and absolute tolerance (``atol``) are passed on to
+        ``Region.allclose`` for the comparison. If not provided default values of
+        ``Region.allclose`` are used.
+
+        Parameters
+        ----------
+        other : discretisedfield.Mesh
+
+            The other mesh used for comparison.
+
+        rtol : numbers.Real, optional
+
+            Absolute tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the ``region.tolerance_factor``.
+
+        atol : numbers.Real, optional
+
+            Relative tolerance. If ``None``, ``region.tolerance_factor`` is used.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if other mesh is close enough, otherwise ``False``.
+
+        Raises
+        ------
+        TypeError
+
+            If the ``other`` argument is not of type ``discretisedfield.Mesh`` or if
+            ``rtol`` and ``atol`` arguments are not of type ``numbers.Real``.
+
+        ValueError
+
+            If the dimensions of the mesh and the other mesh does not match.
+
+        Example
+        -------
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (20e-9, 20e-9, 20e-9)
+        >>> n = (10, 10, 10)
+        >>> mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (20e-9 + 1.2e-12, 20e-9 + 1e-13, 20e-9 + 2e-12)
+        >>> n = (10, 10, 10)
+        >>> mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
+        ...
+        >>> mesh1.allclose(mesh2)
+        True
+        >>> mesh1.allclose(mesh2, rtol=1e-6, atol=1e-13)
+        False
+
+        """
+
+        if not isinstance(other, df.Mesh):
+            raise TypeError(
+                f"Expected argument of type discretisedfield.Mesh but got {type(other)}"
+            )
+
+        if self.region.dims != other.region.dims:
+            raise ValueError("The mesh dimensions do not match.")
+
+        return self.region.allclose(
+            other.region, rtol=rtol, atol=atol
+        ) and np.array_equal(self.n, other.n)
+
     def __repr__(self):
         """Representation string.
 
@@ -1305,7 +1378,16 @@ class Mesh(_MeshIO):
         p2_idx = (np.ceil((item.pmax - self.region.pmin) / self.cell) - 1).astype(int)
         p2 = np.add(self.index2point(p2_idx), hc)
 
-        return self.__class__(region=df.Region(p1=p1, p2=p2), cell=self.cell)
+        return self.__class__(
+            region=df.Region(
+                p1=p1,
+                p2=p2,
+                dims=self.region.dims,
+                units=self.region.units,
+                tolerance_factor=self.region.tolerance_factor,
+            ),
+            cell=self.cell,
+        )
 
     def pad(self, pad_width):
         """Mesh padding.
@@ -1363,7 +1445,17 @@ class Mesh(_MeshIO):
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]
 
-        return self.__class__(p1=pmin, p2=pmax, cell=self.cell, bc=self.bc)
+        return self.__class__(
+            region=df.Region(
+                p1=pmin,
+                p2=pmax,
+                dims=self.region.dims,
+                units=self.region.units,
+                tolerance_factor=self.region.tolerance_factor,
+            ),
+            cell=self.cell,
+            bc=self.bc,
+        )
 
     def __getattr__(self, attr):
         """Extracting the discretisation in a particular direction.
@@ -1907,95 +1999,6 @@ class Mesh(_MeshIO):
             value="z",
             description=description,
             disabled=False,
-        )
-
-    def allclose(self, other, rtol=1e-05, atol=1e-08):
-        """Check if the mesh is close enough to the other based on a tolerance.
-
-        The midpoints (``discretisedfield.Mesh.points``) along all the dimensions for
-        both meshes are compared using ``numpy.allclose``. The value of relative
-        tolerance (``rtol``) and absolute tolerance (``atol``) are passed on to
-        ``numpy.allclose`` for the comparison. If the midpoints along all
-        dimensions are close enough, the method returns ``True``
-        otherwise it returns ``False``.
-
-        Parameters
-        ----------
-        other : discretisedfield.Mesh
-
-            The other mesh used for comparison.
-
-        rtol : int, float, optional
-
-            Relative tolerance used to compare the mesh; passed on to ``numpy.allclose``
-            . It defaults to 1e-05.
-
-        atol : int, float, optional
-
-            Absolute tolerance used to compare the mesh; passed on to ``numpy.allclose``
-            . It defaults to 1e-08.
-
-        Returns
-        -------
-        bool
-
-            ``True`` if other mesh is close enough, otherwise ``False``.
-
-        Raises
-        ------
-        TypeError
-
-            If the ``other`` argument is not of type ``discretisedfield.Mesh`` or if
-            ``rtol`` and ``atol`` arguments are not of type ``float`` or ``int``.
-
-        ValueError
-
-            If the dimensions of the mesh and the other mesh does not match.
-
-        Example
-        -------
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (20e-9, 20e-9, 20e-9)
-        >>> n = (10, 10, 10)
-        >>> mesh1 = df.Mesh(p1=p1, p2=p2, n=n)
-        ...
-        >>> p1 = (0, 0, 0)
-        >>> p2 = (20e-9 + 1.2e-12, 20e-9 + 1e-13, 20e-9 + 2e-12)
-        >>> n = (10, 10, 10)
-        >>> mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
-        ...
-        >>> mesh1.allclose(mesh2)
-        True
-        >>> mesh1.allclose(mesh2, rtol=1e-6, atol=1e-13)
-        False
-
-        """
-
-        if not isinstance(other, df.Mesh):
-            raise TypeError(
-                f"Expected argument of type discretisedfield.Mesh but got {type(other)}"
-            )
-
-        if self.region.dims != other.region.dims:
-            raise ValueError("The mesh dimensions do not match.")
-
-        if any(self.n != other.n):
-            raise ValueError("The number of cells in each dimension do not match.")
-
-        if (not isinstance(rtol, numbers.Real)) or (not isinstance(atol, numbers.Real)):
-            raise TypeError(
-                "Expected both rtol and atol to be either int or float but got"
-                f" {type(rtol)} and {type(atol)}, respectively."
-            )
-
-        return all(
-            np.allclose(
-                getattr(self.points, dim),
-                getattr(other.points, dim),
-                rtol=rtol,
-                atol=atol,
-            )
-            for dim in self.region.dims
         )
 
     def coordinate_field(self):

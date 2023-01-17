@@ -534,6 +534,80 @@ class Region(_RegionIO):
 
         return False
 
+    def allclose(
+        self,
+        other,
+        rtol=None,
+        atol=None,
+    ):
+        r"""Check if two regions are close.
+
+        Two regions are considered to be equal if they have the same minimum
+        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
+        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
+        \mathbf{p}^\text{min}_2` within a tolerance.
+
+        Parameters
+        ----------
+        other : discretisedfield.Region
+
+            Second operand.
+
+        atol : numbers.Number, optional
+
+            Absolute tolerance. If ``None``, the default value is
+            the smallest edge length of the region multipled by
+            the tolerance factor.
+
+        rtol : numbers.Number, optional
+
+            Relative tolerance. If ``None``, ``region.tolerance_factor`` is used.
+
+        Returns
+        -------
+        bool
+
+            ``True`` if two regions are equal (within floating-point accuracy) and
+            ``False`` otherwise.
+
+        Examples
+        --------
+        1. Usage of relational operator ``==``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> region1 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
+        >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
+        >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
+        ...
+        >>> region1.allclose(region2)
+        True
+        >>> region1.allclose(region3)
+        False
+        >>> region2.allclose(region3)
+        False
+
+        """
+        if isinstance(other, self.__class__):
+            if atol is None:
+                atol = np.min(self.edges) * self.tolerance_factor
+            elif not isinstance(atol, numbers.Number):
+                raise TypeError(f"{type(atol)=} is not a number.")
+
+            if rtol is None:
+                rtol = self.tolerance_factor
+            elif not isinstance(rtol, numbers.Number):
+                raise TypeError(f"{type(rtol)=} is not a number.")
+
+            return np.allclose(
+                self.pmin, other.pmin, atol=atol, rtol=rtol
+            ) and np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)
+
+        raise TypeError(
+            f"Unsupported {(type(other))=}; only objects of type Region are allowed for"
+            " method allclose."
+        )
+
     def __contains__(self, other):
         """Determine if a point or another region belong to the region.
 
@@ -592,13 +666,14 @@ class Region(_RegionIO):
 
         """
         if isinstance(other, (numbers.Real, collections.abc.Iterable)):
-            tol = np.min(self.edges) * self.tolerance_factor
+            atol = np.min(self.edges) * self.tolerance_factor
+            rtol = self.tolerance_factor
             return np.all(
                 np.logical_and(
                     np.less_equal(self.pmin, other)
-                    | np.isclose(self.pmin, other, rtol=tol, atol=tol),
+                    | np.isclose(self.pmin, other, rtol=rtol, atol=atol),
                     np.greater_equal(self.pmax, other)
-                    | np.isclose(self.pmax, other, rtol=tol, atol=tol),
+                    | np.isclose(self.pmax, other, rtol=rtol, atol=atol),
                 )
             )
         if isinstance(other, self.__class__):
@@ -793,7 +868,13 @@ class Region(_RegionIO):
             self._pmax = pmax
             return self
         else:
-            return self.__class__(p1=pmin, p2=pmax, dims=self.dims, units=self.units)
+            return self.__class__(
+                p1=pmin,
+                p2=pmax,
+                dims=self.dims,
+                units=self.units,
+                tolerance_factor=self.tolerance_factor,
+            )
 
     def translate(self, vector, inplace=False):
         """Translate the region.
@@ -877,83 +958,8 @@ class Region(_RegionIO):
                 p2=np.add(self.pmax, vector),
                 dims=self.dims,
                 units=self.units,
+                tolerance_factor=self.tolerance_factor,
             )
-
-    def allclose(
-        self,
-        other,
-        atol=None,
-        rtol=None,
-    ):
-        r"""Check if two regions are close.
-
-        Two regions are considered to be equal if they have the same minimum
-        and maximum coordinate points: :math:`\mathbf{p}^\text{max}_1 =
-        \mathbf{p}^\text{max}_2` and :math:`\mathbf{p}^\text{min}_1 =
-        \mathbf{p}^\text{min}_2` within a tolerance.
-
-        Parameters
-        ----------
-        other : discretisedfield.Region
-
-            Second operand.
-
-        atol : numbers.Number, optional
-
-            Absolute tolerance. If ``None``, the default value is
-            the smallest edge length of the region multipled by
-            the tolerance factor.
-
-        rtol : numbers.Number, optional
-
-            Relative tolerance. If ``None``, the default value is
-            the smallest edge length of the region multipled by
-            the tolerance factor.
-
-        Returns
-        -------
-        bool
-
-            ``True`` if two regions are equal (within floating-point accuracy) and
-            ``False`` otherwise.
-
-        Examples
-        --------
-        1. Usage of relational operator ``==``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> region1 = df.Region(p1=(0, 0, 0), p2=(5, 5, 5))
-        >>> region2 = df.Region(p1=(0.0, 0, 0), p2=(5.0, 5, 5))
-        >>> region3 = df.Region(p1=(1, 1, 1), p2=(5, 5, 5))
-        ...
-        >>> region1.allclose(region2)
-        True
-        >>> region1.allclose(region3)
-        False
-        >>> region2.allclose(region3)
-        False
-
-        """
-        if isinstance(other, self.__class__):
-            if atol is None:
-                atol = np.min(self.edges) * self.tolerance_factor
-            elif not isinstance(atol, numbers.Number):
-                raise TypeError(f"{type(atol)=} is not a number.")
-
-            if rtol is None:
-                rtol = np.min(self.edges) * self.tolerance_factor
-            elif not isinstance(rtol, numbers.Number):
-                raise TypeError(f"{type(rtol)=} is not a number.")
-
-            return np.allclose(
-                self.pmin, other.pmin, atol=atol, rtol=rtol
-            ) and np.allclose(self.pmax, other.pmax, atol=atol, rtol=rtol)
-
-        raise TypeError(
-            f"Unsupported {(type(other))=}; only objects of type Region are allowed for"
-            " method allclose."
-        )
 
     @property
     def mpl(self):

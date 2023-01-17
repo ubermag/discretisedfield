@@ -233,39 +233,49 @@ def test_eq(p1_1, p1_2, p2):
 
 
 @pytest.mark.parametrize(
-    "p1_1, p1_2, p2",
+    "p1, p2",
     [
-        [5e-9, 6e-9, 10e-9],
-        [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9)],
-        [(0, 0, 0), (3, 3, 3), (10, 10, 10)],
+        [np.array([5e-9]), np.array([10e-9])],
+        [np.array([-100e-9, -10e-9]), np.array([100e-9, 10e-9])],
+        [np.array([0, 0, 0]), np.array([10, 10, 10])],
     ],
 )
-def test_allclose(p1_1, p1_2, p2, atol=0):
-    region1 = df.Region(p1=p1_1, p2=p2)
-    region2 = df.Region(p1=p1_1, p2=p2)
-    region3 = df.Region(p1=p1_2, p2=p2)
+@pytest.mark.parametrize("tolerance", [1e-12, 1e-3])
+def test_allclose(p1, p2, tolerance):
+    region1 = df.Region(p1=p1, p2=p2, tolerance_factor=tolerance)
 
-    assert isinstance(region1, df.Region)
-    assert isinstance(region2, df.Region)
-    assert isinstance(region3, df.Region)
-    assert region1.allclose(region2, atol=0)
-    assert not region1.allclose(region3, atol=0)
-    assert not region2.allclose(region3, atol=0)
+    region2 = df.Region(p1=p1, p2=p2 * (1 + tolerance))
+    region3 = df.Region(p1=p1 * (1 - tolerance), p2=p2)
+    assert region1.allclose(region2)
+    assert region1.allclose(region3)
+
+    if tolerance == 1e-12:  # default value
+        assert region2.allclose(region1)
+    else:
+        assert not region2.allclose(region1)
+
+    assert not region1.allclose(region2, atol=0, rtol=0)
+
+    # only checks for p2 because test case 3 has p1 = (0, 0, 0) which would not change
+    region4 = df.Region(p1=p1, p2=p2 * (1 + 5 * tolerance))
+    region5 = df.Region(p1=p1, p2=p2 * (1 - 5 * tolerance))
+    assert not region1.allclose(region4)
+    assert not region1.allclose(region5)
+
+    assert region1.allclose(region4, atol=1)
+    assert region1.allclose(region4, rtol=1)
+
+    with pytest.raises(TypeError):
+        region1.allclose("region2")
+
+    with pytest.raises(TypeError):
+        region1.allclose(region2, atol="20")
+
+    with pytest.raises(TypeError):
+        region1.allclose(region2, rtol="1")
 
 
-def test_tolerance_factor():  # TODO
-    p1 = (0, 0, 0)
-    p2 = (100e-9, 100e-9, 100e-9)
-    region = df.Region(p1=p1, p2=p2)
-    assert np.isclose(region.tolerance_factor, 1e-12, atol=0)
-
-    region = df.Region(p1=p1, p2=p2, tolerance_factor=1e-3)
-    assert np.isclose(region.tolerance_factor, 1e-3, atol=0)
-    region.tolerance_factor = 1e-6
-    assert np.isclose(region.tolerance_factor, 1e-6, atol=0)
-
-
-@pytest.mark.parametrize("factor", [None, 1.0])
+@pytest.mark.parametrize("factor", [None, 0.1])
 def test_contains_1d(factor):
     region = df.Region(p1=0, p2=20e-9)
     assert isinstance(region, df.Region)
@@ -274,7 +284,9 @@ def test_contains_1d(factor):
         region.tolerance_factor = factor
     tol = np.min(region.edges) * region.tolerance_factor
     tol_in = tol / 2
-    tol_out = tol * 2
+    # similar sized contribution from rtol and atol requires a larger deviation of the
+    # value to be outside of the region
+    tol_out = tol * 4
 
     assert 0 in region
     assert 20e-9 in region
@@ -286,14 +298,14 @@ def test_contains_1d(factor):
     assert 20e-9 + tol_out not in region
 
 
-@pytest.mark.parametrize("factor", [None, 1.0])
+@pytest.mark.parametrize("factor", [None, 0.1])
 @pytest.mark.parametrize(
     "p1, p2",
     [
         [(0,), (20e-9,)],
         [(0, 10e-9), (20e-9, 0)],
         [(0, 10e-9, 0), (10e-9, 0, 20e-9)],
-        [(0, 10e-9, 0, -10e-9), (10e-9, 0, 20e-9, 30e-9)],
+        [(0, 10e-9, 0, -10e-9), (10e-9, 0, 20e-9, 25e-9)],
     ],
 )
 def test_contains(factor, p1, p2):
@@ -304,7 +316,7 @@ def test_contains(factor, p1, p2):
         region.tolerance_factor = factor
     tol = np.min(region.edges) * region.tolerance_factor
     tol_in = tol / 2
-    tol_out = tol * 2
+    tol_out = tol * 4
 
     assert p1 in region
     assert p2 in region
