@@ -3390,7 +3390,7 @@ class Field(_FieldIO):
             key_dims["vdims"] = hv_key_dim(self.vdims, "")
         return key_dims
 
-    def fftn(self):
+    def fftn(self, **kwargs):
         """N dimensional discrete FFT of the field.
 
         Information about subregions is lost during the transformation.
@@ -3418,13 +3418,13 @@ class Field(_FieldIO):
 
         axes = range(self.mesh.region.ndim)
         ft = spfft.fftshift(
-            spfft.fftn(self.array, axes=axes),
+            spfft.fftn(self.array, axes=axes, **kwargs),
             axes=axes,
         )
 
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
-    def ifftn(self):
+    def ifftn(self, **kwargs):
         """N dimensional discrete inverse FFT of the field.
 
         Information about subregions is lost during the transformation.
@@ -3454,11 +3454,12 @@ class Field(_FieldIO):
         ft = spfft.ifftn(
             spfft.ifftshift(self.array, axes=axes),
             axes=axes,
+            **kwargs,
         )
 
         return self._fftn(mesh=mesh, array=ft, ifftn=True)
 
-    def rfftn(self):
+    def rfftn(self, **kwargs):
         """N dimensional discrete real FFT of the field.
 
         Information about subregions is lost during the transformation.
@@ -3486,13 +3487,13 @@ class Field(_FieldIO):
 
         axes = range(self.mesh.region.ndim)
         ft = spfft.fftshift(
-            spfft.rfftn(self.array, axes=axes),
+            spfft.rfftn(self.array, axes=axes, **kwargs),
             axes=axes,
         )
 
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
-    def irfftn(self, shape=None):
+    def irfftn(self, shape=None, **kwargs):
         """N dimensional discrete inverse real FFT of the field.
 
         If shape is ``None``, the shape of the original mesh
@@ -3532,6 +3533,7 @@ class Field(_FieldIO):
             spfft.ifftshift(self.array, axes=axes),
             axes=axes,
             s=shape,
+            **kwargs,
         )
 
         return self._fftn(mesh=mesh, array=ft, ifftn=True)
