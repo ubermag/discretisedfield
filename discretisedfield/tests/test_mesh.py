@@ -497,7 +497,7 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
 @pytest.mark.parametrize(
     "p1_1, p1_2, p2, n1, n2",
     [
-        [5e-9, 6e-9, 10e-9, 5, 3],  # 1d
+        [(5e-9,), (6e-9,), (10e-9,), 5, 3],  # 1d
         # TODO the next test currently fails because of problems with atol=0 and
         # zero values in the test data; this has to be fixed in Mesh
         [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],  # 2d
@@ -734,6 +734,23 @@ def test_point2index_boundaries():
     # Check inclusive boundaries
     assert mesh.point2index(0) == 0
     assert mesh.point2index(10) == 9
+
+    # Check with floating-point accuracy
+    point = -mesh.region.tolerance_factor
+    assert mesh.point2index(point) == 0
+
+    # tolerance_factor is internally multiplied by min(edges)=10
+    point = -20 * mesh.region.tolerance_factor
+    with pytest.raises(ValueError):
+        mesh.point2index(point)
+
+    point = 10 + mesh.region.tolerance_factor
+    assert mesh.point2index(point) == 9
+
+    point = 10 + 20 * mesh.region.tolerance_factor
+    print(point, point in mesh.region)
+    with pytest.raises(ValueError):
+        mesh.point2index(point)
 
     # Check out of bounds
     with pytest.raises(ValueError):
