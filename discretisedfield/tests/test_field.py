@@ -2762,7 +2762,7 @@ def test_fft():
         )
 
     # 3d single cell fft
-    for dim in ["x", "y", "z"]:
+    for dim in "xyz":
         plane = f.sel(**{dim: (0, 0)})
         plane.mesh.translate(-plane.mesh.region.center, inplace=True)
         assert plane.allclose(plane.fftn().ifftn().real)
@@ -2779,10 +2779,7 @@ def test_fft():
     cell = 2.0
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
-    def _init_random(p):
-        return np.random.rand(1) * 2 - 1
-
-    f = df.Field(mesh, nvdim=1, value=_init_random, norm=1)
+    f = df.Field(mesh, nvdim=1, value=np.random.rand(*mesh.n, 1), norm=1)
 
     assert f.allclose(f.fftn().ifftn().real)
     assert df.Field(mesh, nvdim=1).allclose(f.fftn().ifftn().imag)
