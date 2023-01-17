@@ -849,7 +849,7 @@ class MplField(Mpl):
             rf" ({uu.rsi_prefixes[multiplier]}{self.field.mesh.region.units[0]})"
         )
         ax.set_ylabel(
-            rf"self.field.mesh.region.dims[1]"
+            rf"{self.field.mesh.region.dims[1]}"
             rf" ({uu.rsi_prefixes[multiplier]}{self.field.mesh.region.units[1]})"
         )
 
