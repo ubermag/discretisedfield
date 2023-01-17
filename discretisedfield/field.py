@@ -3436,9 +3436,7 @@ class Field(_FieldIO):
         return key_dims
 
     def fftn(self):
-        """Fourier transform.
-
-        N dimentional discrete FFT of the field.
+        """N dimentional discrete FFT of the field.
 
         Returns
         -------
@@ -3448,7 +3446,7 @@ class Field(_FieldIO):
 
         Examples
         --------
-        1. Create a mesh and perform a FFT.
+        1. Create a mesh and perform an FFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
@@ -3488,9 +3486,7 @@ class Field(_FieldIO):
         )
 
     def ifftn(self):
-        """Inverse Fourier transform.
-
-        N dimentional discrete inverse FFT of the field.
+        """N dimentional discrete inverse FFT of the field.
 
         Returns
         -------
@@ -3513,7 +3509,7 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.ifftn()
 
-        axes = np.arange(self.mesh.region.ndim)
+        axes = range(self.mesh.region.ndim)
         ft = np.fft.ifftn(
             np.fft.ifftshift(self.array, axes=axes),
             axes=axes,
@@ -3540,9 +3536,7 @@ class Field(_FieldIO):
         )
 
     def rfftn(self):
-        """Real Fourier transform.
-
-        N dimentional discrete real FFT of the field.
+        """N dimentional discrete real FFT of the field.
 
         Returns
         -------
@@ -3565,12 +3559,13 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.fftn(rfft=True)
 
-        axes = np.arange(self.mesh.region.ndim)
+        axes = range(self.mesh.region.ndim)
         ft = np.fft.fftshift(
             np.fft.rfftn(self.array, axes=axes),
             axes=axes,
         )
 
+        # TODO: Put into private method.
         if self.vdims is not None:
             ft_vdims = [f"ft_{vdim}" for vdim in self.vdims]
 
@@ -3592,9 +3587,7 @@ class Field(_FieldIO):
         )
 
     def irfftn(self, shape=None):
-        """Inverse real Fourier transform.
-
-        N dimentional discrete inverse real FFT of the field.
+        """N dimentional discrete inverse real FFT of the field.
 
         Shape is ``None``, the shape of the original mesh
         is assumed to be even in the last dimension.
