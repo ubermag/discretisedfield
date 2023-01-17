@@ -890,8 +890,8 @@ class Region(_RegionIO):
     def allclose(
         self,
         other,
-        atol=None,
         rtol=None,
+        atol=None,
     ):
         r"""Check if two regions are close.
 
@@ -914,9 +914,7 @@ class Region(_RegionIO):
 
         rtol : numbers.Number, optional
 
-            Relative tolerance. If ``None``, the default value is
-            the smallest edge length of the region multipled by
-            the tolerance factor.
+            Relative tolerance. If ``None``, ``region.tolerance_factor`` is used.
 
         Returns
         -------

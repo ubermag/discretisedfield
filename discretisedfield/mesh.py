@@ -1933,8 +1933,8 @@ class Mesh(_MeshIO):
         This methods compares the two underlying regions using ``Region.allclose`` and
         the number of cells ``n`` of the two meshes. The value of relative tolerance
         (``rtol``) and absolute tolerance (``atol``) are passed on to
-        ``Region.allclose`` for the comparison. If not provided a default value based on
-        the region size is used.
+        ``Region.allclose`` for the comparison. If not provided default values of
+        ``Region.allclose`` are used.
 
         Parameters
         ----------
@@ -1950,9 +1950,7 @@ class Mesh(_MeshIO):
 
         atol : numbers.Real, optional
 
-            Relative tolerance. If ``None``, the default value is
-            the smallest edge length of the region multipled by
-            the ``region.tolerance_factor``.
+            Relative tolerance. If ``None``, ``region.tolerance_factor`` is used.
 
         Returns
         -------
