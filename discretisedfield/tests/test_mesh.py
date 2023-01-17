@@ -1719,31 +1719,19 @@ def test_fftn_mesh():
     assert np.allclose(mesh_fft.region.pmax, (0.475, 0.475, 0.55))
 
     mesh_fft = mesh.fftn().ifftn()
-    assert mesh_fft.region.ndim == 3
-    assert np.array_equal(mesh_fft.n, (20, 20, 10))
-    assert np.allclose(mesh_fft.cell, (1, 1, 1))
     assert mesh_fft.region.units == ("m", "m", "m")
     assert mesh_fft.region.dims == ("x", "y", "z")
-    assert np.allclose(mesh_fft.region.pmin, p1)
-    assert np.allclose(mesh_fft.region.pmax, p2)
+    assert mesh_fft.allclose(mesh)
 
     mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True)
-    assert mesh_fft.region.ndim == 3
-    assert np.array_equal(mesh_fft.n, (20, 20, 10))
-    assert np.allclose(mesh_fft.cell, (1, 1, 1))
     assert mesh_fft.region.units == ("m", "m", "m")
     assert mesh_fft.region.dims == ("x", "y", "z")
-    assert np.allclose(mesh_fft.region.pmin, p1)
-    assert np.allclose(mesh_fft.region.pmax, p2)
+    assert mesh_fft.allclose(mesh)
 
     mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
-    assert mesh_fft.region.ndim == 3
-    assert np.array_equal(mesh_fft.n, (20, 20, 10))
-    assert np.allclose(mesh_fft.cell, (1, 1, 1))
     assert mesh_fft.region.units == ("m", "m", "m")
     assert mesh_fft.region.dims == ("x", "y", "z")
-    assert np.allclose(mesh_fft.region.pmin, p1)
-    assert np.allclose(mesh_fft.region.pmax, p2)
+    assert mesh_fft.allclose(mesh)
 
     # 3D mesh with odd number of cells
     p1 = (-10, -10, -5)
@@ -1783,31 +1771,19 @@ def test_fftn_mesh():
     assert np.allclose(mesh_fft.region.pmax, (0.525,))
 
     mesh_fft = mesh.fftn().ifftn()
-    assert mesh_fft.region.ndim == 1
-    assert np.array_equal(mesh_fft.n, (20,))
-    assert np.allclose(mesh_fft.cell, (1,))
     assert mesh_fft.region.units == ("m",)
     assert mesh_fft.region.dims == ("x",)
-    assert np.allclose(mesh_fft.region.pmin, p1)
-    assert np.allclose(mesh_fft.region.pmax, p2)
+    assert mesh_fft.allclose(mesh)
 
     mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True)
-    assert mesh_fft.region.ndim == 1
-    assert np.array_equal(mesh_fft.n, (20,))
-    assert np.allclose(mesh_fft.cell, (1,))
     assert mesh_fft.region.units == ("m",)
     assert mesh_fft.region.dims == ("x",)
-    assert np.allclose(mesh_fft.region.pmin, p1)
-    assert np.allclose(mesh_fft.region.pmax, p2)
+    assert mesh_fft.allclose(mesh)
 
     mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
-    assert mesh_fft.region.ndim == 1
-    assert np.array_equal(mesh_fft.n, (20,))
-    assert np.allclose(mesh_fft.cell, (1,))
     assert mesh_fft.region.units == ("m",)
     assert mesh_fft.region.dims == ("x",)
-    assert np.allclose(mesh_fft.region.pmin, p1)
-    assert np.allclose(mesh_fft.region.pmax, p2)
+    assert mesh_fft.allclose(mesh)
 
     # 1D mesh with odd number of cells
     p1 = -10

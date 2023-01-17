@@ -2099,6 +2099,7 @@ class Mesh(_MeshIO):
         p1 = []
         p2 = []
         n = []
+
         for i in range(self.region.ndim):
             if self.n[i] == 1:
                 p1.append(0)
@@ -2204,10 +2205,7 @@ class Mesh(_MeshIO):
                     "Expected shape to be either int, tuple, list or np.ndarray but got"
                     f" {type(shape)}."
                 )
-            if (
-                shape[-1] != (self.n[-1] - 1) * 2
-                and shape[-1] != (self.n[-1] - 1) * 2 + 1
-            ):
+            if shape[-1] // 2 + 1 != self.n[-1]:
                 raise ValueError(
                     "The last dimension of the shape must match"
                     f" {(self.n[-1] - 1) * 2} or {(self.n[-1] - 1) * 2 + 1} not"
