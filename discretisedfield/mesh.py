@@ -851,7 +851,7 @@ class Mesh(_MeshIO):
         # If index is rounded to the out-of-range values.
         index = np.clip(index, 0, self.n - 1)
 
-        return dfu.array2tuple(index)
+        return tuple(index)
 
     def region2slices(self, region):
         """Slices of indices that correspond to cells contained in the region.

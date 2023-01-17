@@ -722,30 +722,30 @@ def test_point2index_valid(p1, p2, n, point, expected):
 def test_point2index_boundaries():
     mesh = df.Mesh(p1=0, p2=10, cell=1)
 
-    assert mesh.point2index(0.9) == 0
-    assert mesh.point2index(1.0) == 1
-    assert mesh.point2index(1.1) == 1
+    assert mesh.point2index(0.9) == (0,)
+    assert mesh.point2index(1.0) == (1,)
+    assert mesh.point2index(1.1) == (1,)
 
     # Check with even values as well
-    assert mesh.point2index(1.9) == 1
-    assert mesh.point2index(2.0) == 2
-    assert mesh.point2index(2.1) == 2
+    assert mesh.point2index(1.9) == (1,)
+    assert mesh.point2index(2.0) == (2,)
+    assert mesh.point2index(2.1) == (2,)
 
     # Check inclusive boundaries
-    assert mesh.point2index(0) == 0
-    assert mesh.point2index(10) == 9
+    assert mesh.point2index(0) == (0,)
+    assert mesh.point2index(10) == (9,)
 
     # Check with floating-point accuracy
     point = -mesh.region.tolerance_factor
-    assert mesh.point2index(point) == 0
+    assert mesh.point2index(point) == (0,)
 
-    # tolerance_factor is internally multiplied by min(edges)=10
+    # tolerance_factor is internally multiplied by min(edges)=1(0,)
     point = -20 * mesh.region.tolerance_factor
     with pytest.raises(ValueError):
         mesh.point2index(point)
 
     point = 10 + mesh.region.tolerance_factor
-    assert mesh.point2index(point) == 9
+    assert mesh.point2index(point) == (9,)
 
     point = 10 + 20 * mesh.region.tolerance_factor
     print(point, point in mesh.region)
@@ -793,6 +793,7 @@ def test_point2index_invalid(p1, p2, n, point, error):
 
 
 def test_index2point_point2index_mutually_inverse():
+    # 1d
     p1 = 15
     p2 = -1
     cell = 1
@@ -803,8 +804,9 @@ def test_index2point_point2index_mutually_inverse():
         assert np.allclose(mesh.index2point(mesh.point2index(p)), p, atol=0)
 
     for i in [0, 1]:
-        assert mesh.point2index(mesh.index2point(i)) == i
+        assert mesh.point2index(mesh.index2point(i)) == (i,)
 
+    # 3d
     p1 = (15, -4, 12.5)
     p2 = (-1, 10.1, 11)
     cell = (1, 0.1, 0.5)
