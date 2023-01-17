@@ -2135,9 +2135,7 @@ class Mesh(_MeshIO):
         return mesh
 
     def ifftn(self, rfft=False, shape=None):
-        """Inverse Fourier transform
-
-        N dimentional discrete inverse FFT of the mesh.
+        """N dimensional discrete inverse FFT of the mesh.
 
         If rfft is ``True`` and shape is ``None``, the shape of the original mesh
         is assumed to be even in the last dimension.
@@ -2152,13 +2150,11 @@ class Mesh(_MeshIO):
 
             Shape of the original mesh. Defaults to ``None``.
 
-
         Returns
         -------
         discretisedfield.Mesh
 
             Inverse Fourier transform of the mesh.
-
 
         Examples
         --------
@@ -2175,7 +2171,7 @@ class Mesh(_MeshIO):
         >>> ifft_mesh.region.pmax
         array([5])
 
-        1. Perform a real iFFT.
+        2. Perform a real iFFT.
         >>> ifft_mesh = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
         >>> ifft_mesh.n
         array([5])
@@ -2237,9 +2233,10 @@ class Mesh(_MeshIO):
                 p2.append(max(freqs) + dfreq)
                 n.append(len(freqs))
 
-        kdims = [d[2:] for d in self.region.dims if d[:2] == "k_"]
+        kdims = [d[2:] if d.startswith("k_") else d for d in self.region.dims]
         kunits = [
-            u[1:-4] for u in self.region.units if u[:1] == "(" and u[-4:] == ")^-1"
+            u[1:-4] if u.startswith("(") and u.endswith(")^-1") else u
+            for u in self.region.units
         ]
 
         region = df.Region(
