@@ -3535,7 +3535,7 @@ class Field(_FieldIO):
     def irfftn(self, shape=None):
         """N dimensional discrete inverse real FFT of the field.
 
-        Shape is ``None``, the shape of the original mesh
+        If shape is ``None``, the shape of the original mesh
         is assumed to be even in the last dimension.
 
         Parameters
