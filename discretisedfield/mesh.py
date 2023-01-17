@@ -7,6 +7,7 @@ from numbers import Integral, Number
 
 import ipywidgets
 import numpy as np
+import scipy.fft as spfft
 import ubermagutil.units as uu
 
 import discretisedfield as df
@@ -2106,7 +2107,7 @@ class Mesh(_MeshIO):
                 p2.append(1 / self.cell[i])
                 n.append(1)
             else:
-                freqs = np.fft.fftfreq(self.n[i], self.cell[i])
+                freqs = spfft.fftfreq(self.n[i], self.cell[i])
                 # Shift the region boundaries to get the correct coordinates of
                 # mesh cells.
                 dfreq = (freqs[1] - freqs[0]) / 2
@@ -2116,7 +2117,7 @@ class Mesh(_MeshIO):
 
         if rfft and self.n[-1] != 1:
             # last frequency is different for rfft
-            freqs = np.fft.rfftfreq(self.n[-1], self.cell[-1])
+            freqs = spfft.rfftfreq(self.n[-1], self.cell[-1])
             dfreq = (freqs[1] - freqs[0]) / 2
             p1[-1] = min(freqs) - dfreq
             p2[-1] = max(freqs) + dfreq
@@ -2232,7 +2233,7 @@ class Mesh(_MeshIO):
                 p2.append(1 / self.cell[i])
                 n.append(1)
             else:
-                freqs = np.fft.fftfreq(shape[i], self.cell[i])
+                freqs = spfft.fftfreq(shape[i], self.cell[i])
                 # Shift the region boundaries to get the correct coordinates of
                 # mesh cells.
                 dfreq = (freqs[1] - freqs[0]) / 2

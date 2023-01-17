@@ -4,6 +4,7 @@ import numbers
 import warnings
 
 import numpy as np
+import scipy.fft as spfft
 import xarray as xr
 from vtkmodules.util import numpy_support as vns
 from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
@@ -3460,8 +3461,8 @@ class Field(_FieldIO):
         mesh = self.mesh.fftn()
 
         axes = range(self.mesh.region.ndim)
-        ft = np.fft.fftshift(
-            np.fft.fftn(self.array, axes=axes),
+        ft = spfft.fftshift(
+            spfft.fftn(self.array, axes=axes),
             axes=axes,
         )
 
@@ -3492,8 +3493,8 @@ class Field(_FieldIO):
         mesh = self.mesh.ifftn()
 
         axes = range(self.mesh.region.ndim)
-        ft = np.fft.ifftn(
-            np.fft.ifftshift(self.array, axes=axes),
+        ft = spfft.ifftn(
+            spfft.ifftshift(self.array, axes=axes),
             axes=axes,
         )
 
@@ -3524,8 +3525,8 @@ class Field(_FieldIO):
         mesh = self.mesh.fftn(rfft=True)
 
         axes = range(self.mesh.region.ndim)
-        ft = np.fft.fftshift(
-            np.fft.rfftn(self.array, axes=axes),
+        ft = spfft.fftshift(
+            spfft.rfftn(self.array, axes=axes),
             axes=axes,
         )
 
@@ -3565,8 +3566,8 @@ class Field(_FieldIO):
         mesh = self.mesh.ifftn(rfft=True, shape=shape)
 
         axes = range(self.mesh.region.ndim)
-        ft = np.fft.irfftn(
-            np.fft.ifftshift(self.array, axes=axes),
+        ft = spfft.irfftn(
+            spfft.ifftshift(self.array, axes=axes),
             axes=axes,
             s=shape,
         )
