@@ -2109,21 +2109,17 @@ class Mesh(_MeshIO):
                 p2.append(1 / self.cell[i])
                 n.append(1)
             else:
-                freqs = spfft.fftfreq(self.n[i], self.cell[i])
+                if rfft and i == self.region.ndim - 1:
+                    # last frequency is different for rfft if it has more than 1 element
+                    freqs = spfft.rfftfreq(self.n[i], self.cell[i])
+                else:
+                    freqs = spfft.fftfreq(self.n[i], self.cell[i])
                 # Shift the region boundaries to get the correct coordinates of
                 # mesh cells.
                 dfreq = (freqs[1] - freqs[0]) / 2
                 p1.append(min(freqs) - dfreq)
                 p2.append(max(freqs) + dfreq)
                 n.append(len(freqs))
-
-        if rfft and self.n[-1] != 1:
-            # last frequency is different for rfft
-            freqs = spfft.rfftfreq(self.n[-1], self.cell[-1])
-            dfreq = (freqs[1] - freqs[0]) / 2
-            p1[-1] = min(freqs) - dfreq
-            p2[-1] = max(freqs) + dfreq
-            n[-1] = len(freqs)
 
         kdims = [f"k_{d}" for d in self.region.dims]
         kunits = [f"({u})^-1" for u in self.region.units]
