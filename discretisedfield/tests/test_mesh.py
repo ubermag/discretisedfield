@@ -449,7 +449,7 @@ def test_indices_coordinates_iter(p1, p2, n, length):
     assert isinstance(mesh.indices, types.GeneratorType)
     assert len(list(mesh.indices)) == length
     for index in mesh.indices:
-        assert isinstance(index, np.ndarray)
+        assert isinstance(index, tuple)
         assert len(index) == mesh.region.ndim
         assert all(isinstance(i, numbers.Integral) for i in index)
         assert all([0 <= i <= j for i, j in zip(index, n)])
@@ -803,7 +803,7 @@ def test_index2point_point2index_mutually_inverse():
         assert np.allclose(mesh.index2point(mesh.point2index(p)), p, atol=0)
 
     for i in [0, 1]:
-        assert all(mesh.point2index(mesh.index2point(i)) == i)
+        assert mesh.point2index(mesh.index2point(i)) == i
 
     p1 = (15, -4, 12.5)
     p2 = (-1, 10.1, 11)
@@ -815,7 +815,7 @@ def test_index2point_point2index_mutually_inverse():
         assert np.allclose(mesh.index2point(mesh.point2index(p)), p, atol=0)
 
     for i in [(1, 0, 0), (0, 1, 0), (0, 0, 1), (1, 1, 1)]:
-        assert all(mesh.point2index(mesh.index2point(i)) == i)
+        assert mesh.point2index(mesh.index2point(i)) == i
 
 
 def test_region2slice():
