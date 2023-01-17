@@ -33,9 +33,7 @@ def bergluescher_angle(v1, v2, v3):
 
 
 def assemble_index(value, n, dictionary):
-    index = [
-        value,
-    ] * n
+    index = [value] * n
     for key, value in dictionary.items():
         index[key] = value
 

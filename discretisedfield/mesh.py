@@ -453,7 +453,7 @@ class Mesh(_MeshIO):
 
         """
         for index in itertools.product(*map(range, reversed(self.n))):
-            yield np.array(list(reversed(index)), dtype=int)
+            yield tuple(reversed(index))
 
     def __iter__(self):
         """Generator yielding coordinates of discretisation cells.
@@ -483,8 +483,7 @@ class Mesh(_MeshIO):
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
 
         """
-        for index in self.indices:
-            yield self.index2point(index)
+        yield from map(self.index2point, self.indices)
 
     @property
     def points(self):
@@ -852,7 +851,7 @@ class Mesh(_MeshIO):
         # If index is rounded to the out-of-range values.
         index = np.clip(index, 0, self.n - 1)
 
-        return index
+        return dfu.array2tuple(index)
 
     def region2slices(self, region):
         """Slices of indices that correspond to cells contained in the region.

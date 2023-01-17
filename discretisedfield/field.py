@@ -872,7 +872,7 @@ class Field(_FieldIO):
         array([1., 3., 4.])
 
         """
-        return self.array[tuple(self.mesh.point2index(point))]
+        return self.array[self.mesh.point2index(point)]
 
     def __getattr__(self, attr):
         """Extract the component of the vector field.
@@ -4008,7 +4008,7 @@ def _(val, mesh, nvdim, dtype):
         # Conversion to array and reshaping is required for numpy >= 1.24
         # and for certain inputs, e.g. a tuple of numpy arrays which can e.g. occur
         # for 1d vector fields.
-        array[tuple(index)] = np.asarray(val(point)).reshape(nvdim)
+        array[index] = np.asarray(val(point)).reshape(nvdim)
     return array
 
 
@@ -4065,6 +4065,6 @@ def _(val, mesh, nvdim, dtype):
         for idx in np.argwhere(np.isnan(array[..., 0])):
             # only spatial indices required -> array[..., 0]
             # conversion to array and reshaping similar to "callable" implementation
-            array[tuple(idx)] = np.asarray(subval(mesh.index2point(idx))).reshape(nvdim)
+            array[idx] = np.asarray(subval(mesh.index2point(idx))).reshape(nvdim)
 
     return array
