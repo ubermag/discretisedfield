@@ -3577,7 +3577,10 @@ class Field(_FieldIO):
     def _fftn(self, mesh, array, ifftn=False):
         if ifftn:
             if self.vdims is not None:
-                new_vdims = [ftvdim[3:] if ftvdim.startswith("ft_") else ftvdim for ftvdim in self.vdims]
+                new_vdims = [
+                    ftvdim[3:] if ftvdim.startswith("ft_") else ftvdim
+                    for ftvdim in self.vdims
+                ]
 
                 new_vdim_mapping = {}
                 for vdim, ft_vdim in zip(new_vdims, self.vdims):
