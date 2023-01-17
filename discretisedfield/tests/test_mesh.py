@@ -1806,7 +1806,6 @@ def test_fftn_mesh():
     [
         [(20, 20, 10), ValueError],
         [(20, 20, 7), ValueError],
-        [(20, 20, 6), ValueError],
         ["a", TypeError],
         [(20,), ValueError],
         [(20, 20, 10, 10), ValueError],
@@ -1829,10 +1828,11 @@ def test_irfftn_3d(shape, error):
     [
         [(20, 20), ValueError],
         ["a", TypeError],
-        [(20,), ValueError],
+        [(20,), ValueError],  # Too many cells
+        [(17,), ValueError],  # Too few cells
         [(20, 20, 10, 10), ValueError],
-        [10, ValueError],
-        [20, ValueError],
+        [17, ValueError],  # Too few cells
+        [20, ValueError],  # Too many cells
     ],
 )
 def test_irfftn_1d(shape, error):
