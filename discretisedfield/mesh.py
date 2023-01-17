@@ -2053,9 +2053,7 @@ class Mesh(_MeshIO):
         return field
 
     def fftn(self, rfft=False):
-        """Fourier transform
-
-        N dimentional discrete FFT of the mesh.
+        """N dimensional discrete FFT of the mesh.
 
         Parameters
         ----------
@@ -2063,13 +2061,11 @@ class Mesh(_MeshIO):
 
             If ``True``, the a real FFT is performed. Defaults to ``False``.
 
-
         Returns
         -------
         discretisedfield.Mesh
 
             Fourier transform of the mesh.
-
 
         Examples
         --------
@@ -2086,7 +2082,7 @@ class Mesh(_MeshIO):
         >>> fft_mesh.region.pmax
         array([0.25])
 
-        1. Perform a real FFT.
+        2. Perform a real FFT.
         >>> fft_mesh = mesh.fftn(rfft=True)
         >>> fft_mesh.n
         array([3])
