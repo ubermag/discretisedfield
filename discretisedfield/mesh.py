@@ -2055,6 +2055,8 @@ class Mesh(_MeshIO):
     def fftn(self, rfft=False):
         """N dimensional discrete FFT of the mesh.
 
+        Information about subregions is lost during the transformation.
+
         Parameters
         ----------
         rfft : bool, optional

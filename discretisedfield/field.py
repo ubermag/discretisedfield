@@ -3439,6 +3439,8 @@ class Field(_FieldIO):
     def fftn(self):
         """N dimensional discrete FFT of the field.
 
+        Information about subregions is lost during the transformation.
+
         Returns
         -------
         discretisedfield.Field
@@ -3471,6 +3473,8 @@ class Field(_FieldIO):
     def ifftn(self):
         """N dimensional discrete inverse FFT of the field.
 
+        Information about subregions is lost during the transformation.
+
         Returns
         -------
         discretisedfield.Field
@@ -3502,6 +3506,8 @@ class Field(_FieldIO):
 
     def rfftn(self):
         """N dimensional discrete real FFT of the field.
+
+        Information about subregions is lost during the transformation.
 
         Returns
         -------
@@ -3537,6 +3543,8 @@ class Field(_FieldIO):
 
         If shape is ``None``, the shape of the original mesh
         is assumed to be even in the last dimension.
+
+        Information about subregions is lost during the transformation.
 
         Parameters
         ----------
