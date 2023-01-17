@@ -3395,6 +3395,12 @@ class Field(_FieldIO):
 
         Information about subregions is lost during the transformation.
 
+        Parameters
+        ----------
+        **kwargs
+
+            Keyword arguments passed to :py:func:`scipy.fft.fftn`.
+
         Returns
         -------
         discretisedfield.Field
@@ -3428,6 +3434,12 @@ class Field(_FieldIO):
         """N dimensional discrete inverse FFT of the field.
 
         Information about subregions is lost during the transformation.
+
+        Parameters
+        ----------
+        **kwargs
+
+            Keyword arguments passed to :py:func:`scipy.fft.ifftn`.
 
         Returns
         -------
@@ -3463,6 +3475,12 @@ class Field(_FieldIO):
         """N dimensional discrete real FFT of the field.
 
         Information about subregions is lost during the transformation.
+
+        Parameters
+        ----------
+        **kwargs
+
+            Keyword arguments passed to :py:func:`scipy.fft.rfftn`.
 
         Returns
         -------
@@ -3506,6 +3524,10 @@ class Field(_FieldIO):
         shape : (tuple, np.ndarray, list), optional
 
             Shape of the original mesh. Defaults to ``None``.
+
+        **kwargs
+
+            Keyword arguments passed to :py:func:`scipy.fft.irfftn`.
 
         Returns
         -------
