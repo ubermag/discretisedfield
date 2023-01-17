@@ -3437,7 +3437,7 @@ class Field(_FieldIO):
         return key_dims
 
     def fftn(self):
-        """N dimentional discrete FFT of the field.
+        """N dimensional discrete FFT of the field.
 
         Returns
         -------
@@ -3469,7 +3469,7 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def ifftn(self):
-        """N dimentional discrete inverse FFT of the field.
+        """N dimensional discrete inverse FFT of the field.
 
         Returns
         -------
@@ -3501,7 +3501,7 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=True)
 
     def rfftn(self):
-        """N dimentional discrete real FFT of the field.
+        """N dimensional discrete real FFT of the field.
 
         Returns
         -------
@@ -3533,7 +3533,7 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def irfftn(self, shape=None):
-        """N dimentional discrete inverse real FFT of the field.
+        """N dimensional discrete inverse real FFT of the field.
 
         Shape is ``None``, the shape of the original mesh
         is assumed to be even in the last dimension.
