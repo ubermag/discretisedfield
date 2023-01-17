@@ -497,7 +497,7 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
 @pytest.mark.parametrize(
     "p1_1, p1_2, p2, n1, n2",
     [
-        [5e-9, 6e-9, 10e-9, 5, 3],  # 1d
+        [(5e-9,), (6e-9,), (10e-9,), 5, 3],  # 1d
         # TODO the next test currently fails because of problems with atol=0 and
         # zero values in the test data; this has to be fixed in Mesh
         [(-100e-9, -10e-9), (-99e-9, -10e-9), (100e-9, 10e-9), (5, 5), (5, 3)],  # 2d
