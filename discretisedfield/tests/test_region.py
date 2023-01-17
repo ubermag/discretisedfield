@@ -275,7 +275,7 @@ def test_allclose(p1, p2, tolerance):
         region1.allclose(region2, rtol="1")
 
 
-@pytest.mark.parametrize("factor", [None, 1.0])
+@pytest.mark.parametrize("factor", [None, 0.1])
 def test_contains_1d(factor):
     region = df.Region(p1=0, p2=20e-9)
     assert isinstance(region, df.Region)
@@ -284,7 +284,9 @@ def test_contains_1d(factor):
         region.tolerance_factor = factor
     tol = np.min(region.edges) * region.tolerance_factor
     tol_in = tol / 2
-    tol_out = tol * 2
+    # similar sized contribution from rtol and atol requires a larger deviation of the
+    # value to be outside of the region
+    tol_out = tol * 4
 
     assert 0 in region
     assert 20e-9 in region
@@ -296,14 +298,14 @@ def test_contains_1d(factor):
     assert 20e-9 + tol_out not in region
 
 
-@pytest.mark.parametrize("factor", [None, 1.0])
+@pytest.mark.parametrize("factor", [None, 0.1])
 @pytest.mark.parametrize(
     "p1, p2",
     [
         [(0,), (20e-9,)],
         [(0, 10e-9), (20e-9, 0)],
         [(0, 10e-9, 0), (10e-9, 0, 20e-9)],
-        [(0, 10e-9, 0, -10e-9), (10e-9, 0, 20e-9, 30e-9)],
+        [(0, 10e-9, 0, -10e-9), (10e-9, 0, 20e-9, 25e-9)],
     ],
 )
 def test_contains(factor, p1, p2):
@@ -314,7 +316,7 @@ def test_contains(factor, p1, p2):
         region.tolerance_factor = factor
     tol = np.min(region.edges) * region.tolerance_factor
     tol_in = tol / 2
-    tol_out = tol * 2
+    tol_out = tol * 4
 
     assert p1 in region
     assert p2 in region
