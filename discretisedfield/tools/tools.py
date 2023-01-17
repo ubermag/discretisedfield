@@ -735,7 +735,7 @@ def _demag_tensor_field_based(mesh):
         nvdim=6,
         value=_N(mesh_new),
         vdims=["xx", "yy", "zz", "xy", "xz", "yz"],
-    ).fftn
+    ).fftn()
 
 
 def demag_tensor(mesh):
@@ -787,7 +787,7 @@ def demag_tensor(mesh):
 
     return df.Field(
         mesh_new, nvdim=6, value=values, vdims=["xx", "yy", "zz", "xy", "xz", "yz"]
-    ).fftn
+    ).fftn()
 
 
 def demag_field(m, tensor):
@@ -817,13 +817,27 @@ def demag_field(m, tensor):
         {d: (0, m.mesh.n[i] - 1) for d, i in zip(["x", "y", "z"], range(3))},
         mode="constant",
     )
-    m_fft = m_pad.fftn
+    m_fft = m_pad.fftn()
 
-    hx_fft = tensor.xx * m_fft.x + tensor.xy * m_fft.y + tensor.xz * m_fft.z
-    hy_fft = tensor.xy * m_fft.x + tensor.yy * m_fft.y + tensor.yz * m_fft.z
-    hz_fft = tensor.xz * m_fft.x + tensor.yz * m_fft.y + tensor.zz * m_fft.z
+    hx_fft = (
+        tensor.ft_xx * m_fft.ft_x
+        + tensor.ft_xy * m_fft.ft_y
+        + tensor.ft_xz * m_fft.ft_z
+    )
+    hy_fft = (
+        tensor.ft_xy * m_fft.ft_x
+        + tensor.ft_yy * m_fft.ft_y
+        + tensor.ft_yz * m_fft.ft_z
+    )
+    hz_fft = (
+        tensor.ft_xz * m_fft.ft_x
+        + tensor.ft_yz * m_fft.ft_y
+        + tensor.ft_zz * m_fft.ft_z
+    )
 
-    H = (hx_fft << hy_fft << hz_fft).ifftn
+    H = hx_fft << hy_fft << hz_fft
+    H.vdims = ["ft_x", "ft_y", "ft_z"]
+    H = H.ifftn()
     return df.Field(
         m.mesh,
         nvdim=3,

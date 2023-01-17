@@ -1721,3 +1721,159 @@ def test_sel_subregions():
 
     # cell boundary and cell midpoint return the same selection
     assert mesh.sel(x0=6) == mesh.sel(x0=7)
+
+
+def test_fftn_mesh():
+
+    # 3D mesh with even number of cells
+    p1 = (-10, -10, -5)
+    p2 = (10, 10, 5)
+    cell = (1, 1, 1)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    mesh_fft = mesh.fftn()
+
+    assert mesh_fft.region.ndim == 3
+    assert mesh_fft.region.dims == ("k_x", "k_y", "k_z")
+    assert mesh_fft.region.units == ("(m)^-1", "(m)^-1", "(m)^-1")
+    assert np.array_equal(mesh_fft.n, (20, 20, 10))
+    assert np.allclose(mesh_fft.cell, (0.05, 0.05, 0.1))
+    assert np.allclose(mesh_fft.region.pmin, (-0.525, -0.525, -0.55))
+    assert np.allclose(mesh_fft.region.pmax, (0.475, 0.475, 0.45))
+
+    mesh_fft = mesh.fftn(rfft=True)
+
+    assert mesh_fft.region.ndim == 3
+    assert mesh_fft.region.dims == ("k_x", "k_y", "k_z")
+    assert mesh_fft.region.units == ("(m)^-1", "(m)^-1", "(m)^-1")
+    assert np.array_equal(mesh_fft.n, (20, 20, 6))
+    assert np.allclose(mesh_fft.cell, (0.05, 0.05, 0.1))
+    assert np.allclose(mesh_fft.region.pmin, (-0.525, -0.525, -0.05))
+    assert np.allclose(mesh_fft.region.pmax, (0.475, 0.475, 0.55))
+
+    mesh_fft = mesh.fftn().ifftn()
+    assert mesh_fft.region.units == ("m", "m", "m")
+    assert mesh_fft.region.dims == ("x", "y", "z")
+    assert mesh_fft.allclose(mesh)
+
+    mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True)
+    assert mesh_fft.region.units == ("m", "m", "m")
+    assert mesh_fft.region.dims == ("x", "y", "z")
+    assert mesh_fft.allclose(mesh)
+
+    mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+    assert mesh_fft.region.units == ("m", "m", "m")
+    assert mesh_fft.region.dims == ("x", "y", "z")
+    assert mesh_fft.allclose(mesh)
+
+    # 3D mesh with odd number of cells
+    p1 = (-10, -10, -5)
+    p2 = (10, 10, 4)
+    cell = (1, 1, 1)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+    assert mesh_fft.region.ndim == 3
+    assert np.array_equal(mesh_fft.n, (20, 20, 9))
+    assert np.allclose(mesh_fft.cell, (1, 1, 1))
+    assert np.allclose(mesh_fft.region.pmin, (-10, -10, -4.5))
+    assert np.allclose(mesh_fft.region.pmax, (10, 10, 4.5))
+
+    # 1D mesh with even number of cells
+    p1 = -10
+    p2 = 10
+    cell = 1
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    mesh_fft = mesh.fftn()
+    assert mesh_fft.region.ndim == 1
+    assert mesh_fft.region.dims == ("k_x",)
+    assert mesh_fft.region.units == ("(m)^-1",)
+    assert np.array_equal(mesh_fft.n, (20,))
+    assert np.allclose(mesh_fft.cell, 0.05)
+    assert np.allclose(mesh_fft.region.pmin, (-0.525,))
+    assert np.allclose(mesh_fft.region.pmax, (0.475,))
+
+    mesh_fft = mesh.fftn(rfft=True)
+    assert mesh_fft.region.ndim == 1
+    assert mesh_fft.region.dims == ("k_x",)
+    assert mesh_fft.region.units == ("(m)^-1",)
+    assert np.array_equal(mesh_fft.n, (11,))
+    assert np.allclose(mesh_fft.cell, 0.05)
+    assert np.allclose(mesh_fft.region.pmin, (-0.025,))
+    assert np.allclose(mesh_fft.region.pmax, (0.525,))
+
+    mesh_fft = mesh.fftn().ifftn()
+    assert mesh_fft.region.units == ("m",)
+    assert mesh_fft.region.dims == ("x",)
+    assert mesh_fft.allclose(mesh)
+
+    mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True)
+    assert mesh_fft.region.units == ("m",)
+    assert mesh_fft.region.dims == ("x",)
+    assert mesh_fft.allclose(mesh)
+
+    mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+    assert mesh_fft.region.units == ("m",)
+    assert mesh_fft.region.dims == ("x",)
+    assert mesh_fft.allclose(mesh)
+
+    # 1D mesh with odd number of cells
+    p1 = -10
+    p2 = 9
+    cell = 1
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+
+    mesh_fft = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+    assert mesh_fft.region.ndim == 1
+    assert np.array_equal(mesh_fft.n, (19,))
+    assert np.allclose(mesh_fft.cell, (1,))
+    assert mesh_fft.region.units == ("m",)
+    assert mesh_fft.region.dims == ("x",)
+    assert np.allclose(mesh_fft.region.pmin, (-9.5,))
+    assert np.allclose(mesh_fft.region.pmax, (9.5,))
+
+
+@pytest.mark.parametrize(
+    "shape, error",
+    [
+        [(20, 20, 10), ValueError],
+        [(20, 20, 7), ValueError],
+        ["a", TypeError],
+        [(20,), ValueError],
+        [(20, 20, 10, 10), ValueError],
+        [10, ValueError],
+    ],
+)
+def test_irfftn_3d(shape, error):
+    p1 = (-10, -10, -5)
+    p2 = (10, 10, 4)
+    cell = (1, 1, 1)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    mesh_fft = mesh.fftn(rfft=True)
+
+    with pytest.raises(error):
+        mesh_fft.ifftn(rfft=True, shape=shape)
+
+
+@pytest.mark.parametrize(
+    "shape, error",
+    [
+        [(20, 20), ValueError],
+        ["a", TypeError],
+        [(20,), ValueError],  # Too many cells
+        [(17,), ValueError],  # Too few cells
+        [(20, 20, 10, 10), ValueError],
+        [17, ValueError],  # Too few cells
+        [20, ValueError],  # Too many cells
+    ],
+)
+def test_irfftn_1d(shape, error):
+    p1 = -10
+    p2 = 9
+    cell = 1
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    mesh_fft = mesh.fftn(rfft=True)
+
+    with pytest.raises(error):
+        mesh_fft.ifftn(rfft=True, shape=shape)

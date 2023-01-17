@@ -7,6 +7,7 @@ from numbers import Integral, Number
 
 import ipywidgets
 import numpy as np
+import scipy.fft as spfft
 import ubermagutil.units as uu
 
 import discretisedfield as df
@@ -2053,3 +2054,201 @@ class Mesh(_MeshIO):
             )
 
         return field
+
+    def fftn(self, rfft=False):
+        """N dimensional discrete FFT of the mesh.
+
+        Information about subregions is lost during the transformation.
+
+        Parameters
+        ----------
+        rfft : bool, optional
+
+            If ``True``, the a real FFT is performed. Defaults to ``False``.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Fourier transform of the mesh.
+
+        Examples
+        --------
+        1. Create a mesh and perform a FFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> fft_mesh = mesh.fftn()
+        >>> fft_mesh.n
+        array([5])
+        >>> fft_mesh.cell
+        array([0.1])
+        >>> fft_mesh.region.pmin
+        array([-0.25])
+        >>> fft_mesh.region.pmax
+        array([0.25])
+
+        2. Perform a real FFT.
+        >>> fft_mesh = mesh.fftn(rfft=True)
+        >>> fft_mesh.n
+        array([3])
+        >>> fft_mesh.cell
+        array([0.1])
+        >>> fft_mesh.region.pmin
+        array([-0.05])
+        >>> fft_mesh.region.pmax
+        array([0.25])
+
+        """
+        p1 = []
+        p2 = []
+        n = []
+
+        for i in range(self.region.ndim):
+            if self.n[i] == 1:
+                p1.append(0)
+                p2.append(1 / self.cell[i])
+                n.append(1)
+            else:
+                if rfft and i == self.region.ndim - 1:
+                    # last frequency is different for rfft if it has more than 1 element
+                    freqs = spfft.rfftfreq(self.n[i], self.cell[i])
+                else:
+                    freqs = spfft.fftfreq(self.n[i], self.cell[i])
+                # Shift the region boundaries to get the correct coordinates of
+                # mesh cells.
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+                n.append(len(freqs))
+
+        kdims = [f"k_{d}" for d in self.region.dims]
+        kunits = [f"({u})^-1" for u in self.region.units]
+        region = df.Region(
+            p1=p1,
+            p2=p2,
+            dims=kdims,
+            units=kunits,
+            tolerance_factor=self.region.tolerance_factor,
+        )
+        # Subregions cannot be kept as we loose the information about the
+        # translation and size of the original subregions.
+        mesh = df.Mesh(region=region, n=n)
+
+        return mesh
+
+    def ifftn(self, rfft=False, shape=None):
+        """N dimensional discrete inverse FFT of the mesh.
+
+        If rfft is ``True`` and shape is ``None``, the shape of the original mesh
+        is assumed to be even in the last dimension.
+
+        Parameters
+        ----------
+        rfft : bool, optional
+
+            If ``True``, the a real FFT is performed. Defaults to ``False``.
+
+        shape : (tuple, np.ndarray, list), optional
+
+            Shape of the original mesh. Defaults to ``None``.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            Inverse Fourier transform of the mesh.
+
+        Examples
+        --------
+        1. Create a mesh and perform an iFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
+        >>> ifft_mesh = mesh.fftn().ifftn()
+        >>> ifft_mesh.n
+        array([5])
+        >>> ifft_mesh.cell
+        array([2])
+        >>> ifft_mesh.region.pmin
+        array([-5])
+        >>> ifft_mesh.region.pmax
+        array([5])
+
+        2. Perform a real iFFT.
+        >>> ifft_mesh = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+        >>> ifft_mesh.n
+        array([5])
+        >>> ifft_mesh.cell
+        array([2])
+        >>> ifft_mesh.region.pmin
+        array([-5])
+        >>> ifft_mesh.region.pmax
+        array([5])
+
+        """
+        if shape is not None:
+            if isinstance(shape, numbers.Number):
+                shape = (shape,)
+
+            if isinstance(shape, (tuple, list, np.ndarray)):
+                if len(shape) != self.region.ndim:
+                    raise ValueError(
+                        "The shape must have the same number of dimensions as the mesh"
+                        f" ({self.region.ndim=})."
+                    )
+                if not np.array_equal(shape[:-1], self.n[:-1]):
+                    raise ValueError(
+                        f"The shape apart from the last dimension must match {self.n=}."
+                    )
+            else:
+                raise TypeError(
+                    "Expected shape to be either int, tuple, list or np.ndarray but got"
+                    f" {type(shape)}."
+                )
+            if shape[-1] // 2 + 1 != self.n[-1]:
+                raise ValueError(
+                    "The last dimension of the shape must match"
+                    f" {(self.n[-1] - 1) * 2} or {(self.n[-1] - 1) * 2 + 1} not"
+                    f" {shape[-1]}."
+                )
+        else:
+            shape = self.n.copy()
+            if rfft and self.n[-1] != 1:
+                shape[-1] = (self.n[-1] - 1) * 2
+
+        p1 = []
+        p2 = []
+        n = []
+        for i in range(self.region.ndim):
+            if shape[i] == 1:
+                p1.append(0)
+                p2.append(1 / self.cell[i])
+                n.append(1)
+            else:
+                freqs = spfft.fftfreq(shape[i], self.cell[i])
+                # Shift the region boundaries to get the correct coordinates of
+                # mesh cells.
+                dfreq = (freqs[1] - freqs[0]) / 2
+                p1.append(min(freqs) - dfreq)
+                p2.append(max(freqs) + dfreq)
+                n.append(len(freqs))
+
+        kdims = [d[2:] if d.startswith("k_") else d for d in self.region.dims]
+        kunits = [
+            u[1:-4] if u.startswith("(") and u.endswith(")^-1") else u
+            for u in self.region.units
+        ]
+
+        region = df.Region(
+            p1=p1,
+            p2=p2,
+            dims=kdims,
+            units=kunits,
+            tolerance_factor=self.region.tolerance_factor,
+        )
+
+        mesh = df.Mesh(region=region, n=n)
+
+        # Shift the center of the mesh to the origin.
+        mesh.translate(-mesh.region.center, inplace=True)
+
+        return mesh
