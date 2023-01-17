@@ -69,20 +69,7 @@ def _split_array_on_idx(array, loc):
     ]
 
 
-def _pad_array(array, bc):
-    if bc == "pbc":  # PBC
-        padding_mode = "wrap"
-    elif bc == "neumann":
-        padding_mode = "symmetric"
-    elif bc == "dirichlet":
-        padding_mode = "constant"
-    else:
-        raise ValueError(f"Unknown boundary condition {bc}.")
-
-    return np.pad(array, (1, 1), padding_mode)
-
-
-def _split_diff_combine(array, valid, order, dx, bc):
+def _split_diff_combine(array, valid, order, dx):
     """Split a 1D array (with spacing dx)
     based on contiguous valid values,
     compute the derivative of certain order,
@@ -92,18 +79,10 @@ def _split_diff_combine(array, valid, order, dx, bc):
     # in the case where we have a single element tuple.
     idx = np.where(np.invert(valid))[0]
     split = _split_array_on_idx(array, idx)
-
-    # Add correct padding for boundary conditions
-    if bc is not None:
-        split = [_pad_array(arr, bc) for arr in split]
-
     diff = [_1d_diff(order, arr, dx) for arr in split]
     out = np.zeros_like(array)
     if len(diff) == 0:
         return out
     else:
-        # Remove padding for boundary conditions
-        if bc is not None:
-            diff = [arr[1:-1] for arr in diff]
         out[valid] = np.concatenate(diff)
         return out
