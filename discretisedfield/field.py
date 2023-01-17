@@ -3561,36 +3561,29 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=True)
 
     def _fftn(self, mesh, array, ifftn=False):
-        if ifftn:
-            if self.vdims is not None:
-                new_vdims = [
-                    ftvdim[3:] if ftvdim.startswith("ft_") else ftvdim
-                    for ftvdim in self.vdims
-                ]
-
-                new_vdim_mapping = {}
-                for vdim, ft_vdim in zip(new_vdims, self.vdims):
-                    if ft_vdim in self.vdim_mapping.keys():
-                        new_vdim_mapping[vdim] = (
-                            self.vdim_mapping[ft_vdim][2:]
-                            if self.vdim_mapping[ft_vdim].startswith("k_")
-                            else self.vdim_mapping[ft_vdim]
-                        )
-            else:
-                new_vdims = None
-                new_vdim_mapping = None
-
+        if self.vdims is None:
+            new_vdims = None
+            new_vdim_mapping = None
         else:
-            if self.vdims is not None:
-                new_vdims = [f"ft_{vdim}" for vdim in self.vdims]
-
-                new_vdim_mapping = {}
-                for vdim, ft_vdim in zip(self.vdims, new_vdims):
-                    if vdim in self.vdim_mapping.keys():
-                        new_vdim_mapping[ft_vdim] = "k_" + self.vdim_mapping[vdim]
+            # vdims
+            if ifftn:
+                new_vdims = [
+                    vdim[3:] if vdim.startswith("ft_") else vdim for vdim in self.vdims
+                ]
             else:
-                new_vdims = None
-                new_vdim_mapping = None
+                new_vdims = [f"ft_{vdim}" for vdim in self.vdims]
+            # vdim mapping
+            new_vdim_mapping = {}
+            for vdim, new_vdim in zip(self.vdims, new_vdims):
+                if vdim in self.vdim_mapping:
+                    if ifftn:
+                        new_vdim_mapping[new_vdim] = (
+                            self.vdim_mapping[vdim][2:]
+                            if self.vdim_mapping[vdim].startswith("k_")
+                            else self.vdim_mapping[vdim]
+                        )
+                    else:
+                        new_vdim_mapping[new_vdim] = f"k_{self.vdim_mapping[vdim]}"
 
         return self.__class__(
             mesh,
