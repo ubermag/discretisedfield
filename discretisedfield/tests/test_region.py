@@ -771,20 +771,20 @@ def test_mpl(p1, p2, tmp_path):
     region = df.Region(p1=p1, p2=p2)
 
     if region.ndim != 3:
-        pytest.xfail(reason="plotting only supports 3d")
-
-    # Check if it runs.
-    region.mpl()
-    region.mpl(
-        figsize=(10, 10),
-        multiplier=1e-9,
-        color=plot_util.cp_hex[1],
-        linewidth=3,
-        box_aspect=(1, 1.5, 2),
-        linestyle="dashed",
-    )
-
-    region.mpl(filename=tmp_path / "figure.pdf")
+        with pytest.raises(RuntimeError):
+            region.mpl()
+    else:
+        # Check if it runs.
+        region.mpl()
+        region.mpl(
+            figsize=(10, 10),
+            multiplier=1e-9,
+            color=plot_util.cp_hex[1],
+            linewidth=3,
+            box_aspect=(1, 1.5, 2),
+            linestyle="dashed",
+        )
+        region.mpl(filename=tmp_path / "figure.pdf")
 
     plt.close("all")
 
