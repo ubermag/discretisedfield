@@ -1538,7 +1538,6 @@ def test_coordinate_field(valid_mesh):
     assert isinstance(cfield, df.Field)
     manually = df.Field(valid_mesh, nvdim=valid_mesh.region.ndim, value=lambda p: p)
     assert cfield.allclose(manually, atol=0)
-    print(valid_mesh.region.dims)
     for dim in valid_mesh.region.dims:
         index = [0] * valid_mesh.region.ndim
         index[valid_mesh.region._dim2index(dim)] = slice(None)
