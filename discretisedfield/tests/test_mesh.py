@@ -1533,17 +1533,17 @@ def test_save_load_subregions(p1, p2, cell, tmp_path):
     assert test_mesh.subregions == sr
 
 
-@pytest.mark.xfail(reason="needs nd field")
-def test_coordinate_field(valid_mesh):  # TODO
+def test_coordinate_field(valid_mesh):
     cfield = valid_mesh.coordinate_field()
     assert isinstance(cfield, df.Field)
-    manually = df.Field(valid_mesh, dim=valid_mesh.region.ndim, value=lambda p: p)
+    manually = df.Field(valid_mesh, nvdim=valid_mesh.region.ndim, value=lambda p: p)
     assert cfield.allclose(manually, atol=0)
-    for dim in range(valid_mesh.region.ndim):
-        index = [
-            0,
-        ] * valid_mesh.region.ndim
+    print(valid_mesh.region.dims)
+    for dim in valid_mesh.region.dims:
+        index = [0] * valid_mesh.region.ndim
         index[valid_mesh.region._dim2index(dim)] = slice(None)
+        # extra index for vector dimension: vector component along the current direction
+        index = tuple(index) + (valid_mesh.region._dim2index(dim),)
         assert np.allclose(cfield.array[index], getattr(valid_mesh.points, dim), atol=0)
 
 
