@@ -1287,12 +1287,13 @@ def test_dV(p1, p2, cell, dV):
 
 def test_mpl(valid_mesh, tmp_path):
     if valid_mesh.region.ndim != 3:
-        pytest.xfail(reason="plotting only supports 3d")
+        with pytest.raises(RuntimeError):
+            valid_mesh.mpl()
+    else:
+        valid_mesh.mpl()
+        valid_mesh.mpl(box_aspect=[1, 2, 3])
+        valid_mesh.mpl(filename=tmp_path / "figure.pdf")
 
-    valid_mesh.mpl()
-    valid_mesh.mpl(box_aspect=[1, 2, 3])
-
-    valid_mesh.mpl(filename=tmp_path / "figure.pdf")
     plt.close("all")
 
 

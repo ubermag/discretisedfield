@@ -2739,7 +2739,7 @@ def test_mpl_scalar(test_field):
         test_field.a.sel("x").mpl.scalar(filename=tmpfilename)
 
     # Exceptions
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.a.mpl.scalar()  # not sliced
     with pytest.raises(ValueError):
         test_field.sel("z").mpl.scalar()  # vector field
@@ -2773,7 +2773,7 @@ def test_mpl_lightess(test_field):
             field.sel("z").mpl.lightness(filename=tmpfilename)
 
     # Exceptions
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.mpl.lightness()  # not sliced
     with pytest.raises(ValueError):
         # wrong filter field
@@ -2829,7 +2829,7 @@ def test_mpl_vector(test_field):
         test_field.sel("x").mpl.vector(filename=tmpfilename)
 
     # Exceptions
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.mpl.vector()  # not sliced
     with pytest.raises(ValueError):
         test_field.b.sel("z").mpl.vector()  # scalar field
@@ -2864,7 +2864,7 @@ def test_mpl_contour(test_field):
         test_field.sel("z").c.mpl.contour(filename=tmpfilename)
 
     # Exceptions
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.mpl.contour()  # not sliced
     with pytest.raises(ValueError):
         test_field.sel("z").mpl.contour()  # vector field
@@ -2909,8 +2909,20 @@ def test_mpl(test_field):
         test_field.sel("x").mpl(filename=tmpfilename)
 
     # Exception
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.mpl()
+
+    plt.close("all")
+
+
+def test_mpl_dimension(valid_mesh):
+    field = df.Field(valid_mesh, nvdim=1)
+
+    if valid_mesh.region.ndim != 2:
+        with pytest.raises(RuntimeError):
+            field.mpl.scalar()
+    else:
+        field.mpl.scalar()
 
     plt.close("all")
 

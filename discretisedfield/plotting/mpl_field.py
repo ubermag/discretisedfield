@@ -37,7 +37,7 @@ class MplField(Mpl):
 
     def __init__(self, field):
         if field.mesh.region.ndim != 2:
-            raise ValueError(
+            raise RuntimeError(
                 "Only fields on 2d meshes can be plotted with matplotlib, not"
                 f" {field.mesh.region.ndim=}."
             )
