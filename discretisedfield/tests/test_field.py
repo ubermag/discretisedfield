@@ -2467,8 +2467,10 @@ def test_write_read_ovf(tmp_path):
 
     # Extend scalar
     for rep in representations:
-        f = df.Field(mesh, nvdim=1, value=lambda point: point[0] + point[1] + point[2])
-        tmpfilename = tmp_path / filename
+        # large mesh required to detect bugs when saving data in chunks
+        large_mesh = df.Mesh(p1=(0, 0, 0), p2=(1, 1, 1), n=(480, 200, 12))
+        f = df.Field(large_mesh, nvdim=1, value=1)
+        tmpfilename = tmp_path / "extended-scalar.ovf"
         f.to_file(tmpfilename, representation=rep, extend_scalar=True)
         f_read = df.Field.from_file(tmpfilename)
 
