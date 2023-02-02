@@ -161,7 +161,7 @@ def field_to_ovf(
 
             # processing in chuncks to reduce memory consumption
             chunksize = 100_000
-            n_chunks = math.ceil(len(field.array.flat) / chunksize)
+            n_chunks = math.ceil(len(reordered.flat) / chunksize)
             for i in range(n_chunks):
                 f.write(
                     np.asarray(
