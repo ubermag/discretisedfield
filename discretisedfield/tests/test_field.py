@@ -1169,7 +1169,7 @@ def test_dot(mesh_3d, nvdim):
     assert np.allclose(res.mean(), 0)
 
     # Check norm computed using dot product
-    assert f1.norm == (f1.dot(f1)) ** (0.5)
+    assert f1.norm.allclose((f1.dot(f1)) ** (0.5))
 
     # Create a list of othogonal fields
     fields = []
