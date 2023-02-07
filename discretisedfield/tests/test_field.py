@@ -128,7 +128,6 @@ def test_init_scalar_valid_args(valid_mesh, value, dtype):
 
 @pytest.mark.parametrize("value, dtype", iters + vfuncs)
 def test_init_vector_valid_args(valid_mesh, value, dtype):
-
     f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
     assert isinstance(f, df.Field)
 

@@ -128,7 +128,6 @@ def topological_charge_density(field, /, method="continuous"):
         return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
 
     elif method == "berg-luescher":
-
         q = df.Field(field.mesh, nvdim=1)
 
         # Area of a single triangle
