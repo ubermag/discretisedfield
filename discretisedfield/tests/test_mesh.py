@@ -1726,7 +1726,6 @@ def test_sel_subregions():
 
 
 def test_fftn_mesh():
-
     # 3D mesh with even number of cells
     p1 = (-10, -10, -5)
     p2 = (10, 10, 5)
