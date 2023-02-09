@@ -117,12 +117,9 @@ def topological_charge_density(field, /, method="continuous"):
 
     of = field.orientation  # unit field - orientation field
 
-    # Spatial axes associated with the first and second vector
-    # dimensions.
-    axis1 = field.vdim_mapping[field.vdims[0]]
-    axis2 = field.vdim_mapping[field.vdims[1]]
-    axis1_idx = field.mesh.region._dim2index(axis1)
-    axis2_idx = field.mesh.region._dim2index(axis2)
+    axis1 = field.mesh.region.dims[0]
+    axis2 = field.mesh.region.dims[1]
+    axis1_idx, axis2_idx = 0, 1
 
     if method == "continuous":
         return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
@@ -299,12 +296,7 @@ def topological_charge(field, /, method="continuous", absolute=False):
             return float(q.integrate())
 
     elif method == "berg-luescher":
-        # Spatial axes associated with the first and second vector
-        # dimensions.
-        axis1 = field.vdim_mapping[field.vdims[0]]
-        axis2 = field.vdim_mapping[field.vdims[1]]
-        axis1_idx = field.mesh.region._dim2index(axis1)
-        axis2_idx = field.mesh.region._dim2index(axis2)
+        axis1_idx, axis2_idx = 0, 1
         of = field.orientation
 
         topological_charge = 0
