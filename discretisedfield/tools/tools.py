@@ -129,14 +129,12 @@ def topological_charge_density(field, /, method="continuous"):
         # Area of a single triangle
         area = 0.5 * field.mesh.cell[0] * field.mesh.cell[1]
 
-        n0, n1 = of.mesh.n[0], of.mesh.n[1]
-
-        for i, j in itertools.product(range(n0), range(n1)):
+        for i, j in itertools.product(range(of.mesh.n[0]), range(of.mesh.n[1])):
             v0 = of.array[i, j]
 
             # Extract 4 neighbouring vectors (if they exist)
-            v1 = of.array[i + 1, j] if i + 1 < n0 else None
-            v2 = of.array[i, j + 1] if j + 1 < n1 else None
+            v1 = of.array[i + 1, j] if i + 1 < of.mesh.n[0] else None
+            v2 = of.array[i, j + 1] if j + 1 < of.mesh.n[1] else None
             v3 = of.array[i - 1, j] if i - 1 >= 0 else None
             v4 = of.array[i, j - 1] if j - 1 >= 0 else None
 
