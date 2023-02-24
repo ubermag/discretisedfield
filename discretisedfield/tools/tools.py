@@ -102,18 +102,15 @@ def topological_charge_density(field, /, method="continuous"):
 
     """
     if field.nvdim != 3:
-        msg = f"Cannot compute topological charge density for {field.nvdim=} field."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Cannot compute topological charge density for {field.nvdim=} field."
+        )
 
     if field.mesh.region.ndim != 2:
         raise ValueError(
             "The topological charge density can only be computed on fields with 2"
             f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
-
-    if method not in ["continuous", "berg-luescher"]:
-        msg = "Method can be either continuous or berg-luescher"
-        raise ValueError(msg)
 
     of = field.orientation  # unit field - orientation field
 
@@ -123,7 +120,6 @@ def topological_charge_density(field, /, method="continuous"):
         return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
 
     elif method == "berg-luescher":
-
         q = df.Field(field.mesh, nvdim=1)
 
         # Area of a single triangle
@@ -159,11 +155,15 @@ def topological_charge_density(field, /, method="continuous"):
 
             if triangle_count > 0:
                 q.array[i, j] = charge / (area * triangle_count)
-            else:
-                # If the cell has no neighbouring cells
+            else:  # the cell has no neighbouring cells
                 q.array[i, j] = 0
 
         return q
+
+    else:
+        raise ValueError(
+            f"'method' can be either 'continuous' or 'berg-luescher', not '{method}'."
+        )
 
 
 def topological_charge(field, /, method="continuous", absolute=False):
@@ -257,18 +257,13 @@ def topological_charge(field, /, method="continuous", absolute=False):
 
     """
     if field.nvdim != 3:
-        msg = f"Cannot compute topological charge for {field.nvdim=} field."
-        raise ValueError(msg)
+        raise ValueError(f"Cannot compute topological charge for {field.nvdim=} field.")
 
     if field.mesh.region.ndim != 2:
         raise ValueError(
             "The topological charge can only be computed on fields with 2"
             f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
-
-    if method not in ["continuous", "berg-luescher"]:
-        msg = "Method can be either continuous or berg-luescher"
-        raise ValueError(msg)
 
     if method == "continuous":
         q = topological_charge_density(field, method=method)
@@ -297,6 +292,11 @@ def topological_charge(field, /, method="continuous", absolute=False):
             topological_charge += triangle1 + triangle2
 
         return topological_charge
+
+    else:
+        raise ValueError(
+            f"'method' can be either 'continuous' or 'berg-luescher', not '{method}'."
+        )
 
 
 def emergent_magnetic_field(field):
