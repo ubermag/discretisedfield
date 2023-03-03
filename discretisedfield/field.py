@@ -3385,6 +3385,11 @@ class Field(_FieldIO):
             key_dims["vdims"] = hv_key_dim(self.vdims, "")
         return key_dims
 
+    @property
+    def pv(self):  # TODO Would a different name be better?
+        """Plot interface, pyvista based."""
+        return dfp.PvField(self)
+
     def fftn(self, **kwargs):
         """N dimensional discrete FFT of the field.
 
