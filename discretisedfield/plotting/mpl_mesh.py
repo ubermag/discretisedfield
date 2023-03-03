@@ -1,4 +1,3 @@
-import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield as df
@@ -97,19 +96,13 @@ class MplMesh(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
+        rescaled_mesh = self.mesh.scale(1 / multiplier)
         cell_region = df.Region(
-            p1=self.mesh.region.pmin, p2=np.add(self.mesh.region.pmin, self.mesh.cell)
+            p1=rescaled_mesh.region.pmin,
+            p2=rescaled_mesh.region.pmin + rescaled_mesh.cell,
         )
-        self.mesh.region.mpl(
-            ax=ax,
-            color=color[0],
-            multiplier=multiplier,
-            box_aspect=box_aspect,
-            **kwargs,
-        )
-        cell_region.mpl(
-            ax=ax, color=color[1], multiplier=multiplier, box_aspect=None, **kwargs
-        )
+        rescaled_mesh.region.mpl(ax=ax, color=color[0], box_aspect=box_aspect, **kwargs)
+        cell_region.mpl(ax=ax, color=color[1], box_aspect=None, **kwargs)
 
         self._savefig(filename)
 
