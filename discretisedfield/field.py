@@ -1,7 +1,6 @@
 import collections
 import functools
 import numbers
-import warnings
 
 import numpy as np
 import scipy.fft as spfft
@@ -573,10 +572,6 @@ class Field(_FieldIO):
             elif self.nvdim == self.mesh.region.ndim:
                 vdim_mapping = dict(zip(self.vdims, self.mesh.region.dims))
             else:
-                warnings.warn(
-                    f"Automatic mapping is not possible for {self.nvdim=} and"
-                    f" {self.mesh.region.ndim=}. Set 'vdim_mapping' manually."
-                )
                 vdim_mapping = {}
         elif not isinstance(vdim_mapping, dict):
             raise TypeError(f"Invalid {type(vdim_mapping)=}; must be of type 'dict'.")
