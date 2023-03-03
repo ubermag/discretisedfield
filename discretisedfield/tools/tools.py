@@ -102,8 +102,9 @@ def topological_charge_density(field, /, method="continuous"):
 
     """
     if field.nvdim != 3:
-        msg = f"Cannot compute topological charge density for {field.nvdim=} field."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Cannot compute topological charge density for {field.nvdim=} field."
+        )
 
     if field.mesh.region.ndim != 2:
         raise ValueError(
@@ -111,52 +112,27 @@ def topological_charge_density(field, /, method="continuous"):
             f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
 
-    if method not in ["continuous", "berg-luescher"]:
-        msg = "Method can be either continuous or berg-luescher"
-        raise ValueError(msg)
-
     of = field.orientation  # unit field - orientation field
 
-    # Spatial axes associated with the first and second vector
-    # dimensions.
-    axis1 = field.vdim_mapping[field.vdims[0]]
-    axis2 = field.vdim_mapping[field.vdims[1]]
-    axis1_idx = field.mesh.region._dim2index(axis1)
-    axis2_idx = field.mesh.region._dim2index(axis2)
-
     if method == "continuous":
+        axis1 = field.mesh.region.dims[0]
+        axis2 = field.mesh.region.dims[1]
         return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
 
     elif method == "berg-luescher":
         q = df.Field(field.mesh, nvdim=1)
 
         # Area of a single triangle
-        area = 0.5 * field.mesh.cell[axis1_idx] * field.mesh.cell[axis2_idx]
+        area = 0.5 * field.mesh.cell[0] * field.mesh.cell[1]
 
-        for i, j in itertools.product(
-            range(of.mesh.n[axis1_idx]), range(of.mesh.n[axis2_idx])
-        ):
-            index = dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j})
-            v0 = of.array[index]
+        for i, j in itertools.product(range(of.mesh.n[0]), range(of.mesh.n[1])):
+            v0 = of.array[i, j]
 
             # Extract 4 neighbouring vectors (if they exist)
-            v1 = v2 = v3 = v4 = None
-            if i + 1 < of.mesh.n[axis1_idx]:
-                v1 = of.array[
-                    dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j})
-                ]
-            if j + 1 < of.mesh.n[axis2_idx]:
-                v2 = of.array[
-                    dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j + 1})
-                ]
-            if i - 1 >= 0:
-                v3 = of.array[
-                    dfu.assemble_index(0, 2, {axis1_idx: i - 1, axis2_idx: j})
-                ]
-            if j - 1 >= 0:
-                v4 = of.array[
-                    dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j - 1})
-                ]
+            v1 = of.array[i + 1, j] if i + 1 < of.mesh.n[0] else None
+            v2 = of.array[i, j + 1] if j + 1 < of.mesh.n[1] else None
+            v3 = of.array[i - 1, j] if i - 1 >= 0 else None
+            v4 = of.array[i, j - 1] if j - 1 >= 0 else None
 
             charge = 0
             triangle_count = 0
@@ -178,12 +154,16 @@ def topological_charge_density(field, /, method="continuous"):
                 charge += dfu.bergluescher_angle(v0, v4, v1)
 
             if triangle_count > 0:
-                q.array[index] = charge / (area * triangle_count)
-            else:
-                # If the cell has no neighbouring cells
-                q.array[index] = 0
+                q.array[i, j] = charge / (area * triangle_count)
+            else:  # the cell has no neighbouring cells
+                q.array[i, j] = 0
 
         return q
+
+    else:
+        raise ValueError(
+            f"'method' can be either 'continuous' or 'berg-luescher', not '{method}'."
+        )
 
 
 def topological_charge(field, /, method="continuous", absolute=False):
@@ -277,18 +257,13 @@ def topological_charge(field, /, method="continuous", absolute=False):
 
     """
     if field.nvdim != 3:
-        msg = f"Cannot compute topological charge for {field.nvdim=} field."
-        raise ValueError(msg)
+        raise ValueError(f"Cannot compute topological charge for {field.nvdim=} field.")
 
     if field.mesh.region.ndim != 2:
         raise ValueError(
             "The topological charge can only be computed on fields with 2"
             f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
-
-    if method not in ["continuous", "berg-luescher"]:
-        msg = "Method can be either continuous or berg-luescher"
-        raise ValueError(msg)
 
     if method == "continuous":
         q = topological_charge_density(field, method=method)
@@ -298,24 +273,14 @@ def topological_charge(field, /, method="continuous", absolute=False):
             return float(q.integrate())
 
     elif method == "berg-luescher":
-        # Spatial axes associated with the first and second vector
-        # dimensions.
-        axis1 = field.vdim_mapping[field.vdims[0]]
-        axis2 = field.vdim_mapping[field.vdims[1]]
-        axis1_idx = field.mesh.region._dim2index(axis1)
-        axis2_idx = field.mesh.region._dim2index(axis2)
         of = field.orientation
 
         topological_charge = 0
-        for i, j in itertools.product(
-            range(of.mesh.n[axis1_idx] - 1), range(of.mesh.n[axis2_idx] - 1)
-        ):
-            v1 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j})]
-            v2 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j})]
-            v3 = of.array[
-                dfu.assemble_index(0, 2, {axis1_idx: i + 1, axis2_idx: j + 1})
-            ]
-            v4 = of.array[dfu.assemble_index(0, 2, {axis1_idx: i, axis2_idx: j + 1})]
+        for i, j in itertools.product(range(of.mesh.n[0] - 1), range(of.mesh.n[1] - 1)):
+            v1 = of.array[i, j]
+            v2 = of.array[i + 1, j]
+            v3 = of.array[i + 1, j + 1]
+            v4 = of.array[i, j + 1]
 
             triangle1 = dfu.bergluescher_angle(v1, v2, v4)
             triangle2 = dfu.bergluescher_angle(v2, v3, v4)
@@ -327,6 +292,11 @@ def topological_charge(field, /, method="continuous", absolute=False):
             topological_charge += triangle1 + triangle2
 
         return topological_charge
+
+    else:
+        raise ValueError(
+            f"'method' can be either 'continuous' or 'berg-luescher', not '{method}'."
+        )
 
 
 def emergent_magnetic_field(field):

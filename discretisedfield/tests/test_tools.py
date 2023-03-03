@@ -18,12 +18,18 @@ def test_topological_charge(method):
     # -> Q(f) = 0
     f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
 
-    q = dft.topological_charge_density(f.sel("z"), method=method)
+    for normal_direction in "xyz":
+        q = dft.topological_charge_density(f.sel(normal_direction), method=method)
+        assert q.nvdim == 1
+        assert np.allclose(q.mean(), 0)
 
-    assert q.nvdim == 1
-    assert q.mean() == 0
-    for absolute in [True, False]:
-        assert dft.topological_charge(f.sel("z"), method=method, absolute=absolute) == 0
+        for absolute in [True, False]:
+            assert np.allclose(
+                dft.topological_charge(
+                    f.sel(normal_direction), method=method, absolute=absolute
+                ),
+                0,
+            )
 
     # Skyrmion (with PBC) from a file
     test_filename = os.path.join(
