@@ -84,7 +84,7 @@ class _FieldIO_OVF:
         bfooter = textwrap.dedent(
             f"""\
             # End: Data {repr_string}
-            # End: Segement
+            # End: Segment
             """
         ).encode("utf-8")
 
