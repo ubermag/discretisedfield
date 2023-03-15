@@ -224,7 +224,7 @@ class Hv:
         else:
             return self.scalar(kdims=kdims, **scalar_kw)
 
-    def scalar(self, kdims, roi=None, n=None, **kwargs):
+    def scalar(self, kdims, roi=None, n=None, symmetric_clim=False, **kwargs):
         """Create an image plot for scalar data or individual components.
 
         This method creates a dynamic holoviews plot (``holoviews.DynamicMap``) based on
@@ -269,6 +269,11 @@ class Hv:
 
             Re-sampling of the array with the given number of points. If not specified
             no re-sampling is done.
+
+        symmetric_clim : bool, optional
+
+            If set to ``True`` the colourbar is centred around 0. Defaults to ``False``.
+            This argument has no effect if ``clim`` is passed as an argument.
 
         kwargs
 
@@ -315,12 +320,17 @@ class Hv:
         roi = self._setup_roi(roi, kdims)
         self._check_n(n)
 
-        def _plot(*values):
+        def _plot(symmetric_clim, *values):
             data = self.callback(**dict(zip(dyn_kdims, values)))
             data = self._filter_values(
                 data, roi, kdims, dyn_kdims=dict(zip(dyn_kdims, values))
             )
             data = self._resample(data, kdims, n)
+
+            if symmetric_clim and "clim" not in kwargs:
+                vabs_max = np.nanmax(np.abs(data.data))
+                kwargs["clim"] = (-vabs_max, vabs_max)
+
             plot = hv.Image(data=data, kdims=kdims).opts(**kwargs)
 
             for dim in plot.kdims:
@@ -328,9 +338,9 @@ class Hv:
 
             return plot
 
-        return hv.DynamicMap(_plot, kdims=dyn_kdims).redim.values(
-            **{dim: self.key_dims[dim].data for dim in dyn_kdims}
-        )
+        return hv.DynamicMap(
+            functools.partial(_plot, symmetric_clim), kdims=dyn_kdims
+        ).redim.values(**{dim: self.key_dims[dim].data for dim in dyn_kdims})
 
     def vector(
         self,
