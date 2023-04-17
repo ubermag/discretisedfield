@@ -631,6 +631,98 @@ def test_invalid_translate(p1, p2, vector, error):
         region.translate(vector)
 
 
+def test_rotate90():
+    p1 = (0, 0, 0)
+    p2 = (40e-9, 20e-9, 10e-9)
+    centre = (20e-9, 10e-9, 5e-9)
+    region = df.Region(p1=p1, p2=p2)
+    assert np.allclose(region.centre, centre)
+    assert region.dims == ("x", "y", "z")
+
+    # 90° rotation about the centre point in the xy plane
+    rotated = region.rotate90("x", "y")
+    assert isinstance(rotated, df.Region)
+    assert np.allclose(rotated.edges, (20e-9, 40e-9, 10e-9))
+    assert np.allclose(rotated.pmin, (10e-9, -10e-9, 0e-9))
+    assert np.allclose(rotated.pmax, (30e-9, 30e-9, 10e-9))
+
+    # make sure that the rotation does not modify the old object
+    assert np.allclose(region.pmin, p1)
+    assert np.allclose(region.pmax, p2)
+
+    # rotate about a different reference point
+    rotated = region.rotate90("x", "y", reference_point=p1)
+    assert isinstance(rotated, df.Region)
+    assert np.allclose(rotated.edges, (20e-9, 40e-9, 10e-9))
+    assert np.allclose(rotated.pmin, (-20e-9, 0e-9, 0e-9))
+    assert np.allclose(rotated.pmax, (0e-9, 40e-9, 10e-9))
+
+    # rotate about 180° in the xz plane about a different reference point
+    rotated = region.rotate90("z", "x", k=2, reference_point=(5e-9, 5e-9, 5e-9))
+    assert np.allclose(rotated.edges, (40e-9, 20e-9, 10e-9))
+    assert np.allclose(rotated.pmin, (-30e-9, 0, 0))
+    assert np.allclose(rotated.pmax, (10e-9, 20e-9, 10e-9))
+
+    # 360° rotation is unity
+    assert region.allclose(
+        region.rotate90("y", "z", k=4, reference_point=(-3e-9, 4e-10, 5e-7))
+    )
+    assert region.rotate90("x", "y").allclose(region.rotate90("x", "y", k=5))
+
+    # rotation direction and sign cancel
+    assert region.rotate90("x", "y").allclose(region.rotate90("y", "x", k=-1))
+
+    # rotation by +180° and -180° are identical
+    assert region.rotate90("y", "z", k=2, reference_point=(1e-9, 2e-9, 3e-9)).allclose(
+        region.rotate90("y", "z", k=-2, reference_point=(1e-9, 2e-9, 3e-9))
+    )
+
+    # units rotate, dims are fixed
+    region.units = ["nm", "mm", "m"]
+    assert region.rotate90("y", "z").units == ("nm", "m", "mm")
+    assert region.rotate90("x", "y").dims == ("x", "y", "z")
+
+    # 2d region
+    region = df.Region(p1=(-5, -3), p2=(11, 7))
+    rotated = region.rotate90("x", "y")
+    assert np.allclose(rotated.pmin, (-2, -6))
+    assert np.allclose(rotated.pmax, (8, 10))
+
+    # in-place rotation
+    region.rotate90("x", "y", inplace=True)
+    assert np.allclose(region.pmin, (-2, -6))
+    assert np.allclose(region.pmax, (8, 10))
+    region.rotate90("y", "x", inplace=True)  # rotate back
+    assert np.allclose(region.pmin, (-5, -3))
+    assert np.allclose(region.pmax, (11, 7))
+
+
+def test_rotate90_invalid():
+    # 1d: rotation makes no sense
+    region = df.Region(p1=-1, p2=1)
+    with pytest.raises(ValueError):
+        region.rotate90("y", "z")
+
+    region = df.Region(p1=(0, 0, 0), p2=(1, 1, 1))
+    # invalid dimension name
+    with pytest.raises(ValueError):
+        region.rotate90("x", "a")
+    # duplicated dimension
+    with pytest.raises(ValueError):
+        region.rotate90("x", "x")
+    # no typechecks in _dim2index, therefore ValueError for wrong type
+    with pytest.raises(ValueError):
+        region.rotate90(0, 1)
+    # only multiples of 90° rotations
+    with pytest.raises(TypeError):
+        region.rotate90("x", "y", k=0.5)
+    # invalid reference point
+    with pytest.raises(TypeError):
+        region.rotate90("x", "z", reference_point="origin")
+    with pytest.raises(ValueError):
+        region.rotate90("x", "z", reference_point=(0, 0))
+
+
 @pytest.mark.parametrize(
     "p1, p2, custom_units, default_units",
     [
