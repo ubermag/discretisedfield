@@ -1012,6 +1012,11 @@ class Region(_RegionIO):
         >>> rotated.pmax
         array([9., 9., 6.])
 
+        See also
+        --------
+        :py:func:`~discretisedfield.Mesh.rotate90`
+        :py:func:`~discretisedfield.Field.rotate90`
+
         """
         if ax1 == ax2:
             raise ValueError(f"{ax1=} and {ax2=} must have different values.")
