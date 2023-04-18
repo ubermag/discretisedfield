@@ -1475,6 +1475,58 @@ def test_translate():
     assert np.allclose(res.subregions["sr2"].pmax, (100e-9, 50e-9, 10e-9), atol=0)
 
 
+def test_rotate90():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(40e-9, 20e-9, 10e-9), n=(40, 10, 5))
+    rotated = mesh.rotate90("x", "y")
+
+    assert rotated.region.allclose(mesh.region.rotate90("x", "y"))
+    assert np.allclose(rotated.n, (10, 40, 5))
+    assert np.allclose(mesh.n, (40, 10, 5))
+
+    rotated = mesh.rotate90("x", "z")
+    assert np.allclose(rotated.n, (5, 10, 40))
+
+    rotated = mesh.rotate90("y", "z", k=2, reference_point=(0, 0, 0))
+    # ensure that the region is rotated
+    assert np.allclose(rotated.region.pmin, (0, -20e-9, -10e-9))
+    assert np.allclose(rotated.region.pmax, (40e-9, 0, 0))
+    # the number of cells stays constant for 180° rotations
+    assert np.allclose(rotated.n, (40, 10, 5))
+
+    # subregion rotation
+    mesh.subregions = {
+        "sr1": df.Region(p1=(0, 0, 0), p2=(10e-9, 2e-9, 4e-9)),
+        "sr2": df.Region(p1=(30e-9, 10e-9, 8e-9), p2=(33e-9, 16e-9, 6e-9)),
+    }
+
+    rotated = mesh.rotate90("x", "y")
+    assert np.allclose(rotated.n, (10, 40, 5))
+    assert np.allclose(rotated.region.pmin, (10e-9, -10e-9, 0))
+    assert np.allclose(rotated.region.pmax, (30e-9, 30e-9, 10e-9))
+    assert rotated.subregions["sr1"].allclose(
+        df.Region(p1=(28e-9, -10e-9, 0), p2=(30e-9, 0, 4e-9))
+    )
+    assert rotated.subregions["sr2"].allclose(
+        df.Region(p1=(14e-9, 20e-9, 6e-9), p2=(20e-9, 23e-9, 8e-9))
+    )
+    # check that the original object has not changed
+    assert mesh.subregions == {
+        "sr1": df.Region(p1=(0, 0, 0), p2=(10e-9, 2e-9, 4e-9)),
+        "sr2": df.Region(p1=(30e-9, 10e-9, 8e-9), p2=(33e-9, 16e-9, 6e-9)),
+    }
+    # inplace rotation
+    mesh.rotate90("z", "y", reference_point=(1e-9, 2e-9, 1e-9), inplace=True)
+    assert np.allclose(mesh.n, (40, 5, 10))
+    assert np.allclose(mesh.region.pmin, (0, 1e-9, -17e-9), atol=0)
+    assert np.allclose(mesh.region.pmax, (40e-9, 11e-9, 3e-9), atol=0)
+    assert mesh.subregions["sr1"].allclose(
+        df.Region(p1=(0, 1e-9, 1e-9), p2=(10e-9, 5e-9, 3e-9))
+    )
+    assert mesh.subregions["sr2"].allclose(
+        df.Region(p1=(30e-9, 7e-9, -13e-9), p2=(33e-9, 9e-9, -7e-9))
+    )
+
+
 def test_slider():
     p1 = (-10e-9, -5e-9, 10e-9)
     p2 = (10e-9, 5e-9, 0)
