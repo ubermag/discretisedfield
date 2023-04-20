@@ -3222,6 +3222,7 @@ class Field(_FieldIO):
                     " vector dimensions and spatial dimensions required."
                 ) from None
 
+            # TODO does this keep the right-handedness?
             value1 = value[..., vdim1].copy()
             value2 = value[..., vdim2].copy()
 
