@@ -2424,6 +2424,11 @@ def test_rotate90():
     assert np.allclose(rotated.mesh.n, (10, 40, 5))
     assert rotated.array.shape == (10, 40, 5, 1)
 
+    # the reference point does not affect the array
+    rotated_ref = field.rotate90("x", "y", reference_point=(0, 0, 0))
+    assert np.allclose(rotated_ref.mesh.region.pmin, (-20e-9, 0, 10e-9))
+    assert np.allclose(rotated.array, rotated_ref.array)
+
     # scalar field with local variations
     field = df.Field(mesh, nvdim=1, value=lambda p: p[2])
     rotated = field.rotate90("z", "x")
@@ -2448,6 +2453,10 @@ def test_rotate90():
     assert np.allclose(rotated(rotated.mesh.region.centre), (3, 2, -1))
     # -90° rotation is equivalent to opposite rotation direction
     assert field.rotate90("x", "y", k=-1).allclose(field.rotate90("y", "x"))
+    # 270° rotation is equivalent to -90° rotation
+    assert field.rotate90("x", "y", k=-1).allclose(field.rotate90("x", "y", k=3))
+    # 360° rotation has no effect
+    assert field.allclose(field.rotate90("x", "z", k=4))
 
     # in-place rotation
     rotated = field.rotate90("x", "y", k=2, inplace=True, reference_point=(0, 0, 0))
@@ -2487,10 +2496,38 @@ def test_rotate90():
     assert not field.valid[-1, 0]
     assert field.valid[0, -1]
 
-    # TODO
-    # - non-uniform valid
-    # - mismatch between dims and vdims
-    # - lower/higher dimensions
+    # mismatch between dims and vdims
+    field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+    # no default vdim mapping -> rotation is not "safe" because the relation between
+    # spatial directions and vector directions is unknown
+    with pytest.raises(RuntimeError):
+        rotated = field.rotate90("x", "y")
+
+    # manually add vdim_mapping
+    # we use different vdims to make the vdim_mapping easier to read
+    # mz component does not point along any spatial direction
+    field = df.Field(
+        mesh,
+        nvdim=3,
+        value=(1, 2, 3),
+        vdims=["mx", "my", "mz"],
+        vdim_mapping={"mx": "x", "my": "y", "mz": None},
+    )
+    rotated = field.rotate90("x", "y")
+    assert np.allclose(rotated.mean(), (-2, 1, 3))
+    assert rotated.vdims == ["mx", "my", "mz"]
+
+    # change mesh to yz plane
+    mesh.region.dims = ["y", "z"]
+    field = df.Field(
+        mesh,
+        nvdim=3,
+        value=(1, 2, 3),
+        vdims=["mx", "my", "mz"],
+        vdim_mapping={"mx": None, "my": "y", "mz": "z"},
+    )
+    field.rotate90("y", "z", k=3, inplace=True)
+    assert np.allclose(field.mean(), (1, 3, -2))
 
 
 # ######################################
