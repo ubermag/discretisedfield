@@ -3212,8 +3212,15 @@ class Field(_FieldIO):
         valid = np.rot90(self.valid.copy(), k=k, axes=(idx1, idx2))
 
         if self.nvdim > 1:
-            vdim1 = self.vdims.index(self._r_dim_mapping[ax1])
-            vdim2 = self.vdims.index(self._r_dim_mapping[ax2])
+            try:
+                vdim1 = self.vdims.index(self._r_dim_mapping[ax1])
+                vdim2 = self.vdims.index(self._r_dim_mapping[ax2])
+            except ValueError:
+                raise RuntimeError(
+                    "Missing information about vector orientation in"
+                    f" {self.vdim_mapping=}. Manual update of the relation between"
+                    " vector dimensions and spatial dimensions required."
+                ) from None
 
             value1 = value[..., vdim1].copy()
             value2 = value[..., vdim2].copy()
