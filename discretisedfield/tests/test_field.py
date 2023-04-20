@@ -2413,6 +2413,86 @@ def test_angle(valid_mesh, nvdim):
             assert np.allclose(f.angle(v).mean(), np.pi / 2)
 
 
+def test_rotate90():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(40e-9, 20e-9, 10e-9), n=(40, 10, 5))
+
+    # uniform scalar field
+    field = df.Field(mesh, nvdim=1, value=1)
+    rotated = field.rotate90("x", "y")
+    assert np.allclose(rotated.mesh.region.pmin, (10e-9, -10e-9, 0e-9))
+    assert np.allclose(rotated.mesh.region.pmax, (30e-9, 30e-9, 10e-9))
+    assert np.allclose(rotated.mesh.n, (10, 40, 5))
+    assert rotated.array.shape == (10, 40, 5, 1)
+
+    # scalar field with local variations
+    field = df.Field(mesh, nvdim=1, value=lambda p: p[2])
+    rotated = field.rotate90("z", "x")
+    assert np.allclose(rotated.mesh.n, (5, 10, 40))
+    assert rotated.array.shape == (5, 10, 40, 1)
+    assert np.allclose(rotated.sel("y").sel("z").array, [1e-9, 3e-9, 5e-9, 7e-9, 9e-9])
+
+    # uniform vector field
+    field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+    # 90° rotation in xy plane
+    rotated = field.rotate90("x", "y")
+    assert rotated.array.shape == (10, 40, 5, 3)
+    assert np.allclose(rotated(rotated.mesh.region.centre), (-2, 1, 3))
+    assert np.allclose(rotated.mean(), (-2, 1, 3))
+    assert rotated.vdims == ["x", "y", "z"]
+    # original field is not modified
+    assert np.allclose(field(field.mesh.region.centre), (1, 2, 3))
+    # -90° rotation in xz plane
+    rotated = field.rotate90("x", "z", k=-1)
+    assert rotated.array.shape == (5, 10, 40, 3)
+    assert np.allclose(rotated.array[0, 0, 0], (3, 2, -1))
+    assert np.allclose(rotated(rotated.mesh.region.centre), (3, 2, -1))
+    # -90° rotation is equivalent to opposite rotation direction
+    assert field.rotate90("x", "y", k=-1).allclose(field.rotate90("y", "x"))
+
+    # in-place rotation
+    rotated = field.rotate90("x", "y", k=2, inplace=True, reference_point=(0, 0, 0))
+    assert isinstance(rotated, df.Field)
+    assert rotated == field
+    assert np.allclose(field.mesh.region.pmin, (-40e-9, -20e-9, 0), atol=0)
+    assert np.allclose(field.mesh.region.pmax, (0, 0, 10e-9), atol=0)
+    assert field.array.shape == (40, 10, 5, 3)
+    assert np.allclose(field(field.mesh.region.centre), (-1, -2, 3))
+
+    # 2 dimensional field with non-uniform norm
+    mesh = df.Mesh(p1=(-20e-9, -10e-9), p2=(20e-9, 10e-9), cell=(2e-9, 2e-9))
+    field = df.Field(
+        mesh, nvdim=1, value=1, norm=lambda p: 10 if p[0] < 4e-9 else 0, valid="norm"
+    )
+    # check correct initialisation
+    assert field((-5e-9, 1e-9)) == 10
+    assert field((3e-9, 1e-9)) == 10
+    assert field((5e-9, 1e-9)) == 0
+    assert field.valid[0, 0]
+    assert not field.valid[-1, 0]
+    assert field.valid[0, -1]
+    assert field.sel(x=(-19e-9, 3e-9)).mean() == 10
+    assert field.sel(x=(5e-9, 19e-9)).mean() == 0
+    assert field.valid.shape == (20, 10)
+    # rotate about 90°
+    rotated = field.rotate90("x", "y")
+    assert rotated.array.shape == (10, 20, 1)
+    assert rotated.valid.shape == (10, 20)
+    assert rotated.valid[0, 0]
+    assert rotated.valid[-1, 0]
+    assert not rotated.valid[0, -1]
+    assert rotated.sel(y=(-19e-9, 3e-9)).mean() == 10
+    assert rotated.sel(y=(5e-9, 19e-9)).mean() == 0
+    # original field has not changed
+    assert field.valid[0, 0]
+    assert not field.valid[-1, 0]
+    assert field.valid[0, -1]
+
+    # TODO
+    # - non-uniform valid
+    # - mismatch between dims and vdims
+    # - lower/higher dimensions
+
+
 # ######################################
 # TODO Martin
 def test_write_read_ovf(tmp_path):

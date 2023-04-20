@@ -3199,6 +3199,45 @@ class Field(_FieldIO):
             self.mesh, nvdim=1, value=angle_array, unit="rad", valid=valid
         )
 
+    def rotate90(self, ax1, ax2, k=1, reference_point=None, inplace=False):
+        """Rotate field and underlying mesh by 90°."""
+        # all checks are performed when rotating the mesh
+        mesh = self.mesh.rotate90(
+            ax1=ax1, ax2=ax2, k=k, reference_point=reference_point, inplace=inplace
+        )
+
+        idx1 = self.mesh.region._dim2index(ax1)
+        idx2 = self.mesh.region._dim2index(ax2)
+        value = np.rot90(self.array.copy(), k=k, axes=(idx1, idx2))
+        valid = np.rot90(self.valid.copy(), k=k, axes=(idx1, idx2))
+
+        if self.nvdim > 1:
+            vdim1 = self.vdims.index(self._r_dim_mapping[ax1])
+            vdim2 = self.vdims.index(self._r_dim_mapping[ax2])
+
+            value1 = value[..., vdim1].copy()
+            value2 = value[..., vdim2].copy()
+
+            theta = k * np.pi / 2
+            value[..., vdim1] = np.cos(theta) * value1 - np.sin(theta) * value2
+            value[..., vdim2] = np.sin(theta) * value1 + np.cos(theta) * value2
+
+        if inplace:
+            self.update_field_values(value)
+            self.valid = valid
+            return self
+        else:
+            return self.__class__(
+                mesh,
+                nvdim=self.nvdim,
+                value=value,
+                vdims=self.vdims,
+                dtype=self.dtype,
+                unit=self.unit,
+                valid=valid,
+                vdim_mapping=self.vdim_mapping,
+            )
+
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
 
