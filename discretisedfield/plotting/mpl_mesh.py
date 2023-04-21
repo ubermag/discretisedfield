@@ -96,7 +96,7 @@ class MplMesh(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        rescaled_mesh = self.mesh.scale(1 / multiplier)
+        rescaled_mesh = self.mesh.scale(1 / multiplier, reference_point=(0, 0, 0))
         cell_region = df.Region(
             p1=rescaled_mesh.region.pmin,
             p2=rescaled_mesh.region.pmin + rescaled_mesh.cell,
