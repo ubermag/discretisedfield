@@ -1156,7 +1156,8 @@ class Mesh(_MeshIO):
                         or point > self.region.pmax[dim_index]
                     ):
                         raise ValueError(
-                            f"Selected value {point} is outside the mesh region."
+                            f"Selected value {point} is outside the mesh region"
+                            f" {self.region}."
                         )
                     test_point = self.region.pmin.copy().astype(
                         max(self.region.pmin.dtype, type(point))
