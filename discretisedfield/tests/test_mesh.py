@@ -1477,8 +1477,8 @@ def test_translate():
 
 def test_rotate90():
     mesh = df.Mesh(p1=(0, 0, 0), p2=(40e-9, 20e-9, 10e-9), n=(40, 10, 5))
-    rotated = mesh.rotate90("x", "y")
 
+    rotated = mesh.rotate90("x", "y")
     assert rotated.region.allclose(mesh.region.rotate90("x", "y"))
     assert np.allclose(rotated.n, (10, 40, 5))
     assert np.allclose(mesh.n, (40, 10, 5))
