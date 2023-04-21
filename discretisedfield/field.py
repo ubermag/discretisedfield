@@ -3200,7 +3200,80 @@ class Field(_FieldIO):
         )
 
     def rotate90(self, ax1, ax2, k=1, reference_point=None, inplace=False):
-        """Rotate field and underlying mesh by 90°."""
+        """Rotate field and underlying mesh by 90°.
+
+        Rotate the field ``k`` times by 90 degrees in the plane defined by ``ax1`` and
+        ``ax2``. The rotation direction is from ``ax1`` to ``ax2``, the two must be
+        different.
+
+        For vector fields (``nvdim>1``) the components of the vector pointing along
+        ``ax1`` and ``ax2`` are determined from ``vdim_mapping``. Rotation is only
+        possible if this mapping defines vector components along both directions ``ax1``
+        and ``ax2``.
+
+        Parameters
+        ----------
+        ax1 : str
+
+            Name of the first dimension.
+
+        ax2 : str
+
+            Name of the second dimension.
+
+        k : int, optional
+
+            Number of 90° rotations, defaults to 1.
+
+        reference_point : array_like, optional
+
+            Point around which the mesh is rotated. If not provided the mesh.region's
+            centre point of the field is used.
+
+        inplace : bool, optional
+
+            If ``True``, the rotation is applied in-place. Defaults to ``False``.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            The rotated field object. Either a new object or a reference to the
+            existing field for ``inplace=True``.
+
+        Raises
+        ------
+
+        RuntimeError
+
+            If a vector field (``nvdim>1``) does not provide the required mapping
+            between spatial directions and vector components in ``vdim_mapping``.
+
+        Examples
+        --------
+
+        >>> import discretisedfield as df
+        >>> import numpy as np
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 8, 6)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=(10, 4, 6))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+        >>> rotated = field.rotate90('x', 'y')
+        >>> rotated.mesh.region.pmin
+        array([ 1., -1.,  0.])
+        >>> rotated.mesh.region.pmax
+        array([9., 9., 6.])
+        >>> rotated.mesh.n
+        array([ 4, 10,  6])
+        >>> rotated.mean()
+        array([-2.,  1.,  3.])
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Region.rotate90`
+        :py:func:`~discretisedfield.Mesh.rotate90`
+
+        """
         # all checks are performed when rotating the mesh
         mesh = self.mesh.rotate90(
             ax1=ax1, ax2=ax2, k=k, reference_point=reference_point, inplace=inplace
@@ -3212,6 +3285,7 @@ class Field(_FieldIO):
         valid = np.rot90(self.valid.copy(), k=k, axes=(idx1, idx2))
 
         if self.nvdim > 1:
+            # rotate the vector, i.e. the relevant in-plane components
             try:
                 vdim1 = self.vdims.index(self._r_dim_mapping[ax1])
                 vdim2 = self.vdims.index(self._r_dim_mapping[ax2])
@@ -3222,7 +3296,6 @@ class Field(_FieldIO):
                     " vector dimensions and spatial dimensions required."
                 ) from None
 
-            # TODO does this keep the right-handedness?
             value1 = value[..., vdim1].copy()
             value2 = value[..., vdim2].copy()
 
