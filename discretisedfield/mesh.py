@@ -1758,6 +1758,12 @@ class Mesh(_MeshIO):
         ``ax2``. The rotation direction is from ``ax1`` to ``ax2``, the two must be
         different.
 
+        The rotate method does not rotate the string defining periodic boundary
+        conditions, e.g. if a system has periodic boundary conditions in x and is
+        rotated in the xy plane the new system will still have periodic boundary
+        conditions in the new x direction, NOT in the new y direction. It is the
+        user's task to update the ``bc`` string after rotation if required.
+
         Parameters
         ----------
         ax1 : str
@@ -1810,12 +1816,12 @@ class Mesh(_MeshIO):
         :py:func:`~discretisedfield.Field.rotate90`
 
         """
+        # all checks will be performed by region.rotate90
         region = self.region.rotate90(
             ax1=ax1, ax2=ax2, k=k, reference_point=reference_point, inplace=inplace
         )
 
         n = list(self.n)
-        # all checks have been performed by self.region.rotate90
         if k % 2 == 1:
             idx1 = self.region._dim2index(ax1)
             idx2 = self.region._dim2index(ax2)
@@ -1823,6 +1829,7 @@ class Mesh(_MeshIO):
 
         if reference_point is None:
             reference_point = self.region.centre
+
         subregions = {
             name: subregion.rotate90(
                 ax1=ax1, ax2=ax2, k=k, reference_point=reference_point, inplace=inplace
