@@ -52,4 +52,4 @@ def test_hopf_index():
     for n_dims in (1, 2):
         field = df.Field(mesh, nvdim=n_dims)
         with pytest.raises(ValueError):
-            dft.hopf_idx(field)
+            dft.hopf_index(field)

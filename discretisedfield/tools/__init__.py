@@ -1,4 +1,5 @@
 """Convenience tools"""
+from .hopf import hopf_index
 from .tools import (
     count_bps,
     count_large_cell_angle_regions,
