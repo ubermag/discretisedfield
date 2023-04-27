@@ -14,7 +14,7 @@ def hopf_index(field):
         H = -\frac{1}{(8\pi)^2} \int \mathrm{d}^3 r \, \boldsymbol{F} \cdot
         \boldsymbol{A},
 
-    where :math:`boldsymbol{F}` is the emergent magnetic field
+    where :math:`\boldsymbol{F}` is the emergent magnetic field
     :math:`F_i = \varepsilon_{ijk} \boldsymbol{m} \cdot (\partial_j \boldsymbol{m}
     \times \partial_k \boldsymbol{m})`
     and :math:`\boldsymbol{A}` is defined implicitly through :math:`\nabla \times
