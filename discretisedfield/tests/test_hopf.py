@@ -19,10 +19,18 @@ def test_hopf_index():
     def psi4(x, y, z):
         return (x**2 + y**2 + z**2 - 1) / (x**2 + y**2 + z**2 + 1)
 
-    x = np.linspace(-5, 5, 100)
-    y = np.copy(x)
-    z = np.copy(x)
-    X, Y, Z = np.meshgrid(x, y, z)
+    def mx(X, Y, Z):
+        return 2 * (psi1(X, Y, Z)*psi4(X, Y, Z) + psi2(X, Y, Z)*psi3(X, Y, Z))
+
+    def my(X, Y, Z):
+        return 2*(psi2(X, Y, Z)*psi4(X, Y, Z) - psi1(X, Y, Z)*psi3(X, Y, Z))
+
+    def mz(X, Y, Z):
+        return psi4(X, Y, Z)**2 + psi3(X, Y, Z)**2 - psi2(X, Y, Z)**2 - psi1(X, Y, Z)**2
+
+    def m_init(pos):
+        x, y, z = pos
+        return (mx(x, y, z), my(x, y, z), mz(x, y, z))
 
     p1 = (-5, -5, -5)
     p2 = (5, 5, 5)
@@ -30,16 +38,7 @@ def test_hopf_index():
     mesh = df.Mesh(p1=p1, p2=p2, n=n)
 
     # Test H=1 texture
-    m = np.zeros(shape=(X.shape[0], X.shape[1], X.shape[2], 3), dtype=float)
-    m[:, :, :, 0] = 2 * (psi1(X, Y, Z) * psi3(X, Y, Z) + psi2(X, Y, Z) * psi4(X, Y, Z))
-    m[:, :, :, 1] = 2 * (psi2(X, Y, Z) * psi3(X, Y, Z) - psi1(X, Y, Z) * psi4(X, Y, Z))
-    m[:, :, :, 2] = (
-        psi1(X, Y, Z) ** 2
-        + psi2(X, Y, Z) ** 2
-        - psi3(X, Y, Z) ** 2
-        - psi4(X, Y, Z) ** 2
-    )
-    field = df.Field(mesh, nvdim=3, value=m)
+    field = df.Field(mesh, nvdim=3, value=m_init)
     H = dft.hopf_index(field)
     assert 0.9 < H < 1.1
 
