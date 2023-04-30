@@ -20,13 +20,18 @@ def test_hopf_index():
         return (x**2 + y**2 + z**2 - 1) / (x**2 + y**2 + z**2 + 1)
 
     def mx(X, Y, Z):
-        return 2 * (psi1(X, Y, Z)*psi4(X, Y, Z) + psi2(X, Y, Z)*psi3(X, Y, Z))
+        return 2 * (psi1(X, Y, Z) * psi4(X, Y, Z) + psi2(X, Y, Z) * psi3(X, Y, Z))
 
     def my(X, Y, Z):
-        return 2*(psi2(X, Y, Z)*psi4(X, Y, Z) - psi1(X, Y, Z)*psi3(X, Y, Z))
+        return 2 * (psi2(X, Y, Z) * psi4(X, Y, Z) - psi1(X, Y, Z) * psi3(X, Y, Z))
 
     def mz(X, Y, Z):
-        return psi4(X, Y, Z)**2 + psi3(X, Y, Z)**2 - psi2(X, Y, Z)**2 - psi1(X, Y, Z)**2
+        return (
+            psi4(X, Y, Z) ** 2
+            + psi3(X, Y, Z) ** 2
+            - psi2(X, Y, Z) ** 2
+            - psi1(X, Y, Z) ** 2
+        )
 
     def m_init(pos):
         x, y, z = pos
