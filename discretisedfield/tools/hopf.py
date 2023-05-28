@@ -5,7 +5,7 @@ import discretisedfield.tools as dft
 
 def hopf_index_density(field):
     r"""Hopf index density.
-    
+
     This method computes the Hopf index density charge density for a vector field
     (``nvdim=3``).
 
@@ -47,7 +47,9 @@ def hopf_index_density(field):
     Ax = -emergent_magnetic_field.z.integrate(axis2, cumulative=True)
     Az = emergent_magnetic_field.x.integrate(axis2, cumulative=True)
 
-    return -(1 / (4 * np.pi)**2) * (Ax * emergent_magnetic_field.x + Az * emergent_magnetic_field.z)
+    return -(1 / (4 * np.pi) ** 2) * (
+        Ax * emergent_magnetic_field.x + Az * emergent_magnetic_field.z
+    )
 
 
 def hopf_index(field):
