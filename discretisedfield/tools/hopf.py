@@ -3,6 +3,53 @@ import numpy as np
 import discretisedfield.tools as dft
 
 
+def hopf_index_density(field):
+    r"""Hopf index density.
+    
+    This method computes the Hopf index density charge density for a vector field
+    (``nvdim=3``).
+
+    Parameters
+    ----------
+    field : discretisedfield.Field
+
+        Vector field.
+
+    Returns
+    -------
+    discretisedfield.Field
+
+        Hopf index density.
+
+    Raises
+    ------
+    ValueError
+
+        If the field is not three-dimensional.
+
+    """
+
+    if field.nvdim != 3:
+        raise ValueError(f"Cannot compute Hopf index density for {field.nvdim=} field.")
+
+    if field.mesh.region.ndim != 3:
+        raise ValueError(
+            "The Hopf index density can only be computed on fields with 3"
+            f" spatial dimensions, not {field.mesh.region.ndim=}."
+        )
+
+    of = field.orientation  # Unit vector field
+    emergent_magnetic_field = dft.emergent_magnetic_field(of)
+
+    axis2 = field.mesh.region.dims[1]  # y-axis
+
+    # Vector potential
+    Ax = -emergent_magnetic_field.z.integrate(axis2, cumulative=True)
+    Az = emergent_magnetic_field.x.integrate(axis2, cumulative=True)
+
+    return -(1 / (4 * np.pi)**2) * (Ax * emergent_magnetic_field.x + Az * emergent_magnetic_field.z)
+
+
 def hopf_index(field):
     r"""Hopf index.
 
@@ -65,16 +112,5 @@ def hopf_index(field):
             f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
 
-    of = field.orientation  # Unit vector field
-    emergent_magnetic_field = dft.emergent_magnetic_field(of)
-
-    axis2 = field.mesh.region.dims[1]  # y-axis
-
-    # Vector potential
-    Ax = -emergent_magnetic_field.z.integrate(axis2, cumulative=True)
-    Az = emergent_magnetic_field.x.integrate(axis2, cumulative=True)
-
-    integrand = Ax * emergent_magnetic_field.x + Az * emergent_magnetic_field.z
-    H = -float(integrand.integrate() / (4 * np.pi) ** 2)
-
-    return H
+    H_dens = hopf_index_density(field)
+    return H_dens.integrate()
