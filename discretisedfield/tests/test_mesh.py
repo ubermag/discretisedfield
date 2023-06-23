@@ -544,10 +544,12 @@ def test_allclose(p1_1, p1_2, p2, n1, n2):
 
 
 def test_allclose_cell_accuracy():
-    eps = 1e-12
-    n = int(1e13)
-    mesh1 = df.Mesh(p1=0, p2=1, n=n)
-    mesh2 = df.Mesh(p1=eps, p2=1 + eps, n=n)
+    eps = 1e-6
+    n = int(1e7)
+    region1 = df.Region(p1=0, p2=1, tolerance_factor=eps)
+    mesh1 = df.Mesh(region=region1, n=n)
+    region2 = df.Region(p1=eps, p2=1 + eps, tolerance_factor=eps)
+    mesh2 = df.Mesh(region=region2, n=n)
     # NOTE the two meshes are shifted by 10 cells but this cannot be dectected with
     # the default tolerance settings
     assert mesh1.allclose(mesh2)
