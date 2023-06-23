@@ -2121,7 +2121,7 @@ class Mesh(_MeshIO):
                 n.append(len(freqs))
 
         kdims = [f"k_{d}" for d in self.region.dims]
-        kunits = [f"({u})^-1" for u in self.region.units]
+        kunits = [f"({u})" + "$^{-1}$" for u in self.region.units]
         region = df.Region(
             p1=p1,
             p2=p2,
@@ -2233,7 +2233,7 @@ class Mesh(_MeshIO):
 
         kdims = [d[2:] if d.startswith("k_") else d for d in self.region.dims]
         kunits = [
-            u[1:-4] if u.startswith("(") and u.endswith(")^-1") else u
+            u[1:-8] if u.startswith("(") and u.endswith(")$^{-1}$") else u
             for u in self.region.units
         ]
 
