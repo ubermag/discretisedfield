@@ -1,5 +1,7 @@
 import numpy as np
 
+from .derivative import fast_diff_order_1
+
 
 def integrate(field, direction=None, cumulative=False):
     """Integral.
@@ -86,3 +88,23 @@ def _split_diff_combine(array, valid, order, dx):
     else:
         out[valid] = np.concatenate(diff)
         return out
+
+
+def _cython_diff(array, valid, direction, dx):
+    """Reorder arrays to compute fast derivatives."""
+    shape_in = array.shape
+    if shape_in[direction] < 3:
+        return np.zeros_like(array)
+
+    array_reorder = array.swapaxes(direction, -2).swapaxes(-2, -1)
+    shape_reorder = array_reorder.shape
+    array_flat = array_reorder.reshape(-1, shape_in[-1], shape_reorder[-1]).copy()
+    assert array_flat.flags["C_CONTIGUOUS"]
+
+    assert len(array.shape) == len(valid.shape) + 1
+    valid_flat = valid.swapaxes(direction, -1).reshape(-1, shape_reorder[-1])
+    assert valid_flat.flags["C_CONTIGUOUS"]
+
+    result = fast_diff_order_1(array_flat, valid_flat, dx)
+
+    return result.reshape(shape_reorder).swapaxes(-2, -1).swapaxes(direction, -2)

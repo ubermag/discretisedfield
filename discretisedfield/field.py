@@ -11,7 +11,7 @@ from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
-from discretisedfield.operators import _split_diff_combine
+from discretisedfield.operators import _cython_diff, _split_diff_combine
 from discretisedfield.plotting.util import hv_key_dim
 
 from . import html
@@ -2182,7 +2182,14 @@ class Field(_FieldIO):
             vdim_mapping=self.vdim_mapping,
         )
 
-    def diff(self, direction, order=1, restrict2valid=True, periodic_bc=False):
+    def diff(
+        self,
+        direction,
+        order=1,
+        restrict2valid=True,
+        periodic_bc=False,
+        cython_diff=True,
+    ):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -2323,6 +2330,20 @@ class Field(_FieldIO):
         # Use only valid values for the derivative if restrict2valid is True
         # or use all values if restrict2valid is False
         valid = field.valid if restrict2valid else np.ones_like(field.valid, dtype=bool)
+
+        if order == 1 and not periodic_bc and cython_diff:
+            out = _cython_diff(
+                self.array, valid, direction_idx, self.mesh.cell[direction_idx]
+            )
+            return self.__class__(
+                self.mesh,
+                nvdim=self.nvdim,
+                value=out,
+                vdims=self.vdims,
+                unit=self.unit,
+                valid=self.valid,
+                vdim_mapping=self.vdim_mapping,
+            )
 
         out = np.zeros_like(field.array)
 
