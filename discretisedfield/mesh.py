@@ -2040,7 +2040,7 @@ class Mesh(_MeshIO):
 
         3. Compare with manually created coordinate field
 
-        >>> manually = df.Field(mesh, dim=3, value=lambda point: point)
+        >>> manually = df.Field(mesh, nvdim=3, value=lambda point: point)
         >>> cfield.allclose(manually)
         True
 
