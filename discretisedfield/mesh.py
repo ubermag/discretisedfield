@@ -726,15 +726,16 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        index : (3,) array_like
+        index : array_like
 
-            The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
+            For three dimensions, the cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Returns
         -------
-        (3,) tuple
+        numpy.ndarray
 
-            The cell's coordinate :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
+            For three dimensions, the cell's coordinate
+            :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Raises
         ------
@@ -753,9 +754,9 @@ class Mesh(_MeshIO):
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.index2point((0, 0, 0))
-        (0.5, 0.5, 0.5)
+        array([0.5, 0.5, 0.5])
         >>> mesh.index2point((0, 1, 0))
-        (0.5, 1.5, 0.5)
+        array([0.5, 1.5, 0.5])
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
