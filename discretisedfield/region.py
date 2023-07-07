@@ -796,9 +796,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale(5)
         >>> res.pmin
-        array([-20, -20, -20])
+        array([-20., -20., -20.])
         >>> res.pmax
-        array([30, 30, 30])
+        array([30., 30., 30.])
 
         2. Scale the region inplace.
 
@@ -809,9 +809,9 @@ class Region(_RegionIO):
         >>> region.scale(5, inplace=True)
         Region(...)
         >>> region.pmin
-        array([-50, -50, -50])
+        array([-50., -50., -50.])
         >>> region.pmax
-        array([50, 50, 50])
+        array([50., 50., 50.])
 
         3. Scale region with different factors along different directions.
 
@@ -821,9 +821,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale((2, 3, 4))
         >>> res.pmin
-        array([ -5, -10, -15])
+        array([ -5., -10., -15.])
         >>> res.pmax
-        array([15, 20, 25])
+        array([15., 20., 25.])
 
         """
         if isinstance(factor, numbers.Real):
