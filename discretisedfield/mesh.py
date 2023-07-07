@@ -462,10 +462,10 @@ class Mesh(_MeshIO):
 
         Yields
         ------
-        tuple (3,)
+        numpy.ndarray
 
-            Mesh cell's center point :math:`\\mathbf{p} = (p_{x}, p_{y},
-            p_{z})`.
+            For three dimensions, mesh cell's center point
+            :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Examples
         --------
@@ -478,7 +478,7 @@ class Mesh(_MeshIO):
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         >>> list(mesh)
-        [(0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 1.5, 0.5), (1.5, 1.5, 0.5)]
+        [array([0.5, 0.5, 0.5]), array([1.5, 0.5, 0.5]), array([0.5, 1.5, 0.5]),...]
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
 
