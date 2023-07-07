@@ -1548,12 +1548,13 @@ class Mesh(_MeshIO):
     def scale(self, factor, reference_point=None, inplace=False):
         """Scale the underlying region and all subregions.
 
-        This method scales mesh.region and all subregions by multiplying ``pmin`` and
-        ``pmax`` with ``factor``. If ``factor`` is a number the same scaling is applied
+        This method scales mesh.region and all subregions by a ``factor`` with respect
+        to a ``reference_point``. If ``factor`` is a number the same scaling is applied
         along all dimensions. If ``factor`` is array-like its length must match
         ``region.ndim`` and different factors are applied along the different directions
-        (based on their order). A new object is created unless ``inplace=True`` is
-        specified.
+        (based on their order). If ``reference_point`` is ``None``,
+        ``mesh.region.center`` is used as the reference point. A new object is created
+        unless ``inplace=True`` is specified.
 
         Scaling the mesh also scales ``mesh.cell``. The number of cells ``mesh.n`` stays
         constant.
@@ -1562,16 +1563,16 @@ class Mesh(_MeshIO):
         ----------
         factor : numbers.Real or array-like of numbers.Real
 
-            Factor to scale the region.
+            Factor to scale the mesh.
 
         reference_point : array_like, optional
 
-            The position of the reference point is fixed when scaling the region. If not
-            specified the region is scaled about its ``center``.
+            The position of the reference point is fixed when scaling the mesh. If not
+            specified the mesh is scaled about its ``mesh.region.center``.
 
         inplace : bool, optional
 
-            If True, the Region object is modified in-place. Defaults to False.
+            If True, the mesh object is modified in-place. Defaults to False.
 
         Returns
         -------
@@ -1595,9 +1596,9 @@ class Mesh(_MeshIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1))
         >>> res = mesh.scale(2)
         >>> res.region.pmin
-        array([0, 0, 0])
+        array([-5., -5., -5.])
         >>> res.region.pmax
-        array([20, 20, 20])
+        array([15., 15., 15.])
 
         2. Scale a mesh with subregions.
 
@@ -1608,13 +1609,13 @@ class Mesh(_MeshIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1), subregions=sr)
         >>> res = mesh.scale(2)
         >>> res.region.pmin
-        array([0, 0, 0])
+        array([-5., -5., -5.])
         >>> res.region.pmax
-        array([20, 20, 20])
+        array([15., 15., 15.])
         >>> res.subregions['sub_reg'].pmin
-        array([0, 0, 0])
+        array([-5., -5., -5.])
         >>> res.subregions['sub_reg'].pmax
-        array([10, 10, 10])
+        array([5., 5., 5.])
 
         3. Scale a mesh with subregions in place.
 
@@ -1626,13 +1627,25 @@ class Mesh(_MeshIO):
         >>> mesh.scale((2, 2, 5), inplace=True)
         Mesh(...)
         >>> mesh.region.pmin
-        array([0, 0, 0])
+        array([ -5.,  -5., -20.])
         >>> mesh.region.pmax
-        array([20, 20, 50])
+        array([15., 15., 30.])
         >>> mesh.subregions['sub_reg'].pmin
-        array([0, 0, 0])
+        array([ -5.,  -5., -20.])
         >>> mesh.subregions['sub_reg'].pmax
-        array([10, 10, 25])
+        array([5., 5., 5.])
+
+        4. Scale with respect to the origin
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1))
+        >>> res = mesh.scale(2, reference_point=p1)
+        >>> res.region.pmin
+        array([0, 0, 0])
+        >>> res.region.pmax
+        array([20, 20, 20])
 
         See also
         --------
