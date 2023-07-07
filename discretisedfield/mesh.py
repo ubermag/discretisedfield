@@ -1432,7 +1432,7 @@ class Mesh(_MeshIO):
         array([100, 100, 100])
         >>> padded_mesh = mesh.pad({'x': (1, 1), 'y': (1, 1), 'z': (0, 1)})
         >>> padded_mesh.region.edges
-        array([120, 120, 110])
+        array([120., 120., 110.])
         >>> padded_mesh.n
         array([12, 12, 11])
 
