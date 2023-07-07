@@ -2167,22 +2167,22 @@ class Mesh(_MeshIO):
         >>> ifft_mesh.n
         array([5])
         >>> ifft_mesh.cell
-        array([2])
+        array([2.])
         >>> ifft_mesh.region.pmin
-        array([-5])
+        array([-5.])
         >>> ifft_mesh.region.pmax
-        array([5])
+        array([5.])
 
         2. Perform a real iFFT.
         >>> ifft_mesh = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
         >>> ifft_mesh.n
         array([5])
         >>> ifft_mesh.cell
-        array([2])
+        array([2.])
         >>> ifft_mesh.region.pmin
-        array([-5])
+        array([-5.])
         >>> ifft_mesh.region.pmax
-        array([5])
+        array([5.])
 
         """
         if shape is not None:
