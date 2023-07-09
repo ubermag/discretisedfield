@@ -2216,8 +2216,7 @@ class Field(_FieldIO):
         ----------
         direction : str
 
-            The direction in which the derivative is computed. It can be
-            ``'x'``, ``'y'``, or ``'z'``.
+            The spatial direction in which the derivative is computed.
 
         order : int
 
@@ -2304,8 +2303,8 @@ class Field(_FieldIO):
         ...
         >>> mesh = df.Mesh(p1=0, p2=10, cell=1)
         >>> f = df.Field(mesh, nvdim=1, value=value_fun, valid=valid_fun)
-        >>> f.diff('x', order=1)
-        array([1., 1., 1., 1., 1., 0., 0., 0., 0., 0.])
+        >>> f.diff('x', order=1).array.tolist()
+        [[1.0], [1.0], [1.0], [1.0], [1.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
 
         """
         # Check order of derivative
