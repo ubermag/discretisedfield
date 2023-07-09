@@ -994,7 +994,6 @@ class Mesh(_MeshIO):
         3
         >>> mesh.region.dims
         ('x', 'y', 'z')
-        ...
         >>> plane_mesh = mesh.sel(y=1)
         >>> plane_mesh.region.ndim
         2
