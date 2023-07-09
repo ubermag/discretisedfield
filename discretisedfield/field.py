@@ -998,7 +998,7 @@ class Field(_FieldIO):
         return dirlist
 
     def __iter__(self):
-        r"""Generator yielding values of all discretisation cells.
+        r"""Generator yielding field values of all discretisation cells.
 
         Yields
         ------
@@ -1037,10 +1037,10 @@ class Field(_FieldIO):
         >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         >>> for coord, value in zip(field.mesh, field):
         ...     print(coord, value)
-        (0.5, 0.5, 0.5) [0. 0. 1.]
-        (1.5, 0.5, 0.5) [0. 0. 1.]
-        (0.5, 1.5, 0.5) [0. 0. 1.]
-        (1.5, 1.5, 0.5) [0. 0. 1.]
+        [0.5 0.5 0.5] [0. 0. 1.]
+        [1.5 0.5 0.5] [0. 0. 1.]
+        [0.5 1.5 0.5] [0. 0. 1.]
+        [1.5 1.5 0.5] [0. 0. 1.]
 
         See also
         --------
