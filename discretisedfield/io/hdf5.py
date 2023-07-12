@@ -49,7 +49,12 @@ class _MeshIO_HDF5:
             )
             for name, data in zip(h5_mesh["subregion_names"], h5_mesh["subregions"])
         }
-        return cls(region=region, n=h5_mesh.attrs["n"], subregions=subregions)
+        return cls(
+            region=region,
+            n=h5_mesh.attrs["n"],
+            bc=h5_mesh.attrs["bc"],
+            subregions=subregions,
+        )
 
 
 class _FieldIO_HDF5:
