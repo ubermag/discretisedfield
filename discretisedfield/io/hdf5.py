@@ -74,14 +74,17 @@ class _FieldIO_HDF5:
 
             h5_field = f.create_group("field")
             self._h5_save_structure(h5_field)
+
             h5_field_data = h5_field.create_dataset(
                 "array", (*self.mesh.n, self.nvdim), dtype=self.array.dtype
             )
             self._h5_save_data(h5_field_data, slice(None))
 
+            self._h5_save_valid(h5_field)
+
     def _h5_save_structure(self, h5_field: h5py.Group):
         """
-        Save the 'field structure', that is the mesh and field attributes into an
+        Save the 'field structure', that is the mesh and field attributes, into an
         existing hdf5 group. The field data is NOT saved.
         """
         h5_mesh = h5_field.create_group("mesh")
@@ -90,6 +93,11 @@ class _FieldIO_HDF5:
         h5_field.attrs["nvdim"] = self.nvdim
         h5_field.attrs["vdims"] = self.vdims if self.vdims is not None else "None"
         h5_field.attrs["unit"] = str(self.unit)
+
+    def _h5_save_valid(self, h5_field: h5py.Group):
+        """Save valid."""
+        h5_field_valid = h5_field.create_dataset("valid", self.mesh.n, dtype=bool)
+        h5_field_valid[:] = self.valid
 
     def _h5_save_data(self, h5_field_data: h5py.Dataset, location):
         """
@@ -130,6 +138,7 @@ class _FieldIO_HDF5:
             value=h5_field["array"][data_location],
             vdims=vdims,
             unit=h5_field.attrs["unit"],
+            valid=h5_field["valid"],
         )
 
     @classmethod
