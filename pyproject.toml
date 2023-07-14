@@ -45,7 +45,7 @@ dependencies = [
     "scipy>=1.6",
     "sympy>=1.10.1",
     "jinja2",
-    "vtk",
+    "vtk>=9.1",
     "xarray",
     "hvplot"
 ]
