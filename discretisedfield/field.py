@@ -546,7 +546,7 @@ class Field(_FieldIO):
     @valid.setter
     def valid(self, valid):
         if valid is not None:
-            if valid == "norm":
+            if isinstance(valid, str) and valid == "norm":
                 valid = ~np.isclose(self.norm.array, 0)
         else:
             valid = True
