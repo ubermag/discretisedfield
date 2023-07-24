@@ -122,14 +122,15 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Names of the two geometrical directions forming the plane to be used for
+            plotting the data.
 
         vdims : List[str], optional
 
-            Names of the components to be used for the x and y component of the plotted
-            arrows. This information is used to associate field components and spatial
-            directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction.
+            Names of the components to be used for plotting the arrows. This information
+            is used to associate field components and spatial directions. Optionally,
+            one of the list elements can be ``None`` if the field has no component in
+            that direction.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
@@ -170,7 +171,7 @@ class Hv:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=1, value=2)
+        >>> field = df.Field(mesh, nvdim=1, value=2)
         ...
         >>> field.hv(kdims=['x', 'y'])
         :DynamicMap...
