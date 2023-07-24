@@ -2735,7 +2735,7 @@ class Field(_FieldIO):
             \int_\mathrm{S} f(\mathbf{r}) |\mathrm{d}\mathbf{S}|
 
         >>> f = df.Field(mesh, nvdim=1, value=5)
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> f_plane.integrate()
         array([500.])
 
@@ -2747,7 +2747,7 @@ class Field(_FieldIO):
             \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot \mathrm{d}\mathbf{S}
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> e_z = [0, 0, 1]
         >>> f_plane.dot(e_z).integrate()
         array([300.])
@@ -2759,7 +2759,7 @@ class Field(_FieldIO):
             \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r}) \mathrm{d}x
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> f_plane.integrate(direction='x').mean()
         array([10., 20., 30.])
 
@@ -2770,7 +2770,7 @@ class Field(_FieldIO):
             \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r}) \mathrm{d}x'
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> f_plane.integrate(direction='x', cumulative=True)
         Field(...)
 
