@@ -3534,12 +3534,12 @@ class Field(_FieldIO):
         1. Create a mesh and perform an irFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> ifft_field = field.rfftn().irfftn(shape=mesh.n)
         >>> ifft_field.nvdim
-        array([3])
+        3
         >>> ifft_field.vdims
-        ('x', 'y', 'z')
+        ['x', 'y', 'z']
 
         """
         mesh = self.mesh.ifftn(rfft=True, shape=shape)
