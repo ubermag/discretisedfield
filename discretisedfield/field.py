@@ -3008,7 +3008,7 @@ class Field(_FieldIO):
         >>> p2 = (100, 100, 100)
         >>> cell = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f = df.Field(mesh, nvdim=1, value=1)
         >>> f.mesh.n
         array([10, 10, 10])
         >>> down_sampled = f.resample((5, 5, 5))
@@ -3023,7 +3023,7 @@ class Field(_FieldIO):
         >>> p2 = (100, 100, 100)
         >>> cell = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f = df.Field(mesh, nvdim=1, value=1)
         >>> f.mesh.n
         array([10, 10, 10])
         >>> up_sampled = f.resample((10, 15, 20))
