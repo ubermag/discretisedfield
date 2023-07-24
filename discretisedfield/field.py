@@ -3812,21 +3812,24 @@ class Field(_FieldIO):
         """Create ``discretisedfield.Field`` from ``xarray.DataArray``
 
         The class method accepts an ``xarray.DataArray`` as an argument to
-        return a ``discretisedfield.Field`` object. The DataArray must have
-        either three (``x``, ``y``, and ``z`` for a scalar field) or four
-        (additionally ``vdims`` for a vector field) dimensions corresponding to
-        geometric axes and components of the field, respectively. The
-        coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
-        discretisation along the respective axis and must have equally spaced
-        values. The coordinates of ``vdims`` represent the field components
+        return a ``discretisedfield.Field`` object. The first n (or n-1) dimensions of
+        the DataArray are considered geometric dimensions of a scalar (or vector) field.
+        In case of a vector field, the last dimension must be named ``vdims``. The
+        DataArray attribute ``nvdim`` determines whether it is a scalar or a vector
+        field (i.e. ``nvdim = 1`` is a scalar field and ``nvdim >= 1`` is a vector
+        field). Hence, ``nvdim`` attribute must be present, greater than or equal to
+        one, and of an integer type.
+
+        The DataArray coordinates corresponding to the geometric dimensions represent
+        the discretisation along the respective dimension and must have equally spaced
+        values. The coordinates of ``vdims`` represent the name of field components
         (e.g. ['x', 'y', 'z'] for a 3D vector field).
 
-        The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
-        attributes for creating ``discretisedfield.Mesh`` required by the
-        ``discretisedfield.Field`` object. However, in the absence of these
-        attributes, the coordinates of ``x``, ``y``, and ``z`` dimensions are
-        utilized. It should be noted that ``cell`` attribute is required if
-        any of the geometric directions has only a single cell.
+        Additionally, it is expected to have ``cell``, ``p1``, and ``p2`` attributes for
+        creating the right mesh for the field; however, in the absence of these, the
+        coordinates of the geometric axes dimensions are utilized. It should be noted
+        that ``cell`` attribute is required if any of the geometric directions has only
+        a single cell.
 
         Parameters
         ----------
@@ -3844,20 +3847,20 @@ class Field(_FieldIO):
         ------
         TypeError
 
-            If argument is not ``xarray.DataArray``.
+            - If argument is not ``xarray.DataArray``.
+            - If ``nvdim`` attribute in not an integer.
 
         KeyError
 
-            If at least one of the geometric dimension coordinates has a single
-            value and ``cell`` attribute is missing.
+            - If at least one of the geometric dimension coordinates has a single
+              value and ``cell`` attribute is missing.
+            - If ``nvdim`` attribute is absent.
 
         ValueError
 
-            - If ``DataArray.ndim`` is not 3 or 4.
-            - If ``DataArray.dims`` are not either ``['x', 'y', 'z']`` or
-              ``['x', 'y', 'z', 'vdims']``
-            - If coordinates of ``x``, ``y``, or ``z`` are not equally
-              spaced
+            - If DataArray does not have a dimension ``vdims`` when attribute ``nvdim``
+              is grater than one.
+            - If coordinates of geometrical dimensions are not equally spaced.
 
         Examples
         --------
@@ -3875,7 +3878,8 @@ class Field(_FieldIO):
         ...                   name = 'mag',
         ...                   attrs = dict(cell=[1., 1., 1.],
         ...                                p1=[1., 1., 1.],
-        ...                                p2=[21., 21., 21.]))
+        ...                                p2=[21., 21., 21.],
+        ...                                nvdim=3),)
         >>> xa
         <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, vdims: 3)>
         ...
