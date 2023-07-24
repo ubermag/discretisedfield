@@ -686,9 +686,12 @@ class Field(_FieldIO):
     def mean(self, direction=None):
         """Field mean.
 
-        It computes the arithmetic mean along the specified direction of the field
-        over the entire volume of the mesh. It returns a numpy array
-        containing the mean values.
+        It computes the arithmetic mean along the specified direction of the field.
+
+        It returns a numpy array containing the mean value if all the geometrical
+        directions or none are selected. If one or more than one directions (and less
+        than ``region.dims``) are selected, the method returns a field of appropriate
+        geometric dimensions with the calculated mean value.
 
 
         Parameters
@@ -703,9 +706,14 @@ class Field(_FieldIO):
 
         Returns
         -------
-        tuple
+        numpy.ndarray
 
-            Field average tuple, whose length equals to the field's dimension.
+            Field average along all the geometrical directions combined.
+
+        discretisedfield.Field
+
+            Field of reduced geometrical dimensions holding the mean value along the
+            selected direction(s).
 
         Examples
         --------
@@ -738,7 +746,7 @@ class Field(_FieldIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
-        >>> field.mean(direction='x')((2.5, 0.5, 0.5))
+        >>> field.mean(direction='x')((0.5, 0.5))
         array([0., 0., 1.])
 
         4. Computing the vector field mean along x and y directions.
@@ -751,7 +759,7 @@ class Field(_FieldIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
-        >>> field.mean(direction=['x', 'y'])((2.5, 2.5, 0.5))
+        >>> field.mean(direction=['x', 'y'])(0.5)
         array([0., 0., 1.])
 
         """
