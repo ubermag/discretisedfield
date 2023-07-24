@@ -3306,7 +3306,7 @@ class Field(_FieldIO):
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl()
+            >>> field.sel(z=50).resample(n=(5, 5)).mpl()
 
         """
         return dfp.MplField(self)
