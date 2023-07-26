@@ -422,7 +422,7 @@ class K3dField:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         ...
         >>> field.k3d.vector()
         Plot(...)
