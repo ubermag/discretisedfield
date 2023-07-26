@@ -177,10 +177,10 @@ class MplField(Mpl):
         r"""Plot the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.sel('z')``). In addition, field must be a scalar field
-        (``nvdim=1``). Otherwise, ``ValueError`` is raised. ``mpl.scalar`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
-        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        ``field.sel('z')``, assuming the geometry has three dimensions). In addition,
+        field must be a scalar field (``nvdim=1``). Otherwise, ``ValueError`` is raised.
+        ``mpl.scalar`` adds the plot to ``matplotlib.axes.Axes`` passed via ``ax``
+        argument. If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
         ``figsize``. By passing ``filter_field`` the points at which the pixels
         are not coloured can be determined. More precisely, only those
@@ -274,7 +274,7 @@ class MplField(Mpl):
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=1, value=2)
             ...
-            >>> field.plane('y').mpl.scalar()
+            >>> field.sel('y').mpl.scalar()
 
         .. seealso:: :py:func:`~discretisedfield.plotting.Mpl.vector`
 
