@@ -11,9 +11,9 @@ import discretisedfield.util as dfu
 def topological_charge_density(field, /, method="continuous"):
     r"""Topological charge density.
 
-    This method computes the topological charge density for a vector field
-    (``nvdim=3``). Two different methods are available and can be selected using
-    ``method``:
+    This method computes the topological charge density for a vector field having three
+    components (i.e. ``nvdim=3``). Two different methods are available and can be
+    selected using ``method``:
 
     1. Continuous method:
 
@@ -35,8 +35,8 @@ def topological_charge_density(field, /, method="continuous"):
         micromagnetics using a lattice-based approach. IOP SciNotes 1, 025211
         (2020).
 
-    Topological charge is defined on two-dimensional samples only. Therefore,
-    the field must be "sliced" using the ``discretisedfield.Field.plane``
+    Topological charge is defined on two-dimensional geometries only. Therefore,
+    the field must be "sliced" using the ``discretisedfield.Field.sel``
     method. If the field is not three-dimensional or the field is not sliced,
     ``ValueError`` is raised.
 
@@ -76,15 +76,15 @@ def topological_charge_density(field, /, method="continuous"):
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
     >>> f = df.Field(mesh, nvdim=3, value=(1, 1, -1))
     ...
-    >>> dft.topological_charge_density(f.plane('z'))
+    >>> dft.topological_charge_density(f.sel('z'))
     Field(...)
-    >>> dft.topological_charge_density(f.plane('z'), method='berg-luescher')
+    >>> dft.topological_charge_density(f.sel('z'), method='berg-luescher')
     Field(...)
 
     2. An attempt to compute the topological charge density of a scalar field.
 
     >>> f = df.Field(mesh, nvdim=1, value=12)
-    >>> dft.topological_charge_density(f.plane('z'))
+    >>> dft.topological_charge_density(f.sel('z'))
     Traceback (most recent call last):
     ...
     ValueError: ...
