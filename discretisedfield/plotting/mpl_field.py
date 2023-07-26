@@ -500,14 +500,14 @@ class MplField(Mpl):
     ):
         r"""Plot the vector field on a plane.
 
-        Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be a vector field
-        (``nvdim=2`` or ``nvdim=3``). Otherwise, ``ValueError`` is raised.
-        ``mpl.vector`` adds the plot to ``matplotlib.axes.axes`` passed via
-        ``ax`` argument. If ``ax`` is not passed, ``matplotlib.axes.axes``
-        object is created automatically and the size of a figure can be
-        specified using ``figsize``. By default, plotted vectors are coloured
-        according to the out-of-plane component of the vectors if the field has
+        Before the field can be plotted, it must be sliced to a plane (e.g.
+        ``field.sel('z')``, assuming the geometry has 3 dimensions). In addition, field
+        must be a vector field of dimensionality two or three (i.e. ``nvdim=2`` or
+        ``nvdim=3``). Otherwise, ``ValueError`` is raised. ``mpl.vector`` adds the plot
+        to ``matplotlib.axes.axes`` passed via ``ax`` argument. If ``ax`` is not passed,
+        ``matplotlib.axes.axes`` object is created automatically and the size of a
+        figure can be specified using ``figsize``. By default, plotted vectors are
+        coloured according to the out-of-plane component of the vectors if the field has
         ``nvdim=3``. This can be changed by passing ``color_field`` with
         ``nvdim=1``. To disable colouring of the plot, ``use_color=False`` can be
         passed. A uniform vector colour can be obtained by specifying
@@ -607,7 +607,7 @@ class MplField(Mpl):
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=3, value=(1.1, 2.1, 3.1))
             ...
-            >>> field.plane('y').mpl.vector()
+            >>> field.sel('y').mpl.vector()
 
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
