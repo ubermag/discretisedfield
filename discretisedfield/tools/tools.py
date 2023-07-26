@@ -169,15 +169,15 @@ def topological_charge_density(field, /, method="continuous"):
 def topological_charge(field, /, method="continuous", absolute=False):
     """Topological charge.
 
-    This function computes topological charge for a vector field (``nvdim=3``).
-    There are two possible methods, which can be chosen using ``method``
-    parameter. For details on method, please refer to
+    This function computes topological charge for a vector field of three dimensions
+    (i.e. ``nvdim=3``). There are two possible methods, which can be chosen using
+    ``method`` parameter. For details on method, please refer to
     :py:func:`~discretisedfield.tools.topological_charge_density`. Absolute
     topological charge given as integral over the absolute values of the
     topological charge density can be computed by passing ``absolute=True``.
 
     Topological charge is defined on two-dimensional samples. Therefore,
-    the field must be "sliced" using ``discretisedfield.Field.plane``
+    the field must be "sliced" using ``discretisedfield.Field.sel``
     method. If the field is not three-dimensional or the field is not
     sliced and ``ValueError`` is raised.
 
@@ -223,21 +223,21 @@ def topological_charge(field, /, method="continuous", absolute=False):
     >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
     ...
     >>> f = df.Field(mesh, nvdim=3, value=(1, 1, -1))
-    >>> dft.topological_charge(f.plane('z'), method='continuous')
+    >>> dft.topological_charge(f.sel('z'), method='continuous')
     0.0
-    >>> dft.topological_charge(f.plane('z'), method='continuous',
+    >>> dft.topological_charge(f.sel('z'), method='continuous',
     ...                                      absolute=True)
     0.0
-    >>> dft.topological_charge(f.plane('z'), method='berg-luescher')
+    >>> dft.topological_charge(f.sel('z'), method='berg-luescher')
     0.0
-    >>> dft.topological_charge(f.plane('z'), method='berg-luescher',
+    >>> dft.topological_charge(f.sel('z'), method='berg-luescher',
     ...                                      absolute=True)
     0.0
 
     2. Attempt to compute the topological charge of a scalar field.
 
     >>> f = df.Field(mesh, nvdim=1, value=12)
-    >>> dft.topological_charge(f.plane('z'))
+    >>> dft.topological_charge(f.sel('z'))
     Traceback (most recent call last):
     ...
     ValueError: ...
