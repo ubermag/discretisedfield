@@ -700,12 +700,12 @@ class MplField(Mpl):
     ):
         r"""Contour line plot.
 
-        Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be a scalar field
-        (``nvdim=1``). Otherwise, ``ValueError`` is raised. ``mpl.contour`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
-        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
-        automatically and the size of a figure can be specified using
+        Before the field can be plotted, it must be sliced to give a plane (e.g.
+        ``field.sel('z')``, assuming ``field`` has three geometrical dimensions). In
+        addition, field must be a scalar field (``nvdim=1``). Otherwise, ``ValueError``
+        is raised. ``mpl.contour`` adds the plot to ``matplotlib.axes.Axes`` passed via
+        ``ax`` argument. If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is
+        created automatically and the size of a figure can be specified using
         ``figsize``. By passing ``filter_field`` the points at which the pixels
         are not coloured can be determined. More precisely, only those
         discretisation cells where ``filter_field != 0`` are plotted. Colorbar
@@ -772,8 +772,8 @@ class MplField(Mpl):
         ------
         ValueError
 
-            If the field has not been sliced, its dimension is not 1, or the
-            dimension of ``filter_field`` is not 1.
+            If the field has not 2D, its dimension is not 1, or the dimension of
+            ``filter_field`` is not 1.
 
         Example
         -------
@@ -793,7 +793,7 @@ class MplField(Mpl):
             ...     x, y, z = point
             ...     return math.sin(x) + math.sin(y)
             >>> field = df.Field(mesh, nvdim=1, value=init_value)
-            >>> field.plane('z').mpl.contour()
+            >>> field.sel('z').mpl.contour()
 
         """
         if self.field.nvdim != 1:
