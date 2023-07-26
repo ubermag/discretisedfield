@@ -235,7 +235,7 @@ class K3dField:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
-        >>> field = df.Field(mesh, dim=1, value=5)
+        >>> field = df.Field(mesh, nvdim=1, value=5)
         >>> field.k3d.scalar()
         Plot(...)
 
