@@ -259,7 +259,8 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Names of the two geometrical directions forming the plane to be used for
+            plotting the data.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
@@ -288,8 +289,7 @@ class Hv:
         ValueError
 
             If ``kdims`` does not have length 2 or contains strings that are not part of
-            the objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
-            discretisedfield.Field objects).
+            the geometrical directions of the field.
 
         Examples
         --------
@@ -301,7 +301,7 @@ class Hv:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=1, value=2)
+        >>> field = df.Field(mesh, nvdim=1, value=2)
         ...
         >>> field.hv.scalar(kdims=['x', 'z'])
         :DynamicMap...
