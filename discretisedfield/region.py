@@ -405,7 +405,7 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
             Center point :math:`(p_c^x, p_c^y, p_c^z)`.
 
