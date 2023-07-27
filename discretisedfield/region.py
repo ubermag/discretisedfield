@@ -371,7 +371,7 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
              Edge lengths :math:`(l_{x}, l_{y}, l_{z})`.
 
