@@ -21,8 +21,8 @@ from .io import _MeshIO
 class Mesh(_MeshIO):
     """Finite-difference mesh.
 
-    Mesh discretises cubic ``discretisedfield.Region``, passed as ``region``,
-    using a regular finite-difference mesh. Since cubic region spans between
+    Mesh discretises the ``discretisedfield.Region``, passed as ``region``,
+    using a regular finite-difference mesh. Since the region spans between
     two points :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`, these
     points can be passed as ``p1`` and ``p2``, instead of passing
     ``discretisedfield.Region`` object. In this case
@@ -53,30 +53,31 @@ class Mesh(_MeshIO):
         Cubic region to be discretised on a regular mesh. Either ``region`` or
         ``p1`` and ``p2`` should be defined, not both. Defaults to ``None``.
 
-    p1 / p2 : (3,) array_like, optional
+    p1 / p2 : array_like, optional
 
-        Diagonally-opposite region points :math:`\\mathbf{p} = (p_{x}, p_{y},
-        p_{z})`. Either ``region`` or ``p1`` and ``p2`` should be defined, not
+        Diagonally-opposite region points, for example for three dimensions
+        :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`. Either ``region`` or ``p1`` and
+        ``p2`` should be defined, not both. Defaults to ``None``.
+
+    cell : array_like, optional
+
+        Discretisation cell size, for example for three dimensions
+        :math:`(d_{x}, d_{y}, d_{z})`. Either ``cell`` or ``n`` should be defined, not
         both. Defaults to ``None``.
 
-    cell : (3,) array_like, optional
+    n : array_like, optional
 
-        Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`. Either ``cell``
-        or ``n`` should be defined, not both. Defaults to ``None``.
-
-    n : (3,) array_like, optional
-
-        The number of discretisation cells :math:`(n_{x}, n_{y}, n_{z})`.
-        Either ``cell`` or ``n`` should be defined, not both. Defaults to
-        ``None``.
+        The number of discretisation cells, for example for three dimensions
+        :math:`(n_{x}, n_{y}, n_{z})`. Either ``cell`` or ``n`` should be defined, not
+        both. Defaults to ``None``.
 
     bc : str, optional
 
-        Periodic boundary conditions in x, y, or z directions is a string
-        consisting of one or more characters ``'x'``, ``'y'``, or ``'z'``,
-        denoting the direction(s) along which the mesh is periodic. In the case
-        of Neumann or Dirichlet boundary condition, string ``'neumann'`` or
-        ``'dirichlet'`` is passed. Defaults to an empty string.
+        Periodic boundary conditions in geometrical directions. It is a string
+        consisting of one or more characters representing the name of the direction(s)
+        as present in ``self.region.dims``, denoting the direction(s) along which the
+        mesh is periodic. In the case of Neumann or Dirichlet boundary condition, string
+        ``'neumann'`` or ``'dirichlet'`` is passed. Defaults to an empty string.
 
     subregions : dict, optional
 
