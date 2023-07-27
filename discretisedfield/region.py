@@ -631,7 +631,7 @@ class Region(_RegionIO):
 
         Parameters
         ----------
-        other : (3,) array_like or discretisedfield.Region
+        other : array_like or discretisedfield.Region
 
             The point coordinate :math:`(p_{x}, p_{y}, p_{z})` or a region
             object.
