@@ -796,15 +796,15 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        point : (3,) array_like
+        point : array_like
 
-            Point :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
+            For three dimensions, point :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------
-        (3,) tuple
+        tuple
 
-            The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
+            For three dimensions, the cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Raises
         ------
