@@ -433,9 +433,9 @@ class Mesh(_MeshIO):
 
         Yields
         ------
-        tuple (3,)
+        tuple
 
-            Mesh cell indices :math:`(i_{x}, i_{y}, i_{z})`.
+            For three dimensions, mesh cell indices :math:`(i_{x}, i_{y}, i_{z})`.
 
         Examples
         --------
