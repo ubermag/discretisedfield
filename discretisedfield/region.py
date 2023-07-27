@@ -143,9 +143,9 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Point with minimum coordinates :math:`(p_x^\text{min},
+            Point with minimum coordinates for tree dimensions :math:`(p_x^\text{min},
             p_y^\text{min}, p_z^\text{min})`.
 
         Examples
@@ -176,9 +176,9 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Point with maximum coordinates :math:`(p_x^\text{max},
+            Point with maximum coordinates for three dimensions :math:`(p_x^\text{max},
             p_y^\text{max}, p_z^\text{max})`.
 
         Examples
