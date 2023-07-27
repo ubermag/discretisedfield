@@ -260,10 +260,10 @@ class Mesh(_MeshIO):
         """Boundary condition for the mesh.
 
         Periodic boundary conditions can be specified by passing a string containing one
-        or more characters from ``self.region.dims`` (e.g. ``'x'``, ``'yz'``, ``'xyz'``)
-        . Neumann or Dirichlet boundary conditions are defined by passing ``'neumann'``
-        or ``'dirichlet'`` string. Neumann and Dirichlett boundary conditions are still
-        experimental.
+        or more characters from ``self.region.dims`` (e.g. ``'x'``, ``'yz'``, ``'xyz'``
+        for three dimensions). Neumann or Dirichlet boundary conditions are defined by
+        passing ``'neumann'`` or ``'dirichlet'`` string. Neumann and Dirichlet boundary
+        conditions are still experimental.
 
         Returns
         -------
