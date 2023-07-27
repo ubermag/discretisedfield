@@ -1902,7 +1902,7 @@ class Mesh(_MeshIO):
     def slider(self, axis, /, *, multiplier=None, description=None, **kwargs):
         """Axis slider.
 
-        For ``axis``, ``'x'``, ``'y'``, or ``'z'`` is passed. Based on that
+        For ``axis``, the name of a spatial dimension is passed. Based on that
         value, ``ipywidgets.SelectionSlider`` is returned. Axis multiplier can
         be changed via ``multiplier``.
 
@@ -1913,7 +1913,7 @@ class Mesh(_MeshIO):
         ----------
         axis : str
 
-            Axis for which the slider is returned (``'x'``, ``'y'``, or
+            Axis for which the slider is returned (For eg., ``'x'``, ``'y'``, or
             ``'z'``).
 
         multiplier : numbers.Real, optional
