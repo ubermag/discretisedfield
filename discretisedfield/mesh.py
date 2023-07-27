@@ -491,15 +491,15 @@ class Mesh(_MeshIO):
         """Midpoints of the cells of the mesh along the three directions.
 
         This method returns a named tuple containing three numpy arrays with
-        midpoints of the cells along the three spatial directions ``x``, ``y``,
-        and ``z``. Individual directions can be accessed from the tuple.
+        midpoints of the cells along the three spatial directions. Individual directions
+        can be accessed from the tuple.
 
         Returns
         -------
         collections.namedtuple
 
-            Namedtuple with three elements ``x``, ``y``, and ``z``, the cell
-            midpoints along the three spatial directions as numpy arrays.
+            Namedtuple with elements corresponding to geometrical directions, the cell
+            midpoints along the directions as numpy arrays.
 
         Examples
         --------
