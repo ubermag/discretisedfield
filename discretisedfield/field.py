@@ -858,10 +858,10 @@ class Field(_FieldIO):
 
         Parameters
         ----------
-        point : (3,) array_like
+        point : array_like
 
-            The mesh point coordinate :math:`\mathbf{p} = (p_{x}, p_{y},
-            p_{z})`.
+            For example, in three dimensions, the mesh point coordinate
+            :math:`\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------
