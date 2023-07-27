@@ -1508,7 +1508,8 @@ class Mesh(_MeshIO):
     def __dir__(self):
         """Extension of the ``dir(self)`` list.
 
-        Adds ``'dx'``, ``'dy'``, and ``'dz'``.
+        For example in a three dimensional geometry with spatial dimensions ``'x'``,
+        ``'y'``, and ``'z'``, it adds ``'dx'``, ``'dy'``, and ``'dz'``.
 
         Returns
         -------
