@@ -322,7 +322,7 @@ class Mesh(_MeshIO):
         -------
         discretisedfield.Region
 
-            A cuboidal region over which the regular mesh is defined.
+            A region over which the regular mesh is defined.
         """
         return self._region
 
