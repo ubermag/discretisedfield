@@ -21,15 +21,22 @@ class Region(_RegionIO):
 
     Parameters
     ----------
-    p1 / p2 : (3,) array_like
+    p1 / p2 : array_like
 
-        Diagonally-opposite corner points of the region :math:`\mathbf{p}_i =
-        (p_x, p_y, p_z)`.
+        Diagonally-opposite corner points of the region, for example :math:`\mathbf{p}_i
+        = (p_x, p_y, p_z)`.
 
-    unit : str, optional
+    dims : array_like of str, optional
 
-        Physical unit of the region. This is mainly used for labelling plots.
-        Defaults to ``m``.
+        Name of the respective geometrical dimensions of the region.
+
+        Up to three dimensions, this defaults to ``x``, ``y``, and ``z``. For more than
+        three dimensions, it defaults to ``x1``, ``x2``, ``x3``, ``x4``, etc.
+
+    units : array_like of str, optional
+
+        Physical units of the region. This is mainly used for labelling plots.
+        Defaults to ``m`` for all the dimensions.
 
     tolerance_factor : float, optional
 
