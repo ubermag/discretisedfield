@@ -2844,7 +2844,7 @@ class Field(_FieldIO):
 
         Parameters
         ----------
-        p1, p2 : (3,) array_like
+        p1, p2 : array_like
 
             Two points between which the line is generated.
 
