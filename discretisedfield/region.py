@@ -563,7 +563,7 @@ class Region(_RegionIO):
         atol : numbers.Number, optional
 
             Absolute tolerance. If ``None``, the default value is
-            the smallest edge length of the region multipled by
+            the smallest edge length of the region multiplied by
             the tolerance factor.
 
         rtol : numbers.Number, optional
@@ -579,7 +579,7 @@ class Region(_RegionIO):
 
         Examples
         --------
-        1. Usage of relational operator ``==``.
+        1. Usage of ``allclose`` method.
 
         >>> import discretisedfield as df
         ...
