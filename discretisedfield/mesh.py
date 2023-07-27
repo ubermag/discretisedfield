@@ -901,10 +901,10 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        p1 / p2 : (3,) array_like
+        p1 / p2 : array_like
 
-            Points between which the line is defined :math:`\\mathbf{p} =
-            (p_{x}, p_{y}, p_{z})`.
+            For three dimensions, points between which the line is defined
+            :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         n : int
 
@@ -912,7 +912,7 @@ class Mesh(_MeshIO):
 
         Yields
         ------
-        tuple (3,)
+        tuple
 
             :math:`\\mathbf{r}_{i}`
 
@@ -1460,14 +1460,15 @@ class Mesh(_MeshIO):
     def __getattr__(self, attr):
         """Extracting the discretisation in a particular direction.
 
-        If ``'dx'``, ``'dy'``, or ``'dz'`` is accessed, the discretisation cell
-        size in that direction is returned.
+        For example in a three dimensional geometry with spatial dimensions ``'x'``,
+        ``'y'``, and ``'z'``, if ``'dx'``, ``'dy'``, or ``'dz'`` is accessed, the
+        discretisation cell size in that direction is returned.
 
         Parameters
         ----------
         attr : str
 
-            Discretisation direction (``'dx'``, ``'dy'``, or ``'dz'``)
+            Discretisation direction (eg. ``'dx'``, ``'dy'``, or ``'dz'``)
 
         Returns
         -------
