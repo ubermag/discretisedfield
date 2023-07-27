@@ -532,15 +532,15 @@ class Mesh(_MeshIO):
         """Vertices of the cells of the mesh along the three directions.
 
         This method returns a named tuple containing three numpy arrays with
-        vertices of the cells along the three spatial directions ``x``, ``y``,
-        and ``z``. Individual directions can be accessed from the tuple.
+        vertices of the cells along the spatial directions. Individual directions can be
+        accessed from the tuple.
 
         Returns
         -------
         collections.namedtuple
 
-            Namedtuple with three elements ``x``, ``y``, and ``z``, the cell
-            vertices along the three spatial directions as numpy arrays.
+            Namedtuple with elements corresponding to spatial directions, the cell
+            vertices along the directions as numpy arrays.
 
         Examples
         --------
