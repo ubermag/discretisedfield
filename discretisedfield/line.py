@@ -304,8 +304,8 @@ class Line:
         passed, ``matplotlib.axes.Axes`` object is created automatically and
         the size of a figure can be specified using ``figsize``. To choose
         particular value columns to be plotted ``yaxis`` can be passed as a
-        list of column names. The range of ``r``values on the horizontal axis
-        can be defined by passing a lenth-2 tuple. It is often the case that
+        list of column names. The range of ``r`` values on the horizontal axis
+        can be defined by passing a lenth-2 tuple to ``xlim``. It is often the case that
         the line length is small (e.g. on a nanoscale) or very large (e.g. in
         units of kilometers). Accordingly, ``multiplier`` can be passed as
         :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
@@ -360,7 +360,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["x", "y", "z"],
+        ...                value_columns=["v1", "v2", "v3"])
         >>> line.mpl()
 
         """
