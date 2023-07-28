@@ -479,7 +479,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["px", "py", "pz"],
+        ...                value_columns=["vx", "vy", "vz"])
         >>> line.selector()
         SelectMultiple(...)
 
