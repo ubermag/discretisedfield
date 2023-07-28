@@ -17,7 +17,7 @@ class Line:
 
     This class represents field sampled on the line. It is based on
     ``pandas.DataFrame``, which is generated from two lists: ``points`` and
-    ``values`` of the same length. ``points`` is a list of length-3 tuples
+    ``values`` of the same length. ``points`` is a list of ``array_like`` objects
     representing the points on the line on which the field was sampled. On the
     other hand, ``values`` is a list of field values, which are
     ``numbers.Real`` for scalar fields or ``array_like`` for vector fields.
@@ -25,13 +25,8 @@ class Line:
     ``pandas.DataFrame`` and it represents the distance of the point from the
     first point in ``points``.
 
-    By default the columns where points data is stored are labelled as ``px``,
-    ``py``, and ``pz``, storing the x, y, and z components of the point,
-    respectively. Similarly, for scalar fields, values are stored in column
-    ``v``, whereas for vector fields, data is stored in ``vx``, ``vy``, and
-    ``vz``. The default names of columns can be changed by passing
-    ``point_columns`` and ``value_columns`` lists. Both lists are composed of
-    strings and must have appropriate lengths.
+    The names of the columns are set by passing ``point_columns`` and ``value_columns``
+    lists. Both lists are composed of strings and must have appropriate lengths.
 
     The number of points can be retrieved as ``discretisedfield.Line.n`` and
     the dimension of the value can be retrieved using
@@ -43,7 +38,7 @@ class Line:
     ----------
     points : list
 
-        Points at which the field was sampled. It is a list of length-3 tuples.
+        Points at which the field was sampled. It is a list of ``array_like``.
 
     values : list
 
@@ -71,7 +66,10 @@ class Line:
     ...
     >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
     >>> values = [1, 2, 3]  # scalar values
-    >>> line = df.Line(points=points, values=values)
+    >>> line = df.Line(points=points,
+    ...                values=values,
+    ...                point_columns=["x", "y", "z"],
+    ...                value_columns=["vx"])
     >>> line.n  # the number of points
     3
     >>> line.dim
@@ -81,7 +79,10 @@ class Line:
 
     >>> points = [(0, 0, 0), (1, 1, 1), (2, 2, 2), (3, 3, 3)]
     >>> values = [(0, 0, 1), (0, 0, 2), (0, 0, 3), (0, 0, 4)]  # vector values
-    >>> line = df.Line(points=points, values=values)
+    >>> line = df.Line(points=points,
+    ...                values=values,
+    ...                point_columns=["x", "y", "z"],
+    ...                value_columns=["vx", "vy", "vz"])
     >>> line.n  # the number of points
     4
     >>> line.dim
