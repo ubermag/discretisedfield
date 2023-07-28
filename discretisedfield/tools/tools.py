@@ -633,8 +633,7 @@ def count_bps(field, /, direction="x"):
 
     direction : str, optional
 
-        Direction in which to compute arrangement. Can be one of ``x``, ``y``,
-        or ``z``. Defaults to ``x``.
+        Geometric direction in which to compute arrangement. Defaults to ``x``.
 
     Returns
     -------
