@@ -364,9 +364,9 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
     """Calculate angles between neighbouring cells.
 
     This method calculates the angle between magnetic moments in all
-    neighbouring cells. The calculation is only possible for vector fields
-    (``nvdim=3``). Angles are computed in degrees if ``units='deg'`` and in
-    radians if ``units='rad'``.
+    neighbouring cells. The calculation is only possible for vector fields of three
+    dimensions (i.e. ``nvdim=3``). Angles are computed in degrees if ``units='deg'`` and
+    in radians if ``units='rad'``.
 
     The resulting field has one discretisation cell less in the specified
     direction.
@@ -379,8 +379,7 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
 
     direction : str
 
-        The direction in which the angles are calculated. Can be ``'x'``,
-        ``'y'`` or ``'z'``.
+        The spatial direction in which the angles are calculated.
 
     units : str, optional
 
