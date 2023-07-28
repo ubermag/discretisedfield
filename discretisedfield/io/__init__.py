@@ -76,8 +76,8 @@ class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
         values for `representation` are ``'bin'`` (``'bin8'`` as an equivalent for
         convenience), ``'txt'``, or ``'xml'``. The data is saved as a
         ``RECTILINEAR_GRID``. A scalar field (``nvdim=1``) is saved as ``SCALARS``. A
-        vector field (``nvdim=3``) is saved as both ``VECTORS`` as well as ``SCALARS``
-        for all three components to enable easier colouring of vectors in some
+        vector field (``nvdim>=1``) is saved as both ``VECTORS`` as well as ``SCALARS``
+        for all the components to enable easier colouring of vectors in some
         visualisation packages. The data is stored as ``CELL_DATA``. Subregions are
         automatically saved in a separate json file for ``save_subregions=True``.
         `extend_scalar` has no effect for VTK files. The saved VTK file can be opened
