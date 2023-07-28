@@ -32,7 +32,7 @@ class Mpl(metaclass=abc.ABCMeta):
 
     def _savefig(self, filename):
         if filename is not None:
-            plt.savefig(filename, pad_inches=0.02)
+            plt.savefig(filename, bbox_inches="tight", pad_inches=0.02)
 
 
 def add_colorwheel(ax, width=1, height=1, loc="lower right", **kwargs):
