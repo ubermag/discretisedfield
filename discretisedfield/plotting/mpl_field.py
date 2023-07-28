@@ -13,21 +13,21 @@ from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 class MplField(Mpl):
     """Matplotlib-based plotting methods.
 
-    Before the field can be plotted, it must be sliced with a plane (e.g.
-    ``field.plane('z')``). This class should not be accessed directly. Use
+    Before the field can be plotted, it must be ensured that it is defined on two
+    dimensional geometry. This class should not be accessed directly. Use
     ``field.mpl`` to use the different plotting methods.
 
     Parameters
     ----------
     field : df.Field
 
-        Field sliced with a plane, e.g. field.plane('x').
+        Field defined on a two-dimensional plane.
 
     Raises
     ------
     ValueError
 
-        If the field has not been sliced.
+        If the field has not a two-dimensional plane.
 
     .. seealso::
 
