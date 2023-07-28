@@ -273,7 +273,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["x1", "x2", "x3"],
+        ...                value_columns=["v1", "v2", "v3"])
         >>> repr(line)
         '...
 
