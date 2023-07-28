@@ -3717,9 +3717,9 @@ class Field(_FieldIO):
     def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.
 
-        The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``vdims`` (only if ``field.nvdim > 1``). The coordinates
-        of the geometric dimensions are derived from ``self.mesh.points``,
+        The function returns an ``xarray.DataArray`` with the dimensions
+        ``self.mesh.region.dims`` and ``vdims`` (only if ``field.nvdim > 1``). The
+        coordinates of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.vdims``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
         ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
