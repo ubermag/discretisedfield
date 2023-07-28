@@ -20,7 +20,7 @@ def interact(**kwargs):
     >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
     >>> @df.interact(x=field.mesh.slider('x')) # doctest: +SKIP
     ... def myplot(x):
-    ...     field.plane(x=x).mpl()
+    ...     field.sel(x=x).mpl()
     interactive(...)
 
     """
