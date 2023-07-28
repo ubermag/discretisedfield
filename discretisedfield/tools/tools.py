@@ -543,8 +543,8 @@ def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="r
 
     direction : str, optional
 
-        Direction of neighbouring cells. Can be ``None`` or one of ``x``,
-        ``y``, or ``z``. If ``None``, all directions are taken into account.
+        Direction of neighbouring cells. Can be ``None`` or one of the geometric
+        dimensions. If ``None``, all directions are taken into account.
         Defaults to ``None``.
 
     units : str, optional
