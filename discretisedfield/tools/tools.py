@@ -465,8 +465,8 @@ def max_neigbouring_cell_angle(field, /, units="rad"):
 
     This function computes an angle between a cell and all its six neighbouring
     cells and assigns the maximum to that cell. The calculation is only
-    possible for vector fields (``nvdim=3``). Angles are computed in degrees if
-    ``units='deg'`` and in radians if ``units='rad'``.
+    possible for vector fields of three dimensions (i.e. ``nvdim=3``). Angles are
+    computed in degrees if ``units='deg'`` and in radians if ``units='rad'``.
 
     The resulting field has one discretisation cell less in the specified
     direction.
