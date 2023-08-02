@@ -2080,12 +2080,14 @@ class Mesh(_MeshIO):
         Parameters
         ----------
         rfft : bool, optional
+
             Determines if a real FFT is to be performed (if True) or a complex FFT
             (if False). Defaults to False, i.e., a complex FFT is performed by default.
 
         Returns
         -------
         discretisedfield.Mesh
+
             A mesh representing the Fourier transform of the original mesh. The returned
             mesh has dimensions labeled with frequency (k) and cells have coordinates
             that correspond to the correct frequencies in the frequency domain.
