@@ -83,6 +83,6 @@ class K3dRegion:
 
     def _axis_labels(self, plot, multiplier):
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(self.region.dims, self.region.units)
         ]
