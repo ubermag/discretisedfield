@@ -42,7 +42,7 @@ class Field(_FieldIO):
 
     nvdim : int
 
-        Number of Value DIMensions of the field. For instance, if `nvdim=3` the field is
+        Number of Value dimensions of the field. For instance, if `nvdim=3` the field is
         a three-dimensional vector field and for `nvdim=1` the field is a scalar field.
 
     value : array_like, callable, dict, optional
@@ -66,6 +66,17 @@ class Field(_FieldIO):
     unit : str, optional
 
         Physical unit of the field.
+
+    valid : numpy.ndarray, str, optional
+
+        Property used to mask invalid values of the field. Please refer to
+        ``discretisedfield.Field.valid``. Defaults to ``True``.
+
+    vdim_mapping : dict, optional
+
+        Dictionary that maps value dimensions to the spatial dimensions. It defaults to
+        the same as spatial dimensions if the number of value and spatial dimensions are
+        the same, else it is empty.
 
     Examples
     --------
@@ -686,9 +697,12 @@ class Field(_FieldIO):
     def mean(self, direction=None):
         """Field mean.
 
-        It computes the arithmetic mean along the specified direction of the field
-        over the entire volume of the mesh. It returns a numpy array
-        containing the mean values.
+        It computes the arithmetic mean along the specified direction of the field.
+
+        It returns a numpy array containing the mean value if all the geometrical
+        directions or none are selected. If one or more than one directions (and less
+        than ``region.dims``) are selected, the method returns a field of appropriate
+        geometric dimensions with the calculated mean value.
 
 
         Parameters
@@ -703,9 +717,14 @@ class Field(_FieldIO):
 
         Returns
         -------
-        tuple
+        numpy.ndarray
 
-            Field average tuple, whose length equals to the field's dimension.
+            Field average along all the geometrical directions combined.
+
+        discretisedfield.Field
+
+            Field of reduced geometrical dimensions holding the mean value along the
+            selected direction(s).
 
         Examples
         --------
@@ -738,7 +757,7 @@ class Field(_FieldIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
-        >>> field.mean(direction='x')((2.5, 0.5, 0.5))
+        >>> field.mean(direction='x')((0.5, 0.5))
         array([0., 0., 1.])
 
         4. Computing the vector field mean along x and y directions.
@@ -751,7 +770,7 @@ class Field(_FieldIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> field = df.Field(mesh=mesh, nvdim=3, value=(0, 0, 1))
-        >>> field.mean(direction=['x', 'y'])((2.5, 2.5, 0.5))
+        >>> field.mean(direction=['x', 'y'])(0.5)
         array([0., 0., 1.])
 
         """
@@ -839,10 +858,10 @@ class Field(_FieldIO):
 
         Parameters
         ----------
-        point : (3,) array_like
+        point : array_like
 
-            The mesh point coordinate :math:`\mathbf{p} = (p_{x}, p_{y},
-            p_{z})`.
+            For example, in three dimensions, the mesh point coordinate
+            :math:`\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------
@@ -998,7 +1017,7 @@ class Field(_FieldIO):
         return dirlist
 
     def __iter__(self):
-        r"""Generator yielding values of all discretisation cells.
+        r"""Generator yielding field values of all discretisation cells.
 
         Yields
         ------
@@ -1037,10 +1056,10 @@ class Field(_FieldIO):
         >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         >>> for coord, value in zip(field.mesh, field):
         ...     print(coord, value)
-        (0.5, 0.5, 0.5) [0. 0. 1.]
-        (1.5, 0.5, 0.5) [0. 0. 1.]
-        (0.5, 1.5, 0.5) [0. 0. 1.]
-        (1.5, 1.5, 0.5) [0. 0. 1.]
+        [0.5 0.5 0.5] [0. 0. 1.]
+        [1.5 0.5 0.5] [0. 0. 1.]
+        [0.5 1.5 0.5] [0. 0. 1.]
+        [1.5 1.5 0.5] [0. 0. 1.]
 
         See also
         --------
@@ -2216,8 +2235,7 @@ class Field(_FieldIO):
         ----------
         direction : str
 
-            The direction in which the derivative is computed. It can be
-            ``'x'``, ``'y'``, or ``'z'``.
+            The spatial direction in which the derivative is computed.
 
         order : int
 
@@ -2304,8 +2322,8 @@ class Field(_FieldIO):
         ...
         >>> mesh = df.Mesh(p1=0, p2=10, cell=1)
         >>> f = df.Field(mesh, nvdim=1, value=value_fun, valid=valid_fun)
-        >>> f.diff('x', order=1)
-        array([1., 1., 1., 1., 1., 0., 0., 0., 0., 0.])
+        >>> f.diff('x', order=1).array.tolist()
+        [[1.0], [1.0], [1.0], [1.0], [1.0], [0.0], [0.0], [0.0], [0.0], [0.0]]
 
         """
         # Check order of derivative
@@ -2395,6 +2413,7 @@ class Field(_FieldIO):
         1. Compute gradient of a contant field.
 
         >>> import discretisedfield as df
+        >>> import numpy as np
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10e-9, 10e-9, 10e-9)
@@ -2402,8 +2421,8 @@ class Field(_FieldIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, nvdim=1, value=5)
-        >>> f.grad.mean()
-        array([0., 0., 0.])
+        >>> np.allclose(f.grad.mean(), 0, atol=1e-06)
+        True
 
         2. Compute gradient of a spatially varying field. For a field we choose
         :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the gradient
@@ -2736,7 +2755,7 @@ class Field(_FieldIO):
             \int_\mathrm{S} f(\mathbf{r}) |\mathrm{d}\mathbf{S}|
 
         >>> f = df.Field(mesh, nvdim=1, value=5)
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> f_plane.integrate()
         array([500.])
 
@@ -2748,7 +2767,7 @@ class Field(_FieldIO):
             \int_\mathrm{S} \mathbf{f}(\mathbf{r}) \cdot \mathrm{d}\mathbf{S}
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> e_z = [0, 0, 1]
         >>> f_plane.dot(e_z).integrate()
         array([300.])
@@ -2760,7 +2779,7 @@ class Field(_FieldIO):
             \int_{x_\mathrm{min}}^{x_\mathrm{max}} \mathbf{f}(\mathbf{r}) \mathrm{d}x
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> f_plane.integrate(direction='x').mean()
         array([10., 20., 30.])
 
@@ -2771,7 +2790,7 @@ class Field(_FieldIO):
             \int_{x_\mathrm{min}}^{x} \mathbf{f}(\mathbf{r}) \mathrm{d}x'
 
         >>> f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> f_plane = f.plane('z')
+        >>> f_plane = f.sel('z')
         >>> f_plane.integrate(direction='x', cumulative=True)
         Field(...)
 
@@ -2826,7 +2845,7 @@ class Field(_FieldIO):
 
         Parameters
         ----------
-        p1, p2 : (3,) array_like
+        p1, p2 : array_like
 
             Two points between which the line is generated.
 
@@ -3009,7 +3028,7 @@ class Field(_FieldIO):
         >>> p2 = (100, 100, 100)
         >>> cell = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f = df.Field(mesh, nvdim=1, value=1)
         >>> f.mesh.n
         array([10, 10, 10])
         >>> down_sampled = f.resample((5, 5, 5))
@@ -3024,7 +3043,7 @@ class Field(_FieldIO):
         >>> p2 = (100, 100, 100)
         >>> cell = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-        >>> f = df.Field(mesh, dim=1, value=1)
+        >>> f = df.Field(mesh, nvdim=1, value=1)
         >>> f.mesh.n
         array([10, 10, 10])
         >>> up_sampled = f.resample((10, 15, 20))
@@ -3307,7 +3326,7 @@ class Field(_FieldIO):
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl()
+            >>> field.sel(z=50).resample(n=(5, 5)).mpl()
 
         """
         return dfp.MplField(self)
@@ -3407,12 +3426,12 @@ class Field(_FieldIO):
         1. Create a mesh and perform an FFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> fft_field = field.fftn()
         >>> fft_field.nvdim
-        array([3])
+        3
         >>> fft_field.vdims
-        ('ft_x', 'ft_y', 'ft_z')
+        ['ft_x', 'ft_y', 'ft_z']
 
         """
         mesh = self.mesh.fftn()
@@ -3447,12 +3466,12 @@ class Field(_FieldIO):
         1. Create a mesh and perform an iFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> ifft_field = field.fftn().ifftn()
         >>> ifft_field.nvdim
-        array([3])
+        3
         >>> ifft_field.vdims
-        ('x', 'y', 'z')
+        ['x', 'y', 'z']
 
         """
         mesh = self.mesh.ifftn()
@@ -3488,12 +3507,12 @@ class Field(_FieldIO):
         1. Create a mesh and perform a rFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> fft_field = field.fftn()
         >>> fft_field.nvdim
-        array([3])
+        3
         >>> fft_field.vdims
-        ('ft_x', 'ft_y', 'ft_z')
+        ['ft_x', 'ft_y', 'ft_z']
 
         """
         mesh = self.mesh.fftn(rfft=True)
@@ -3535,12 +3554,12 @@ class Field(_FieldIO):
         1. Create a mesh and perform an irFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         >>> ifft_field = field.rfftn().irfftn(shape=mesh.n)
         >>> ifft_field.nvdim
-        array([3])
+        3
         >>> ifft_field.vdims
-        ('x', 'y', 'z')
+        ['x', 'y', 'z']
 
         """
         mesh = self.mesh.ifftn(rfft=True, shape=shape)
@@ -3699,9 +3718,9 @@ class Field(_FieldIO):
     def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.
 
-        The function returns an ``xarray.DataArray`` with dimensions ``x``,
-        ``y``, ``z``, and ``vdims`` (only if ``field.nvdim > 1``). The coordinates
-        of the geometric dimensions are derived from ``self.mesh.points``,
+        The function returns an ``xarray.DataArray`` with the dimensions
+        ``self.mesh.region.dims`` and ``vdims`` (only if ``field.nvdim > 1``). The
+        coordinates of the geometric dimensions are derived from ``self.mesh.points``,
         and for vector field components from ``self.vdims``. Addtionally,
         the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
         ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
@@ -3813,21 +3832,24 @@ class Field(_FieldIO):
         """Create ``discretisedfield.Field`` from ``xarray.DataArray``
 
         The class method accepts an ``xarray.DataArray`` as an argument to
-        return a ``discretisedfield.Field`` object. The DataArray must have
-        either three (``x``, ``y``, and ``z`` for a scalar field) or four
-        (additionally ``vdims`` for a vector field) dimensions corresponding to
-        geometric axes and components of the field, respectively. The
-        coordinates of the ``x``, ``y``, and ``z`` dimensions represent the
-        discretisation along the respective axis and must have equally spaced
-        values. The coordinates of ``vdims`` represent the field components
+        return a ``discretisedfield.Field`` object. The first n (or n-1) dimensions of
+        the DataArray are considered geometric dimensions of a scalar (or vector) field.
+        In case of a vector field, the last dimension must be named ``vdims``. The
+        DataArray attribute ``nvdim`` determines whether it is a scalar or a vector
+        field (i.e. ``nvdim = 1`` is a scalar field and ``nvdim >= 1`` is a vector
+        field). Hence, ``nvdim`` attribute must be present, greater than or equal to
+        one, and of an integer type.
+
+        The DataArray coordinates corresponding to the geometric dimensions represent
+        the discretisation along the respective dimension and must have equally spaced
+        values. The coordinates of ``vdims`` represent the name of field components
         (e.g. ['x', 'y', 'z'] for a 3D vector field).
 
-        The ``DataArray`` is expected to have ``cell``, ``p1``, and ``p2``
-        attributes for creating ``discretisedfield.Mesh`` required by the
-        ``discretisedfield.Field`` object. However, in the absence of these
-        attributes, the coordinates of ``x``, ``y``, and ``z`` dimensions are
-        utilized. It should be noted that ``cell`` attribute is required if
-        any of the geometric directions has only a single cell.
+        Additionally, it is expected to have ``cell``, ``p1``, and ``p2`` attributes for
+        creating the right mesh for the field; however, in the absence of these, the
+        coordinates of the geometric axes dimensions are utilized. It should be noted
+        that ``cell`` attribute is required if any of the geometric directions has only
+        a single cell.
 
         Parameters
         ----------
@@ -3845,20 +3867,20 @@ class Field(_FieldIO):
         ------
         TypeError
 
-            If argument is not ``xarray.DataArray``.
+            - If argument is not ``xarray.DataArray``.
+            - If ``nvdim`` attribute in not an integer.
 
         KeyError
 
-            If at least one of the geometric dimension coordinates has a single
-            value and ``cell`` attribute is missing.
+            - If at least one of the geometric dimension coordinates has a single
+              value and ``cell`` attribute is missing.
+            - If ``nvdim`` attribute is absent.
 
         ValueError
 
-            - If ``DataArray.ndim`` is not 3 or 4.
-            - If ``DataArray.dims`` are not either ``['x', 'y', 'z']`` or
-              ``['x', 'y', 'z', 'vdims']``
-            - If coordinates of ``x``, ``y``, or ``z`` are not equally
-              spaced
+            - If DataArray does not have a dimension ``vdims`` when attribute ``nvdim``
+              is grater than one.
+            - If coordinates of geometrical dimensions are not equally spaced.
 
         Examples
         --------
@@ -3876,7 +3898,8 @@ class Field(_FieldIO):
         ...                   name = 'mag',
         ...                   attrs = dict(cell=[1., 1., 1.],
         ...                                p1=[1., 1., 1.],
-        ...                                p2=[21., 21., 21.]))
+        ...                                p2=[21., 21., 21.],
+        ...                                nvdim=3),)
         >>> xa
         <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, vdims: 3)>
         ...
