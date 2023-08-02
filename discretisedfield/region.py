@@ -23,8 +23,8 @@ class Region(_RegionIO):
     ----------
     p1 / p2 : array_like
 
-        Diagonally-opposite corner points of the region, for example :math:`\mathbf{p}_i
-        = (p_x, p_y, p_z)`.
+        Diagonally-opposite corner points of the region, for example in three
+        dimensions :math:`\mathbf{p}_i = (p_x, p_y, p_z)`.
 
     dims : array_like of str, optional
 
@@ -145,8 +145,8 @@ class Region(_RegionIO):
         -------
         numpy.ndarray
 
-            Point with minimum coordinates. E.g. for three dimensions :math:`(p_x^\text{min},
-            p_y^\text{min}, p_z^\text{min})`.
+            Point with minimum coordinates. E.g. for three dimensions
+            :math:`(p_x^\text{min}, p_y^\text{min}, p_z^\text{min})`.
 
         Examples
         --------
@@ -178,8 +178,8 @@ class Region(_RegionIO):
         -------
         numpy.ndarray
 
-            Point with maximum coordinates. E.g. for three dimensions :math:`(p_x^\text{max},
-            p_y^\text{max}, p_z^\text{max})`.
+            Point with maximum coordinates. E.g. for three dimensions
+            :math:`(p_x^\text{max}, p_y^\text{max}, p_z^\text{max})`.
 
         Examples
         --------
@@ -373,7 +373,7 @@ class Region(_RegionIO):
         -------
         numpy.ndarray
 
-             Edge lengths :math:`(l_{x}, l_{y}, l_{z})`.
+             Edge lengths. E.g. in three dimensions :math:`(l_{x}, l_{y}, l_{z})`.
 
         Examples
         --------
@@ -407,7 +407,7 @@ class Region(_RegionIO):
         -------
         numpy.ndarray
 
-            Center point :math:`(p_c^x, p_c^y, p_c^z)`.
+            Center point. E.g. in three dimensions :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
@@ -433,7 +433,8 @@ class Region(_RegionIO):
     def volume(self):
         r"""Region's volume.
 
-        It is computed by multiplying edge lengths of the region:
+        It is computed by multiplying edge lengths of the region.
+        E.g. in three dimensions
 
         .. math::
 
@@ -623,7 +624,7 @@ class Region(_RegionIO):
         .. math::
 
             p^\\text{min}_{i} \\le p_{i} \\le p^\\text{max}_{i}, \\text{for}\\,
-            i = x, y, z.
+            i in dims.
 
         Similarly, if the second operand is ``discretisedfield.Region`` object,
         it is considered to be in the region if both its ``pmin`` and ``pmax``
@@ -633,8 +634,8 @@ class Region(_RegionIO):
         ----------
         other : array_like or discretisedfield.Region
 
-            The point coordinate :math:`(p_{x}, p_{y}, p_{z})` or a region
-            object.
+            The point coordinate (E.g. in three dimensions
+            :math:`(p_{x}, p_{y}, p_{z})`) or a region object.
 
         Returns
         -------
@@ -708,7 +709,7 @@ class Region(_RegionIO):
 
         Returns
         -------
-        tuple : (3,)
+        tuple : (ndims,)
 
             The first element is the axis facing surfaces are perpendicular to.
             If we start moving along that axis (e.g. from minus infinity) the
