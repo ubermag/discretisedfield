@@ -3452,6 +3452,14 @@ class Field(_FieldIO):
         >>> fft_field.vdims
         ['ft_v0', 'ft_v1', 'ft_v2', 'ft_v3']
 
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
+
         """
         mesh = self.mesh.fftn()
 
@@ -3508,6 +3516,14 @@ class Field(_FieldIO):
         4
         >>> fft_field.vdims
         ['v0', 'v1', 'v2', 'v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.ifftn()
@@ -3569,6 +3585,14 @@ class Field(_FieldIO):
         >>> fft_field.vdims
         ['ft_v0', 'ft_v1', 'ft_v2', 'ft_v3']
 
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
+
         """
         mesh = self.mesh.fftn(rfft=True)
 
@@ -3625,6 +3649,14 @@ class Field(_FieldIO):
         4
         >>> fft_field.vdims
         ['v0', 'v1', 'v2', 'v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.ifftn(rfft=True, shape=shape)
