@@ -13,21 +13,21 @@ from discretisedfield.plotting.mpl import Mpl, add_colorwheel
 class MplField(Mpl):
     """Matplotlib-based plotting methods.
 
-    Before the field can be plotted, it must be sliced with a plane (e.g.
-    ``field.plane('z')``). This class should not be accessed directly. Use
+    Before the field can be plotted, it must be ensured that it is defined on two
+    dimensional geometry. This class should not be accessed directly. Use
     ``field.mpl`` to use the different plotting methods.
 
     Parameters
     ----------
     field : df.Field
 
-        Field sliced with a plane, e.g. field.plane('x').
+        Field defined on a two-dimensional plane.
 
     Raises
     ------
     ValueError
 
-        If the field has not been sliced.
+        If the field has not a two-dimensional plane.
 
     .. seealso::
 
@@ -110,7 +110,7 @@ class MplField(Mpl):
             >>> n = (10, 10, 10)
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
-            >>> field.plane(z=50, n=(5, 5)).mpl()
+            >>> field.sel(z=50).resample(n=(5, 5)).mpl()
 
         .. seealso::
 
@@ -177,10 +177,10 @@ class MplField(Mpl):
         r"""Plot the scalar field on a plane.
 
         Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.sel('z')``). In addition, field must be a scalar field
-        (``nvdim=1``). Otherwise, ``ValueError`` is raised. ``mpl.scalar`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
-        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
+        ``field.sel('z')``, assuming the geometry has three dimensions). In addition,
+        field must be a scalar field (``nvdim=1``). Otherwise, ``ValueError`` is raised.
+        ``mpl.scalar`` adds the plot to ``matplotlib.axes.Axes`` passed via ``ax``
+        argument. If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
         automatically and the size of a figure can be specified using
         ``figsize``. By passing ``filter_field`` the points at which the pixels
         are not coloured can be determined. More precisely, only those
@@ -274,7 +274,7 @@ class MplField(Mpl):
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=1, value=2)
             ...
-            >>> field.plane('y').mpl.scalar()
+            >>> field.sel('y').mpl.scalar()
 
         .. seealso:: :py:func:`~discretisedfield.plotting.Mpl.vector`
 
@@ -376,7 +376,7 @@ class MplField(Mpl):
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
             ...
-            >>> field.plane('z').mpl.lightness()
+            >>> field.sel('z').mpl.lightness()
 
         """
         if self.field.nvdim == 2:
@@ -500,14 +500,14 @@ class MplField(Mpl):
     ):
         r"""Plot the vector field on a plane.
 
-        Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be a vector field
-        (``nvdim=2`` or ``nvdim=3``). Otherwise, ``ValueError`` is raised.
-        ``mpl.vector`` adds the plot to ``matplotlib.axes.axes`` passed via
-        ``ax`` argument. If ``ax`` is not passed, ``matplotlib.axes.axes``
-        object is created automatically and the size of a figure can be
-        specified using ``figsize``. By default, plotted vectors are coloured
-        according to the out-of-plane component of the vectors if the field has
+        Before the field can be plotted, it must be sliced to a plane (e.g.
+        ``field.sel('z')``, assuming the geometry has 3 dimensions). In addition, field
+        must be a vector field of dimensionality two or three (i.e. ``nvdim=2`` or
+        ``nvdim=3``). Otherwise, ``ValueError`` is raised. ``mpl.vector`` adds the plot
+        to ``matplotlib.axes.axes`` passed via ``ax`` argument. If ``ax`` is not passed,
+        ``matplotlib.axes.axes`` object is created automatically and the size of a
+        figure can be specified using ``figsize``. By default, plotted vectors are
+        coloured according to the out-of-plane component of the vectors if the field has
         ``nvdim=3``. This can be changed by passing ``color_field`` with
         ``nvdim=1``. To disable colouring of the plot, ``use_color=False`` can be
         passed. A uniform vector colour can be obtained by specifying
@@ -607,7 +607,7 @@ class MplField(Mpl):
             >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
             >>> field = df.Field(mesh, nvdim=3, value=(1.1, 2.1, 3.1))
             ...
-            >>> field.plane('y').mpl.vector()
+            >>> field.sel('y').mpl.vector()
 
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
@@ -700,12 +700,12 @@ class MplField(Mpl):
     ):
         r"""Contour line plot.
 
-        Before the field can be plotted, it must be sliced with a plane (e.g.
-        ``field.plane('z')``). In addition, field must be a scalar field
-        (``nvdim=1``). Otherwise, ``ValueError`` is raised. ``mpl.contour`` adds
-        the plot to ``matplotlib.axes.Axes`` passed via ``ax`` argument. If
-        ``ax`` is not passed, ``matplotlib.axes.Axes`` object is created
-        automatically and the size of a figure can be specified using
+        Before the field can be plotted, it must be sliced to give a plane (e.g.
+        ``field.sel('z')``, assuming ``field`` has three geometrical dimensions). In
+        addition, field must be a scalar field (``nvdim=1``). Otherwise, ``ValueError``
+        is raised. ``mpl.contour`` adds the plot to ``matplotlib.axes.Axes`` passed via
+        ``ax`` argument. If ``ax`` is not passed, ``matplotlib.axes.Axes`` object is
+        created automatically and the size of a figure can be specified using
         ``figsize``. By passing ``filter_field`` the points at which the pixels
         are not coloured can be determined. More precisely, only those
         discretisation cells where ``filter_field != 0`` are plotted. Colorbar
@@ -772,8 +772,8 @@ class MplField(Mpl):
         ------
         ValueError
 
-            If the field has not been sliced, its dimension is not 1, or the
-            dimension of ``filter_field`` is not 1.
+            If the field has not 2D, its dimension is not 1, or the dimension of
+            ``filter_field`` is not 1.
 
         Example
         -------
@@ -793,7 +793,7 @@ class MplField(Mpl):
             ...     x, y, z = point
             ...     return math.sin(x) + math.sin(y)
             >>> field = df.Field(mesh, nvdim=1, value=init_value)
-            >>> field.plane('z').mpl.contour()
+            >>> field.sel('z').mpl.contour()
 
         """
         if self.field.nvdim != 1:
