@@ -145,7 +145,7 @@ class Region(_RegionIO):
         -------
         numpy.ndarray
 
-            Point with minimum coordinates for tree dimensions :math:`(p_x^\text{min},
+            Point with minimum coordinates. E.g. for three dimensions :math:`(p_x^\text{min},
             p_y^\text{min}, p_z^\text{min})`.
 
         Examples
