@@ -546,7 +546,7 @@ class Field(_FieldIO):
     @valid.setter
     def valid(self, valid):
         if valid is not None:
-            if valid == "norm":
+            if isinstance(valid, str) and valid == "norm":
                 valid = ~np.isclose(self.norm.array, 0)
         else:
             valid = True
@@ -1185,7 +1185,7 @@ class Field(_FieldIO):
         if not isinstance(other, self.__class__):
             raise TypeError(f"Object of type {type(other)} not supported.")
 
-        if self.mesh != other.mesh:
+        if not self.mesh.allclose(other.mesh):
             raise ValueError(
                 "To perform this operation both fields must have the same mesh."
             )
