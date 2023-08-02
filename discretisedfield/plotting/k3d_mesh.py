@@ -95,7 +95,7 @@ class K3dMesh:
         )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
         ]
 
@@ -191,6 +191,6 @@ class K3dMesh:
         )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
         ]
