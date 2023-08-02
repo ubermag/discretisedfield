@@ -12,7 +12,7 @@ def topological_charge_density(field, /, method="continuous"):
     r"""Topological charge density.
 
     This method computes the topological charge density for a vector field having three
-    components (i.e. ``nvdim=3``). Two different methods are available and can be
+    value components (i.e. ``nvdim=3``). Two different methods are available and can be
     selected using ``method``:
 
     1. Continuous method:
