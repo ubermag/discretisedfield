@@ -150,7 +150,7 @@ class K3dField:
         )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(
                 self.data.mesh.region.dims, self.data.mesh.region.units
             )
@@ -309,7 +309,7 @@ class K3dField:
         )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(
                 self.data.mesh.region.dims, self.data.mesh.region.units
             )
@@ -520,7 +520,7 @@ class K3dField:
             )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(
                 self.data.mesh.region.dims, self.data.mesh.region.units
             )
