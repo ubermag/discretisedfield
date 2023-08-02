@@ -97,12 +97,18 @@ class MplMesh(Mpl):
         multiplier = self._setup_multiplier(multiplier)
 
         rescaled_mesh = self.mesh.scale(1 / multiplier)
+        rescaled_mesh.region.units = [
+            f"{uu.rsi_prefixes[multiplier]}{unit}" for unit in self.mesh.region.units
+        ]
         cell_region = df.Region(
             p1=rescaled_mesh.region.pmin,
             p2=rescaled_mesh.region.pmin + rescaled_mesh.cell,
+            units=rescaled_mesh.region.units,
         )
-        rescaled_mesh.region.mpl(ax=ax, color=color[0], box_aspect=box_aspect, **kwargs)
-        cell_region.mpl(ax=ax, color=color[1], box_aspect=None, **kwargs)
+        rescaled_mesh.region.mpl(
+            ax=ax, color=color[0], box_aspect=box_aspect, multiplier=1, **kwargs
+        )
+        cell_region.mpl(ax=ax, color=color[1], box_aspect=None, multiplier=1, **kwargs)
 
         self._savefig(filename)
 
