@@ -178,7 +178,7 @@ class Region(_RegionIO):
         -------
         numpy.ndarray
 
-            Point with maximum coordinates for three dimensions :math:`(p_x^\text{max},
+            Point with maximum coordinates. E.g. for three dimensions :math:`(p_x^\text{max},
             p_y^\text{max}, p_z^\text{max})`.
 
         Examples
