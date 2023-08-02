@@ -21,8 +21,8 @@ from .io import _MeshIO
 class Mesh(_MeshIO):
     """Finite-difference mesh.
 
-    Mesh discretises cubic ``discretisedfield.Region``, passed as ``region``,
-    using a regular finite-difference mesh. Since cubic region spans between
+    Mesh discretises the ``discretisedfield.Region``, passed as ``region``,
+    using a regular finite-difference mesh. Since the region spans between
     two points :math:`\\mathbf{p}_{1}` and :math:`\\mathbf{p}_{2}`, these
     points can be passed as ``p1`` and ``p2``, instead of passing
     ``discretisedfield.Region`` object. In this case
@@ -53,30 +53,31 @@ class Mesh(_MeshIO):
         Cubic region to be discretised on a regular mesh. Either ``region`` or
         ``p1`` and ``p2`` should be defined, not both. Defaults to ``None``.
 
-    p1 / p2 : (3,) array_like, optional
+    p1 / p2 : array_like, optional
 
-        Diagonally-opposite region points :math:`\\mathbf{p} = (p_{x}, p_{y},
-        p_{z})`. Either ``region`` or ``p1`` and ``p2`` should be defined, not
+        Diagonally-opposite region points, for example for three dimensions
+        :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`. Either ``region`` or ``p1`` and
+        ``p2`` should be defined, not both. Defaults to ``None``.
+
+    cell : array_like, optional
+
+        Discretisation cell size, for example for three dimensions
+        :math:`(d_{x}, d_{y}, d_{z})`. Either ``cell`` or ``n`` should be defined, not
         both. Defaults to ``None``.
 
-    cell : (3,) array_like, optional
+    n : array_like, optional
 
-        Discretisation cell size :math:`(d_{x}, d_{y}, d_{z})`. Either ``cell``
-        or ``n`` should be defined, not both. Defaults to ``None``.
-
-    n : (3,) array_like, optional
-
-        The number of discretisation cells :math:`(n_{x}, n_{y}, n_{z})`.
-        Either ``cell`` or ``n`` should be defined, not both. Defaults to
-        ``None``.
+        The number of discretisation cells, for example for three dimensions
+        :math:`(n_{x}, n_{y}, n_{z})`. Either ``cell`` or ``n`` should be defined, not
+        both. Defaults to ``None``.
 
     bc : str, optional
 
-        Periodic boundary conditions in x, y, or z directions is a string
-        consisting of one or more characters ``'x'``, ``'y'``, or ``'z'``,
-        denoting the direction(s) along which the mesh is periodic. In the case
-        of Neumann or Dirichlet boundary condition, string ``'neumann'`` or
-        ``'dirichlet'`` is passed. Defaults to an empty string.
+        Periodic boundary conditions in geometrical directions. It is a string
+        consisting of one or more characters representing the name of the direction(s)
+        as present in ``self.region.dims``, denoting the direction(s) along which the
+        mesh is periodic. In the case of Neumann or Dirichlet boundary condition, string
+        ``'neumann'`` or ``'dirichlet'`` is passed. Defaults to an empty string.
 
     subregions : dict, optional
 
@@ -259,10 +260,10 @@ class Mesh(_MeshIO):
         """Boundary condition for the mesh.
 
         Periodic boundary conditions can be specified by passing a string containing one
-        or more characters from ``self.region.dims`` (e.g. ``'x'``, ``'yz'``, ``'xyz'``)
-        . Neumann or Dirichlet boundary conditions are defined by passing ``'neumann'``
-        or ``'dirichlet'`` string. Neumann and Dirichlett boundary conditions are still
-        experimental.
+        or more characters from ``self.region.dims`` (e.g. ``'x'``, ``'yz'``, ``'xyz'``
+        for three dimensions). Neumann or Dirichlet boundary conditions are defined by
+        passing ``'neumann'`` or ``'dirichlet'`` string. Neumann and Dirichlet boundary
+        conditions are still experimental.
 
         Returns
         -------
@@ -321,7 +322,7 @@ class Mesh(_MeshIO):
         -------
         discretisedfield.Region
 
-            A cuboidal region over which the regular mesh is defined.
+            A region over which the regular mesh is defined.
         """
         return self._region
 
@@ -432,9 +433,9 @@ class Mesh(_MeshIO):
 
         Yields
         ------
-        tuple (3,)
+        tuple
 
-            Mesh cell indices :math:`(i_{x}, i_{y}, i_{z})`.
+            For three dimensions, mesh cell indices :math:`(i_{x}, i_{y}, i_{z})`.
 
         Examples
         --------
@@ -462,10 +463,10 @@ class Mesh(_MeshIO):
 
         Yields
         ------
-        tuple (3,)
+        numpy.ndarray
 
-            Mesh cell's center point :math:`\\mathbf{p} = (p_{x}, p_{y},
-            p_{z})`.
+            For three dimensions, mesh cell's center point
+            :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Examples
         --------
@@ -478,7 +479,7 @@ class Mesh(_MeshIO):
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         >>> list(mesh)
-        [(0.5, 0.5, 0.5), (1.5, 0.5, 0.5), (0.5, 1.5, 0.5), (1.5, 1.5, 0.5)]
+        [array([0.5, 0.5, 0.5]), array([1.5, 0.5, 0.5]), array([0.5, 1.5, 0.5]),...]
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.indices`
 
@@ -490,15 +491,15 @@ class Mesh(_MeshIO):
         """Midpoints of the cells of the mesh along the three directions.
 
         This method returns a named tuple containing three numpy arrays with
-        midpoints of the cells along the three spatial directions ``x``, ``y``,
-        and ``z``. Individual directions can be accessed from the tuple.
+        midpoints of the cells along the three spatial directions. Individual directions
+        can be accessed from the tuple.
 
         Returns
         -------
         collections.namedtuple
 
-            Namedtuple with three elements ``x``, ``y``, and ``z``, the cell
-            midpoints along the three spatial directions as numpy arrays.
+            Namedtuple with elements corresponding to geometrical directions, the cell
+            midpoints along the directions as numpy arrays.
 
         Examples
         --------
@@ -531,15 +532,15 @@ class Mesh(_MeshIO):
         """Vertices of the cells of the mesh along the three directions.
 
         This method returns a named tuple containing three numpy arrays with
-        vertices of the cells along the three spatial directions ``x``, ``y``,
-        and ``z``. Individual directions can be accessed from the tuple.
+        vertices of the cells along the spatial directions. Individual directions can be
+        accessed from the tuple.
 
         Returns
         -------
         collections.namedtuple
 
-            Namedtuple with three elements ``x``, ``y``, and ``z``, the cell
-            vertices along the three spatial directions as numpy arrays.
+            Namedtuple with elements corresponding to spatial directions, the cell
+            vertices along the directions as numpy arrays.
 
         Examples
         --------
@@ -669,9 +670,9 @@ class Mesh(_MeshIO):
         >>> n = (10, 10, 10)
         >>> mesh2 = df.Mesh(p1=p1, p2=p2, n=n)
         ...
-        >>> mesh1.allclose(mesh2)
+        >>> mesh1.allclose(mesh2, atol=1e-11)
         True
-        >>> mesh1.allclose(mesh2, rtol=1e-6, atol=1e-13)
+        >>> mesh1.allclose(mesh2, atol=1e-13)
         False
 
         """
@@ -726,15 +727,16 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        index : (3,) array_like
+        index : array_like
 
-            The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
+            For three dimensions, the cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Returns
         -------
-        (3,) tuple
+        numpy.ndarray
 
-            The cell's coordinate :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
+            For three dimensions, the cell's coordinate
+            :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Raises
         ------
@@ -753,9 +755,9 @@ class Mesh(_MeshIO):
         >>> cell = (1, 1, 1)
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         >>> mesh.index2point((0, 0, 0))
-        (0.5, 0.5, 0.5)
+        array([0.5, 0.5, 0.5])
         >>> mesh.index2point((0, 1, 0))
-        (0.5, 1.5, 0.5)
+        array([0.5, 1.5, 0.5])
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.point2index`
 
@@ -794,15 +796,15 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        point : (3,) array_like
+        point : array_like
 
-            Point :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
+            For three dimensions, point :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         Returns
         -------
-        (3,) tuple
+        tuple
 
-            The cell's index :math:`(i_{x}, i_{y}, i_{z})`.
+            For three dimensions, the cell's index :math:`(i_{x}, i_{y}, i_{z})`.
 
         Raises
         ------
@@ -899,10 +901,10 @@ class Mesh(_MeshIO):
 
         Parameters
         ----------
-        p1 / p2 : (3,) array_like
+        p1 / p2 : array_like
 
-            Points between which the line is defined :math:`\\mathbf{p} =
-            (p_{x}, p_{y}, p_{z})`.
+            For three dimensions, points between which the line is defined
+            :math:`\\mathbf{p} = (p_{x}, p_{y}, p_{z})`.
 
         n : int
 
@@ -910,7 +912,7 @@ class Mesh(_MeshIO):
 
         Yields
         ------
-        tuple (3,)
+        tuple
 
             :math:`\\mathbf{r}_{i}`
 
@@ -993,7 +995,6 @@ class Mesh(_MeshIO):
         3
         >>> mesh.region.dims
         ('x', 'y', 'z')
-        ...
         >>> plane_mesh = mesh.sel(y=1)
         >>> plane_mesh.region.ndim
         2
@@ -1431,7 +1432,7 @@ class Mesh(_MeshIO):
         array([100, 100, 100])
         >>> padded_mesh = mesh.pad({'x': (1, 1), 'y': (1, 1), 'z': (0, 1)})
         >>> padded_mesh.region.edges
-        array([120, 120, 110])
+        array([120., 120., 110.])
         >>> padded_mesh.n
         array([12, 12, 11])
 
@@ -1459,14 +1460,15 @@ class Mesh(_MeshIO):
     def __getattr__(self, attr):
         """Extracting the discretisation in a particular direction.
 
-        If ``'dx'``, ``'dy'``, or ``'dz'`` is accessed, the discretisation cell
-        size in that direction is returned.
+        For example in a three dimensional geometry with spatial dimensions ``'x'``,
+        ``'y'``, and ``'z'``, if ``'dx'``, ``'dy'``, or ``'dz'`` is accessed, the
+        discretisation cell size in that direction is returned.
 
         Parameters
         ----------
         attr : str
 
-            Discretisation direction (``'dx'``, ``'dy'``, or ``'dz'``)
+            Discretisation direction (eg. ``'dx'``, ``'dy'``, or ``'dz'``)
 
         Returns
         -------
@@ -1506,7 +1508,8 @@ class Mesh(_MeshIO):
     def __dir__(self):
         """Extension of the ``dir(self)`` list.
 
-        Adds ``'dx'``, ``'dy'``, and ``'dz'``.
+        For example in a three dimensional geometry with spatial dimensions ``'x'``,
+        ``'y'``, and ``'z'``, it adds ``'dx'``, ``'dy'``, and ``'dz'``.
 
         Returns
         -------
@@ -1547,12 +1550,13 @@ class Mesh(_MeshIO):
     def scale(self, factor, reference_point=None, inplace=False):
         """Scale the underlying region and all subregions.
 
-        This method scales mesh.region and all subregions by multiplying ``pmin`` and
-        ``pmax`` with ``factor``. If ``factor`` is a number the same scaling is applied
+        This method scales mesh.region and all subregions by a ``factor`` with respect
+        to a ``reference_point``. If ``factor`` is a number the same scaling is applied
         along all dimensions. If ``factor`` is array-like its length must match
         ``region.ndim`` and different factors are applied along the different directions
-        (based on their order). A new object is created unless ``inplace=True`` is
-        specified.
+        (based on their order). If ``reference_point`` is ``None``,
+        ``mesh.region.center`` is used as the reference point. A new object is created
+        unless ``inplace=True`` is specified.
 
         Scaling the mesh also scales ``mesh.cell``. The number of cells ``mesh.n`` stays
         constant.
@@ -1561,16 +1565,16 @@ class Mesh(_MeshIO):
         ----------
         factor : numbers.Real or array-like of numbers.Real
 
-            Factor to scale the region.
+            Factor to scale the mesh.
 
         reference_point : array_like, optional
 
-            The position of the reference point is fixed when scaling the region. If not
-            specified the region is scaled about its ``center``.
+            The position of the reference point is fixed when scaling the mesh. If not
+            specified the mesh is scaled about its ``mesh.region.center``.
 
         inplace : bool, optional
 
-            If True, the Region object is modified in-place. Defaults to False.
+            If True, the mesh object is modified in-place. Defaults to False.
 
         Returns
         -------
@@ -1594,9 +1598,9 @@ class Mesh(_MeshIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1))
         >>> res = mesh.scale(2)
         >>> res.region.pmin
-        array([0, 0, 0])
+        array([-5., -5., -5.])
         >>> res.region.pmax
-        array([20, 20, 20])
+        array([15., 15., 15.])
 
         2. Scale a mesh with subregions.
 
@@ -1607,13 +1611,13 @@ class Mesh(_MeshIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1), subregions=sr)
         >>> res = mesh.scale(2)
         >>> res.region.pmin
-        array([0, 0, 0])
+        array([-5., -5., -5.])
         >>> res.region.pmax
-        array([20, 20, 20])
+        array([15., 15., 15.])
         >>> res.subregions['sub_reg'].pmin
-        array([0, 0, 0])
+        array([-5., -5., -5.])
         >>> res.subregions['sub_reg'].pmax
-        array([10, 10, 10])
+        array([5., 5., 5.])
 
         3. Scale a mesh with subregions in place.
 
@@ -1625,13 +1629,25 @@ class Mesh(_MeshIO):
         >>> mesh.scale((2, 2, 5), inplace=True)
         Mesh(...)
         >>> mesh.region.pmin
-        array([0, 0, 0])
+        array([ -5.,  -5., -20.])
         >>> mesh.region.pmax
-        array([20, 20, 50])
+        array([15., 15., 30.])
         >>> mesh.subregions['sub_reg'].pmin
-        array([0, 0, 0])
+        array([ -5.,  -5., -20.])
         >>> mesh.subregions['sub_reg'].pmax
-        array([10, 10, 25])
+        array([5., 5., 5.])
+
+        4. Scale with respect to the origin
+
+        >>> import discretisedfield as df
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=(1, 1, 1))
+        >>> res = mesh.scale(2, reference_point=p1)
+        >>> res.region.pmin
+        array([0, 0, 0])
+        >>> res.region.pmax
+        array([20, 20, 20])
 
         See also
         --------
@@ -1886,7 +1902,7 @@ class Mesh(_MeshIO):
     def slider(self, axis, /, *, multiplier=None, description=None, **kwargs):
         """Axis slider.
 
-        For ``axis``, ``'x'``, ``'y'``, or ``'z'`` is passed. Based on that
+        For ``axis``, the name of a spatial dimension is passed. Based on that
         value, ``ipywidgets.SelectionSlider`` is returned. Axis multiplier can
         be changed via ``multiplier``.
 
@@ -1897,7 +1913,7 @@ class Mesh(_MeshIO):
         ----------
         axis : str
 
-            Axis for which the slider is returned (``'x'``, ``'y'``, or
+            Axis for which the slider is returned (For eg., ``'x'``, ``'y'``, or
             ``'z'``).
 
         multiplier : numbers.Real, optional
@@ -2039,7 +2055,7 @@ class Mesh(_MeshIO):
 
         3. Compare with manually created coordinate field
 
-        >>> manually = df.Field(mesh, dim=3, value=lambda point: point)
+        >>> manually = df.Field(mesh, nvdim=3, value=lambda point: point)
         >>> cfield.allclose(manually)
         True
 
@@ -2166,22 +2182,22 @@ class Mesh(_MeshIO):
         >>> ifft_mesh.n
         array([5])
         >>> ifft_mesh.cell
-        array([2])
+        array([2.])
         >>> ifft_mesh.region.pmin
-        array([-5])
+        array([-5.])
         >>> ifft_mesh.region.pmax
-        array([5])
+        array([5.])
 
         2. Perform a real iFFT.
         >>> ifft_mesh = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
         >>> ifft_mesh.n
         array([5])
         >>> ifft_mesh.cell
-        array([2])
+        array([2.])
         >>> ifft_mesh.region.pmin
-        array([-5])
+        array([-5.])
         >>> ifft_mesh.region.pmax
-        array([5])
+        array([5.])
 
         """
         if shape is not None:
