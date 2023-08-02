@@ -2071,21 +2071,24 @@ class Mesh(_MeshIO):
         return field
 
     def fftn(self, rfft=False):
-        """N dimensional discrete FFT of the mesh.
+        """Performs an N-dimensional discrete Fast Fourier Transform (FFT) on the mesh.
 
-        Information about subregions is lost during the transformation.
+        This method computes the FFT in an N-dimensional space. The FFT is a way to
+        transform a spatial-domain into a frequency domain. Note that any information
+        about subregions in the mesh is lost during this transformation.
 
         Parameters
         ----------
         rfft : bool, optional
-
-            If ``True``, the a real FFT is performed. Defaults to ``False``.
+            Determines if a real FFT is to be performed (if True) or a complex FFT
+            (if False). Defaults to False, i.e., a complex FFT is performed by default.
 
         Returns
         -------
         discretisedfield.Mesh
-
-            Fourier transform of the mesh.
+            A mesh representing the Fourier transform of the original mesh. The returned
+            mesh has dimensions labeled with frequency (k) and cells have coordinates
+            that correspond to the correct frequencies in the frequency domain.
 
         Examples
         --------
@@ -2113,7 +2116,20 @@ class Mesh(_MeshIO):
         >>> fft_mesh.region.pmax
         array([0.25])
 
+        3. Create a 2D mesh and perform a FFT. This demonstrates how the function works
+        with higher dimensional meshes.
+        >>> mesh = df.Mesh(p1=(0, 0), p2=(10, 10), cell=(2, 2))
+        >>> fft_mesh = mesh.fftn()
+        >>> fft_mesh.n
+        array([5, 5])
+        >>> fft_mesh.cell
+        array([0.1, 0.1])
+        >>> fft_mesh.region.pmin
+        array([-0.25, -0.25])
+        >>> fft_mesh.region.pmax
+        array([0.25, 0.25])
         """
+
         p1 = []
         p2 = []
         n = []
