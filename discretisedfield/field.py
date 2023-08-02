@@ -2413,6 +2413,7 @@ class Field(_FieldIO):
         1. Compute gradient of a contant field.
 
         >>> import discretisedfield as df
+        >>> import numpy as np
         ...
         >>> p1 = (0, 0, 0)
         >>> p2 = (10e-9, 10e-9, 10e-9)
@@ -2420,8 +2421,8 @@ class Field(_FieldIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
         ...
         >>> f = df.Field(mesh, nvdim=1, value=5)
-        >>> f.grad.mean()
-        array([0., 0., 0.])
+        >>> np.allclose(f.grad.mean(), 0, atol=1e-06)
+        True
 
         2. Compute gradient of a spatially varying field. For a field we choose
         :math:`f(x, y, z) = 2x + 3y - 5z`. Accordingly, we expect the gradient
