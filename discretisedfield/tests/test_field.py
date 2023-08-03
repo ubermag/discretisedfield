@@ -10,6 +10,7 @@ import k3d
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import scipy.fft as spfft
 import xarray as xr
 
 import discretisedfield as df
@@ -2708,6 +2709,27 @@ def test_fft():
     assert df.Field(mesh, nvdim=1).allclose(f.fftn().ifftn().imag)
 
     assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n))
+
+    # test 1d rfft
+    assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n).real)
+    assert df.Field(mesh, nvdim=1).allclose(f.rfftn().irfftn(shape=f.mesh.n).imag)
+
+    assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n))
+
+    # test rfft no shift last dim
+    a = np.zeros((5, 5))
+    a[2, 3] = 1
+
+    p1 = (0, 0)
+    p2 = (10, 10)
+    cell = (2.0, 2.0)
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    f = df.Field(mesh, nvdim=1, value=a)
+
+    field_ft = f.rfftn()
+    ft = spfft.fftshift(spfft.rfftn(a), axes=[0])
+
+    assert np.array_equal(field_ft.array[..., 0], ft)
 
 
 def test_mpl_scalar(test_field):
