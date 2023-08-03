@@ -750,25 +750,43 @@ def test_orientation_func():
 @pytest.mark.parametrize("ndim", [1, 2, 3, 4])
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_call(ndim, nvdim):
-    mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(2,) * ndim)
+    mesh = df.Mesh(p1=(0.0,) * ndim, p2=(10.0,) * ndim, cell=(2.0,) * ndim)
 
     def val_func(point):
         return (point[0],) * nvdim
 
     f = df.Field(mesh, nvdim=nvdim, value=val_func)
 
-    assert np.allclose(f((1,) * ndim), (1,) * nvdim)
-    assert np.allclose(f((5,) * ndim), (5,) * nvdim)
-    assert np.allclose(f((9,) * ndim), (9,) * nvdim)
+    # test center of the cells
+    assert np.allclose(f((1.0,) * ndim), (1.0,) * nvdim)
+    assert np.allclose(f((5.0,) * ndim), (5.0,) * nvdim)
+    assert np.allclose(f((9.0,) * ndim), (9.0,) * nvdim)
+
+    # Regions are inclusive: [ ]
+    # test with points exactly on the boundary of the mesh
+    assert np.allclose(f((0.0,) * ndim), (1.0,) * nvdim)
+    assert np.allclose(f((10.0,) * ndim), (9.0,) * nvdim)
+
+    # cells are half-open: [ )
+    # test with points exactly on the boundary of cells
+    assert np.allclose(f((1.9,) * ndim), (1.0,) * nvdim)
+    assert np.allclose(f((2,) * ndim), (3.0,) * nvdim)
+    assert np.allclose(f((2.1,) * ndim), (3.0,) * nvdim)
 
     with pytest.raises(ValueError):
-        f((5,) * (ndim + 1))
+        f((5.0,) * (ndim + 1))
 
     with pytest.raises(ValueError):
-        f((5,) * (ndim - 1))
+        f((5.0,) * (ndim - 1))
 
     with pytest.raises(ValueError):
-        f((-1,) * ndim)
+        f((-1.0,) * ndim)
+
+    with pytest.raises(TypeError):
+        f("invalid_input")
+
+    with pytest.raises(TypeError):
+        f(None)
 
 
 def test_mean():
