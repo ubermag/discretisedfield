@@ -747,26 +747,28 @@ def test_orientation_func():
     assert np.allclose(f.orientation(mesh.region.center + mesh.cell), (0.6, 0, 0.8))
 
 
-# TODO Martin
-def test_call():
-    p1 = (-5e-9, -5e-9, -5e-9)
-    p2 = (5e-9, 5e-9, 5e-9)
-    n = (5, 5, 10)  # cell points in x, y at: [-4, -2, 0, 2, 4] * 1e-9
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_call(ndim, nvdim):
+    mesh = df.Mesh(p1=(0,) * ndim, p2=(10,) * ndim, cell=(2,) * ndim)
 
-    f = df.Field(mesh, nvdim=3, value=lambda p: (p[0], p[1], 1))
-    assert np.allclose(f((0, 0, 0)), (0, 0, 1))
-    assert np.allclose(f((0.5e-9, 0.5e-9, 0.5e-9)), (0, 0, 1))
-    assert np.allclose(f((2e-9, 2e-9, 2e-9)), (2e-9, 2e-9, 1))
-    assert np.allclose(f((1.5e-9, 2.5e-9, 1.5e-9)), (2e-9, 2e-9, 1))
-    assert np.allclose(f((1.5e-9, 3.5e-9, 1.5e-9)), (2e-9, 4e-9, 1))
-    assert np.allclose(f((-5e-9, 5e-9, -5e-9)), (-4e-9, 4e-9, 1))
+    def val_func(point):
+        return (point[0],) * nvdim
 
-    with pytest.raises(ValueError):
-        f((0, 1, 0))
+    f = df.Field(mesh, nvdim=nvdim, value=val_func)
+
+    assert np.allclose(f((1,) * ndim), (1,) * nvdim)
+    assert np.allclose(f((5,) * ndim), (5,) * nvdim)
+    assert np.allclose(f((9,) * ndim), (9,) * nvdim)
 
     with pytest.raises(ValueError):
-        f((0, 0))
+        f((5,) * (ndim + 1))
+
+    with pytest.raises(ValueError):
+        f((5,) * (ndim - 1))
+
+    with pytest.raises(ValueError):
+        f((-1,) * ndim)
 
 
 def test_mean():
