@@ -2385,42 +2385,58 @@ def test_resample(test_field):
         test_field.resample((0, 1, 2))
 
 
-# TODO Martin
-def test_getitem():
-    p1 = (0, 0, 0)
-    p2 = (90, 50, 10)
-    cell = (5, 5, 5)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_getitem_no_subregions(valid_mesh, nvdim):
+    f = df.Field(valid_mesh, nvdim=nvdim, value=(1,) * nvdim)
+
+    with pytest.raises(KeyError):
+        f["no_sub"]
+
+
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_getitem(ndim, nvdim):
+    p1 = np.full(ndim, 0.0)
+    p2 = np.full(ndim, 50.0)
+    cell = np.full(ndim, 5.0)
+
+    p2_r1 = np.full(ndim, 50.0)
+    p2_r1[0] = 30.0
+
+    p1_r2 = np.full(ndim, 0.0)
+    p1_r2[0] = 30.0
+
     subregions = {
-        "r1": df.Region(p1=(0, 0, 0), p2=(30, 50, 10)),
-        "r2": df.Region(p1=(30, 0, 0), p2=(90, 50, 10)),
+        "r1": df.Region(p1=p1, p2=p2_r1),
+        "r2": df.Region(p1=p1_r2, p2=p2),
     }
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
 
     def value_fun(point):
-        x, y, z = point
-        if x <= 60:
-            return (-1, -2, -3)
+        if point[0] <= 30:
+            return (1,) * nvdim
         else:
-            return (1, 2, 3)
+            return (0,) * nvdim
 
-    f = df.Field(mesh, nvdim=3, value=value_fun)
+    f = df.Field(mesh, nvdim=nvdim, value=value_fun)
     assert isinstance(f, df.Field)
     assert isinstance(f["r1"], df.Field)
     assert isinstance(f["r2"], df.Field)
     assert isinstance(f[subregions["r2"]], df.Field)
     assert isinstance(f[subregions["r1"]], df.Field)
 
-    assert np.allclose(f["r1"].mean(), (-1, -2, -3))
-    assert np.allclose(f["r2"].mean(), (0, 0, 0))
-    assert np.allclose(f[subregions["r1"]].mean(), (-1, -2, -3))
-    assert np.allclose(f[subregions["r2"]].mean(), (0, 0, 0))
+    assert np.allclose(f["r1"].mean(), (1,) * nvdim)
+    assert np.allclose(f["r2"].mean(), (0,) * nvdim)
+    assert np.allclose(f[subregions["r1"]].mean(), (1,) * nvdim)
+    assert np.allclose(f[subregions["r2"]].mean(), (0,) * nvdim)
 
     assert len(f["r1"].mesh) + len(f["r2"].mesh) == len(f.mesh)
 
     # Meshes are not aligned
-    subregion = df.Region(p1=(1.1, 0, 0), p2=(9.9, 15, 5))
-
-    assert f[subregion].array.shape == (2, 3, 1, 3)
+    p1_sub = np.full(ndim, 1.1)
+    p2_sub = np.full(ndim, 9.9)
+    subregion = df.Region(p1=p1_sub, p2=p2_sub)
+    assert f[subregion].array.shape == (2,) * ndim + (nvdim,)
 
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
