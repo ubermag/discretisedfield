@@ -863,20 +863,27 @@ def test_mean():
         f.mean(direction=["x", "y", "z", "z"])
 
 
-# TODO Martin
-def test_field_component(valid_mesh):
-    f = df.Field(valid_mesh, nvdim=3, value=(1, 2, 3))
-    assert all(isinstance(getattr(f, i), df.Field) for i in "xyz")
-    assert all(getattr(f, i).nvdim == 1 for i in "xyz")
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_field_component(valid_mesh, nvdim):
+    valid_components = ["a", "b", "c", "d", "e", "f"]
+    f = df.Field(valid_mesh, nvdim=nvdim, vdims=valid_components[:nvdim])
+    assert all(isinstance(getattr(f, i), df.Field) for i in valid_components[:nvdim])
+    assert all(getattr(f, i).nvdim == 1 for i in valid_components[:nvdim])
 
-    f = df.Field(valid_mesh, nvdim=2, value=(1, 2))
-    assert all(isinstance(getattr(f, i), df.Field) for i in "xy")
-    assert all(getattr(f, i).nvdim == 1 for i in "xy")
+    # Default
+    f = df.Field(valid_mesh, nvdim=nvdim)
+    if nvdim in [2, 3]:
+        valid_components = ["x", "y", "z"]
+    elif nvdim > 3:
+        valid_components = [f"v{i}" for i in range(nvdim)]
+    else:
+        # nvdim = 1 exception
+        with pytest.raises(AttributeError):
+            f.x.nvdim
+        return
 
-    # Exception.
-    f = df.Field(valid_mesh, nvdim=1, value=1)
-    with pytest.raises(AttributeError):
-        f.x.nvdim
+    assert all(isinstance(getattr(f, i), df.Field) for i in valid_components[:nvdim])
+    assert all(getattr(f, i).nvdim == 1 for i in valid_components[:nvdim])
 
 
 def test_get_attribute_exception(mesh_3d):
