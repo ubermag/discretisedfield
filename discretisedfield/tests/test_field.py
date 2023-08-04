@@ -939,10 +939,26 @@ def test_allclose_rtol(valid_mesh, nvdim, tol_value, base_value):
     base_value = np.full(nvdim, base_value)
     f1 = df.Field(valid_mesh, nvdim=nvdim, value=base_value)
     f2 = df.Field(valid_mesh, nvdim=nvdim, value=base_value * (1 + tol_value * 0.9))
-    f3 = df.Field(valid_mesh, nvdim=nvdim, value=base_value * (1 + tol_value * 1.5))
+    f3 = df.Field(valid_mesh, nvdim=nvdim, value=base_value * (1 + tol_value * 1.1))
 
     assert f1.allclose(f2, rtol=tol_value, atol=0)
     assert not f1.allclose(f3, rtol=tol_value, atol=0)
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+@pytest.mark.parametrize("tol_value", [1e-7, 1e-5, 0.5, 2])
+@pytest.mark.parametrize("base_value", [0, 0.5, 1, -1, 1e-9])
+def test_allclose_atol(valid_mesh, nvdim, tol_value, base_value):
+    base_value = np.full(nvdim, base_value)
+    f1 = df.Field(valid_mesh, nvdim=nvdim, value=base_value)
+    f2 = df.Field(valid_mesh, nvdim=nvdim, value=base_value + tol_value * 0.9)
+    f3 = df.Field(valid_mesh, nvdim=nvdim, value=base_value + tol_value * 1.1)
+
+    # Need an rtol to deal with floating point accuracy
+    rtol = (base_value - tol_value) * 1e-10
+
+    assert f1.allclose(f2, atol=tol_value, rtol=rtol)
+    assert not f1.allclose(f3, atol=tol_value, rtol=rtol)
 
 
 @pytest.mark.parametrize("invalid_input", [2, "string", None, []])
