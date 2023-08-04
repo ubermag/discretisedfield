@@ -1324,7 +1324,7 @@ def test_cross(mesh_3d):
 
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
-def test_lshift_1(valid_mesh, nvdim):
+def test_lshift(valid_mesh, nvdim):
     f_list = [df.Field(valid_mesh, nvdim=1, value=i + 1) for i in range(nvdim)]
     res = f_list[0]
     for f in f_list[1:]:
