@@ -932,28 +932,41 @@ def test_eq():
     assert f5 == f7
 
 
-# TODO Hans
-def test_allclose():
-    p1 = (-5e-9, -5e-9, -5e-9)
-    p2 = (15e-9, 5e-9, 5e-9)
-    cell = (5e-9, 1e-9, 2.5e-9)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+@pytest.mark.parametrize("tol_value", [1e-10, 1e-5, 0.5, 2])
+@pytest.mark.parametrize("base_value", [0.5, 1, -1, 1e-9])
+def test_allclose_rtol(valid_mesh, nvdim, tol_value, base_value):
+    base_value = np.full(nvdim, base_value)
+    f1 = df.Field(valid_mesh, nvdim=nvdim, value=base_value)
+    f2 = df.Field(valid_mesh, nvdim=nvdim, value=base_value * (1 + tol_value * 0.9))
+    f3 = df.Field(valid_mesh, nvdim=nvdim, value=base_value * (1 + tol_value * 1.1))
 
-    f1 = df.Field(mesh, nvdim=1, value=0.2)
-    f2 = df.Field(mesh, nvdim=1, value=0.2 + 1e-9)
-    f3 = df.Field(mesh, nvdim=1, value=0.21)
-    f4 = df.Field(mesh, nvdim=3, value=(1, -6, 0))
-    f5 = df.Field(mesh, nvdim=3, value=(1, -6 + 1e-8, 0))
-    f6 = df.Field(mesh, nvdim=3, value=(1, -6.01, 0))
+    assert f1.allclose(f2, rtol=tol_value, atol=0)
+    assert not f1.allclose(f3, rtol=tol_value, atol=0)
 
-    assert f1.allclose(f2)
-    assert not f1.allclose(f3)
-    assert not f1.allclose(f5)
-    assert f4.allclose(f5)
-    assert not f4.allclose(f6)
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+@pytest.mark.parametrize("tol_value", [1e-7, 1e-5, 0.5, 2])
+@pytest.mark.parametrize("base_value", [0, 0.5, 1, -1, 1e-9])
+def test_allclose_atol(valid_mesh, nvdim, tol_value, base_value):
+    base_value = np.full(nvdim, base_value)
+    f1 = df.Field(valid_mesh, nvdim=nvdim, value=base_value)
+    f2 = df.Field(valid_mesh, nvdim=nvdim, value=base_value + tol_value * 0.9)
+    f3 = df.Field(valid_mesh, nvdim=nvdim, value=base_value + tol_value * 1.1)
+
+    # Need an rtol to deal with floating point accuracy
+    rtol = (base_value - tol_value) * 1e-10
+
+    assert f1.allclose(f2, atol=tol_value, rtol=rtol)
+    assert not f1.allclose(f3, atol=tol_value, rtol=rtol)
+
+
+@pytest.mark.parametrize("invalid_input", [2, "string", None, []])
+def test_allclose_invalid_type(valid_mesh, invalid_input):
+    f1 = df.Field(valid_mesh, nvdim=1, value=0)
 
     with pytest.raises(TypeError):
-        f1.allclose(2)
+        f1.allclose(invalid_input)
 
 
 def test_point_neg():
