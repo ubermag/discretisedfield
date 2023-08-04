@@ -866,8 +866,22 @@ def test_get_attribute_exception(mesh_3d):
         assert "has no attribute" in str(excinfo.value)
 
 
-# TODO Check and update (Martin and Sam, low priority)
 def test_dir(valid_mesh):
+    # Not testing component labels as this is already tested for in
+    # test_field_component
+
+    # Scalar
+    f = df.Field(valid_mesh, nvdim=1)
+    assert all(attr not in dir(f) for attr in ["div", "curl", "orientation"])
+    assert "grad" in dir(f)
+
+    # cross self.nvdim != 3 or other.nvdim != 3:
+    # grad self.nvdim != 1:
+    # return self.diff("x") << self.diff("y") << self.diff("z")
+    # div if self.nvdim not in [2, 3]:
+    # curl if self.nvdim != 3:
+    # Laplace self.nvdim not in [1, 3] raise error
+
     f = df.Field(valid_mesh, nvdim=3, value=(5, 6, -9))
     assert all(attr in dir(f) for attr in ["x", "y", "z", "div"])
     assert "grad" not in dir(f)
