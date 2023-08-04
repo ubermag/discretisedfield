@@ -4021,7 +4021,7 @@ class Field(_FieldIO):
 
         if "nvdim" not in xa.attrs:
             raise KeyError(
-                'The DataArray must have an attribute "nvdims" to identify a scalar or'
+                'The DataArray must have an attribute "nvdim" to identify a scalar or'
                 " a vector field."
             )
 
