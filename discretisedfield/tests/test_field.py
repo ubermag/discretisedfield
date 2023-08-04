@@ -852,10 +852,10 @@ def test_field_component(valid_mesh, nvdim):
 
     # Default
     f = df.Field(valid_mesh, nvdim=nvdim)
-    if nvdim > 3:
-        valid_components = [f"v{i}" for i in range(nvdim)]
-    elif nvdim > 1:
+    if nvdim in [2, 3]:
         valid_components = ["x", "y", "z"]
+    elif nvdim > 3:
+        valid_components = [f"v{i}" for i in range(nvdim)]
     else:
         # nvdim = 1 exception
         with pytest.raises(AttributeError):
