@@ -2369,22 +2369,28 @@ def test_sel_invalid(test_field):
         test_field.sel(z=slice(0, 5e-9))
 
 
-# TODO Martin
-def test_resample(test_field):
-    resampled = test_field.resample(n=(10, 15, 20))
-    assert np.allclose(resampled.mesh.n, (10, 15, 20))
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_resample(valid_mesh, nvdim):
+    test_field = df.Field(valid_mesh, nvdim=nvdim, value=(1,) * nvdim)
+    desired_n = tuple(max(i - 1, 1) for i in valid_mesh.n)
+    resampled = test_field.resample(desired_n)
+    assert np.allclose(resampled.mesh.n, desired_n)
     assert resampled.mesh.region == test_field.mesh.region
-    pmin = test_field.mesh.region.pmin
-    assert np.allclose(resampled(pmin), test_field(pmin))
+    assert np.allclose(resampled.array, 1)
 
-    resampled = test_field.resample(n=(1, 1, 1))
-    assert np.allclose(resampled.mesh.n, (1, 1, 1))
+    desired_n = list(np.ones(valid_mesh.region.ndim, dtype=int))
+    resampled = test_field.resample(desired_n)
+    assert np.allclose(resampled.mesh.n, desired_n)
     assert resampled.mesh.region == test_field.mesh.region
-    pmin = test_field.mesh.region.pmin
-    assert np.allclose(resampled(pmin), test_field((0, 0, 0)))
+    assert np.allclose(resampled.array, 1)
 
+    desired_n[-1] = 0
     with pytest.raises(ValueError):
-        test_field.resample((0, 1, 2))
+        test_field.resample(desired_n)
+
+    desired_n = list(np.ones(valid_mesh.region.ndim, dtype=float))
+    with pytest.raises(TypeError):
+        test_field.resample(desired_n)
 
 
 # TODO Martin
