@@ -3405,21 +3405,30 @@ class Field(_FieldIO):
         return key_dims
 
     def fftn(self, **kwargs):
-        """N dimensional discrete FFT of the field.
+        """Performs an N-dimensional discrete Fast Fourier Transform (FFT)
+        on the field.
 
-        Information about subregions is lost during the transformation.
+        This method applies an FFT to the field and the underying mesh, transforming
+        it from a spatial domain into a frequency domain. During this process, any
+        information about subregions within the field is lost.
+
 
         Parameters
         ----------
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.fftn`.
+            Keyword arguments passed directly to the FFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.fftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Fourier transformed field.
+            A field representing the Fourier transform of the original field.
+            This returned field has value dimensions labeled with frequency
+            (``ft_`` in front of each vdim) and values corresponding to frequencies
+            in the frequency domain.
+
 
         Examples
         --------
@@ -3433,6 +3442,24 @@ class Field(_FieldIO):
         >>> fft_field.vdims
         ['ft_x', 'ft_y', 'ft_z']
 
+        2. Create a 3D mesh and perform an FFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.fftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['ft_v0', 'ft_v1', 'ft_v2', 'ft_v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
+
         """
         mesh = self.mesh.fftn()
 
@@ -3445,21 +3472,28 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def ifftn(self, **kwargs):
-        """N dimensional discrete inverse FFT of the field.
+        """Performs an N-dimensional discrete inverse Fast Fourier Transform (iFFT)
+        on the field.
 
-        Information about subregions is lost during the transformation.
+        This method applies an iFFT to the field and the underying mesh, transforming
+        it from a frequency domain into a spatial domain. During this process, any
+        information about subregions within the field is lost.
 
         Parameters
         ----------
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.ifftn`.
+            Keyword arguments passed directly to the iFFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.ifftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Inverse Fourier transformed field.
+            A field representing the inverse Fourier transform of the original field.
+            This returned field is in the spatial domain and has value dimensions
+            labeled with the ``ft_`` removed if the vdims of the original field
+            started with ``ft_``.
 
         Examples
         --------
@@ -3472,6 +3506,24 @@ class Field(_FieldIO):
         3
         >>> ifft_field.vdims
         ['x', 'y', 'z']
+
+        2. Create a 3D mesh and perform an iFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.fftn().ifftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['v0', 'v1', 'v2', 'v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.ifftn()
@@ -3486,33 +3538,60 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=True)
 
     def rfftn(self, **kwargs):
-        """N dimensional discrete real FFT of the field.
+        """Performs an N-dimensional discrete real Fast Fourier Transform (rFFT)
+        on the field.
 
-        Information about subregions is lost during the transformation.
+        This method applies an rFFT to the field and the underying mesh, transforming
+        it from a spatial domain into a frequency domain. During this process, any
+        information about subregions within the field is lost.
+
 
         Parameters
         ----------
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.rfftn`.
+            Keyword arguments passed directly to the rFFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.rfftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Fourier transformed field.
+            A field representing the Fourier transform of the original field.
+            This returned field has value dimensions labeled with frequency
+            (``ft_`` in front of each vdim) and values corresponding to frequencies
+            in the frequency domain.
+
 
         Examples
         --------
-        1. Create a mesh and perform a rFFT.
+        1. Create a mesh and perform an rFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> fft_field = field.fftn()
+        >>> fft_field = field.rfftn()
         >>> fft_field.nvdim
         3
         >>> fft_field.vdims
         ['ft_x', 'ft_y', 'ft_z']
+
+        2. Create a 3D mesh and perform an rFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.rfftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['ft_v0', 'ft_v1', 'ft_v2', 'ft_v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.fftn(rfft=True)
@@ -3526,28 +3605,28 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def irfftn(self, shape=None, **kwargs):
-        """N dimensional discrete inverse real FFT of the field.
+        """Performs an N-dimensional discrete inverse real Fast Fourier Transform
+        (irFFT) on the field.
 
-        If shape is ``None``, the shape of the original mesh
-        is assumed to be even in the last dimension.
-
-        Information about subregions is lost during the transformation.
+        This method applies an irFFT to the field and the underying mesh, transforming
+        it from a frequency domain into a spatial domain. During this process, any
+        information about subregions within the field is lost.
 
         Parameters
         ----------
-        shape : (tuple, np.ndarray, list), optional
-
-            Shape of the original mesh. Defaults to ``None``.
-
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.irfftn`.
+            Keyword arguments passed directly to the irFFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.irfftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Inverse Fourier transformed field.
+            A field representing the inverse Fourier transform of the original field.
+            This returned field is in the spatial domain and has value dimensions
+            labeled with the ``ft_`` removed if the vdims of the original field
+            started with ``ft_``.
 
         Examples
         --------
@@ -3555,11 +3634,29 @@ class Field(_FieldIO):
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> ifft_field = field.rfftn().irfftn(shape=mesh.n)
+        >>> ifft_field = field.fftn().irfftn()
         >>> ifft_field.nvdim
         3
         >>> ifft_field.vdims
         ['x', 'y', 'z']
+
+        2. Create a 3D mesh and perform an irFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.fftn().irfftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['v0', 'v1', 'v2', 'v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.ifftn(rfft=True, shape=shape)

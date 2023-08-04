@@ -2071,21 +2071,26 @@ class Mesh(_MeshIO):
         return field
 
     def fftn(self, rfft=False):
-        """N dimensional discrete FFT of the mesh.
+        """Performs an N-dimensional discrete Fast Fourier Transform (FFT) on the mesh.
 
-        Information about subregions is lost during the transformation.
+        This method computes the FFT in an N-dimensional space. The FFT is a way to
+        transform a spatial-domain into a frequency domain. Note that any information
+        about subregions in the mesh is lost during this transformation.
 
         Parameters
         ----------
         rfft : bool, optional
 
-            If ``True``, the a real FFT is performed. Defaults to ``False``.
+            Determines if a real FFT is to be performed (if True) or a complex FFT
+            (if False). Defaults to False, i.e., a complex FFT is performed by default.
 
         Returns
         -------
         discretisedfield.Mesh
 
-            Fourier transform of the mesh.
+            A mesh representing the Fourier transform of the original mesh. The returned
+            mesh has dimensions labeled with frequency (k) and cells have coordinates
+            that correspond to the correct frequencies in the frequency domain.
 
         Examples
         --------
@@ -2113,7 +2118,20 @@ class Mesh(_MeshIO):
         >>> fft_mesh.region.pmax
         array([0.25])
 
+        3. Create a 2D mesh and perform a FFT. This demonstrates how the function works
+        with higher dimensional meshes.
+        >>> mesh = df.Mesh(p1=(0, 0), p2=(10, 10), cell=(2, 2))
+        >>> fft_mesh = mesh.fftn()
+        >>> fft_mesh.n
+        array([5, 5])
+        >>> fft_mesh.cell
+        array([0.1, 0.1])
+        >>> fft_mesh.region.pmin
+        array([-0.25, -0.25])
+        >>> fft_mesh.region.pmax
+        array([0.25, 0.25])
         """
+
         p1 = []
         p2 = []
         n = []
@@ -2152,26 +2170,36 @@ class Mesh(_MeshIO):
         return mesh
 
     def ifftn(self, rfft=False, shape=None):
-        """N dimensional discrete inverse FFT of the mesh.
+        """Performs an N-dimensional discrete inverse Fast Fourier Transform (iFFT)
+        on the mesh.
 
-        If rfft is ``True`` and shape is ``None``, the shape of the original mesh
-        is assumed to be even in the last dimension.
+        This function calculates the iFFT in an N-dimensional space. The iFFT is a
+        method to convert a frequency-domain signal into a spatial-domain signal.
+        If 'rfft' is set to True and 'shape' is None, the original mesh shape is
+        assumed to be even in the last dimension.
+
+        Please note that during Fourier transformations, the original position
+        information is lost, causing the inverse Fourier transform to be centered at
+        the origin. This can be rectified by `mesh.translate` to translate the mesh
+        back to the desired position.
 
         Parameters
         ----------
         rfft : bool, optional
 
-            If ``True``, the a real FFT is performed. Defaults to ``False``.
+            If set to True, a real FFT is performed. If False, a complex FFT is
+            performed. Defaults to False.
 
         shape : (tuple, np.ndarray, list), optional
 
-            Shape of the original mesh. Defaults to ``None``.
+            Specifies the shape of the original mesh. Defaults to None, which means the
+            shape of the original mesh is used.
 
         Returns
         -------
         discretisedfield.Mesh
 
-            Inverse Fourier transform of the mesh.
+            A mesh representing the inverse Fourier transform of the mesh.
 
         Examples
         --------
@@ -2198,6 +2226,29 @@ class Mesh(_MeshIO):
         array([-5.])
         >>> ifft_mesh.region.pmax
         array([5.])
+
+        3. Perform a 2D iFFT.
+        >>> mesh = df.Mesh(p1=(0, 0), p2=(10, 10), cell=(2, 2))
+        >>> ifft_mesh = mesh.fftn().ifftn()
+        >>> ifft_mesh.n
+        array([5, 5])
+        >>> ifft_mesh.cell
+        array([2., 2.])
+        >>> ifft_mesh.region.pmin
+        array([-5., -5.])
+        >>> ifft_mesh.region.pmax
+        array([5., 5.])
+
+        4. Perform a real 2D iFFT.
+        >>> ifft_mesh = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+        >>> ifft_mesh.n
+        array([5, 5])
+        >>> ifft_mesh.cell
+        array([2., 2.])
+        >>> ifft_mesh.region.pmin
+        array([-5., -5.])
+        >>> ifft_mesh.region.pmax
+        array([5., 5.])
 
         """
         if shape is not None:
