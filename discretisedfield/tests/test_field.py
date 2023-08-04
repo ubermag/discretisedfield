@@ -1336,53 +1336,42 @@ def test_cross(mesh_3d):
         res = f1.cross(f2)
 
 
-# TODO Martin
-def test_lshift():
-    p1 = (0, 0, 0)
-    p2 = (10e6, 10e6, 10e6)
-    cell = (5e6, 5e6, 5e6)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_lshift(valid_mesh, nvdim):
+    f_list = [df.Field(valid_mesh, nvdim=1, value=i + 1) for i in range(nvdim)]
+    res = f_list[0]
+    for f in f_list[1:]:
+        res = res << f
 
-    f1 = df.Field(mesh, nvdim=1, value=1)
-    f2 = df.Field(mesh, nvdim=1, value=-3)
-    f3 = df.Field(mesh, nvdim=1, value=5)
+    assert res.nvdim == nvdim
+    assert np.allclose(res.mean(), tuple(range(1, nvdim + 1)))
 
-    res = f1 << f2 << f3
-    assert res.nvdim == 3
-    assert np.allclose(res.mean(), (1, -3, 5))
-
-    # Different dimensions
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    f2 = df.Field(mesh, nvdim=2, value=(-1, -3))
+    # Test for different dimensions
+    f1 = df.Field(valid_mesh, nvdim=1, value=1.2)
+    f2 = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(-nvdim, 0)))
     res = f1 << f2
-    assert np.allclose(res.mean(), (1.2, -1, -3))
-    res = f2 << f1
-    assert np.allclose(res.mean(), (-1, -3, 1.2))
+    assert np.allclose(res.mean(), (1.2, *range(-nvdim, 0)))
 
-    # Constants
-    f1 = df.Field(mesh, nvdim=1, value=1.2)
-    res = f1 << 2
-    assert np.allclose(res.mean(), (1.2, 2))
-    res = f1 << (1, -1)
-    assert np.allclose(res.mean(), (1.2, 1, -1))
-    res = 3 << f1
-    assert np.allclose(res.mean(), (3, 1.2))
-    res = (1.2, 3) << f1 << 3
-    assert np.allclose(res.mean(), (1.2, 3, 1.2, 3))
+    # Test for constants
+    f1 = df.Field(valid_mesh, nvdim=1, value=1.2)
+    res = f1 << tuple(range(nvdim))
+    assert np.allclose(res.mean(), (1.2, *range(nvdim)))
+    res = tuple(range(nvdim)) << f1
+    assert np.allclose(res.mean(), (*range(nvdim), 1.2))
 
-    # Exceptions
     with pytest.raises(TypeError):
-        res = "a" << f1
+        _ = "a" << f1
     with pytest.raises(TypeError):
-        res = f1 << "a"
+        _ = f1 << "a"
 
-    # Fields defined on different meshes
+
+def test_lshift_different_mesh():
     mesh1 = df.Mesh(p1=(0, 0, 0), p2=(5, 5, 5), n=(1, 1, 1))
     mesh2 = df.Mesh(p1=(0, 0, 0), p2=(3, 3, 3), n=(1, 1, 1))
     f1 = df.Field(mesh1, nvdim=1, value=1.2)
     f2 = df.Field(mesh2, nvdim=1, value=1)
     with pytest.raises(ValueError):
-        res = f1 << f2
+        _ = f1 << f2
 
 
 def test_all_operators():
