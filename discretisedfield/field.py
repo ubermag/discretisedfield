@@ -1647,7 +1647,7 @@ class Field(_FieldIO):
         >>> res = f1 / f2
         >>> res.mean()
         array([5.])
-        >>> f1 / f2 == (f2 / f1)**(-1)
+        >>> (f1 / f2).allclose((f2 / f1)**(-1))
         True
 
         2. Divide vector field by a scalar.
