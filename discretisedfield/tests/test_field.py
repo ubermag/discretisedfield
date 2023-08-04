@@ -3471,8 +3471,47 @@ def test_complex(test_field):
     assert df.Field(mesh, nvdim=1, value=np.pi / 4).allclose(field.phase)
 
 
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_numpy_ufunc(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
+    # Two input ufunc
+    for ufunc in [np.add, np.multiply, np.power]:
+        # Test with another field
+        assert np.allclose(
+            ufunc(field, field).array,
+            ufunc(field.array, field.array),
+        )
+
+        # Test with a scalar
+        assert np.allclose(
+            ufunc(field, 2).array,
+            ufunc(field.array, 2),
+        )
+
+        # Test with an ndarray
+        array = np.array(range(nvdim))
+        assert np.allclose(
+            ufunc(field, array).array,
+            ufunc(field.array, array),
+        )
+
+    for ufunc in [np.sin, np.exp]:
+        # Test with another field
+        assert np.allclose(
+            ufunc(field).array,
+            ufunc(field.array),
+        )
+
+    for ufunc in [np.sum, np.mean]:
+        # Test with another field
+        assert np.allclose(
+            ufunc(field),
+            ufunc(field.array),
+        )
+
+
 # TODO Hans
-def test_numpy_ufunc(test_field):
+def test_numpy_ufunc1(test_field):
     assert np.allclose(np.sin(test_field).array, np.sin(test_field.array))
     assert np.sum([test_field, test_field]).allclose(test_field + test_field)
     assert np.multiply(test_field.a, test_field.b).allclose(test_field.a * test_field.b)
