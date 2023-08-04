@@ -1191,7 +1191,11 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         if self.mesh.allclose(other.mesh) and self.nvdim == other.nvdim:
-            return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
+            # Order matters absolute(a - b) <= (atol + rtol * absolute(b))
+            # The above equation is not symmetric in a and b, so that allclose(a, b)
+            # might be different from allclose(b, a)
+            # We want it relative to the original array
+            return np.allclose(other.array, self.array, rtol=rtol, atol=atol)
         else:
             return False
 
