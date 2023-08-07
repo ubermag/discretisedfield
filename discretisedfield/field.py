@@ -2703,21 +2703,26 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim not in [1, 3]:
-            raise ValueError(f"Cannot compute laplace for nvdim={self.nvdim} field.")
+
+        # Create a list of derivatives for each dimension
         if self.nvdim == 1:
-            return (
-                self.diff("x", order=2)
-                + self.diff("y", order=2)
-                + self.diff("z", order=2)
-            )
+            derivatives = [
+                sum(self.diff(dim, order=2) for dim in self.mesh.region.dims)
+            ]
         else:
-            x, y, z = self.vdims
-            return (
-                getattr(self, x).laplace
-                << getattr(self, y).laplace
-                << getattr(self, z).laplace
-            )
+            derivatives = [
+                sum(
+                    getattr(self, vdim).diff(dim, order=2)
+                    for dim in self.mesh.region.dims
+                )
+                for vdim in self.vdims
+            ]
+
+        result = derivatives[0]
+        for derivative in derivatives[1:]:
+            result = result << derivative
+
+        return result
 
     def integrate(self, direction=None, cumulative=False):
         r"""Integral.
