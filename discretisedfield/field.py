@@ -2391,9 +2391,9 @@ class Field(_FieldIO):
 
         .. math::
 
-            \nabla f = (\frac{\partial f}{\partial x},
-                         \frac{\partial f}{\partial y},
-                         \frac{\partial f}{\partial z})
+            \nabla f = (\frac{\partial f}{\partial x_1},
+                        ...
+                        \frac{\partial f}{\partial x_ndim}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2455,7 +2455,14 @@ class Field(_FieldIO):
             msg = f"Cannot compute gradient for nvdim={self.nvdim} field."
             raise ValueError(msg)
 
-        return self.diff("x") << self.diff("y") << self.diff("z")
+        # Create a list of derivatives for each dimension
+        derivatives = [self.diff(dim) for dim in self.mesh.region.dims]
+
+        result = derivatives[0]
+        for derivative in derivatives[1:]:
+            result = result << derivative
+
+        return result
 
     @property
     def div(self):
