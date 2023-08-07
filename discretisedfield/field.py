@@ -2590,14 +2590,36 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim != 3:
-            msg = f"Cannot compute curl for nvdim={self.nvdim} field."
-            raise ValueError(msg)
+        if self.nvdim != 3 or self.mesh.region.ndim != 3:
+            raise ValueError(
+                "Curl can only be computed for a field with nvdim=3 and ndim=3,"
+                f"Not {self.nvdim=} and {self.mesh.region.ndim}"
+            )
 
-        x, y, z = self.vdims
-        curl_x = getattr(self, z).diff("y") - getattr(self, y).diff("z")
-        curl_y = getattr(self, x).diff("z") - getattr(self, z).diff("x")
-        curl_z = getattr(self, y).diff("x") - getattr(self, x).diff("y")
+        for vdim in self.vdims:
+            if vdim not in self.vdim_mapping:
+                raise ValueError(
+                    f"Cannot compute curl of the field as {self.vdim_mapping=} is"
+                    " not set properly."
+                )
+            else:
+                if self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                    raise ValueError(
+                        "Cannot compute curl of the field as"
+                        f" {self.vdim_mapping=} is not set properly."
+                    )
+
+        # Use dims order instead of vdims
+        x, y, z = self.mesh.region.dims
+        curl_x = getattr(self, self._r_dim_mapping[z]).diff(y) - getattr(
+            self, self._r_dim_mapping[y]
+        ).diff(z)
+        curl_y = getattr(self, self._r_dim_mapping[x]).diff(z) - getattr(
+            self, self._r_dim_mapping[z]
+        ).diff(x)
+        curl_z = getattr(self, self._r_dim_mapping[y]).diff(x) - getattr(
+            self, self._r_dim_mapping[x]
+        ).diff(y)
 
         return curl_x << curl_y << curl_z
 
