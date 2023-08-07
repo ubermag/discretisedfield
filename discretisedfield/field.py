@@ -2647,20 +2647,18 @@ class Field(_FieldIO):
     def laplace(self):
         r"""Laplace operator.
 
-        This method computes the laplacian of a scalar (``nvdim=1``) or a vector
-        (``nvdim=3``) field and returns a resulting field:
+        This method computes the laplacian for any field:
 
         .. math::
 
-            \nabla^2 f = \frac{\partial^{2} f}{\partial x^{2}} +
-                          \frac{\partial^{2} f}{\partial y^{2}} +
-                          \frac{\partial^{2} f}{\partial z^{2}}
+            \nabla^2 f = \sum_{i=0}^\mathrm{ndim}
+                                \frac{\partial^{2} f}{\partial x_i^{2}}
 
         .. math::
 
-            \nabla^2 \mathbf{f} = (\nabla^2 f_{x},
-                                     \nabla^2 f_{y},
-                                     \nabla^2 f_{z})
+            \nabla^2 \mathbf{f} = (\nabla^2 f_{0},
+                                     ...
+                                     \nabla^2 f_mathrm{nvdim})
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2671,7 +2669,7 @@ class Field(_FieldIO):
         -------
         discretisedfield.Field
 
-            Resulting field.
+            Laplacian of the field.
 
         Example
         -------
