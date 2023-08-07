@@ -1916,53 +1916,53 @@ def test_diff_valid():
     assert np.allclose(f.diff("z", restrict2valid=False).array, (0, 0, 1))
 
 
-def test_grad():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-    # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
-    f = df.Field(mesh, nvdim=1, value=0)
-
+def test_grad(valid_mesh):
+    # f() = 0 -> grad(f) = (0, 0, 0)
+    f = df.Field(valid_mesh, nvdim=1, value=0)
     assert isinstance(f.grad, df.Field)
-    assert np.allclose(f.grad.mean(), (0, 0, 0))
+    assert np.allclose(f.grad.mean(), (0,) * valid_mesh.region.ndim)
 
     # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
     def value_fun(point):
-        x, y, z = point
-        return x + y + z
+        return np.sum(point)
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=1, value=value_fun)
+    assert isinstance(f.grad, df.Field)
+    assert np.allclose(f.grad.mean(), [0 if num == 1 else 1 for num in valid_mesh.n])
 
-    assert np.allclose(f.grad.mean(), (1, 1, 1))
-
-    # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
+    # f(x, y, z) = x^2 + y^2 + z^2 -> grad(f) = (2, 2, 2)
     def value_fun(point):
-        x, y, z = point
-        return x * y + y + z
+        return np.sum(np.square(point))
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=1, value=value_fun)
+    assert isinstance(f.grad, df.Field)
+    assert np.allclose(
+        f.grad.mean(),
+        [
+            0 if num == 1 else 2 * cent
+            for num, cent in zip(valid_mesh.n, valid_mesh.region.center)
+        ],
+    )
 
-    assert np.allclose(f.grad((3, 1, 3)), (1, 4, 1))
-    assert np.allclose(f.grad((5, 3, 5)), (3, 6, 1))
-
-    # f(x, y, z) = x*y + 2*y + x*y*z ->
-    # grad(f) = (y+y*z, x+2+x*z, x*y)
+    # Test mixing terms
+    # f(x, y, z) = x^2 + x*y + x*z -> grad(f) = (2x+y+z, x, x)
     def value_fun(point):
-        x, y, z = point
-        return x * y + 2 * y + x * y * z
+        return np.sum(point[0] * point)
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=1, value=value_fun)
+    assert isinstance(f.grad, df.Field)
+    result = np.full(valid_mesh.region.ndim, valid_mesh.region.center[0])
+    result[0] += np.sum(valid_mesh.region.center)
+    assert np.allclose(
+        f.grad.mean(),
+        [0 if num == 1 else result[i] for i, num in enumerate(valid_mesh.n)],
+    )
 
-    assert np.allclose(f.grad((7, 5, 1)), (10, 16, 35))
-    assert f.grad.x == f.diff("x")
-    assert f.grad.y == f.diff("y")
-    assert f.grad.z == f.diff("z")
 
-    # Exception
-    f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-
+@pytest.mark.parametrize("nvdim", [2, 3, 4, 5])
+def test_grad_exception(valid_mesh, nvdim):
+    # Grad only on scalar fields
+    f = df.Field(valid_mesh, nvdim=nvdim, value=0)
     with pytest.raises(ValueError):
         f.grad
 
