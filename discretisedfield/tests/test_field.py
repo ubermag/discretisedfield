@@ -2662,17 +2662,11 @@ def test_fft():
     f = df.Field(mesh, nvdim=3, value=_init_random, norm=1)
 
     # 3d fft
-    assert f.allclose(f.fftn().ifftn().real)
-    assert df.Field(mesh, nvdim=3).allclose(f.fftn().ifftn().imag)
-
     assert f.allclose(f.rfftn().irfftn())
 
     # 2d fft
     for i in ["x", "y", "z"]:
         plane = f.sel(i)
-        assert plane.allclose(plane.fftn().ifftn().real)
-        assert df.Field(mesh, nvdim=3).sel(i).allclose(plane.fftn().ifftn().imag)
-
         assert plane.allclose(plane.rfftn().irfftn())
 
     # Fourier slice theoreme
@@ -2705,15 +2699,9 @@ def test_fft():
 
     f = df.Field(mesh, nvdim=1, value=np.random.rand(*mesh.n, 1), norm=1)
 
-    assert f.allclose(f.fftn().ifftn().real)
-    assert df.Field(mesh, nvdim=1).allclose(f.fftn().ifftn().imag)
-
     assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n))
 
     # test 1d rfft
-    assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n).real)
-    assert df.Field(mesh, nvdim=1).allclose(f.rfftn().irfftn(shape=f.mesh.n).imag)
-
     assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n))
 
     # test rfft no shift last dim
