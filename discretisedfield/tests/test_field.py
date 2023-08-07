@@ -1969,14 +1969,14 @@ def test_grad():
 
 def test_div(valid_mesh):
     nvdim = valid_mesh.region.ndim
-    vdims = valid_mesh.region.dims
+    vdims = ["v" + d for d in valid_mesh.region.dims]  # ensure unique vdims
     vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
     f = df.Field(valid_mesh, nvdim=nvdim, vdims=vdims, vdim_mapping=vdim_mapping)
 
     assert isinstance(f.div, df.Field)
     assert np.allclose(f.div.mean(), 0)
 
-    # f(x, y, z) = (x, y, z) -> div(f) = (1, 1, 1)
+    # f(x, y, z) = (x, y, z) -> div(f) = 1 + 1 + 1
     def value_fun(point):
         return point
 
@@ -1987,7 +1987,7 @@ def test_div(valid_mesh):
         f.div.mean(), np.sum([0 if num == 1 else 1 for num in valid_mesh.n])
     )
 
-    # f(x, y, z) = (x^2, y^2, z^2) -> div(f) = (2x, 2y, 1z)
+    # f(x, y, z) = (x^2, y^2, z^2) -> div(f) = 2x + 2y + 1z
     def value_fun(point):
         return np.square(point)
 
@@ -2003,6 +2003,29 @@ def test_div(valid_mesh):
             ]
         ),
     )
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_div_exception(valid_mesh, nvdim):
+    f = df.Field(valid_mesh, nvdim=nvdim)
+    if valid_mesh.region.ndim != nvdim:
+        # Wrong dimensions
+        with pytest.raises(ValueError):
+            f.div
+    else:
+        vdims = ["v" + d for d in valid_mesh.region.dims]
+        f.vdims = vdims
+        # Empty dictionary
+        f.vdim_mapping = {}
+        with pytest.raises(ValueError):
+            f.div
+        # Incorect dictionary
+        if nvdim > 1:
+            vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
+            vdim_mapping[vdims[0]] = None
+            f.vdim_mapping = vdim_mapping
+            with pytest.raises(ValueError):
+                f.div
 
 
 def test_div_curl():

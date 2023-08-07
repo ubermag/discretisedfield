@@ -2520,13 +2520,27 @@ class Field(_FieldIO):
 
         """
         if self.nvdim != self.mesh.region.ndim:
-            msg = (
+            raise ValueError(
                 f"Cannot compute divergence for field with a differnt {self.nvdim=} and"
                 f" {self.mesh.region.ndim}."
             )
-            raise ValueError(msg)
 
-        return sum(getattr(self, vdim).diff(vdim) for vdim in self.vdims)
+        for vdim in self.vdims:
+            if vdim not in self.vdim_mapping:
+                raise ValueError(
+                    f"Cannot compute divergence for field as {self.vdim_mapping=} is"
+                    " not set properly."
+                )
+            else:
+                if self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                    raise ValueError(
+                        "Cannot compute divergence for field as"
+                        f" {self.vdim_mapping=} is not set properly."
+                    )
+
+        return sum(
+            getattr(self, vdim).diff(self.vdim_mapping[vdim]) for vdim in self.vdims
+        )
 
     @property
     def curl(self):
