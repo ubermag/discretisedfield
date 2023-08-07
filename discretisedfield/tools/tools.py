@@ -15,13 +15,13 @@ def topological_charge_density(field, /, method="continuous"):
     value components (i.e. ``nvdim=3``). Two different methods are available and can be
     selected using ``method``:
 
-    1. Continuous method:
+    1. Continuous method for calculation of the topological charge density in xy-plane:
 
         .. math::
 
             q = \frac{1}{4\pi} \mathbf{n} \cdot \left(\frac{\partial
             \mathbf{n}}{\partial x} \times \frac{\partial
-            \mathbf{n}}{\partial x} \right),
+            \mathbf{n}}{\partial y} \right),
 
         where :math:`\mathbf{n}` is the orientation field.
 
