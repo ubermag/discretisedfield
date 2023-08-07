@@ -2529,33 +2529,38 @@ class Field(_FieldIO):
     def curl(self):
         r"""Curl.
 
-        This method computes the curl of a vector (``nvdim=3``) field and returns
-        a vector (``nvdim=3``) as a result:
+        This method computes the curl of a three dimensional vector (``nvdim=3``)
+        field in three spatial dimensions (``ndim=3``) and returns
+        a three dimensional vector (``nvdim=3``) field in three spatial
+        dimensions (``ndim=3``)
 
         .. math::
 
             \nabla \times \mathbf{v} = \left(\frac{\partial
-            v_{z}}{\partial y} - \frac{\partial v_{y}}{\partial z},
-            \frac{\partial v_{x}}{\partial z} - \frac{\partial
-            v_{z}}{\partial x}, \frac{\partial v_{y}}{\partial x} -
-            \frac{\partial v_{x}}{\partial y},\right)
+            v_{2}}{\partial x_{1}} - \frac{\partial v_{1}}{\partial x_{2}},
+            \frac{\partial v_{0}}{\partial x_{2}} - \frac{\partial
+            v_{2}}{\partial x_{0}}, \frac{\partial v_{1}}{\partial x_{0}} -
+            \frac{\partial v_{0}}{\partial x_{1}},\right)
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
         considered to be that directional derivative. More precisely, it is
         assumed that the field does not change in that direction.
+        ``vdim_mapping`` needs to be set in order to relate the vector and
+        spatial dimensions.
 
         Returns
         -------
         discretisedfield.Field
 
-            Resulting field.
+            Curl of the field.
 
         Raises
         ------
         ValueError
 
-            If the dimension of the field is not 3.
+            If the ``ndim`` or ``nvdim`` of the field is not 3.
+            The ``vdims`` are not correctly mapped to the ``dims``.
 
         Example
         -------
