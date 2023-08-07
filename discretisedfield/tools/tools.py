@@ -350,14 +350,23 @@ def emergent_magnetic_field(field):
 
     """
     if field.nvdim != 3:
-        msg = f"Cannot compute emergent magnetic field for {field.nvdim=} field."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Cannot compute emergent magnetic field for {field.nvdim=}"
+            " field. It must be three-dimensional vector field."
+        )
+    elif field.mesh.region.ndim != 3:
+        raise ValueError(
+            f"Cannot compute emergent magnetic field for {field.mesh.region.ndim=}"
+            " region. It must be three-dimensional region."
+        )
 
-    Fx = field.dot(field.diff("y").cross(field.diff("z")))
-    Fy = field.dot(field.diff("z").cross(field.diff("x")))
-    Fz = field.dot(field.diff("x").cross(field.diff("y")))
+    geo_dims = field.mesh.region.dims
 
-    return Fx << Fy << Fz
+    F1 = field.dot(field.diff(geo_dims[1]).cross(field.diff(geo_dims[2])))
+    F2 = field.dot(field.diff(geo_dims[2]).cross(field.diff(geo_dims[0])))
+    F3 = field.dot(field.diff(geo_dims[0]).cross(field.diff(geo_dims[1])))
+
+    return F1 << F2 << F3
 
 
 def neigbouring_cell_angle(field, /, direction, units="rad"):
