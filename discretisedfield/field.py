@@ -2519,8 +2519,11 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim not in [2, 3]:
-            msg = f"Cannot compute divergence for nvdim={self.nvdim} field."
+        if self.nvdim != self.mesh.region.ndim:
+            msg = (
+                f"Cannot compute divergence for field with a differnt {self.nvdim=} and"
+                f" {self.mesh.region.ndim}."
+            )
             raise ValueError(msg)
 
         return sum(getattr(self, vdim).diff(vdim) for vdim in self.vdims)

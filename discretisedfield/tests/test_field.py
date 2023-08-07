@@ -1967,6 +1967,44 @@ def test_grad():
         f.grad
 
 
+def test_div(valid_mesh):
+    nvdim = valid_mesh.region.ndim
+    vdims = valid_mesh.region.dims
+    vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
+    f = df.Field(valid_mesh, nvdim=nvdim, vdims=vdims, vdim_mapping=vdim_mapping)
+
+    assert isinstance(f.div, df.Field)
+    assert np.allclose(f.div.mean(), 0)
+
+    # f(x, y, z) = (x, y, z) -> div(f) = (1, 1, 1)
+    def value_fun(point):
+        return point
+
+    f = df.Field(
+        valid_mesh, nvdim=nvdim, vdims=vdims, vdim_mapping=vdim_mapping, value=value_fun
+    )
+    assert np.allclose(
+        f.div.mean(), np.sum([0 if num == 1 else 1 for num in valid_mesh.n])
+    )
+
+    # f(x, y, z) = (x^2, y^2, z^2) -> div(f) = (2x, 2y, 1z)
+    def value_fun(point):
+        return np.square(point)
+
+    f = df.Field(
+        valid_mesh, nvdim=nvdim, vdims=vdims, vdim_mapping=vdim_mapping, value=value_fun
+    )
+    assert np.allclose(
+        f.div.mean(),
+        np.sum(
+            [
+                0 if num == 1 else 2 * cent
+                for num, cent in zip(valid_mesh.n, valid_mesh.region.center)
+            ]
+        ),
+    )
+
+
 def test_div_curl():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
