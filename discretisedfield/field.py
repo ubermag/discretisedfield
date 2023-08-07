@@ -2391,9 +2391,9 @@ class Field(_FieldIO):
 
         .. math::
 
-            \nabla f = (\frac{\partial f}{\partial x},
-                         \frac{\partial f}{\partial y},
-                         \frac{\partial f}{\partial z})
+            \nabla f = (\frac{\partial f}{\partial x_1},
+                        ...
+                        \frac{\partial f}{\partial x_ndim}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2455,14 +2455,21 @@ class Field(_FieldIO):
             msg = f"Cannot compute gradient for nvdim={self.nvdim} field."
             raise ValueError(msg)
 
-        return self.diff("x") << self.diff("y") << self.diff("z")
+        # Create a list of derivatives for each dimension
+        derivatives = [self.diff(dim) for dim in self.mesh.region.dims]
+
+        result = derivatives[0]
+        for derivative in derivatives[1:]:
+            result = result << derivative
+
+        return result
 
     @property
     def div(self):
-        r"""Divergence.
+        r"""Compute the divergence of a field.
 
-        This method computes the divergence of a vector (``nvdim=2`` or
-        ``nvdim=3``) field and returns a scalar (``nvdim=1``) field as a result.
+        This method calculates the divergence of a field of dimension `nvdim`
+        and returns a scalar (``nvdim=1``) field as a result.
 
         .. math::
 
@@ -2484,7 +2491,8 @@ class Field(_FieldIO):
         ------
         ValueError
 
-            If the dimension of the field is 1.
+            If the field and the mesh don't have the same dimentionality or
+            they are not mapped correctly.
 
         Example
         -------
@@ -2508,22 +2516,30 @@ class Field(_FieldIO):
         >>> f.div.mean()
         array([5.])
 
-        2. Attempt to compute the divergence of a scalar field.
-
-        >>> f = df.Field(mesh, nvdim=1, value=3.14)
-        >>> f.div
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
-
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim not in [2, 3]:
-            msg = f"Cannot compute divergence for nvdim={self.nvdim} field."
-            raise ValueError(msg)
+        if self.nvdim != self.mesh.region.ndim:
+            raise ValueError(
+                f"Cannot compute divergence for field with a differnt {self.nvdim=} and"
+                f" {self.mesh.region.ndim}."
+            )
 
-        return sum(getattr(self, vdim).diff(vdim) for vdim in self.vdims)
+        for vdim in self.vdims:
+            if vdim not in self.vdim_mapping:
+                raise ValueError(
+                    f"Cannot compute divergence for field as {vdim} is not present in"
+                    f"{self.vdim_mapping=}."
+                )
+            elif self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Cannot compute divergence for field as {self.vdim_mapping[vdim]}"
+                    f"is not present in {self.mesh.region.dims=}."
+                )
+
+        return sum(
+            getattr(self, vdim).diff(self.vdim_mapping[vdim]) for vdim in self.vdims
+        )
 
     @property
     def curl(self):
