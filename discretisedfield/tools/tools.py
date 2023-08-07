@@ -615,7 +615,7 @@ def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="r
     return num_features
 
 
-def count_bps(field, /, direction="x"):
+def count_bps(field, /, direction):
     """Bloch point count and arrangement.
 
     Function to obtain information about Bloch point number and arrangement.
@@ -642,7 +642,7 @@ def count_bps(field, /, direction="x"):
 
     direction : str, optional
 
-        Geometric direction in which to compute arrangement. Defaults to ``x``.
+        Geometric direction in which to compute arrangement.
 
     Returns
     -------
@@ -653,9 +653,19 @@ def count_bps(field, /, direction="x"):
     Examples
     --------
     """
+    if field.mesh.region.ndim != 3:
+        raise ValueError(f"The region must be 3D, not {field.mesh.region.ndim}D.")
+    elif field.nvdim != 3:
+        raise ValueError(f"The field must be 3D vector, not {field.nvdim}D.")
+    elif direction not in field.mesh.region.dims:
+        raise ValueError(
+            f"The specified direction ({direction}) must be one of the"
+            f" geometric dimensions {field.mesh.region.dims}."
+        )
+
     F_div = emergent_magnetic_field(field.orientation).div
 
-    averaged = str.replace("xyz", direction, "")
+    averaged = str.join("", [dim for dim in field.mesh.region.dims if dim != direction])
 
     F_red = F_div.integrate(direction=averaged[0]).integrate(direction=averaged[1])
     F_int = F_red.integrate(direction=direction, cumulative=True)
