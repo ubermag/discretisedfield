@@ -139,19 +139,30 @@ def test_count_lange_cell_angle_regions():
     assert dft.count_large_cell_angle_regions(field, min_angle=1) == 1
 
 
-def test_count_bps():
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_count_bps(ndim, nvdim):
     # TODO use BP field from file
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    n = (10, 10, 10)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
+    p1 = (0,) * ndim
+    p2 = (10,) * ndim
+    n = (10,) * ndim
+    value = (1,) * nvdim
+    dims = [f"g{i}" for i in range(ndim)]
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    mesh = df.Mesh(region=region, n=n)
+    field = df.Field(mesh, nvdim=nvdim, value=value)
 
-    result = dft.count_bps(field)
-    assert result["bp_number"] == 0
-    assert result["bp_number_hh"] == 0
-    assert result["bp_number_tt"] == 0
-    assert result["bp_pattern_x"] == "[[0.0, 10]]"
+    if ndim != 3 or nvdim != 3:
+        with pytest.raises(ValueError):
+            dft.count_bps(field, "g1")
+    else:
+        with pytest.raises(ValueError):
+            dft.count_bps(field, "wrong")
+        result = dft.count_bps(field, "g1")
+        assert result["bp_number"] == 0
+        assert result["bp_number_hh"] == 0
+        assert result["bp_number_tt"] == 0
+        assert result["bp_pattern_x"] == "[[0.0, 10]]"
 
 
 def test_demag_tensor():
