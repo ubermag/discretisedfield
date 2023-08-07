@@ -3804,6 +3804,7 @@ class Field(_FieldIO):
         elif method == "at":
             return None
         else:
+            # TODO: If shape is nvdim then return np.array
             return self.__class__(
                 mesh[0],
                 nvdim=result.shape[-1],

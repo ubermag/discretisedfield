@@ -3471,6 +3471,7 @@ def test_complex(test_field):
     assert df.Field(mesh, nvdim=1, value=np.pi / 4).allclose(field.phase)
 
 
+# TODO: Split into multiple tests. Test at method, multiple np array
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_numpy_ufunc(valid_mesh, nvdim):
     field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
