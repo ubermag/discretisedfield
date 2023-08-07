@@ -1930,7 +1930,7 @@ def test_grad(valid_mesh):
     assert isinstance(f.grad, df.Field)
     assert np.allclose(f.grad.mean(), [0 if num == 1 else 1 for num in valid_mesh.n])
 
-    # f(x, y, z) = x^2 + y^2 + z^2 -> grad(f) = (2, 2, 2)
+    # f(x, y, z) = x^2 + y^2 + z^2 -> grad(f) = (2x, 2y, 2z)
     def value_fun(point):
         return np.sum(np.square(point))
 
