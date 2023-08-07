@@ -3436,6 +3436,7 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.fftn()
 
+        # Use scipy as faster than numpy
         axes = range(self.mesh.region.ndim)
         ft = spfft.fftshift(
             spfft.fftn(self.array, axes=axes, **kwargs),
