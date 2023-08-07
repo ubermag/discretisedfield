@@ -64,21 +64,25 @@ def test_topological_charge(method):
             getattr(dft, function)(f.sel("z"), method="wrong")
 
 
-def test_emergent_magnetic_field():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_emergent_magnetic_field(ndim, nvdim):
+    p1 = (0,) * ndim
+    p2 = (10,) * ndim
+    cell = (2,) * ndim
+    value = (0,) * nvdim
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     # f(x, y, z) = (0, 0, 0)
     # -> F(f) = 0
-    f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+    f = df.Field(mesh, nvdim=nvdim, value=value)
 
-    assert dft.emergent_magnetic_field(f).nvdim == 3
-    assert np.allclose(dft.emergent_magnetic_field(f).mean(), (0, 0, 0))
-
-    with pytest.raises(ValueError):
-        dft.emergent_magnetic_field(f.x)
+    if ndim != 3 or nvdim != 3:
+        with pytest.raises(ValueError):
+            dft.emergent_magnetic_field(f)
+    else:
+        assert dft.emergent_magnetic_field(f).nvdim == 3
+        assert np.allclose(dft.emergent_magnetic_field(f).mean(), (0, 0, 0))
 
 
 def test_neigbouring_cell_angle():
