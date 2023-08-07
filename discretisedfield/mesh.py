@@ -2131,6 +2131,7 @@ class Mesh(_MeshIO):
                     freqs = spfft.fftfreq(self.n[i], self.cell[i])
                 # Shift the region boundaries to get the correct coordinates of
                 # mesh cells.
+                # This effectively does the same as using fftshift
                 dfreq = (freqs[1] - freqs[0]) / 2
                 p1.append(min(freqs) - dfreq)
                 p2.append(max(freqs) + dfreq)
