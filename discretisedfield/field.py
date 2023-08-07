@@ -2604,15 +2604,14 @@ class Field(_FieldIO):
         for vdim in self.vdims:
             if vdim not in self.vdim_mapping:
                 raise ValueError(
-                    f"Cannot compute curl of the field as {self.vdim_mapping=} is"
-                    " not set properly."
+                    f"Cannot compute curl of the field as {vdim} is not present in"
+                    f" {self.vdim_mapping=}."
                 )
-            else:
-                if self.vdim_mapping[vdim] not in self.mesh.region.dims:
-                    raise ValueError(
-                        "Cannot compute curl of the field as"
-                        f" {self.vdim_mapping=} is not set properly."
-                    )
+            elif self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Cannot compute curl of the field as {self.vdim_mapping[vdim]}"
+                    f" is not present in {self.mesh.region.dims=}."
+                )
 
         # Use dims order instead of vdims
         x, y, z = self.mesh.region.dims
