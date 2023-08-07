@@ -1977,11 +1977,12 @@ def test_div(valid_mesh):
     assert np.allclose(f.div.mean(), 0)
 
     # f(x, y, z) = (x, y, z) -> div(f) = 1 + 1 + 1
-    def value_fun(point):
-        return point
-
     f = df.Field(
-        valid_mesh, nvdim=nvdim, vdims=vdims, vdim_mapping=vdim_mapping, value=value_fun
+        valid_mesh,
+        nvdim=nvdim,
+        vdims=vdims,
+        vdim_mapping=vdim_mapping,
+        value=valid_mesh.coordinate_field(),
     )
     assert np.allclose(
         f.div.mean(), np.sum([0 if num == 1 else 1 for num in valid_mesh.n])

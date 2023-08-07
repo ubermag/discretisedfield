@@ -2521,15 +2521,14 @@ class Field(_FieldIO):
         for vdim in self.vdims:
             if vdim not in self.vdim_mapping:
                 raise ValueError(
-                    f"Cannot compute divergence for field as {self.vdim_mapping=} is"
-                    " not set properly."
+                    f"Cannot compute divergence for field as {vdim} is not present in"
+                    f"{self.vdim_mapping=}."
                 )
-            else:
-                if self.vdim_mapping[vdim] not in self.mesh.region.dims:
-                    raise ValueError(
-                        "Cannot compute divergence for field as"
-                        f" {self.vdim_mapping=} is not set properly."
-                    )
+            elif self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Cannot compute divergence for field as {self.vdim_mapping[vdim]}"
+                    f"is not present in {self.mesh.region.dims=}."
+                )
 
         return sum(
             getattr(self, vdim).diff(self.vdim_mapping[vdim]) for vdim in self.vdims
