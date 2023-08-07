@@ -2029,39 +2029,30 @@ def test_div_exception(valid_mesh, nvdim):
                 f.div
 
 
-def test_div_curl():
+def test_curl():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (2, 2, 2)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     # f(x, y, z) = (0, 0, 0)
-    # -> div(f) = 0
     # -> curl(f) = (0, 0, 0)
     f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
-
-    assert isinstance(f.div, df.Field)
-    assert f.div.nvdim == 1
-    assert f.div.mean() == 0
 
     assert isinstance(f.curl, df.Field)
     assert f.curl.nvdim == 3
     assert np.allclose(f.curl.mean(), (0, 0, 0))
 
     # f(x, y, z) = (x, y, z)
-    # -> div(f) = 3
     # -> curl(f) = (0, 0, 0)
     def value_fun(point):
         x, y, z = point
         return (x, y, z)
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
-
-    assert f.div.mean() == 3
     assert np.allclose(f.curl.mean(), (0, 0, 0))
 
     # f(x, y, z) = (x*y, y*z, x*y*z)
-    # -> div(f) = y + z + x*y
     # -> curl(f) = (x*z-y, -y*z, -x)
     def value_fun(point):
         x, y, z = point
@@ -2069,14 +2060,10 @@ def test_div_curl():
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
 
-    assert np.allclose(f.div((3, 1, 3)), 7)
-    assert np.allclose(f.div((5, 3, 5)), 23)
-
     assert np.allclose(f.curl((3, 1, 3)), (8, -3, -3))
     assert np.allclose(f.curl((5, 3, 5)), (22, -15, -5))
 
     # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
-    # -> div(f) = y - 2 + x*y
     # -> curl(f) = (x*z, -y*z, 1-x)
     def value_fun(point):
         x, y, z = point
@@ -2084,16 +2071,49 @@ def test_div_curl():
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
 
-    assert np.allclose(f.div((7, 5, 1)), 38)
     assert np.allclose(f.curl((7, 5, 1)), (7, -5, -6))
 
-    # Exception
-    f = df.Field(mesh, nvdim=1, value=3.11)
+    # Test vdims and dims
+    # f(a, b, c) = (3+a*b, a-2*b, a*b*c)
+    # -> curl(f) = (a*c, -b*c, 1-a)
+    def value_fun(point):
+        a, b, c = point
+        return (3 + a * b, a - 2 * b, a * b * c)
 
-    with pytest.raises(ValueError):
-        f.div
-    with pytest.raises(ValueError):
-        f.curl
+    dims = ["a", "b", "c"]
+    vdims = ["va", "vb", "vc"]
+    vdim_mapping = dict(zip(vdims, dims))
+
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    mesh = df.Mesh(region=region, cell=cell)
+    f = df.Field(mesh, nvdim=3, value=value_fun, vdims=vdims, vdim_mapping=vdim_mapping)
+
+    assert np.allclose(f.curl((7, 5, 1)), (7, -5, -6))
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_curl_exception(valid_mesh, nvdim):
+    # Exception
+    f = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 3 or nvdim != 3:
+        with pytest.raises(ValueError):
+            f.curl
+
+    else:
+        vdims = ["v" + d for d in valid_mesh.region.dims]
+        f.vdims = vdims
+        # Empty dictionary
+        f.vdim_mapping = {}
+        with pytest.raises(ValueError):
+            f.curl
+
+        # Incorect dictionary
+        vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
+        vdim_mapping[vdims[0]] = None
+        f.vdim_mapping = vdim_mapping
+        with pytest.raises(ValueError):
+            f.curl
 
 
 def test_laplace():

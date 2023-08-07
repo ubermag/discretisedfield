@@ -2545,33 +2545,38 @@ class Field(_FieldIO):
     def curl(self):
         r"""Curl.
 
-        This method computes the curl of a vector (``nvdim=3``) field and returns
-        a vector (``nvdim=3``) as a result:
+        This method computes the curl of a three dimensional vector (``nvdim=3``)
+        field in three spatial dimensions (``ndim=3``) and returns
+        a three dimensional vector (``nvdim=3``) field in three spatial
+        dimensions (``ndim=3``)
 
         .. math::
 
             \nabla \times \mathbf{v} = \left(\frac{\partial
-            v_{z}}{\partial y} - \frac{\partial v_{y}}{\partial z},
-            \frac{\partial v_{x}}{\partial z} - \frac{\partial
-            v_{z}}{\partial x}, \frac{\partial v_{y}}{\partial x} -
-            \frac{\partial v_{x}}{\partial y},\right)
+            v_{2}}{\partial x_{1}} - \frac{\partial v_{1}}{\partial x_{2}},
+            \frac{\partial v_{0}}{\partial x_{2}} - \frac{\partial
+            v_{2}}{\partial x_{0}}, \frac{\partial v_{1}}{\partial x_{0}} -
+            \frac{\partial v_{0}}{\partial x_{1}},\right)
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
         considered to be that directional derivative. More precisely, it is
         assumed that the field does not change in that direction.
+        ``vdim_mapping`` needs to be set in order to relate the vector and
+        spatial dimensions.
 
         Returns
         -------
         discretisedfield.Field
 
-            Resulting field.
+            Curl of the field.
 
         Raises
         ------
         ValueError
 
-            If the dimension of the field is not 3.
+            If the ``ndim`` or ``nvdim`` of the field is not 3.
+            The ``vdims`` are not correctly mapped to the ``dims``.
 
         Example
         -------
@@ -2606,14 +2611,35 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim != 3:
-            msg = f"Cannot compute curl for nvdim={self.nvdim} field."
-            raise ValueError(msg)
+        if self.nvdim != 3 or self.mesh.region.ndim != 3:
+            raise ValueError(
+                "Curl can only be computed for a field with nvdim=3 and ndim=3,"
+                f"Not {self.nvdim=} and {self.mesh.region.ndim}"
+            )
 
-        x, y, z = self.vdims
-        curl_x = getattr(self, z).diff("y") - getattr(self, y).diff("z")
-        curl_y = getattr(self, x).diff("z") - getattr(self, z).diff("x")
-        curl_z = getattr(self, y).diff("x") - getattr(self, x).diff("y")
+        for vdim in self.vdims:
+            if vdim not in self.vdim_mapping:
+                raise ValueError(
+                    f"Cannot compute curl of the field as {vdim} is not present in"
+                    f" {self.vdim_mapping=}."
+                )
+            elif self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Cannot compute curl of the field as {self.vdim_mapping[vdim]}"
+                    f" is not present in {self.mesh.region.dims=}."
+                )
+
+        # Use dims order instead of vdims
+        x, y, z = self.mesh.region.dims
+        curl_x = getattr(self, self._r_dim_mapping[z]).diff(y) - getattr(
+            self, self._r_dim_mapping[y]
+        ).diff(z)
+        curl_y = getattr(self, self._r_dim_mapping[x]).diff(z) - getattr(
+            self, self._r_dim_mapping[z]
+        ).diff(x)
+        curl_z = getattr(self, self._r_dim_mapping[y]).diff(x) - getattr(
+            self, self._r_dim_mapping[x]
+        ).diff(y)
 
         return curl_x << curl_y << curl_z
 
