@@ -2116,52 +2116,32 @@ def test_curl_exception(valid_mesh, nvdim):
             f.curl
 
 
-def test_laplace():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_laplace(valid_mesh, nvdim):
     # f(x, y, z) = (0, 0, 0)
     # -> laplace(f) = 0
-    f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+    f = df.Field(valid_mesh, nvdim=nvdim)
 
     assert isinstance(f.laplace, df.Field)
-    assert f.laplace.nvdim == 3
-    assert np.allclose(f.laplace.mean(), (0, 0, 0))
+    assert f.laplace.nvdim == nvdim
+    assert np.allclose(f.laplace.mean(), 0, atol=1e-5)
+    f = df.Field(valid_mesh, nvdim=nvdim, value=(5,) * nvdim)
+    assert np.allclose(f.laplace.mean(), 0, atol=1e-5)
 
-    f = df.Field(mesh, nvdim=1, value=5)
-    assert np.allclose(f.laplace.mean(), 0)
-
-    # f(x, y, z) = x + y + z
+    # f(x, y, z) = (x, y, z)
     # -> laplace(f) = 0
-    def value_fun(point):
-        x, y, z = point
-        return x + y + z
-
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = valid_mesh.coordinate_field()
     assert isinstance(f.laplace, df.Field)
-    assert np.allclose(f.laplace.mean(), 0)
+    assert np.allclose(f.laplace.mean(), 0, atol=1e-5)
 
-    # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
-    # -> laplace(f) = 4 + 4 + 6 = 14
+    # f(x, y, z) = (x^2, y^2, z^2)
+    # -> laplace(f) = (2, 2, 2)
     def value_fun(point):
-        x, y, z = point
-        return 2 * x * x + 2 * y * y + 3 * z * z
+        return np.full(nvdim, point[0] * point[0])
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=nvdim, value=value_fun)
 
-    assert np.allclose(f.laplace.mean(), 14)
-
-    # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
-    # -> laplace(f) = (4, 4, 6)
-    def value_fun(point):
-        x, y, z = point
-        return (2 * x * x, 2 * y * y, 3 * z * z)
-
-    f = df.Field(mesh, nvdim=3, value=value_fun)
-
-    assert np.allclose(f.laplace.mean(), (4, 4, 6))
+    assert np.allclose(f.laplace.mean(), (2,) * nvdim if valid_mesh.n[0] > 1 else 0)
 
 
 def test_integrate_volume():

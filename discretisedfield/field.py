@@ -2647,20 +2647,18 @@ class Field(_FieldIO):
     def laplace(self):
         r"""Laplace operator.
 
-        This method computes the laplacian of a scalar (``nvdim=1``) or a vector
-        (``nvdim=3``) field and returns a resulting field:
+        This method computes the laplacian for any field:
 
         .. math::
 
-            \nabla^2 f = \frac{\partial^{2} f}{\partial x^{2}} +
-                          \frac{\partial^{2} f}{\partial y^{2}} +
-                          \frac{\partial^{2} f}{\partial z^{2}}
+            \nabla^2 f = \sum_{i=0}^\mathrm{ndim}
+                                \frac{\partial^{2} f}{\partial x_i^{2}}
 
         .. math::
 
-            \nabla^2 \mathbf{f} = (\nabla^2 f_{x},
-                                     \nabla^2 f_{y},
-                                     \nabla^2 f_{z})
+            \nabla^2 \mathbf{f} = (\nabla^2 f_{0},
+                                     ...
+                                     \nabla^2 f_mathrm{nvdim})
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2671,7 +2669,7 @@ class Field(_FieldIO):
         -------
         discretisedfield.Field
 
-            Resulting field.
+            Laplacian of the field.
 
         Example
         -------
@@ -2703,21 +2701,26 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim not in [1, 3]:
-            raise ValueError(f"Cannot compute laplace for nvdim={self.nvdim} field.")
+
+        # Create a list of derivatives for each dimension
         if self.nvdim == 1:
-            return (
-                self.diff("x", order=2)
-                + self.diff("y", order=2)
-                + self.diff("z", order=2)
-            )
+            derivatives = [
+                sum(self.diff(dim, order=2) for dim in self.mesh.region.dims)
+            ]
         else:
-            x, y, z = self.vdims
-            return (
-                getattr(self, x).laplace
-                << getattr(self, y).laplace
-                << getattr(self, z).laplace
-            )
+            derivatives = [
+                sum(
+                    getattr(self, vdim).diff(dim, order=2)
+                    for dim in self.mesh.region.dims
+                )
+                for vdim in self.vdims
+            ]
+
+        result = derivatives[0]
+        for derivative in derivatives[1:]:
+            result = result << derivative
+
+        return result
 
     def integrate(self, direction=None, cumulative=False):
         r"""Integral.
