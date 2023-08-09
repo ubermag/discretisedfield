@@ -96,7 +96,7 @@ class MplMesh(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        rescaled_mesh = self.mesh.scale(1 / multiplier)
+        rescaled_mesh = self.mesh.scale(1 / multiplier, reference_point=(0, 0, 0))
         rescaled_mesh.region.units = [
             f"{uu.rsi_prefixes[multiplier]}{unit}" for unit in self.mesh.region.units
         ]

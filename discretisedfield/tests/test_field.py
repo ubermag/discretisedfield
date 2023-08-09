@@ -1916,90 +1916,143 @@ def test_diff_valid():
     assert np.allclose(f.diff("z", restrict2valid=False).array, (0, 0, 1))
 
 
-def test_grad():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-    # f(x, y, z) = 0 -> grad(f) = (0, 0, 0)
-    f = df.Field(mesh, nvdim=1, value=0)
-
+def test_grad(valid_mesh):
+    # f() = 0 -> grad(f) = (0, 0, 0)
+    f = df.Field(valid_mesh, nvdim=1, value=0)
     assert isinstance(f.grad, df.Field)
-    assert np.allclose(f.grad.mean(), (0, 0, 0))
+    assert np.allclose(f.grad.mean(), (0,) * valid_mesh.region.ndim)
 
     # f(x, y, z) = x + y + z -> grad(f) = (1, 1, 1)
     def value_fun(point):
-        x, y, z = point
-        return x + y + z
+        return np.sum(point)
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=1, value=value_fun)
+    assert isinstance(f.grad, df.Field)
+    assert np.allclose(f.grad.mean(), [0 if num == 1 else 1 for num in valid_mesh.n])
 
-    assert np.allclose(f.grad.mean(), (1, 1, 1))
-
-    # f(x, y, z) = x*y + y + z -> grad(f) = (y, x+1, 1)
+    # f(x, y, z) = x^2 + y^2 + z^2 -> grad(f) = (2x, 2y, 2z)
     def value_fun(point):
-        x, y, z = point
-        return x * y + y + z
+        return np.sum(np.square(point))
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=1, value=value_fun)
+    assert isinstance(f.grad, df.Field)
+    assert np.allclose(
+        f.grad.mean(),
+        [
+            0 if num == 1 else 2 * cent
+            for num, cent in zip(valid_mesh.n, valid_mesh.region.center)
+        ],
+    )
 
-    assert np.allclose(f.grad((3, 1, 3)), (1, 4, 1))
-    assert np.allclose(f.grad((5, 3, 5)), (3, 6, 1))
-
-    # f(x, y, z) = x*y + 2*y + x*y*z ->
-    # grad(f) = (y+y*z, x+2+x*z, x*y)
+    # Test mixing terms
+    # f(x, y, z) = x^2 + x*y + x*z -> grad(f) = (2x+y+z, x, x)
     def value_fun(point):
-        x, y, z = point
-        return x * y + 2 * y + x * y * z
+        return np.sum(point[0] * point)
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=1, value=value_fun)
+    assert isinstance(f.grad, df.Field)
+    result = np.full(valid_mesh.region.ndim, valid_mesh.region.center[0])
+    result[0] += np.sum(valid_mesh.region.center)
+    assert np.allclose(
+        f.grad.mean(),
+        [0 if num == 1 else result[i] for i, num in enumerate(valid_mesh.n)],
+    )
 
-    assert np.allclose(f.grad((7, 5, 1)), (10, 16, 35))
-    assert f.grad.x == f.diff("x")
-    assert f.grad.y == f.diff("y")
-    assert f.grad.z == f.diff("z")
 
-    # Exception
-    f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-
+@pytest.mark.parametrize("nvdim", [2, 3, 4, 5])
+def test_grad_exception(valid_mesh, nvdim):
+    # Grad only on scalar fields
+    f = df.Field(valid_mesh, nvdim=nvdim, value=0)
     with pytest.raises(ValueError):
         f.grad
 
 
-def test_div_curl():
+def test_div(valid_mesh):
+    nvdim = valid_mesh.region.ndim
+    vdims = ["v" + d for d in valid_mesh.region.dims]  # ensure unique vdims
+    vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
+    f = df.Field(valid_mesh, nvdim=nvdim, vdims=vdims, vdim_mapping=vdim_mapping)
+
+    assert isinstance(f.div, df.Field)
+    assert np.allclose(f.div.mean(), 0)
+
+    # f(x, y, z) = (x, y, z) -> div(f) = 1 + 1 + 1
+    f = df.Field(
+        valid_mesh,
+        nvdim=nvdim,
+        vdims=vdims,
+        vdim_mapping=vdim_mapping,
+        value=valid_mesh.coordinate_field(),
+    )
+    assert np.allclose(
+        f.div.mean(), np.sum([0 if num == 1 else 1 for num in valid_mesh.n])
+    )
+
+    # f(x, y, z) = (x^2, y^2, z^2) -> div(f) = 2x + 2y + 1z
+    def value_fun(point):
+        return np.square(point)
+
+    f = df.Field(
+        valid_mesh, nvdim=nvdim, vdims=vdims, vdim_mapping=vdim_mapping, value=value_fun
+    )
+    assert np.allclose(
+        f.div.mean(),
+        np.sum(
+            [
+                0 if num == 1 else 2 * cent
+                for num, cent in zip(valid_mesh.n, valid_mesh.region.center)
+            ]
+        ),
+    )
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_div_exception(valid_mesh, nvdim):
+    f = df.Field(valid_mesh, nvdim=nvdim)
+    if valid_mesh.region.ndim != nvdim:
+        # Wrong dimensions
+        with pytest.raises(ValueError):
+            f.div
+    else:
+        vdims = ["v" + d for d in valid_mesh.region.dims]
+        f.vdims = vdims
+        # Empty dictionary
+        f.vdim_mapping = {}
+        with pytest.raises(ValueError):
+            f.div
+        # Incorect dictionary
+        if nvdim > 1:
+            vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
+            vdim_mapping[vdims[0]] = None
+            f.vdim_mapping = vdim_mapping
+            with pytest.raises(ValueError):
+                f.div
+
+
+def test_curl():
     p1 = (0, 0, 0)
     p2 = (10, 10, 10)
     cell = (2, 2, 2)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     # f(x, y, z) = (0, 0, 0)
-    # -> div(f) = 0
     # -> curl(f) = (0, 0, 0)
     f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
-
-    assert isinstance(f.div, df.Field)
-    assert f.div.nvdim == 1
-    assert f.div.mean() == 0
 
     assert isinstance(f.curl, df.Field)
     assert f.curl.nvdim == 3
     assert np.allclose(f.curl.mean(), (0, 0, 0))
 
     # f(x, y, z) = (x, y, z)
-    # -> div(f) = 3
     # -> curl(f) = (0, 0, 0)
     def value_fun(point):
         x, y, z = point
         return (x, y, z)
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
-
-    assert f.div.mean() == 3
     assert np.allclose(f.curl.mean(), (0, 0, 0))
 
     # f(x, y, z) = (x*y, y*z, x*y*z)
-    # -> div(f) = y + z + x*y
     # -> curl(f) = (x*z-y, -y*z, -x)
     def value_fun(point):
         x, y, z = point
@@ -2007,14 +2060,10 @@ def test_div_curl():
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
 
-    assert np.allclose(f.div((3, 1, 3)), 7)
-    assert np.allclose(f.div((5, 3, 5)), 23)
-
     assert np.allclose(f.curl((3, 1, 3)), (8, -3, -3))
     assert np.allclose(f.curl((5, 3, 5)), (22, -15, -5))
 
     # f(x, y, z) = (3+x*y, x-2*y, x*y*z)
-    # -> div(f) = y - 2 + x*y
     # -> curl(f) = (x*z, -y*z, 1-x)
     def value_fun(point):
         x, y, z = point
@@ -2022,64 +2071,77 @@ def test_div_curl():
 
     f = df.Field(mesh, nvdim=3, value=value_fun)
 
-    assert np.allclose(f.div((7, 5, 1)), 38)
     assert np.allclose(f.curl((7, 5, 1)), (7, -5, -6))
 
+    # Test vdims and dims
+    # f(a, b, c) = (3+a*b, a-2*b, a*b*c)
+    # -> curl(f) = (a*c, -b*c, 1-a)
+    def value_fun(point):
+        a, b, c = point
+        return (3 + a * b, a - 2 * b, a * b * c)
+
+    dims = ["a", "b", "c"]
+    vdims = ["va", "vb", "vc"]
+    vdim_mapping = dict(zip(vdims, dims))
+
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    mesh = df.Mesh(region=region, cell=cell)
+    f = df.Field(mesh, nvdim=3, value=value_fun, vdims=vdims, vdim_mapping=vdim_mapping)
+
+    assert np.allclose(f.curl((7, 5, 1)), (7, -5, -6))
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_curl_exception(valid_mesh, nvdim):
     # Exception
-    f = df.Field(mesh, nvdim=1, value=3.11)
+    f = df.Field(valid_mesh, nvdim=nvdim)
 
-    with pytest.raises(ValueError):
-        f.div
-    with pytest.raises(ValueError):
-        f.curl
+    if valid_mesh.region.ndim != 3 or nvdim != 3:
+        with pytest.raises(ValueError):
+            f.curl
+
+    else:
+        vdims = ["v" + d for d in valid_mesh.region.dims]
+        f.vdims = vdims
+        # Empty dictionary
+        f.vdim_mapping = {}
+        with pytest.raises(ValueError):
+            f.curl
+
+        # Incorect dictionary
+        vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
+        vdim_mapping[vdims[0]] = None
+        f.vdim_mapping = vdim_mapping
+        with pytest.raises(ValueError):
+            f.curl
 
 
-def test_laplace():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_laplace(valid_mesh, nvdim):
     # f(x, y, z) = (0, 0, 0)
     # -> laplace(f) = 0
-    f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+    f = df.Field(valid_mesh, nvdim=nvdim)
 
     assert isinstance(f.laplace, df.Field)
-    assert f.laplace.nvdim == 3
-    assert np.allclose(f.laplace.mean(), (0, 0, 0))
+    assert f.laplace.nvdim == nvdim
+    assert np.allclose(f.laplace.mean(), 0, atol=1e-5)
+    f = df.Field(valid_mesh, nvdim=nvdim, value=(5,) * nvdim)
+    assert np.allclose(f.laplace.mean(), 0, atol=1e-5)
 
-    f = df.Field(mesh, nvdim=1, value=5)
-    assert np.allclose(f.laplace.mean(), 0)
-
-    # f(x, y, z) = x + y + z
+    # f(x, y, z) = (x, y, z)
     # -> laplace(f) = 0
-    def value_fun(point):
-        x, y, z = point
-        return x + y + z
-
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = valid_mesh.coordinate_field()
     assert isinstance(f.laplace, df.Field)
-    assert np.allclose(f.laplace.mean(), 0)
+    assert np.allclose(f.laplace.mean(), 0, atol=1e-5)
 
-    # f(x, y, z) = 2*x*x + 2*y*y + 3*z*z
-    # -> laplace(f) = 4 + 4 + 6 = 14
+    # f(x, y, z) = (x^2, y^2, z^2)
+    # -> laplace(f) = (2, 2, 2)
     def value_fun(point):
-        x, y, z = point
-        return 2 * x * x + 2 * y * y + 3 * z * z
+        return np.full(nvdim, point[0] * point[0])
 
-    f = df.Field(mesh, nvdim=1, value=value_fun)
+    f = df.Field(valid_mesh, nvdim=nvdim, value=value_fun)
 
-    assert np.allclose(f.laplace.mean(), 14)
-
-    # f(x, y, z) = (2*x*x, 2*y*y, 3*z*z)
-    # -> laplace(f) = (4, 4, 6)
-    def value_fun(point):
-        x, y, z = point
-        return (2 * x * x, 2 * y * y, 3 * z * z)
-
-    f = df.Field(mesh, nvdim=3, value=value_fun)
-
-    assert np.allclose(f.laplace.mean(), (4, 4, 6))
+    assert np.allclose(f.laplace.mean(), (2,) * nvdim if valid_mesh.n[0] > 1 else 0)
 
 
 def test_integrate_volume():
@@ -2462,6 +2524,128 @@ def test_angle(valid_mesh, nvdim):
             assert np.allclose(f.angle(v).mean(), 0.0)
         else:
             assert np.allclose(f.angle(v).mean(), np.pi / 2)
+
+
+def test_rotate90():
+    mesh = df.Mesh(p1=(0, 0, 0), p2=(40e-9, 20e-9, 10e-9), n=(40, 10, 5))
+
+    # uniform scalar field
+    field = df.Field(mesh, nvdim=1, value=1)
+    rotated = field.rotate90("x", "y")
+    assert np.allclose(rotated.mesh.region.pmin, (10e-9, -10e-9, 0e-9))
+    assert np.allclose(rotated.mesh.region.pmax, (30e-9, 30e-9, 10e-9))
+    assert np.allclose(rotated.mesh.n, (10, 40, 5))
+    assert rotated.array.shape == (10, 40, 5, 1)
+
+    # the reference point does not affect rotating the array
+    rotated_ref = field.rotate90("x", "y", reference_point=(0, 0, 0))
+    assert np.allclose(rotated_ref.mesh.region.pmin, (-20e-9, 0, 10e-9))
+    assert np.allclose(rotated.array, rotated_ref.array)
+
+    # scalar field with local variations
+    field = df.Field(mesh, nvdim=1, value=lambda p: p[2])
+    rotated = field.rotate90("z", "x")
+    assert np.allclose(rotated.mesh.n, (5, 10, 40))
+    assert rotated.array.shape == (5, 10, 40, 1)
+    assert np.allclose(rotated.sel("y").sel("z").array, [1e-9, 3e-9, 5e-9, 7e-9, 9e-9])
+
+    # uniform vector field
+    field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+    # 90° rotation in xy plane
+    rotated = field.rotate90("x", "y")
+    assert rotated.array.shape == (10, 40, 5, 3)
+    assert np.allclose(rotated(rotated.mesh.region.centre), (-2, 1, 3))
+    assert np.allclose(rotated.mean(), (-2, 1, 3))
+    assert rotated.vdims == ["x", "y", "z"]
+    # original field is not modified
+    assert np.allclose(field(field.mesh.region.centre), (1, 2, 3))
+    # -90° rotation in xz plane
+    rotated = field.rotate90("x", "z", k=-1)
+    assert rotated.array.shape == (5, 10, 40, 3)
+    assert np.allclose(rotated.array[0, 0, 0], (3, 2, -1))
+    assert np.allclose(rotated(rotated.mesh.region.centre), (3, 2, -1))
+    # -90° rotation is equivalent to rotation in opposite direction
+    assert field.rotate90("x", "y", k=-1).allclose(field.rotate90("y", "x"))
+    # 270° rotation is equivalent to -90° rotation
+    assert field.rotate90("x", "y", k=-1).allclose(field.rotate90("x", "y", k=3))
+    # 360° rotation has no effect
+    assert field.allclose(field.rotate90("x", "z", k=4))
+    assert field.rotate90("x", "z").allclose(field.rotate90("x", "z", k=5))
+
+    # in-place rotation
+    rotated = field.rotate90("x", "y", k=2, inplace=True, reference_point=(0, 0, 0))
+    assert rotated == field  # in-place rotation returns self
+    assert np.allclose(field.mesh.region.pmin, (-40e-9, -20e-9, 0), atol=0)
+    assert np.allclose(field.mesh.region.pmax, (0, 0, 10e-9), atol=0)
+    assert field.array.shape == (40, 10, 5, 3)
+    assert np.allclose(field(field.mesh.region.centre), (-1, -2, 3))
+
+    # 2 dimensional field with cells not containing valid data
+    mesh = df.Mesh(p1=(-20e-9, -10e-9), p2=(20e-9, 10e-9), cell=(2e-9, 2e-9))
+    field = df.Field(
+        mesh, nvdim=1, value=1, norm=lambda p: 10 if p[0] < 4e-9 else 0, valid="norm"
+    )
+    # check correct initialisation
+    assert field((-5e-9, 1e-9)) == 10
+    assert field((3e-9, 1e-9)) == 10
+    assert field((5e-9, 1e-9)) == 0
+    assert field.valid[0, 0]
+    assert not field.valid[-1, 0]
+    assert field.valid[0, -1]
+    # check mean values in each sub-part; cell centres are located at 3e-9 and 5e-9
+    assert field.sel(x=(-19e-9, 3e-9)).mean() == 10
+    assert field.sel(x=(5e-9, 19e-9)).mean() == 0
+    assert field.valid.shape == (20, 10)
+    # rotate about 90°
+    rotated = field.rotate90("x", "y")
+    assert rotated.array.shape == (10, 20, 1)
+    assert rotated.valid.shape == (10, 20)
+    assert rotated.valid[0, 0]
+    assert rotated.valid[-1, 0]
+    assert not rotated.valid[0, -1]
+    assert rotated.sel(y=(-19e-9, 3e-9)).mean() == 10
+    assert rotated.sel(y=(5e-9, 19e-9)).mean() == 0
+    # number of invalid cells stays the same
+    assert np.count_nonzero(rotated.array == 0) == np.count_nonzero(field.array == 0)
+    assert np.count_nonzero(rotated.valid == 0) == np.count_nonzero(field.valid == 0)
+    # original field has not changed
+    assert field.valid[0, 0]
+    assert not field.valid[-1, 0]
+    assert field.valid[0, -1]
+
+    # mismatch between dims and vdims
+    field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+    # no default vdim mapping -> rotation is not "safe" because the relation between
+    # spatial directions and vector directions is unknown
+    with pytest.raises(RuntimeError):
+        rotated = field.rotate90("x", "y")
+
+    # manually add vdim_mapping
+    # we use other vdims that the default x, y, z to make the vdim_mapping easier to
+    # read; the mz component does not point along any spatial direction
+    field = df.Field(
+        mesh,
+        nvdim=3,
+        value=(1, 2, 3),
+        vdims=["mx", "my", "mz"],
+        vdim_mapping={"mx": "x", "my": "y", "mz": None},
+    )
+    rotated = field.rotate90("x", "y")
+    assert np.allclose(rotated.mean(), (-2, 1, 3))
+    # vector names, like axis/dimension names, do not change when rotating the object
+    assert rotated.vdims == ["mx", "my", "mz"]
+
+    # change mesh to yz plane
+    mesh.region.dims = ["y", "z"]
+    field = df.Field(
+        mesh,
+        nvdim=3,
+        value=(1, 2, 3),
+        vdims=["mx", "my", "mz"],
+        vdim_mapping={"mx": None, "my": "y", "mz": "z"},
+    )
+    field.rotate90("y", "z", k=3, inplace=True)
+    assert np.allclose(field.mean(), (1, 3, -2))
 
 
 # ######################################
