@@ -469,7 +469,7 @@ def neighbouring_cell_angle(field, /, direction, units="rad"):
     return df.Field(mesh, nvdim=1, value=angles.reshape(*angles.shape, 1))
 
 
-def max_neigbouring_cell_angle(field, /, units="rad"):
+def max_neighbouring_cell_angle(field, /, units="rad"):
     """Calculate maximum angle between neighbouring cells in all directions.
 
     This function computes an angle between a cell and all its six neighbouring
@@ -510,21 +510,26 @@ def max_neigbouring_cell_angle(field, /, units="rad"):
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
     ...
-    >>> dft.max_neigbouring_cell_angle(field)
+    >>> dft.max_neighbouring_cell_angle(field)
     Field(...)
 
     """
-    x_angles = neigbouring_cell_angle(field, "x", units=units).array.squeeze()
-    y_angles = neigbouring_cell_angle(field, "y", units=units).array.squeeze()
-    z_angles = neigbouring_cell_angle(field, "z", units=units).array.squeeze()
+    max_angles = np.zeros((*field.mesh.n, 2 * field.mesh.region.ndim))
+    for i, dim in enumerate(field.mesh.region.dims):
+        slices_one = [
+            slice(1, None) if i == j else slice(None)
+            for j in range(field.mesh.region.ndim)
+        ]
+        slices_two = [
+            slice(-1) if i == j else slice(None) for j in range(field.mesh.region.ndim)
+        ]
+        max_angles[(*slices_one, 2 * i)] = neighbouring_cell_angle(
+            field, dim, units=units
+        ).array.squeeze()
+        max_angles[(*slices_two, (2 * i) + 1)] = neighbouring_cell_angle(
+            field, dim, units=units
+        ).array.squeeze()
 
-    max_angles = np.zeros((*field.array.shape[:-1], 6))
-    max_angles[1:, :, :, 0] = x_angles
-    max_angles[:-1, :, :, 1] = x_angles
-    max_angles[:, 1:, :, 2] = y_angles
-    max_angles[:, :-1, :, 3] = y_angles
-    max_angles[:, :, 1:, 4] = z_angles
-    max_angles[:, :, :-1, 5] = z_angles
     max_angles = max_angles.max(axis=-1, keepdims=True)
 
     return df.Field(field.mesh, nvdim=1, value=max_angles)
