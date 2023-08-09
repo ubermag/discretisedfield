@@ -140,6 +140,18 @@ def test_invalid_field(valid_mesh, nvdim):
             df.FieldRotator(field)
 
 
+def test_invalid_vdim_mapping():
+    mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
+    field = df.Field(mesh, nvdim=3)
+    field.vdim_mapping = {}
+    with pytest.raises(ValueError):
+        df.FieldRotator(field)
+
+    field.vdim_mapping = {"x": None, "y": "y", "z": "z"}
+    with pytest.raises(ValueError):
+        df.FieldRotator(field)
+
+
 def test_invalid_method(field):
     fr = df.FieldRotator(field)
     with pytest.raises(ValueError):

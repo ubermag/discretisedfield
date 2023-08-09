@@ -71,6 +71,21 @@ class FieldRotator:
                 "Field rotator can only be used on field defined on three spatial"
                 f" dimensions not with {field.mesh.region.ndim=}."
             )
+
+        if field.nvdim > 1:
+            for vdim in field.vdims:
+                if vdim not in field.vdim_mapping:
+                    raise ValueError(
+                        f"Cannot compute rotations for field as {vdim} is not present"
+                        f" in{field.vdim_mapping=}."
+                    )
+                elif field.vdim_mapping[vdim] not in field.mesh.region.dims:
+                    raise ValueError(
+                        "Cannot compute divergence for field as"
+                        f" {field.vdim_mapping[vdim]}is not present in"
+                        f" {field.mesh.region.dims=}."
+                    )
+
         if field.mesh.bc != "":
             warnings.warn("Boundary conditions are lost when rotating the field.")
         self._orig_field = field
