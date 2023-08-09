@@ -118,24 +118,42 @@ def test_neighbouring_cell_angle(ndim, nvdim):
     arr = np.concatenate(
         [
             np.full((*mesh.n, 1), 0),
-            np.cos(arr_x_coord * np.pi/20),
-            np.sin(arr_x_coord * np.pi/20),
+            np.cos(arr_x_coord * np.pi / 20),
+            np.sin(arr_x_coord * np.pi / 20),
         ],
         axis=-1,
     )
     fied_piby2 = df.Field(mesh, nvdim=3, value=arr)
-    assert np.isclose(dft.neighbouring_cell_angle(
-        fied_piby2, direction="g1", units="rad").mean(), np.pi/2)
+    assert np.isclose(
+        dft.neighbouring_cell_angle(fied_piby2, direction="g1", units="rad").mean(),
+        np.pi / 2,
+    )
 
-def test_max_neigbouring_cell_angle():
-    p1 = (0, 0, 0)
-    p2 = (100, 100, 100)
-    n = (10, 10, 10)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+def test_max_neighbouring_cell_angle(ndim):
+    p1 = (0,) * ndim
+    p2 = (100,) * ndim
+    n = (10,) * ndim
+    regoin = df.Region(p1=p1, p2=p2, dims=[f"g{i}" for i in range(1, ndim + 1)])
+    mesh = df.Mesh(region=regoin, n=n)
     field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
 
     for units in ["rad", "deg"]:
-        assert dft.max_neigbouring_cell_angle(field, units=units).mean() == 0
+        assert dft.max_neighbouring_cell_angle(field, units=units).mean() == 0
+
+    # Check for a value of max angle
+    def val(point):
+        g1, *_ = point
+        if g1 < 50:
+            return (0, 0, 1)
+        else:
+            return (0, 0, -1)
+
+    field.update_field_values(val)
+
+    # Here the mean is 2*pi/10 because 2 cells will have pi values
+    assert np.isclose(dft.max_neighbouring_cell_angle(field).mean(), 2 * np.pi / 10)
 
 
 def test_count_lange_cell_angle_regions():
