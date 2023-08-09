@@ -198,7 +198,7 @@ def test_count_bps(ndim, nvdim):
         assert result["bp_number"] == 0
         assert result["bp_number_hh"] == 0
         assert result["bp_number_tt"] == 0
-        assert result["bp_pattern_x"] == "[[0.0, 10]]"
+        assert result["bp_pattern_g1"] == "[[0.0, 10]]"
 
 
 def test_demag_tensor():
