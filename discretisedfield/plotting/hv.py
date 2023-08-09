@@ -122,14 +122,15 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Names of the two geometrical directions forming the plane to be used for
+            plotting the data.
 
         vdims : List[str], optional
 
-            Names of the components to be used for the x and y component of the plotted
-            arrows. This information is used to associate field components and spatial
-            directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction.
+            Names of the components to be used for plotting the arrows. This information
+            is used to associate field components and spatial directions. Optionally,
+            one of the list elements can be ``None`` if the field has no component in
+            that direction.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
@@ -170,7 +171,7 @@ class Hv:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=1, value=2)
+        >>> field = df.Field(mesh, nvdim=1, value=2)
         ...
         >>> field.hv(kdims=['x', 'y'])
         :DynamicMap...
@@ -258,7 +259,8 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Names of the two geometrical directions forming the plane to be used for
+            plotting the data.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
@@ -287,8 +289,7 @@ class Hv:
         ValueError
 
             If ``kdims`` does not have length 2 or contains strings that are not part of
-            the objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
-            discretisedfield.Field objects).
+            the geometrical directions of the field.
 
         Examples
         --------
@@ -300,7 +301,7 @@ class Hv:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=1, value=2)
+        >>> field = df.Field(mesh, nvdim=1, value=2)
         ...
         >>> field.hv.scalar(kdims=['x', 'z'])
         :DynamicMap...
@@ -350,8 +351,8 @@ class Hv:
         the norm of the in-plane component of the field. It is not necessary to create a
         cut-plane first.
 
-        ``vdims`` defines the components of the plotted object shown in the plot x and
-        plot y direction (defined with ``kdims``). If not specified
+        ``vdims`` co-relates the vector directions with the geometrical direction
+        defined with ``kdims``. If not specified, ``kdims`` is used to guess the values.
 
         For 3d vector fields the color by default encodes the out-of-plane component.
         Other fields cannot be colored automatically. To assign a non-uniform color
@@ -384,18 +385,18 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Names of the two geometrical directions forming the plane to be used for
+            plotting the data.
 
         vdims : List[str], optional
 
-            Names of the components to be used for the x and y component of the plotted
-            arrows. This information is used to associate field components and spatial
-            directions. Optionally, one of the list elements can be ``None`` if the
-            field has no component in that direction. If ``vdims`` is not specified the
-            method tries to guess the correct ``vdims`` from the ``kdims`` by matching
-            spatial coordinates and vector components based on the order they are
-            defined in. This only works if both have the same number of elements, e.g. a
-            3d vector field in 3d space.
+            Names of the components to be used for plotting the arrows. This information
+            is used to associate field components and spatial directions. Optionally,
+            one of the list elements can be ``None`` if the field has no component in
+            that direction. If ``vdims`` is not specified the method tries to guess the
+            correct ``vdims`` from the ``kdims`` by matching spatial coordinates and
+            vector components based on the order they are defined in. This only works if
+            both have the same number of elements, e.g. a 3d vector field in 3d space.
 
         cdim : str, xarray.DataArray, discretisedfield.Field, optional
 
@@ -438,9 +439,8 @@ class Hv:
         ------
         ValueError
 
-            If ``kdims`` has not length 2 or contains strings that are not part of the
-            objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
-            discretisedfield.Field objects).
+            If ``kdims`` does not have length 2 or contains strings that are not part of
+            the geometrical directions of the field.
 
             If the object has no dimension ``vdims`` that defines the vector components.
 
@@ -454,7 +454,7 @@ class Hv:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 3))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
         ...
         >>> field.hv.vector(kdims=['x', 'y'], vdims=['x', 'y'])
         :DynamicMap...
@@ -584,7 +584,8 @@ class Hv:
         ----------
         kdims : List[str]
 
-            Array coordinates plotted in plot x and plot y directon.
+            Names of the two geometrical directions forming the plane to be used for
+            plotting the data.
 
         roi : xarray.DataArray, discretisedfield.Field, optional
 
@@ -617,9 +618,8 @@ class Hv:
         ------
         ValueError
 
-            If ``kdims`` has not length 2 or containts strings that are not part of the
-            objects dimensions (``'x'``, ``'y'``, or ``'z'`` for standard
-            discretisedfield.Field objects).
+            If ``kdims`` has not length 2 or contains strings that are not part of the
+            geometrical directions of the field.
 
         Examples
         --------
@@ -631,7 +631,7 @@ class Hv:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=1, value=2)
+        >>> field = df.Field(mesh, nvdim=1, value=2)
         ...
         >>> field.hv.contour(kdims=['y', 'z'])
         :DynamicMap...

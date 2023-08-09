@@ -86,7 +86,7 @@ class K3dField:
         >>> p2 = (50e-9, 50e-9, 50e-9)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-        >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
         >>> def normfun(point):
         ...     x, y, z = point
         ...     if x**2 + y**2 < 30**2:
@@ -150,7 +150,7 @@ class K3dField:
         )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(
                 self.data.mesh.region.dims, self.data.mesh.region.units
             )
@@ -235,7 +235,7 @@ class K3dField:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
-        >>> field = df.Field(mesh, dim=1, value=5)
+        >>> field = df.Field(mesh, nvdim=1, value=5)
         >>> field.k3d.scalar()
         Plot(...)
 
@@ -309,7 +309,7 @@ class K3dField:
         )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(
                 self.data.mesh.region.dims, self.data.mesh.region.units
             )
@@ -422,7 +422,7 @@ class K3dField:
         >>> p2 = (100, 100, 100)
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
-        >>> field = df.Field(mesh, dim=3, value=(0, 0, 1))
+        >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         ...
         >>> field.k3d.vector()
         Plot(...)
@@ -520,7 +520,7 @@ class K3dField:
             )
 
         plot.axes = [
-            rf"dim\,\text{{{uu.rsi_prefixes[multiplier]}{unit}}}"
+            rf"{dim}\,(\text{{{uu.rsi_prefixes[multiplier]}{unit}}})"
             for dim, unit in zip(
                 self.data.mesh.region.dims, self.data.mesh.region.units
             )

@@ -21,15 +21,22 @@ class Region(_RegionIO):
 
     Parameters
     ----------
-    p1 / p2 : (3,) array_like
+    p1 / p2 : array_like
 
-        Diagonally-opposite corner points of the region :math:`\mathbf{p}_i =
-        (p_x, p_y, p_z)`.
+        Diagonally-opposite corner points of the region, for example in three
+        dimensions :math:`\mathbf{p}_i = (p_x, p_y, p_z)`.
 
-    unit : str, optional
+    dims : array_like of str, optional
 
-        Physical unit of the region. This is mainly used for labelling plots.
-        Defaults to ``m``.
+        Name of the respective geometrical dimensions of the region.
+
+        Up to three dimensions, this defaults to ``x``, ``y``, and ``z``. For more than
+        three dimensions, it defaults to ``x1``, ``x2``, ``x3``, ``x4``, etc.
+
+    units : array_like of str, optional
+
+        Physical units of the region. This is mainly used for labelling plots.
+        Defaults to ``m`` for all the dimensions.
 
     tolerance_factor : float, optional
 
@@ -136,10 +143,10 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Point with minimum coordinates :math:`(p_x^\text{min},
-            p_y^\text{min}, p_z^\text{min})`.
+            Point with minimum coordinates. E.g. for three dimensions
+            :math:`(p_x^\text{min}, p_y^\text{min}, p_z^\text{min})`.
 
         Examples
         --------
@@ -169,10 +176,10 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Point with maximum coordinates :math:`(p_x^\text{max},
-            p_y^\text{max}, p_z^\text{max})`.
+            Point with maximum coordinates. E.g. for three dimensions
+            :math:`(p_x^\text{max}, p_y^\text{max}, p_z^\text{max})`.
 
         Examples
         --------
@@ -364,9 +371,9 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-             Edge lengths :math:`(l_{x}, l_{y}, l_{z})`.
+             Edge lengths. E.g. in three dimensions :math:`(l_{x}, l_{y}, l_{z})`.
 
         Examples
         --------
@@ -398,9 +405,9 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Center point :math:`(p_c^x, p_c^y, p_c^z)`.
+            Center point. E.g. in three dimensions :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
@@ -426,7 +433,8 @@ class Region(_RegionIO):
     def volume(self):
         r"""Region's volume.
 
-        It is computed by multiplying edge lengths of the region:
+        It is computed by multiplying edge lengths of the region.
+        E.g. in three dimensions
 
         .. math::
 
@@ -556,7 +564,7 @@ class Region(_RegionIO):
         atol : numbers.Number, optional
 
             Absolute tolerance. If ``None``, the default value is
-            the smallest edge length of the region multipled by
+            the smallest edge length of the region multiplied by
             the tolerance factor.
 
         rtol : numbers.Number, optional
@@ -572,7 +580,7 @@ class Region(_RegionIO):
 
         Examples
         --------
-        1. Usage of relational operator ``==``.
+        1. Usage of ``allclose`` method.
 
         >>> import discretisedfield as df
         ...
@@ -616,7 +624,7 @@ class Region(_RegionIO):
         .. math::
 
             p^\\text{min}_{i} \\le p_{i} \\le p^\\text{max}_{i}, \\text{for}\\,
-            i = x, y, z.
+            i in dims.
 
         Similarly, if the second operand is ``discretisedfield.Region`` object,
         it is considered to be in the region if both its ``pmin`` and ``pmax``
@@ -624,10 +632,10 @@ class Region(_RegionIO):
 
         Parameters
         ----------
-        other : (3,) array_like or discretisedfield.Region
+        other : array_like or discretisedfield.Region
 
-            The point coordinate :math:`(p_{x}, p_{y}, p_{z})` or a region
-            object.
+            The point coordinate (E.g. in three dimensions
+            :math:`(p_{x}, p_{y}, p_{z})`) or a region object.
 
         Returns
         -------
@@ -701,7 +709,7 @@ class Region(_RegionIO):
 
         Returns
         -------
-        tuple : (3,)
+        tuple : (ndims,)
 
             The first element is the axis facing surfaces are perpendicular to.
             If we start moving along that axis (e.g. from minus infinity) the
@@ -796,9 +804,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale(5)
         >>> res.pmin
-        array([-20, -20, -20])
+        array([-20., -20., -20.])
         >>> res.pmax
-        array([30, 30, 30])
+        array([30., 30., 30.])
 
         2. Scale the region inplace.
 
@@ -809,9 +817,9 @@ class Region(_RegionIO):
         >>> region.scale(5, inplace=True)
         Region(...)
         >>> region.pmin
-        array([-50, -50, -50])
+        array([-50., -50., -50.])
         >>> region.pmax
-        array([50, 50, 50])
+        array([50., 50., 50.])
 
         3. Scale region with different factors along different directions.
 
@@ -821,9 +829,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale((2, 3, 4))
         >>> res.pmin
-        array([ -5, -10, -15])
+        array([ -5., -10., -15.])
         >>> res.pmax
-        array([15, 20, 25])
+        array([15., 20., 25.])
 
         """
         if isinstance(factor, numbers.Real):

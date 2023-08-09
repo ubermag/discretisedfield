@@ -17,7 +17,7 @@ class Line:
 
     This class represents field sampled on the line. It is based on
     ``pandas.DataFrame``, which is generated from two lists: ``points`` and
-    ``values`` of the same length. ``points`` is a list of length-3 tuples
+    ``values`` of the same length. ``points`` is a list of ``array_like`` objects
     representing the points on the line on which the field was sampled. On the
     other hand, ``values`` is a list of field values, which are
     ``numbers.Real`` for scalar fields or ``array_like`` for vector fields.
@@ -25,13 +25,8 @@ class Line:
     ``pandas.DataFrame`` and it represents the distance of the point from the
     first point in ``points``.
 
-    By default the columns where points data is stored are labelled as ``px``,
-    ``py``, and ``pz``, storing the x, y, and z components of the point,
-    respectively. Similarly, for scalar fields, values are stored in column
-    ``v``, whereas for vector fields, data is stored in ``vx``, ``vy``, and
-    ``vz``. The default names of columns can be changed by passing
-    ``point_columns`` and ``value_columns`` lists. Both lists are composed of
-    strings and must have appropriate lengths.
+    The names of the columns are set by passing ``point_columns`` and ``value_columns``
+    lists. Both lists are composed of strings and must have appropriate lengths.
 
     The number of points can be retrieved as ``discretisedfield.Line.n`` and
     the dimension of the value can be retrieved using
@@ -43,7 +38,7 @@ class Line:
     ----------
     points : list
 
-        Points at which the field was sampled. It is a list of length-3 tuples.
+        Points at which the field was sampled. It is a list of ``array_like``.
 
     values : list
 
@@ -71,7 +66,10 @@ class Line:
     ...
     >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
     >>> values = [1, 2, 3]  # scalar values
-    >>> line = df.Line(points=points, values=values)
+    >>> line = df.Line(points=points,
+    ...                values=values,
+    ...                point_columns=["x", "y", "z"],
+    ...                value_columns=["vx"])
     >>> line.n  # the number of points
     3
     >>> line.dim
@@ -81,7 +79,10 @@ class Line:
 
     >>> points = [(0, 0, 0), (1, 1, 1), (2, 2, 2), (3, 3, 3)]
     >>> values = [(0, 0, 1), (0, 0, 2), (0, 0, 3), (0, 0, 4)]  # vector values
-    >>> line = df.Line(points=points, values=values)
+    >>> line = df.Line(points=points,
+    ...                values=values,
+    ...                point_columns=["x", "y", "z"],
+    ...                value_columns=["vx", "vy", "vz"])
     >>> line.n  # the number of points
     4
     >>> line.dim
@@ -154,7 +155,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
         >>> values = [1, 2, 3]  # scalar values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["px", "py", "pz"],
+        ...                value_columns=["v"])
         >>> line.point_columns
         ['px', 'py', 'pz']
         >>> line.point_columns = ['p0', 'p1', 'p2']
@@ -208,7 +212,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (1, 0, 0), (2, 0, 0)]
         >>> values = [1, 2, 3]  # scalar values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["px", "py", "pz"],
+        ...                value_columns=["v"])
         >>> line.value_columns
         ['v']
         >>> line.value_columns = ['my_interesting_value']
@@ -248,7 +255,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["x", "y", "z"],
+        ...                value_columns=["vx", "vy", "vz"])
         >>> line.length
         4.0
 
@@ -272,7 +282,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["x1", "x2", "x3"],
+        ...                value_columns=["v1", "v2", "v3"])
         >>> repr(line)
         '...
 
@@ -297,8 +310,8 @@ class Line:
         passed, ``matplotlib.axes.Axes`` object is created automatically and
         the size of a figure can be specified using ``figsize``. To choose
         particular value columns to be plotted ``yaxis`` can be passed as a
-        list of column names. The range of ``r``values on the horizontal axis
-        can be defined by passing a lenth-2 tuple. It is often the case that
+        list of column names. The range of ``r`` values on the horizontal axis
+        can be defined by passing a lenth-2 tuple to ``xlim``. It is often the case that
         the line length is small (e.g. on a nanoscale) or very large (e.g. in
         units of kilometers). Accordingly, ``multiplier`` can be passed as
         :math:`10^{n}`, where :math:`n` is a multiple of 3  (..., -6, -3, 0, 3,
@@ -353,7 +366,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["x", "y", "z"],
+        ...                value_columns=["v1", "v2", "v3"])
         >>> line.mpl()
 
         """
@@ -423,7 +439,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["x", "y", "z"],
+        ...                value_columns=["x", "y", "z"])
         >>> line.slider()
         SelectionRangeSlider(...)
 
@@ -466,7 +485,10 @@ class Line:
         ...
         >>> points = [(0, 0, 0), (2, 0, 0), (4, 0, 0)]
         >>> values = [(1, 0, 0), (0, 1, 0), (0, 0, 1)]  # vector values
-        >>> line = df.Line(points=points, values=values)
+        >>> line = df.Line(points=points,
+        ...                values=values,
+        ...                point_columns=["px", "py", "pz"],
+        ...                value_columns=["vx", "vy", "vz"])
         >>> line.selector()
         SelectMultiple(...)
 
