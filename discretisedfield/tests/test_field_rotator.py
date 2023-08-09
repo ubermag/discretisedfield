@@ -67,6 +67,27 @@ def test_valid_rotation(field):
     check_rotator(fr)
 
 
+def test_valid_vdim_mapping(mesh):
+    field = df.Field(
+        mesh,
+        nvdim=3,
+        value=(1, 0, 0),
+        vdims=("v0", "v1", "v2"),
+        vdim_mapping={"v0": "z", "v1": "y", "v2": "x"},
+    )
+    fr = df.FieldRotator(field)
+    fr.rotate("from_euler", seq="z", angles=np.pi / 2, n=(1, 1, 1))
+    assert np.allclose(fr.field.v0.array, 1)
+    assert np.allclose(fr.field.v1.array, 0)
+    assert np.allclose(fr.field.v2.array, 0)
+
+    fr = df.FieldRotator(field)
+    fr.rotate("from_euler", seq="x", angles=np.pi / 2, n=(1, 1, 1))
+    assert np.allclose(fr.field.v0.array, 0)
+    assert np.allclose(fr.field.v1.array, -1)
+    assert np.allclose(fr.field.v2.array, 0)
+
+
 def test_n(field):
     fr = df.FieldRotator(field)
     # no rotation => field should be the same

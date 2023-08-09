@@ -185,15 +185,28 @@ class FieldRotator:
         if self._orig_field.nvdim == 1:
             rot_field = self._orig_field.array
         elif self._orig_field.nvdim == 3:
-            rot_field = self._rotation.apply(
-                self._orig_field.array.reshape((-1, self._orig_field.nvdim))
-            ).reshape((*self._orig_field.mesh.n, self._orig_field.nvdim))
+            ordered_idx = np.array(
+                [
+                    self._orig_field.vdims.index(self._orig_field._r_dim_mapping[dim])
+                    for dim in self._orig_field.mesh.region.dims
+                ]
+            )
+            array = self._orig_field.array.reshape((-1, self._orig_field.nvdim))[
+                ..., ordered_idx
+            ]
+            rot_field = self._rotation.apply(array).reshape(
+                (*self._orig_field.mesh.n, self._orig_field.nvdim)
+            )[..., ordered_idx.argsort()]
 
         # Calculate field at new mesh positions
         new_m = self._map_and_interpolate(new_mesh, rot_field)
 
         self._rotated_field = df.Field(
-            mesh=new_mesh, nvdim=self._orig_field.nvdim, value=new_m
+            mesh=new_mesh,
+            nvdim=self._orig_field.nvdim,
+            value=new_m,
+            vdims=self._orig_field.vdims,
+            vdim_mapping=self._orig_field.vdim_mapping,
         )
 
     def clear_rotation(self):
