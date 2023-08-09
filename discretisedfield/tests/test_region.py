@@ -696,6 +696,29 @@ def test_rotate90():
     assert np.allclose(region.pmin, (-5, -3))
     assert np.allclose(region.pmax, (11, 7))
 
+    # 4d region
+    region = df.Region(p1=(0, 0, 0, 0), p2=(40e-9, 20e-9, 10e-9, 5e-9))
+    assert region.dims == ("x0", "x1", "x2", "x3")
+    rotated = region.rotate90("x0", "x1")
+    assert np.allclose(rotated.pmin, (10e-9, -10e-9, 0, 0))
+    assert np.allclose(rotated.pmax, (30e-9, 30e-9, 10e-9, 5e-9))
+
+    rotated = region.rotate90("x0", "x3")
+    assert np.allclose(rotated.pmin, (10e-9, 0, 0, -17.5e-9))
+    assert np.allclose(rotated.pmax, (22.5e-9, 20e-9, 10e-9, 22.5e-9))
+
+    rotated = region.rotate90("x0", "x1", reference_point=(0, 0, 0, 0))
+    assert np.allclose(rotated.pmin, (-20e-9, 0, 0, 0))
+    assert np.allclose(rotated.pmax, (0, 40e-9, 10e-9, 5e-9))
+
+    # 360° rotation is unity
+    assert region.allclose(region.rotate90("x1", "x3", k=4))
+
+    # units rotate, dims are fixed
+    region.units = ["nm", "mm", "m", "um"]
+    assert region.rotate90("x1", "x3").units == ("nm", "um", "m", "mm")
+    assert region.rotate90("x0", "x1").dims == ("x0", "x1", "x2", "x3")
+
 
 def test_rotate90_invalid():
     # 1d: rotation makes no sense
