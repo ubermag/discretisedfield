@@ -3804,14 +3804,16 @@ class Field(_FieldIO):
         elif method == "at":
             return None
         else:
-            # TODO: If shape is nvdim then return np.array
-            return self.__class__(
-                mesh[0],
-                nvdim=result.shape[-1],
-                value=result,
-                vdims=self.vdims,
-                vdim_mapping=self.vdim_mapping,
-            )
+            try:
+                return self.__class__(
+                    mesh[0],
+                    nvdim=result.shape[-1],
+                    value=result,
+                    vdims=self.vdims,
+                    vdim_mapping=self.vdim_mapping,
+                )
+            except Exception:
+                raise NotImplementedError()
 
     def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.

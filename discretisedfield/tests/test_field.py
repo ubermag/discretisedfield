@@ -3471,44 +3471,60 @@ def test_complex(test_field):
     assert df.Field(mesh, nvdim=1, value=np.pi / 4).allclose(field.phase)
 
 
-# TODO: Split into multiple tests. Test at method, multiple np array
+# TODO: Test at method, multiple np array
+@pytest.mark.parametrize("ufunc", [np.add, np.multiply, np.power])
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
-def test_numpy_ufunc(valid_mesh, nvdim):
+def test_numpy_ufunc_two_input(valid_mesh, nvdim, ufunc):
     field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
-    # Two input ufunc
-    for ufunc in [np.add, np.multiply, np.power]:
-        # Test with another field
-        assert np.allclose(
-            ufunc(field, field).array,
-            ufunc(field.array, field.array),
-        )
 
-        # Test with a scalar
-        assert np.allclose(
-            ufunc(field, 2).array,
-            ufunc(field.array, 2),
-        )
+    # Test with another field
+    assert np.allclose(
+        ufunc(field, field).array,
+        ufunc(field.array, field.array),
+    )
 
-        # Test with an ndarray
-        array = np.array(range(nvdim))
-        assert np.allclose(
-            ufunc(field, array).array,
-            ufunc(field.array, array),
-        )
+    # Test with a scalar
+    assert np.allclose(
+        ufunc(field, 2).array,
+        ufunc(field.array, 2),
+    )
 
-    for ufunc in [np.sin, np.exp]:
-        # Test with another field
-        assert np.allclose(
-            ufunc(field).array,
-            ufunc(field.array),
-        )
+    # Test with an ndarray
+    array = np.array(range(nvdim))
+    assert np.allclose(
+        ufunc(field, array).array,
+        ufunc(field.array, array),
+    )
 
-    for ufunc in [np.sum, np.mean]:
-        # Test with another field
-        assert np.allclose(
-            ufunc(field),
-            ufunc(field.array),
-        )
+
+@pytest.mark.parametrize("ufunc", [np.sin, np.exp])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_numpy_ufunc_single_input(valid_mesh, nvdim, ufunc):
+    field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
+    assert np.allclose(
+        ufunc(field).array,
+        ufunc(field.array),
+    )
+
+
+@pytest.mark.parametrize("ufunc", [np.sum, np.mean])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_numpy_ufunc_single_input_stats(valid_mesh, nvdim, ufunc):
+    field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
+    assert np.allclose(
+        ufunc([field, field]),
+        ufunc([field.array, field.array], axis=0),
+    )
+
+    assert np.allclose(
+        ufunc([field, field.array]),
+        ufunc([field.array, field.array]),
+    )
+
+    assert np.allclose(
+        ufunc(field),
+        ufunc(field.array),
+    )
 
 
 # TODO Hans
