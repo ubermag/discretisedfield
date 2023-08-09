@@ -369,10 +369,10 @@ def emergent_magnetic_field(field):
     return F1 << F2 << F3
 
 
-def neigbouring_cell_angle(field, /, direction, units="rad"):
+def neighbouring_cell_angle(field, /, direction, units="rad"):
     """Calculate angles between neighbouring cells.
 
-    This method calculates the angle between magnetic moments in all
+    This method calculates the angle between value vectors in all
     neighbouring cells. The calculation is only possible for vector fields of three
     dimensions (i.e. ``nvdim=3``). Angles are computed in degrees if ``units='deg'`` and
     in radians if ``units='rad'``.
@@ -422,40 +422,40 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
     ...
-    >>> dft.neigbouring_cell_angle(field, direction='z')
+    >>> dft.neighbouring_cell_angle(field, direction='z')
     Field(...)
 
     """
     if not field.nvdim == 3:
-        msg = f"Cannot compute spin angles for a field with {field.nvdim=}."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Cannot compute value angles for a field with {field.nvdim=}."
+            " Field must be three-dimensional."
+        )
 
     if direction not in field.mesh.region.dims:
-        msg = f"Cannot compute spin angles for direction {direction=}."
-        raise ValueError(msg)
+        raise ValueError(f"Cannot compute value angles for {direction=}.")
 
     if units not in ["rad", "deg"]:
-        msg = f"Units {units=} not supported."
-        raise ValueError(msg)
+        raise ValueError(f"Units {units=} not supported.")
 
     # Orientation field
     fo = field.orientation
 
-    if direction == "x":
-        dot_product = np.einsum("...j,...j->...", fo.array[:-1, ...], fo.array[1:, ...])
-        delta_p = np.divide((field.mesh.dx, 0, 0), 2)
-
-    elif direction == "y":
-        dot_product = np.einsum(
-            "...j,...j->...", fo.array[:, :-1, ...], fo.array[:, 1:, ...]
-        )
-        delta_p = np.divide((0, field.mesh.dy, 0), 2)
-
-    elif direction == "z":
-        dot_product = np.einsum(
-            "...j,...j->...", fo.array[..., :-1, :], fo.array[..., 1:, :]
-        )
-        delta_p = np.divide((0, 0, field.mesh.dz), 2)
+    sclices_one = list()
+    sclices_two = list()
+    delta_p = list()
+    for dim in fo.mesh.region.dims:
+        if dim == direction:
+            sclices_one.append(slice(-1))
+            sclices_two.append(slice(1, None))
+            delta_p.append(getattr(fo.mesh, f"d{dim}") / 2.0)
+        else:
+            sclices_one.append(slice(None))
+            sclices_two.append(slice(None))
+            delta_p.append(0)
+    dot_product = np.einsum(
+        "...j,...j->...", fo.array[(*sclices_one,)], fo.array[(*sclices_two,)]
+    )
 
     # Define new mesh.
     p1 = np.add(field.mesh.region.pmin, delta_p)
