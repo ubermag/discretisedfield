@@ -70,12 +70,11 @@ def test_emergent_magnetic_field(ndim, nvdim):
     p1 = (0,) * ndim
     p2 = (10,) * ndim
     cell = (2,) * ndim
-    value = (0,) * nvdim
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     # f(x, y, z) = (0, 0, 0)
     # -> F(f) = 0
-    f = df.Field(mesh, nvdim=nvdim, value=value)
+    f = df.Field(mesh, nvdim=nvdim)
 
     if ndim != 3 or nvdim != 3:
         with pytest.raises(ValueError):
