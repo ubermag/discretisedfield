@@ -670,7 +670,7 @@ def count_bps(field, /, direction):
 
     F_div = emergent_magnetic_field(field.orientation).div
 
-    averaged = str.join("", [dim for dim in field.mesh.region.dims if dim != direction])
+    averaged = [dim for dim in field.mesh.region.dims if dim != direction]
 
     F_red = F_div.integrate(direction=averaged[0]).integrate(direction=averaged[1])
     F_int = F_red.integrate(direction=direction, cumulative=True)
