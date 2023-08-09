@@ -64,7 +64,12 @@ class FieldRotator:
     def __init__(self, field):
         if field.nvdim not in [1, 3]:
             raise ValueError(
-                f"Rotations are not supported for fields with{field.nvdim=}."
+                f"Rotations are not supported for fields with {field.nvdim=}."
+            )
+        if field.mesh.region.ndim != 3:
+            raise ValueError(
+                "Field rotator can only be used on field defined on three spatial"
+                f" dimensions not with {field.mesh.region.ndim=}."
             )
         if field.mesh.bc != "":
             warnings.warn("Boundary conditions are lost when rotating the field.")

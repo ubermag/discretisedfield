@@ -132,10 +132,12 @@ def test_macrospin_rotation():
     )
 
 
-def test_invalid_field(mesh):
-    field = df.Field(mesh, nvdim=2, value=(1, 1))
-    with pytest.raises(ValueError):
-        df.FieldRotator(field)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_invalid_field(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+    if nvdim not in [1, 3] or valid_mesh.region.ndim != 3:
+        with pytest.raises(ValueError):
+            df.FieldRotator(field)
 
 
 def test_invalid_method(field):
