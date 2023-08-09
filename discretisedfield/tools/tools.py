@@ -611,9 +611,9 @@ def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="r
     0
     """
     if direction is None:
-        cell_angles = max_neigbouring_cell_angle(field, units=units).array
+        cell_angles = max_neighbouring_cell_angle(field, units=units).array
     else:
-        cell_angles = neigbouring_cell_angle(
+        cell_angles = neighbouring_cell_angle(
             field, direction=direction, units=units
         ).array
     _, num_features = ndimage.label(cell_angles > min_angle)
