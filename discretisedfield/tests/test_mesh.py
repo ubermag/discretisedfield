@@ -1528,6 +1528,24 @@ def test_rotate90():
         df.Region(p1=(30e-9, 7e-9, -13e-9), p2=(33e-9, 9e-9, -7e-9))
     )
 
+    # 4d region
+    region = df.Region(p1=(0, 0, 0, 0), p2=(40e-9, 20e-9, 10e-9, 5e-9))
+    mesh = df.Mesh(region=region, n=(2, 3, 4, 5))
+    # subregion rotation
+    mesh.subregions = {
+        "sr1": df.Region(p1=(0, 0, 0, 0), p2=(20e-9, 20e-9, 10e-9, 5e-9)),
+        "sr2": df.Region(p1=(20e-9, 0, 0, 0), p2=(40e-9, 20e-9, 10e-9, 5e-9)),
+    }
+
+    rotated = mesh.rotate90("x0", "x1")
+    assert np.allclose(rotated.n, (3, 2, 4, 5))
+    assert rotated.subregions["sr1"].allclose(
+        df.Region(p1=(10e-9, -10e-9, 0, 0), p2=(30e-9, 10e-9, 10e-9, 5e-9))
+    )
+    assert rotated.subregions["sr2"].allclose(
+        df.Region(p1=(10e-9, 10e-9, 0, 0), p2=(30e-9, 30e-9, 10e-9, 5e-9))
+    )
+
 
 def test_slider():
     p1 = (-10e-9, -5e-9, 10e-9)
