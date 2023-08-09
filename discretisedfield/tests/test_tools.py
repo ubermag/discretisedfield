@@ -85,29 +85,47 @@ def test_emergent_magnetic_field(ndim, nvdim):
         assert np.allclose(dft.emergent_magnetic_field(f).mean(), (0, 0, 0))
 
 
-def test_neigbouring_cell_angle():
-    p1 = (0, 0, 0)
-    p2 = (100, 100, 100)
-    n = (10, 10, 10)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_neighbouring_cell_angle(ndim, nvdim):
+    p1 = (0,) * ndim
+    p2 = (100,) * ndim
+    n = (10,) * ndim
+    value = (1,) * nvdim
+    region = df.Region(p1=p1, p2=p2, dims=[f"g{i}" for i in range(1, ndim + 1)])
+    mesh = df.Mesh(region=region, n=n)
+    field = df.Field(mesh, nvdim=nvdim, value=value)
 
-    for direction in "xyz":
+    # Exception
+    if nvdim != 3:
+        with pytest.raises(ValueError):
+            dft.neighbouring_cell_angle(field, direction="g1")
+        return
+
+    with pytest.raises(ValueError):
+        dft.neighbouring_cell_angle(field, direction="x")
+
+    with pytest.raises(ValueError):
+        dft.neighbouring_cell_angle(field, direction="g1", units="wrong")
+
+    for direction in field.mesh.region.dims:
         for units in ["rad", "deg"]:
-            sa = dft.neigbouring_cell_angle(field, direction=direction, units=units)
+            sa = dft.neighbouring_cell_angle(field, direction=direction, units=units)
             assert sa.mean() == 0
 
-    # Exceptions
-    scalar_field = df.Field(mesh, nvdim=1, value=5)
-    with pytest.raises(ValueError):
-        dft.neigbouring_cell_angle(scalar_field, direction="x")
-
-    with pytest.raises(ValueError):
-        dft.neigbouring_cell_angle(field, direction="l")
-
-    with pytest.raises(ValueError):
-        dft.neigbouring_cell_angle(field, direction="x", units="wrong")
-
+    # Check for a value of angle
+    arr_x_coord = mesh.coordinate_field().array[..., 0, np.newaxis].copy()
+    arr = np.concatenate(
+        [
+            np.full((*mesh.n, 1), 0),
+            np.cos(arr_x_coord * np.pi/20),
+            np.sin(arr_x_coord * np.pi/20),
+        ],
+        axis=-1,
+    )
+    fied_piby2 = df.Field(mesh, nvdim=3, value=arr)
+    assert np.isclose(dft.neighbouring_cell_angle(
+        fied_piby2, direction="g1", units="rad").mean(), np.pi/2)
 
 def test_max_neigbouring_cell_angle():
     p1 = (0, 0, 0)
