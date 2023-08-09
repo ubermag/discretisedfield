@@ -95,7 +95,7 @@ class MplRegion(Mpl):
 
         kwargs.setdefault("color", color)
 
-        rescaled_region = self.region.scale(1 / multiplier)
+        rescaled_region = self.region.scale(1 / multiplier, reference_point=(0, 0, 0))
 
         if box_aspect == "auto":
             ax.set_box_aspect(rescaled_region.edges)
