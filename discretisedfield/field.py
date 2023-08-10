@@ -3552,7 +3552,7 @@ class Field(_FieldIO):
         return res
 
     def _hv_valid_callback(self, **kwargs):
-        """Select field part as specified by the input arguments."""
+        """Select valid field part as specified by the input arguments."""
         return self._valid_as_field.to_xarray().sel(**kwargs, method="nearest")
 
     def _hv_vdims_guess(self, kdims):
