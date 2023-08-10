@@ -5,8 +5,8 @@ from .tools import (
     demag_field,
     demag_tensor,
     emergent_magnetic_field,
-    max_neigbouring_cell_angle,
-    neigbouring_cell_angle,
+    max_neighbouring_cell_angle,
+    neighbouring_cell_angle,
     topological_charge,
     topological_charge_density,
 )

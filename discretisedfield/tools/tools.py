@@ -15,13 +15,13 @@ def topological_charge_density(field, /, method="continuous"):
     value components (i.e. ``nvdim=3``). Two different methods are available and can be
     selected using ``method``:
 
-    1. Continuous method:
+    1. Continuous method for calculation of the topological charge density in xy-plane:
 
         .. math::
 
             q = \frac{1}{4\pi} \mathbf{n} \cdot \left(\frac{\partial
             \mathbf{n}}{\partial x} \times \frac{\partial
-            \mathbf{n}}{\partial x} \right),
+            \mathbf{n}}{\partial y} \right),
 
         where :math:`\mathbf{n}` is the orientation field.
 
@@ -350,20 +350,29 @@ def emergent_magnetic_field(field):
 
     """
     if field.nvdim != 3:
-        msg = f"Cannot compute emergent magnetic field for {field.nvdim=} field."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Cannot compute emergent magnetic field for {field.nvdim=}"
+            " field. It must be three-dimensional vector field."
+        )
+    elif field.mesh.region.ndim != 3:
+        raise ValueError(
+            f"Cannot compute emergent magnetic field for {field.mesh.region.ndim=}"
+            " region. It must be three-dimensional region."
+        )
 
-    Fx = field.dot(field.diff("y").cross(field.diff("z")))
-    Fy = field.dot(field.diff("z").cross(field.diff("x")))
-    Fz = field.dot(field.diff("x").cross(field.diff("y")))
+    geo_dims = field.mesh.region.dims
 
-    return Fx << Fy << Fz
+    F1 = field.dot(field.diff(geo_dims[1]).cross(field.diff(geo_dims[2])))
+    F2 = field.dot(field.diff(geo_dims[2]).cross(field.diff(geo_dims[0])))
+    F3 = field.dot(field.diff(geo_dims[0]).cross(field.diff(geo_dims[1])))
+
+    return F1 << F2 << F3
 
 
-def neigbouring_cell_angle(field, /, direction, units="rad"):
+def neighbouring_cell_angle(field, /, direction, units="rad"):
     """Calculate angles between neighbouring cells.
 
-    This method calculates the angle between magnetic moments in all
+    This method calculates the angle between value vectors in all
     neighbouring cells. The calculation is only possible for vector fields of three
     dimensions (i.e. ``nvdim=3``). Angles are computed in degrees if ``units='deg'`` and
     in radians if ``units='rad'``.
@@ -413,40 +422,40 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
     ...
-    >>> dft.neigbouring_cell_angle(field, direction='z')
+    >>> dft.neighbouring_cell_angle(field, direction='z')
     Field(...)
 
     """
     if not field.nvdim == 3:
-        msg = f"Cannot compute spin angles for a field with {field.nvdim=}."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Cannot compute value angles for a field with {field.nvdim=}."
+            " Field must be three-dimensional."
+        )
 
     if direction not in field.mesh.region.dims:
-        msg = f"Cannot compute spin angles for direction {direction=}."
-        raise ValueError(msg)
+        raise ValueError(f"Cannot compute value angles for {direction=}.")
 
     if units not in ["rad", "deg"]:
-        msg = f"Units {units=} not supported."
-        raise ValueError(msg)
+        raise ValueError(f"Units {units=} not supported.")
 
     # Orientation field
     fo = field.orientation
 
-    if direction == "x":
-        dot_product = np.einsum("...j,...j->...", fo.array[:-1, ...], fo.array[1:, ...])
-        delta_p = np.divide((field.mesh.dx, 0, 0), 2)
-
-    elif direction == "y":
-        dot_product = np.einsum(
-            "...j,...j->...", fo.array[:, :-1, ...], fo.array[:, 1:, ...]
-        )
-        delta_p = np.divide((0, field.mesh.dy, 0), 2)
-
-    elif direction == "z":
-        dot_product = np.einsum(
-            "...j,...j->...", fo.array[..., :-1, :], fo.array[..., 1:, :]
-        )
-        delta_p = np.divide((0, 0, field.mesh.dz), 2)
+    sclices_one = list()
+    sclices_two = list()
+    delta_p = list()
+    for dim in fo.mesh.region.dims:
+        if dim == direction:
+            sclices_one.append(slice(-1))
+            sclices_two.append(slice(1, None))
+            delta_p.append(getattr(fo.mesh, f"d{dim}") / 2.0)
+        else:
+            sclices_one.append(slice(None))
+            sclices_two.append(slice(None))
+            delta_p.append(0)
+    dot_product = np.einsum(
+        "...j,...j->...", fo.array[(*sclices_one,)], fo.array[(*sclices_two,)]
+    )
 
     # Define new mesh.
     p1 = np.add(field.mesh.region.pmin, delta_p)
@@ -460,7 +469,7 @@ def neigbouring_cell_angle(field, /, direction, units="rad"):
     return df.Field(mesh, nvdim=1, value=angles.reshape(*angles.shape, 1))
 
 
-def max_neigbouring_cell_angle(field, /, units="rad"):
+def max_neighbouring_cell_angle(field, /, units="rad"):
     """Calculate maximum angle between neighbouring cells in all directions.
 
     This function computes an angle between a cell and all its six neighbouring
@@ -501,21 +510,26 @@ def max_neigbouring_cell_angle(field, /, units="rad"):
     >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
     >>> field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
     ...
-    >>> dft.max_neigbouring_cell_angle(field)
+    >>> dft.max_neighbouring_cell_angle(field)
     Field(...)
 
     """
-    x_angles = neigbouring_cell_angle(field, "x", units=units).array.squeeze()
-    y_angles = neigbouring_cell_angle(field, "y", units=units).array.squeeze()
-    z_angles = neigbouring_cell_angle(field, "z", units=units).array.squeeze()
+    max_angles = np.zeros((*field.mesh.n, 2 * field.mesh.region.ndim))
+    for i, dim in enumerate(field.mesh.region.dims):
+        slices_one = [
+            slice(1, None) if i == j else slice(None)
+            for j in range(field.mesh.region.ndim)
+        ]
+        slices_two = [
+            slice(-1) if i == j else slice(None) for j in range(field.mesh.region.ndim)
+        ]
+        max_angles[(*slices_one, 2 * i)] = neighbouring_cell_angle(
+            field, dim, units=units
+        ).array.squeeze()
+        max_angles[(*slices_two, (2 * i) + 1)] = neighbouring_cell_angle(
+            field, dim, units=units
+        ).array.squeeze()
 
-    max_angles = np.zeros((*field.array.shape[:-1], 6))
-    max_angles[1:, :, :, 0] = x_angles
-    max_angles[:-1, :, :, 1] = x_angles
-    max_angles[:, 1:, :, 2] = y_angles
-    max_angles[:, :-1, :, 3] = y_angles
-    max_angles[:, :, 1:, 4] = z_angles
-    max_angles[:, :, :-1, 5] = z_angles
     max_angles = max_angles.max(axis=-1, keepdims=True)
 
     return df.Field(field.mesh, nvdim=1, value=max_angles)
@@ -597,16 +611,16 @@ def count_large_cell_angle_regions(field, /, min_angle, direction=None, units="r
     0
     """
     if direction is None:
-        cell_angles = max_neigbouring_cell_angle(field, units=units).array
+        cell_angles = max_neighbouring_cell_angle(field, units=units).array
     else:
-        cell_angles = neigbouring_cell_angle(
+        cell_angles = neighbouring_cell_angle(
             field, direction=direction, units=units
         ).array
     _, num_features = ndimage.label(cell_angles > min_angle)
     return num_features
 
 
-def count_bps(field, /, direction="x"):
+def count_bps(field, /, direction):
     """Bloch point count and arrangement.
 
     Function to obtain information about Bloch point number and arrangement.
@@ -633,7 +647,7 @@ def count_bps(field, /, direction="x"):
 
     direction : str, optional
 
-        Geometric direction in which to compute arrangement. Defaults to ``x``.
+        Geometric direction in which to compute arrangement.
 
     Returns
     -------
@@ -644,9 +658,19 @@ def count_bps(field, /, direction="x"):
     Examples
     --------
     """
+    if field.mesh.region.ndim != 3:
+        raise ValueError(f"The region must be 3D, not {field.mesh.region.ndim}D.")
+    elif field.nvdim != 3:
+        raise ValueError(f"The field must be 3D vector, not {field.nvdim}D.")
+    elif direction not in field.mesh.region.dims:
+        raise ValueError(
+            f"The specified direction ({direction}) must be one of the"
+            f" geometric dimensions {field.mesh.region.dims}."
+        )
+
     F_div = emergent_magnetic_field(field.orientation).div
 
-    averaged = str.replace("xyz", direction, "")
+    averaged = [dim for dim in field.mesh.region.dims if dim != direction]
 
     F_red = F_div.integrate(direction=averaged[0]).integrate(direction=averaged[1])
     F_int = F_red.integrate(direction=direction, cumulative=True)

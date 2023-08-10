@@ -2154,7 +2154,12 @@ class Mesh(_MeshIO):
 
         """
 
-        field = df.Field(self, nvdim=self.region.ndim)
+        field = df.Field(
+            self,
+            nvdim=self.region.ndim,
+            vdims=self.region.dims,
+            vdim_mapping=dict(zip(self.region.dims, self.region.dims)),
+        )
         for i, dim in enumerate(self.region.dims):
             points = self.points  # avoid re-computing points
             field.array[..., i] = getattr(points, dim).reshape(
