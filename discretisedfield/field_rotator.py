@@ -81,7 +81,7 @@ class FieldRotator:
                     )
                 elif field.vdim_mapping[vdim] not in field.mesh.region.dims:
                     raise ValueError(
-                        "Cannot compute divergence for field as"
+                        "Cannot compute rotations for field as"
                         f" {field.vdim_mapping[vdim]}is not present in"
                         f" {field.mesh.region.dims=}."
                     )
