@@ -890,6 +890,10 @@ class MplField(Mpl):
         # Need to normalise physical units
         fig = ax.figure
         fig_width_inches, fig_height_inches = fig.get_size_inches()
+
+        # Obtain the position of the main ax
+        pos = ax.get_position()
+
         min_height_norm = min_height_inches / fig_height_inches
         min_width_norm = min_width_inches / fig_width_inches
         min_pad_norm = min_pad_inches / fig_width_inches
@@ -898,19 +902,13 @@ class MplField(Mpl):
         pad_norm = max(0.05, min_pad_norm)
         width_norm = max(0.05, min_width_norm)
 
-        # Obtain the position of the main ax
-        pos = ax.get_position()
-
         # Try to determine the height and y-center of existing colorbars
         # We cannot use the same method twice as adding a colorbar may
         # change the size/shape of the figure
         existing_cax_height = None
         existing_cax_center_y = None
         for existing_ax in fig.axes:
-            if existing_ax is not ax and (
-                pos.y0 < existing_ax.get_position().y1 < pos.y1
-                or pos.y1 > existing_ax.get_position().y0 > pos.y0
-            ):  # potentially a colorbar for ax
+            if existing_ax is not ax and hasattr(existing_ax, "_colorbar"):
                 existing_cax_height = existing_ax.get_position().height
                 existing_cax_center_y = (
                     existing_ax.get_position().y0 + existing_ax.get_position().y1
@@ -929,13 +927,23 @@ class MplField(Mpl):
 
         # Check for existing colorbars to decide x-position
         # Multiple cbars should be positioned to the right of eachother
+        # Without their lables overlapping
+        figure_width_pixels = fig.get_figwidth() * fig.dpi
         last_cax_x1 = pos.x1
         for existing_ax in fig.axes:
-            if existing_ax is not ax and (
-                pos.y0 < existing_ax.get_position().y1 < pos.y1
-                or pos.y1 > existing_ax.get_position().y0 > pos.y0
-            ):
-                last_cax_x1 = max(last_cax_x1, existing_ax.get_position().x1)
+            if existing_ax is not ax:
+                # max_width is in pixels
+                max_width = max(
+                    [
+                        label.get_window_extent().width
+                        for label in existing_ax.get_yticklabels()
+                    ]
+                )
+                # normalise to figure size
+                text_width_norm = max_width / figure_width_pixels
+                last_cax_x1 = max(
+                    last_cax_x1, existing_ax.get_position().x1 + text_width_norm
+                )
 
         # Create colorbar axis using add_axes
         cax_position = [last_cax_x1 + pad_norm, cax_y, width_norm, cax_height]
