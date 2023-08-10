@@ -4,7 +4,6 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 import ubermagutil.units as uu
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 import discretisedfield.plotting.util as plot_util
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
@@ -872,9 +871,77 @@ class MplField(Mpl):
 
         return dirlist
 
-    def _add_colorbar(self, ax, cp, colorbar_label):
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
+    def _add_colorbar(
+        self,
+        ax,
+        cp,
+        colorbar_label,
+        min_height_inches=1.0,
+        min_width_inches=0.2,
+        min_pad_inches=0.2,
+    ):
+        """Adds a colorbar to the current plot.
+
+        This colorbar has a minimum width, height, and padding. Multiple colorbars
+        can be added. These additional colorbars will have the same width and height
+        as the original colorbar.
+        """
+
+        # Need to normalise physical units
+        fig = ax.figure
+        fig_width_inches, fig_height_inches = fig.get_size_inches()
+        min_height_norm = min_height_inches / fig_height_inches
+        min_width_norm = min_width_inches / fig_width_inches
+        min_pad_norm = min_pad_inches / fig_width_inches
+
+        # Calculate pad and width
+        pad_norm = max(0.05, min_pad_norm)
+        width_norm = max(0.05, min_width_norm)
+
+        # Obtain the position of the main ax
+        pos = ax.get_position()
+
+        # Try to determine the height and y-center of existing colorbars
+        # We cannot use the same method twice as adding a colorbar may
+        # change the size/shape of the figure
+        existing_cax_height = None
+        existing_cax_center_y = None
+        for existing_ax in fig.axes:
+            if existing_ax is not ax and (
+                pos.y0 < existing_ax.get_position().y1 < pos.y1
+                or pos.y1 > existing_ax.get_position().y0 > pos.y0
+            ):  # potentially a colorbar for ax
+                existing_cax_height = existing_ax.get_position().height
+                existing_cax_center_y = (
+                    existing_ax.get_position().y0 + existing_ax.get_position().y1
+                ) / 2
+                break
+
+        # If there's an existing colorbar, match its height and y-centering
+        if existing_cax_height and existing_cax_center_y:
+            cax_height = existing_cax_height
+            cax_center_y = existing_cax_center_y
+        else:
+            cax_height = max(pos.y1 - pos.y0, min_height_norm)
+            cax_center_y = (pos.y0 + pos.y1) / 2
+
+        cax_y = cax_center_y - (cax_height / 2)
+
+        # Check for existing colorbars to decide x-position
+        # Multiple cbars should be positioned to the right of eachother
+        last_cax_x1 = pos.x1
+        for existing_ax in fig.axes:
+            if existing_ax is not ax and (
+                pos.y0 < existing_ax.get_position().y1 < pos.y1
+                or pos.y1 > existing_ax.get_position().y0 > pos.y0
+            ):
+                last_cax_x1 = max(last_cax_x1, existing_ax.get_position().x1)
+
+        # Create colorbar axis using add_axes
+        cax_position = [last_cax_x1 + pad_norm, cax_y, width_norm, cax_height]
+        cax = fig.add_axes(cax_position)
+
         cbar = plt.colorbar(cp, cax=cax)
+
         if colorbar_label is not None:
             cbar.ax.set_ylabel(colorbar_label)
