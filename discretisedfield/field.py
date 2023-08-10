@@ -3536,7 +3536,12 @@ class Field(_FieldIO):
         :DynamicMap...
 
         """
-        return dfp.Hv(self._hv_key_dims, self._hv_data_selection, self._hv_vdims_guess)
+        return dfp.Hv(
+            self._hv_key_dims,
+            self._hv_data_selection,
+            self._hv_valid_callback,
+            vdim_guess_callback=self._hv_vdims_guess,
+        )
 
     def _hv_data_selection(self, **kwargs):
         """Select field part as specified by the input arguments."""
@@ -3545,6 +3550,10 @@ class Field(_FieldIO):
         if vdims:
             res = res.sel(vdims=vdims)
         return res
+
+    def _hv_valid_callback(self, **kwargs):
+        """Select field part as specified by the input arguments."""
+        return self._valid_as_field.to_xarray().sel(**kwargs, method="nearest")
 
     def _hv_vdims_guess(self, kdims):
         """Try to find vector components matching the given kdims."""

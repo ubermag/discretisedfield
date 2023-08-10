@@ -48,14 +48,15 @@ class Hv:
 
     """
 
-    _norm_filter = True
-
-    def __init__(self, key_dims, callback, vdim_guess_callback=None):
+    def __init__(
+        self, key_dims, callback, valid_callback=None, vdim_guess_callback=None
+    ):
         # no tests for key_dims and callback as the class is not directly used by users
         if not hv.extension._loaded:
             hv.extension("bokeh", logo=False)
         self.key_dims = key_dims
         self.callback = callback
+        self.valid_callback = valid_callback
         self.vdim_guess_callback = vdim_guess_callback
 
     def __call__(
@@ -63,7 +64,6 @@ class Hv:
         kdims,
         vdims=None,
         roi=None,
-        norm_filter=None,
         scalar_kw=None,
         vector_kw=None,
     ):
@@ -180,11 +180,10 @@ class Hv:
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
 
-        if norm_filter or (norm_filter is None and self._norm_filter):
-            if roi is None:
-                roi = self.callback
-            scalar_kw.setdefault("roi", roi)
-            vector_kw.setdefault("roi", roi)
+        if roi is None:
+            roi = self.valid_callback
+        scalar_kw.setdefault("roi", roi)
+        vector_kw.setdefault("roi", roi)
 
         vector_kw.setdefault("use_color", False)
 
@@ -655,7 +654,7 @@ class Hv:
 
     def _setup_roi(self, roi, kdims):
         if roi is None:
-            return None
+            return self.valid_callback
         elif isinstance(roi, df.Field):
             roi = roi.to_xarray()
         elif callable(roi):
