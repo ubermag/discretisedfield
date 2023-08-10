@@ -113,7 +113,7 @@ def test_neighbouring_cell_angle(ndim, nvdim):
             assert sa.mean() == 0
 
     # Check for a value of angle
-    arr_x_coord = mesh.coordinate_field().array[..., 0, np.newaxis].copy()
+    arr_x_coord = mesh.coordinate_field().g1.array
     arr = np.concatenate(
         [
             np.full((*mesh.n, 1), 0),
