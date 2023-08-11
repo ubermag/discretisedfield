@@ -1182,7 +1182,11 @@ class Field(_FieldIO):
             raise TypeError(msg)
 
         if self.mesh.allclose(other.mesh) and self.nvdim == other.nvdim:
-            return np.allclose(self.array, other.array, rtol=rtol, atol=atol)
+            # Order matters absolute(a - b) <= (atol + rtol * absolute(b))
+            # The above equation is not symmetric in a and b, so that allclose(a, b)
+            # might be different from allclose(b, a)
+            # We want it relative to the original array
+            return np.allclose(other.array, self.array, rtol=rtol, atol=atol)
         else:
             return False
 
@@ -1638,7 +1642,7 @@ class Field(_FieldIO):
         >>> res = f1 / f2
         >>> res.mean()
         array([5.])
-        >>> f1 / f2 == (f2 / f1)**(-1)
+        >>> (f1 / f2).allclose((f2 / f1)**(-1))
         True
 
         2. Divide vector field by a scalar.
@@ -2378,9 +2382,9 @@ class Field(_FieldIO):
 
         .. math::
 
-            \nabla f = (\frac{\partial f}{\partial x},
-                         \frac{\partial f}{\partial y},
-                         \frac{\partial f}{\partial z})
+            \nabla f = (\frac{\partial f}{\partial x_1},
+                        ...
+                        \frac{\partial f}{\partial x_ndim}
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2442,14 +2446,21 @@ class Field(_FieldIO):
             msg = f"Cannot compute gradient for nvdim={self.nvdim} field."
             raise ValueError(msg)
 
-        return self.diff("x") << self.diff("y") << self.diff("z")
+        # Create a list of derivatives for each dimension
+        derivatives = [self.diff(dim) for dim in self.mesh.region.dims]
+
+        result = derivatives[0]
+        for derivative in derivatives[1:]:
+            result = result << derivative
+
+        return result
 
     @property
     def div(self):
-        r"""Divergence.
+        r"""Compute the divergence of a field.
 
-        This method computes the divergence of a vector (``nvdim=2`` or
-        ``nvdim=3``) field and returns a scalar (``nvdim=1``) field as a result.
+        This method calculates the divergence of a field of dimension `nvdim`
+        and returns a scalar (``nvdim=1``) field as a result.
 
         .. math::
 
@@ -2471,7 +2482,8 @@ class Field(_FieldIO):
         ------
         ValueError
 
-            If the dimension of the field is 1.
+            If the field and the mesh don't have the same dimentionality or
+            they are not mapped correctly.
 
         Example
         -------
@@ -2495,54 +2507,67 @@ class Field(_FieldIO):
         >>> f.div.mean()
         array([5.])
 
-        2. Attempt to compute the divergence of a scalar field.
-
-        >>> f = df.Field(mesh, nvdim=1, value=3.14)
-        >>> f.div
-        Traceback (most recent call last):
-        ...
-        ValueError: ...
-
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim not in [2, 3]:
-            msg = f"Cannot compute divergence for nvdim={self.nvdim} field."
-            raise ValueError(msg)
+        if self.nvdim != self.mesh.region.ndim:
+            raise ValueError(
+                f"Cannot compute divergence for field with a differnt {self.nvdim=} and"
+                f" {self.mesh.region.ndim}."
+            )
 
-        return sum(getattr(self, vdim).diff(vdim) for vdim in self.vdims)
+        for vdim in self.vdims:
+            if vdim not in self.vdim_mapping:
+                raise ValueError(
+                    f"Cannot compute divergence for field as {vdim} is not present in"
+                    f"{self.vdim_mapping=}."
+                )
+            elif self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Cannot compute divergence for field as {self.vdim_mapping[vdim]}"
+                    f"is not present in {self.mesh.region.dims=}."
+                )
+
+        return sum(
+            getattr(self, vdim).diff(self.vdim_mapping[vdim]) for vdim in self.vdims
+        )
 
     @property
     def curl(self):
         r"""Curl.
 
-        This method computes the curl of a vector (``nvdim=3``) field and returns
-        a vector (``nvdim=3``) as a result:
+        This method computes the curl of a three dimensional vector (``nvdim=3``)
+        field in three spatial dimensions (``ndim=3``) and returns
+        a three dimensional vector (``nvdim=3``) field in three spatial
+        dimensions (``ndim=3``)
 
         .. math::
 
             \nabla \times \mathbf{v} = \left(\frac{\partial
-            v_{z}}{\partial y} - \frac{\partial v_{y}}{\partial z},
-            \frac{\partial v_{x}}{\partial z} - \frac{\partial
-            v_{z}}{\partial x}, \frac{\partial v_{y}}{\partial x} -
-            \frac{\partial v_{x}}{\partial y},\right)
+            v_{2}}{\partial x_{1}} - \frac{\partial v_{1}}{\partial x_{2}},
+            \frac{\partial v_{0}}{\partial x_{2}} - \frac{\partial
+            v_{2}}{\partial x_{0}}, \frac{\partial v_{1}}{\partial x_{0}} -
+            \frac{\partial v_{0}}{\partial x_{1}},\right)
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
         considered to be that directional derivative. More precisely, it is
         assumed that the field does not change in that direction.
+        ``vdim_mapping`` needs to be set in order to relate the vector and
+        spatial dimensions.
 
         Returns
         -------
         discretisedfield.Field
 
-            Resulting field.
+            Curl of the field.
 
         Raises
         ------
         ValueError
 
-            If the dimension of the field is not 3.
+            If the ``ndim`` or ``nvdim`` of the field is not 3.
+            The ``vdims`` are not correctly mapped to the ``dims``.
 
         Example
         -------
@@ -2577,14 +2602,35 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim != 3:
-            msg = f"Cannot compute curl for nvdim={self.nvdim} field."
-            raise ValueError(msg)
+        if self.nvdim != 3 or self.mesh.region.ndim != 3:
+            raise ValueError(
+                "Curl can only be computed for a field with nvdim=3 and ndim=3,"
+                f"Not {self.nvdim=} and {self.mesh.region.ndim}"
+            )
 
-        x, y, z = self.vdims
-        curl_x = getattr(self, z).diff("y") - getattr(self, y).diff("z")
-        curl_y = getattr(self, x).diff("z") - getattr(self, z).diff("x")
-        curl_z = getattr(self, y).diff("x") - getattr(self, x).diff("y")
+        for vdim in self.vdims:
+            if vdim not in self.vdim_mapping:
+                raise ValueError(
+                    f"Cannot compute curl of the field as {vdim} is not present in"
+                    f" {self.vdim_mapping=}."
+                )
+            elif self.vdim_mapping[vdim] not in self.mesh.region.dims:
+                raise ValueError(
+                    f"Cannot compute curl of the field as {self.vdim_mapping[vdim]}"
+                    f" is not present in {self.mesh.region.dims=}."
+                )
+
+        # Use dims order instead of vdims
+        x, y, z = self.mesh.region.dims
+        curl_x = getattr(self, self._r_dim_mapping[z]).diff(y) - getattr(
+            self, self._r_dim_mapping[y]
+        ).diff(z)
+        curl_y = getattr(self, self._r_dim_mapping[x]).diff(z) - getattr(
+            self, self._r_dim_mapping[z]
+        ).diff(x)
+        curl_z = getattr(self, self._r_dim_mapping[y]).diff(x) - getattr(
+            self, self._r_dim_mapping[x]
+        ).diff(y)
 
         return curl_x << curl_y << curl_z
 
@@ -2592,20 +2638,18 @@ class Field(_FieldIO):
     def laplace(self):
         r"""Laplace operator.
 
-        This method computes the laplacian of a scalar (``nvdim=1``) or a vector
-        (``nvdim=3``) field and returns a resulting field:
+        This method computes the laplacian for any field:
 
         .. math::
 
-            \nabla^2 f = \frac{\partial^{2} f}{\partial x^{2}} +
-                          \frac{\partial^{2} f}{\partial y^{2}} +
-                          \frac{\partial^{2} f}{\partial z^{2}}
+            \nabla^2 f = \sum_{i=0}^\mathrm{ndim}
+                                \frac{\partial^{2} f}{\partial x_i^{2}}
 
         .. math::
 
-            \nabla^2 \mathbf{f} = (\nabla^2 f_{x},
-                                     \nabla^2 f_{y},
-                                     \nabla^2 f_{z})
+            \nabla^2 \mathbf{f} = (\nabla^2 f_{0},
+                                     ...
+                                     \nabla^2 f_mathrm{nvdim})
 
         Directional derivative cannot be computed if only one discretisation
         cell exists in a certain direction. In that case, a zero field is
@@ -2616,7 +2660,7 @@ class Field(_FieldIO):
         -------
         discretisedfield.Field
 
-            Resulting field.
+            Laplacian of the field.
 
         Example
         -------
@@ -2648,21 +2692,26 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.derivative`
 
         """
-        if self.nvdim not in [1, 3]:
-            raise ValueError(f"Cannot compute laplace for nvdim={self.nvdim} field.")
+
+        # Create a list of derivatives for each dimension
         if self.nvdim == 1:
-            return (
-                self.diff("x", order=2)
-                + self.diff("y", order=2)
-                + self.diff("z", order=2)
-            )
+            derivatives = [
+                sum(self.diff(dim, order=2) for dim in self.mesh.region.dims)
+            ]
         else:
-            x, y, z = self.vdims
-            return (
-                getattr(self, x).laplace
-                << getattr(self, y).laplace
-                << getattr(self, z).laplace
-            )
+            derivatives = [
+                sum(
+                    getattr(self, vdim).diff(dim, order=2)
+                    for dim in self.mesh.region.dims
+                )
+                for vdim in self.vdims
+            ]
+
+        result = derivatives[0]
+        for derivative in derivatives[1:]:
+            result = result << derivative
+
+        return result
 
     def integrate(self, direction=None, cumulative=False):
         r"""Integral.
@@ -3209,6 +3258,126 @@ class Field(_FieldIO):
             self.mesh, nvdim=1, value=angle_array, unit="rad", valid=valid
         )
 
+    def rotate90(self, ax1, ax2, k=1, reference_point=None, inplace=False):
+        """Rotate field and underlying mesh by 90°.
+
+        Rotate the field ``k`` times by 90 degrees in the plane defined by ``ax1`` and
+        ``ax2``. The rotation direction is from ``ax1`` to ``ax2``, the two must be
+        different.
+
+        For vector fields (``nvdim>1``) the components of the vector pointing along
+        ``ax1`` and ``ax2`` are determined from ``vdim_mapping``. Rotation is only
+        possible if this mapping defines vector components along both directions ``ax1``
+        and ``ax2``.
+
+        Parameters
+        ----------
+        ax1 : str
+
+            Name of the first dimension.
+
+        ax2 : str
+
+            Name of the second dimension.
+
+        k : int, optional
+
+            Number of 90° rotations, defaults to 1.
+
+        reference_point : array_like, optional
+
+            Point around which the mesh is rotated. If not provided the mesh.region's
+            centre point of the field is used.
+
+        inplace : bool, optional
+
+            If ``True``, the rotation is applied in-place. Defaults to ``False``.
+
+        Returns
+        -------
+        discretisedfield.Field
+
+            The rotated field object. Either a new object or a reference to the
+            existing field for ``inplace=True``.
+
+        Raises
+        ------
+
+        RuntimeError
+
+            If a vector field (``nvdim>1``) does not provide the required mapping
+            between spatial directions and vector components in ``vdim_mapping``.
+
+        Examples
+        --------
+
+        >>> import discretisedfield as df
+        >>> import numpy as np
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 8, 6)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=(10, 4, 6))
+        >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
+        >>> rotated = field.rotate90('x', 'y')
+        >>> rotated.mesh.region.pmin
+        array([ 1., -1.,  0.])
+        >>> rotated.mesh.region.pmax
+        array([9., 9., 6.])
+        >>> rotated.mesh.n
+        array([ 4, 10,  6])
+        >>> rotated.mean()
+        array([-2.,  1.,  3.])
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Region.rotate90`
+        :py:func:`~discretisedfield.Mesh.rotate90`
+
+        """
+        # all checks are performed when rotating the mesh
+        mesh = self.mesh.rotate90(
+            ax1=ax1, ax2=ax2, k=k, reference_point=reference_point, inplace=inplace
+        )
+
+        idx1 = self.mesh.region._dim2index(ax1)
+        idx2 = self.mesh.region._dim2index(ax2)
+        value = np.rot90(self.array.copy(), k=k, axes=(idx1, idx2))
+        valid = np.rot90(self.valid.copy(), k=k, axes=(idx1, idx2))
+
+        if self.nvdim > 1:
+            # rotate the vector, i.e. the relevant in-plane components
+            try:
+                vdim1 = self.vdims.index(self._r_dim_mapping[ax1])
+                vdim2 = self.vdims.index(self._r_dim_mapping[ax2])
+            except ValueError:
+                raise RuntimeError(
+                    "Missing information about vector orientation in"
+                    f" {self.vdim_mapping=}. Manual update of the relation between"
+                    " vector dimensions and spatial dimensions required."
+                ) from None
+
+            value1 = value[..., vdim1].copy()
+            value2 = value[..., vdim2].copy()
+
+            theta = k * np.pi / 2
+            value[..., vdim1] = np.cos(theta) * value1 - np.sin(theta) * value2
+            value[..., vdim2] = np.sin(theta) * value1 + np.cos(theta) * value2
+
+        if inplace:
+            self.update_field_values(value)
+            self.valid = valid
+            return self
+        else:
+            return self.__class__(
+                mesh,
+                nvdim=self.nvdim,
+                value=value,
+                vdims=self.vdims,
+                dtype=self.dtype,
+                unit=self.unit,
+                valid=valid,
+                vdim_mapping=self.vdim_mapping,
+            )
+
     def to_vtk(self):
         """Convert field to vtk rectilinear grid.
 
@@ -3396,21 +3565,30 @@ class Field(_FieldIO):
         return key_dims
 
     def fftn(self, **kwargs):
-        """N dimensional discrete FFT of the field.
+        """Performs an N-dimensional discrete Fast Fourier Transform (FFT)
+        on the field.
 
-        Information about subregions is lost during the transformation.
+        This method applies an FFT to the field and the underying mesh, transforming
+        it from a spatial domain into a frequency domain. During this process, any
+        information about subregions within the field is lost.
+
 
         Parameters
         ----------
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.fftn`.
+            Keyword arguments passed directly to the FFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.fftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Fourier transformed field.
+            A field representing the Fourier transform of the original field.
+            This returned field has value dimensions labeled with frequency
+            (``ft_`` in front of each vdim) and values corresponding to frequencies
+            in the frequency domain.
+
 
         Examples
         --------
@@ -3424,6 +3602,24 @@ class Field(_FieldIO):
         >>> fft_field.vdims
         ['ft_x', 'ft_y', 'ft_z']
 
+        2. Create a 3D mesh and perform an FFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.fftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['ft_v0', 'ft_v1', 'ft_v2', 'ft_v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
+
         """
         mesh = self.mesh.fftn()
 
@@ -3436,21 +3632,28 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def ifftn(self, **kwargs):
-        """N dimensional discrete inverse FFT of the field.
+        """Performs an N-dimensional discrete inverse Fast Fourier Transform (iFFT)
+        on the field.
 
-        Information about subregions is lost during the transformation.
+        This method applies an iFFT to the field and the underying mesh, transforming
+        it from a frequency domain into a spatial domain. During this process, any
+        information about subregions within the field is lost.
 
         Parameters
         ----------
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.ifftn`.
+            Keyword arguments passed directly to the iFFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.ifftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Inverse Fourier transformed field.
+            A field representing the inverse Fourier transform of the original field.
+            This returned field is in the spatial domain and has value dimensions
+            labeled with the ``ft_`` removed if the vdims of the original field
+            started with ``ft_``.
 
         Examples
         --------
@@ -3463,6 +3666,24 @@ class Field(_FieldIO):
         3
         >>> ifft_field.vdims
         ['x', 'y', 'z']
+
+        2. Create a 3D mesh and perform an iFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.fftn().ifftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['v0', 'v1', 'v2', 'v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.ifftn()
@@ -3477,33 +3698,60 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=True)
 
     def rfftn(self, **kwargs):
-        """N dimensional discrete real FFT of the field.
+        """Performs an N-dimensional discrete real Fast Fourier Transform (rFFT)
+        on the field.
 
-        Information about subregions is lost during the transformation.
+        This method applies an rFFT to the field and the underying mesh, transforming
+        it from a spatial domain into a frequency domain. During this process, any
+        information about subregions within the field is lost.
+
 
         Parameters
         ----------
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.rfftn`.
+            Keyword arguments passed directly to the rFFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.rfftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Fourier transformed field.
+            A field representing the Fourier transform of the original field.
+            This returned field has value dimensions labeled with frequency
+            (``ft_`` in front of each vdim) and values corresponding to frequencies
+            in the frequency domain.
+
 
         Examples
         --------
-        1. Create a mesh and perform a rFFT.
+        1. Create a mesh and perform an rFFT.
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> fft_field = field.fftn()
+        >>> fft_field = field.rfftn()
         >>> fft_field.nvdim
         3
         >>> fft_field.vdims
         ['ft_x', 'ft_y', 'ft_z']
+
+        2. Create a 3D mesh and perform an rFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.rfftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['ft_v0', 'ft_v1', 'ft_v2', 'ft_v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.irfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.fftn(rfft=True)
@@ -3517,28 +3765,28 @@ class Field(_FieldIO):
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
 
     def irfftn(self, shape=None, **kwargs):
-        """N dimensional discrete inverse real FFT of the field.
+        """Performs an N-dimensional discrete inverse real Fast Fourier Transform
+        (irFFT) on the field.
 
-        If shape is ``None``, the shape of the original mesh
-        is assumed to be even in the last dimension.
-
-        Information about subregions is lost during the transformation.
+        This method applies an irFFT to the field and the underying mesh, transforming
+        it from a frequency domain into a spatial domain. During this process, any
+        information about subregions within the field is lost.
 
         Parameters
         ----------
-        shape : (tuple, np.ndarray, list), optional
-
-            Shape of the original mesh. Defaults to ``None``.
-
         **kwargs
 
-            Keyword arguments passed to :py:func:`scipy.fft.irfftn`.
+            Keyword arguments passed directly to the irFFT function provided by
+            SciPy's fftpack :py:func:`scipy.fft.irfftn`.
 
         Returns
         -------
         discretisedfield.Field
 
-            Inverse Fourier transformed field.
+            A field representing the inverse Fourier transform of the original field.
+            This returned field is in the spatial domain and has value dimensions
+            labeled with the ``ft_`` removed if the vdims of the original field
+            started with ``ft_``.
 
         Examples
         --------
@@ -3546,11 +3794,29 @@ class Field(_FieldIO):
         >>> import discretisedfield as df
         >>> mesh = df.Mesh(p1=0, p2=10, cell=2)
         >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 3))
-        >>> ifft_field = field.rfftn().irfftn(shape=mesh.n)
+        >>> ifft_field = field.fftn().irfftn()
         >>> ifft_field.nvdim
         3
         >>> ifft_field.vdims
         ['x', 'y', 'z']
+
+        2. Create a 3D mesh and perform an irFFT.
+        >>> import discretisedfield as df
+        >>> mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(2, 2, 2))
+        >>> field = df.Field(mesh, nvdim=4, value=(1, 2, 3, 4))
+        >>> fft_field = field.fftn().irfftn()
+        >>> fft_field.nvdim
+        4
+        >>> fft_field.vdims
+        ['v0', 'v1', 'v2', 'v3']
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Field.fftn`
+        :py:func:`~discretisedfield.Field.ifftn`
+        :py:func:`~discretisedfield.Field.rfftn`
+        :py:func:`~discretisedfield.Mesh.fftn`
+        :py:func:`~discretisedfield.Mesh.ifftn`
 
         """
         mesh = self.mesh.ifftn(rfft=True, shape=shape)
@@ -3911,7 +4177,7 @@ class Field(_FieldIO):
 
         if "nvdim" not in xa.attrs:
             raise KeyError(
-                'The DataArray must have an attribute "nvdims" to identify a scalar or'
+                'The DataArray must have an attribute "nvdim" to identify a scalar or'
                 " a vector field."
             )
 

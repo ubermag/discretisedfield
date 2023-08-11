@@ -1157,7 +1157,8 @@ class Mesh(_MeshIO):
                         or point > self.region.pmax[dim_index]
                     ):
                         raise ValueError(
-                            f"Selected value {point} is outside the mesh region."
+                            f"Selected value {point} is outside the mesh region"
+                            f" {self.region}."
                         )
                     test_point = self.region.pmin.copy().astype(
                         max(self.region.pmin.dtype, type(point))
@@ -1437,8 +1438,8 @@ class Mesh(_MeshIO):
         array([12, 12, 11])
 
         """
-        pmin = self.region.pmin.astype(float)
-        pmax = self.region.pmax.astype(float)
+        pmin = self.region.pmin.copy().astype(float)
+        pmax = self.region.pmax.copy().astype(float)
         # Convert to np.ndarray to allow operations on them.
         for direction in pad_width.keys():
             axis = self.region._dim2index(direction)
@@ -1767,6 +1768,98 @@ class Mesh(_MeshIO):
                 region=region, n=self.n, bc=self.bc, subregions=subregions
             )
 
+    def rotate90(self, ax1, ax2, k=1, reference_point=None, inplace=False):
+        """Rotate mesh by 90°.
+
+        Rotate the mesh ``k`` times by 90 degrees in the plane defined by ``ax1`` and
+        ``ax2``. The rotation direction is from ``ax1`` to ``ax2``, the two must be
+        different.
+
+        The rotate method does not rotate the string defining periodic boundary
+        conditions, e.g. if a system has periodic boundary conditions in x and is
+        rotated in the xy plane the new system will still have periodic boundary
+        conditions in the new x direction, NOT in the new y direction. It is the
+        user's task to update the ``bc`` string after rotation if required.
+
+        Parameters
+        ----------
+        ax1 : str
+
+            Name of the first dimension.
+
+        ax2 : str
+
+            Name of the second dimension.
+
+        k : int, optional
+
+            Number of 90° rotations, defaults to 1.
+
+        reference_point : array_like, optional
+
+            Point around which the mesh is rotated. If not provided the mesh.region's
+            centre point is used.
+
+        inplace : bool, optional
+
+            If ``True``, the rotation is applied in-place. Defaults to ``False``.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            The rotated mesh object. Either a new object or a reference to the
+            existing mesh for ``inplace=True``.
+
+        Examples
+        --------
+
+        >>> import discretisedfield as df
+        >>> import numpy as np
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 8, 6)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=(10, 4, 6))
+        >>> rotated = mesh.rotate90('x', 'y')
+        >>> rotated.region.pmin
+        array([ 1., -1.,  0.])
+        >>> rotated.region.pmax
+        array([9., 9., 6.])
+        >>> rotated.n
+        array([ 4, 10,  6])
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Region.rotate90`
+        :py:func:`~discretisedfield.Field.rotate90`
+
+        """
+        # all checks will be performed by region.rotate90
+        region = self.region.rotate90(
+            ax1=ax1, ax2=ax2, k=k, reference_point=reference_point, inplace=inplace
+        )
+
+        n = list(self.n)
+        if k % 2 == 1:
+            idx1 = self.region._dim2index(ax1)
+            idx2 = self.region._dim2index(ax2)
+            n[idx1], n[idx2] = n[idx2], n[idx1]
+
+        if reference_point is None:
+            reference_point = self.region.centre
+
+        subregions = {
+            name: subregion.rotate90(
+                ax1=ax1, ax2=ax2, k=k, reference_point=reference_point, inplace=inplace
+            )
+            for name, subregion in self.subregions.items()
+        }
+
+        if inplace:
+            self._n = np.array(n, dtype=int)
+            return self
+        else:
+            return self.__class__(region=region, n=n, bc=self.bc, subregions=subregions)
+
     @property
     def mpl(self):
         """``matplotlib`` plot.
@@ -2061,7 +2154,12 @@ class Mesh(_MeshIO):
 
         """
 
-        field = df.Field(self, nvdim=self.region.ndim)
+        field = df.Field(
+            self,
+            nvdim=self.region.ndim,
+            vdims=self.region.dims,
+            vdim_mapping=dict(zip(self.region.dims, self.region.dims)),
+        )
         for i, dim in enumerate(self.region.dims):
             points = self.points  # avoid re-computing points
             field.array[..., i] = getattr(points, dim).reshape(
@@ -2071,21 +2169,26 @@ class Mesh(_MeshIO):
         return field
 
     def fftn(self, rfft=False):
-        """N dimensional discrete FFT of the mesh.
+        """Performs an N-dimensional discrete Fast Fourier Transform (FFT) on the mesh.
 
-        Information about subregions is lost during the transformation.
+        This method computes the FFT in an N-dimensional space. The FFT is a way to
+        transform a spatial-domain into a frequency domain. Note that any information
+        about subregions in the mesh is lost during this transformation.
 
         Parameters
         ----------
         rfft : bool, optional
 
-            If ``True``, the a real FFT is performed. Defaults to ``False``.
+            Determines if a real FFT is to be performed (if True) or a complex FFT
+            (if False). Defaults to False, i.e., a complex FFT is performed by default.
 
         Returns
         -------
         discretisedfield.Mesh
 
-            Fourier transform of the mesh.
+            A mesh representing the Fourier transform of the original mesh. The returned
+            mesh has dimensions labeled with frequency (k) and cells have coordinates
+            that correspond to the correct frequencies in the frequency domain.
 
         Examples
         --------
@@ -2113,7 +2216,20 @@ class Mesh(_MeshIO):
         >>> fft_mesh.region.pmax
         array([0.25])
 
+        3. Create a 2D mesh and perform a FFT. This demonstrates how the function works
+        with higher dimensional meshes.
+        >>> mesh = df.Mesh(p1=(0, 0), p2=(10, 10), cell=(2, 2))
+        >>> fft_mesh = mesh.fftn()
+        >>> fft_mesh.n
+        array([5, 5])
+        >>> fft_mesh.cell
+        array([0.1, 0.1])
+        >>> fft_mesh.region.pmin
+        array([-0.25, -0.25])
+        >>> fft_mesh.region.pmax
+        array([0.25, 0.25])
         """
+
         p1 = []
         p2 = []
         n = []
@@ -2152,26 +2268,36 @@ class Mesh(_MeshIO):
         return mesh
 
     def ifftn(self, rfft=False, shape=None):
-        """N dimensional discrete inverse FFT of the mesh.
+        """Performs an N-dimensional discrete inverse Fast Fourier Transform (iFFT)
+        on the mesh.
 
-        If rfft is ``True`` and shape is ``None``, the shape of the original mesh
-        is assumed to be even in the last dimension.
+        This function calculates the iFFT in an N-dimensional space. The iFFT is a
+        method to convert a frequency-domain signal into a spatial-domain signal.
+        If 'rfft' is set to True and 'shape' is None, the original mesh shape is
+        assumed to be even in the last dimension.
+
+        Please note that during Fourier transformations, the original position
+        information is lost, causing the inverse Fourier transform to be centered at
+        the origin. This can be rectified by `mesh.translate` to translate the mesh
+        back to the desired position.
 
         Parameters
         ----------
         rfft : bool, optional
 
-            If ``True``, the a real FFT is performed. Defaults to ``False``.
+            If set to True, a real FFT is performed. If False, a complex FFT is
+            performed. Defaults to False.
 
         shape : (tuple, np.ndarray, list), optional
 
-            Shape of the original mesh. Defaults to ``None``.
+            Specifies the shape of the original mesh. Defaults to None, which means the
+            shape of the original mesh is used.
 
         Returns
         -------
         discretisedfield.Mesh
 
-            Inverse Fourier transform of the mesh.
+            A mesh representing the inverse Fourier transform of the mesh.
 
         Examples
         --------
@@ -2198,6 +2324,29 @@ class Mesh(_MeshIO):
         array([-5.])
         >>> ifft_mesh.region.pmax
         array([5.])
+
+        3. Perform a 2D iFFT.
+        >>> mesh = df.Mesh(p1=(0, 0), p2=(10, 10), cell=(2, 2))
+        >>> ifft_mesh = mesh.fftn().ifftn()
+        >>> ifft_mesh.n
+        array([5, 5])
+        >>> ifft_mesh.cell
+        array([2., 2.])
+        >>> ifft_mesh.region.pmin
+        array([-5., -5.])
+        >>> ifft_mesh.region.pmax
+        array([5., 5.])
+
+        4. Perform a real 2D iFFT.
+        >>> ifft_mesh = mesh.fftn(rfft=True).ifftn(rfft=True, shape=mesh.n)
+        >>> ifft_mesh.n
+        array([5, 5])
+        >>> ifft_mesh.cell
+        array([2., 2.])
+        >>> ifft_mesh.region.pmin
+        array([-5., -5.])
+        >>> ifft_mesh.region.pmax
+        array([5., 5.])
 
         """
         if shape is not None:

@@ -67,6 +67,27 @@ def test_valid_rotation(field):
     check_rotator(fr)
 
 
+def test_valid_vdim_mapping(mesh):
+    field = df.Field(
+        mesh,
+        nvdim=3,
+        value=(1, 0, 0),
+        vdims=("v0", "v1", "v2"),
+        vdim_mapping={"v0": "z", "v1": "y", "v2": "x"},
+    )
+    fr = df.FieldRotator(field)
+    fr.rotate("from_euler", seq="z", angles=np.pi / 2, n=(1, 1, 1))
+    assert np.allclose(fr.field.v0.array, 1)
+    assert np.allclose(fr.field.v1.array, 0)
+    assert np.allclose(fr.field.v2.array, 0)
+
+    fr = df.FieldRotator(field)
+    fr.rotate("from_euler", seq="x", angles=np.pi / 2, n=(1, 1, 1))
+    assert np.allclose(fr.field.v0.array, 0)
+    assert np.allclose(fr.field.v1.array, -1)
+    assert np.allclose(fr.field.v2.array, 0)
+
+
 def test_n(field):
     fr = df.FieldRotator(field)
     # no rotation => field should be the same
@@ -132,8 +153,22 @@ def test_macrospin_rotation():
     )
 
 
-def test_invalid_field(mesh):
-    field = df.Field(mesh, nvdim=2, value=(1, 1))
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_invalid_field(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+    if nvdim not in [1, 3] or valid_mesh.region.ndim != 3:
+        with pytest.raises(ValueError):
+            df.FieldRotator(field)
+
+
+def test_invalid_vdim_mapping():
+    mesh = df.Mesh(p1=(-5, -5, -5), p2=(5, 5, 5), cell=(1, 1, 1))
+    field = df.Field(mesh, nvdim=3)
+    field.vdim_mapping = {}
+    with pytest.raises(ValueError):
+        df.FieldRotator(field)
+
+    field.vdim_mapping = {"x": None, "y": "y", "z": "z"}
     with pytest.raises(ValueError):
         df.FieldRotator(field)
 

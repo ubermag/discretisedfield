@@ -969,6 +969,119 @@ class Region(_RegionIO):
                 tolerance_factor=self.tolerance_factor,
             )
 
+    def rotate90(self, ax1, ax2, k=1, reference_point=None, inplace=False):
+        """Rotate region by 90 degrees.
+
+        Rotate the region ``k`` times by 90 degrees in the plane defined by ``ax1`` and
+        ``ax2``. The rotation direction is from ``ax1`` to ``ax2``, the two must be
+        different.
+
+        Parameters
+        ----------
+        ax1 : str
+
+            Name of the first dimension.
+
+        ax2 : str
+
+            Name of the second dimension.
+
+        k : int, optional
+
+            Number of 90° rotations, defaults to 1.
+
+        reference_point : array_like, optional
+
+            Point around which the region is rotated. If not provided the region's
+            centre point is used.
+
+        inplace : bool, optional
+
+            If ``True``, the rotation is applied in-place. Defaults to ``False``.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            The rotated region object. Either a new object or a reference to the
+            existing region for ``inplace=True``.
+
+        Examples
+        --------
+
+        >>> import discretisedfield as df
+        >>> import numpy as np
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 8, 6)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> rotated = region.rotate90('x', 'y')
+        >>> rotated.pmin
+        array([ 1., -1.,  0.])
+        >>> rotated.pmax
+        array([9., 9., 6.])
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Mesh.rotate90`
+        :py:func:`~discretisedfield.Field.rotate90`
+
+        """
+        if ax1 == ax2:
+            raise ValueError(f"{ax1=} and {ax2=} must have different values.")
+        if not isinstance(k, int):
+            raise TypeError(f"k must be an integer, not {type(k)=}.")
+
+        if reference_point is None:
+            reference_point = self.centre
+        elif not isinstance(reference_point, (tuple, list, np.ndarray)):
+            raise TypeError(
+                f"reference_point must be array_like, not {type(reference_point)=}."
+            )
+        elif len(reference_point) != self.ndim:
+            raise ValueError(
+                f"reference_point must have length {self.ndim}, not"
+                f" {len(reference_point)=}."
+            )
+
+        idx1 = self._dim2index(ax1)
+        idx2 = self._dim2index(ax2)
+        p1 = self.pmin.copy().astype("float")
+        p2 = self.pmax.copy().astype("float")
+
+        ref_1 = reference_point[idx1]
+        ref_2 = reference_point[idx2]
+        p1_inplane = np.array([p1[idx1] - ref_1, p1[idx2] - ref_2])
+        p2_inplane = np.array([p2[idx1] - ref_1, p2[idx2] - ref_2])
+        rot_matrix = np.array(
+            [
+                [np.cos(k * np.pi / 2), -np.sin(k * np.pi / 2)],
+                [np.sin(k * np.pi / 2), np.cos(k * np.pi / 2)],
+            ]
+        )
+        p1_rot = np.dot(rot_matrix, p1_inplane)
+        p2_rot = np.dot(rot_matrix, p2_inplane)
+        p1[idx1] = ref_1 + p1_rot[0]
+        p1[idx2] = ref_2 + p1_rot[1]
+        p2[idx1] = ref_1 + p2_rot[0]
+        p2[idx2] = ref_2 + p2_rot[1]
+
+        units = list(self.units)
+        if k % 2 == 1:
+            units[idx1], units[idx2] = units[idx2], units[idx1]
+
+        if inplace:
+            self._pmin = np.minimum(p1, p2)
+            self._pmax = np.maximum(p1, p2)
+            return self
+        else:
+            return self.__class__(
+                p1=p1,
+                p2=p2,
+                dims=self.dims,
+                units=units,
+                tolerance_factor=self.tolerance_factor,
+            )
+
     @property
     def mpl(self):
         r"""``matplotlib`` plot.
