@@ -3507,20 +3507,6 @@ def test_numpy_ufunc_single_input(valid_mesh, nvdim, ufunc):
     )
 
 
-# TODO Hans
-def test_numpy_ufunc1(test_field):
-    assert np.allclose(np.sin(test_field).array, np.sin(test_field.array))
-    assert np.sum([test_field, test_field]).allclose(test_field + test_field)
-    assert np.multiply(test_field.a, test_field.b).allclose(test_field.a * test_field.b)
-    assert np.power(test_field.c, 2).allclose(test_field.c**2)
-
-    # test_field contains values of 1e5 and exp of this,produces an overflow
-    field = df.Field(
-        test_field.mesh, nvdim=3, value=lambda _: np.random.random(3) * 2 - 1
-    )
-    assert np.allclose(np.exp(field.orientation).array, np.exp(field.orientation.array))
-
-
 @pytest.mark.parametrize("value, dtype", vfuncs)
 def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     f = df.Field(valid_mesh, nvdim=3, value=value, dtype=dtype)
