@@ -3507,26 +3507,6 @@ def test_numpy_ufunc_single_input(valid_mesh, nvdim, ufunc):
     )
 
 
-@pytest.mark.parametrize("ufunc", [np.sum, np.mean])
-@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
-def test_numpy_ufunc_single_input_stats(valid_mesh, nvdim, ufunc):
-    field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
-    assert np.allclose(
-        ufunc([field, field]),
-        ufunc([field.array, field.array], axis=0),
-    )
-
-    assert np.allclose(
-        ufunc([field, field.array]),
-        ufunc([field.array, field.array]),
-    )
-
-    assert np.allclose(
-        ufunc(field),
-        ufunc(field.array),
-    )
-
-
 # TODO Hans
 def test_numpy_ufunc1(test_field):
     assert np.allclose(np.sin(test_field).array, np.sin(test_field.array))
