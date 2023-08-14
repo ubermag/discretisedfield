@@ -4,6 +4,7 @@ import warnings
 import matplotlib.pyplot as plt
 import numpy as np
 import ubermagutil.units as uu
+from mpl_toolkits.axes_grid1 import Size, make_axes_locatable
 
 import discretisedfield.plotting.util as plot_util
 from discretisedfield.plotting.mpl import Mpl, add_colorwheel
@@ -876,9 +877,9 @@ class MplField(Mpl):
         ax,
         cp,
         colorbar_label,
-        min_height_inches=1.0,
-        min_width_inches=0.2,
-        min_pad_inches=0.2,
+        min_height_inches=2.0,
+        min_width_inches=0.5,
+        min_pad_inches=0.5,
     ):
         """Adds a colorbar to the current plot.
 
@@ -891,63 +892,79 @@ class MplField(Mpl):
         fig = ax.figure
         fig_width_inches, fig_height_inches = fig.get_size_inches()
 
-        # Obtain the position of the main ax
         pos = ax.get_position()
 
-        min_height_norm = min_height_inches / fig_height_inches
+        # relative to ax
+        min_height_norm = min_height_inches / (fig_height_inches * (pos.y1 - pos.y0))
+        # relative to fig
         min_width_norm = min_width_inches / fig_width_inches
         min_pad_norm = min_pad_inches / fig_width_inches
 
         # Calculate pad and width
-        pad_norm = max(0.05, min_pad_norm)
-        width_norm = max(0.05, min_width_norm)
-
-        # Try to determine the height and y-center of existing colorbars
-        # We cannot use the same method twice as adding a colorbar may
-        # change the size/shape of the figure
-        existing_cax_height = None
-        existing_cax_center_y = None
-        for existing_ax in fig.axes:
-            if existing_ax is not ax and hasattr(existing_ax, "_colorbar"):
-                existing_cax_height = existing_ax.get_position().height
-                existing_cax_center_y = (
-                    existing_ax.get_position().y0 + existing_ax.get_position().y1
-                ) / 2
-                break
-
-        # If there's an existing colorbar, match its height and y-centering
-        if existing_cax_height and existing_cax_center_y:
-            cax_height = existing_cax_height
-            cax_center_y = existing_cax_center_y
+        if min_pad_norm > 0.05:
+            pad_h = Size.Fixed(min_pad_inches)
         else:
-            cax_height = max(pos.y1 - pos.y0, min_height_norm)
-            cax_center_y = (pos.y0 + pos.y1) / 2
+            pad_h = Size.AxesX(ax, aspect=0.05)
 
-        cax_y = cax_center_y - (cax_height / 2)
+        if min_width_norm > 0.05:
+            width_h = Size.Fixed(min_width_inches)
+        else:
+            width_h = Size.AxesX(ax, aspect=0.05)
 
-        # Check for existing colorbars to decide x-position
-        # Multiple cbars should be positioned to the right of eachother
-        # Without their lables overlapping
-        figure_width_pixels = fig.get_figwidth() * fig.dpi
-        last_cax_x1 = pos.x1
-        for existing_ax in fig.axes:
-            if existing_ax is not ax:
-                # max_width is in pixels
-                max_width = max(
-                    [
-                        label.get_window_extent().width
-                        for label in existing_ax.get_yticklabels()
-                    ]
-                )
-                # normalise to figure size
-                text_width_norm = max_width / figure_width_pixels
-                last_cax_x1 = max(
-                    last_cax_x1, existing_ax.get_position().x1 + text_width_norm
-                )
+        if min_height_norm > 1:
+            v_aspect = min_height_norm
+        else:
+            v_aspect = 1
 
-        # Create colorbar axis using add_axes
-        cax_position = [last_cax_x1 + pad_norm, cax_y, width_norm, cax_height]
-        cax = fig.add_axes(cax_position)
+        existing_colorbars = [
+            a for a in fig.get_axes() if f"cb_{id(ax)}" in a.get_label()
+        ]
+        # if len(existing_colorbars) > 0:
+        #    text_widths = sum(
+        #        [
+        #            max(
+        #                [
+        #                    label.get_window_extent().width
+        #                    for label in cb.get_yticklabels()
+        #                ]
+        #            )
+        #            for cb in existing_colorbars
+        #        ]
+        #    )
+        #    cbar_widths = sum(
+        #        [cb.get_window_extent().width for cb in existing_colorbars]
+        #    )
+        # else:
+        #    text_widths = 0
+        #    cbar_widths = 0
+
+        # all_text_width_inches = text_widths / fig.dpi
+        # all_cbar_width_inches = cbar_widths / fig.dpi
+
+        divider = make_axes_locatable(ax)
+        # divider = SubplotDivider(fig, 2, 2, 2, aspect=True)
+
+        # axes for colorbar
+        # (the label prevents Axes.add_axes from incorrectly believing that the two
+        # axes are the same)
+        cax = fig.add_axes(
+            divider.get_position(), label=f"cb_{id(ax)}_{len(existing_colorbars)+1}"
+        )
+
+        h = [
+            Size.AxesX(ax),  # main axes
+            *[Size.AxesX(cb) for cb in existing_colorbars],
+            pad_h,  # padding,
+            width_h,  # colorbar
+        ]
+
+        v = [Size.AxesY(ax, aspect=v_aspect)]
+
+        divider.set_horizontal(h)
+        divider.set_vertical(v)
+
+        ax.set_axes_locator(divider.new_locator(nx=0, ny=0))
+        cax.set_axes_locator(divider.new_locator(nx=len(h) - 1, ny=0))
 
         cbar = plt.colorbar(cp, cax=cax)
 
