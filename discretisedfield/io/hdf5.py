@@ -31,24 +31,28 @@ class _MeshIO_HDF5:
         for attr in ["n", "bc"]:
             h5_mesh.attrs[attr] = getattr(self, attr)
 
-        h5_mesh.create_dataset("subregion_names", data=list(self.subregions.keys()))
-        h5_mesh_subregions = h5_mesh.create_dataset(
-            "subregions",
-            (len(self.subregions), 2 * self.region.ndim),
-            dtype=self.region.pmin.dtype,
-        )
-        for i, subregion in enumerate(self.subregions.values()):
-            h5_mesh_subregions[i] = [*subregion.pmin, *subregion.pmax]
+        if len(self.subregions) > 0:
+            h5_mesh.create_dataset("subregion_names", data=list(self.subregions.keys()))
+            h5_mesh_subregions = h5_mesh.create_dataset(
+                "subregions",
+                (len(self.subregions), 2 * self.region.ndim),
+                dtype=self.region.pmin.dtype,
+            )
+            for i, subregion in enumerate(self.subregions.values()):
+                h5_mesh_subregions[i] = [*subregion.pmin, *subregion.pmax]
 
     @classmethod
     def _h5_load(cls, h5_mesh: h5py.Group):
         region = df.Region._h5_load(h5_mesh["region"])
-        subregions = {
-            name.decode("utf-8"): df.Region(
-                p1=data[: region.ndim], p2=data[region.ndim :]
-            )
-            for name, data in zip(h5_mesh["subregion_names"], h5_mesh["subregions"])
-        }
+        if "subregions" in h5_mesh.keys():
+            subregions = {
+                name.decode("utf-8"): df.Region(
+                    p1=data[: region.ndim], p2=data[region.ndim :]
+                )
+                for name, data in zip(h5_mesh["subregion_names"], h5_mesh["subregions"])
+            }
+        else:
+            subregions = {}
         return cls(
             region=region,
             n=h5_mesh.attrs["n"],
@@ -96,8 +100,7 @@ class _FieldIO_HDF5:
 
     def _h5_save_valid(self, h5_field: h5py.Group):
         """Save valid."""
-        h5_field_valid = h5_field.create_dataset("valid", self.mesh.n, dtype=bool)
-        h5_field_valid[:] = self.valid
+        h5_field.create_dataset("valid", data=self.valid, dtype=np.bool_)
 
     def _h5_save_data(self, h5_field_data: h5py.Dataset, location):
         """
