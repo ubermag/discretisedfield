@@ -3808,7 +3808,7 @@ class Field(_FieldIO):
             return None
         else:
             print("Hi")
-            if not np.array_equal(result.shape[:-1], mesh[0].n):
+            if not np.array_equal(result.shape[:-1], self.mesh.n):
                 raise NotImplementedError()
             try:
                 return self.__class__(
