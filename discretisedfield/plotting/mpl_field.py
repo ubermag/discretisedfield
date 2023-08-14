@@ -958,6 +958,13 @@ class MplField(Mpl):
             width_h,  # colorbar
         ]
 
+        # Set the divider to consider the current axis,
+        # previous colorbars, padding and the new colorbar width
+        h = [Size.AxesX(ax)]
+        for _ in range(len(existing_colorbars)):
+            h.extend([pad_h, width_h])
+        h.extend([pad_h, width_h])
+
         v = [Size.AxesY(ax, aspect=v_aspect)]
 
         divider.set_horizontal(h)
