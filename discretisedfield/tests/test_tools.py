@@ -43,7 +43,20 @@ def test_topological_charge(method):
     assert q.mean() > 0
     for absolute in [True, False]:
         Q = dft.topological_charge(f.sel("z"), method=method, absolute=absolute)
-        assert abs(Q) < 1 and abs(Q - 1) < 0.15
+        assert abs(Q - 1) < 0.15
+
+    # Test valid with hald skyrmion
+    f.valid = True
+    f.valid[: f.valid.shape[0] // 2] = False
+
+    q = dft.topological_charge_density(f.sel("z"), method=method)
+
+    assert q.nvdim == 1
+    assert q.mean() > 0
+    assert np.array_equal(q.valid, f.sel("z").valid)
+    for absolute in [True, False]:
+        Q = dft.topological_charge(f.sel("z"), method=method, absolute=absolute)
+        assert abs(Q - 0.5) < 0.15
 
     # Not sliced
     f = df.Field(mesh, nvdim=3, value=(1, 2, 3))

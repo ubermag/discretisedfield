@@ -120,43 +120,49 @@ def topological_charge_density(field, /, method="continuous"):
         return 1 / (4 * np.pi) * of.dot(of.diff(axis1).cross(of.diff(axis2)))
 
     elif method == "berg-luescher":
-        q = df.Field(field.mesh, nvdim=1)
+        q = df.Field(field.mesh, nvdim=1, valid=of.valid)
 
         # Area of a single triangle
         area = 0.5 * field.mesh.cell[0] * field.mesh.cell[1]
 
         for i, j in itertools.product(range(of.mesh.n[0]), range(of.mesh.n[1])):
-            v0 = of.array[i, j]
+            if of.valid[i, j]:
+                v0 = of.array[i, j]
+                # Extract 4 neighbouring vectors (if they exist)
+                v1 = (
+                    of.array[i + 1, j]
+                    if i + 1 < of.mesh.n[0] and of.valid[i + 1, j]
+                    else None
+                )
+                v2 = (
+                    of.array[i, j + 1]
+                    if j + 1 < of.mesh.n[1] and of.valid[i, j + 1]
+                    else None
+                )
+                v3 = of.array[i - 1, j] if i - 1 >= 0 and of.valid[i - 1, j] else None
+                v4 = of.array[i, j - 1] if j - 1 >= 0 and of.valid[i, j - 1] else None
 
-            # Extract 4 neighbouring vectors (if they exist)
-            v1 = of.array[i + 1, j] if i + 1 < of.mesh.n[0] else None
-            v2 = of.array[i, j + 1] if j + 1 < of.mesh.n[1] else None
-            v3 = of.array[i - 1, j] if i - 1 >= 0 else None
-            v4 = of.array[i, j - 1] if j - 1 >= 0 else None
+                charge = 0
+                triangle_count = 0
 
-            charge = 0
-            triangle_count = 0
+                if v1 is not None and v2 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v1, v2)
 
-            if v1 is not None and v2 is not None:
-                triangle_count += 1
-                charge += dfu.bergluescher_angle(v0, v1, v2)
+                if v2 is not None and v3 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v2, v3)
 
-            if v2 is not None and v3 is not None:
-                triangle_count += 1
-                charge += dfu.bergluescher_angle(v0, v2, v3)
+                if v3 is not None and v4 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v3, v4)
 
-            if v3 is not None and v4 is not None:
-                triangle_count += 1
-                charge += dfu.bergluescher_angle(v0, v3, v4)
+                if v4 is not None and v1 is not None:
+                    triangle_count += 1
+                    charge += dfu.bergluescher_angle(v0, v4, v1)
 
-            if v4 is not None and v1 is not None:
-                triangle_count += 1
-                charge += dfu.bergluescher_angle(v0, v4, v1)
-
-            if triangle_count > 0:
-                q.array[i, j] = charge / (area * triangle_count)
-            else:  # the cell has no neighbouring cells
-                q.array[i, j] = 0
+                if triangle_count > 0:
+                    q.array[i, j] = charge / (area * triangle_count)
 
         return q
 
@@ -265,38 +271,11 @@ def topological_charge(field, /, method="continuous", absolute=False):
             f" spatial dimensions, not {field.mesh.region.ndim=}."
         )
 
-    if method == "continuous":
-        q = topological_charge_density(field, method=method)
-        if absolute:
-            return float(abs(q).integrate())
-        else:
-            return float(q.integrate())
-
-    elif method == "berg-luescher":
-        of = field.orientation
-
-        topological_charge = 0
-        for i, j in itertools.product(range(of.mesh.n[0] - 1), range(of.mesh.n[1] - 1)):
-            v1 = of.array[i, j]
-            v2 = of.array[i + 1, j]
-            v3 = of.array[i + 1, j + 1]
-            v4 = of.array[i, j + 1]
-
-            triangle1 = dfu.bergluescher_angle(v1, v2, v4)
-            triangle2 = dfu.bergluescher_angle(v2, v3, v4)
-
-            if absolute:
-                triangle1 = abs(triangle1)
-                triangle2 = abs(triangle2)
-
-            topological_charge += triangle1 + triangle2
-
-        return topological_charge
-
+    q = topological_charge_density(field, method=method)
+    if absolute:
+        return float(abs(q).integrate())
     else:
-        raise ValueError(
-            f"'method' can be either 'continuous' or 'berg-luescher', not '{method}'."
-        )
+        return float(q.integrate())
 
 
 def emergent_magnetic_field(field):
