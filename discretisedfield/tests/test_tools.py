@@ -42,7 +42,6 @@ def test_topological_charge(method):
     assert q.nvdim == 1
     assert q.mean() > 0
     for absolute in [True, False]:
-        print(test_filename)
         Q = dft.topological_charge(f.sel("z"), method=method, absolute=absolute)
         assert abs(Q - 1) < 0.15
 
