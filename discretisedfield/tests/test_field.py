@@ -1765,9 +1765,9 @@ def test_diff_pbc():
 
     # PBC
     f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
-    assert np.allclose(f.diff("x", periodic_bc=True)((11, 1, 1)), -2)
-    assert np.allclose(f.diff("y", periodic_bc=True)((1, 7, 1)), -1)
-    assert np.allclose(f.diff("z", periodic_bc=True)((1, 1, 5)), -0.5)
+    assert np.allclose(f.diff("x")((11, 1, 1)), -2)
+    assert np.allclose(f.diff("y")((1, 7, 1)), -1)
+    assert np.allclose(f.diff("z")((1, 1, 5)), -0.5)
 
     # Vector field
     def value_fun(point):
@@ -1782,9 +1782,9 @@ def test_diff_pbc():
 
     # PBC
     f = df.Field(mesh_pbc, nvdim=3, value=value_fun)
-    assert np.allclose(f.diff("x", periodic_bc=True)((11, 1, 1)), (-2, -2, -2))
-    assert np.allclose(f.diff("y", periodic_bc=True)((1, 7, 1)), (-1, -1, -1))
-    assert np.allclose(f.diff("z", periodic_bc=True)((1, 1, 5)), (-0.5, -0.5, -0.5))
+    assert np.allclose(f.diff("x")((11, 1, 1)), (-2, -2, -2))
+    assert np.allclose(f.diff("y")((1, 7, 1)), (-1, -1, -1))
+    assert np.allclose(f.diff("z")((1, 1, 5)), (-0.5, -0.5, -0.5))
 
     # Higher order derivatives
     def value_fun(point):
@@ -1795,7 +1795,7 @@ def test_diff_pbc():
     assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
     f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
-    assert np.allclose(f.diff("x", order=2, periodic_bc=True)((1, 1, 1)), 32)
+    assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 32)
 
 
 def test_diff_single_cell():

@@ -2205,7 +2205,7 @@ class Field(_FieldIO):
             vdim_mapping=self.vdim_mapping,
         )
 
-    def diff(self, direction, order=1, restrict2valid=True, periodic_bc=False):
+    def diff(self, direction, order=1, restrict2valid=True):
         """Directional derivative.
 
         This method computes a directional derivative of the field and returns
@@ -2232,8 +2232,7 @@ class Field(_FieldIO):
         Computing of the directional derivative depends
         strongly on the boundary condition specified. In this method,
         only periodic boundary conditions at the edges of the region
-        are supported. To enable periodic boundary conditions, set ``periodic_bc`` to
-        ``True``.
+        are supported. To enable periodic boundary conditions, set ``mesh.bc``.
 
         Parameters
         ----------
@@ -2252,10 +2251,6 @@ class Field(_FieldIO):
             the directional derivative is computed across the whole field.
             The default value is ``True``.
 
-        periodic_bc : bool
-
-            If ``True``, the directional derivative is computed using periodic
-            boundary conditions at the edges of the region.
 
         Returns
         -------
@@ -2336,8 +2331,8 @@ class Field(_FieldIO):
 
         direction_idx = self.mesh.region._dim2index(direction)
 
-        # If periodic is True, we pad the field
-        if periodic_bc:
+        # If direction is periodic pad the field
+        if direction in self.mesh.bc:
             field = self.pad({direction: (1, 1)}, mode="wrap")
         else:
             field = self
@@ -2367,7 +2362,7 @@ class Field(_FieldIO):
                 )
 
         # Remove the padding if periodic is True
-        if periodic_bc:
+        if direction in self.mesh.bc:
             slices = field.mesh.region2slices(self.mesh.region)
             out = out[slices]
 
