@@ -3812,7 +3812,7 @@ class Field(_FieldIO):
                 raise NotImplementedError()
             try:
                 return self.__class__(
-                    mesh[0],
+                    self.mesh,
                     nvdim=result.shape[-1],
                     value=result,
                     vdims=self.vdims,
