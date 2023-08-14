@@ -3807,7 +3807,6 @@ class Field(_FieldIO):
         elif method == "at":
             return None
         else:
-            print("Hi")
             if not np.array_equal(result.shape[:-1], self.mesh.n):
                 raise NotImplementedError()
             try:
