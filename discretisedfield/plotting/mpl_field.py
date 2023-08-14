@@ -919,27 +919,6 @@ class MplField(Mpl):
         existing_colorbars = [
             a for a in fig.get_axes() if f"cb_{id(ax)}" in a.get_label()
         ]
-        # if len(existing_colorbars) > 0:
-        #    text_widths = sum(
-        #        [
-        #            max(
-        #                [
-        #                    label.get_window_extent().width
-        #                    for label in cb.get_yticklabels()
-        #                ]
-        #            )
-        #            for cb in existing_colorbars
-        #        ]
-        #    )
-        #    cbar_widths = sum(
-        #        [cb.get_window_extent().width for cb in existing_colorbars]
-        #    )
-        # else:
-        #    text_widths = 0
-        #    cbar_widths = 0
-
-        # all_text_width_inches = text_widths / fig.dpi
-        # all_cbar_width_inches = cbar_widths / fig.dpi
 
         divider = make_axes_locatable(ax)
         # divider = SubplotDivider(fig, 2, 2, 2, aspect=True)
@@ -948,30 +927,30 @@ class MplField(Mpl):
         # (the label prevents Axes.add_axes from incorrectly believing that the two
         # axes are the same)
         cax = fig.add_axes(
-            divider.get_position(), label=f"cb_{id(ax)}_{len(existing_colorbars)+1}"
+            divider.get_position(), label=f"cb_{id(ax)}_{len(existing_colorbars)}"
         )
-
-        h = [
-            Size.AxesX(ax),  # main axes
-            *[Size.AxesX(cb) for cb in existing_colorbars],
-            pad_h,  # padding,
-            width_h,  # colorbar
-        ]
 
         # Set the divider to consider the current axis,
         # previous colorbars, padding and the new colorbar width
-        h = [Size.AxesX(ax)]
-        for _ in range(len(existing_colorbars)):
-            h.extend([pad_h, width_h])
-        h.extend([pad_h, width_h])
+        if len(existing_colorbars) == 0:
+            h = [Size.AxesX(ax), pad_h, width_h]
+            divider.set_horizontal(h)
+        else:
+            divider.new_horizontal(pad_h, pack_start=False)
+            divider.new_horizontal(width_h, pack_start=False)
 
         v = [Size.AxesY(ax, aspect=v_aspect)]
 
-        divider.set_horizontal(h)
+        # divider.set_horizontal(h)
         divider.set_vertical(v)
 
         ax.set_axes_locator(divider.new_locator(nx=0, ny=0))
-        cax.set_axes_locator(divider.new_locator(nx=len(h) - 1, ny=0))
+
+        for i, cb in enumerate(existing_colorbars):
+            cb.set_axes_locator(divider.new_locator(nx=2 * (i + 1), ny=0))
+        cax.set_axes_locator(
+            divider.new_locator(nx=2 * (len(existing_colorbars) + 1), ny=0)
+        )
 
         cbar = plt.colorbar(cp, cax=cax)
 
