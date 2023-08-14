@@ -1004,15 +1004,6 @@ class Field(_FieldIO):
 
         if self.vdims is not None:
             dirlist += self.vdims
-        if self.nvdim == 1:
-            need_removing = ["div", "curl", "orientation"]
-        if self.nvdim == 2:
-            need_removing = ["grad", "curl", "k3d"]
-        if self.nvdim == 3:
-            need_removing = ["grad"]
-
-        for attr in need_removing:
-            dirlist.remove(attr)
 
         return dirlist
 
