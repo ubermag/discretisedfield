@@ -28,3 +28,4 @@ jobs:
           debug: false
           review_simple_changes: true
           openai_light_model: 'gpt-3.5-turbo'
+          openai_heavy_model: 'gpt-3.5-turbo'
