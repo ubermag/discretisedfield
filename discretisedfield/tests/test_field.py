@@ -893,15 +893,15 @@ def test_get_attribute_exception(mesh_3d):
         assert "has no attribute" in str(excinfo.value)
 
 
-# TODO Check and update (Martin and Sam, low priority)
 def test_dir(valid_mesh):
+    # Not testing component labels as this is already tested for in
+    # test_field_component
+
     f = df.Field(valid_mesh, nvdim=3, value=(5, 6, -9))
-    assert all(attr in dir(f) for attr in ["x", "y", "z", "div"])
-    assert "grad" not in dir(f)
+    assert all(attr in dir(f) for attr in ["x", "y", "z"])
 
     f = df.Field(valid_mesh, nvdim=1, value=1)
-    assert all(attr not in dir(f) for attr in ["x", "y", "z", "div"])
-    assert "grad" in dir(f)
+    assert all(attr not in dir(f) for attr in ["x", "y", "z"])
 
 
 def test_eq():
@@ -1765,9 +1765,9 @@ def test_diff_pbc():
 
     # PBC
     f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
-    assert np.allclose(f.diff("x", periodic_bc=True)((11, 1, 1)), -2)
-    assert np.allclose(f.diff("y", periodic_bc=True)((1, 7, 1)), -1)
-    assert np.allclose(f.diff("z", periodic_bc=True)((1, 1, 5)), -0.5)
+    assert np.allclose(f.diff("x")((11, 1, 1)), -2)
+    assert np.allclose(f.diff("y")((1, 7, 1)), -1)
+    assert np.allclose(f.diff("z")((1, 1, 5)), -0.5)
 
     # Vector field
     def value_fun(point):
@@ -1782,9 +1782,9 @@ def test_diff_pbc():
 
     # PBC
     f = df.Field(mesh_pbc, nvdim=3, value=value_fun)
-    assert np.allclose(f.diff("x", periodic_bc=True)((11, 1, 1)), (-2, -2, -2))
-    assert np.allclose(f.diff("y", periodic_bc=True)((1, 7, 1)), (-1, -1, -1))
-    assert np.allclose(f.diff("z", periodic_bc=True)((1, 1, 5)), (-0.5, -0.5, -0.5))
+    assert np.allclose(f.diff("x")((11, 1, 1)), (-2, -2, -2))
+    assert np.allclose(f.diff("y")((1, 7, 1)), (-1, -1, -1))
+    assert np.allclose(f.diff("z")((1, 1, 5)), (-0.5, -0.5, -0.5))
 
     # Higher order derivatives
     def value_fun(point):
@@ -1795,7 +1795,7 @@ def test_diff_pbc():
     assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 2)
 
     f = df.Field(mesh_pbc, nvdim=1, value=value_fun)
-    assert np.allclose(f.diff("x", order=2, periodic_bc=True)((1, 1, 1)), 32)
+    assert np.allclose(f.diff("x", order=2)((1, 1, 1)), 32)
 
 
 def test_diff_single_cell():

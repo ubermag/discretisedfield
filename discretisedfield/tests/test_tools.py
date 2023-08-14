@@ -43,7 +43,20 @@ def test_topological_charge(method):
     assert q.mean() > 0
     for absolute in [True, False]:
         Q = dft.topological_charge(f.sel("z"), method=method, absolute=absolute)
-        assert abs(Q) < 1 and abs(Q - 1) < 0.15
+        assert abs(Q - 1) < 0.15
+
+    # Test valid with hald skyrmion
+    f.valid = True
+    f.valid[: f.valid.shape[0] // 2] = False
+
+    q = dft.topological_charge_density(f.sel("z"), method=method)
+
+    assert q.nvdim == 1
+    assert q.mean() > 0
+    assert np.array_equal(q.valid, f.sel("z").valid)
+    for absolute in [True, False]:
+        Q = dft.topological_charge(f.sel("z"), method=method, absolute=absolute)
+        assert abs(Q - 0.5) < 0.15
 
     # Not sliced
     f = df.Field(mesh, nvdim=3, value=(1, 2, 3))
@@ -64,56 +77,95 @@ def test_topological_charge(method):
             getattr(dft, function)(f.sel("z"), method="wrong")
 
 
-def test_emergent_magnetic_field():
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    cell = (2, 2, 2)
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_emergent_magnetic_field(ndim, nvdim):
+    p1 = (0,) * ndim
+    p2 = (10,) * ndim
+    cell = (2,) * ndim
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
 
     # f(x, y, z) = (0, 0, 0)
     # -> F(f) = 0
-    f = df.Field(mesh, nvdim=3, value=(0, 0, 0))
+    f = df.Field(mesh, nvdim=nvdim)
 
-    assert dft.emergent_magnetic_field(f).nvdim == 3
-    assert np.allclose(dft.emergent_magnetic_field(f).mean(), (0, 0, 0))
+    if ndim != 3 or nvdim != 3:
+        with pytest.raises(ValueError):
+            dft.emergent_magnetic_field(f)
+    else:
+        assert dft.emergent_magnetic_field(f).nvdim == 3
+        assert np.allclose(dft.emergent_magnetic_field(f).mean(), (0, 0, 0))
+
+
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_neighbouring_cell_angle(ndim, nvdim):
+    p1 = (0,) * ndim
+    p2 = (100,) * ndim
+    n = (10,) * ndim
+    value = (1,) * nvdim
+    region = df.Region(p1=p1, p2=p2, dims=[f"g{i}" for i in range(1, ndim + 1)])
+    mesh = df.Mesh(region=region, n=n)
+    field = df.Field(mesh, nvdim=nvdim, value=value)
+
+    # Exception
+    if nvdim != 3:
+        with pytest.raises(ValueError):
+            dft.neighbouring_cell_angle(field, direction="g1")
+        return
 
     with pytest.raises(ValueError):
-        dft.emergent_magnetic_field(f.x)
+        dft.neighbouring_cell_angle(field, direction="x")
 
+    with pytest.raises(ValueError):
+        dft.neighbouring_cell_angle(field, direction="g1", units="wrong")
 
-def test_neigbouring_cell_angle():
-    p1 = (0, 0, 0)
-    p2 = (100, 100, 100)
-    n = (10, 10, 10)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
-
-    for direction in "xyz":
+    for direction in field.mesh.region.dims:
         for units in ["rad", "deg"]:
-            sa = dft.neigbouring_cell_angle(field, direction=direction, units=units)
+            sa = dft.neighbouring_cell_angle(field, direction=direction, units=units)
             assert sa.mean() == 0
 
-    # Exceptions
-    scalar_field = df.Field(mesh, nvdim=1, value=5)
-    with pytest.raises(ValueError):
-        dft.neigbouring_cell_angle(scalar_field, direction="x")
+    # Check for a value of angle
+    arr_x_coord = mesh.coordinate_field().g1.array
+    arr = np.concatenate(
+        [
+            np.full((*mesh.n, 1), 0),
+            np.cos(arr_x_coord * np.pi / 20),
+            np.sin(arr_x_coord * np.pi / 20),
+        ],
+        axis=-1,
+    )
+    fied_piby2 = df.Field(mesh, nvdim=3, value=arr)
+    assert np.isclose(
+        dft.neighbouring_cell_angle(fied_piby2, direction="g1", units="rad").mean(),
+        np.pi / 2,
+    )
 
-    with pytest.raises(ValueError):
-        dft.neigbouring_cell_angle(field, direction="l")
 
-    with pytest.raises(ValueError):
-        dft.neigbouring_cell_angle(field, direction="x", units="wrong")
-
-
-def test_max_neigbouring_cell_angle():
-    p1 = (0, 0, 0)
-    p2 = (100, 100, 100)
-    n = (10, 10, 10)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+def test_max_neighbouring_cell_angle(ndim):
+    p1 = (0,) * ndim
+    p2 = (100,) * ndim
+    n = (10,) * ndim
+    regoin = df.Region(p1=p1, p2=p2, dims=[f"g{i}" for i in range(1, ndim + 1)])
+    mesh = df.Mesh(region=regoin, n=n)
     field = df.Field(mesh, nvdim=3, value=(0, 1, 0))
 
     for units in ["rad", "deg"]:
-        assert dft.max_neigbouring_cell_angle(field, units=units).mean() == 0
+        assert dft.max_neighbouring_cell_angle(field, units=units).mean() == 0
+
+    # Check for a value of max angle
+    def val(point):
+        g1, *_ = point
+        if g1 < 50:
+            return (0, 0, 1)
+        else:
+            return (0, 0, -1)
+
+    field.update_field_values(val)
+
+    # Here the mean is 2*pi/10 because 2 cells will have pi values
+    assert np.isclose(dft.max_neighbouring_cell_angle(field).mean(), 2 * np.pi / 10)
 
 
 def test_count_lange_cell_angle_regions():
@@ -135,19 +187,30 @@ def test_count_lange_cell_angle_regions():
     assert dft.count_large_cell_angle_regions(field, min_angle=1) == 1
 
 
-def test_count_bps():
+@pytest.mark.parametrize("ndim", [1, 2, 3, 4])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_count_bps(ndim, nvdim):
     # TODO use BP field from file
-    p1 = (0, 0, 0)
-    p2 = (10, 10, 10)
-    n = (10, 10, 10)
-    mesh = df.Mesh(p1=p1, p2=p2, n=n)
-    field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
+    p1 = (0,) * ndim
+    p2 = (10,) * ndim
+    n = (10,) * ndim
+    value = (1,) * nvdim
+    dims = [f"g{i}" for i in range(ndim)]
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    mesh = df.Mesh(region=region, n=n)
+    field = df.Field(mesh, nvdim=nvdim, value=value)
 
-    result = dft.count_bps(field)
-    assert result["bp_number"] == 0
-    assert result["bp_number_hh"] == 0
-    assert result["bp_number_tt"] == 0
-    assert result["bp_pattern_x"] == "[[0.0, 10]]"
+    if ndim != 3 or nvdim != 3:
+        with pytest.raises(ValueError):
+            dft.count_bps(field, "g1")
+    else:
+        with pytest.raises(ValueError):
+            dft.count_bps(field, "wrong")
+        result = dft.count_bps(field, "g1")
+        assert result["bp_number"] == 0
+        assert result["bp_number_hh"] == 0
+        assert result["bp_number_tt"] == 0
+        assert result["bp_pattern_g1"] == "[[0.0, 10]]"
 
 
 def test_demag_tensor():

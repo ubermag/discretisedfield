@@ -1438,8 +1438,8 @@ class Mesh(_MeshIO):
         array([12, 12, 11])
 
         """
-        pmin = self.region.pmin.astype(float)
-        pmax = self.region.pmax.astype(float)
+        pmin = self.region.pmin.copy().astype(float)
+        pmax = self.region.pmax.copy().astype(float)
         # Convert to np.ndarray to allow operations on them.
         for direction in pad_width.keys():
             axis = self.region._dim2index(direction)
@@ -2154,7 +2154,12 @@ class Mesh(_MeshIO):
 
         """
 
-        field = df.Field(self, nvdim=self.region.ndim)
+        field = df.Field(
+            self,
+            nvdim=self.region.ndim,
+            vdims=self.region.dims,
+            vdim_mapping=dict(zip(self.region.dims, self.region.dims)),
+        )
         for i, dim in enumerate(self.region.dims):
             points = self.points  # avoid re-computing points
             field.array[..., i] = getattr(points, dim).reshape(
