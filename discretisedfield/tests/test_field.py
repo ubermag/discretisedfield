@@ -3679,18 +3679,40 @@ def test_complex(test_field):
     assert df.Field(mesh, nvdim=1, value=np.pi / 4).allclose(field.phase)
 
 
-# TODO Hans
-def test_numpy_ufunc(test_field):
-    assert np.allclose(np.sin(test_field).array, np.sin(test_field.array))
-    assert np.sum([test_field, test_field]).allclose(test_field + test_field)
-    assert np.multiply(test_field.a, test_field.b).allclose(test_field.a * test_field.b)
-    assert np.power(test_field.c, 2).allclose(test_field.c**2)
+# TODO: Test at method, multiple np array
+@pytest.mark.parametrize("ufunc", [np.add, np.multiply, np.power])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_numpy_ufunc_two_input(valid_mesh, nvdim, ufunc):
+    field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
 
-    # test_field contains values of 1e5 and exp of this,produces an overflow
-    field = df.Field(
-        test_field.mesh, nvdim=3, value=lambda _: np.random.random(3) * 2 - 1
+    # Test with another field
+    assert np.allclose(
+        ufunc(field, field).array,
+        ufunc(field.array, field.array),
     )
-    assert np.allclose(np.exp(field.orientation).array, np.exp(field.orientation.array))
+
+    # Test with a scalar
+    assert np.allclose(
+        ufunc(field, 2).array,
+        ufunc(field.array, 2),
+    )
+
+    # Test with an ndarray
+    array = np.array(range(nvdim))
+    assert np.allclose(
+        ufunc(field, array).array,
+        ufunc(field.array, array),
+    )
+
+
+@pytest.mark.parametrize("ufunc", [np.sin, np.exp])
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_numpy_ufunc_single_input(valid_mesh, nvdim, ufunc):
+    field = df.Field(valid_mesh, nvdim=nvdim, value=tuple(range(nvdim)))
+    assert np.allclose(
+        ufunc(field).array,
+        ufunc(field.array),
+    )
 
 
 @pytest.mark.parametrize("value, dtype", vfuncs)

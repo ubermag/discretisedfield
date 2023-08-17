@@ -3930,12 +3930,12 @@ class Field(_FieldIO):
         # https://numpy.org/doc/stable/reference/generated/numpy.lib.mixins.NDArrayOperatorsMixin.html#numpy.lib.mixins.NDArrayOperatorsMixin
         for x in inputs:
             if not isinstance(x, (Field, np.ndarray, numbers.Number)):
-                return NotImplemented
+                raise NotImplementedError()
         out = kwargs.get("out", ())
         if out:
             for x in out:
                 if not isinstance(x, Field):
-                    return NotImplemented
+                    raise NotImplementedError()
 
         mesh = [x.mesh for x in inputs if isinstance(x, Field)]
         inputs = tuple(x.array if isinstance(x, Field) else x for x in inputs)
@@ -3945,27 +3945,35 @@ class Field(_FieldIO):
         result = getattr(ufunc, method)(*inputs, **kwargs)
         if isinstance(result, tuple):
             if len(result) != len(mesh):
-                raise ValueError("wrong number of Field objects")
-            return tuple(
-                self.__class__(
-                    m,
-                    nvdim=x.shape[-1],
-                    value=x,
-                    vdims=self.vdims,
-                    vdim_mapping=self.vdim_mapping,
+                raise NotImplementedError()
+            try:
+                return tuple(
+                    self.__class__(
+                        m,
+                        nvdim=x.shape[-1],
+                        value=x,
+                        vdims=self.vdims,
+                        vdim_mapping=self.vdim_mapping,
+                    )
+                    for x, m in zip(result, mesh)
                 )
-                for x, m in zip(result, mesh)
-            )
+            except Exception:
+                raise NotImplementedError()
         elif method == "at":
             return None
         else:
-            return self.__class__(
-                mesh[0],
-                nvdim=result.shape[-1],
-                value=result,
-                vdims=self.vdims,
-                vdim_mapping=self.vdim_mapping,
-            )
+            if not np.array_equal(result.shape[:-1], self.mesh.n):
+                raise NotImplementedError()
+            try:
+                return self.__class__(
+                    self.mesh,
+                    nvdim=result.shape[-1],
+                    value=result,
+                    vdims=self.vdims,
+                    vdim_mapping=self.vdim_mapping,
+                )
+            except Exception:
+                raise NotImplementedError()
 
     def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.
