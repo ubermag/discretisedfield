@@ -3151,10 +3151,11 @@ def test_mpl(test_field):
     plt.close("all")
 
 
-def test_mpl_dimension(valid_mesh):
-    field = df.Field(valid_mesh, nvdim=1)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
 
-    if valid_mesh.region.ndim != 2:
+    if valid_mesh.region.ndim != 2 or nvdim not in [1, 3]:
         with pytest.raises(RuntimeError):
             field.mpl.scalar()
     else:
