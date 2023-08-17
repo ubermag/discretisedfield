@@ -2985,6 +2985,19 @@ def test_mpl_scalar(test_field):
     plt.close("all")
 
 
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_scalar(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2 or nvdim != 1:
+        with pytest.raises(RuntimeError):
+            field.mpl.scalar()
+    else:
+        field.mpl.scalar()
+
+    plt.close("all")
+
+
 def test_mpl_lightess(test_field):
     filenames = ["skyrmion.omf", "skyrmion-disk.omf"]
     for i in filenames:
