@@ -3438,7 +3438,7 @@ class Field(_FieldIO):
                 component_array = vns.numpy_to_vtk(
                     getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
                 )
-                component_array.SetName(f"{comp}-component")
+                component_array.SetName(f"{comp}")
                 cell_data.AddArray(component_array)
         field_array = vns.numpy_to_vtk(
             self.array.transpose((2, 1, 0, 3)).reshape((-1, self.nvdim))

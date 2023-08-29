@@ -17,7 +17,7 @@ class PyVistaMesh:
         if self.mesh.region.ndim != 3:
             raise RuntimeError(
                 "Only meshes with 3 spatial dimensions can be plotted not"
-                f" {self.data.mesh.region.ndim=}."
+                f" {self.mesh.region.ndim=}."
             )
 
         if plot is None:
@@ -59,6 +59,8 @@ class PyVistaMesh:
 
         if plot is None:
             plotter = pv.Plotter()
+        else:
+            plotter = plot
 
         multiplier = self._setup_multiplier(multiplier)
 
