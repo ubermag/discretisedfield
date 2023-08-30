@@ -3492,6 +3492,11 @@ class Field(_FieldIO):
         return dfp.K3dField(self)
 
     @property
+    def pyvista(self):
+        """Plot interface, k3d based."""
+        return dfp.PyVistaField(self)
+
+    @property
     def hv(self):
         """Plot interface, Holoviews/hvplot based.
 
