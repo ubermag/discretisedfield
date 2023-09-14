@@ -878,8 +878,8 @@ class MplField(Mpl):
         cp,
         colorbar_label,
         min_height_inches=2.0,
-        min_width_inches=0.5,
-        min_pad_inches=0.5,
+        min_width_inches=0.35,
+        min_pad_inches=0.1,
     ):
         """Adds a colorbar to the current plot.
 
