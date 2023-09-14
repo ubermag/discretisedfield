@@ -2933,6 +2933,22 @@ def test_rfft_no_shift_last_dim():
     assert np.array_equal(field_ft.array[..., 0], ft)
 
 
+def test_1d_fft():
+    mesh = df.Mesh(p1=0, p2=10, cell=2)
+    f = mesh.coordinate_field()
+    field_ft = f.fftn()
+    expected_array = np.array(
+        [
+            -5.0 - 1.62459848j,
+            -5.0 - 6.8819096j,
+            25.0 - 0.0j,
+            -5.0 + 6.8819096j,
+            -5.0 + 1.62459848j,
+        ]
+    )
+    assert np.allclose(expected_array, field_ft.array.flatten())
+
+
 def test_mpl_scalar(test_field):
     # No axes
     for comp in test_field.vdims:
