@@ -17,10 +17,10 @@ def interact(**kwargs):
     >>> p2 = (50e-9, 50e-9, 50e-9)
     >>> n = (10, 10, 10)
     >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), n=n)
-    >>> field = df.Field(mesh, dim=3, value=(1, 2, 0))
+    >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
     >>> @df.interact(x=field.mesh.slider('x')) # doctest: +SKIP
     ... def myplot(x):
-    ...     field.plane(x=x).mpl()
+    ...     field.sel(x=x).mpl()
     interactive(...)
 
     """

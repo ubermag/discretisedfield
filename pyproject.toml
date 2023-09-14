@@ -38,14 +38,14 @@ classifiers = [
 dependencies = [
     "ubermagutil>=0.63.0",
     "pandas>=1.1",
-    "matplotlib>=3.3",
+    "matplotlib>=3.3, !=3.7.2",
     "jupyterlab~=3.0",
     "h5py>=3.1",
     "k3d>=2.11",
     "scipy>=1.6",
     "sympy>=1.10.1",
     "jinja2",
-    "vtk",
+    "vtk>=9.1",
     "xarray",
     "hvplot"
 ]

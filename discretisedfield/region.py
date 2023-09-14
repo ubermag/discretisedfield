@@ -21,15 +21,22 @@ class Region(_RegionIO):
 
     Parameters
     ----------
-    p1 / p2 : (3,) array_like
+    p1 / p2 : array_like
 
-        Diagonally-opposite corner points of the region :math:`\mathbf{p}_i =
-        (p_x, p_y, p_z)`.
+        Diagonally-opposite corner points of the region, for example in three
+        dimensions :math:`\mathbf{p}_i = (p_x, p_y, p_z)`.
 
-    unit : str, optional
+    dims : array_like of str, optional
 
-        Physical unit of the region. This is mainly used for labelling plots.
-        Defaults to ``m``.
+        Name of the respective geometrical dimensions of the region.
+
+        Up to three dimensions, this defaults to ``x``, ``y``, and ``z``. For more than
+        three dimensions, it defaults to ``x1``, ``x2``, ``x3``, ``x4``, etc.
+
+    units : array_like of str, optional
+
+        Physical units of the region. This is mainly used for labelling plots.
+        Defaults to ``m`` for all the dimensions.
 
     tolerance_factor : float, optional
 
@@ -136,10 +143,10 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Point with minimum coordinates :math:`(p_x^\text{min},
-            p_y^\text{min}, p_z^\text{min})`.
+            Point with minimum coordinates. E.g. for three dimensions
+            :math:`(p_x^\text{min}, p_y^\text{min}, p_z^\text{min})`.
 
         Examples
         --------
@@ -169,10 +176,10 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Point with maximum coordinates :math:`(p_x^\text{max},
-            p_y^\text{max}, p_z^\text{max})`.
+            Point with maximum coordinates. E.g. for three dimensions
+            :math:`(p_x^\text{max}, p_y^\text{max}, p_z^\text{max})`.
 
         Examples
         --------
@@ -364,9 +371,9 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-             Edge lengths :math:`(l_{x}, l_{y}, l_{z})`.
+             Edge lengths. E.g. in three dimensions :math:`(l_{x}, l_{y}, l_{z})`.
 
         Examples
         --------
@@ -398,9 +405,9 @@ class Region(_RegionIO):
 
         Returns
         -------
-        numpy.ndarray (3,)
+        numpy.ndarray
 
-            Center point :math:`(p_c^x, p_c^y, p_c^z)`.
+            Center point. E.g. in three dimensions :math:`(p_c^x, p_c^y, p_c^z)`.
 
         Examples
         --------
@@ -426,7 +433,8 @@ class Region(_RegionIO):
     def volume(self):
         r"""Region's volume.
 
-        It is computed by multiplying edge lengths of the region:
+        It is computed by multiplying edge lengths of the region.
+        E.g. in three dimensions
 
         .. math::
 
@@ -556,7 +564,7 @@ class Region(_RegionIO):
         atol : numbers.Number, optional
 
             Absolute tolerance. If ``None``, the default value is
-            the smallest edge length of the region multipled by
+            the smallest edge length of the region multiplied by
             the tolerance factor.
 
         rtol : numbers.Number, optional
@@ -572,7 +580,7 @@ class Region(_RegionIO):
 
         Examples
         --------
-        1. Usage of relational operator ``==``.
+        1. Usage of ``allclose`` method.
 
         >>> import discretisedfield as df
         ...
@@ -616,7 +624,7 @@ class Region(_RegionIO):
         .. math::
 
             p^\\text{min}_{i} \\le p_{i} \\le p^\\text{max}_{i}, \\text{for}\\,
-            i = x, y, z.
+            i in dims.
 
         Similarly, if the second operand is ``discretisedfield.Region`` object,
         it is considered to be in the region if both its ``pmin`` and ``pmax``
@@ -624,10 +632,10 @@ class Region(_RegionIO):
 
         Parameters
         ----------
-        other : (3,) array_like or discretisedfield.Region
+        other : array_like or discretisedfield.Region
 
-            The point coordinate :math:`(p_{x}, p_{y}, p_{z})` or a region
-            object.
+            The point coordinate (E.g. in three dimensions
+            :math:`(p_{x}, p_{y}, p_{z})`) or a region object.
 
         Returns
         -------
@@ -701,7 +709,7 @@ class Region(_RegionIO):
 
         Returns
         -------
-        tuple : (3,)
+        tuple : (ndims,)
 
             The first element is the axis facing surfaces are perpendicular to.
             If we start moving along that axis (e.g. from minus infinity) the
@@ -796,9 +804,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale(5)
         >>> res.pmin
-        array([-20, -20, -20])
+        array([-20., -20., -20.])
         >>> res.pmax
-        array([30, 30, 30])
+        array([30., 30., 30.])
 
         2. Scale the region inplace.
 
@@ -809,9 +817,9 @@ class Region(_RegionIO):
         >>> region.scale(5, inplace=True)
         Region(...)
         >>> region.pmin
-        array([-50, -50, -50])
+        array([-50., -50., -50.])
         >>> region.pmax
-        array([50, 50, 50])
+        array([50., 50., 50.])
 
         3. Scale region with different factors along different directions.
 
@@ -821,9 +829,9 @@ class Region(_RegionIO):
         >>> region = df.Region(p1=p1, p2=p2)
         >>> res = region.scale((2, 3, 4))
         >>> res.pmin
-        array([ -5, -10, -15])
+        array([ -5., -10., -15.])
         >>> res.pmax
-        array([15, 20, 25])
+        array([15., 20., 25.])
 
         """
         if isinstance(factor, numbers.Real):
@@ -958,6 +966,119 @@ class Region(_RegionIO):
                 p2=np.add(self.pmax, vector),
                 dims=self.dims,
                 units=self.units,
+                tolerance_factor=self.tolerance_factor,
+            )
+
+    def rotate90(self, ax1, ax2, k=1, reference_point=None, inplace=False):
+        """Rotate region by 90 degrees.
+
+        Rotate the region ``k`` times by 90 degrees in the plane defined by ``ax1`` and
+        ``ax2``. The rotation direction is from ``ax1`` to ``ax2``, the two must be
+        different.
+
+        Parameters
+        ----------
+        ax1 : str
+
+            Name of the first dimension.
+
+        ax2 : str
+
+            Name of the second dimension.
+
+        k : int, optional
+
+            Number of 90° rotations, defaults to 1.
+
+        reference_point : array_like, optional
+
+            Point around which the region is rotated. If not provided the region's
+            centre point is used.
+
+        inplace : bool, optional
+
+            If ``True``, the rotation is applied in-place. Defaults to ``False``.
+
+        Returns
+        -------
+        discretisedfield.Region
+
+            The rotated region object. Either a new object or a reference to the
+            existing region for ``inplace=True``.
+
+        Examples
+        --------
+
+        >>> import discretisedfield as df
+        >>> import numpy as np
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 8, 6)
+        >>> region = df.Region(p1=p1, p2=p2)
+        >>> rotated = region.rotate90('x', 'y')
+        >>> rotated.pmin
+        array([ 1., -1.,  0.])
+        >>> rotated.pmax
+        array([9., 9., 6.])
+
+        See also
+        --------
+        :py:func:`~discretisedfield.Mesh.rotate90`
+        :py:func:`~discretisedfield.Field.rotate90`
+
+        """
+        if ax1 == ax2:
+            raise ValueError(f"{ax1=} and {ax2=} must have different values.")
+        if not isinstance(k, int):
+            raise TypeError(f"k must be an integer, not {type(k)=}.")
+
+        if reference_point is None:
+            reference_point = self.centre
+        elif not isinstance(reference_point, (tuple, list, np.ndarray)):
+            raise TypeError(
+                f"reference_point must be array_like, not {type(reference_point)=}."
+            )
+        elif len(reference_point) != self.ndim:
+            raise ValueError(
+                f"reference_point must have length {self.ndim}, not"
+                f" {len(reference_point)=}."
+            )
+
+        idx1 = self._dim2index(ax1)
+        idx2 = self._dim2index(ax2)
+        p1 = self.pmin.copy().astype("float")
+        p2 = self.pmax.copy().astype("float")
+
+        ref_1 = reference_point[idx1]
+        ref_2 = reference_point[idx2]
+        p1_inplane = np.array([p1[idx1] - ref_1, p1[idx2] - ref_2])
+        p2_inplane = np.array([p2[idx1] - ref_1, p2[idx2] - ref_2])
+        rot_matrix = np.array(
+            [
+                [np.cos(k * np.pi / 2), -np.sin(k * np.pi / 2)],
+                [np.sin(k * np.pi / 2), np.cos(k * np.pi / 2)],
+            ]
+        )
+        p1_rot = np.dot(rot_matrix, p1_inplane)
+        p2_rot = np.dot(rot_matrix, p2_inplane)
+        p1[idx1] = ref_1 + p1_rot[0]
+        p1[idx2] = ref_2 + p1_rot[1]
+        p2[idx1] = ref_1 + p2_rot[0]
+        p2[idx2] = ref_2 + p2_rot[1]
+
+        units = list(self.units)
+        if k % 2 == 1:
+            units[idx1], units[idx2] = units[idx2], units[idx1]
+
+        if inplace:
+            self._pmin = np.minimum(p1, p2)
+            self._pmax = np.maximum(p1, p2)
+            return self
+        else:
+            return self.__class__(
+                p1=p1,
+                p2=p2,
+                dims=self.dims,
+                units=units,
                 tolerance_factor=self.tolerance_factor,
             )
 
