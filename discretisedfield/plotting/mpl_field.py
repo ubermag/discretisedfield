@@ -881,26 +881,51 @@ class MplField(Mpl):
         min_width_inches=0.35,
         min_pad_inches=0.1,
     ):
-        """Adds a colorbar to the current plot.
+        """
+        Adds a colorbar to the current plot with specified dimensions and padding.
 
-        This colorbar has a minimum width, height, and padding. Multiple colorbars
-        can be added. These additional colorbars will have the same width and height
-        as the original colorbar.
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+
+            The parent axes to which the colorbar is added.
+
+        cp : ScalarMappable
+
+            The plot to which the colorbar is associated.
+
+        colorbar_label : str
+
+            Label for the colorbar. If None, no label is added.
+
+        min_height_inches : float, optional
+
+            Minimum height for the colorbar in inches. Default is 2.0 inches.
+
+        min_width_inches : float, optional
+
+            Minimum width for the colorbar in inches. Default is 0.35 inches.
+
+        min_pad_inches : float, optional
+
+            Minimum padding from the parent axes in inches. Default is 0.1 inches.
+
         """
 
-        # Need to normalise physical units
+        # Retrieve the figure associated with the axis
         fig = ax.figure
+        # Extract figure dimensions in inches
         fig_width_inches, fig_height_inches = fig.get_size_inches()
-
+        # Get position of the current axes (normalized to figure size)
         pos = ax.get_position()
 
-        # relative to ax
+        # Normalize height relative to ax
         min_height_norm = min_height_inches / (fig_height_inches * (pos.y1 - pos.y0))
-        # relative to fig
+        # Normalize width and padding relative to figure size
         min_width_norm = min_width_inches / fig_width_inches
         min_pad_norm = min_pad_inches / fig_width_inches
 
-        # Calculate pad and width
+        # Decide on pad and width based on a threshold of 5% of the figure width
         if min_pad_norm > 0.05:
             pad_h = Size.Fixed(min_pad_inches)
         else:
@@ -911,27 +936,26 @@ class MplField(Mpl):
         else:
             width_h = Size.AxesX(ax, aspect=0.05)
 
+        # Determine the vertical aspect ratio for the colorbar
         if min_height_norm > 1:
             v_aspect = min_height_norm
         else:
             v_aspect = 1
 
+        # Check for any existing colorbars associated with the current axis
         existing_colorbars = [
             a for a in fig.get_axes() if f"cb_{id(ax)}" in a.get_label()
         ]
 
+        # Create a divider for the axes to place the colorbar
         divider = make_axes_locatable(ax)
-        # divider = SubplotDivider(fig, 2, 2, 2, aspect=True)
 
-        # axes for colorbar
-        # (the label prevents Axes.add_axes from incorrectly believing that the two
-        # axes are the same)
+        # Define a unique label for the colorbar axis to prevent any overlaps
         cax = fig.add_axes(
             divider.get_position(), label=f"cb_{id(ax)}_{len(existing_colorbars)}"
         )
 
-        # Set the divider to consider the current axis,
-        # previous colorbars, padding and the new colorbar width
+        # Update divider settings based on existing colorbars
         if len(existing_colorbars) == 0:
             h = [Size.AxesX(ax), pad_h, width_h]
             divider.set_horizontal(h)
@@ -939,20 +963,32 @@ class MplField(Mpl):
             divider.new_horizontal(pad_h, pack_start=False)
             divider.new_horizontal(width_h, pack_start=False)
 
+        # Set the vertical aspect for the divider
         v = [Size.AxesY(ax, aspect=v_aspect)]
-
-        # divider.set_horizontal(h)
         divider.set_vertical(v)
 
+        # Set the location of the main plot's axes to its original position.
+        # The main plot's axes will be placed at the starting (0,0) position
+        # on the grid defined by the divider.
         ax.set_axes_locator(divider.new_locator(nx=0, ny=0))
 
+        # Loop through any existing colorbars associated with the main axes.
+        # Adjust their positions to accommodate the new colorbar.
+        # Each colorbar is positioned two steps away on the x-axis
+        # (e.g., main plot at 0, first colorbar at 2, second at 4, and so on).
         for i, cb in enumerate(existing_colorbars):
             cb.set_axes_locator(divider.new_locator(nx=2 * (i + 1), ny=0))
+
+        # Set the position of the new colorbar (`cax`).
+        # It will be placed next to the last existing colorbar or next
+        # to the main plot if it's the first colorbar.
         cax.set_axes_locator(
             divider.new_locator(nx=2 * (len(existing_colorbars) + 1), ny=0)
         )
 
+        # Create the colorbar with the provided ScalarMappable object
         cbar = plt.colorbar(cp, cax=cax)
 
+        # Add a label to the colorbar if provided
         if colorbar_label is not None:
             cbar.ax.set_ylabel(colorbar_label)
