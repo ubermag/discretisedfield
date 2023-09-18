@@ -3499,6 +3499,9 @@ class Field(_FieldIO):
         also callable to quickly generate plots. For more details and the
         available methods refer to the documentation linked below.
 
+        Data shown in the plot is automatically filtered using the `valid` property of
+        the field.
+
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.Hv.__call__`

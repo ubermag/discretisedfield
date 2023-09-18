@@ -20,6 +20,9 @@ class Hv:
     created for the directions not shown in the plot. This class should not be accessed
     directly. Use ``field.hv`` to use the different plotting methods.
 
+    Data in the plots is filtered based on ``field.valid``. Only cells where
+    ``valid==True`` are visible in the plots.
+
     Parameters
     ----------
     key_dims : dict[df.plotting.util.hv_key_dim]
