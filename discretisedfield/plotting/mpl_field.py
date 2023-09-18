@@ -976,8 +976,8 @@ class MplField(Mpl):
         # Adjust their positions to accommodate the new colorbar.
         # Each colorbar is positioned two steps away on the x-axis
         # (e.g., main plot at 0, first colorbar at 2, second at 4, and so on).
-        for i, cb in enumerate(existing_colorbars):
-            cb.set_axes_locator(divider.new_locator(nx=2 * (i + 1), ny=0))
+        for i, cb in enumerate(existing_colorbars, start=1):
+            cb.set_axes_locator(divider.new_locator(nx=2 * i, ny=0))
 
         # Set the position of the new colorbar (`cax`).
         # It will be placed next to the last existing colorbar or next
