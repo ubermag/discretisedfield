@@ -8,6 +8,3 @@ from discretisedfield.plotting.mpl import add_colorwheel
 from discretisedfield.plotting.mpl_field import MplField
 from discretisedfield.plotting.mpl_mesh import MplMesh
 from discretisedfield.plotting.mpl_region import MplRegion
-
-"""Default settings for plotting."""
-defaults = util.Defaults(Hv)

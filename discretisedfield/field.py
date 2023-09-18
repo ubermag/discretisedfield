@@ -3527,7 +3527,9 @@ class Field(_FieldIO):
     def _hv_data_selection(self, **kwargs):
         """Select field part as specified by the input arguments."""
         vdims = kwargs.pop("vdims") if "vdims" in kwargs else None
-        res = self.to_xarray().sel(**kwargs, method="nearest")
+        xrfield = self.to_xarray().copy()  # create copy to avoid changing field values
+        xrfield.data[~self.valid] = np.nan
+        res = xrfield.sel(**kwargs, method="nearest")
         if vdims:
             res = res.sel(vdims=vdims)
         return res
