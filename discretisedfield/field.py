@@ -3618,6 +3618,7 @@ class Field(_FieldIO):
         """
         mesh = self.mesh.fftn()
 
+        # Use scipy as faster than numpy
         axes = range(self.mesh.region.ndim)
         ft = spfft.fftshift(
             spfft.fftn(self.array, axes=axes, **kwargs),
@@ -3754,7 +3755,7 @@ class Field(_FieldIO):
         axes = range(self.mesh.region.ndim)
         ft = spfft.fftshift(
             spfft.rfftn(self.array, axes=axes, **kwargs),
-            axes=axes,
+            axes=axes[:-1],
         )
 
         return self._fftn(mesh=mesh, array=ft, ifftn=False)
@@ -3818,7 +3819,7 @@ class Field(_FieldIO):
 
         axes = range(self.mesh.region.ndim)
         ft = spfft.irfftn(
-            spfft.ifftshift(self.array, axes=axes),
+            spfft.ifftshift(self.array, axes=axes[:-1]),
             axes=axes,
             s=shape,
             **kwargs,

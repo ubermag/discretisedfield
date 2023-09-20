@@ -10,6 +10,7 @@ import k3d
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import scipy.fft as spfft
 import xarray as xr
 
 import discretisedfield as df
@@ -2880,11 +2881,22 @@ def test_write_read_invalid_extension():
         df.Field.from_file(filename)
 
 
-##################################
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_fft(valid_mesh, nvdim):
+    def _init_random(p):
+        return np.random.rand(nvdim) * 2 - 1
+
+    f = df.Field(valid_mesh, nvdim=nvdim, value=_init_random, norm=1)
+
+    ifft_f = f.fftn().ifftn()
+    ifft_f.mesh.translate(f.mesh.region.centre, inplace=True)
+    assert f.allclose(ifft_f)
+    irfft_f = f.rfftn().irfftn(shape=f.mesh.n)
+    irfft_f.mesh.translate(f.mesh.region.centre, inplace=True)
+    assert f.allclose(ifft_f)
 
 
-# TODO Sam and Martin (low priority)
-def test_fft():
+def test_fft_Fourier_slice_theoreme():
     p1 = (-10, -10, -5)
     p2 = (10, 10, 5)
     cell = (1, 1, 1)
@@ -2895,21 +2907,6 @@ def test_fft():
 
     f = df.Field(mesh, nvdim=3, value=_init_random, norm=1)
 
-    # 3d fft
-    assert f.allclose(f.fftn().ifftn().real)
-    assert df.Field(mesh, nvdim=3).allclose(f.fftn().ifftn().imag)
-
-    assert f.allclose(f.rfftn().irfftn())
-
-    # 2d fft
-    for i in ["x", "y", "z"]:
-        plane = f.sel(i)
-        assert plane.allclose(plane.fftn().ifftn().real)
-        assert df.Field(mesh, nvdim=3).sel(i).allclose(plane.fftn().ifftn().imag)
-
-        assert plane.allclose(plane.rfftn().irfftn())
-
-    # Fourier slice theoreme
     for i in "xyz":
         plane = f.integrate(i)
         assert plane.allclose(f.fftn().sel(**{"k_" + i: 0}).ifftn().real)
@@ -2919,30 +2916,29 @@ def test_fft():
             .allclose(f.fftn().sel(**{"k_" + i: 0}).ifftn().imag)
         )
 
-    # 3d single cell fft
-    for dim in "xyz":
-        plane = f.sel(**{dim: (0, 0)})
-        plane.mesh.translate(-plane.mesh.region.center, inplace=True)
-        assert plane.allclose(plane.fftn().ifftn().real)
 
-        zero_f = df.Field(mesh, nvdim=3).sel(**{dim: (0, 0)})
-        zero_f.mesh.translate(-zero_f.mesh.region.center, inplace=True)
-        assert zero_f.allclose(plane.fftn().ifftn().imag)
+def test_rfft_no_shift_last_dim():
+    a = np.zeros((5, 5))
+    a[2, 3] = 1
 
-        assert plane.allclose(plane.rfftn().irfftn(shape=plane.mesh.n))
-
-    # 1d fft
-    p1 = -5.0
-    p2 = 5.0
-    cell = 2.0
+    p1 = (0, 0)
+    p2 = (10, 10)
+    cell = (2.0, 2.0)
     mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+    f = df.Field(mesh, nvdim=1, value=a)
 
-    f = df.Field(mesh, nvdim=1, value=np.random.rand(*mesh.n, 1), norm=1)
+    field_ft = f.rfftn()
+    ft = spfft.fftshift(spfft.rfftn(a), axes=[0])
 
-    assert f.allclose(f.fftn().ifftn().real)
-    assert df.Field(mesh, nvdim=1).allclose(f.fftn().ifftn().imag)
+    assert np.array_equal(field_ft.array[..., 0], ft)
 
-    assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n))
+
+def test_1d_fft():
+    mesh = df.Mesh(p1=0, p2=10, cell=2)
+    f = mesh.coordinate_field()
+    field_ft = f.fftn()
+    expected_array = np.fft.fftshift(np.fft.fftn(f.array))
+    assert np.allclose(expected_array, field_ft.array)
 
 
 def test_mpl_scalar(test_field):
@@ -2977,11 +2973,24 @@ def test_mpl_scalar(test_field):
     # Exceptions
     with pytest.raises(RuntimeError):
         test_field.a.mpl.scalar()  # not sliced
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.sel("z").mpl.scalar()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
         test_field.a.sel("z").mpl.scalar(filter_field=test_field)
+    plt.close("all")
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_scalar(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2 or nvdim != 1:
+        with pytest.raises(RuntimeError):
+            field.mpl.scalar()
+    else:
+        field.mpl.scalar()
+
     plt.close("all")
 
 
