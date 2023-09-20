@@ -2977,7 +2977,7 @@ def test_mpl_scalar(test_field):
     # Exceptions
     with pytest.raises(RuntimeError):
         test_field.a.mpl.scalar()  # not sliced
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.sel("z").mpl.scalar()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
