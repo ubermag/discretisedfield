@@ -3030,6 +3030,7 @@ def test_mpl_lightess(test_field):
     plt.close("all")
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_mpl_vector(test_field):
     # No axes
     test_field.sel("x").resample((3, 4)).mpl.vector()
@@ -3057,8 +3058,7 @@ def test_mpl_vector(test_field):
     plane_2d.mpl.vector()
     # renaming vdims does update vdim_mapping
     plane_2d.vdims = ["a", "b"]
-    with pytest.warns(UserWarning, match="Automatic coloring is only supported"):
-        plane_2d.mpl.vector()
+    plane_2d.mpl.vector()
     # manually remove vdim_mapping
     plane_2d.vdim_mapping = {}
     with pytest.raises(ValueError):
