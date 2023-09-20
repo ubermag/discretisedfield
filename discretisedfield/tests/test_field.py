@@ -3243,6 +3243,7 @@ def test_hv_scalar(test_field):
         )
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_hv_vector(test_field):
     for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
         normal = (set("xyz") - set(kdims)).pop()
