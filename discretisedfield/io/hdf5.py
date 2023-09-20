@@ -68,28 +68,28 @@ class _FieldIO_HDF5:
         """Save a single field in a new hdf5 file."""
         utc_now = datetime.datetime.utcnow().isoformat(timespec="seconds")
         with h5py.File(filename, "w") as f:
-            for attribute, value in [
-                ("ubermag-hdf5-file-version", "0.1"),
-                ("discretisedfield.__version__", df.__version__),
-                ("file-creation-time-UTC", utc_now),
-                ("type", "discretisedfield.Field"),
-            ]:
-                f.attrs[attribute] = value
+            f.attrs["ubermag-hdf5-file-version"] = "0.1"
+            f.attrs["discretisedfield.__version__"] = df.__version__
+            f.attrs["file-creation-time-UTC"] = utc_now
+            f.attrs["type"] = "discretisedfield.Field"
 
             h5_field = f.create_group("field")
-            self._h5_save_structure(h5_field)
-
-            h5_field_data = h5_field.create_dataset(
-                "array", (*self.mesh.n, self.nvdim), dtype=self.array.dtype
+            h5_field_data = self._h5_save_structure(
+                h5_field, data_shape=(*self.mesh.n, self.nvdim)
             )
+
             self._h5_save_data(h5_field_data, slice(None))
 
-            self._h5_save_valid(h5_field)
-
-    def _h5_save_structure(self, h5_field: h5py.Group):
+    def _h5_save_structure(self, h5_field: h5py.Group, data_shape: tuple):
         """
-        Save the 'field structure', that is the mesh and field attributes, into an
-        existing hdf5 group. The field data is NOT saved.
+        Save the 'field structure', that is the mesh, field attributes and valid, into
+        an existing hdf5 group and create an ``h5py.Dataset`` for the field data with a
+        given ``data_shape``. The shape can have additional dimensions, e.g. an extra
+        first dimension for a time series that should be stored in the hdf5 file. Valid
+        is always static and does not support extra dimensions. The field data is NOT
+        saved.
+
+        The ``h5py.Dataset`` that will store the field values is returned.
         """
         h5_mesh = h5_field.create_group("mesh")
         self.mesh._h5_save(h5_mesh)
@@ -98,16 +98,22 @@ class _FieldIO_HDF5:
         h5_field.attrs["vdims"] = self.vdims if self.vdims is not None else "None"
         h5_field.attrs["unit"] = str(self.unit)
 
-    def _h5_save_valid(self, h5_field: h5py.Group):
-        """Save valid."""
+        # empty dataset that can later contain field.array
+        h5_field_data = h5_field.create_dataset(
+            "array", data_shape, dtype=self.array.dtype
+        )
+
         h5_field.create_dataset("valid", data=self.valid, dtype=np.bool_)
+
+        return h5_field_data
 
     def _h5_save_data(self, h5_field_data: h5py.Dataset, location):
         """
-        Save field data into an existing hdf5 dataset at a given `location` inside that
-        dataset. For a single field in that dataset the `location` refers to the whole
-        dataset (`slice(None)`). Other values for `location` are useful to save a single
-        field into a bigger dataset, e.g. a dataset meant to contain a time series.
+        Save field data into an existing hdf5 dataset at a given ``location`` inside the
+        dataset. For a single field in that dataset the ``location``` refers to the
+        whole dataset (``slice(None)``). Other values for ``location`` are useful to
+        save a single field into a bigger dataset, e.g. a dataset meant to contain a
+        time series.
         """
         h5_field_data[location] = self.array
 
@@ -121,16 +127,18 @@ class _FieldIO_HDF5:
                 raise ValueError(
                     f"{cls} cannot read hdf5 files with type {f.attrs['type']}."
                 )
-            assert f.attrs["ubermag-hdf5-file-version"] == "0.1"
+            # check for the correct version; in the future multiple code paths may
+            # be required to handle different versions
+            assert f.attrs["ubermag-hdf5-file-version"] in ["0.1"]
             return cls._h5_load_field(f["field"], slice(None))
 
     @classmethod
     def _h5_load_field(cls, h5_field: h5py.Group, data_location):
         """
         Load a Field from an hdf5 group containing a single field. The hdf5 dataset
-        containing the field data can contain multiple fields arrays on the same mesh
-        (e.g. in a time series). The correct part of the array can be selected with
-        `data_location`.
+        ``array`` containing the field data can contain data for multiple fields on the
+        same mesh (e.g. in a time series). The correct part of the array can be selected
+        with ``data_location``.
         """
         vdims = h5_field.attrs["vdims"]
         if isinstance(vdims, str) and vdims == "None":
@@ -146,7 +154,10 @@ class _FieldIO_HDF5:
 
     @classmethod
     def _h5_legacy_load_field(cls, h5_file: h5py.Group, filename):
-        # reads old hdf5 files written prior to introducing ubermag-hdf5-file-version
+        """
+        Reads old hdf5 files written prior to introducing ubermag-hdf5-file-version.
+        These lack most of the additional metadata defined in the new standard.
+        """
         p1 = tuple(h5_file["field/mesh/region/p1"])
         p2 = tuple(h5_file["field/mesh/region/p2"])
         n = np.array(h5_file["field/mesh/n"]).tolist()
