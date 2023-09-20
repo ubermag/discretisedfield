@@ -83,18 +83,32 @@ def test_field():
     mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
     c_array = mesh.coordinate_field().array
 
+    # The norm is defined via numpy for performance reasons;
+    # In the simple loop form it would be:
+    # x, y, _ = point
+    # if x**2 + y**2 <= 5e-9**2:
+    #     return 1e5
+    # else:
+    #     return 0
     def norm(points):
         return np.where(
             (points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0
         )[..., np.newaxis]
 
+    # Values are defined in numpy for performance reasons
+    # We define vector fields with vx=0, vy=0, vz=+/-1 for x<0 / x>0
     def value(points):
         res = np.zeros((*mesh.n, 3))
         res[..., 2] = np.where(points[..., 0] <= 0, 1, -1)
         return res
 
     return df.Field(
-        mesh, nvdim=3, value=value(c_array), norm=norm(c_array), vdims=["a", "b", "c"]
+        mesh,
+        nvdim=3,
+        value=value(c_array),
+        norm=norm(c_array),
+        vdims=["a", "b", "c"],
+        valid="norm",
     )
 
 
@@ -3171,6 +3185,29 @@ def test_mpl_dimension(valid_mesh):
         field.mpl.scalar()
 
     plt.close("all")
+
+
+@pytest.mark.parametrize(
+    "selection", [dict(x=4e-9), dict(y=-2e-9), dict(z=0, vdims="b")]
+)
+def test_hv_data_selection(test_field, selection):
+    """
+    Test selecting parts of the data and returning them as xarray as done in the hv
+    plotting methods.
+    """
+    hv_plane = test_field._hv_data_selection(**selection)
+    field_plane = test_field
+    for key, value in selection.items():
+        if key == "vdims":
+            field_plane = getattr(field_plane, value)
+        else:
+            field_plane = field_plane.sel(**{key: value})
+    valid_plane = field_plane.valid.squeeze()
+    assert np.allclose(hv_plane.data[valid_plane], field_plane.array[valid_plane])
+    assert np.allclose(hv_plane.data[~valid_plane], np.nan, equal_nan=True)
+
+    for dim in hv_plane.dims:
+        assert all(hv_plane[dim].data == field_plane.to_xarray()[dim].data)
 
 
 def test_hv_scalar(test_field):
