@@ -2834,6 +2834,7 @@ def test_write_read_vtk(tmp_path):
         f.to_file(str(tmp_path / filename))
 
 
+@pytest.mark.parametrize("norm", [None, lambda p: 100 if p[0] < 5e-12 else 0])
 @pytest.mark.parametrize("nvdim,value", [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))])
 @pytest.mark.parametrize(
     "subregions",
@@ -2846,24 +2847,34 @@ def test_write_read_vtk(tmp_path):
     ],
 )
 @pytest.mark.parametrize("filename", ["testfile.hdf5", "testfile.h5"])
-def test_write_read_hdf5(nvdim, value, subregions, filename, tmp_path):
+def test_write_read_hdf5(norm, nvdim, value, subregions, filename, tmp_path):
     p1 = (0, 0, 0)
     p2 = (10e-12, 5e-12, 5e-12)
     cell = (1e-12, 1e-12, 1e-12)
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
-    f = df.Field(mesh, nvdim=nvdim, value=value)
+    f = df.Field(mesh, nvdim=nvdim, value=value, norm=norm, valid="norm")
+
+    # sanity checks
+    if norm is not None:
+        assert f.valid[0, 0, 0]
+        assert not f.valid[-1, -1, -1]
+    else:
+        assert f.valid.all()
+
     tmpfilename = tmp_path / filename
     f.to_file(tmpfilename)
     f_read = df.Field.from_file(tmpfilename)
 
     assert f == f_read
+    assert f.mesh.subregions == f_read.mesh.subregions  # not checked in __eq__
 
     tmpfilename = tmp_path / f"no_sr_{filename}"
     f.to_file(tmpfilename, save_subregions=False)
+    # subregions are always saved in hdf5, 'save_subregions' is ignored
     f_read = df.Field.from_file(tmpfilename)
     assert f == f_read
-    assert f.mesh.subregions == f_read.mesh.subregions  # not checked above
+    assert f.mesh.subregions == f_read.mesh.subregions  # not checked in __eq__
 
 
 def test_write_read_invalid_extension():
