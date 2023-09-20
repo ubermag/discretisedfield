@@ -1158,7 +1158,8 @@ def test_mul_truediv(mesh_3d):
     assert np.allclose(f.mean(), (2, 4, 0))
     f /= 2
     assert np.allclose(f.mean(), (1, 2, 0))
-    res = 10 / f
+    with pytest.warns(RuntimeWarning, match="divide by zero"):
+        res = 10 / f
     assert np.allclose(res.mean(), (10, 5, np.inf))
 
     # Further checks
