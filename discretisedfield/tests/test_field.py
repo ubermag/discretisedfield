@@ -3120,6 +3120,19 @@ def test_mpl_contour(test_field):
     plt.close("all")
 
 
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_lightness(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2 or nvdim != 1:
+        with pytest.raises(RuntimeError):
+            field.mpl.contour()
+    else:
+        field.mpl.contour()
+
+    plt.close("all")
+
+
 def test_mpl(test_field):
     # No axes
     test_field.sel("x").resample((3, 4)).mpl()
