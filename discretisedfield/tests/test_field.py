@@ -2695,7 +2695,8 @@ def test_write_read_ovf(tmp_path):
     f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
     tmpfilename = str(tmp_path / filename)
     f.to_file(tmpfilename, representation=rep)
-    f_read = df.Field.from_file(tmpfilename)
+    with pytest.warns(UserWarning, match=r"multiple units.+Unit is set to None"):
+        f_read = df.Field.from_file(tmpfilename)
 
     assert f.allclose(f_read)
     assert f_read.unit is None
