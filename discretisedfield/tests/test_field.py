@@ -3111,7 +3111,7 @@ def test_mpl_contour(test_field):
     # Exceptions
     with pytest.raises(RuntimeError):
         test_field.mpl.contour()  # not sliced
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.sel("z").mpl.contour()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
