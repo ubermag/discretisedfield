@@ -3085,6 +3085,22 @@ def test_mpl_vector(test_field):
     plt.close("all")
 
 
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_vector(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2:
+        with pytest.raises(RuntimeError):
+            field.mpl.vector()
+    elif nvdim != 2:
+        with pytest.raises(ValueError):
+            field.mpl.vector()
+    else:
+        field.mpl.vector()
+
+    plt.close("all")
+
+
 def test_mpl_contour(test_field):
     # No axes
     test_field.sel("z").c.mpl.contour()
