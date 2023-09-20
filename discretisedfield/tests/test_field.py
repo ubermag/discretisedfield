@@ -3057,7 +3057,8 @@ def test_mpl_vector(test_field):
     plane_2d.mpl.vector()
     # renaming vdims does update vdim_mapping
     plane_2d.vdims = ["a", "b"]
-    plane_2d.mpl.vector()
+    with pytest.warns(UserWarning, match="Automatic coloring is only supported"):
+        plane_2d.mpl.vector()
     # manually remove vdim_mapping
     plane_2d.vdim_mapping = {}
     with pytest.raises(ValueError):
