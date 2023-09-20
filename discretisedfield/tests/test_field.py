@@ -3164,8 +3164,11 @@ def test_mpl(test_field):
 def test_mpl_dimension(valid_mesh, nvdim):
     field = df.Field(valid_mesh, nvdim=nvdim)
 
-    if valid_mesh.region.ndim != 2 or nvdim not in [1, 2, 3]:
+    if valid_mesh.region.ndim != 2:
         with pytest.raises(RuntimeError):
+            field.mpl()
+    elif nvdim not in [1, 2]:
+        with pytest.raises(ValueError):
             field.mpl()
     else:
         field.mpl()
