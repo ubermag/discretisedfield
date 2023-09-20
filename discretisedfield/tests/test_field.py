@@ -3092,11 +3092,15 @@ def test_mpl_dimension_vector(valid_mesh, nvdim):
     if valid_mesh.region.ndim != 2:
         with pytest.raises(RuntimeError):
             field.mpl.vector()
-    elif nvdim != 2:
-        with pytest.raises(ValueError):
-            field.mpl.vector()
     else:
-        field.mpl.vector()
+        if nvdim != 2:
+            with pytest.raises(ValueError):
+                field.mpl.vector()
+        else:
+            field.mpl.vector()
+
+        if nvdim > 1:
+            field.mpl.vector(vdims=field.vdims[:2])
 
     plt.close("all")
 
