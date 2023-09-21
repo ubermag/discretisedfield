@@ -3408,6 +3408,11 @@ class Field(_FieldIO):
         1000
 
         """
+        if self.mesh.region.ndim != 3:
+            raise RuntimeError(
+                "Conversion to VTK RectilinearGrid is only possible for 'ndim=3', not"
+                f" {self.mesh.region.ndim=}"
+            )
         if self.nvdim > 1 and self.vdims is None:
             raise AttributeError(
                 "Field vdims must be assigned before converting to vtk."
