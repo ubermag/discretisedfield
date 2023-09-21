@@ -1158,7 +1158,8 @@ def test_mul_truediv(mesh_3d):
     assert np.allclose(f.mean(), (2, 4, 0))
     f /= 2
     assert np.allclose(f.mean(), (1, 2, 0))
-    res = 10 / f
+    with pytest.warns(RuntimeWarning, match="divide by zero"):
+        res = 10 / f
     assert np.allclose(res.mean(), (10, 5, np.inf))
 
     # Further checks
@@ -2695,7 +2696,8 @@ def test_write_read_ovf(tmp_path):
     f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
     tmpfilename = str(tmp_path / filename)
     f.to_file(tmpfilename, representation=rep)
-    f_read = df.Field.from_file(tmpfilename)
+    with pytest.warns(UserWarning, match=r"multiple units.+Unit is set to None"):
+        f_read = df.Field.from_file(tmpfilename)
 
     assert f.allclose(f_read)
     assert f_read.unit is None
@@ -3029,6 +3031,7 @@ def test_mpl_lightess(test_field):
     plt.close("all")
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_mpl_vector(test_field):
     # No axes
     test_field.sel("x").resample((3, 4)).mpl.vector()
@@ -3241,6 +3244,7 @@ def test_hv_scalar(test_field):
         )
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_hv_vector(test_field):
     for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
         normal = (set("xyz") - set(kdims)).pop()
