@@ -2661,7 +2661,10 @@ def test_write_read_ovf(tmp_path):
         "sr1": df.Region(p1=p1, p2=(2e-9, 2e-9, 1e-9)),
         "sr2": df.Region(p1=(3e-9, 0, 0), p2=p2),
     }
-    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
+    units = ("nm", "nm", "nm")  # test saving units to file
+    region = df.Region(p1=p1, p2=p2, units=units)
+    assert region.units == units  # sanity check: data type of region.units
+    mesh = df.Mesh(region=region, cell=cell, subregions=subregions)
 
     # Write/read
     for nvdim, value in [
@@ -2677,6 +2680,7 @@ def test_write_read_ovf(tmp_path):
 
             assert f.allclose(f_read)
             assert f_read.unit == "A/m"
+            assert f_read.mesh.region.units == units
             assert f.mesh.subregions == f_read.mesh.subregions
 
             tmpfilename = tmp_path / f"no_sr_{filename}"
@@ -2685,6 +2689,7 @@ def test_write_read_ovf(tmp_path):
 
             assert f.allclose(f_read)
             assert f_read.unit == "A/m"
+            assert f_read.mesh.region.units == units
             assert f_read.mesh.subregions == {}
 
         # Directly write with wrong representation (no data is written)
