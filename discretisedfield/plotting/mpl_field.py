@@ -612,7 +612,7 @@ class MplField(Mpl):
         .. seealso:: :py:func:`~discretisedfield.field.mpl_scalar`
 
         """
-        if vdims is None and self.field.vdim_mapping is None:
+        if vdims is None and not self.field.vdim_mapping:
             raise ValueError("'vdims' is required for a field without 'vdim_mapping'.")
         ax = self._setup_axes(ax, figsize)
 
