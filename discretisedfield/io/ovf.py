@@ -159,7 +159,8 @@ class _FieldIO_OVF:
             p1 = [float(header[f"{key}min"]) for key in "xyz"]
             p2 = [float(header[f"{key}max"]) for key in "xyz"]
             cell = [float(header[f"{key}stepsize"]) for key in "xyz"]
-            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+            units = [header["meshunit"]] * 3
+            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2, units=units), cell=cell)
 
             nodes = math.prod(int(header[f"{key}nodes"]) for key in "xyz")
 
