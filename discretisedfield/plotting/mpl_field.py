@@ -402,6 +402,8 @@ class MplField(Mpl):
             )
         elif self.field.nvdim == 3:
             if lightness_field is None:
+                if not self.field.vdim_mapping:
+                    raise ValueError("'vdim_mapping' is required for lightness plots.")
                 # find vector components pointing along the two axes 0 and 1
                 vdims = [
                     self.field._r_dim_mapping[self.field.mesh.region.dims[0]],
@@ -427,6 +429,10 @@ class MplField(Mpl):
                 colorwheel_args=colorwheel_args,
                 filename=filename,
                 **kwargs,
+            )
+        elif self.field.nvdim > 3:
+            raise RuntimeError(
+                f"Only fields with `nvdim<=3` can be plotted. Not {self.field.nvdim=}"
             )
 
         ax = self._setup_axes(ax, figsize)

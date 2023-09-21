@@ -3033,12 +3033,12 @@ def test_mpl_lightess(test_field):
 def test_mpl_dimension_lightness(valid_mesh, nvdim):
     field = df.Field(valid_mesh, nvdim=nvdim)
 
-    if valid_mesh.region.ndim != 2:
+    if valid_mesh.region.ndim != 2 or nvdim > 3:
         with pytest.raises(RuntimeError):
             field.mpl.lightness()
-    elif nvdim not in [1, 2]:
-        with pytest.raises(ValueError):
-            field.mpl.lightness()
+    elif nvdim == 3:
+        field.vdim_mapping = dict(zip(field.vdims, [*valid_mesh.region.dims, None]))
+        field.mpl.lightness()
     else:
         field.mpl.lightness()
 
