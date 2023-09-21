@@ -136,7 +136,7 @@ class MplField(Mpl):
             scalar_field = None
             vector_field = self.field
 
-        else:
+        elif self.field.nvdim == 3:
             vector_field = self.field
             # find vector components pointing along the two axes 0 and 1
             vdims = [
@@ -149,6 +149,11 @@ class MplField(Mpl):
             scalar_kw.setdefault(
                 "colorbar_label",
                 f"{scalar_vdim}-component",
+            )
+        else:
+            raise RuntimeError(
+                "The `mpl()` function cannot determine unique "
+                f"directions to plot for {self.field.nvdim=}."
             )
 
         scalar_kw.setdefault("filter_field", self.field._valid_as_field)
