@@ -18,11 +18,6 @@ class _FieldIO_OVF:
     def _to_ovf(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
-        if self.mesh.region.ndim != 3:
-            raise RuntimeError(
-                "OVF files can only store fields with 'ndim=3', not"
-                f" {self.mesh.region.ndim=}."
-            )
         filename = pathlib.Path(filename)
         write_dim = 3 if extend_scalar and self.nvdim == 1 else self.nvdim
         valueunits = " ".join([str(self.unit) if self.unit else "None"] * write_dim)
