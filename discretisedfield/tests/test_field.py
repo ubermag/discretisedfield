@@ -2650,8 +2650,6 @@ def test_rotate90():
     assert np.allclose(field.mean(), (1, 3, -2))
 
 
-# ######################################
-# TODO Martin
 def test_write_read_ovf(tmp_path):
     representations = ["txt", "bin4", "bin8"]
     filename = "testfile.ovf"
@@ -2839,6 +2837,16 @@ def test_write_read_vtk(tmp_path):
     f._vdims = None  # manually remove component labels
     with pytest.raises(AttributeError):
         f.to_file(str(tmp_path / filename))
+
+
+@pytest.mark.parametrize("extension", ["ovf", "vtk"])
+@pytest.mark.parametrize("ndim", [1, 2, 4])
+def test_write_invalid_ndim(ndim, extension):
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=1)
+
+    with pytest.raises(RuntimeError):
+        field.to_file(f"field.{extension}")
 
 
 @pytest.mark.parametrize("nvdim,value", [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))])
