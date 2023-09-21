@@ -29,14 +29,11 @@ class _FieldIO_VTK:
             writer.SetFileTypeToBinary()
         # xml has no distinction between ascii and binary
 
-        writer.SetFileName(str(filename))
-        # Convert field to VTK before writing subregion information because
-        # to_vtk will fail if ndim is not correct
-        writer.SetInputData(self.to_vtk())
-
         if save_subregions and self.mesh.subregions:
             self.mesh.save_subregions(filename)
 
+        writer.SetFileName(str(filename))
+        writer.SetInputData(self.to_vtk())
         writer.Write()
 
     @classmethod
