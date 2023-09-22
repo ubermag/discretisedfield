@@ -213,6 +213,7 @@ def test_count_bps(ndim, nvdim):
         assert result["bp_pattern_g1"] == "[[0.0, 10]]"
 
 
+@pytest.mark.filterwarnings("ignore:This method is still experimental.")
 def test_demag_tensor():
     L = 2e-9
     mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
@@ -238,6 +239,7 @@ def test_demag_tensor():
     assert rtensor.allclose(df.Field.from_file(oommf_tensor))
 
 
+@pytest.mark.filterwarnings("ignore:This method is still experimental.")
 def test_demag_field_sphere():
     L = 10e-9
     mesh = df.Mesh(p1=(-L, -L, -L), p2=(L, L, L), cell=(1e-9, 1e-9, 1e-9))
@@ -263,6 +265,7 @@ def test_demag_field_sphere():
     assert dft.demag_field(f, tensor).allclose(df.Field.from_file(oommf_sphere))
 
 
+@pytest.mark.filterwarnings("ignore:This method is still experimental.")
 def test_demag_field_plane():
     L = 100
     mesh = df.Mesh(p1=(-L, -L, -1 / 2), p2=(L, L, 1 / 2), cell=(1, 1, 1))

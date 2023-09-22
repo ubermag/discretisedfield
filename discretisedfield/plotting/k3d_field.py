@@ -289,7 +289,7 @@ class K3dField:
         plot_array = np.swapaxes(plot_array, 0, 2)  # k3d: arrays are (z, y, x)
         plot_array = plot_array.astype(np.uint8)  # to avoid k3d warning
 
-        cmap = matplotlib.cm.get_cmap(cmap, 256)
+        cmap = matplotlib.colormaps[cmap]
         cmap_int = []
         for i in range(cmap.N):
             rgb = cmap(i)[:3]
@@ -474,7 +474,7 @@ class K3dField:
             color_values = plot_util.normalise_to_range(color_values, (0, 255))
 
             # Generate double pairs (body, head) for colouring vectors.
-            cmap = matplotlib.cm.get_cmap(cmap, 256)
+            cmap = matplotlib.colormaps[cmap]
             cmap_int = []
             for i in range(cmap.N):
                 rgb = cmap(i)[:3]

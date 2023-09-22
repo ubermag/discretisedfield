@@ -186,8 +186,8 @@ def test_init_subregions(p1, p2, cell, sr1_p1, sr1_p2, sr2_p1, sr2_p2):
         "r1": df.Region(p1=sr1_p1, p2=sr1_p2),
         "default": df.Region(p1=sr2_p1, p2=sr2_p2),
     }
-    # with pytest.warns()  # FIXME
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+    with pytest.warns(UserWarning, match="Subregion name ``default``"):
+        mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
     assert isinstance(mesh, df.Mesh)
     assert mesh.subregions == subregions
 
