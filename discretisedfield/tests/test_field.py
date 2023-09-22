@@ -3393,7 +3393,7 @@ def test_hv_vector(test_field):
     with pytest.raises(ValueError):
         check_hv(test_field.hv.vector(kdims=["x", "y"], n=(10, 10, 10)), ...)
 
-    # scalar field
+    # scalar field, same implementation for all ndim, testing with ndim=3 sufficient
     with pytest.raises(ValueError):
         check_hv(field_2d.a.hv.vector(kdims=["x", "y"]), ...)
 
@@ -3528,6 +3528,102 @@ def test_hv(test_field):
                 f"VectorField {kdim_str}",
             ],
         )
+
+
+@pytest.mark.parametrize("method", ["__call__", "scalar", "vector", "contour"])
+def test_hv_ndim_1(method):
+    """
+    Plotting ndim=1 fields is not supported. This is only indirectly checked:
+    ``kdims`` must have length 2 and if we pass an unknown kdim (region.dim) a
+    ``ValueError`` is raised.
+
+    All plotting methods behave the same.
+    """
+    field = df.Mesh(p1=[0], p2=[1], n=[10]).coordinate_field()
+    with pytest.raises(ValueError):
+        getattr(field.hv, method)(kdims=["x"])
+    with pytest.raises(ValueError):
+        getattr(field.hv, method)(kdims=["x", "y"])
+
+
+@pytest.mark.parametrize("ndim", range(2, 5))
+@pytest.mark.parametrize("nvdim", range(1, 5))
+def test_hv_scalar_ndim(ndim, nvdim):
+    """
+    Scalar can plot any fields with arbitrary ndim and nvdim.
+
+    Contour is based on scalar and can also show fields with arbitrary ndim and nvdim.
+    Testing is however more difficult because contour does not work for spatially
+    constant data (due to restrictions in HoloViews that we cannot easily test for).
+    We restrict testing of contour to the 3d case.
+    """
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=nvdim, value=[1] * nvdim)
+
+    static_dims = ",".join(field.mesh.region.dims[:2])
+    dyn_dims = ",".join(field.mesh.region.dims[2:])
+    if nvdim > 1:
+        dyn_dims += ("," if dyn_dims != "" else "") + "vdims"
+
+    if ndim > 2 or nvdim > 1:
+        reference = [f"DynamicMap [{dyn_dims}]", f"Image [{static_dims}]"]
+    else:
+        reference = [f"Image [{static_dims}]"]
+
+    check_hv(field.hv.scalar(kdims=list(field.mesh.region.dims[:2])), reference)
+
+
+@pytest.mark.filterwarning("ignore:Automatic coloring")
+@pytest.mark.parametrize("ndim", range(2, 5))
+@pytest.mark.parametrize("nvdim", range(2, 5))
+def test_hv_vector_ndim(ndim, nvdim):
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=nvdim, value=[1] * nvdim)
+
+    static_dims = ",".join(field.mesh.region.dims[:2])
+    dyn_dims = ",".join(field.mesh.region.dims[2:])
+
+    if ndim > 2:
+        reference = [f"DynamicMap [{dyn_dims}]", f"VectorField [{static_dims}]"]
+    else:
+        reference = [f"VectorField [{static_dims}]"]
+
+    if ndim == nvdim:
+        check_hv(field.hv.vector(kdims=list(field.mesh.region.dims[:2])), reference)
+    else:
+        check_hv(
+            field.hv.vector(
+                kdims=list(field.mesh.region.dims[:2]), vdims=field.vdims[:2]
+            ),
+            reference,
+        )
+
+
+@pytest.mark.parametrize("ndim", range(2, 5))
+@pytest.mark.parametrize("nvdim", range(1, 5))
+def test_hv_ndim(ndim, nvdim):
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=nvdim, value=[1] * nvdim)
+
+    static_dims = ",".join(field.mesh.region.dims[:2])
+    dyn_dims = ",".join(field.mesh.region.dims[2:])
+    if nvdim > 3 or (nvdim > 1 and ndim != nvdim):
+        dyn_dims += ("," if dyn_dims != "" else "") + "vdims"
+
+    if ndim == 2 and nvdim == 1:
+        reference = [f"Image [{static_dims}]"]
+    elif ndim == 2 and nvdim == 2:
+        reference = [f"VectorField [{static_dims}]"]
+    elif ndim == nvdim:
+        reference = [
+            f"DynamicMap [{dyn_dims}]",
+            f"Image [{static_dims}]",
+            f"VectorField [{static_dims}]",
+        ]
+    else:
+        reference = [f"DynamicMap [{dyn_dims}]", f"Image [{static_dims}]"]
+
+    check_hv(field.hv(kdims=list(field.mesh.region.dims[:2])), reference)
 
 
 def test_k3d(valid_mesh):
