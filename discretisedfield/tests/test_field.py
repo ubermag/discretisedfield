@@ -83,18 +83,32 @@ def test_field():
     mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
     c_array = mesh.coordinate_field().array
 
+    # The norm is defined via numpy for performance reasons;
+    # In the simple loop form it would be:
+    # x, y, _ = point
+    # if x**2 + y**2 <= 5e-9**2:
+    #     return 1e5
+    # else:
+    #     return 0
     def norm(points):
         return np.where(
             (points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0
         )[..., np.newaxis]
 
+    # Values are defined in numpy for performance reasons
+    # We define vector fields with vx=0, vy=0, vz=+/-1 for x<0 / x>0
     def value(points):
         res = np.zeros((*mesh.n, 3))
         res[..., 2] = np.where(points[..., 0] <= 0, 1, -1)
         return res
 
     return df.Field(
-        mesh, nvdim=3, value=value(c_array), norm=norm(c_array), vdims=["a", "b", "c"]
+        mesh,
+        nvdim=3,
+        value=value(c_array),
+        norm=norm(c_array),
+        vdims=["a", "b", "c"],
+        valid="norm",
     )
 
 
@@ -1158,7 +1172,8 @@ def test_mul_truediv(mesh_3d):
     assert np.allclose(f.mean(), (2, 4, 0))
     f /= 2
     assert np.allclose(f.mean(), (1, 2, 0))
-    res = 10 / f
+    with pytest.warns(RuntimeWarning, match="divide by zero"):
+        res = 10 / f
     assert np.allclose(res.mean(), (10, 5, np.inf))
 
     # Further checks
@@ -2649,8 +2664,6 @@ def test_rotate90():
     assert np.allclose(field.mean(), (1, 3, -2))
 
 
-# ######################################
-# TODO Martin
 def test_write_read_ovf(tmp_path):
     representations = ["txt", "bin4", "bin8"]
     filename = "testfile.ovf"
@@ -2661,7 +2674,10 @@ def test_write_read_ovf(tmp_path):
         "sr1": df.Region(p1=p1, p2=(2e-9, 2e-9, 1e-9)),
         "sr2": df.Region(p1=(3e-9, 0, 0), p2=p2),
     }
-    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
+    units = ("nm", "nm", "nm")  # test saving units to file
+    region = df.Region(p1=p1, p2=p2, units=units)
+    assert region.units == units  # sanity check: data type of region.units
+    mesh = df.Mesh(region=region, cell=cell, subregions=subregions)
 
     # Write/read
     for nvdim, value in [
@@ -2677,6 +2693,7 @@ def test_write_read_ovf(tmp_path):
 
             assert f.allclose(f_read)
             assert f_read.unit == "A/m"
+            assert f_read.mesh.region.units == units
             assert f.mesh.subregions == f_read.mesh.subregions
 
             tmpfilename = tmp_path / f"no_sr_{filename}"
@@ -2685,6 +2702,7 @@ def test_write_read_ovf(tmp_path):
 
             assert f.allclose(f_read)
             assert f_read.unit == "A/m"
+            assert f_read.mesh.region.units == units
             assert f_read.mesh.subregions == {}
 
         # Directly write with wrong representation (no data is written)
@@ -2695,7 +2713,8 @@ def test_write_read_ovf(tmp_path):
     f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
     tmpfilename = str(tmp_path / filename)
     f.to_file(tmpfilename, representation=rep)
-    f_read = df.Field.from_file(tmpfilename)
+    with pytest.warns(UserWarning, match=r"multiple units.+Unit is set to None"):
+        f_read = df.Field.from_file(tmpfilename)
 
     assert f.allclose(f_read)
     assert f_read.unit is None
@@ -2834,6 +2853,17 @@ def test_write_read_vtk(tmp_path):
         f.to_file(str(tmp_path / filename))
 
 
+@pytest.mark.parametrize("extension", ["ovf", "vtk"])
+@pytest.mark.parametrize("ndim", [1, 2, 4])
+def test_write_invalid_ndim(ndim, extension):
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=1)
+
+    with pytest.raises(RuntimeError):
+        field.to_file(f"field.{extension}")
+
+
+@pytest.mark.parametrize("norm", [None, lambda p: 100 if p[0] < 5e-12 else 0])
 @pytest.mark.parametrize("nvdim,value", [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))])
 @pytest.mark.parametrize(
     "subregions",
@@ -2846,24 +2876,34 @@ def test_write_read_vtk(tmp_path):
     ],
 )
 @pytest.mark.parametrize("filename", ["testfile.hdf5", "testfile.h5"])
-def test_write_read_hdf5(nvdim, value, subregions, filename, tmp_path):
+def test_write_read_hdf5(norm, nvdim, value, subregions, filename, tmp_path):
     p1 = (0, 0, 0)
     p2 = (10e-12, 5e-12, 5e-12)
     cell = (1e-12, 1e-12, 1e-12)
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
-    f = df.Field(mesh, nvdim=nvdim, value=value)
+    f = df.Field(mesh, nvdim=nvdim, value=value, norm=norm, valid="norm")
+
+    # sanity checks
+    if norm is not None:
+        assert f.valid[0, 0, 0]
+        assert not f.valid[-1, -1, -1]
+    else:
+        assert f.valid.all()
+
     tmpfilename = tmp_path / filename
     f.to_file(tmpfilename)
     f_read = df.Field.from_file(tmpfilename)
 
     assert f == f_read
+    assert f.mesh.subregions == f_read.mesh.subregions  # not checked in __eq__
 
     tmpfilename = tmp_path / f"no_sr_{filename}"
     f.to_file(tmpfilename, save_subregions=False)
+    # subregions are always saved in hdf5, 'save_subregions' is ignored
     f_read = df.Field.from_file(tmpfilename)
     assert f == f_read
-    assert f.mesh.subregions == f_read.mesh.subregions  # not checked above
+    assert f.mesh.subregions == f_read.mesh.subregions  # not checked in __eq__
 
 
 def test_write_read_invalid_extension():
@@ -3045,6 +3085,7 @@ def test_mpl_dimension_lightness(valid_mesh, nvdim):
     plt.close("all")
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_mpl_vector(test_field):
     # No axes
     test_field.sel("x").resample((3, 4)).mpl.vector()
@@ -3127,11 +3168,24 @@ def test_mpl_contour(test_field):
     # Exceptions
     with pytest.raises(RuntimeError):
         test_field.mpl.contour()  # not sliced
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.sel("z").mpl.contour()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
         test_field.sel("z").c.mpl.contour(filter_field=test_field)
+
+    plt.close("all")
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_lightness(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2 or nvdim != 1:
+        with pytest.raises(RuntimeError):
+            field.mpl.contour()
+    else:
+        field.mpl.contour()
 
     plt.close("all")
 
@@ -3186,6 +3240,29 @@ def test_mpl_dimension(valid_mesh):
         field.mpl.scalar()
 
     plt.close("all")
+
+
+@pytest.mark.parametrize(
+    "selection", [dict(x=4e-9), dict(y=-2e-9), dict(z=0, vdims="b")]
+)
+def test_hv_data_selection(test_field, selection):
+    """
+    Test selecting parts of the data and returning them as xarray as done in the hv
+    plotting methods.
+    """
+    hv_plane = test_field._hv_data_selection(**selection)
+    field_plane = test_field
+    for key, value in selection.items():
+        if key == "vdims":
+            field_plane = getattr(field_plane, value)
+        else:
+            field_plane = field_plane.sel(**{key: value})
+    valid_plane = field_plane.valid.squeeze()
+    assert np.allclose(hv_plane.data[valid_plane], field_plane.array[valid_plane])
+    assert np.allclose(hv_plane.data[~valid_plane], np.nan, equal_nan=True)
+
+    for dim in hv_plane.dims:
+        assert all(hv_plane[dim].data == field_plane.to_xarray()[dim].data)
 
 
 def test_hv_scalar(test_field):
@@ -3244,6 +3321,7 @@ def test_hv_scalar(test_field):
         )
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_hv_vector(test_field):
     for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
         normal = (set("xyz") - set(kdims)).pop()

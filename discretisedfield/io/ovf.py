@@ -18,6 +18,11 @@ class _FieldIO_OVF:
     def _to_ovf(
         self, filename, representation="bin8", extend_scalar=False, save_subregions=True
     ):
+        if self.mesh.region.ndim != 3:
+            raise RuntimeError(
+                "OVF files can only store fields with 'ndim=3', not"
+                f" {self.mesh.region.ndim=}."
+            )
         filename = pathlib.Path(filename)
         write_dim = 3 if extend_scalar and self.nvdim == 1 else self.nvdim
         valueunits = " ".join([str(self.unit) if self.unit else "None"] * write_dim)
@@ -159,7 +164,8 @@ class _FieldIO_OVF:
             p1 = [float(header[f"{key}min"]) for key in "xyz"]
             p2 = [float(header[f"{key}max"]) for key in "xyz"]
             cell = [float(header[f"{key}stepsize"]) for key in "xyz"]
-            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
+            units = [header["meshunit"]] * 3
+            mesh = df.Mesh(region=df.Region(p1=p1, p2=p2, units=units), cell=cell)
 
             nodes = math.prod(int(header[f"{key}nodes"]) for key in "xyz")
 

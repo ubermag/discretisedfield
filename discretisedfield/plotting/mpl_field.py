@@ -803,7 +803,7 @@ class MplField(Mpl):
 
         """
         if self.field.nvdim != 1:
-            raise ValueError(f"Cannot plot nvdim={self.field.nvdim} field.")
+            raise RuntimeError(f"Cannot plot nvdim={self.field.nvdim} field.")
 
         ax = self._setup_axes(ax, figsize)
 
