@@ -3168,6 +3168,10 @@ def test_mpl_dimension(valid_mesh, nvdim):
         with pytest.raises(RuntimeError):
             field.mpl()
     else:
+        if nvdim == 3:
+            field.vdim_mapping = dict(
+                zip(field.vdims, [*valid_mesh.region.dims, None, None])
+            )
         field.mpl()
 
     plt.close("all")
