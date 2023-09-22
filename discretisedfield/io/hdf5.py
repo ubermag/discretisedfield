@@ -25,6 +25,13 @@ class _MeshIO_HDF5:
     __slots__ = []
 
     def _h5_save(self, h5_mesh: h5py.Group):
+        """
+        Create a group for the underlying region and call the region save method.
+        Save mesh attributes ``n`` and ``bc``. If subregions are defined for the mesh,
+        these are saved into two datasets ``subregion_names`` and ``subregions``. The
+        latter contains pmin and pmax as 2*ndim vectors. The two datasets are related
+        via position. If no subregions are defined, the datasets will not be created.
+        """
         h5_region = h5_mesh.create_group("region")
         self.region._h5_save(h5_region)
 
