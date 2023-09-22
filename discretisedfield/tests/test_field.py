@@ -3170,7 +3170,7 @@ def test_mpl_dimension(valid_mesh, nvdim):
     else:
         if nvdim == 3:
             field.vdim_mapping = dict(
-                zip(field.vdims, [*valid_mesh.region.dims, None, None])
+                zip(field.vdims, [*valid_mesh.region.dims, None])
             )
         field.mpl()
 
