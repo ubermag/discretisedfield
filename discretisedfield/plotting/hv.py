@@ -487,7 +487,7 @@ class Hv:
             vector_data["angle"] = np.arctan2(
                 data.sel(vdims=arrow_y) if arrow_y else 0,
                 data.sel(vdims=arrow_x) if arrow_x else 0,
-                where=np.logical_and(vector_norm != 0, ~np.isnan(vector_norm)),
+                where=np.logical_and(vector_norm != 0, ~np.isnan(vector_norm)).data,
                 out=np.full(vector_norm.shape, np.nan),
             )
 
