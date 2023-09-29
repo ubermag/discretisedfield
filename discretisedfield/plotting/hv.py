@@ -12,6 +12,19 @@ import discretisedfield as df
 
 from .util import hv_key_dim
 
+# HoloViews shows a warning about a deprecated call to unique when creating
+# the dynamic map.
+# The developers have confirmed, that this warning can be ignored
+# and the problem will be fixed in the next HoloViews release.
+# https://discourse.holoviz.org/t/futurewarning-when-creating-a-dynamicmap/6108
+# The warnings filtering can be removed once this is fixed.
+warnings.filterwarnings(
+    "ignore",
+    message="unique with argument",
+    category=FutureWarning,
+    module="holoviews.core.util",
+)
+
 
 class Hv:
     """Holoviews-based plotting methods.
