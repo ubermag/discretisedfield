@@ -3086,7 +3086,7 @@ def test_mpl_dimension_lightness(valid_mesh, nvdim):
 
 
 @pytest.mark.filterwarnings("error")
-def test_mpl_lightness_valid(test_field, tmp_path):
+def test_mpl_lightness_handles_invalid_parts(test_field, tmp_path):
     """
     We did set rgb values in invalid parts to np.nan. The array is internally converted
     to dtype np.uint8. The nan values result in a warning.
