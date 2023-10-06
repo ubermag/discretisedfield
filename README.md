@@ -13,7 +13,6 @@
 | Description | Badge |
 | --- | --- |
 | Tests | [![Build status](https://github.com/ubermag/discretisedfield/workflows/workflow/badge.svg)](https://github.com/ubermag/discretisedfield/actions?query=workflow%3Aworkflow) |
-|       | [![conda](https://github.com/ubermag/discretisedfield/workflows/conda/badge.svg)](https://github.com/ubermag/discretisedfield/actions?query=workflow%3Aconda) |
 | Linting | [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/ubermag/discretisedfield/master.svg)](https://results.pre-commit.ci/latest/github/ubermag/discretisedfield/master) |
 |         | [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
 | Releases | [![PyPI version](https://badge.fury.io/py/discretisedfield.svg)](https://badge.fury.io/py/discretisedfield) |
@@ -85,7 +84,7 @@ Licensed under the BSD 3-Clause "New" or "Revised" License. For details, please 
 
 2. M. Beg, R. A. Pepper, and H. Fangohr. User interfaces for computational science: A domain specific language for OOMMF embedded in Python. [*AIP Advances* **7**, 56025](http://aip.scitation.org/doi/10.1063/1.4977225) (2017).
 
-3. Marijan Beg, Martin Lang, Samuel Holt, Swapneel Amit Pathak, Ryan A. Pepper, and Hans Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2022).
+3. Marijan Beg, Martin Lang, Samuel Holt, Swapneel Amit Pathak, Ryan A. Pepper, and Hans Fangohr. discretisedfield: Python package for the analysis and visualisation of finite-difference fields. DOI: [10.5281/zenodo.3539461](http://doi.org/10.5281/zenodo.3539461) (2023).
 
 ## Acknowledgements
 
