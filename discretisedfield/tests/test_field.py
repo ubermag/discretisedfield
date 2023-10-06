@@ -3085,6 +3085,18 @@ def test_mpl_dimension_lightness(valid_mesh, nvdim):
     plt.close("all")
 
 
+@pytest.mark.filterwarnings("error")
+def test_mpl_lightness_valid(test_field, tmp_path):
+    """
+    We did set rgb values in invalid parts to np.nan. The array is internally converted
+    to dtype np.uint8. The nan values result in a warning.
+    To avoid this we now set invalid parts to zero.
+    """
+    assert (~test_field.valid).any()
+    # save field to trigger the warning
+    test_field.sel("z").mpl.lightness(filename=str(tmp_path / "test.pdf"))
+
+
 @pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_mpl_vector(test_field):
     # No axes
@@ -3616,7 +3628,7 @@ def test_hv_scalar_ndim(ndim, nvdim):
     check_hv(field.hv.scalar(kdims=list(field.mesh.region.dims[:2])), reference)
 
 
-@pytest.mark.filterwarning("ignore:Automatic coloring")
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 @pytest.mark.parametrize("ndim", range(2, 5))
 @pytest.mark.parametrize("nvdim", range(2, 5))
 def test_hv_vector_ndim(ndim, nvdim):

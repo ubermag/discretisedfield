@@ -475,6 +475,7 @@ class MplField(Mpl):
         rgba[..., :3] = rgb
         rgba[..., 3] = 1.0
         rgba[..., 3][np.isnan(rgb[..., 0])] = 0
+        rgba[..., :3][np.isnan(rgb[..., 0])] = 0  # nan -> zero to avoid cast warning
 
         kwargs["cmap"] = "hsv"  # only hsv cmap allowed
         ax.imshow(
