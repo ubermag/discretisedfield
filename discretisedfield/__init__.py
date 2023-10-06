@@ -1,9 +1,9 @@
 """Finite-difference fields."""
+import importlib.metadata
 import os
 import pathlib
 
 import matplotlib.pyplot as plt
-import pkg_resources
 import pytest
 
 from . import tools
@@ -18,7 +18,7 @@ from .region import Region
 # Enable default plotting style.
 plt.style.use(pathlib.Path(__file__).parent / "plotting" / "plotting-style.mplstyle")
 
-__version__ = pkg_resources.get_distribution(__name__).version
+__version__ = importlib.metadata.version(__package__)
 
 
 def test():
