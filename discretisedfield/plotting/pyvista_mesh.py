@@ -84,7 +84,7 @@ class PyVistaMesh:
         plotter.show_grid(xtitle=label[0], ytitle=label[1], ztitle=label[2])
 
         if len(rescaled_mesh.subregions) != 0:
-            plotter.add_legend()
+            plotter.add_legend(bcolor=None)
         if plot is None:
             plotter.show()
 
