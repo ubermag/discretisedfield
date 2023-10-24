@@ -88,7 +88,7 @@ class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
         If the extension of `filename` is ``.hdf5`` or ``.h5`` an HDF5 file will be
         written. The parameters `representation`, `extend_scalar` and `save_subregions`
         have no effect for HDF5 files and are silently ignored. Subregions are stored
-        inside the HDF5 file.
+        inside the HDF5 file, if any are defined for the field.
 
         Parameters
         ----------
@@ -217,9 +217,9 @@ class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
         correct data without additional user input. Mesh subregions are loaded from a
         separate json file if it exists.
 
-        For HDF5 files written with discretisedfield version 0.70.0 or newer all data is
+        For HDF5 files written with discretisedfield version 0.90.0 or newer all data is
         contained in the file. No separate json file for subregions is read. Older
-        versions of discretisedfield did only did not save all attributes (e.g. no
+        versions of discretisedfield did not save all attributes (e.g. no
         subregions). Reading old files is automatically handled internally. For old HDF5
         files subregions can be read from disk if they were saved in a separate json
         file.

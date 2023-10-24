@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "discretisedfield"
-version = "0.65.1"
+version = "0.90.0"
 description = "Python package for the analysis and visualisation of finite-difference fields."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -36,18 +36,17 @@ classifiers = [
 ]
 
 dependencies = [
-    "ubermagutil>=0.63.0",
-    "pandas>=1.1",
-    "matplotlib>=3.3, !=3.7.2",
-    "jupyterlab~=3.0",
     "h5py>=3.1",
+    "holoviews",
+    "jinja2",
     "k3d>=2.11",
+    "matplotlib>=3.3, !=3.7.2",
+    "pandas>=1.1",
     "scipy>=1.6",
     "sympy>=1.10.1",
-    "jinja2",
+    "ubermagutil>=0.63.2",
     "vtk>=9.1",
-    "xarray",
-    "hvplot"
+    "xarray"
 ]
 
 [project.optional-dependencies]
@@ -77,6 +76,9 @@ omit = ["discretisedfield/tests/*"]
 [tool.isort]
 profile = "black"
 skip_gitignore = true  # ignores files listed in .gitignore
+
+[tool.setuptools.packages.find]
+include = ["discretisedfield*"]
 
 # to define additional information we use a custom table
 # see: https://www.python.org/dev/peps/pep-0518/#tool-table

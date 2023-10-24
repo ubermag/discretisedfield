@@ -11,6 +11,3 @@ from discretisedfield.plotting.mpl_region import MplRegion
 from discretisedfield.plotting.pyvista_field import PyVistaField
 from discretisedfield.plotting.pyvista_mesh import PyVistaMesh
 from discretisedfield.plotting.pyvista_region import PyVistaRegion
-
-"""Default settings for plotting."""
-defaults = util.Defaults(Hv)

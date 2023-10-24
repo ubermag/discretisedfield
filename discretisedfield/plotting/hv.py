@@ -12,6 +12,19 @@ import discretisedfield as df
 
 from .util import hv_key_dim
 
+# HoloViews shows a warning about a deprecated call to unique when creating
+# the dynamic map.
+# The developers have confirmed, that this warning can be ignored
+# and the problem will be fixed in the next HoloViews release.
+# https://discourse.holoviz.org/t/futurewarning-when-creating-a-dynamicmap/6108
+# The warnings filtering can be removed once this is fixed.
+warnings.filterwarnings(
+    "ignore",
+    message="unique with argument",
+    category=FutureWarning,
+    module="holoviews.core.util",
+)
+
 
 class Hv:
     """Holoviews-based plotting methods.
@@ -20,11 +33,8 @@ class Hv:
     created for the directions not shown in the plot. This class should not be accessed
     directly. Use ``field.hv`` to use the different plotting methods.
 
-    Hv has a class property ``norm_filter`` that controls the default behaviour of
-    ``Hv.__call__``, the convenience plotting method that is typically available as
-    ``field.hv()``. By default ``norm_filter=True`` and plots created with ``hv()`` use
-    automatic filtering based on the norm of the field. To disable automatic filtering
-    globally use ``discretisedfield.plotting.defaults.norm_filter = False``.
+    Data in the plots is filtered based on ``field.valid``. Only cells where
+    ``valid==True`` are visible in the plots.
 
     Parameters
     ----------
@@ -48,8 +58,6 @@ class Hv:
 
     """
 
-    _norm_filter = True
-
     def __init__(self, key_dims, callback, vdim_guess_callback=None):
         # no tests for key_dims and callback as the class is not directly used by users
         if not hv.extension._loaded:
@@ -63,7 +71,6 @@ class Hv:
         kdims,
         vdims=None,
         roi=None,
-        norm_filter=None,
         scalar_kw=None,
         vector_kw=None,
     ):
@@ -98,11 +105,6 @@ class Hv:
         ``roi`` is 0. It relies on ``xarray``s broadcasting and the object passed to
         ``roi`` must only have the same dimensions as the ones specified as ``kdims``.
 
-        To disable filtering pass ``norm_filter=False``. To disable filtering for all
-        plots globally set ``discretisedfield.plotting.defaults.norm_filter = False``.
-        If norm filtering has been disabled globally use ``norm_filter=True`` to enable
-        it for a single plot.
-
         All default values of ``hv.scalar`` and ``hv.vector`` can be changed by passing
         dictionaries to ``scalar_kw`` and ``vector_kw``, which are then used in
         subplots.
@@ -136,13 +138,6 @@ class Hv:
 
             Filter out certain areas in the plot. Only cells where the roi is non-zero
             are included in the output.
-
-        norm_filter : bool, optional
-
-            If ``True`` use a default roi based on the norm of the field, if ``False``
-            do not filter automatically. If not specified the value of
-            ``discretisedfield.plotting.defaults.norm_filter`` is used. This allows
-            globally disabling the filtering.
 
         scalar_kw : dict
 
@@ -179,12 +174,6 @@ class Hv:
         """
         scalar_kw = {} if scalar_kw is None else scalar_kw.copy()
         vector_kw = {} if vector_kw is None else vector_kw.copy()
-
-        if norm_filter or (norm_filter is None and self._norm_filter):
-            if roi is None:
-                roi = self.callback
-            scalar_kw.setdefault("roi", roi)
-            vector_kw.setdefault("roi", roi)
 
         vector_kw.setdefault("use_color", False)
 
@@ -511,7 +500,7 @@ class Hv:
             vector_data["angle"] = np.arctan2(
                 data.sel(vdims=arrow_y) if arrow_y else 0,
                 data.sel(vdims=arrow_x) if arrow_x else 0,
-                where=np.logical_and(vector_norm != 0, ~np.isnan(vector_norm)),
+                where=np.logical_and(vector_norm != 0, ~np.isnan(vector_norm)).data,
                 out=np.full(vector_norm.shape, np.nan),
             )
 

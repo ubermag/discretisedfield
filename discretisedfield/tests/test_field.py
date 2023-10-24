@@ -83,18 +83,32 @@ def test_field():
     mesh = df.Mesh(p1=(-5e-9, -5e-9, -5e-9), p2=(5e-9, 5e-9, 5e-9), n=(5, 5, 5))
     c_array = mesh.coordinate_field().array
 
+    # The norm is defined via numpy for performance reasons;
+    # In the simple loop form it would be:
+    # x, y, _ = point
+    # if x**2 + y**2 <= 5e-9**2:
+    #     return 1e5
+    # else:
+    #     return 0
     def norm(points):
         return np.where(
             (points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0
         )[..., np.newaxis]
 
+    # Values are defined in numpy for performance reasons
+    # We define vector fields with vx=0, vy=0, vz=+/-1 for x<0 / x>0
     def value(points):
         res = np.zeros((*mesh.n, 3))
         res[..., 2] = np.where(points[..., 0] <= 0, 1, -1)
         return res
 
     return df.Field(
-        mesh, nvdim=3, value=value(c_array), norm=norm(c_array), vdims=["a", "b", "c"]
+        mesh,
+        nvdim=3,
+        value=value(c_array),
+        norm=norm(c_array),
+        vdims=["a", "b", "c"],
+        valid="norm",
     )
 
 
@@ -1158,7 +1172,8 @@ def test_mul_truediv(mesh_3d):
     assert np.allclose(f.mean(), (2, 4, 0))
     f /= 2
     assert np.allclose(f.mean(), (1, 2, 0))
-    res = 10 / f
+    with pytest.warns(RuntimeWarning, match="divide by zero"):
+        res = 10 / f
     assert np.allclose(res.mean(), (10, 5, np.inf))
 
     # Further checks
@@ -2649,8 +2664,6 @@ def test_rotate90():
     assert np.allclose(field.mean(), (1, 3, -2))
 
 
-# ######################################
-# TODO Martin
 def test_write_read_ovf(tmp_path):
     representations = ["txt", "bin4", "bin8"]
     filename = "testfile.ovf"
@@ -2661,7 +2674,10 @@ def test_write_read_ovf(tmp_path):
         "sr1": df.Region(p1=p1, p2=(2e-9, 2e-9, 1e-9)),
         "sr2": df.Region(p1=(3e-9, 0, 0), p2=p2),
     }
-    mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
+    units = ("nm", "nm", "nm")  # test saving units to file
+    region = df.Region(p1=p1, p2=p2, units=units)
+    assert region.units == units  # sanity check: data type of region.units
+    mesh = df.Mesh(region=region, cell=cell, subregions=subregions)
 
     # Write/read
     for nvdim, value in [
@@ -2677,6 +2693,7 @@ def test_write_read_ovf(tmp_path):
 
             assert f.allclose(f_read)
             assert f_read.unit == "A/m"
+            assert f_read.mesh.region.units == units
             assert f.mesh.subregions == f_read.mesh.subregions
 
             tmpfilename = tmp_path / f"no_sr_{filename}"
@@ -2685,6 +2702,7 @@ def test_write_read_ovf(tmp_path):
 
             assert f.allclose(f_read)
             assert f_read.unit == "A/m"
+            assert f_read.mesh.region.units == units
             assert f_read.mesh.subregions == {}
 
         # Directly write with wrong representation (no data is written)
@@ -2695,7 +2713,8 @@ def test_write_read_ovf(tmp_path):
     f = df.Field(mesh, nvdim=3, value=(1, 1, 1), unit="m s kg")
     tmpfilename = str(tmp_path / filename)
     f.to_file(tmpfilename, representation=rep)
-    f_read = df.Field.from_file(tmpfilename)
+    with pytest.warns(UserWarning, match=r"multiple units.+Unit is set to None"):
+        f_read = df.Field.from_file(tmpfilename)
 
     assert f.allclose(f_read)
     assert f_read.unit is None
@@ -2834,6 +2853,17 @@ def test_write_read_vtk(tmp_path):
         f.to_file(str(tmp_path / filename))
 
 
+@pytest.mark.parametrize("extension", ["ovf", "vtk"])
+@pytest.mark.parametrize("ndim", [1, 2, 4])
+def test_write_invalid_ndim(ndim, extension):
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=1)
+
+    with pytest.raises(RuntimeError):
+        field.to_file(f"field.{extension}")
+
+
+@pytest.mark.parametrize("norm", [None, lambda p: 100 if p[0] < 5e-12 else 0])
 @pytest.mark.parametrize("nvdim,value", [(1, -1.23), (3, (1e-3 + np.pi, -5e6, 6e6))])
 @pytest.mark.parametrize(
     "subregions",
@@ -2846,24 +2876,34 @@ def test_write_read_vtk(tmp_path):
     ],
 )
 @pytest.mark.parametrize("filename", ["testfile.hdf5", "testfile.h5"])
-def test_write_read_hdf5(nvdim, value, subregions, filename, tmp_path):
+def test_write_read_hdf5(norm, nvdim, value, subregions, filename, tmp_path):
     p1 = (0, 0, 0)
     p2 = (10e-12, 5e-12, 5e-12)
     cell = (1e-12, 1e-12, 1e-12)
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell, subregions=subregions)
 
-    f = df.Field(mesh, nvdim=nvdim, value=value)
+    f = df.Field(mesh, nvdim=nvdim, value=value, norm=norm, valid="norm")
+
+    # sanity checks
+    if norm is not None:
+        assert f.valid[0, 0, 0]
+        assert not f.valid[-1, -1, -1]
+    else:
+        assert f.valid.all()
+
     tmpfilename = tmp_path / filename
     f.to_file(tmpfilename)
     f_read = df.Field.from_file(tmpfilename)
 
     assert f == f_read
+    assert f.mesh.subregions == f_read.mesh.subregions  # not checked in __eq__
 
     tmpfilename = tmp_path / f"no_sr_{filename}"
     f.to_file(tmpfilename, save_subregions=False)
+    # subregions are always saved in hdf5, 'save_subregions' is ignored
     f_read = df.Field.from_file(tmpfilename)
     assert f == f_read
-    assert f.mesh.subregions == f_read.mesh.subregions  # not checked above
+    assert f.mesh.subregions == f_read.mesh.subregions  # not checked in __eq__
 
 
 def test_write_read_invalid_extension():
@@ -2881,11 +2921,22 @@ def test_write_read_invalid_extension():
         df.Field.from_file(filename)
 
 
-##################################
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_fft(valid_mesh, nvdim):
+    def _init_random(p):
+        return np.random.rand(nvdim) * 2 - 1
+
+    f = df.Field(valid_mesh, nvdim=nvdim, value=_init_random, norm=1)
+
+    ifft_f = f.fftn().ifftn()
+    ifft_f.mesh.translate(f.mesh.region.centre, inplace=True)
+    assert f.allclose(ifft_f)
+    irfft_f = f.rfftn().irfftn(shape=f.mesh.n)
+    irfft_f.mesh.translate(f.mesh.region.centre, inplace=True)
+    assert f.allclose(ifft_f)
 
 
-# TODO Sam and Martin (low priority)
-def test_fft():
+def test_fft_Fourier_slice_theoreme():
     p1 = (-10, -10, -5)
     p2 = (10, 10, 5)
     cell = (1, 1, 1)
@@ -2896,15 +2947,6 @@ def test_fft():
 
     f = df.Field(mesh, nvdim=3, value=_init_random, norm=1)
 
-    # 3d fft
-    assert f.allclose(f.rfftn().irfftn())
-
-    # 2d fft
-    for i in ["x", "y", "z"]:
-        plane = f.sel(i)
-        assert plane.allclose(plane.rfftn().irfftn())
-
-    # Fourier slice theoreme
     for i in "xyz":
         plane = f.integrate(i)
         assert plane.allclose(f.fftn().sel(**{"k_" + i: 0}).ifftn().real)
@@ -2914,32 +2956,8 @@ def test_fft():
             .allclose(f.fftn().sel(**{"k_" + i: 0}).ifftn().imag)
         )
 
-    # 3d single cell fft
-    for dim in "xyz":
-        plane = f.sel(**{dim: (0, 0)})
-        plane.mesh.translate(-plane.mesh.region.center, inplace=True)
-        assert plane.allclose(plane.fftn().ifftn().real)
 
-        zero_f = df.Field(mesh, nvdim=3).sel(**{dim: (0, 0)})
-        zero_f.mesh.translate(-zero_f.mesh.region.center, inplace=True)
-        assert zero_f.allclose(plane.fftn().ifftn().imag)
-
-        assert plane.allclose(plane.rfftn().irfftn(shape=plane.mesh.n))
-
-    # 1d fft
-    p1 = -5.0
-    p2 = 5.0
-    cell = 2.0
-    mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
-
-    f = df.Field(mesh, nvdim=1, value=np.random.rand(*mesh.n, 1), norm=1)
-
-    assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n))
-
-    # test 1d rfft
-    assert f.allclose(f.rfftn().irfftn(shape=f.mesh.n))
-
-    # test rfft no shift last dim
+def test_rfft_no_shift_last_dim():
     a = np.zeros((5, 5))
     a[2, 3] = 1
 
@@ -2953,6 +2971,14 @@ def test_fft():
     ft = spfft.fftshift(spfft.rfftn(a), axes=[0])
 
     assert np.array_equal(field_ft.array[..., 0], ft)
+
+
+def test_1d_fft():
+    mesh = df.Mesh(p1=0, p2=10, cell=2)
+    f = mesh.coordinate_field()
+    field_ft = f.fftn()
+    expected_array = np.fft.fftshift(np.fft.fftn(f.array))
+    assert np.allclose(expected_array, field_ft.array)
 
 
 def test_mpl_scalar(test_field):
@@ -2987,11 +3013,24 @@ def test_mpl_scalar(test_field):
     # Exceptions
     with pytest.raises(RuntimeError):
         test_field.a.mpl.scalar()  # not sliced
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.sel("z").mpl.scalar()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
         test_field.a.sel("z").mpl.scalar(filter_field=test_field)
+    plt.close("all")
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_scalar(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2 or nvdim != 1:
+        with pytest.raises(RuntimeError):
+            field.mpl.scalar()
+    else:
+        field.mpl.scalar()
+
     plt.close("all")
 
 
@@ -3030,6 +3069,35 @@ def test_mpl_lightess(test_field):
     plt.close("all")
 
 
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_lightness(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2 or nvdim > 3:
+        with pytest.raises(RuntimeError):
+            field.mpl.lightness()
+    elif nvdim == 3:
+        field.vdim_mapping = dict(zip(field.vdims, [*valid_mesh.region.dims, None]))
+        field.mpl.lightness()
+    else:
+        field.mpl.lightness()
+
+    plt.close("all")
+
+
+@pytest.mark.filterwarnings("error")
+def test_mpl_lightness_handles_invalid_parts(test_field, tmp_path):
+    """
+    We did set rgb values in invalid parts to np.nan. The array is internally converted
+    to dtype np.uint8. The nan values result in a warning.
+    To avoid this we now set invalid parts to zero.
+    """
+    assert (~test_field.valid).any()
+    # save field to trigger the warning
+    test_field.sel("z").mpl.lightness(filename=str(tmp_path / "test.pdf"))
+
+
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_mpl_vector(test_field):
     # No axes
     test_field.sel("x").resample((3, 4)).mpl.vector()
@@ -3086,6 +3154,30 @@ def test_mpl_vector(test_field):
     plt.close("all")
 
 
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_vector(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2:
+        with pytest.raises(RuntimeError):
+            field.mpl.vector()
+    else:
+        if nvdim == 1:
+            field.vdim_mapping = dict(zip([field.vdims], valid_mesh.region.dims))
+            with pytest.raises(ValueError):
+                field.mpl.vector()
+        else:
+            field.vdim_mapping = dict(
+                zip(field.vdims, [*valid_mesh.region.dims, None, None])
+            )
+            field.mpl.vector()
+
+        if nvdim > 1:
+            field.mpl.vector(vdims=field.vdims[:2])
+
+    plt.close("all")
+
+
 def test_mpl_contour(test_field):
     # No axes
     test_field.sel("z").c.mpl.contour()
@@ -3112,11 +3204,24 @@ def test_mpl_contour(test_field):
     # Exceptions
     with pytest.raises(RuntimeError):
         test_field.mpl.contour()  # not sliced
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         test_field.sel("z").mpl.contour()  # vector field
     with pytest.raises(ValueError):
         # wrong filter field
         test_field.sel("z").c.mpl.contour(filter_field=test_field)
+
+    plt.close("all")
+
+
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension_contour(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
+
+    if valid_mesh.region.ndim != 2 or nvdim != 1:
+        with pytest.raises(RuntimeError):
+            field.mpl.contour()
+    else:
+        field.mpl.contour()
 
     plt.close("all")
 
@@ -3161,16 +3266,42 @@ def test_mpl(test_field):
     plt.close("all")
 
 
-def test_mpl_dimension(valid_mesh):
-    field = df.Field(valid_mesh, nvdim=1)
+@pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
+def test_mpl_dimension(valid_mesh, nvdim):
+    field = df.Field(valid_mesh, nvdim=nvdim)
 
-    if valid_mesh.region.ndim != 2:
+    if valid_mesh.region.ndim != 2 or nvdim > 3:
         with pytest.raises(RuntimeError):
-            field.mpl.scalar()
+            field.mpl()
     else:
-        field.mpl.scalar()
+        if nvdim == 3:
+            field.vdim_mapping = dict(zip(field.vdims, [*valid_mesh.region.dims, None]))
+        field.mpl()
 
     plt.close("all")
+
+
+@pytest.mark.parametrize(
+    "selection", [dict(x=4e-9), dict(y=-2e-9), dict(z=0, vdims="b")]
+)
+def test_hv_data_selection(test_field, selection):
+    """
+    Test selecting parts of the data and returning them as xarray as done in the hv
+    plotting methods.
+    """
+    hv_plane = test_field._hv_data_selection(**selection)
+    field_plane = test_field
+    for key, value in selection.items():
+        if key == "vdims":
+            field_plane = getattr(field_plane, value)
+        else:
+            field_plane = field_plane.sel(**{key: value})
+    valid_plane = field_plane.valid.squeeze()
+    assert np.allclose(hv_plane.data[valid_plane], field_plane.array[valid_plane])
+    assert np.allclose(hv_plane.data[~valid_plane], np.nan, equal_nan=True)
+
+    for dim in hv_plane.dims:
+        assert all(hv_plane[dim].data == field_plane.to_xarray()[dim].data)
 
 
 def test_hv_scalar(test_field):
@@ -3229,6 +3360,7 @@ def test_hv_scalar(test_field):
         )
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 def test_hv_vector(test_field):
     for kdims in [["x", "y"], ["x", "z"], ["y", "z"]]:
         normal = (set("xyz") - set(kdims)).pop()
@@ -3316,7 +3448,7 @@ def test_hv_vector(test_field):
     with pytest.raises(ValueError):
         check_hv(test_field.hv.vector(kdims=["x", "y"], n=(10, 10, 10)), ...)
 
-    # scalar field
+    # scalar field, same implementation for all ndim, testing with ndim=3 sufficient
     with pytest.raises(ValueError):
         check_hv(field_2d.a.hv.vector(kdims=["x", "y"]), ...)
 
@@ -3451,6 +3583,102 @@ def test_hv(test_field):
                 f"VectorField {kdim_str}",
             ],
         )
+
+
+@pytest.mark.parametrize("method", ["__call__", "scalar", "vector", "contour"])
+def test_hv_ndim_1(method):
+    """
+    Plotting ndim=1 fields is not supported. This is only indirectly checked:
+    ``kdims`` must have length 2 and if we pass an unknown kdim (region.dim) a
+    ``ValueError`` is raised.
+
+    All plotting methods behave the same.
+    """
+    field = df.Mesh(p1=[0], p2=[1], n=[10]).coordinate_field()
+    with pytest.raises(ValueError):
+        getattr(field.hv, method)(kdims=["x"])
+    with pytest.raises(ValueError):
+        getattr(field.hv, method)(kdims=["x", "y"])
+
+
+@pytest.mark.parametrize("ndim", range(2, 5))
+@pytest.mark.parametrize("nvdim", range(1, 5))
+def test_hv_scalar_ndim(ndim, nvdim):
+    """
+    Scalar can plot any fields with arbitrary ndim and nvdim.
+
+    Contour is based on scalar and can also show fields with arbitrary ndim and nvdim.
+    Testing is however more difficult because contour does not work for spatially
+    constant data (due to restrictions in HoloViews that we cannot easily test for).
+    We restrict testing of contour to the 3d case.
+    """
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=nvdim, value=[1] * nvdim)
+
+    static_dims = ",".join(field.mesh.region.dims[:2])
+    dyn_dims = ",".join(field.mesh.region.dims[2:])
+    if nvdim > 1:
+        dyn_dims += ("," if dyn_dims != "" else "") + "vdims"
+
+    if ndim > 2 or nvdim > 1:
+        reference = [f"DynamicMap [{dyn_dims}]", f"Image [{static_dims}]"]
+    else:
+        reference = [f"Image [{static_dims}]"]
+
+    check_hv(field.hv.scalar(kdims=list(field.mesh.region.dims[:2])), reference)
+
+
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
+@pytest.mark.parametrize("ndim", range(2, 5))
+@pytest.mark.parametrize("nvdim", range(2, 5))
+def test_hv_vector_ndim(ndim, nvdim):
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=nvdim, value=[1] * nvdim)
+
+    static_dims = ",".join(field.mesh.region.dims[:2])
+    dyn_dims = ",".join(field.mesh.region.dims[2:])
+
+    if ndim > 2:
+        reference = [f"DynamicMap [{dyn_dims}]", f"VectorField [{static_dims}]"]
+    else:
+        reference = [f"VectorField [{static_dims}]"]
+
+    if ndim == nvdim:
+        check_hv(field.hv.vector(kdims=list(field.mesh.region.dims[:2])), reference)
+    else:
+        check_hv(
+            field.hv.vector(
+                kdims=list(field.mesh.region.dims[:2]), vdims=field.vdims[:2]
+            ),
+            reference,
+        )
+
+
+@pytest.mark.parametrize("ndim", range(2, 5))
+@pytest.mark.parametrize("nvdim", range(1, 5))
+def test_hv_ndim(ndim, nvdim):
+    mesh = df.Mesh(p1=[0] * ndim, p2=[1] * ndim, n=[10] * ndim)
+    field = df.Field(mesh, nvdim=nvdim, value=[1] * nvdim)
+
+    static_dims = ",".join(field.mesh.region.dims[:2])
+    dyn_dims = ",".join(field.mesh.region.dims[2:])
+    if nvdim > 3 or (nvdim > 1 and ndim != nvdim):
+        dyn_dims += ("," if dyn_dims != "" else "") + "vdims"
+
+    if ndim == 2 and nvdim == 1:
+        reference = [f"Image [{static_dims}]"]
+    elif ndim == 2 and nvdim == 2:
+        reference = [f"VectorField [{static_dims}]"]
+    elif ndim == nvdim:
+        reference = [
+            f"DynamicMap [{dyn_dims}]",
+            f"Image [{static_dims}]",
+            f"VectorField [{static_dims}]",
+        ]
+    else:
+        reference = [f"DynamicMap [{dyn_dims}]", f"Image [{static_dims}]"]
+
+    check_hv(field.hv(kdims=list(field.mesh.region.dims[:2])), reference)
 
 
 def test_k3d(valid_mesh):

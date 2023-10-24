@@ -3408,6 +3408,11 @@ class Field(_FieldIO):
         1000
 
         """
+        if self.mesh.region.ndim != 3:
+            raise RuntimeError(
+                "Conversion to VTK RectilinearGrid is only possible for 'ndim=3', not"
+                f" {self.mesh.region.ndim=}"
+            )
         if self.nvdim > 1 and self.vdims is None:
             raise AttributeError(
                 "Field vdims must be assigned before converting to vtk."
@@ -3504,6 +3509,9 @@ class Field(_FieldIO):
         also callable to quickly generate plots. For more details and the
         available methods refer to the documentation linked below.
 
+        Data shown in the plot is automatically filtered using the `valid` property of
+        the field.
+
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.Hv.__call__`
@@ -3532,7 +3540,11 @@ class Field(_FieldIO):
     def _hv_data_selection(self, **kwargs):
         """Select field part as specified by the input arguments."""
         vdims = kwargs.pop("vdims") if "vdims" in kwargs else None
-        res = self.to_xarray().sel(**kwargs, method="nearest")
+        xrfield = self.to_xarray().copy()
+        # we create copy to avoid changing field values
+        # using np.where instead did cause issues with broadcasting
+        xrfield.data[~self.valid] = np.nan
+        res = xrfield.sel(**kwargs, method="nearest")
         if vdims:
             res = res.sel(vdims=vdims)
         return res
