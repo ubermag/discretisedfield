@@ -75,9 +75,9 @@ class PyVistaField:
 
         grid = pv.RectilinearGrid(*rescaled_mesh.vertices)
         grid.cell_data["values"] = values.flatten(order="F")
+        threshed = grid.threshold(0.5, scalars="values")
 
-        # plotter.add_mesh(grid, scalars='values', opacity='values', **kwargs)
-        plotter.add_volume(grid, scalars="values", flip_scalars=True, **kwargs)
+        plotter.add_mesh(threshed, **kwargs)
         plotter.remove_scalar_bar()
 
         self._add_empty_region(plotter, multiplier, self.field.mesh.region)
