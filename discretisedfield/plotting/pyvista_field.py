@@ -11,18 +11,18 @@ class PyVistaField:
 
     # TODO: Add geom to args
     def __call__(
-        self, plot=None, multiplier=None, scalars=None, cmap="coolwarm", **kwargs
+        self, plotter=None, multiplier=None, scalars=None, cmap="coolwarm", **kwargs
     ):
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
-                f" {self.field.mesh.region.ndim=}."
+                f" {self.field.nvdim=}."
             )
 
-        if plot is None:
-            plotter = pv.Plotter()
+        if plotter is None:
+            plot = pv.Plotter()
         else:
-            plotter = plot
+            plot = plotter
 
         if scalars is None:
             scalars = self.field.vdims[-1]
@@ -45,27 +45,58 @@ class PyVistaField:
             shaft_radius=0.05,
             start=(-0.5 * scale, 0, 0),
         )
-        plotter.add_mesh(
+        plot.add_mesh(
             field_pv.glyph(orient="field", scale="norm", geom=vector),
             scalars=scalars,
             cmap=cmap,
             **kwargs,
         )
 
-        self._add_empty_region(plotter, multiplier, self.field.mesh.region)
+        self._add_empty_region(plot, multiplier, self.field.mesh.region)
 
-        if plot is None:
-            plotter.show()
+        if plotter is None:
+            plot.show()
 
-    def valid(self, plot=None, multiplier=None, **kwargs):
+    def scalar(self, plotter=None, multiplier=None, cmap="coolwarm", **kwargs):
+        if self.field.nvdim != 1:
+            raise RuntimeError(
+                "Only meshes with scalar dimensions can be plotted not"
+                f" {self.field.nvdim=}."
+            )
+
+        if plotter is None:
+            plot = pv.Plotter()
+        else:
+            plot = plotter
+
+        multiplier = self._setup_multiplier(multiplier)
+
+        self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
+
+        field_pv = pv.wrap(self.field.to_vtk())
+
+        plot.add_volume(
+            field_pv,
+            cmap=cmap,
+            **kwargs,
+        )
+
+        self._add_empty_region(plot, multiplier, self.field.mesh.region)
+
+        if plotter is None:
+            plot.show()
+
+    def valid(self, plotter=None, multiplier=None, **kwargs):
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
                 f" {self.field.mesh.region.ndim=}."
             )
 
-        if plot is None:
-            plotter = pv.Plotter()
+        if plotter is None:
+            plot = pv.Plotter()
+        else:
+            plot = plotter
 
         multiplier = self._setup_multiplier(multiplier)
 
@@ -77,13 +108,13 @@ class PyVistaField:
         grid.cell_data["values"] = values.flatten(order="F")
         threshed = grid.threshold(0.5, scalars="values")
 
-        plotter.add_mesh(threshed, **kwargs)
-        plotter.remove_scalar_bar()
+        plot.add_mesh(threshed, **kwargs)
+        plot.remove_scalar_bar()
 
-        self._add_empty_region(plotter, multiplier, self.field.mesh.region)
+        self._add_empty_region(plot, multiplier, self.field.mesh.region)
 
-        if plot is None:
-            plotter.show()
+        if plotter is None:
+            plot.show()
 
     def contour(
         self,
@@ -91,7 +122,7 @@ class PyVistaField:
         scalars=None,
         cmap="RdBu",
         opacity=0.5,
-        plot=None,
+        plotter=None,
         multiplier=None,
         **kwargs,
     ):
@@ -101,10 +132,10 @@ class PyVistaField:
                 f" {self.field.mesh.region.ndim=}."
             )
 
-        if plot is None:
-            plotter = pv.Plotter()
+        if plotter is None:
+            plot = pv.Plotter()
         else:
-            plotter = plot
+            plot = plotter
 
         if scalars is None:
             scalars = self.field.vdims[-1]
@@ -116,24 +147,24 @@ class PyVistaField:
         field_pv = pv.wrap(self.field.to_vtk()).cell_data_to_point_data()
         # field_pv = self._vtk_add_point_data(field_pv)
 
-        plotter.add_mesh(
+        plot.add_mesh(
             field_pv.contour(scalars=scalars, isosurfaces=isosurfaces),
             cmap=cmap,
             opacity=opacity,
             smooth_shading=True,
         )
 
-        self._add_empty_region(plotter, multiplier, self.field.mesh.region)
-        plotter.enable_eye_dome_lighting()
-        if plot is None:
-            plotter.show()
+        self._add_empty_region(plot, multiplier, self.field.mesh.region)
+        plot.enable_eye_dome_lighting()
+        if plotter is None:
+            plot.show()
 
     def streamlines(
         self,
         scalars=None,
         cmap="RdBu",
         opacity=0.5,
-        plot=None,
+        plotter=None,
         multiplier=None,
         **kwargs,
     ):
@@ -143,10 +174,10 @@ class PyVistaField:
                 f" {self.field.mesh.region.ndim=}."
             )
 
-        if plot is None:
-            plotter = pv.Plotter()
+        if plotter is None:
+            plot = pv.Plotter()
         else:
-            plotter = plot
+            plot = plotter
 
         if scalars is None:
             scalars = self.field.vdims[-1]
@@ -163,17 +194,17 @@ class PyVistaField:
             max_time=1000,
         )
 
-        plotter.add_mesh(
+        plot.add_mesh(
             streamlines.tube(radius=0.05),
             cmap=cmap,
             opacity=opacity,
             smooth_shading=True,
         )
 
-        self._add_empty_region(plotter, multiplier, self.field.mesh.region)
-        plotter.enable_eye_dome_lighting()
-        if plot is None:
-            plotter.show()
+        self._add_empty_region(plot, multiplier, self.field.mesh.region)
+        plot.enable_eye_dome_lighting()
+        if plotter is None:
+            plot.show()
 
     def _setup_multiplier(self, multiplier):
         return self.field.mesh.region.multiplier if multiplier is None else multiplier
