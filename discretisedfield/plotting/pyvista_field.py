@@ -184,9 +184,10 @@ class PyVistaField:
 
     def streamlines(
         self,
-        scalars=None,
         plotter=None,
         multiplier=None,
+        streamlines_kwargs={"max_time": 1000, "n_points": 20},
+        tube_kwargs={"radius": 0.05},
         **kwargs,
     ):
         if self.field.nvdim != 3:
@@ -200,24 +201,18 @@ class PyVistaField:
         else:
             plot = plotter
 
-        if scalars is None:
-            scalars = self.field.vdims[-1]
-
         multiplier = self._setup_multiplier(multiplier)
 
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk()).cell_data_to_point_data()
 
-        streamlines = field_pv.streamlines(
-            "field",
-            n_points=20,
-            max_time=1000,
-        )
+        streamlines = field_pv.streamlines("field", **streamlines_kwargs)
 
         plot.add_mesh(
-            streamlines.tube(radius=0.05),
+            streamlines.tube(**tube_kwargs),
             smooth_shading=True,
+            **kwargs,
         )
 
         self._add_empty_region(plot, multiplier, self.field.mesh.region)
