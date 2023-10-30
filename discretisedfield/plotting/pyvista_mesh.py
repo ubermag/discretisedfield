@@ -76,7 +76,7 @@ class PyVistaMesh:
             plot.show()
 
         if filename is not None:
-            plot.screenshot(filename=filename)
+            self._save_to_file(filename, plot)
 
     def _setup_multiplier(self, multiplier):
         return self.mesh.region.multiplier if multiplier is None else multiplier
@@ -86,3 +86,15 @@ class PyVistaMesh:
             rf"{dim} ({uu.rsi_prefixes[multiplier]}{unit})"
             for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
         ]
+
+    def _save_to_file(self, filename, plot):
+        extension = filename.split(".")[-1] if "." in filename else None
+        if extension in ["png", "jpeg", "jpg", "bmp", "tif", "tiff"]:
+            plot.screenshot(filename=filename)
+        elif extension in ["svg", "eps", "ps", "pdf", "tex"]:
+            plot.save_graphic(filename=filename)
+        else:
+            raise ValueError(
+                f"{extension} extension is not supported. The supported formats are"
+                " png, jpeg, jpg, bmp, tif, tiff, svg, eps, ps, pdf, and txt."
+            )
