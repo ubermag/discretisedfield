@@ -11,7 +11,7 @@ class PyVistaRegion:
         self.region = region
 
     def __call__(
-        self, *, plot=None, color=plot_util.cp_hex[0], multiplier=None, **kwargs
+        self, *, plotter=None, color=plot_util.cp_hex[0], multiplier=None, **kwargs
     ):
         """``pyvista`` plot.
 
@@ -52,10 +52,10 @@ class PyVistaRegion:
         if self.region.ndim != 3:
             raise RuntimeError("Only 3-dimensional regions can be plotted.")
 
-        if plot is None:
-            plotter = pv.Plotter()
+        if plotter is None:
+            plot = pv.Plotter()
         else:
-            plotter = plot
+            plot = plotter
 
         multiplier = self._setup_multiplier(multiplier)
 
@@ -71,12 +71,12 @@ class PyVistaRegion:
         box = pv.Box(bounds)
 
         # Add the box to the plotter
-        plotter.add_mesh(box, color=color, **kwargs)
+        plot.add_mesh(box, color=color, **kwargs)
         # plot.show_bounds(axes_ranges=bounds)
         label = self._axis_labels(multiplier)
-        plotter.show_grid(xtitle=label[0], ytitle=label[1], ztitle=label[2])
-        if plot is None:
-            plotter.show()
+        plot.show_grid(xtitle=label[0], ytitle=label[1], ztitle=label[2])
+        if plotter is None:
+            plot.show()
 
     def _setup_multiplier(self, multiplier):
         return self.region.multiplier if multiplier is None else multiplier

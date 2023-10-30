@@ -35,7 +35,7 @@ class PyVistaMesh:
         rescaled_mesh = self.mesh.scale(1 / multiplier, reference_point=(0, 0, 0))
 
         for i, (key, subregion) in enumerate(rescaled_mesh.subregions.items()):
-            subregion.pyvista(plot=plotter, color=color[i], label=key, **kwargs)
+            subregion.pyvista(plotter=plotter, color=color[i], label=key, **kwargs)
 
         grid = pv.RectilinearGrid(*rescaled_mesh.vertices)
         plot.disable_hidden_line_removal()
