@@ -1,6 +1,7 @@
-import numpy as np
 import pyvista as pv
 import ubermagutil.units as uu
+
+import discretisedfield.plotting.util as plot_util
 
 
 class PyVistaField:
@@ -15,7 +16,14 @@ class PyVistaField:
         elif self.field.nvdim == 1:
             return self.scalar()
 
-    def vector(self, plotter=None, multiplier=None, scalars=None, **kwargs):
+    def vector(
+        self,
+        plotter=None,
+        multiplier=None,
+        scalars=None,
+        vector=plot_util.arrow(),
+        **kwargs,
+    ):
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
@@ -36,17 +44,8 @@ class PyVistaField:
 
         field_pv = pv.wrap(self.field.to_vtk())
 
-        scale = np.min(self.field.mesh.cell) / np.max(self.field.norm.array)
+        # scale = np.min(self.field.mesh.cell) / np.max(self.field.norm.array)
 
-        vector = pv.Arrow(
-            tip_radius=0.18,
-            tip_length=0.4,
-            scale=scale,
-            tip_resolution=80,
-            shaft_resolution=80,
-            shaft_radius=0.05,
-            start=(-0.5 * scale, 0, 0),
-        )
         plot.add_mesh(
             field_pv.glyph(orient="field", scale="norm", geom=vector),
             scalars=scalars,
@@ -58,7 +57,7 @@ class PyVistaField:
         if plotter is None:
             plot.show()
 
-    def scalar(self, plotter=None, multiplier=None, cmap="coolwarm", **kwargs):
+    def scalar(self, plotter=None, multiplier=None, **kwargs):
         if self.field.nvdim != 1:
             raise RuntimeError(
                 "Only meshes with scalar dimensions can be plotted not"
@@ -78,7 +77,34 @@ class PyVistaField:
 
         plot.add_volume(
             field_pv,
-            cmap=cmap,
+            **kwargs,
+        )
+
+        self._add_empty_region(plot, multiplier, self.field.mesh.region)
+
+        if plotter is None:
+            plot.show()
+
+    def volume(self, plotter=None, multiplier=None, **kwargs):
+        if self.field.nvdim != 1:
+            raise RuntimeError(
+                "Only meshes with scalar dimensions can be plotted not"
+                f" {self.field.nvdim=}."
+            )
+
+        if plotter is None:
+            plot = pv.Plotter()
+        else:
+            plot = plotter
+
+        multiplier = self._setup_multiplier(multiplier)
+
+        self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
+
+        field_pv = pv.wrap(self.field.to_vtk())
+
+        plot.add_volume(
+            field_pv,
             **kwargs,
         )
 
@@ -121,7 +147,6 @@ class PyVistaField:
         self,
         isosurfaces=10,
         scalars=None,
-        cmap="RdBu",
         plotter=None,
         multiplier=None,
         **kwargs,
@@ -148,7 +173,6 @@ class PyVistaField:
 
         plot.add_mesh(
             field_pv.contour(scalars=scalars, isosurfaces=isosurfaces),
-            cmap=cmap,
             smooth_shading=True,
             **kwargs,
         )
@@ -161,8 +185,6 @@ class PyVistaField:
     def streamlines(
         self,
         scalars=None,
-        cmap="RdBu",
-        opacity=0.5,
         plotter=None,
         multiplier=None,
         **kwargs,
@@ -195,8 +217,6 @@ class PyVistaField:
 
         plot.add_mesh(
             streamlines.tube(radius=0.05),
-            cmap=cmap,
-            opacity=opacity,
             smooth_shading=True,
         )
 
