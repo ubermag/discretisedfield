@@ -9,10 +9,13 @@ class PyVistaField:
             raise RuntimeError("Only 3d meshes can be plotted.")
         self.field = field * 1
 
-    # TODO: Add geom to args
-    def __call__(
-        self, plotter=None, multiplier=None, scalars=None, cmap="coolwarm", **kwargs
-    ):
+    def __call__(self):
+        if self.field.nvdim == 3:
+            return self.vector()
+        elif self.field.nvdim == 1:
+            return self.scalar()
+
+    def vector(self, plotter=None, multiplier=None, scalars=None, **kwargs):
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
@@ -32,7 +35,6 @@ class PyVistaField:
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk())
-        # field_pv = self._vtk_add_point_data(field_pv)
 
         scale = np.min(self.field.mesh.cell) / np.max(self.field.norm.array)
 
@@ -48,7 +50,6 @@ class PyVistaField:
         plot.add_mesh(
             field_pv.glyph(orient="field", scale="norm", geom=vector),
             scalars=scalars,
-            cmap=cmap,
             **kwargs,
         )
 
@@ -121,7 +122,6 @@ class PyVistaField:
         isosurfaces=10,
         scalars=None,
         cmap="RdBu",
-        opacity=0.5,
         plotter=None,
         multiplier=None,
         **kwargs,
@@ -145,13 +145,12 @@ class PyVistaField:
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk()).cell_data_to_point_data()
-        # field_pv = self._vtk_add_point_data(field_pv)
 
         plot.add_mesh(
             field_pv.contour(scalars=scalars, isosurfaces=isosurfaces),
             cmap=cmap,
-            opacity=opacity,
             smooth_shading=True,
+            **kwargs,
         )
 
         self._add_empty_region(plot, multiplier, self.field.mesh.region)
