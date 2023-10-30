@@ -17,6 +17,7 @@ class PyVistaMesh:
         color=plot_util.cp_hex,
         multiplier=None,
         wireframe=True,
+        filename=None,
         **kwargs,
     ):
         if self.mesh.region.ndim != 3:
@@ -70,8 +71,12 @@ class PyVistaMesh:
             plot.add_mesh(edges, color="black")
 
         plot.add_legend(bcolor=None)
+
         if plotter is None:
             plot.show()
+
+        if filename is not None:
+            plot.screenshot(filename=filename)
 
     def _setup_multiplier(self, multiplier):
         return self.mesh.region.multiplier if multiplier is None else multiplier

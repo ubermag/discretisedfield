@@ -11,7 +11,13 @@ class PyVistaRegion:
         self.region = region
 
     def __call__(
-        self, *, plotter=None, color=plot_util.cp_hex[0], multiplier=None, **kwargs
+        self,
+        *,
+        plotter=None,
+        color=plot_util.cp_hex[0],
+        multiplier=None,
+        filename=None,
+        **kwargs,
     ):
         """``pyvista`` plot.
 
@@ -75,8 +81,12 @@ class PyVistaRegion:
         # plot.show_bounds(axes_ranges=bounds)
         label = self._axis_labels(multiplier)
         plot.show_grid(xtitle=label[0], ytitle=label[1], ztitle=label[2])
+
         if plotter is None:
             plot.show()
+
+        if filename is not None:
+            plot.screenshot(filename=filename)
 
     def _setup_multiplier(self, multiplier):
         return self.region.multiplier if multiplier is None else multiplier

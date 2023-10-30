@@ -22,6 +22,7 @@ class PyVistaField:
         multiplier=None,
         scalars=None,
         vector=plot_util.arrow(),
+        filename=None,
         **kwargs,
     ):
         if self.field.nvdim != 3:
@@ -57,7 +58,10 @@ class PyVistaField:
         if plotter is None:
             plot.show()
 
-    def scalar(self, plotter=None, multiplier=None, **kwargs):
+        if filename is not None:
+            plot.screenshot(filename=filename)
+
+    def scalar(self, plotter=None, multiplier=None, filename=None, **kwargs):
         if self.field.nvdim != 1:
             raise RuntimeError(
                 "Only meshes with scalar dimensions can be plotted not"
@@ -85,7 +89,10 @@ class PyVistaField:
         if plotter is None:
             plot.show()
 
-    def volume(self, plotter=None, multiplier=None, **kwargs):
+        if filename is not None:
+            plot.screenshot(filename=filename)
+
+    def volume(self, plotter=None, multiplier=None, filename=None, **kwargs):
         if self.field.nvdim != 1:
             raise RuntimeError(
                 "Only meshes with scalar dimensions can be plotted not"
@@ -113,7 +120,10 @@ class PyVistaField:
         if plotter is None:
             plot.show()
 
-    def valid(self, plotter=None, multiplier=None, **kwargs):
+        if filename is not None:
+            plot.screenshot(filename=filename)
+
+    def valid(self, plotter=None, multiplier=None, filename=None, **kwargs):
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
@@ -143,11 +153,15 @@ class PyVistaField:
         if plotter is None:
             plot.show()
 
+        if filename is not None:
+            plot.screenshot(filename=filename)
+
     def contour(
         self,
         isosurfaces=10,
         plotter=None,
         multiplier=None,
+        filename=None,
         contour_kwargs={},
         **kwargs,
     ):
@@ -179,13 +193,18 @@ class PyVistaField:
 
         self._add_empty_region(plot, multiplier, self.field.mesh.region)
         plot.enable_eye_dome_lighting()
+
         if plotter is None:
             plot.show()
+
+        if filename is not None:
+            plot.screenshot(filename=filename)
 
     def streamlines(
         self,
         plotter=None,
         multiplier=None,
+        filename=None,
         streamlines_kwargs={"max_time": 10, "n_points": 20},
         tube_kwargs={"radius": 0.05},
         **kwargs,
@@ -217,8 +236,12 @@ class PyVistaField:
 
         self._add_empty_region(plot, multiplier, self.field.mesh.region)
         plot.enable_eye_dome_lighting()
+
         if plotter is None:
             plot.show()
+
+        if filename is not None:
+            plot.screenshot(filename=filename)
 
     def _setup_multiplier(self, multiplier):
         return self.field.mesh.region.multiplier if multiplier is None else multiplier
