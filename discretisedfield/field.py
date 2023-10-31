@@ -3451,6 +3451,13 @@ class Field(_FieldIO):
         field_array.SetName("field")
         cell_data.AddArray(field_array)
 
+        # No support for bools
+        valid_array = vns.numpy_to_vtk(
+            self.valid.astype(int).transpose((2, 1, 0)).reshape((-1))
+        )
+        valid_array.SetName("valid")
+        cell_data.AddArray(valid_array)
+
         if self.nvdim == 3:
             cell_data.SetActiveVectors("field")
         elif self.nvdim == 1:

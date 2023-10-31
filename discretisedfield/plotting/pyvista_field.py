@@ -44,6 +44,7 @@ class PyVistaField:
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk())
+        field_pv = field_pv.extract_cells(field_pv["valid"].astype(bool))
 
         # scale = np.min(self.field.mesh.cell) / np.max(self.field.norm.array)
 
@@ -69,7 +70,7 @@ class PyVistaField:
         else:
             plot = plotter
 
-        if scalars is None:
+        if scalars is None and self.field.nvdim > 1:
             scalars = self.field.vdims[-1]
 
         multiplier = self._setup_multiplier(multiplier)
@@ -77,6 +78,7 @@ class PyVistaField:
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk())
+        field_pv = field_pv.extract_cells(field_pv["valid"].astype(bool))
 
         plot.add_mesh_slice(
             field_pv,
@@ -109,6 +111,7 @@ class PyVistaField:
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk())
+        field_pv = field_pv.extract_cells(field_pv["valid"].astype(bool))
 
         plot.add_volume(
             field_pv,
@@ -180,7 +183,10 @@ class PyVistaField:
 
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
-        field_pv = pv.wrap(self.field.to_vtk()).cell_data_to_point_data()
+        field_pv = pv.wrap(self.field.to_vtk())
+        field_pv = field_pv.extract_cells(
+            field_pv["valid"].astype(bool)
+        ).cell_data_to_point_data()
 
         if "scalars" not in contour_kwargs.keys():
             contour_kwargs["scalars"] = self.field.vdims[-1]
@@ -224,7 +230,10 @@ class PyVistaField:
 
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
-        field_pv = pv.wrap(self.field.to_vtk()).cell_data_to_point_data()
+        field_pv = pv.wrap(self.field.to_vtk())
+        field_pv = field_pv.extract_cells(
+            field_pv["valid"].astype(bool)
+        ).cell_data_to_point_data()
 
         streamlines = field_pv.streamlines("field", **streamlines_kwargs)
 
