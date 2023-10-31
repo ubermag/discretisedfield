@@ -43,17 +43,6 @@ class PyVistaRegion:
 
             Axes multiplier. Defaults to ``None``.
 
-        Examples
-        --------
-        1. Visualising the region using ``pyvista``.
-
-        >>> import discretisedfield as df
-        ...
-        >>> p1 = (-50e-9, -50e-9, 0)
-        >>> p2 = (50e-9, 50e-9, 10e-9)
-        >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.pyvista()
-
         """
         if self.region.ndim != 3:
             raise RuntimeError("Only 3-dimensional regions can be plotted.")
