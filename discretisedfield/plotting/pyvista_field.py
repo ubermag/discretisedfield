@@ -61,17 +61,16 @@ class PyVistaField:
         if filename is not None:
             self._save_to_file(filename, plot)
 
-    def scalar(self, plotter=None, multiplier=None, filename=None, **kwargs):
-        if self.field.nvdim != 1:
-            raise RuntimeError(
-                "Only meshes with scalar dimensions can be plotted not"
-                f" {self.field.nvdim=}."
-            )
-
+    def scalar(
+        self, plotter=None, multiplier=None, scalars=None, filename=None, **kwargs
+    ):
         if plotter is None:
             plot = pv.Plotter()
         else:
             plot = plotter
+
+        if scalars is None:
+            scalars = self.field.vdims[-1]
 
         multiplier = self._setup_multiplier(multiplier)
 
@@ -79,8 +78,9 @@ class PyVistaField:
 
         field_pv = pv.wrap(self.field.to_vtk())
 
-        plot.add_volume(
+        plot.add_mesh_slice(
             field_pv,
+            scalars=scalars,
             **kwargs,
         )
 
