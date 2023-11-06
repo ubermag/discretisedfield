@@ -1,3 +1,4 @@
+import numpy as np
 import pyvista as pv
 import ubermagutil.units as uu
 
@@ -22,6 +23,7 @@ class PyVistaField:
         multiplier=None,
         scalars=None,
         vector=plot_util.arrow(),
+        scale=None,
         filename=None,
         **kwargs,
     ):
@@ -58,6 +60,12 @@ class PyVistaField:
             A ``pyvista`` geometric object used as the glyph that represents the vectors
             in the field. The default is set by `plot_util.arrow()`, which provides
             a simple arrow shape.
+
+        scale : float, optional
+
+            This values scales the vector glyph prior to plotting. The scale defaults
+            to the minimum edge length of a cell divided by the maximum norm of the
+            field.
 
         filename : str, optional
 
@@ -103,10 +111,13 @@ class PyVistaField:
         field_pv = pv.wrap(self.field.to_vtk())
         field_pv = field_pv.extract_cells(field_pv["valid"].astype(bool))
 
-        # scale = np.min(self.field.mesh.cell) / np.max(self.field.norm.array)
+        if scale is None:
+            scale = np.min(self.field.mesh.cell) / np.max(self.field.norm.array)
+
+        scaled_vector = vector.scale(scale, inplace=False)
 
         plot.add_mesh(
-            field_pv.glyph(orient="field", scale="norm", geom=vector),
+            field_pv.glyph(orient="field", scale="norm", geom=scaled_vector),
             scalars=scalars,
             **kwargs,
         )
