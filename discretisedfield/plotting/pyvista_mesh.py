@@ -20,16 +20,15 @@ class PyVistaMesh:
         filename=None,
         **kwargs,
     ):
-        """``pyvista`` plot.
+        """Generates a ``pyvista`` plot of a mesh.
 
-        If ``plotter`` is not passed, a new `pyvista` plotter object is created
-        automatically. The colour of the subregion cans be specified using
-        ``color`` argument. A single cell is always coloured black.
+        This method generates a ``pyvista`` plot of a given mesh by plotting
+        the overall region, each subregion of the mesh, and a cell.
+        Each subregion can be coloured distinctly, while the discretisation
+        cell is always coloured black.
 
-        For details about ``multiplier``, please refer to
-        ``discretisedfield.Region.mpl``.
-
-        Keyword arguments are passed onto ``pyvista.add_mesh``.
+        Keyword arguments are passed onto ``pyvista.add_mesh`` when
+        plotting each subregion.
 
         Parameters
         ----------
@@ -49,13 +48,27 @@ class PyVistaMesh:
 
         multiplier : numbers.Real, optional
 
-            Axes multiplier. Defaults to ``None``.
+            A scaling factor applied to the region dimensions. This can be useful for
+            adjusting the region size for visualisation purposes. If ``None``, no
+            scaling is applied. For more details, see ``discretisedfield.Region.mpl``.
 
         filename : str, optional
 
-            If filename is passed, the plot is saved. Defaults to ``None``.
-            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
-            eps, ps, pdf, and txt.
+            The path or filename where the plot will be saved. If specified, the plot is
+            saved to this file. The file format is inferred from the extension, which
+            must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
+            'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
+
+        **kwargs
+
+            Arbitrary keyword arguments passed to `pyvista.add_mesh`, allowing for
+            additional customisation of the plot.
+
+        Raises
+        ------
+        ValueError
+
+            If the mesh associated does not have three spatial dimensions.
 
         .. seealso::
 

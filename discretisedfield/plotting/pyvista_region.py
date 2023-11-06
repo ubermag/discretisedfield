@@ -19,16 +19,15 @@ class PyVistaRegion:
         filename=None,
         **kwargs,
     ):
-        """``pyvista`` plot.
+        """Generates a ``pyvista`` plot of a 3-dimensional region.
 
-        If ``plotter`` is not passed, a new `pyvista` plotter object is created
-        automatically. The colour of the region can be specified using
-        ``color`` argument.
+        This method utilises ``pyvista`` to visualise the region.
 
-        For details about ``multiplier``, please refer to
-        ``discretisedfield.Region.mpl``.
+        If a ``plotter`` is not supplied, it initialises and uses its
+        own ``pyvista.Plotter``.
 
-        Keyword arguments are passed onto ``pyvista.add_mesh``.
+        Additional keyword arguments are forwarded to the ``pyvista.add_mesh``
+        method to allow further customisation.
 
         Parameters
         ----------
@@ -43,13 +42,26 @@ class PyVistaRegion:
 
         multiplier : numbers.Real, optional
 
-            Axes multiplier. Defaults to ``None``.
+            A scaling factor applied to the region dimensions. This can be useful for
+            adjusting the region size for visualisation purposes. If ``None``, no
+            scaling is applied. For more details, see ``discretisedfield.Region.mpl``.
 
         filename : str, optional
 
-            If filename is passed, the plot is saved. Defaults to ``None``.
-            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
-            eps, ps, pdf, and txt.
+            The path or filename where the plot will be saved. If specified, the plot is
+            saved to this file. The file format is inferred from the extension, which
+            must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
+            'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
+
+        **kwargs
+
+            Arbitrary keyword arguments that are passed directly to the
+            `pyvista.add_mesh` method for additional customisation of the plot.
+
+        Raises
+        ------
+        RuntimeError
+            If the region is not 3-dimensional.
 
         """
         if self.region.ndim != 3:
