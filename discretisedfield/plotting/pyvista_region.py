@@ -21,19 +21,21 @@ class PyVistaRegion:
     ):
         """``pyvista`` plot.
 
-        If ``plot`` is not passed, a new `pyvista` plotter object is created
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
         automatically. The colour of the region can be specified using
         ``color`` argument.
 
         For details about ``multiplier``, please refer to
         ``discretisedfield.Region.mpl``.
 
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
         Parameters
         ----------
-        plot : pyvista.Plotter, optional
+        plotter : pyvista.Plotter, optional
 
-            Plot to which the plot is added. Defaults to ``None`` - plot is
-            created internally.
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
 
         color : tuple, optional
 
@@ -42,6 +44,12 @@ class PyVistaRegion:
         multiplier : numbers.Real, optional
 
             Axes multiplier. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
 
         """
         if self.region.ndim != 3:

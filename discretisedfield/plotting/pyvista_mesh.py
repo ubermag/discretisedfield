@@ -20,6 +20,48 @@ class PyVistaMesh:
         filename=None,
         **kwargs,
     ):
+        """``pyvista`` plot.
+
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
+        automatically. The colour of the subregion cans be specified using
+        ``color`` argument. A single cell is always coloured black.
+
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
+
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
+        Parameters
+        ----------
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
+
+        color : array_like, optional
+
+            Colour of the subregions and the discretisation cell. Defaults to the
+            default color palette.
+
+        wireframe : bool, optional
+
+            Show a wireframe to outline the cells. Defaults to ``True``.
+
+        multiplier : numbers.Real, optional
+
+            Axes multiplier. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.pyvista.region`
+
+        """
         if self.mesh.region.ndim != 3:
             raise ValueError(
                 "Only meshes with 3 spatial dimensions can be plotted not"

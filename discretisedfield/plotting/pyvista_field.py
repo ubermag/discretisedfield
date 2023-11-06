@@ -25,6 +25,48 @@ class PyVistaField:
         filename=None,
         **kwargs,
     ):
+        """``pyvista`` vector plot.
+
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
+        automatically.
+
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
+
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
+        Parameters
+        ----------
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
+
+        multiplier : numbers.Real, optional
+
+            Axes multiplier. Defaults to ``None``.
+
+        scalars : str, optional
+
+            ``vdims`` on which to colour the glyphs. Defaults to the last ``vdims``.
+
+        vector : pyvista.object
+
+            pyvista object to place at each position. These point in the direction
+            of the field and are scaled by the norm of the field.
+            Defaults to ``plot_util.arrow()``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.pyvista.scalar`
+
+        """
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
@@ -65,6 +107,42 @@ class PyVistaField:
     def scalar(
         self, plotter=None, multiplier=None, scalars=None, filename=None, **kwargs
     ):
+        """``pyvista`` scalar plot.
+
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
+        automatically.
+
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
+
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
+        Parameters
+        ----------
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
+
+        multiplier : numbers.Real, optional
+
+            Axes multiplier. Defaults to ``None``.
+
+        scalars : str, optional
+
+            ``vdims`` on which to colour the cells. Defaults to the last ``vdims``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.pyvista.scalar`
+
+        """
         if plotter is None:
             plot = pv.Plotter()
         else:
@@ -95,6 +173,39 @@ class PyVistaField:
             self._save_to_file(filename, plot)
 
     def volume(self, plotter=None, multiplier=None, filename=None, **kwargs):
+        """``pyvista`` volume plot.
+
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
+        automatically.
+
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
+
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
+        Parameters
+        ----------
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
+
+        multiplier : numbers.Real, optional
+
+            Axes multiplier. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.pyvista.scalar`
+
+        """
+
         if self.field.nvdim != 1:
             raise RuntimeError(
                 "Only meshes with scalar dimensions can be plotted not"
@@ -127,6 +238,39 @@ class PyVistaField:
             self._save_to_file(filename, plot)
 
     def valid(self, plotter=None, multiplier=None, filename=None, **kwargs):
+        """``pyvista`` valid plot.
+
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
+        automatically.
+
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
+
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
+        Parameters
+        ----------
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
+
+        multiplier : numbers.Real, optional
+
+            Axes multiplier. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.pyvista.scalar`
+
+        """
+
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
@@ -168,6 +312,48 @@ class PyVistaField:
         contour_kwargs={},
         **kwargs,
     ):
+        """``pyvista`` contour plot.
+
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
+        automatically.
+
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
+
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
+        Parameters
+        ----------
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
+
+        isosurfaces : int | sequence[float], optional
+
+            Number of isosurfaces to compute across valid data range
+            or a sequence of float values to explicitly use as
+            the isosurfaces.
+
+        multiplier : numbers.Real, optional
+
+            Axes multiplier. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
+
+        contour_kwargs : dict, optional
+
+            keyword argument to pass to ``pyvista.contour`` function.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.pyvista.scalar`
+
+        """
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
@@ -215,6 +401,52 @@ class PyVistaField:
         tube_kwargs={"radius": 0.05},
         **kwargs,
     ):
+        """``pyvista`` streamline plot.
+
+        If ``plotter`` is not passed, a new `pyvista` plotter object is created
+        automatically.
+
+        For details about ``multiplier``, please refer to
+        ``discretisedfield.Region.mpl``.
+
+        Keyword arguments are passed onto ``pyvista.add_mesh``.
+
+        Parameters
+        ----------
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
+
+        isosurfaces : int | sequence[float], optional
+
+            Number of isosurfaces to compute across valid data range
+            or a sequence of float values to explicitly use as
+            the isosurfaces.
+
+        multiplier : numbers.Real, optional
+
+            Axes multiplier. Defaults to ``None``.
+
+        filename : str, optional
+
+            If filename is passed, the plot is saved. Defaults to ``None``.
+            The supported formats are png, jpeg, jpg, bmp, tif, tiff, svg,
+            eps, ps, pdf, and txt.
+
+        streamlines_kwargs : dict, optional
+
+            Keyword argument to pass to ``pyvista.streamlines`` function.
+
+        tube_kwargs : dict, optional
+
+            Keyword argument to pass to ``pyvista.tube`` function.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.pyvista.scalar`
+
+        """
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
