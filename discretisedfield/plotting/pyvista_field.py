@@ -351,7 +351,9 @@ class PyVistaField:
         isosurfaces=10,
         plotter=None,
         multiplier=None,
+        color_field=None,
         filename=None,
+        scalars=None,
         contour_kwargs={},
         **kwargs,
     ):
@@ -401,6 +403,11 @@ class PyVistaField:
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
 
         """
+        if color_field is not None:
+            if color_field.nvdim != 1:
+                raise ValueError(f"Cannot use {color_field.nvdim=}.")
+            if not self.field.mesh.allclose(color_field.mesh):
+                raise ValueError("The color_field has to be defined on the same mesh.")
 
         if plotter is None:
             plot = pv.Plotter()
@@ -412,6 +419,10 @@ class PyVistaField:
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk())
+        if color_field is not None:
+            # Need the copy
+            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"].copy()
+            scalars = "color_field"
         field_pv = field_pv.extract_cells(
             field_pv["valid"].astype(bool)
         ).cell_data_to_point_data()
@@ -422,6 +433,7 @@ class PyVistaField:
         plot.add_mesh(
             field_pv.contour(isosurfaces=isosurfaces, **contour_kwargs),
             smooth_shading=True,
+            scalars=scalars,
             **kwargs,
         )
 
