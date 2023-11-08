@@ -23,8 +23,10 @@ class PyVistaField:
         multiplier=None,
         scalars=None,
         vector=plot_util.arrow(),
+        color_field=None,
         scale=None,
         filename=None,
+        glyph_kwargs={},
         **kwargs,
     ):
         """``pyvista`` vector plot.
@@ -74,6 +76,17 @@ class PyVistaField:
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
 
+        color_field : discretisedfield.field, optional
+
+            A scalar field used for colouring. Defaults to ``None``
+            and the colouring is based on ``scalars``. If provided,
+            ``scalars`` are ignored.
+
+        glyph_kwargs : dict, optional
+
+            Keyword arguments for the `pyvista.glyph` function that generates the
+            glyphs from the vector field data.
+
         **kwargs
 
             Arbitrary keyword arguments that are passed to `pyvista.add_mesh`,
@@ -96,6 +109,12 @@ class PyVistaField:
                 f" {self.field.nvdim=}."
             )
 
+        if color_field is not None:
+            if color_field.nvdim != 1:
+                raise ValueError(f"Cannot use {color_field.nvdim=}.")
+            if not self.field.mesh.allclose(color_field.mesh):
+                raise ValueError("The color_field has to be defined on the same mesh.")
+
         if plotter is None:
             plot = pv.Plotter()
         else:
@@ -109,6 +128,10 @@ class PyVistaField:
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk())
+        if color_field is not None:
+            # Need the copy
+            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"].copy()
+            scalars = "color_field"
         field_pv = field_pv.extract_cells(field_pv["valid"].astype(bool))
 
         if scale is None:
@@ -117,7 +140,9 @@ class PyVistaField:
         scaled_vector = vector.scale(scale, inplace=False)
 
         plot.add_mesh(
-            field_pv.glyph(orient="field", scale="norm", geom=scaled_vector),
+            field_pv.glyph(
+                orient="field", scale="norm", geom=scaled_vector, **glyph_kwargs
+            ),
             scalars=scalars,
             **kwargs,
         )
@@ -202,7 +227,9 @@ class PyVistaField:
         if filename is not None:
             self._save_to_file(filename, plot)
 
-    def volume(self, plotter=None, multiplier=None, filename=None, **kwargs):
+    def volume(
+        self, plotter=None, multiplier=None, filename=None, scalars=None, **kwargs
+    ):
         """``pyvista`` volume plot.
 
         This method visualises the scalar field within a three-dimensional region
@@ -228,6 +255,11 @@ class PyVistaField:
             saved to this file. The file format is inferred from the extension, which
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
+
+        scalars : str, optional
+
+            The name of the field's vector dimension used to determine the colours of
+            the glyphs. By default, the last vector dimension of the field is used.
 
         **kwargs
 
@@ -257,6 +289,9 @@ class PyVistaField:
         else:
             plot = plotter
 
+        if scalars is None and self.field.nvdim > 1:
+            scalars = self.field.vdims[-1]
+
         multiplier = self._setup_multiplier(multiplier)
 
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
@@ -266,6 +301,7 @@ class PyVistaField:
 
         plot.add_volume(
             field_pv,
+            scalars=scalars,
             **kwargs,
         )
 
@@ -389,6 +425,12 @@ class PyVistaField:
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
 
+        color_field : discretisedfield.field, optional
+
+            A scalar field used for colouring. Defaults to ``None``
+            and the colouring is based on ``scalars``. If provided,
+            ``scalars`` are ignored.
+
         contour_kwargs : dict, optional
 
             keyword argument to pass to ``pyvista.contour`` function.
@@ -408,6 +450,9 @@ class PyVistaField:
                 raise ValueError(f"Cannot use {color_field.nvdim=}.")
             if not self.field.mesh.allclose(color_field.mesh):
                 raise ValueError("The color_field has to be defined on the same mesh.")
+
+        if scalars is None and self.field.nvdim > 1:
+            scalars = self.field.vdims[-1]
 
         if plotter is None:
             plot = pv.Plotter()
@@ -453,6 +498,8 @@ class PyVistaField:
         filename=None,
         streamlines_kwargs={"max_time": 10, "n_points": 20},
         tube_kwargs={"radius": 0.05},
+        color_field=None,
+        scalars=None,
         **kwargs,
     ):
         """``pyvista`` streamline plot.
@@ -486,6 +533,12 @@ class PyVistaField:
             saved to this file. The file format is inferred from the extension, which
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
+
+        color_field : discretisedfield.field, optional
+
+            A scalar field used for colouring. Defaults to ``None``
+            and the colouring is based on ``scalars``. If provided,
+            ``scalars`` are ignored.
 
         streamlines_kwargs : dict, optional
 
@@ -524,11 +577,18 @@ class PyVistaField:
         else:
             plot = plotter
 
+        if scalars is None and self.field.nvdim > 1:
+            scalars = self.field.vdims[-1]
+
         multiplier = self._setup_multiplier(multiplier)
 
         self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0), inplace=True)
 
         field_pv = pv.wrap(self.field.to_vtk())
+        if color_field is not None:
+            # Need the copy
+            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"].copy()
+            scalars = "color_field"
         field_pv = field_pv.extract_cells(
             field_pv["valid"].astype(bool)
         ).cell_data_to_point_data()
@@ -537,7 +597,7 @@ class PyVistaField:
 
         plot.add_mesh(
             streamlines.tube(**tube_kwargs),
-            smooth_shading=True,
+            scalars=scalars,
             **kwargs,
         )
 
