@@ -27,10 +27,8 @@ jobs:
     - name: Initialisation
       uses: actions/checkout@v4
 
-    - name: Run headless test
-      uses: coactions/setup-xvfb@v1.0.1
-      with:
-        run: npm test
+    - name: Setup headless display
+      uses: pyvista/setup-headless-display-action@v1
 
     - name: Set up conda
       uses: conda-incubator/setup-miniconda@v2
