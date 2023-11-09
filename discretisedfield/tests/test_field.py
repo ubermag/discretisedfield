@@ -4015,7 +4015,7 @@ def test_pyvista_contour(test_field):
     test_field.pyvista.contour(color_field=test_field.a)
 
     # contour_kwargs
-    test_field.pyvista.contour(contour_kwargs={"progress_bar": True})
+    test_field.pyvista.contour(contour_kwargs={"scalars": test_field.vdims[-1]})
 
 
 def test_pyvista_streamlines(test_field):
@@ -4037,6 +4037,9 @@ def test_pyvista_streamlines(test_field):
     test_field.pyvista.streamlines(color_field=test_field.a)
 
     # kwargs
+
+
+def test_pyvista_progress(test_field):
     test_field.pyvista.streamlines(streamlines_kwargs={"progress_bar": True})
     test_field.pyvista.streamlines(tube_kwargs={"progress_bar": True})
 
