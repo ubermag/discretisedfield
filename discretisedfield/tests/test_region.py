@@ -932,3 +932,7 @@ def test_pyvista(p1, p2):
         # Check if runs.
         region.pyvista(multiplier=1e9)
         region.pyvista(color=plot_util.cp_hex[3])
+
+        plotter = pv.Plotter()
+        region.pyvista(plotter=plotter)
+        plotter.show()

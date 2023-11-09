@@ -106,7 +106,7 @@ class PyVistaMesh:
             for val in pair
         )
         box = pv.Box(bounds)
-        plotter.add_mesh(box, color="black", label="cell")
+        plot.add_mesh(box, color="black", label="cell")
 
         label = self._axis_labels(multiplier)
         # Bounds only needed due to axis bug
