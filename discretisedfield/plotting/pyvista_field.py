@@ -153,7 +153,7 @@ class PyVistaField:
             plot.show()
 
         if filename is not None:
-            self._save_to_file(filename, plot)
+            plot_util._pyvista_save_to_file(filename, plot)
 
     def scalar(
         self, plotter=None, multiplier=None, scalars=None, filename=None, **kwargs
@@ -225,7 +225,7 @@ class PyVistaField:
             plot.show()
 
         if filename is not None:
-            self._save_to_file(filename, plot)
+            plot_util._pyvista_save_to_file(filename, plot)
 
     def volume(
         self, plotter=None, multiplier=None, scalars=None, filename=None, **kwargs
@@ -311,7 +311,7 @@ class PyVistaField:
             plot.show()
 
         if filename is not None:
-            self._save_to_file(filename, plot)
+            plot_util._pyvista_save_to_file(filename, plot)
 
     def valid(self, plotter=None, multiplier=None, filename=None, **kwargs):
         """``pyvista`` valid plot.
@@ -380,7 +380,7 @@ class PyVistaField:
             plot.show()
 
         if filename is not None:
-            self._save_to_file(filename, plot)
+            plot_util._pyvista_save_to_file(filename, plot)
 
     def contour(
         self,
@@ -501,7 +501,7 @@ class PyVistaField:
             plot.show()
 
         if filename is not None:
-            self._save_to_file(filename, plot)
+            plot_util._pyvista_save_to_file(filename, plot)
 
     def streamlines(
         self,
@@ -619,7 +619,7 @@ class PyVistaField:
             plot.show()
 
         if filename is not None:
-            self._save_to_file(filename, plot)
+            plot_util._pyvista_save_to_file(filename, plot)
 
     def _setup_multiplier(self, multiplier):
         return self.field.mesh.region.multiplier if multiplier is None else multiplier

@@ -130,3 +130,16 @@ def cone():
     return pv.Cone(
         center=(-0.5, 0, 0),
     )
+
+
+def _pyvista_save_to_file(filename, plotter):
+    extension = filename.split(".")[-1] if "." in filename else None
+    if extension in ["png", "jpeg", "jpg", "bmp", "tif", "tiff"]:
+        plotter.screenshot(filename=filename)
+    elif extension in ["svg", "eps", "ps", "pdf", "tex"]:
+        plotter.save_graphic(filename=filename)
+    else:
+        raise ValueError(
+            f"{extension} extension is not supported. The supported formats are"
+            " png, jpeg, jpg, bmp, tif, tiff, svg, eps, ps, pdf, and txt."
+        )
