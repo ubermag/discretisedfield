@@ -4037,9 +4037,6 @@ def test_pyvista_streamlines(test_field):
     test_field.pyvista.streamlines(color_field=test_field.a)
 
     # kwargs
-
-
-def test_pyvista_progress(test_field):
     test_field.pyvista.streamlines(streamlines_kwargs={"progress_bar": True})
     test_field.pyvista.streamlines(tube_kwargs={"progress_bar": True})
 
