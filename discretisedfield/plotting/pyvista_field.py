@@ -26,7 +26,7 @@ class PyVistaField:
         scale=None,
         color_field=None,
         filename=None,
-        glyph_kwargs={},
+        glyph_kwargs=None,
         **kwargs,
     ):
         """``pyvista`` vector plot.
@@ -108,6 +108,9 @@ class PyVistaField:
                 "Only meshes with 3 vector dimensions can be plotted not"
                 f" {self.field.nvdim=}."
             )
+
+        if glyph_kwargs is None:
+            glyph_kwargs = {}
 
         if color_field is not None:
             if color_field.nvdim != 1:
@@ -379,7 +382,7 @@ class PyVistaField:
         scalars=None,
         color_field=None,
         filename=None,
-        contour_kwargs={},
+        contour_kwargs=None,
         **kwargs,
     ):
         """``pyvista`` contour plot.
@@ -444,6 +447,16 @@ class PyVistaField:
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
 
         """
+
+        if contour_kwargs is None:
+            contour_kwargs = {}
+
+        if self.field.nvdim > 1 and "scalars" not in contour_kwargs:
+            if contour_scalars is None:
+                contour_kwargs["scalars"] = self.field.vdims[-1]
+            else:
+                contour_kwargs["scalars"] = contour_scalars
+
         if color_field is not None:
             if color_field.nvdim != 1:
                 raise ValueError(f"Cannot use {color_field.nvdim=}.")
@@ -452,12 +465,6 @@ class PyVistaField:
 
         if scalars is None and self.field.nvdim > 1:
             scalars = self.field.vdims[-1]
-
-        if self.field.nvdim > 1:
-            if contour_scalars is None:
-                contour_kwargs["scalars"] = self.field.vdims[-1]
-            else:
-                contour_kwargs["scalars"] = contour_scalars
 
         if plotter is None:
             plot = pv.Plotter()
@@ -575,6 +582,27 @@ class PyVistaField:
                 f" {self.field.mesh.region.ndim=}."
             )
 
+        streamlines_default_values = {
+            "max_time": 10,
+            "n_points": 20,
+        }
+
+        tube_default_values = {
+            "radius": 0.05,
+        }
+
+        if streamlines_kwargs is None:
+            streamlines_kwargs = streamlines_default_values
+        else:
+            for key, value in streamlines_default_values.items():
+                streamlines_kwargs.setdefault(key, value)
+
+        if tube_kwargs is None:
+            tube_kwargs = tube_default_values
+        else:
+            for key, value in tube_default_values.items():
+                tube_kwargs.setdefault(key, value)
+
         if plotter is None:
             plot = pv.Plotter()
         else:
@@ -596,16 +624,7 @@ class PyVistaField:
             field_pv["valid"].astype(bool)
         ).cell_data_to_point_data()
 
-        if "max_time" not in streamlines_kwargs:
-            streamlines_kwargs["max_time"] = 10
-        if "n_points" not in streamlines_kwargs:
-            streamlines_kwargs["n_points"] = 20
-        if "radius" not in tube_kwargs:
-            tube_kwargs["radius"] = 0.05
-
         streamlines = field_pv.streamlines("field", **streamlines_kwargs)
-
-        print(streamlines.point_data)
 
         plot.add_mesh(
             streamlines.tube(**tube_kwargs),

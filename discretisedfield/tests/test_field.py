@@ -4000,7 +4000,7 @@ def test_pyvista_contour(test_field):
     test_field.pyvista.contour(multiplier=1e-6)
 
     # Scalar field
-    test_field.b.pyvista.contour()
+    test_field.c.pyvista.contour()
 
     # Plotter
     plotter = pv.Plotter()
@@ -4012,7 +4012,7 @@ def test_pyvista_contour(test_field):
     test_field.pyvista.contour(isosurfaces=[0, 1])
 
     # Contour scalars
-    test_field.pyvista.contour(contour_scalars=test_field.vdims[0])
+    test_field.pyvista.contour(contour_scalars=test_field.vdims[-1])
 
     # Color field
     test_field.pyvista.contour(color_field=test_field.a)
