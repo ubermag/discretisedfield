@@ -278,12 +278,6 @@ class PyVistaField:
 
         """
 
-        if self.field.nvdim != 1:
-            raise RuntimeError(
-                "Only meshes with scalar dimensions can be plotted not"
-                f" {self.field.nvdim=}."
-            )
-
         if plotter is None:
             plot = pv.Plotter()
         else:
@@ -349,12 +343,6 @@ class PyVistaField:
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
 
         """
-
-        if self.field.nvdim != 3:
-            raise RuntimeError(
-                "Only meshes with 3 vector dimensions can be plotted not"
-                f" {self.field.mesh.region.ndim=}."
-            )
 
         if plotter is None:
             plot = pv.Plotter()
@@ -465,6 +453,12 @@ class PyVistaField:
         if scalars is None and self.field.nvdim > 1:
             scalars = self.field.vdims[-1]
 
+        if self.field.nvdim > 1:
+            if contour_scalars is None:
+                contour_kwargs["scalars"] = self.field.vdims[-1]
+            else:
+                contour_kwargs["scalars"] = contour_scalars
+
         if plotter is None:
             plot = pv.Plotter()
         else:
@@ -482,10 +476,6 @@ class PyVistaField:
         field_pv = field_pv.extract_cells(
             field_pv["valid"].astype(bool)
         ).cell_data_to_point_data()
-
-        contour_kwargs["scalars"] = (
-            self.field.vdims[-1] if contour_scalars is None else contour_scalars
-        )
 
         plot.add_mesh(
             field_pv.contour(isosurfaces=isosurfaces, **contour_kwargs),
@@ -510,8 +500,8 @@ class PyVistaField:
         scalars=None,
         color_field=None,
         filename=None,
-        streamlines_kwargs={"max_time": 10, "n_points": 20},
-        tube_kwargs={"radius": 0.05},
+        streamlines_kwargs={},
+        tube_kwargs={},
         **kwargs,
     ):
         """``pyvista`` streamline plot.
@@ -554,12 +544,14 @@ class PyVistaField:
         streamlines_kwargs : dict, optional
 
             Keyword arguments for the `pyvista.streamlines` function that generates the
-            streamline geometry from the vector field data.
+            streamline geometry from the vector field data. If not provided, the default
+            keys are ``max_time=10`` and ``n_points=20``.
 
         tube_kwargs : dict, optional
 
             Keyword arguments for the `pyvista.tube` function that creates
-            tubes around the streamlines.
+            tubes around the streamlines. If not provided, the default keys
+            are ``radius=0.05``.
 
         **kwargs
 
@@ -604,7 +596,16 @@ class PyVistaField:
             field_pv["valid"].astype(bool)
         ).cell_data_to_point_data()
 
+        if "max_time" not in streamlines_kwargs:
+            streamlines_kwargs["max_time"] = 10
+        if "n_points" not in streamlines_kwargs:
+            streamlines_kwargs["n_points"] = 20
+        if "radius" not in tube_kwargs:
+            tube_kwargs["radius"] = 0.05
+
         streamlines = field_pv.streamlines("field", **streamlines_kwargs)
+
+        print(streamlines.point_data)
 
         plot.add_mesh(
             streamlines.tube(**tube_kwargs),
