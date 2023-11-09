@@ -27,6 +27,9 @@ jobs:
     - name: Initialisation
       uses: actions/checkout@v4
 
+    - name: Run headless test
+      uses: coactions/setup-xvfb@v1.0.1
+
     - name: Set up conda
       uses: conda-incubator/setup-miniconda@v2
       with:
