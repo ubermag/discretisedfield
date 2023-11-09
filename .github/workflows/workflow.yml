@@ -29,6 +29,8 @@ jobs:
 
     - name: Run headless test
       uses: coactions/setup-xvfb@v1.0.1
+      with:
+        run: npm test
 
     - name: Set up conda
       uses: conda-incubator/setup-miniconda@v2
