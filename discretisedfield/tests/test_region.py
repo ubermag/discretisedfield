@@ -8,6 +8,8 @@ import pyvista as pv
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
 
+pv.OFF_SCREEN = True
+
 html_re = (
     r"<strong>Region</strong>( <i>\w+</i>)?\s*"
     r"<ul>\s*"
@@ -923,7 +925,6 @@ def test_k3d(p1, p2):
     [[0, 1], [(0, 0), (1, 1)], [(0, 0, 0), (1, 1, 1)], [(0, 0, 0, 0), (1, 1, 1, 1)]],
 )
 def test_pyvista(p1, p2):
-    pv.OFF_SCREEN = True
     region = df.Region(p1=p1, p2=p2)
     if region.ndim != 3:
         with pytest.raises(RuntimeError):

@@ -19,6 +19,8 @@ import discretisedfield.plotting.util as plot_util
 
 from .test_mesh import html_re as mesh_html_re
 
+pv.OFF_SCREEN = True
+
 html_re = (
     r"<strong>Field</strong>\s*<ul>\s*"
     rf"<li>{mesh_html_re}</li>\s*"
@@ -3891,7 +3893,6 @@ def test_plot_large_sample():
 
 
 def test_pyvista_vector(test_field):
-    pv.OFF_SCREEN = True
     # Default
     test_field.pyvista.vector()
 
@@ -3929,7 +3930,6 @@ def test_pyvista_vector(test_field):
 
 
 def test_pyvista_scalar(test_field):
-    pv.OFF_SCREEN = True
     # Default
     test_field.a.pyvista.scalar()
 
@@ -3949,7 +3949,6 @@ def test_pyvista_scalar(test_field):
 
 
 def test_pyvista_volume(test_field):
-    pv.OFF_SCREEN = True
     # Default
     test_field.a.pyvista.volume()
 
@@ -3969,7 +3968,6 @@ def test_pyvista_volume(test_field):
 
 
 def test_pyvista_valid(test_field):
-    pv.OFF_SCREEN = True
     # Default
     test_field.pyvista.valid()
 
@@ -3989,7 +3987,6 @@ def test_pyvista_valid(test_field):
 
 
 def test_pyvista_contour(test_field):
-    pv.OFF_SCREEN = True
     # Default
     test_field.pyvista.contour()
 
@@ -4022,7 +4019,6 @@ def test_pyvista_contour(test_field):
 
 
 def test_pyvista_streamlines(test_field):
-    pv.OFF_SCREEN = True
     # Default
     test_field.pyvista.streamlines()
 

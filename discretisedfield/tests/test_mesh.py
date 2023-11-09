@@ -13,6 +13,8 @@ import discretisedfield.plotting.util as plot_util
 
 from .test_region import html_re as region_html_re
 
+pv.OFF_SCREEN = True
+
 html_re = (
     r"<strong>Mesh</strong>\s*<ul>\s*"
     rf"<li>{region_html_re}</li>\s*"
@@ -1337,7 +1339,6 @@ def test_k3d_mpl_subregions(tmp_path):
 
 
 def test_pyvista(valid_mesh):
-    pv.OFF_SCREEN = True
     if valid_mesh.region.ndim != 3:
         with pytest.raises(RuntimeError):
             valid_mesh.pyvista()
@@ -1346,7 +1347,6 @@ def test_pyvista(valid_mesh):
 
 
 def test_pyvista_subregions(tmp_path):
-    pv.OFF_SCREEN = True
     p1 = (0, 0, 0)
     p2 = (100, 80, 10)
     cell = (100, 5, 10)
