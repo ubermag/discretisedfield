@@ -23,8 +23,8 @@ class PyVistaField:
         multiplier=None,
         scalars=None,
         vector=plot_util.arrow(),
-        color_field=None,
         scale=None,
+        color_field=None,
         filename=None,
         glyph_kwargs={},
         **kwargs,
@@ -69,18 +69,18 @@ class PyVistaField:
             to the minimum edge length of a cell divided by the maximum norm of the
             field.
 
+        color_field : discretisedfield.field, optional
+
+            A scalar field used for colouring. Defaults to ``None``
+            and the colouring is based on ``scalars``. If provided,
+            ``scalars`` are ignored.
+
         filename : str, optional
 
             The path or filename where the plot will be saved. If specified, the plot is
             saved to this file. The file format is inferred from the extension, which
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
-
-        color_field : discretisedfield.field, optional
-
-            A scalar field used for colouring. Defaults to ``None``
-            and the colouring is based on ``scalars``. If provided,
-            ``scalars`` are ignored.
 
         glyph_kwargs : dict, optional
 
@@ -228,7 +228,7 @@ class PyVistaField:
             self._save_to_file(filename, plot)
 
     def volume(
-        self, plotter=None, multiplier=None, filename=None, scalars=None, **kwargs
+        self, plotter=None, multiplier=None, scalars=None, filename=None, **kwargs
     ):
         """``pyvista`` volume plot.
 
@@ -249,17 +249,17 @@ class PyVistaField:
             adjusting the region size for visualisation purposes. If ``None``, no
             scaling is applied. For more details, see ``discretisedfield.Region.mpl``.
 
+        scalars : str, optional
+
+            The name of the field's vector dimension used to determine the colours of
+            the glyphs. By default, the last vector dimension of the field is used.
+
         filename : str, optional
 
             The path or filename where the plot will be saved. If specified, the plot is
             saved to this file. The file format is inferred from the extension, which
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
-
-        scalars : str, optional
-
-            The name of the field's vector dimension used to determine the colours of
-            the glyphs. By default, the last vector dimension of the field is used.
 
         **kwargs
 
@@ -385,11 +385,12 @@ class PyVistaField:
     def contour(
         self,
         isosurfaces=10,
+        contour_scalars=None,
         plotter=None,
         multiplier=None,
+        scalars=None,
         color_field=None,
         filename=None,
-        scalars=None,
         contour_kwargs={},
         **kwargs,
     ):
@@ -401,16 +402,21 @@ class PyVistaField:
 
         Parameters
         ----------
-        plotter : pyvista.Plotter, optional
-
-            Plotter to which the plotter is added. Defaults to ``None``
-            - plot is created internally.
-
         isosurfaces : int | sequence[float], optional
 
             Number of isosurfaces to compute across valid data range
             or a sequence of float values to explicitly use as
             the isosurfaces. Defaults to 10.
+
+        contour_scalars : str, optional
+
+            The name of the field's vector dimension used for the isosurfaces.
+            By default, the last vector dimension of the field is used.
+
+        plotter : pyvista.Plotter, optional
+
+            Plotter to which the plotter is added. Defaults to ``None``
+            - plot is created internally.
 
         multiplier : numbers.Real, optional
 
@@ -418,18 +424,23 @@ class PyVistaField:
             adjusting the region size for visualisation purposes. If ``None``, no
             scaling is applied. For more details, see ``discretisedfield.Region.mpl``.
 
-        filename : str, optional
+        scalars : str, optional
 
-            The path or filename where the plot will be saved. If specified, the plot is
-            saved to this file. The file format is inferred from the extension, which
-            must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
-            'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
+            The name of the field's vector dimension used to determine the colour.
+            By default, the last vector dimension of the field is used.
 
         color_field : discretisedfield.field, optional
 
             A scalar field used for colouring. Defaults to ``None``
             and the colouring is based on ``scalars``. If provided,
             ``scalars`` are ignored.
+
+        filename : str, optional
+
+            The path or filename where the plot will be saved. If specified, the plot is
+            saved to this file. The file format is inferred from the extension, which
+            must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
+            'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
 
         contour_kwargs : dict, optional
 
@@ -472,8 +483,9 @@ class PyVistaField:
             field_pv["valid"].astype(bool)
         ).cell_data_to_point_data()
 
-        if "scalars" not in contour_kwargs.keys():
-            contour_kwargs["scalars"] = self.field.vdims[-1]
+        contour_kwargs["scalars"] = (
+            self.field.vdims[-1] if contour_scalars is None else contour_scalars
+        )
 
         plot.add_mesh(
             field_pv.contour(isosurfaces=isosurfaces, **contour_kwargs),
@@ -495,11 +507,11 @@ class PyVistaField:
         self,
         plotter=None,
         multiplier=None,
+        scalars=None,
+        color_field=None,
         filename=None,
         streamlines_kwargs={"max_time": 10, "n_points": 20},
         tube_kwargs={"radius": 0.05},
-        color_field=None,
-        scalars=None,
         **kwargs,
     ):
         """``pyvista`` streamline plot.
@@ -515,17 +527,22 @@ class PyVistaField:
             Plotter to which the plotter is added. Defaults to ``None``
             - plot is created internally.
 
-        isosurfaces : int | sequence[float], optional
-
-            Number of isosurfaces to compute across valid data range
-            or a sequence of float values to explicitly use as
-            the isosurfaces.
-
         multiplier : numbers.Real, optional
 
             A scaling factor applied to the region dimensions. This can be useful for
             adjusting the region size for visualisation purposes. If ``None``, no
             scaling is applied. For more details, see ``discretisedfield.Region.mpl``.
+
+        scalars : str, optional
+
+            The name of the field's vector dimension used to determine the colour.
+            By default, the last vector dimension of the field is used.
+
+        color_field : discretisedfield.field, optional
+
+            A scalar field used for colouring. Defaults to ``None``
+            and the colouring is based on ``scalars``. If provided,
+            ``scalars`` are ignored.
 
         filename : str, optional
 
@@ -533,12 +550,6 @@ class PyVistaField:
             saved to this file. The file format is inferred from the extension, which
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
-
-        color_field : discretisedfield.field, optional
-
-            A scalar field used for colouring. Defaults to ``None``
-            and the colouring is based on ``scalars``. If provided,
-            ``scalars`` are ignored.
 
         streamlines_kwargs : dict, optional
 
