@@ -63,6 +63,18 @@ class PyVistaRegion:
         RuntimeError
             If the region is not 3-dimensional.
 
+        Examples
+        --------
+        1. Visualising a region using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> region = df.Region(p1=p1, p2=p2)
+        ...
+        >>> region.pyvista() # doctest: +SKIP
+
         """
         if self.region.ndim != 3:
             raise RuntimeError("Only 3-dimensional regions can be plotted.")

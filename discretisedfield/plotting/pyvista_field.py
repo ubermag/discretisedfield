@@ -98,6 +98,20 @@ class PyVistaField:
 
             If the vector field does not have three dimensions.
 
+        Examples
+        --------
+        1. Visualising the vector field using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
+        ...
+        >>> field.pyvista.vector() # doctest: +SKIP
+
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
@@ -196,6 +210,20 @@ class PyVistaField:
             Arbitrary keyword arguments passed to `pyvista.add_mesh_slice` for
             additional customisation of the plot.
 
+        Examples
+        --------
+        1. Visualising a scalar field using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, nvdim=1, value=1)
+        ...
+        >>> field.pyvista.scalar() # doctest: +SKIP
+
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.vector`
@@ -269,6 +297,20 @@ class PyVistaField:
             Arbitrary keyword arguments passed directly to `pyvista.add_volume` for
             additional customisation.
 
+        Examples
+        --------
+        1. Visualising a scalar field using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = df.Field(mesh, nvdim=1, value=1)
+        ...
+        >>> field.pyvista.volume() # doctest: +SKIP
+
         Raises
         ------
         RuntimeError
@@ -340,6 +382,22 @@ class PyVistaField:
             saved to this file. The file format is inferred from the extension, which
             must be one of: 'png', 'jpeg', 'jpg', 'bmp', 'tif', 'tiff', 'svg', 'eps',
             'ps', 'pdf', or 'txt'. If `None`, the plot is not saved to a file.
+
+
+        Examples
+        --------
+        1. Visualising the vector field using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (1, 2, 2)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> valid = [[[True, True], [True, False]]]
+        >>> field = df.Field(mesh, nvdim=1, value=1, valid=valid)
+        ...
+        >>> field.pyvista.valid() # doctest: +SKIP
 
         .. seealso::
 
@@ -441,6 +499,20 @@ class PyVistaField:
 
             Arbitrary keyword arguments that are passed to `pyvista.add_mesh`,
             allowing for additional customisation.
+
+        Examples
+        --------
+        1. Visualising a field using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = mesh.coordinate_field()
+        ...
+        >>> field.pyvista.contour() # doctest: +SKIP
 
         .. seealso::
 
@@ -564,6 +636,20 @@ class PyVistaField:
 
             Arbitrary keyword arguments passed directly to `pyvista.add_mesh`,
             allowing for further customization of the plot.
+
+        Examples
+        --------
+        1. Visualising a field using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+        >>> field = mesh.coordinate_field()
+        ...
+        >>> field.pyvista.streamlines() # doctest: +SKIP
 
         Raises
         ------

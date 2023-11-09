@@ -70,6 +70,23 @@ class PyVistaMesh:
 
             If the mesh associated does not have three spatial dimensions.
 
+        Examples
+        --------
+        1. Visualising a mesh using ``pyvista``.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> n = (10, 10, 10)
+        >>> subregions = {
+        ...     "r1": df.Region(p1=(0, 0, 0), p2=(100, 10, 10)),
+        ...     "r2": df.Region(p1=(0, 10, 0), p2=(100, 20, 10)),
+        ... }
+        >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
+        ...
+        >>> mesh.pyvista() # doctest: +SKIP
+
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.region`
