@@ -2,6 +2,7 @@ import itertools
 import os
 import random
 import re
+import sys
 import tempfile
 import types
 
@@ -3986,6 +3987,9 @@ def test_pyvista_valid(test_field):
     plotter.show()
 
 
+@pytest.mark.skipif(
+    sys.platform != "linux", reason="Segmentation fault on Mac and Windows."
+)
 def test_pyvista_contour(test_field):
     # Default
     test_field.pyvista.contour()
