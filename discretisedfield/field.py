@@ -3505,7 +3505,7 @@ class Field(_FieldIO):
 
     @property
     def pyvista(self):
-        """Plot interface, k3d based."""
+        """Plot interface, pyvista based."""
         return dfp.PyVistaField(self)
 
     @property
