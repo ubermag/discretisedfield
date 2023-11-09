@@ -4022,6 +4022,9 @@ def test_pyvista_contour(test_field):
     test_field.pyvista.contour(contour_kwargs={"scalars": test_field.vdims[-1]})
 
 
+@pytest.mark.skipif(
+    sys.platform != "linux", reason="Segmentation fault on Mac and Windows."
+)
 def test_pyvista_streamlines(test_field):
     # Default
     test_field.pyvista.streamlines()
