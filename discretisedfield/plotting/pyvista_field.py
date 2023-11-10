@@ -11,12 +11,6 @@ class PyVistaField:
             raise RuntimeError("Only 3d meshes can be plotted.")
         self.field = field * 1
 
-    def __call__(self):
-        if self.field.nvdim == 3:
-            return self.vector()
-        elif self.field.nvdim == 1:
-            return self.scalar()
-
     def vector(
         self,
         plotter=None,
