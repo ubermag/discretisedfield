@@ -109,6 +109,8 @@ class PyVistaField:
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
+            :py:func:`~discretisedfield.plotting.pyvista.contour`
+            :py:func:`~discretisedfield.plotting.pyvista.valid`
 
         """
         if self.field.nvdim != 3:
@@ -220,7 +222,11 @@ class PyVistaField:
 
         .. seealso::
 
+            :py:func:`~discretisedfield.plotting.pyvista.scalar`
             :py:func:`~discretisedfield.plotting.pyvista.vector`
+            :py:func:`~discretisedfield.plotting.pyvista.contour`
+            :py:func:`~discretisedfield.plotting.pyvista.valid`
+            :py:func:`~discretisedfield.plotting.pyvista.volume`
 
         """
         if plotter is None:
@@ -314,6 +320,9 @@ class PyVistaField:
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
+            :py:func:`~discretisedfield.plotting.pyvista.vector`
+            :py:func:`~discretisedfield.plotting.pyvista.contour`
+            :py:func:`~discretisedfield.plotting.pyvista.valid`
 
         """
 
@@ -396,6 +405,8 @@ class PyVistaField:
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
+            :py:func:`~discretisedfield.plotting.pyvista.vector`
+            :py:func:`~discretisedfield.plotting.pyvista.contour`
 
         """
 
@@ -511,6 +522,9 @@ class PyVistaField:
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
+            :py:func:`~discretisedfield.plotting.pyvista.vector`
+            :py:func:`~discretisedfield.plotting.pyvista.contour`
+            :py:func:`~discretisedfield.plotting.pyvista.valid`
 
         """
 
@@ -654,6 +668,9 @@ class PyVistaField:
         .. seealso::
 
             :py:func:`~discretisedfield.plotting.pyvista.scalar`
+            :py:func:`~discretisedfield.plotting.pyvista.vector`
+            :py:func:`~discretisedfield.plotting.pyvista.contour`
+            :py:func:`~discretisedfield.plotting.pyvista.valid`
 
         """
         if self.field.nvdim != 3:
