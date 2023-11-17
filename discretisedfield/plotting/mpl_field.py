@@ -630,8 +630,8 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points1 = self.field.mesh.points[0] / multiplier
-        points2 = self.field.mesh.points[1] / multiplier
+        points1 = self.field.mesh.cells[0] / multiplier
+        points2 = self.field.mesh.cells[1] / multiplier
 
         values = self.field.array.copy()
         self._filter_values(self.field._valid_as_field, values)
@@ -815,8 +815,8 @@ class MplField(Mpl):
 
         multiplier = self._setup_multiplier(multiplier)
 
-        points1 = self.field.mesh.points[0] / multiplier
-        points2 = self.field.mesh.points[1] / multiplier
+        points1 = self.field.mesh.cells[0] / multiplier
+        points2 = self.field.mesh.cells[1] / multiplier
 
         values = self.field.array.copy().reshape(self.field.mesh.n)
 

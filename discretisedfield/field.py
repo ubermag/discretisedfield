@@ -3565,7 +3565,7 @@ class Field(_FieldIO):
         key_dims = {
             dim: hv_key_dim(coords, unit)
             for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
-            if len(coords := getattr(self.mesh.points, dim)) > 1
+            if len(coords := getattr(self.mesh.cells, dim)) > 1
         }
         if self.nvdim > 1:
             key_dims["vdims"] = hv_key_dim(self.vdims, "")
@@ -4065,7 +4065,7 @@ class Field(_FieldIO):
 
         axes = self.mesh.region.dims
 
-        data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
+        data_array_coords = {axis: getattr(self.mesh.cells, axis) for axis in axes}
 
         geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
@@ -4314,7 +4314,7 @@ def _(val, mesh, nvdim, dtype):
     value = (
         val.to_xarray()
         .sel(
-            **{dim: getattr(mesh.points, dim) for dim in mesh.region.dims},
+            **{dim: getattr(mesh.cells, dim) for dim in mesh.region.dims},
             method="nearest",
         )
         .data
