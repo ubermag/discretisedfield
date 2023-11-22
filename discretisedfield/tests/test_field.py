@@ -1854,10 +1854,10 @@ def test_diff_valid():
     f = df.Field(mesh, nvdim=1, value=lambda p: p[0] ** 2, valid=valid)
 
     assert np.allclose(f.diff("x").array[:3], 0)
-    assert np.allclose(f.diff("x").array[3:6, 0], 2 * f.mesh.points[0][3:6])
+    assert np.allclose(f.diff("x").array[3:6, 0], 2 * f.mesh.cells[0][3:6])
     assert np.allclose(f.diff("x").array[6:], 0)
     assert np.allclose(
-        f.diff("x", restrict2valid=False).array[..., 0], 2 * f.mesh.points[0]
+        f.diff("x", restrict2valid=False).array[..., 0], 2 * f.mesh.cells[0]
     )
 
     # 3d mesh
@@ -3972,7 +3972,7 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
     assert np.allclose(fxa.attrs["tolerance_factor"], f.mesh.region.tolerance_factor)
     for i in f.mesh.region.dims:
-        assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
+        assert np.array_equal(getattr(f.mesh.cells, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
     assert all(fxa["vdims"].values == f.vdims)
     assert np.array_equal(f.array, fxa.values)
@@ -3996,7 +3996,7 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
     assert np.allclose(fxa.attrs["tolerance_factor"], f.mesh.region.tolerance_factor)
     for i in f.mesh.region.dims:
-        assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
+        assert np.array_equal(getattr(f.mesh.cells, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
     assert "vdims" not in fxa.dims
     assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)
