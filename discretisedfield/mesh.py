@@ -170,7 +170,7 @@ class Mesh(_MeshIO):
     # removed attribute: new method/property
     # implemented in __getattr__
     # to exclude methods from tap completion and documentation
-    _removed_attributes = {"midpoints": "points"}
+    _removed_attributes = {"midpoints": "cells", "points": "cells"}
 
     def __init__(
         self,
