@@ -488,11 +488,11 @@ class Mesh(_MeshIO):
 
     @property
     def cells(self):
-        """Midpoints of the cells of the mesh along the three directions.
+        """Midpoints of the cells of the mesh along the spatial directions.
 
-        This method returns a named tuple containing three numpy arrays with
-        midpoints of the cells along the three spatial directions. Individual directions
-        can be accessed from the tuple.
+        This method returns a named tuple containing numpy arrays with midpoints of the
+        cells along the spatial directions. Individual directions can be accessed from
+        the tuple.
 
         Returns
         -------
@@ -529,11 +529,11 @@ class Mesh(_MeshIO):
 
     @property
     def vertices(self):
-        """Vertices of the cells of the mesh along the three directions.
+        """Vertices of the cells of the mesh along the spatial directions.
 
-        This method returns a named tuple containing three numpy arrays with
-        vertices of the cells along the spatial directions. Individual directions can be
-        accessed from the tuple.
+        This method returns a named tuple containing numpy arrays with vertices of the
+        cells along the spatial directions. Individual directions can be accessed from
+        the tuple.
 
         Returns
         -------
