@@ -6,7 +6,7 @@ import pathlib
 import matplotlib.pyplot as plt
 import pytest
 
-from . import tools
+from . import tools, vertex_field, cell_field
 from .field import Field
 from .field_rotator import FieldRotator
 from .interact import interact

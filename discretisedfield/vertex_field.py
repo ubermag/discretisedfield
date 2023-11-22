@@ -1,10 +1,7 @@
-from discretisedfield import Field
+from .field import Field
 
 
 class VertexField(Field):
-    def _repr_html_(self):
-        pass  # @Martin
-
     def __call__(self, point):
         raise NotImplementedError
 
@@ -21,9 +18,6 @@ class VertexField(Field):
 
     def __getitem__(self, item):
         raise NotImplementedError
-
-    def to_vtk(self):
-        pass  # @Martin
 
     def mpl(self):
         pass  # @Swapneel

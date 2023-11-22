@@ -1,3 +1,4 @@
+import abc
 import collections
 import functools
 import numbers
@@ -157,12 +158,34 @@ class Field(_FieldIO):
         "write": "to_file",  # method is in io.__init__
     }
 
+    def __new__(
+        cls,
+        mesh,
+        nvdim=None,
+        value=0.0,
+        norm=None,
+        data_location="cell",
+        vdims=None,
+        dtype=None,
+        unit=None,
+        valid=True,
+        vdim_mapping=None,
+        **kwargs,
+    ):
+        if data_location == "cell":
+            return super().__new__(df.cell_field.CellField)
+        elif data_location == "vertex":
+            return super().__new__(df.vertex_field.VertexField)
+        else:
+            raise ValueError(f"Unknown field data location: {data_location}")
+
     def __init__(
         self,
         mesh,
         nvdim=None,
         value=0.0,
         norm=None,
+        data_location="cell",
         vdims=None,
         dtype=None,
         unit=None,
@@ -849,6 +872,7 @@ class Field(_FieldIO):
         """Show HTML-based representation in Jupyter notebook."""
         return html.get_template("field").render(field=self)
 
+    @abc.abstractmethod
     def __call__(self, point):
         r"""Sample the field value at ``point``.
 
@@ -886,7 +910,6 @@ class Field(_FieldIO):
         array([1., 3., 4.])
 
         """
-        return self.array[self.mesh.point2index(point)]
 
     def __getattr__(self, attr):
         """Extract the component of the vector field.
@@ -3098,6 +3121,7 @@ class Field(_FieldIO):
             vdim_mapping=self.vdim_mapping,
         )
 
+    @abc.abstractmethod
     def __getitem__(self, item):
         """Extracts the field on a subregion.
 
@@ -3168,22 +3192,6 @@ class Field(_FieldIO):
         (4, 4, 1, 1)
 
         """
-        submesh = self.mesh[item]
-
-        index_min = self.mesh.point2index(
-            submesh.index2point((0,) * submesh.region.ndim)
-        )
-        index_max = np.add(index_min, submesh.n)
-        slices = [slice(i, j) for i, j in zip(index_min, index_max)]
-        return self.__class__(
-            submesh,
-            nvdim=self.nvdim,
-            value=self.array[tuple(slices)],
-            vdims=self.vdims,
-            unit=self.unit,
-            valid=self.valid[tuple(slices)],
-            vdim_mapping=self.vdim_mapping,
-        )
 
     def angle(self, vector):
         r"""Angle between two vectors.
@@ -3430,12 +3438,17 @@ class Field(_FieldIO):
             vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.z, float))
         )
 
-        cell_data = rgrid.GetCellData()
+        if isinstance(self, df.cell_field.CellField):
+            vtk_data = rgrid.GetCellData()
+        elif isinstance(self, df.vertex_field.VertexField):
+            vtk_data = rgrid.GetPointData()
+        else:
+            assert False, f"Unknown field type {type(self)}."
         field_norm = vns.numpy_to_vtk(
             self.norm.array.transpose((2, 1, 0, 3)).reshape(-1)
         )
         field_norm.SetName("norm")
-        cell_data.AddArray(field_norm)
+        vtk_data.AddArray(field_norm)
         if self.nvdim > 1:
             # For some visualisation packages it is an advantage to have direct
             # access to the individual field components, e.g. for colouring.
@@ -3444,17 +3457,17 @@ class Field(_FieldIO):
                     getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
                 )
                 component_array.SetName(f"{comp}-component")
-                cell_data.AddArray(component_array)
+                vtk_data.AddArray(component_array)
         field_array = vns.numpy_to_vtk(
             self.array.transpose((2, 1, 0, 3)).reshape((-1, self.nvdim))
         )
         field_array.SetName("field")
-        cell_data.AddArray(field_array)
+        vtk_data.AddArray(field_array)
 
         if self.nvdim == 3:
-            cell_data.SetActiveVectors("field")
+            vtk_data.SetActiveVectors("field")
         elif self.nvdim == 1:
-            cell_data.SetActiveScalars("field")
+            vtk_data.SetActiveScalars("field")
         return rgrid
 
     @property
