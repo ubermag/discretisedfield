@@ -170,7 +170,9 @@ class Field(_FieldIO):
         vdim_mapping=None,
         **kwargs,
     ):
-        if data_location == "cell":
+        if cls in [df.cell_field.CellField, df.vertex_field.VertexField]:
+            return super().__new__(cls)
+        elif data_location == "cell":
             return super().__new__(df.cell_field.CellField)
         elif data_location == "vertex":
             return super().__new__(df.vertex_field.VertexField)
