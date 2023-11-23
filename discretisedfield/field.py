@@ -2888,6 +2888,7 @@ class Field(_FieldIO):
             vdim_mapping=self.vdim_mapping,
         )
 
+    @abc.abstractmethod
     def line(self, p1, p2, n=100):
         r"""Sample the field along the line.
 
@@ -2936,17 +2937,6 @@ class Field(_FieldIO):
         >>> line = field.line(p1=(0, 0, 0), p2=(2, 0, 0), n=5)
 
         """
-        points = list(self.mesh.line(p1=p1, p2=p2, n=n))
-        values = [self(p) for p in points]
-
-        return df.Line(
-            points=points,
-            values=values,
-            point_columns=self.mesh.region.dims,
-            value_columns=[f"v{dim}" for dim in self.vdims]
-            if self.vdims is not None
-            else "v",
-        )  # TODO scalar fields have no vdim
 
     def sel(self, *args, **kwargs):
         """Select a part of the field.

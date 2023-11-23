@@ -4,6 +4,8 @@ import numbers
 
 import numpy as np
 
+import discretisedfield as df
+
 from .field import Field
 
 
@@ -12,6 +14,19 @@ class CellField(Field):
         return self.array[self.mesh.point2index(point)]
 
     # diff, integrate depending on how we calculate those for the VertexField
+
+    def line(self, p1, p2, n=100):
+        points = list(self.mesh.line(p1=p1, p2=p2, n=n))
+        values = [self(p) for p in points]
+
+        return df.Line(
+            points=points,
+            values=values,
+            point_columns=self.mesh.region.dims,
+            value_columns=[f"v{dim}" for dim in self.vdims]
+            if self.vdims is not None
+            else "v",
+        )  # TODO scalar fields have no vdim
 
     def __getitem__(self, item):
         submesh = self.mesh[item]
