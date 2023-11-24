@@ -146,9 +146,9 @@ class _FieldIO_OVF:
             # >>> READ HEADER <<<
             ovf_v2 = b"2.0" in next(f)
             for line in f:
-                line = line.decode("utf-8").lower()
-                if line.startswith("# begin: data"):
-                    mode = line.split()[3]
+                line = line.decode("utf-8")
+                if line.lower().startswith("# begin: data"):
+                    mode = line.split()[3].lower()
                     if mode == "binary":
                         nbytes = int(line.split()[-1])
                     break
