@@ -2739,6 +2739,7 @@ def test_write_read_ovf(tmp_path):
         "oommf-ovf1-txt.omf",
         "oommf-ovf1-bin4.omf",
         "oommf-ovf1-bin8.omf",
+        "ovf2-bin8_different-case.ovf",  # lower-case "Begin: data binary 8"
     ]
     dirname = os.path.join(os.path.dirname(__file__), "test_sample")
     for filename in filenames:
