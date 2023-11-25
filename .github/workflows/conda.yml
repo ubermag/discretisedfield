@@ -1,0 +1,50 @@
+name: conda-workflow
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 1'  # run every Monday
+  workflow_dispatch:
+
+env:
+  PYTEST_ADDOPTS: "--color=yes"
+
+jobs:
+  workflow:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.8", "3.10"]
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - name: Initialisation
+      uses: actions/checkout@v4
+
+    - name: Set up conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        auto-update-conda: true
+        use-mamba: true
+        miniforge-version: latest
+        miniforge-variant: Mambaforge
+
+    - name: Install package
+      run: mamba install -c conda-forge -y discretisedfield pytest nbval invoke
+
+    - name: Unit tests
+      run: invoke test.unittest
+
+    - name: Documentation tests
+      run: invoke test.docs
+
+    - name: Jupyter notebook tests
+      run: invoke test.ipynb
+
