@@ -2739,7 +2739,6 @@ def test_write_read_ovf(tmp_path):
         "oommf-ovf1-txt.omf",
         "oommf-ovf1-bin4.omf",
         "oommf-ovf1-bin8.omf",
-        "ovf2-bin8_different-case.ovf",  # lower-case "Begin: data binary 8"
     ]
     dirname = os.path.join(os.path.dirname(__file__), "test_sample")
     for filename in filenames:
@@ -2783,6 +2782,17 @@ def test_write_read_ovf(tmp_path):
         # We know the saved magentisation.
         f_saved = df.Field(f_read.mesh, nvdim=3, value=(1, 0.1, 0), norm=1)
         assert f_saved.allclose(f_read)
+
+    # Read other ovf files that were reported as problematic by users
+    filenames = [
+        "ovf2-bin8_different-case.ovf",  # lower-case "Begin: data binary 8"
+    ]
+    for filename in filenames:
+        omffilename = os.path.join(dirname, filename)
+        f_read = df.Field.from_file(omffilename)
+        # test that some data has been read without errors; the exact content of the
+        # files can vary, so we cannot easily perform more thorough checks
+        assert f_read.array.nbytes > 0
 
 
 def test_write_read_vtk(tmp_path):
