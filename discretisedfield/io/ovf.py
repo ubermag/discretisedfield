@@ -147,9 +147,9 @@ class _FieldIO_OVF:
             ovf_v2 = b"2.0" in next(f)
             for line in f:
                 line = line.decode("utf-8")
-                if line.startswith("# Begin: Data"):
-                    mode = line.split()[3]
-                    if mode == "Binary":
+                if line.lower().startswith("# begin: data"):
+                    mode = line.split()[3].lower()
+                    if mode == "binary":
                         nbytes = int(line.split()[-1])
                     break
                 information = line[1:].split(":")  # remove leading `#`
@@ -170,7 +170,7 @@ class _FieldIO_OVF:
             nodes = math.prod(int(header[f"{key}nodes"]) for key in "xyz")
 
             # >>> READ DATA <<<
-            if mode == "Binary":
+            if mode == "binary":
                 # OVF2 uses little-endian and OVF1 uses big-endian
                 format = f'{"<" if ovf_v2 else ">"}{"d" if nbytes == 8 else "f"}'
 
