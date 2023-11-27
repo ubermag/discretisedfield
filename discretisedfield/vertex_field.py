@@ -3,6 +3,7 @@ import functools
 import numbers
 
 import numpy as np
+import xarray as xr
 
 import discretisedfield as df
 import discretisedfield.util as dfu
@@ -63,7 +64,117 @@ class VertexField(Field):
     # NOTE: We are ignoring all the FFTs for now.
 
     def to_xarray(self, name="field", unit=None):
-        pass  # @Swapneel
+        """VertexField value as ``xarray.DataArray``.
+
+        The method returns an ``xarray.DataArray`` with the dimensions
+        ``self.mesh.region.dims`` and ``vdims`` (only if ``field.nvdim > 1``). The
+        coordinates of the geometric dimensions are derived from ``self.mesh.vertices``
+        and for vector field components from ``self.vdims``. Additionally,
+        the values of ``self.mesh.cell``, ``self.mesh.region.pmin``, and
+        ``self.mesh.region.pmax`` are stored as ``cell``, ``pmin``, and ``pmax``
+        attributes of the DataArray. The ``unit`` attribute of geometric
+        dimensions is set to the respective strings in ``self.mesh.region.units``.
+
+        The name and unit of the ``DataArray`` can be set by passing ``name`` and
+        ``unit`` respectively. If the type of value passed to any of the two
+        arguments is not ``str``, then a ``TypeError`` is raised.
+
+        Parameters
+        ----------
+        name : str, optional
+
+            String to set name of the field ``DataArray``.
+
+        unit : str, optional
+
+            String to set units of the field ``DataArray``.
+
+        Returns
+        -------
+        xarray.DataArray
+
+            VertexField values DataArray.
+
+        Raises
+        ------
+        TypeError
+
+            If either ``name`` or ``unit`` argument is not a string.
+
+        Examples
+        --------
+        1. Create a field
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (10, 10, 10)
+        >>> cell = (1, 1, 1)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> field = df.VertexField(mesh=mesh, nvdim=3, value=(1, 0, 0), norm=1.)
+        ...
+        >>> field
+        Field(...)
+
+        2. Create `xarray.DataArray` from field
+
+        >>> xa = field.to_xarray()
+        >>> xa
+        <xarray.DataArray 'field' (x: 11, y: 11, z: 11, vdims: 3)>
+        ...
+
+        3. Select values of `x` component
+
+        >>> xa.sel(vdims='x')
+        <xarray.DataArray 'field' (x: 11, y: 11, z: 11)>
+        ...
+
+        """
+        if not isinstance(name, str):
+            msg = "Name argument must be a string."
+            raise TypeError(msg)
+
+        if unit is not None and not isinstance(unit, str):
+            msg = "Unit argument must be a string."
+            raise TypeError(msg)
+
+        axes = self.mesh.region.dims
+
+        data_array_coords = {axis: getattr(self.mesh.vertices, axis) for axis in axes}
+
+        geo_units_dict = dict(zip(axes, self.mesh.region.units))
+
+        if self.nvdim > 1:
+            data_array_dims = axes + ("vdims",)
+            if self.vdims is not None:
+                data_array_coords["vdims"] = self.vdims
+            field_array = self.array
+        else:
+            data_array_dims = axes
+            field_array = np.squeeze(self.array, axis=-1)
+
+        data_array = xr.DataArray(
+            field_array,
+            dims=data_array_dims,
+            coords=data_array_coords,
+            name=name,
+            attrs=dict(
+                units=unit or self.unit,
+                cell=self.mesh.cell,
+                pmin=self.mesh.region.pmin,
+                pmax=self.mesh.region.pmax,
+                nvdim=self.nvdim,
+                tolerance_factor=self.mesh.region.tolerance_factor,
+                data_location="vertex",
+            ),
+        )
+
+        # TODO save vdim_mapping
+
+        for dim in geo_units_dict:
+            data_array[dim].attrs["units"] = geo_units_dict[dim]
+
+        return data_array
 
     @classmethod
     def from_xarray(cls, xa):
