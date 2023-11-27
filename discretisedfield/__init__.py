@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import pytest
 
 from . import cell_field, tools, vertex_field
+from .cell_field import CellField
 from .field import Field
 from .field_rotator import FieldRotator
 from .interact import interact
@@ -14,6 +15,7 @@ from .line import Line
 from .mesh import Mesh
 from .operators import integrate
 from .region import Region
+from .vertex_field import VertexField
 
 # Enable default plotting style.
 plt.style.use(pathlib.Path(__file__).parent / "plotting" / "plotting-style.mplstyle")
