@@ -7,6 +7,7 @@ import xarray as xr
 
 import discretisedfield as df
 import discretisedfield.util as dfu
+from discretisedfield.plotting.util import hv_key_dim
 
 from .field import Field
 
@@ -58,9 +59,28 @@ class VertexField(Field):
     def mpl(self):
         pass  # @Swapneel
 
-    def hv(self):
-        pass  # @Swapneel
+    @property
+    def _hv_key_dims(self):
+        """Dict of key dimensions of the field.
 
+        Keys are the field dimensions (domain and vector space, e.g. x, y, z, vdims)
+        that have length > 1. Values are named_tuples ``hv_key_dim(data, unit)`` that
+        contain the data (which has to fulfil len(data) > 1, typically as a numpy array
+        or list) and the unit of a string (empty string if there is no unit).
+
+        """
+        key_dims = {
+            dim: hv_key_dim(coords, unit)
+            for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
+            if len(coords := getattr(self.mesh.vertices, dim)) > 1
+        }
+        if self.nvdim > 1:
+            key_dims["vdims"] = hv_key_dim(self.vdims, "")
+        return key_dims
+
+    # def hv(self):
+    #     pass  # @Swapneel
+    #
     # NOTE: We are ignoring all the FFTs for now.
 
     def to_xarray(self, name="field", unit=None):
