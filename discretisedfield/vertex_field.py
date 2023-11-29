@@ -245,4 +245,27 @@ class VertexField(Field):
             array[index] = np.asarray(val(point)).reshape(nvdim)
         return array
 
+
+# We cannot register to self inside the class
+@VertexField._as_array.register(VertexField)
+def _(self, val, mesh, nvdim, dtype):
+    if mesh.region not in val.mesh.region:
+        raise ValueError(
+            f"{val.mesh.region} of the provided field does not "
+            f"contain {mesh.region} of the field that is being "
+            "created."
+        )
+    value = (
+        val.to_xarray()
+        .sel(
+            **{dim: getattr(mesh.vertices, dim) for dim in mesh.region.dims},
+            method="nearest",
+        )
+        .data
+    )
+    if nvdim == 1:
+        # xarray dataarrays for scalar data are three dimensional
+        return value.reshape(*(mesh.n + 1), -1)
+    return value
+
     # TODO: reimplement the remaining _as_array functions. @Swapneel
