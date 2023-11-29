@@ -1,6 +1,7 @@
 import collections
 import functools
 import numbers
+from itertools import product
 
 import numpy as np
 import xarray as xr
@@ -227,5 +228,21 @@ class VertexField(Field):
                 )
         dtype = dtype or max(np.asarray(val).dtype, np.float64)
         return np.full((*(mesh.n + 1), nvdim), val, dtype=dtype)
+
+    @_as_array.register(collections.abc.Callable)
+    def _(self, val, mesh, nvdim, dtype):
+        # will only be called on user input
+        # dtype must be specified by the user for complex values
+        n_vertices = [i + 1 for i in mesh.n]
+        array = np.empty((*n_vertices, nvdim), dtype=dtype)
+        for index, point in zip(
+            product(*(range(vertices) for vertices in n_vertices)),
+            product(*(getattr(mesh.vertices, dim) for dim in mesh.region.dims)),
+        ):
+            # Conversion to array and reshaping is required for numpy >= 1.24
+            # and for certain inputs, e.g. a tuple of numpy arrays which can e.g. occur
+            # for 1d vector fields.
+            array[index] = np.asarray(val(point)).reshape(nvdim)
+        return array
 
     # TODO: reimplement the remaining _as_array functions. @Swapneel
