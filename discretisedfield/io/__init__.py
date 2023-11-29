@@ -58,7 +58,7 @@ class _MeshIO(_MeshIO_HDF5):
         return f"{str(filename)}.subregions.json"
 
 
-class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
+class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK, _FieldIO_VTI):
     __slots__ = []
 
     def to_file(

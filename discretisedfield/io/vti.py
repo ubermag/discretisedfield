@@ -1,5 +1,6 @@
 import contextlib
 
+import numpy as np
 import pyvista as pv
 
 import discretisedfield as df
@@ -44,7 +45,7 @@ class _FieldIO_VTI:
         nvdim = value.shape[-1]
 
         value = value.reshape((*data.dimensions, nvdim), order="F")
-        if mesh.n == value.shape[:-1]:
+        if np.array_equal(mesh.n, value.shape[:-1]):
             data_location = "cell"
         else:
             data_location = "vertex"
