@@ -7,6 +7,7 @@ import xarray as xr
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
+from discretisedfield.plotting.utils import hv_key_dim
 
 from .field import Field
 
@@ -16,6 +17,25 @@ class CellField(Field):
         return self.array[self.mesh.point2index(point)]
 
     # diff, integrate depending on how we calculate those for the VertexField
+
+    @property
+    def _hv_key_dims(self):
+        """Dict of key dimensions of the field.
+
+        Keys are the field dimensions (domain and vector space, e.g. x, y, z, vdims)
+        that have length > 1. Values are named_tuples ``hv_key_dim(data, unit)`` that
+        contain the data (which has to fulfil len(data) > 1, typically as a numpy array
+        or list) and the unit of a string (empty string if there is no unit).
+
+        """
+        key_dims = {
+            dim: hv_key_dim(coords, unit)
+            for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
+            if len(coords := getattr(self.mesh.cells, dim)) > 1
+        }
+        if self.nvdim > 1:
+            key_dims["vdims"] = hv_key_dim(self.vdims, "")
+        return key_dims
 
     def line(self, p1, p2, n=100):
         points = list(self.mesh.line(p1=p1, p2=p2, n=n))

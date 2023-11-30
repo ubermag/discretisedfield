@@ -10,7 +10,6 @@ import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
 from discretisedfield.operators import _split_diff_combine
-from discretisedfield.plotting.util import hv_key_dim
 
 from . import html
 from .io import _FieldIO
@@ -3525,24 +3524,10 @@ class Field(_FieldIO):
         # the hv class expects two valid vdims or None
         return None if None in vdims else vdims
 
+    @abc.abstractmethod
     @property
     def _hv_key_dims(self):
-        """Dict of key dimensions of the field.
-
-        Keys are the field dimensions (domain and vector space, e.g. x, y, z, vdims)
-        that have length > 1. Values are named_tuples ``hv_key_dim(data, unit)`` that
-        contain the data (which has to fulfil len(data) > 1, typically as a numpy array
-        or list) and the unit of a string (empty string if there is no unit).
-
-        """
-        key_dims = {
-            dim: hv_key_dim(coords, unit)
-            for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
-            if len(coords := getattr(self.mesh.cells, dim)) > 1
-        }
-        if self.nvdim > 1:
-            key_dims["vdims"] = hv_key_dim(self.vdims, "")
-        return key_dims
+        pass
 
     def fftn(self, **kwargs):
         """Performs an N-dimensional discrete Fast Fourier Transform (FFT)
