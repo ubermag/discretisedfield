@@ -3458,8 +3458,7 @@ class Field(_FieldIO):
             vtk_data.SetActiveScalars("field")
         return rgrid
 
-    @abc.abstractmethod
-    @property
+    @abc.abstractproperty
     def mpl(self):
         pass
 
@@ -3524,8 +3523,7 @@ class Field(_FieldIO):
         # the hv class expects two valid vdims or None
         return None if None in vdims else vdims
 
-    @abc.abstractmethod
-    @property
+    @abc.abstractproperty
     def _hv_key_dims(self):
         pass
 
@@ -3950,8 +3948,7 @@ class Field(_FieldIO):
     def to_xarray(self, name="field", unit=None):
         pass
 
-    @abc.abstractmethod
-    @classmethod
+    @abc.abstractclassmethod
     def from_xarray(cls, xa):
         pass
 
