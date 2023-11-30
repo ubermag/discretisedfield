@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import pytest
 
 from . import cell_field, tools, vertex_field
-from .cell_field import CellField
 from .field import Field
 from .field_rotator import FieldRotator
 from .interact import interact
