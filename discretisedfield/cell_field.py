@@ -7,7 +7,6 @@ import xarray as xr
 
 import discretisedfield as df
 import discretisedfield.plotting as dfp
-from discretisedfield.plotting.utils import hv_key_dim
 
 from .field import Field
 
@@ -29,12 +28,12 @@ class CellField(Field):
 
         """
         key_dims = {
-            dim: hv_key_dim(coords, unit)
+            dim: dfp.util.hv_key_dim(coords, unit)
             for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
             if len(coords := getattr(self.mesh.cells, dim)) > 1
         }
         if self.nvdim > 1:
-            key_dims["vdims"] = hv_key_dim(self.vdims, "")
+            key_dims["vdims"] = dfp.util.hv_key_dim(self.vdims, "")
         return key_dims
 
     def line(self, p1, p2, n=100):
