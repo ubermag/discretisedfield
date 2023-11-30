@@ -14,6 +14,7 @@ import discretisedfield as df
 
 from .hdf5 import _FieldIO_HDF5, _MeshIO_HDF5, _RegionIO_HDF5
 from .ovf import _FieldIO_OVF
+from .vti import _FieldIO_VTI
 from .vtk import _FieldIO_VTK
 
 
@@ -57,11 +58,16 @@ class _MeshIO(_MeshIO_HDF5):
         return f"{str(filename)}.subregions.json"
 
 
-class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
+class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK, _FieldIO_VTI):
     __slots__ = []
 
     def to_file(
-        self, filename, representation="bin8", extend_scalar=False, save_subregions=True
+        self,
+        filename,
+        representation="bin8",
+        extend_scalar=False,
+        save_subregions=True,
+        array_name=None,
     ):
         """Write the field to OVF, HDF5, or VTK file.
 
@@ -179,6 +185,12 @@ class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
                 representation=representation,
                 save_subregions=save_subregions,
             )
+        elif filename.suffix == ".vti":
+            self._to_vti(
+                filename,
+                array_name=array_name,
+                save_subregions=save_subregions,
+            )
         elif filename.suffix in [".hdf5", ".h5"]:
             self._to_hdf5(filename)
         else:
@@ -274,6 +286,8 @@ class _FieldIO(_FieldIO_HDF5, _FieldIO_OVF, _FieldIO_VTK):
             return cls._from_ovf(filename)
         elif filename.suffix == ".vtk":
             return cls._from_vtk(filename)
+        elif filename.suffix == ".vti":
+            return cls._from_vti(filename)
         elif filename.suffix in [".hdf5", ".h5"]:
             return cls._from_hdf5(filename)
         else:
