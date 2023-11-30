@@ -5,6 +5,7 @@ import numbers
 import numpy as np
 
 import discretisedfield as df
+import discretisedfield.plotting as dfp
 
 from .field import Field
 
@@ -45,6 +46,40 @@ class CellField(Field):
             valid=self.valid[tuple(slices)],
             vdim_mapping=self.vdim_mapping,
         )
+
+    @property
+    def mpl(self):
+        """Plot interface, matplotlib based.
+
+        This property provides access to the different plotting methods. It is
+        also callable to quickly generate plots. For more details and the
+        available methods refer to the documentation linked below.
+
+        .. seealso::
+
+            :py:func:`~discretisedfield.plotting.Mpl.__call__`
+            :py:func:`~discretisedfield.plotting.Mpl.scalar`
+            :py:func:`~discretisedfield.plotting.Mpl.vector`
+            :py:func:`~discretisedfield.plotting.Mpl.lightness`
+            :py:func:`~discretisedfield.plotting.Mpl.contour`
+
+        Examples
+        --------
+        .. plot:: :context: close-figs
+
+            1. Visualising the field using ``matplotlib``.
+
+            >>> import discretisedfield as df
+            ...
+            >>> p1 = (0, 0, 0)
+            >>> p2 = (100, 100, 100)
+            >>> n = (10, 10, 10)
+            >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
+            >>> field = df.Field(mesh, nvdim=3, value=(1, 2, 0))
+            >>> field.sel(z=50).resample(n=(5, 5)).mpl()
+
+        """
+        return dfp.MplField(self)
 
     @functools.singledispatchmethod
     def _as_array(self, val, mesh, nvdim, dtype):
