@@ -14,7 +14,6 @@ from .line import Line
 from .mesh import Mesh
 from .operators import integrate
 from .region import Region
-from .vertex_field import VertexField
 
 # Enable default plotting style.
 plt.style.use(pathlib.Path(__file__).parent / "plotting" / "plotting-style.mplstyle")
