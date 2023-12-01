@@ -25,9 +25,7 @@ def test_ovf2vtk(tmp_path, capfd):
     f.to_file(omffilename_1)
 
     cmd = [
-        sys.executable,
-        "-m",
-        "discretisedfield.io.ovf2vtk",
+        "ovf2vtk",
         "--input",
         omffilename_1,
         "--output",
