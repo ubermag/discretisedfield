@@ -152,8 +152,7 @@ class PyVistaField:
 
         field_pv = pv.wrap(self.field.to_vtk())
         if color_field is not None:
-            # Need the copy
-            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"].copy()
+            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"]
             scalars = "color_field"
         field_pv = field_pv.extract_cells(field_pv["valid"].astype(bool))
 
@@ -569,8 +568,7 @@ class PyVistaField:
 
         field_pv = pv.wrap(self.field.to_vtk())
         if color_field is not None:
-            # Need the copy
-            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"].copy()
+            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"]
             scalars = "color_field"
         field_pv = field_pv.extract_cells(
             field_pv["valid"].astype(bool)
@@ -726,8 +724,7 @@ class PyVistaField:
 
         field_pv = pv.wrap(self.field.to_vtk())
         if color_field is not None:
-            # Need the copy
-            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"].copy()
+            field_pv["color_field"] = pv.wrap(color_field.to_vtk())["field"]
             scalars = "color_field"
         field_pv = field_pv.extract_cells(
             field_pv["valid"].astype(bool)
