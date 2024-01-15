@@ -64,7 +64,7 @@ class PyVistaField:
         vector : pyvista.core.pointset.PointSet, optional
 
             A ``pyvista`` geometric object used as the glyph that represents the vectors
-            in the field. The default is set by `plot_util.arrow()`, which provides
+            in the field. The default is set by ``plot_util.arrow()``, which provides
             a simple arrow shape.
 
         scale : float, optional
