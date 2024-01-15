@@ -1,3 +1,5 @@
+import copy
+
 import pyvista as pv
 import ubermagutil.units as uu
 
@@ -8,13 +10,16 @@ class PyVistaMesh:
     def __init__(self, mesh):
         if mesh.region.ndim != 3:
             raise RuntimeError("Only 3d meshes can be plotted.")
-        self.mesh = mesh
+        self.mesh = copy.deepcopy(mesh)
 
     def __call__(
         self,
         *,
         plotter=None,
         color=plot_util.cp_hex,
+        cell=True,
+        cell_color="black",
+        cell_kwargs=None,
         multiplier=None,
         wireframe=True,
         filename=None,
@@ -39,8 +44,16 @@ class PyVistaMesh:
 
         color : array_like, optional
 
-            Colour of the subregions and the discretisation cell. Defaults to the
-            default color palette.
+            Colour of the subregions. Defaults to the default color palette.
+
+        cell_color : str, optional
+
+            Colour of the discretisation cell.
+
+        cell_kwargs : dict, optional
+
+            Arbitrary keyword arguments passed to `pyvista.add_mesh` when plotting the
+            discretisation cell, allowing for additional customisation of the plot.
 
         wireframe : bool, optional
 
@@ -98,6 +111,9 @@ class PyVistaMesh:
                 f" {self.data.mesh.region.ndim=}."
             )
 
+        if cell_kwargs is None:
+            cell_kwargs = {}
+
         if plotter is None:
             plot = pv.Plotter()
         else:
@@ -113,17 +129,18 @@ class PyVistaMesh:
         grid = pv.RectilinearGrid(*rescaled_mesh.vertices)
         plot.disable_hidden_line_removal()
 
-        # Add single cell
-        bounds = tuple(
-            val
-            for pair in zip(
-                rescaled_mesh.region.pmin,
-                rescaled_mesh.region.pmin + rescaled_mesh.cell,
+        if cell:
+            # Add single cell
+            bounds = tuple(
+                val
+                for pair in zip(
+                    rescaled_mesh.region.pmin,
+                    rescaled_mesh.region.pmin + rescaled_mesh.cell,
+                )
+                for val in pair
             )
-            for val in pair
-        )
-        box = pv.Box(bounds)
-        plot.add_mesh(box, color="black", label="cell")
+            box = pv.Box(bounds)
+            plot.add_mesh(box, color=cell_color, label="cell", **cell_kwargs)
 
         label = self._axis_labels(multiplier)
         # Bounds only needed due to axis bug
