@@ -1994,7 +1994,7 @@ class Mesh(_MeshIO):
 
     @property
     def pyvista(self):
-        """Dev"""
+        r"""``pyvista`` plot."""
         return dfp.PyVistaMesh(self)
 
     def slider(self, axis, /, *, multiplier=None, description=None, **kwargs):
