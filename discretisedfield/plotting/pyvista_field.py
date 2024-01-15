@@ -763,7 +763,9 @@ class PyVistaField:
 
     def _add_empty_region(self, plotter, multiplier, region):
         label = self._axis_labels(multiplier)
-        # Bounds only needed due to axis bug
+        # Bounds only needed due to bug in pyvista.
+        # Usually we could just use add_axes but they were not plotted
+        # over the full region.
         bounds = tuple(val for pair in zip(region.pmin, region.pmax) for val in pair)
         box = pv.Box(bounds)
         plotter.add_mesh(box, opacity=0.0)
