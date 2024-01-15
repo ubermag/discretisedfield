@@ -59,7 +59,7 @@ class PyVistaField:
 
         scale : float, optional
 
-            This values scales the vector glyph prior to plotting. The scale defaults
+            This value scales the vector glyph prior to plotting. The scale defaults
             to the minimum edge length of a cell divided by the maximum norm of the
             field.
 
