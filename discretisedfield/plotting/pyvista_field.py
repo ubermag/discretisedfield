@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import pyvista as pv
 import ubermagutil.units as uu
@@ -9,7 +11,15 @@ class PyVistaField:
     def __init__(self, field):
         if field.mesh.region.ndim != 3:
             raise RuntimeError("Only 3d meshes can be plotted.")
-        self.field = field * 1
+
+        self.field = field.__class__(
+            copy.deepcopy(field.mesh),
+            nvdim=field.nvdim,
+            value=field.array,
+            vdims=field.vdims,
+            valid=field.valid,
+            vdim_mapping=field.vdim_mapping,
+        )
 
     def vector(
         self,
@@ -415,6 +425,9 @@ class PyVistaField:
         else:
             plot = plotter
 
+        # Default colour
+        kwargs.setdefault("color", "blue")
+
         multiplier = self._setup_multiplier(multiplier)
 
         rescaled_mesh = self.field.mesh.scale(1 / multiplier, reference_point=(0, 0, 0))
@@ -426,7 +439,6 @@ class PyVistaField:
         threshed = grid.threshold(0.5, scalars="values")
 
         plot.add_mesh(threshed, **kwargs)
-        plot.remove_scalar_bar()
 
         self._add_empty_region(plot, multiplier, self.field.mesh.region)
 
