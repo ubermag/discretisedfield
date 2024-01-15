@@ -9,7 +9,10 @@ import discretisedfield.plotting.util as plot_util
 class PyVistaMesh:
     def __init__(self, mesh):
         if mesh.region.ndim != 3:
-            raise RuntimeError("Only 3d meshes can be plotted.")
+            raise RuntimeError(
+                "Only meshes with 3 spatial dimensions can be plotted not"
+                f" {self.data.mesh.region.ndim=}."
+            )
         self.mesh = copy.deepcopy(mesh)
 
     def __call__(
@@ -105,11 +108,6 @@ class PyVistaMesh:
             :py:func:`~discretisedfield.plotting.pyvista.region`
 
         """
-        if self.mesh.region.ndim != 3:
-            raise ValueError(
-                "Only meshes with 3 spatial dimensions can be plotted not"
-                f" {self.data.mesh.region.ndim=}."
-            )
 
         if cell_kwargs is None:
             cell_kwargs = {}
