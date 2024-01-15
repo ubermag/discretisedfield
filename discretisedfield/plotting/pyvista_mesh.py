@@ -11,7 +11,7 @@ class PyVistaMesh:
         if mesh.region.ndim != 3:
             raise RuntimeError(
                 "Only meshes with 3 spatial dimensions can be plotted not"
-                f" {self.data.mesh.region.ndim=}."
+                f" {mesh.region.ndim=}."
             )
         self.mesh = copy.deepcopy(mesh)
 
