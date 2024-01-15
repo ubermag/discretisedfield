@@ -73,7 +73,7 @@ class _FieldIO_VTK:
                 field_idx = i
             elif name == "valid":
                 valid_idx = i
-            elif name not in ["field", "norm"]:
+            elif name not in ["norm"]:
                 vdims.append(name)
         array = cell_data.GetArray(field_idx)
         dim = array.GetNumberOfComponents()
