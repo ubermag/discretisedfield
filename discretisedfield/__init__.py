@@ -1,19 +1,18 @@
 """Finite-difference fields."""
 import importlib.metadata
-import os
 import pathlib
 
 import matplotlib.pyplot as plt
 import pytest
 
-from . import tools
-from .field import Field
-from .field_rotator import FieldRotator
-from .interact import interact
-from .line import Line
-from .mesh import Mesh
-from .operators import integrate
-from .region import Region
+from . import tools  # noqa: F401
+from .field import Field  # noqa: F401
+from .field_rotator import FieldRotator  # noqa: F401
+from .interact import interact  # noqa: F401
+from .line import Line  # noqa: F401
+from .mesh import Mesh  # noqa: F401
+from .operators import integrate  # noqa: F401
+from .region import Region  # noqa: F401
 
 # Enable default plotting style.
 plt.style.use(pathlib.Path(__file__).parent / "plotting" / "plotting-style.mplstyle")
