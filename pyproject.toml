@@ -67,15 +67,11 @@ repository = "https://github.com/ubermag/discretisedfield"
 [project.scripts]
 ovf2vtk = "discretisedfield.io.ovf2vtk:ovf2vtk"
 
-[tool.black]
-experimental-string-processing = true
+[tool.ruff]
+ignore-init-module-imports = true
 
 [tool.coverage.run]
 omit = ["discretisedfield/tests/*"]
-
-[tool.isort]
-profile = "black"
-skip_gitignore = true  # ignores files listed in .gitignore
 
 [tool.setuptools.packages.find]
 include = ["discretisedfield*"]
