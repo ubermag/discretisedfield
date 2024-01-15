@@ -1,3 +1,5 @@
+import copy
+
 import pyvista as pv
 import ubermagutil.units as uu
 
@@ -8,7 +10,7 @@ class PyVistaRegion:
     def __init__(self, region):
         if region.ndim != 3:
             raise RuntimeError("Only 3d regions can be plotted.")
-        self.region = region
+        self.region = copy.deepcopy(region)
 
     def __call__(
         self,
@@ -38,7 +40,7 @@ class PyVistaRegion:
 
         color : tuple, optional
 
-            Colour of the region. Defaults to the default color palette.
+            Colour of the region in hexadecimal. Defaults to the default color palette.
 
         multiplier : numbers.Real, optional
 
