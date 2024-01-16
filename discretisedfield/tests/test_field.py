@@ -91,9 +91,9 @@ def test_field():
     # else:
     #     return 0
     def norm(points):
-        return np.where(
-            (points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0
-        )[..., np.newaxis]
+        return np.where((points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0)[
+            ..., np.newaxis
+        ]
 
     # Values are defined in numpy for performance reasons
     # We define vector fields with vx=0, vy=0, vz=+/-1 for x<0 / x>0
