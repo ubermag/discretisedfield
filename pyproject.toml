@@ -70,6 +70,9 @@ ovf2vtk = "discretisedfield.io.ovf2vtk:ovf2vtk"
 [tool.ruff]
 ignore-init-module-imports = true
 
+[tool.ruff.per-file-ignores]
+"*.ipynb" = ["F811"]  # 'redefined-while-unused'; many false positives in notebooks because ipywidgets decorated functions are not recognised
+
 [tool.coverage.run]
 omit = ["discretisedfield/tests/*"]
 
