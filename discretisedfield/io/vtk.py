@@ -64,13 +64,17 @@ class _FieldIO_VTK:
             # Old writing routine did write to points instead of cells.
             return cls._from_vtk_legacy(filename)
 
+        valid_idx = None
+
         vdims = []
         for i in range(cell_data.GetNumberOfArrays()):
             name = cell_data.GetArrayName(i)
             if name == "field":
                 field_idx = i
-            elif name.endswith("-component"):
-                vdims.append(name[: -len("-component")])
+            elif name == "valid":
+                valid_idx = i
+            elif name not in ["norm"]:
+                vdims.append(name)
         array = cell_data.GetArray(field_idx)
         dim = array.GetNumberOfComponents()
 
@@ -80,11 +84,18 @@ class _FieldIO_VTK:
         value = vns.vtk_to_numpy(array).reshape(*reversed(n), dim)
         value = value.transpose((2, 1, 0, 3))
 
+        if valid_idx is not None:
+            valid_array = cell_data.GetArray(valid_idx)
+            valid = vns.vtk_to_numpy(valid_array).reshape(*reversed(n))
+            valid = valid.transpose((2, 1, 0))
+        else:
+            valid = True
+
         mesh = df.Mesh(p1=p1, p2=p2, n=n)
         with contextlib.suppress(FileNotFoundError):
             mesh.load_subregions(filename)
 
-        return cls(mesh, nvdim=dim, value=value, vdims=vdims)
+        return cls(mesh, nvdim=dim, value=value, vdims=vdims, valid=valid)
 
     @classmethod
     def _from_vtk_legacy(cls, filename):

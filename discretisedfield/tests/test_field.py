@@ -2,6 +2,7 @@ import itertools
 import os
 import random
 import re
+import sys
 import tempfile
 import types
 
@@ -10,12 +11,16 @@ import k3d
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import pyvista as pv
 import scipy.fft as spfft
 import xarray as xr
 
 import discretisedfield as df
+import discretisedfield.plotting.util as plot_util
 
 from .test_mesh import html_re as mesh_html_re
+
+pv.OFF_SCREEN = True
 
 html_re = (
     r"<strong>Field</strong>\s*<ul>\s*"
@@ -3897,6 +3902,161 @@ def test_plot_large_sample():
     field.norm.k3d.nonzero()
     field.x.k3d.scalar()
     field.k3d.vector()
+
+
+def test_pyvista_vector(test_field):
+    # Default
+    test_field.pyvista.vector()
+
+    # Color field
+    test_field.pyvista.vector(color_field=test_field.a)
+
+    # Colormap
+    test_field.pyvista.vector(cmap="hsv")
+
+    # Scalar
+    test_field.pyvista.vector(scalars=test_field.vdims[0])
+
+    # Change vector
+    test_field.pyvista.vector(vector=plot_util.cone())
+
+    # Scale
+    test_field.pyvista.vector(scale=1e9)
+
+    # Multiplier
+    test_field.pyvista.vector(multiplier=1e-6)
+
+    # glyph_kwargs
+    test_field.pyvista.vector(glyph_kwargs={"progress_bar": True})
+
+    # Plotter
+    plotter = pv.Plotter()
+    test_field.pyvista.vector(plotter=plotter)
+    plotter.show()
+
+    # Exceptions
+    with pytest.raises(RuntimeError):
+        test_field.a.pyvista.vector()
+    with pytest.raises(ValueError):
+        test_field.pyvista.vector(color_field=test_field)
+
+
+def test_pyvista_scalar(test_field):
+    # Default
+    test_field.a.pyvista.scalar()
+
+    # Colormap
+    test_field.a.pyvista.scalar(cmap="hsv")
+
+    # Multiplier
+    test_field.a.pyvista.scalar(multiplier=1e-6)
+
+    # 3D
+    test_field.pyvista.scalar(scalars=test_field.vdims[0])
+
+    # Plotter
+    plotter = pv.Plotter()
+    test_field.pyvista.scalar(plotter=plotter)
+    plotter.show()
+
+
+def test_pyvista_volume(test_field):
+    # Default
+    test_field.a.pyvista.volume()
+
+    # Colormap
+    test_field.a.pyvista.volume(cmap="hsv")
+
+    # Multiplier
+    test_field.a.pyvista.volume(multiplier=1e-6)
+
+    # 3D
+    test_field.pyvista.volume(scalars=test_field.vdims[0])
+
+    # Plotter
+    plotter = pv.Plotter()
+    test_field.pyvista.volume(plotter=plotter)
+    plotter.show()
+
+
+def test_pyvista_valid(test_field):
+    # Default
+    test_field.pyvista.valid()
+
+    # Colormap
+    test_field.pyvista.valid(cmap="hsv")
+
+    # Multiplier
+    test_field.pyvista.valid(multiplier=1e-6)
+
+    # Scalar field
+    test_field.a.pyvista.valid()
+
+    # Plotter
+    plotter = pv.Plotter()
+    test_field.pyvista.valid(plotter=plotter)
+    plotter.show()
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux", reason="Segmentation fault on Mac and Windows."
+)
+def test_pyvista_contour(test_field):
+    # Default
+    test_field.pyvista.contour()
+
+    # Colormap
+    test_field.pyvista.contour(cmap="hsv")
+
+    # Multiplier
+    test_field.pyvista.contour(multiplier=1e-6)
+
+    # Scalar field
+    test_field.c.pyvista.contour()
+
+    # Plotter
+    plotter = pv.Plotter()
+    test_field.pyvista.contour(plotter=plotter)
+    plotter.show()
+
+    # Isosurface
+    test_field.pyvista.contour(isosurfaces=5)
+    test_field.pyvista.contour(isosurfaces=[0, 1])
+
+    # Contour scalars
+    test_field.pyvista.contour(contour_scalars=test_field.vdims[-1])
+
+    # Color field
+    test_field.pyvista.contour(color_field=test_field.a)
+
+    # contour_kwargs
+    test_field.pyvista.contour(contour_kwargs={"scalars": test_field.vdims[-1]})
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux", reason="Segmentation fault on Mac and Windows."
+)
+def test_pyvista_streamlines(test_field):
+    # Default
+    test_field.pyvista.streamlines()
+
+    # Colormap
+    test_field.pyvista.streamlines(cmap="hsv")
+
+    # Multiplier
+    test_field.pyvista.streamlines(multiplier=1e3)
+
+    # Plotter
+    plotter = pv.Plotter()
+    test_field.pyvista.streamlines(plotter=plotter)
+    plotter.show()
+
+    # Color field
+    test_field.pyvista.streamlines(color_field=test_field.a)
+
+    # kwargs
+    test_field.pyvista.streamlines(streamlines_kwargs={"progress_bar": True})
+    test_field.pyvista.streamlines(tube_kwargs={"progress_bar": True})
 
 
 # ##################################

@@ -1992,6 +1992,11 @@ class Mesh(_MeshIO):
         """
         return dfp.K3dMesh(self)
 
+    @property
+    def pyvista(self):
+        r"""``pyvista`` plot."""
+        return dfp.PyVistaMesh(self)
+
     def slider(self, axis, /, *, multiplier=None, description=None, **kwargs):
         """Axis slider.
 

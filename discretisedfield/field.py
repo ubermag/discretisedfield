@@ -3443,13 +3443,20 @@ class Field(_FieldIO):
                 component_array = vns.numpy_to_vtk(
                     getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
                 )
-                component_array.SetName(f"{comp}-component")
+                component_array.SetName(f"{comp}")
                 cell_data.AddArray(component_array)
         field_array = vns.numpy_to_vtk(
             self.array.transpose((2, 1, 0, 3)).reshape((-1, self.nvdim))
         )
         field_array.SetName("field")
         cell_data.AddArray(field_array)
+
+        # No support for bools
+        valid_array = vns.numpy_to_vtk(
+            self.valid.astype(int).transpose((2, 1, 0)).reshape((-1))
+        )
+        valid_array.SetName("valid")
+        cell_data.AddArray(valid_array)
 
         if self.nvdim == 3:
             cell_data.SetActiveVectors("field")
@@ -3495,6 +3502,11 @@ class Field(_FieldIO):
     def k3d(self):
         """Plot interface, k3d based."""
         return dfp.K3dField(self)
+
+    @property
+    def pyvista(self):
+        """Plot interface, pyvista based."""
+        return dfp.PyVistaField(self)
 
     @property
     def hv(self):

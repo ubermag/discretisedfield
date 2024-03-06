@@ -6,10 +6,14 @@ import ipywidgets
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import pyvista as pv
 
 import discretisedfield as df
+import discretisedfield.plotting.util as plot_util
 
 from .test_region import html_re as region_html_re
+
+pv.OFF_SCREEN = True
 
 html_re = (
     r"<strong>Mesh</strong>\s*<ul>\s*"
@@ -1332,6 +1336,40 @@ def test_k3d_mpl_subregions(tmp_path):
 
     # k3d tests
     mesh.k3d.subregions()
+
+
+def test_pyvista(valid_mesh):
+    if valid_mesh.region.ndim != 3:
+        with pytest.raises(RuntimeError):
+            valid_mesh.pyvista()
+    else:
+        valid_mesh.pyvista()
+
+
+def test_pyvista_subregions(tmp_path):
+    p1 = (0, 0, 0)
+    p2 = (100, 80, 10)
+    cell = (100, 5, 10)
+    subregions = {
+        "r1": df.Region(p1=(0, 0, 0), p2=(100, 10, 10)),
+        "r2": df.Region(p1=(0, 10, 0), p2=(100, 20, 10)),
+        "r3": df.Region(p1=(0, 20, 0), p2=(100, 30, 10)),
+        "r4": df.Region(p1=(0, 30, 0), p2=(100, 40, 10)),
+        "r5": df.Region(p1=(0, 40, 0), p2=(100, 50, 10)),
+        "r6": df.Region(p1=(0, 50, 0), p2=(100, 60, 10)),
+        "r7": df.Region(p1=(0, 60, 0), p2=(100, 70, 10)),
+        "r8": df.Region(p1=(0, 70, 0), p2=(100, 80, 10)),
+    }
+    mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions=subregions)
+
+    mesh.pyvista()
+    mesh.pyvista(color=list(reversed(plot_util.cp_hex)))
+    mesh.pyvista(multiplier=1e9)
+    mesh.pyvista(wireframe=False)
+
+    plotter = pv.Plotter()
+    mesh.pyvista(plotter=plotter)
+    plotter.show()
 
 
 def test_scale():

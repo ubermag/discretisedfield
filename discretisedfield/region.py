@@ -1197,6 +1197,11 @@ class Region(_RegionIO):
         """
         return dfp.K3dRegion(self)
 
+    @property
+    def pyvista(self):
+        r"""``pyvista`` plot."""
+        return dfp.PyVistaRegion(self)
+
     def to_dict(self):
         """Convert region object to dict.
 
