@@ -481,16 +481,16 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     assert isinstance(mesh2, df.Mesh)
     assert isinstance(mesh3, df.Mesh)
     assert mesh1 == mesh2
-    assert not mesh1 != mesh2
+    assert not mesh1 != mesh2  # noqa: SIM202
     assert mesh1 != mesh3
-    assert not mesh1 == mesh3
+    assert not mesh1 == mesh3  # noqa: SIM201
     assert mesh1 != mesh4
-    assert not mesh1 == mesh4
+    assert not mesh1 == mesh4  # noqa: SIM201
     assert mesh3 != mesh4
-    assert not mesh3 == mesh4
+    assert not mesh3 == mesh4  # noqa: SIM201
 
     assert mesh1 != 1
-    assert not mesh2 == "mesh2"
+    assert not mesh2 == "mesh2"  # noqa: SIM201
 
 
 @pytest.mark.parametrize(

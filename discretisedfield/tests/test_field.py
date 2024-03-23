@@ -933,14 +933,14 @@ def test_eq():
     f7 = df.Field(mesh, nvdim=3, value=(1, -6, 0), unit="A/m")
 
     assert f1 == f2
-    assert not f1 != f2
-    assert not f1 == f3
+    assert not f1 != f2  # noqa: SIM202
+    assert not f1 == f3  # noqa: SIM201
     assert f1 != f3
-    assert not f2 == f4
+    assert not f2 == f4  # noqa: SIM201
     assert f2 != f4
     assert f4 == f5
-    assert not f4 != f5
-    assert not f1 == 0.2
+    assert not f4 != f5  # noqa: SIM202
+    assert not f1 == 0.2  # noqa: SIM201
     assert f1 != 0.2
     assert f5 == f6
     assert f5 == f7
