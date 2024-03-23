@@ -299,7 +299,7 @@ class MplField(Mpl):
 
         self._filter_values(filter_field, values)
 
-        if symmetric_clim and "clim" not in kwargs.keys():
+        if symmetric_clim and "clim" not in kwargs:
             vmin = np.min(values, where=~np.isnan(values), initial=0)
             vmax = np.max(values, where=~np.isnan(values), initial=0)
             vmax_abs = max(abs(vmin), abs(vmax))
@@ -669,7 +669,8 @@ class MplField(Mpl):
             if self.field.nvdim != 3:
                 warnings.warn(
                     "Automatic coloring is only supported for 3d"
-                    f' fields. Ignoring "{use_color=}".'
+                    f' fields. Ignoring "{use_color=}".',
+                    stacklevel=2,
                 )
                 use_color = False
             else:
@@ -949,10 +950,7 @@ class MplField(Mpl):
             width_h = Size.AxesX(ax, aspect=0.05)
 
         # Determine the vertical aspect ratio for the colorbar
-        if min_height_norm > 1:
-            v_aspect = min_height_norm
-        else:
-            v_aspect = 1
+        v_aspect = min_height_norm if min_height_norm > 1 else 1
 
         # Check for any existing colorbars associated with the current axis
         existing_colorbars = [

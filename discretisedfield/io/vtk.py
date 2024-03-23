@@ -93,7 +93,7 @@ class _FieldIO_VTK:
         This method reads vtk files written with discretisedfield <= 0.61.0
         in which the data is stored as point data instead of cell data.
         """
-        with open(filename, "r") as f:
+        with open(filename) as f:
             content = f.read()
         lines = content.split("\n")
 

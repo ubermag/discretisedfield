@@ -14,7 +14,6 @@ import scipy.fft as spfft
 import xarray as xr
 
 import discretisedfield as df
-
 from .test_mesh import html_re as mesh_html_re
 
 html_re = (
@@ -600,7 +599,7 @@ def test_average():
     mesh = df.Mesh(p1=(0, 0, 0), p2=(10, 10, 10), cell=(5, 5, 5))
     f = df.Field(mesh, nvdim=3, value=(2, 2, 2))
     with pytest.raises(AttributeError):
-        f.average
+        f.average  # noqa: B018
 
 
 @pytest.mark.parametrize("norm_value", [1, 2.1, 1e-3])
@@ -894,7 +893,7 @@ def test_field_component(valid_mesh, nvdim):
     else:
         # nvdim = 1 exception
         with pytest.raises(AttributeError):
-            f.x.nvdim
+            f.x.nvdim  # noqa: B018
         return
 
     assert all(isinstance(getattr(f, i), df.Field) for i in valid_components[:nvdim])
@@ -996,8 +995,8 @@ def test_point_neg():
     assert isinstance(res, df.Field)
     assert res.mean() == -3
     assert f == +f
-    assert f == -(-f)
-    assert f == +(-(-f))
+    assert f == -(-f)  # noqa: B002
+    assert f == +(-(-f))  # noqa: B002
 
     # Vector field
     f = df.Field(mesh, nvdim=3, value=(1, 2, -3))
@@ -1005,8 +1004,8 @@ def test_point_neg():
     assert isinstance(res, df.Field)
     assert np.allclose(res.mean(), (-1, -2, 3))
     assert f == +f
-    assert f == -(-f)
-    assert f == +(-(-f))
+    assert f == -(-f)  # noqa: B002
+    assert f == +(-(-f))  # noqa: B002
 
 
 def test_pow(mesh_3d):
@@ -1873,10 +1872,7 @@ def test_diff_valid():
 
     def valid_fun(point):
         x, y, z = point
-        if x > 6:
-            return False
-        else:
-            return True
+        return x <= 6
 
     f = df.Field(mesh, nvdim=3, value=value_fun, valid=valid_fun)
 
@@ -1892,10 +1888,7 @@ def test_diff_valid():
 
     def valid_fun(point):
         x, y, z = point
-        if x > 2 and x < 8:
-            return True
-        else:
-            return False
+        return 2 < x < 8
 
     f = df.Field(mesh, nvdim=3, value=value_fun, valid=valid_fun)
     assert np.allclose(f.diff("x").array[1:4, ...], (1, 0, 0))
@@ -1913,9 +1906,7 @@ def test_diff_valid():
 
     def valid_fun(point):
         x, y, z = point
-        if x > 4 and x < 8 and y < 5:
-            return False
-        elif x > 12 and x < 15:
+        if (4 < x < 8 and y < 5) or 12 < x < 15:  # noqa: SIM103
             return False
         else:
             return True
@@ -1980,7 +1971,7 @@ def test_grad_exception(valid_mesh, nvdim):
     # Grad only on scalar fields
     f = df.Field(valid_mesh, nvdim=nvdim, value=0)
     with pytest.raises(ValueError):
-        f.grad
+        f.grad  # noqa: B018
 
 
 def test_div(valid_mesh):
@@ -2028,21 +2019,21 @@ def test_div_exception(valid_mesh, nvdim):
     if valid_mesh.region.ndim != nvdim:
         # Wrong dimensions
         with pytest.raises(ValueError):
-            f.div
+            f.div  # noqa: B018
     else:
         vdims = ["v" + d for d in valid_mesh.region.dims]
         f.vdims = vdims
         # Empty dictionary
         f.vdim_mapping = {}
         with pytest.raises(ValueError):
-            f.div
+            f.div  # noqa: B018
         # Incorect dictionary
         if nvdim > 1:
             vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
             vdim_mapping[vdims[0]] = None
             f.vdim_mapping = vdim_mapping
             with pytest.raises(ValueError):
-                f.div
+                f.div  # noqa: B018
 
 
 def test_curl():
@@ -2114,7 +2105,7 @@ def test_curl_exception(valid_mesh, nvdim):
 
     if valid_mesh.region.ndim != 3 or nvdim != 3:
         with pytest.raises(ValueError):
-            f.curl
+            f.curl  # noqa: B018
 
     else:
         vdims = ["v" + d for d in valid_mesh.region.dims]
@@ -2122,14 +2113,14 @@ def test_curl_exception(valid_mesh, nvdim):
         # Empty dictionary
         f.vdim_mapping = {}
         with pytest.raises(ValueError):
-            f.curl
+            f.curl  # noqa: B018
 
         # Incorect dictionary
         vdim_mapping = dict(zip(vdims, valid_mesh.region.dims))
         vdim_mapping[vdims[0]] = None
         f.vdim_mapping = vdim_mapping
         with pytest.raises(ValueError):
-            f.curl
+            f.curl  # noqa: B018
 
 
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
@@ -2270,7 +2261,7 @@ def test_integrate_cumulative():
     assert np.allclose(f_int.diff("x").array, f.array)
 
     for i, d in enumerate("xyz"):
-        f = df.Field(mesh, nvdim=1, value=lambda p: p[i])
+        f = df.Field(mesh, nvdim=1, value=lambda p, i=i: p[i])
         assert np.allclose(f.integrate(d, cumulative=True).diff(d).array, f.array)
         assert np.allclose(f.diff(d).integrate(d, cumulative=True).array, f.array)
 
@@ -4129,9 +4120,9 @@ def test_from_xarray_valid_args(test_field):
 
 def test_from_xarray_invalid_args_and_DataArrays():
     args = [
-        int(),
-        float(),
-        str(),
+        0,
+        0.0,
+        "",
         list(),
         dict(),
         xr.Dataset(),

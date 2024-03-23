@@ -6,7 +6,6 @@ import numpy as np
 import ubermagutil.units as uu
 
 import discretisedfield.plotting as dfp
-
 from . import html
 from .io import _RegionIO
 
@@ -1217,5 +1216,6 @@ class Region(_RegionIO):
         warnings.warn(
             "This method will be removed and should not be used anymore.",
             DeprecationWarning,
+            stacklevel=2,
         )
         return tuple(np.random.random(self.ndim) * self.edges + self.pmin)

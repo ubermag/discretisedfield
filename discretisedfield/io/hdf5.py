@@ -51,7 +51,7 @@ class _MeshIO_HDF5:
     @classmethod
     def _h5_load(cls, h5_mesh: h5py.Group):
         region = df.Region._h5_load(h5_mesh["region"])
-        if "subregions" in h5_mesh.keys():
+        if "subregions" in h5_mesh:
             subregions = {
                 name.decode("utf-8"): df.Region(
                     p1=data[: region.ndim], p2=data[region.ndim :]

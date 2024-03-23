@@ -251,10 +251,9 @@ class K3dField:
             plot = k3d.plot()
             plot.display()
 
-        if filter_field is not None:
-            if filter_field.nvdim != 1:
-                msg = f"Cannot use nvdim={self.data.nvdim} filter_field."
-                raise ValueError(msg)
+        if filter_field is not None and filter_field.nvdim != 1:
+            msg = f"Cannot use nvdim={self.data.nvdim} filter_field."
+            raise ValueError(msg)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)
@@ -437,10 +436,9 @@ class K3dField:
             plot = k3d.plot()
             plot.display()
 
-        if color_field is not None:
-            if color_field.nvdim != 1:
-                msg = f"Cannot use nvdim={self.data.nvdim} color_field."
-                raise ValueError(msg)
+        if color_field is not None and color_field.nvdim != 1:
+            msg = f"Cannot use nvdim={self.data.nvdim} color_field."
+            raise ValueError(msg)
 
         if multiplier is None:
             multiplier = uu.si_max_multiplier(self.data.mesh.region.edges)

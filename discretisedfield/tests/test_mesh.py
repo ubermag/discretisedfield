@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 import discretisedfield as df
-
 from .test_region import html_re as region_html_re
 
 html_re = (
@@ -1249,11 +1248,11 @@ def test_getattr(p1, p2, cell, checks):
         assert np.isclose(getattr(mesh, key), val, atol=0)
 
     with pytest.raises(AttributeError):
-        mesh.dk
+        mesh.dk  # noqa: B018
 
     # single-character attributes are handled differently
     with pytest.raises(AttributeError):
-        mesh.a
+        mesh.a  # noqa: B018
 
 
 @pytest.mark.parametrize(
