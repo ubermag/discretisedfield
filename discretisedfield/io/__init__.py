@@ -5,6 +5,7 @@ Generally, their direct use is discouraged. Use :py:func:`discretisedfield.Field
 and :py:func:`discretisedfield.Field.fromfile` instead.
 
 """
+
 import json
 import pathlib
 

@@ -1,4 +1,5 @@
 """Matplotlib based plotting."""
+
 # ruff: noqa: F401
 from discretisedfield.plotting import util
 from discretisedfield.plotting.hv import Hv
