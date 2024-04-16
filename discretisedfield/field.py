@@ -4057,14 +4057,12 @@ class Field(_FieldIO):
 
         >>> xa = field.to_xarray()
         >>> xa
-        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, vdims: 3)>
-        ...
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, vdims: 3)>...
 
         3. Select values of `x` component
 
         >>> xa.sel(vdims='x')
-        <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
-        ...
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>...
 
         """
         if not isinstance(name, str):
