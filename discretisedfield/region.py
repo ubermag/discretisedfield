@@ -76,6 +76,7 @@ class Region(_RegionIO):
     ValueError: ...
 
     """
+
     __slots__ = ["_pmin", "_pmax", "_dims", "_units", "_tolerance_factor"]
 
     def __init__(

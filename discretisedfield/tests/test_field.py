@@ -96,9 +96,9 @@ def test_field():
     # else:
     #     return 0
     def norm(points):
-        return np.where(
-            (points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0
-        )[..., np.newaxis]
+        return np.where((points[..., 0] ** 2 + points[..., 1] ** 2) <= 5e-9**2, 1e5, 0)[
+            ..., np.newaxis
+        ]
 
     # Values are defined in numpy for performance reasons
     # We define vector fields with vx=0, vy=0, vz=+/-1 for x<0 / x>0
@@ -1859,10 +1859,10 @@ def test_diff_valid():
     f = df.Field(mesh, nvdim=1, value=lambda p: p[0] ** 2, valid=valid)
 
     assert np.allclose(f.diff("x").array[:3], 0)
-    assert np.allclose(f.diff("x").array[3:6, 0], 2 * f.mesh.points[0][3:6])
+    assert np.allclose(f.diff("x").array[3:6, 0], 2 * f.mesh.cells[0][3:6])
     assert np.allclose(f.diff("x").array[6:], 0)
     assert np.allclose(
-        f.diff("x", restrict2valid=False).array[..., 0], 2 * f.mesh.points[0]
+        f.diff("x", restrict2valid=False).array[..., 0], 2 * f.mesh.cells[0]
     )
 
     # 3d mesh
@@ -2787,6 +2787,17 @@ def test_write_read_ovf(tmp_path):
         # We know the saved magentisation.
         f_saved = df.Field(f_read.mesh, nvdim=3, value=(1, 0.1, 0), norm=1)
         assert f_saved.allclose(f_read)
+
+    # Read other ovf files that were reported as problematic by users
+    filenames = [
+        "ovf2-bin8_different-case.ovf",  # lower-case "Begin: data binary 8"
+    ]
+    for filename in filenames:
+        omffilename = os.path.join(dirname, filename)
+        f_read = df.Field.from_file(omffilename)
+        # test that some data has been read without errors; the exact content of the
+        # files can vary, so we cannot easily perform more thorough checks
+        assert f_read.array.nbytes > 0
 
 
 def test_write_read_vtk(tmp_path):
@@ -4132,7 +4143,7 @@ def test_to_xarray_valid_args_vector(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
     assert np.allclose(fxa.attrs["tolerance_factor"], f.mesh.region.tolerance_factor)
     for i in f.mesh.region.dims:
-        assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
+        assert np.array_equal(getattr(f.mesh.cells, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
     assert all(fxa["vdims"].values == f.vdims)
     assert np.array_equal(f.array, fxa.values)
@@ -4156,7 +4167,7 @@ def test_to_xarray_valid_args_scalar(valid_mesh, value, dtype):
     assert np.allclose(fxa.attrs["pmax"], f.mesh.region.pmax)
     assert np.allclose(fxa.attrs["tolerance_factor"], f.mesh.region.tolerance_factor)
     for i in f.mesh.region.dims:
-        assert np.array_equal(getattr(f.mesh.points, i), fxa[i].values)
+        assert np.array_equal(getattr(f.mesh.cells, i), fxa[i].values)
         assert fxa[i].attrs["units"] == f.mesh.region.units[f.mesh.region.dims.index(i)]
     assert "vdims" not in fxa.dims
     assert np.array_equal(f.array.squeeze(axis=-1), fxa.values)

@@ -866,14 +866,14 @@ def test_region2slice():
         mesh.region2slices(df.Region(p1=(-1, 3), p2=(3, 5)))
 
 
-def test_points():
+def test_cells():
     # 1d example (ndim=1)
     p1 = 0
     p2 = 10
     cell = 2
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-    assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
+    assert np.allclose(mesh.cells.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
 
     # 3d example (ndim=3)
     p1 = (0, 0, 4)
@@ -881,9 +881,9 @@ def test_points():
     cell = (2, 2, 1)
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-    assert np.allclose(mesh.points.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
-    assert np.allclose(mesh.points.y, [1.0, 3.0, 5.0], atol=0)
-    assert np.allclose(mesh.points.z, [0.5, 1.5, 2.5, 3.5], atol=0)
+    assert np.allclose(mesh.cells.x, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
+    assert np.allclose(mesh.cells.y, [1.0, 3.0, 5.0], atol=0)
+    assert np.allclose(mesh.cells.z, [0.5, 1.5, 2.5, 3.5], atol=0)
 
     # 4d example (ndim=4)
     p1 = (0, 0, 4, 4)
@@ -891,10 +891,10 @@ def test_points():
     cell = (2, 2, 1, 1)
     mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
 
-    assert np.allclose(mesh.points.x0, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
-    assert np.allclose(mesh.points.x1, [1.0, 3.0, 5.0], atol=0)
-    assert np.allclose(mesh.points.x2, [0.5, 1.5, 2.5, 3.5], atol=0)
-    assert np.allclose(mesh.points.x3, [0.5, 1.5, 2.5, 3.5], atol=0)
+    assert np.allclose(mesh.cells.x0, [1.0, 3.0, 5.0, 7.0, 9.0], atol=0)
+    assert np.allclose(mesh.cells.x1, [1.0, 3.0, 5.0], atol=0)
+    assert np.allclose(mesh.cells.x2, [0.5, 1.5, 2.5, 3.5], atol=0)
+    assert np.allclose(mesh.cells.x3, [0.5, 1.5, 2.5, 3.5], atol=0)
 
 
 def test_vertices():
@@ -1654,7 +1654,7 @@ def test_coordinate_field(valid_mesh):
         index[valid_mesh.region._dim2index(dim)] = slice(None)
         # extra index for vector dimension: vector component along the current direction
         index = tuple(index) + (valid_mesh.region._dim2index(dim),)
-        assert np.allclose(cfield.array[index], getattr(valid_mesh.points, dim), atol=0)
+        assert np.allclose(cfield.array[index], getattr(valid_mesh.cells, dim), atol=0)
 
 
 def test_sel_convert_intput():

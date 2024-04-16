@@ -170,7 +170,7 @@ class Mesh(_MeshIO):
     # removed attribute: new method/property
     # implemented in __getattr__
     # to exclude methods from tap completion and documentation
-    _removed_attributes = {"midpoints": "points"}
+    _removed_attributes = {"midpoints": "cells", "points": "cells"}
 
     def __init__(
         self,
@@ -487,12 +487,12 @@ class Mesh(_MeshIO):
         yield from map(self.index2point, self.indices)
 
     @property
-    def points(self):
-        """Midpoints of the cells of the mesh along the three directions.
+    def cells(self):
+        """Midpoints of the cells of the mesh along the spatial directions.
 
-        This method returns a named tuple containing three numpy arrays with
-        midpoints of the cells along the three spatial directions. Individual directions
-        can be accessed from the tuple.
+        This method returns a named tuple containing numpy arrays with midpoints of the
+        cells along the spatial directions. Individual directions can be accessed from
+        the tuple.
 
         Returns
         -------
@@ -512,13 +512,13 @@ class Mesh(_MeshIO):
         >>> cell = (2, 1, 1)
         >>> mesh = df.Mesh(region=df.Region(p1=p1, p2=p2), cell=cell)
         ...
-        >>> mesh.points.x
+        >>> mesh.cells.x
         array([1., 3., 5., 7., 9.])
 
         """
-        points = collections.namedtuple("points", self.region.dims)
+        cells = collections.namedtuple("cells", self.region.dims)
 
-        return points(
+        return cells(
             *(
                 np.linspace(pmin + cell / 2, pmax - cell / 2, n)
                 for pmin, pmax, cell, n in zip(
@@ -529,11 +529,11 @@ class Mesh(_MeshIO):
 
     @property
     def vertices(self):
-        """Vertices of the cells of the mesh along the three directions.
+        """Vertices of the cells of the mesh along the spatial directions.
 
-        This method returns a named tuple containing three numpy arrays with
-        vertices of the cells along the spatial directions. Individual directions can be
-        accessed from the tuple.
+        This method returns a named tuple containing numpy arrays with vertices of the
+        cells along the spatial directions. Individual directions can be accessed from
+        the tuple.
 
         Returns
         -------
@@ -2166,8 +2166,8 @@ class Mesh(_MeshIO):
             vdim_mapping=dict(zip(self.region.dims, self.region.dims)),
         )
         for i, dim in enumerate(self.region.dims):
-            points = self.points  # avoid re-computing points
-            field.array[..., i] = getattr(points, dim).reshape(
+            cells = self.cells  # avoid re-computing cells
+            field.array[..., i] = getattr(cells, dim).reshape(
                 tuple(self.n[i] if i == j else 1 for j in range(self.region.ndim))
             )
 

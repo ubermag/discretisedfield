@@ -355,7 +355,7 @@ class Field(_FieldIO):
         .. seealso:: :py:func:`~discretisedfield.Field.array`
 
         """
-        self.array = _as_array(value, self.mesh, self.nvdim, dtype=self.dtype)
+        self.array = self._as_array(value, self.mesh, self.nvdim, dtype=self.dtype)
 
     @property
     def vdims(self):
@@ -457,7 +457,7 @@ class Field(_FieldIO):
 
     @array.setter
     def array(self, val):
-        self._array = _as_array(val, self.mesh, self.nvdim, dtype=self.dtype)
+        self._array = self._as_array(val, self.mesh, self.nvdim, dtype=self.dtype)
 
     @property
     def norm(self):
@@ -539,7 +539,7 @@ class Field(_FieldIO):
                 out=np.zeros_like(self.array),
                 where=self.norm.array != 0.0,
             )
-            self.array *= _as_array(val, self.mesh, nvdim=1, dtype=None)
+            self.array *= self._as_array(val, self.mesh, nvdim=1, dtype=None)
 
     @property
     def valid(self):
@@ -561,10 +561,10 @@ class Field(_FieldIO):
                 valid = ~np.isclose(self.norm.array, 0)
         else:
             valid = True
-        # Using _as_array creates an array with shape (*mesh.n, 1).
+        # Using self._as_array creates an array with shape (*mesh.n, 1).
         # We only want a shape of mesh.n so we can directly use it
         # to index field.array i.e. field.array[field.valid].
-        self._valid = _as_array(valid, self.mesh, nvdim=1, dtype=bool)[..., 0]
+        self._valid = self._as_array(valid, self.mesh, nvdim=1, dtype=bool)[..., 0]
 
     @property
     def _valid_as_field(self):
@@ -3577,7 +3577,7 @@ class Field(_FieldIO):
         key_dims = {
             dim: hv_key_dim(coords, unit)
             for dim, unit in zip(self.mesh.region.dims, self.mesh.region.units)
-            if len(coords := getattr(self.mesh.points, dim)) > 1
+            if len(coords := getattr(self.mesh.cells, dim)) > 1
         }
         if self.nvdim > 1:
             key_dims["vdims"] = hv_key_dim(self.vdims, "")
@@ -4057,14 +4057,12 @@ class Field(_FieldIO):
 
         >>> xa = field.to_xarray()
         >>> xa
-        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, vdims: 3)>
-        ...
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10, vdims: 3)>...
 
         3. Select values of `x` component
 
         >>> xa.sel(vdims='x')
-        <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>
-        ...
+        <xarray.DataArray 'field' (x: 10, y: 10, z: 10)>...
 
         """
         if not isinstance(name, str):
@@ -4077,7 +4075,7 @@ class Field(_FieldIO):
 
         axes = self.mesh.region.dims
 
-        data_array_coords = {axis: getattr(self.mesh.points, axis) for axis in axes}
+        data_array_coords = {axis: getattr(self.mesh.cells, axis) for axis in axes}
 
         geo_units_dict = dict(zip(axes, self.mesh.region.units))
 
@@ -4186,8 +4184,7 @@ class Field(_FieldIO):
         ...                                p2=[21., 21., 21.],
         ...                                nvdim=3),)
         >>> xa
-        <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, vdims: 3)>
-        ...
+        <xarray.DataArray 'mag' (x: 20, y: 20, z: 20, vdims: 3)>...
 
         2. Create Field from DataArray
 
@@ -4270,53 +4267,87 @@ class Field(_FieldIO):
             mesh=mesh, nvdim=nvdim, value=val, vdims=vdims, dtype=xa.values.dtype
         )
 
+    @functools.singledispatchmethod
+    def _as_array(self, val, mesh, nvdim, dtype):
+        raise TypeError(f"Unsupported type {type(val)}.")
 
-@functools.singledispatch
-def _as_array(val, mesh, nvdim, dtype):
-    raise TypeError(f"Unsupported type {type(val)}.")
+    # to avoid str being interpreted as iterable
+    @_as_array.register(str)
+    def _(self, val, mesh, nvdim, dtype):
+        raise TypeError(f"Unsupported type {type(val)}.")
 
-
-# to avoid str being interpreted as iterable
-@_as_array.register(str)
-def _(val, mesh, nvdim, dtype):
-    raise TypeError(f"Unsupported type {type(val)}.")
-
-
-@_as_array.register(numbers.Complex)
-@_as_array.register(collections.abc.Iterable)
-def _(val, mesh, nvdim, dtype):
-    if isinstance(val, numbers.Complex) and nvdim > 1 and val != 0:
-        raise ValueError(
-            f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
-        )
-
-    if isinstance(val, collections.abc.Iterable):
-        if nvdim == 1 and np.array_equal(np.shape(val), mesh.n):
-            return np.expand_dims(val, axis=-1)
-        elif np.shape(val)[-1] != nvdim:
+    @_as_array.register(numbers.Complex)
+    @_as_array.register(collections.abc.Iterable)
+    def _(self, val, mesh, nvdim, dtype):
+        if isinstance(val, numbers.Complex) and nvdim > 1 and val != 0:
             raise ValueError(
-                f"Wrong dimension {len(val)} provided for value; expected dimension is"
-                f" {nvdim}."
+                f"Wrong dimension 1 provided for value; expected dimension is {nvdim}"
             )
-    dtype = dtype or max(np.asarray(val).dtype, np.float64)
-    return np.full((*mesh.n, nvdim), val, dtype=dtype)
+
+        if isinstance(val, collections.abc.Iterable):
+            if nvdim == 1 and np.array_equal(np.shape(val), mesh.n):
+                return np.expand_dims(val, axis=-1)
+            elif np.shape(val)[-1] != nvdim:
+                raise ValueError(
+                    f"Wrong dimension {len(val)} provided for value; expected dimension"
+                    f" is {nvdim}."
+                )
+        dtype = dtype or max(np.asarray(val).dtype, np.float64)
+        return np.full((*mesh.n, nvdim), val, dtype=dtype)
+
+    @_as_array.register(collections.abc.Callable)
+    def _(self, val, mesh, nvdim, dtype):
+        # will only be called on user input
+        # dtype must be specified by the user for complex values
+        array = np.empty((*mesh.n, nvdim), dtype=dtype)
+        for index, point in zip(mesh.indices, mesh):
+            # Conversion to array and reshaping is required for numpy >= 1.24
+            # and for certain inputs, e.g. a tuple of numpy arrays which can e.g. occur
+            # for 1d vector fields.
+            array[index] = np.asarray(val(point)).reshape(nvdim)
+        return array
+
+    @_as_array.register(dict)
+    def _(self, val, mesh, nvdim, dtype):
+        # will only be called on user input
+        # dtype must be specified by the user for complex values
+        dtype = dtype or np.float64
+        fill_value = (
+            val["default"]
+            if "default" in val and not callable(val["default"])
+            else np.nan
+        )
+        array = np.full((*mesh.n, nvdim), fill_value, dtype=dtype)
+
+        for subregion in reversed(mesh.subregions.keys()):
+            # subregions can overlap, first subregion takes precedence
+            try:
+                submesh = mesh[subregion]
+                subval = val[subregion]
+            except KeyError:
+                continue  # subregion not in val when implicitly set via "default"
+            else:
+                slices = mesh.region2slices(submesh.region)
+                array[slices] = self._as_array(subval, submesh, nvdim, dtype)
+
+        if np.any(np.isnan(array)):
+            # not all subregion keys specified and 'default' is missing or callable
+            if "default" not in val:
+                raise KeyError(
+                    "Key 'default' required if not all subregion keys are specified."
+                )
+            subval = val["default"]
+            for idx in np.argwhere(np.isnan(array[..., 0])):
+                # only spatial indices required -> array[..., 0]
+                # conversion to array and reshaping similar to "callable" implementation
+                array[idx] = np.asarray(subval(mesh.index2point(idx))).reshape(nvdim)
+
+        return array
 
 
-@_as_array.register(collections.abc.Callable)
-def _(val, mesh, nvdim, dtype):
-    # will only be called on user input
-    # dtype must be specified by the user for complex values
-    array = np.empty((*mesh.n, nvdim), dtype=dtype)
-    for index, point in zip(mesh.indices, mesh):
-        # Conversion to array and reshaping is required for numpy >= 1.24
-        # and for certain inputs, e.g. a tuple of numpy arrays which can e.g. occur
-        # for 1d vector fields.
-        array[index] = np.asarray(val(point)).reshape(nvdim)
-    return array
-
-
-@_as_array.register(Field)
-def _(val, mesh, nvdim, dtype):
+# We cannot register to self (or df.Field) inside the class
+@Field._as_array.register(Field)
+def _(self, val, mesh, nvdim, dtype):
     if mesh.region not in val.mesh.region:
         raise ValueError(
             f"{val.mesh.region} of the provided field does not "
@@ -4326,7 +4357,7 @@ def _(val, mesh, nvdim, dtype):
     value = (
         val.to_xarray()
         .sel(
-            **{dim: getattr(mesh.points, dim) for dim in mesh.region.dims},
+            **{dim: getattr(mesh.cells, dim) for dim in mesh.region.dims},
             method="nearest",
         )
         .data
@@ -4335,39 +4366,3 @@ def _(val, mesh, nvdim, dtype):
         # xarray dataarrays for scalar data are three dimensional
         return value.reshape(*mesh.n, -1)
     return value
-
-
-@_as_array.register(dict)
-def _(val, mesh, nvdim, dtype):
-    # will only be called on user input
-    # dtype must be specified by the user for complex values
-    dtype = dtype or np.float64
-    fill_value = (
-        val["default"] if "default" in val and not callable(val["default"]) else np.nan
-    )
-    array = np.full((*mesh.n, nvdim), fill_value, dtype=dtype)
-
-    for subregion in reversed(mesh.subregions.keys()):
-        # subregions can overlap, first subregion takes precedence
-        try:
-            submesh = mesh[subregion]
-            subval = val[subregion]
-        except KeyError:
-            continue  # subregion not in val when implicitly set via "default"
-        else:
-            slices = mesh.region2slices(submesh.region)
-            array[slices] = _as_array(subval, submesh, nvdim, dtype)
-
-    if np.any(np.isnan(array)):
-        # not all subregion keys specified and 'default' is missing or callable
-        if "default" not in val:
-            raise KeyError(
-                "Key 'default' required if not all subregion keys are specified."
-            )
-        subval = val["default"]
-        for idx in np.argwhere(np.isnan(array[..., 0])):
-            # only spatial indices required -> array[..., 0]
-            # conversion to array and reshaping similar to "callable" implementation
-            array[idx] = np.asarray(subval(mesh.index2point(idx))).reshape(nvdim)
-
-    return array
