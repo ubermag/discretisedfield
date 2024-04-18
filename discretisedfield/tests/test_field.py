@@ -16,7 +16,6 @@ import scipy.fft as spfft
 import xarray as xr
 
 import discretisedfield as df
-
 from .test_mesh import html_re as mesh_html_re
 
 pv.OFF_SCREEN = True

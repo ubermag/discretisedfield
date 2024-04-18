@@ -9,7 +9,6 @@ import pytest
 import pyvista as pv
 
 import discretisedfield as df
-
 from .test_region import html_re as region_html_re
 
 pv.OFF_SCREEN = True

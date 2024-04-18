@@ -3453,7 +3453,7 @@ class Field(_FieldIO):
 
         # No support for bools
         valid_array = vns.numpy_to_vtk(
-            self.valid.astype(int).transpose((2, 1, 0)).reshape((-1))
+            self.valid.astype(int).transpose((2, 1, 0)).reshape(-1)
         )
         valid_array.SetName("valid")
         cell_data.AddArray(valid_array)
