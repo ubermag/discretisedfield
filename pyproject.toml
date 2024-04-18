@@ -46,7 +46,8 @@ dependencies = [
     "sympy>=1.10.1",
     "ubermagutil>=0.63.2",
     "vtk>=9.1",
-    "xarray"
+    "xarray",
+    "pyvista[all]>=0.42.3"
 ]
 
 [project.optional-dependencies]

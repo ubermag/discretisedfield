@@ -2,6 +2,7 @@ import collections
 import colorsys
 
 import numpy as np
+import pyvista as pv
 
 # Color pallete as hex and int.
 cp_hex = [
@@ -112,3 +113,35 @@ def hls2rgb(hue, lightness=None, saturation=None, lightness_clim=None):
     )
 
     return rgb.squeeze()
+
+
+def arrow():
+    return pv.Arrow(
+        tip_radius=0.18,
+        tip_length=0.4,
+        tip_resolution=10,
+        shaft_resolution=10,
+        shaft_radius=0.05,
+        start=(-0.5, 0, 0),
+    )
+
+
+def cone():
+    return pv.Cone(
+        center=(-0.5, 0, 0),
+    )
+
+
+def _pyvista_save_to_file(filename, plotter):
+    extension = filename.split(".")[-1] if "." in filename else None
+    screenshot = ["png", "jpeg", "jpg", "bmp", "tif", "tiff"]
+    graphic = ["svg", "eps", "ps", "pdf", "tex"]
+    if extension in screenshot:
+        plotter.screenshot(filename=filename)
+    elif extension in graphic:
+        plotter.save_graphic(filename=filename)
+    else:
+        raise ValueError(
+            f"{extension} extension is not supported. The supported formats are"
+            f" {', '.join(screenshot+graphic)}."
+        )

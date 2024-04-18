@@ -3,9 +3,12 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+import pyvista as pv
 
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
+
+pv.OFF_SCREEN = True
 
 html_re = (
     r"<strong>Region</strong>( <i>\w+</i>)?\s*"
@@ -915,3 +918,22 @@ def test_k3d(p1, p2):
         # Check if runs.
         region.k3d()
         region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
+
+
+@pytest.mark.parametrize(
+    "p1, p2",
+    [[0, 1], [(0, 0), (1, 1)], [(0, 0, 0), (1, 1, 1)], [(0, 0, 0, 0), (1, 1, 1, 1)]],
+)
+def test_pyvista(p1, p2):
+    region = df.Region(p1=p1, p2=p2)
+    if region.ndim != 3:
+        with pytest.raises(RuntimeError):
+            region.pyvista()
+    else:
+        # Check if runs.
+        region.pyvista(multiplier=1e9)
+        region.pyvista(color=plot_util.cp_hex[3])
+
+        plotter = pv.Plotter()
+        region.pyvista(plotter=plotter)
+        plotter.show()

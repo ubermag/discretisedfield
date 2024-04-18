@@ -9,3 +9,6 @@ from discretisedfield.plotting.mpl import add_colorwheel
 from discretisedfield.plotting.mpl_field import MplField
 from discretisedfield.plotting.mpl_mesh import MplMesh
 from discretisedfield.plotting.mpl_region import MplRegion
+from discretisedfield.plotting.pyvista_field import PyVistaField
+from discretisedfield.plotting.pyvista_mesh import PyVistaMesh
+from discretisedfield.plotting.pyvista_region import PyVistaRegion
