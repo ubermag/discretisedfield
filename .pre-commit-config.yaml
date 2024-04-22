@@ -2,7 +2,7 @@ exclude: 'dev'
 
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.6.0
   hooks:
   - id: check-merge-conflict  # checks for files that contain merge conflict strings
   - id: check-toml  # checks toml files for parseable syntax
@@ -12,7 +12,7 @@ repos:
 #    exclude: 'discretisedfield/tests/test_sample/.*'
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.1.11
+  rev: v0.4.1
   hooks:
     # Run the linter.
     - id: ruff
