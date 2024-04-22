@@ -1,4 +1,5 @@
 """Matplotlib-based plotting."""
+
 import abc
 
 import matplotlib.pyplot as plt

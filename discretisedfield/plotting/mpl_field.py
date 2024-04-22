@@ -1,4 +1,5 @@
 """Matplotlib-based plotting."""
+
 import warnings
 
 import matplotlib.pyplot as plt
