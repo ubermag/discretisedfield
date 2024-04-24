@@ -81,10 +81,7 @@ class PyVistaRegion:
         if self.region.ndim != 3:
             raise RuntimeError("Only 3-dimensional regions can be plotted.")
 
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         multiplier = self._setup_multiplier(multiplier)
 

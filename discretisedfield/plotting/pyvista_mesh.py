@@ -112,10 +112,7 @@ class PyVistaMesh:
         if cell_kwargs is None:
             cell_kwargs = {}
 
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         multiplier = self._setup_multiplier(multiplier)
 

@@ -9,6 +9,7 @@ import pytest
 import pyvista as pv
 
 import discretisedfield as df
+import discretisedfield.plotting.util as plot_util
 from .test_region import html_re as region_html_re
 
 pv.OFF_SCREEN = True
