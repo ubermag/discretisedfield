@@ -11,11 +11,10 @@ from vtkmodules.vtkCommonDataModel import vtkRectilinearGrid
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
-from discretisedfield.operators import _split_diff_combine
-from discretisedfield.plotting.util import hv_key_dim
-
 from . import html
 from .io import _FieldIO
+from discretisedfield.operators import _split_diff_combine
+from discretisedfield.plotting.util import hv_key_dim
 
 # TODO: tutorials, line operations
 
@@ -381,13 +380,14 @@ class Field(_FieldIO):
             if len(vdims) != len(set(vdims)):
                 raise ValueError("'vdims' must be unique.")
             for c in vdims:
-                if hasattr(self, c):
-                    # redefining component labels is okay.
-                    if self._vdims is None or c not in self._vdims:
-                        raise ValueError(
-                            f"Component name {c} is already "
-                            "used by a different method/property."
-                        )
+                if hasattr(self, c) and (
+                    self._vdims is None
+                    or c not in self._vdims  # allow redefining component labels
+                ):
+                    raise ValueError(
+                        f"Component name {c} is already "
+                        "used by a different method/property."
+                    )
             vdims = list(vdims)
 
         # setting vdim_mapping reads self.vdims -> self.vdims has to be updated before
@@ -3237,9 +3237,9 @@ class Field(_FieldIO):
         if isinstance(vector, self.__class__):
             self._check_same_mesh_and_field_dim(vector)
             valid = np.logical_and(valid, vector.valid)
-        elif self.nvdim == 1 and isinstance(vector, numbers.Complex):
-            vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
-        elif isinstance(vector, (tuple, list, np.ndarray)):
+        elif (self.nvdim == 1 and isinstance(vector, numbers.Complex)) or isinstance(
+            vector, (tuple, list, np.ndarray)
+        ):
             vector = self.__class__(self.mesh, nvdim=self.nvdim, value=vector)
         else:
             msg = (
@@ -3441,7 +3441,7 @@ class Field(_FieldIO):
             # access to the individual field components, e.g. for colouring.
             for comp in self.vdims:
                 component_array = vns.numpy_to_vtk(
-                    getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape((-1))
+                    getattr(self, comp).array.transpose((2, 1, 0, 3)).reshape(-1)
                 )
                 component_array.SetName(f"{comp}")
                 cell_data.AddArray(component_array)
@@ -3453,7 +3453,7 @@ class Field(_FieldIO):
 
         # No support for bools
         valid_array = vns.numpy_to_vtk(
-            self.valid.astype(int).transpose((2, 1, 0)).reshape((-1))
+            self.valid.astype(int).transpose((2, 1, 0)).reshape(-1)
         )
         valid_array.SetName("valid")
         cell_data.AddArray(valid_array)
@@ -3982,8 +3982,8 @@ class Field(_FieldIO):
                     )
                     for x, m in zip(result, mesh)
                 )
-            except Exception:
-                raise NotImplementedError()
+            except Exception as e:
+                raise NotImplementedError() from e
         elif method == "at":
             return None
         else:
@@ -3997,8 +3997,8 @@ class Field(_FieldIO):
                     vdims=self.vdims,
                     vdim_mapping=self.vdim_mapping,
                 )
-            except Exception:
-                raise NotImplementedError()
+            except Exception as e:
+                raise NotImplementedError() from e
 
     def to_xarray(self, name="field", unit=None):
         """Field value as ``xarray.DataArray``.

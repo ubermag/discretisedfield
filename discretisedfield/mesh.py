@@ -13,7 +13,6 @@ import ubermagutil.units as uu
 import discretisedfield as df
 import discretisedfield.plotting as dfp
 import discretisedfield.util as dfu
-
 from . import html
 from .io import _MeshIO
 
@@ -373,15 +372,16 @@ class Mesh(_MeshIO):
                     f"Subregion {key} cannot be divided into "
                     f"discretisation cells of size {self.cell=}."
                 )
-                raise ValueError(msg)
+                raise ValueError(msg) from None
 
             # Is the subregion aligned with the mesh?
             if not self.is_aligned(self.__class__(region=value, cell=self.cell)):
                 raise ValueError(f"Subregion {key} is not aligned with the mesh.")
-        if "default" in subregions.keys():
+        if "default" in subregions:
             warnings.warn(
                 "Subregion name ``default`` has a special meaning when "
-                "initialising field values"
+                "initialising field values",
+                stacklevel=2,
             )
         self._subregions = {
             name: df.Region(
@@ -611,10 +611,7 @@ class Mesh(_MeshIO):
         """
         if not isinstance(other, self.__class__):
             return False
-        if self.region == other.region and all(self.n == other.n):
-            return True
-        else:
-            return False
+        return self.region == other.region and all(self.n == other.n)
 
     def allclose(self, other, rtol=None, atol=None):
         """Check if the mesh is close enough to the other based on a tolerance.
@@ -1189,6 +1186,7 @@ class Mesh(_MeshIO):
         warnings.warn(
             "Bitwise OR (|) operator is deprecated; please use is_aligned",
             DeprecationWarning,
+            stacklevel=2,
         )
         return self.is_aligned(other)
 
@@ -1441,7 +1439,7 @@ class Mesh(_MeshIO):
         pmin = self.region.pmin.copy().astype(float)
         pmax = self.region.pmax.copy().astype(float)
         # Convert to np.ndarray to allow operations on them.
-        for direction in pad_width.keys():
+        for direction in pad_width:
             axis = self.region._dim2index(direction)
             pmin[axis] -= pad_width[direction][0] * self.cell[axis]
             pmax[axis] += pad_width[direction][1] * self.cell[axis]

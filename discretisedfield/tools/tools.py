@@ -729,7 +729,8 @@ def demag_tensor(mesh):
     """
     warnings.warn(
         "This method is still experimental. Users are strongly encouraged to use oommfc"
-        " for the calculation of the demag field."
+        " for the calculation of the demag field.",
+        stacklevel=2,
     )
     x = np.linspace(
         (-mesh.n[0] + 1) * mesh.cell[0],
@@ -781,7 +782,8 @@ def demag_field(m, tensor):
     """
     warnings.warn(
         "This method is still experimental. Users are strongly encouraged to use oommfc"
-        " for the calculation of the demag field."
+        " for the calculation of the demag field.",
+        stacklevel=2,
     )
     m_pad = m.pad(
         {d: (0, m.mesh.n[i] - 1) for d, i in zip(["x", "y", "z"], range(3))},

@@ -4,7 +4,6 @@ import numpy as np
 import pytest
 
 import discretisedfield as df
-
 from .test_field import html_re as field_html_re
 
 html_re = (

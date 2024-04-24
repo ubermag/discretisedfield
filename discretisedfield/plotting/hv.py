@@ -9,7 +9,6 @@ import numpy as np
 import xarray as xr
 
 import discretisedfield as df
-
 from .util import hv_key_dim
 
 # HoloViews shows a warning about a deprecated call to unique when creating
@@ -510,7 +509,8 @@ class Hv:
                 else:
                     warnings.warn(
                         "Automatic coloring is only supported for 3d"
-                        f' vector fields. Ignoring "{use_color=}".'
+                        f' vector fields. Ignoring "{use_color=}".',
+                        stacklevel=2,
                     )
                     use_color = False
 
@@ -738,7 +738,7 @@ class Hv:
         }
         resampled = array.sel(**vals, method="nearest")
         resampled = resampled.assign_coords(vals)
-        for dim in vals.keys():
+        for dim in vals:
             with contextlib.suppress(AttributeError):
                 resampled[dim]["units"] = array[dim].units
         return resampled

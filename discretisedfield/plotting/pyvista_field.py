@@ -26,7 +26,7 @@ class PyVistaField:
         plotter=None,
         multiplier=None,
         scalars=None,
-        vector=plot_util.arrow(),
+        vector=None,
         scale=None,
         color_field=None,
         filename=None,
@@ -132,16 +132,16 @@ class PyVistaField:
         if glyph_kwargs is None:
             glyph_kwargs = {}
 
+        if vector is None:
+            vector = plot_util.arrow()
+
         if color_field is not None:
             if color_field.nvdim != 1:
                 raise ValueError(f"Cannot use {color_field.nvdim=}.")
             if not self.field.mesh.allclose(color_field.mesh):
                 raise ValueError("The color_field has to be defined on the same mesh.")
 
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         if scalars is None:
             scalars = self.field.vdims[-1]
@@ -238,10 +238,7 @@ class PyVistaField:
             :py:func:`~discretisedfield.plotting.pyvista.volume`
 
         """
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         if scalars is None and self.field.nvdim > 1:
             scalars = self.field.vdims[-1]
@@ -335,10 +332,7 @@ class PyVistaField:
 
         """
 
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         if scalars is None and self.field.nvdim > 1:
             scalars = self.field.vdims[-1]
@@ -419,10 +413,7 @@ class PyVistaField:
 
         """
 
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         # Default colour
         kwargs.setdefault("color", "blue")
@@ -557,10 +548,7 @@ class PyVistaField:
         if scalars is None and self.field.nvdim > 1:
             scalars = self.field.vdims[-1]
 
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         multiplier = self._setup_multiplier(multiplier)
 
@@ -597,8 +585,8 @@ class PyVistaField:
         scalars=None,
         color_field=None,
         filename=None,
-        streamlines_kwargs={},
-        tube_kwargs={},
+        streamlines_kwargs=None,
+        tube_kwargs=None,
         **kwargs,
     ):
         """``pyvista`` streamline plot.
@@ -683,6 +671,10 @@ class PyVistaField:
             :py:func:`~discretisedfield.plotting.pyvista.valid`
 
         """
+        if tube_kwargs is None:
+            tube_kwargs = {}
+        if streamlines_kwargs is None:
+            streamlines_kwargs = {}
         if self.field.nvdim != 3:
             raise RuntimeError(
                 "Only meshes with 3 vector dimensions can be plotted not"
@@ -710,10 +702,7 @@ class PyVistaField:
             for key, value in tube_default_values.items():
                 tube_kwargs.setdefault(key, value)
 
-        if plotter is None:
-            plot = pv.Plotter()
-        else:
-            plot = plotter
+        plot = pv.Plotter() if plotter is None else plotter
 
         if scalars is None and self.field.nvdim > 1:
             scalars = self.field.vdims[-1]

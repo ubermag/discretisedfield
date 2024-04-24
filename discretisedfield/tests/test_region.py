@@ -230,9 +230,9 @@ def test_eq(p1_1, p1_2, p2):
     assert isinstance(region2, df.Region)
     assert isinstance(region3, df.Region)
     assert region1 == region2
-    assert not region1 != region2
+    assert not region1 != region2  # noqa: SIM202
     assert region1 != region3
-    assert not region1 == region3
+    assert not region1 == region3  # noqa: SIM201
 
 
 @pytest.mark.parametrize(

@@ -5,7 +5,6 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.spatial.transform import Rotation
 
 import discretisedfield as df
-
 from . import html
 
 
@@ -87,7 +86,9 @@ class FieldRotator:
                     )
 
         if field.mesh.bc != "":
-            warnings.warn("Boundary conditions are lost when rotating the field.")
+            warnings.warn(
+                "Boundary conditions are lost when rotating the field.", stacklevel=2
+            )
         self._orig_field = field
         # set up state without rotations
         self.clear_rotation()

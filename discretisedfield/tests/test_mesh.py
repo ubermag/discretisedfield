@@ -10,7 +10,6 @@ import pyvista as pv
 
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
-
 from .test_region import html_re as region_html_re
 
 pv.OFF_SCREEN = True
@@ -486,16 +485,16 @@ def test_eq(p1_1, p1_2, p2, n1, n2):
     assert isinstance(mesh2, df.Mesh)
     assert isinstance(mesh3, df.Mesh)
     assert mesh1 == mesh2
-    assert not mesh1 != mesh2
+    assert not mesh1 != mesh2  # noqa: SIM202
     assert mesh1 != mesh3
-    assert not mesh1 == mesh3
+    assert not mesh1 == mesh3  # noqa: SIM201
     assert mesh1 != mesh4
-    assert not mesh1 == mesh4
+    assert not mesh1 == mesh4  # noqa: SIM201
     assert mesh3 != mesh4
-    assert not mesh3 == mesh4
+    assert not mesh3 == mesh4  # noqa: SIM201
 
     assert mesh1 != 1
-    assert not mesh2 == "mesh2"
+    assert not mesh2 == "mesh2"  # noqa: SIM201
 
 
 @pytest.mark.parametrize(
@@ -1253,11 +1252,11 @@ def test_getattr(p1, p2, cell, checks):
         assert np.isclose(getattr(mesh, key), val, atol=0)
 
     with pytest.raises(AttributeError):
-        mesh.dk
+        mesh.dk  # noqa: B018
 
     # single-character attributes are handled differently
     with pytest.raises(AttributeError):
-        mesh.a
+        mesh.a  # noqa: B018
 
 
 @pytest.mark.parametrize(

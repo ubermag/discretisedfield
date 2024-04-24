@@ -238,7 +238,8 @@ class _FieldIO_OVF:
                 warnings.warn(
                     f"File {filename} contains multiple units for the individual"
                     f" vdims: {unit_list=}. This is not supported by"
-                    " discretisedfield. Unit is set to None."
+                    " discretisedfield. Unit is set to None.",
+                    stacklevel=2,
                 )
                 unit = None
             else:
