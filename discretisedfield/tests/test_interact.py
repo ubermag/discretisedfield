@@ -11,4 +11,4 @@ def test_interact():
     # Only test whether it runs.
     @df.interact(x=field.mesh.slider("x"))
     def myplot(x):
-        field.plane(x=x).mpl()
+        field.sel(x=x).mpl()
