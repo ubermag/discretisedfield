@@ -601,7 +601,7 @@ class Field(_FieldIO):
     def _r_dim_mapping(self):
         """Map dims to vdims."""
         reversed_mapping = {val: key for key, val in self.vdim_mapping.items()}
-        return {dim: reversed_mapping.get(dim, None) for dim in self.mesh.region.dims}
+        return {dim: reversed_mapping.get(dim) for dim in self.mesh.region.dims}
 
     def __abs__(self):
         """Absolute value of the field.

@@ -1,4 +1,5 @@
 """Finite-difference fields."""
+
 import importlib.metadata
 import pathlib
 
