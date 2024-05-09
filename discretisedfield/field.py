@@ -3423,27 +3423,13 @@ class Field(_FieldIO):
         rgrid = vtkRectilinearGrid()
         rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
 
-        rgrid.SetXCoordinates(
-            vns.numpy_to_vtk(
-                np.fromiter(
-                    getattr(self.mesh.vertices, self.mesh.region.dims[0]), float
-                )
+        for dim, setter in zip(
+            self.mesh.region.dims,
+            [rgrid.SetXCoordinates, rgrid.SetYCoordinates, rgrid.SetZCoordinates],
+        ):
+            setter(
+                vns.numpy_to_vtk(np.fromiter(getattr(self.mesh.vertices, dim), float))
             )
-        )
-        rgrid.SetYCoordinates(
-            vns.numpy_to_vtk(
-                np.fromiter(
-                    getattr(self.mesh.vertices, self.mesh.region.dims[1]), float
-                )
-            )
-        )
-        rgrid.SetZCoordinates(
-            vns.numpy_to_vtk(
-                np.fromiter(
-                    getattr(self.mesh.vertices, self.mesh.region.dims[2]), float
-                )
-            )
-        )
 
         cell_data = rgrid.GetCellData()
         field_norm = vns.numpy_to_vtk(
