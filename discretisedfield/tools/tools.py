@@ -279,11 +279,7 @@ def topological_charge(field, /, method="continuous", absolute=False):
         assert np.isscalar(result), "Expected a scalar result from integration"
         return float(result)
     else:
-        result = q.integrate()
-        if isinstance(result, np.ndarray) and result.size == 1:
-            result = result.item()
-        assert np.isscalar(result), "Expected a scalar result from integration"
-        return float(result)
+        return q.integrate().item()
 
 
 def emergent_magnetic_field(field):
