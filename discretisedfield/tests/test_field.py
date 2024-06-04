@@ -13,6 +13,7 @@ import numpy as np
 import pytest
 import pyvista as pv
 import scipy.fft as spfft
+import vtk
 import xarray as xr
 
 import discretisedfield as df
@@ -2789,6 +2790,49 @@ def test_write_read_ovf(tmp_path):
         # test that some data has been read without errors; the exact content of the
         # files can vary, so we cannot easily perform more thorough checks
         assert f_read.array.nbytes > 0
+
+
+def test_to_vtk():
+    p1 = (0, 0, 0)
+    p2 = (5e-9, 2e-9, 1e-9)
+    cell = (1e-9, 1e-9, 1e-9)
+
+    def value_fun(point):
+        a, b, c = point
+        return (3 + a * b, a - 2 * b, a * b * c)
+
+    region = df.Region(p1=p1, p2=p2)
+    mesh = df.Mesh(region=region, cell=cell)
+
+    f = df.Field(mesh, nvdim=3, value=value_fun)
+    f_vtk = f.to_vtk()
+    assert isinstance(f_vtk, vtk.vtkRectilinearGrid)
+    cell_data = f_vtk.GetCellData()
+    assert cell_data.GetArrayName(0) == "norm"
+    assert cell_data.GetArrayName(1) == "x"
+    assert cell_data.GetArrayName(2) == "y"
+    assert cell_data.GetArrayName(3) == "z"
+    assert cell_data.GetArrayName(4) == "field"
+
+    # Test with different dims
+    dims = ["a", "b", "c"]
+    vdims = ["va", "vb", "vc"]
+    vdim_mapping = dict(zip(vdims, dims))
+
+    region = df.Region(p1=p1, p2=p2, dims=dims)
+    mesh = df.Mesh(region=region, cell=cell)
+
+    f = df.Field(mesh, nvdim=3, value=value_fun, vdims=vdims, vdim_mapping=vdim_mapping)
+    f.to_vtk()
+
+    f_vtk = f.to_vtk()
+    assert isinstance(f_vtk, vtk.vtkRectilinearGrid)
+    cell_data = f_vtk.GetCellData()
+    assert cell_data.GetArrayName(0) == "norm"
+    assert cell_data.GetArrayName(1) == "va"
+    assert cell_data.GetArrayName(2) == "vb"
+    assert cell_data.GetArrayName(3) == "vc"
+    assert cell_data.GetArrayName(4) == "field"
 
 
 def test_write_read_vtk(tmp_path):

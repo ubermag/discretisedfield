@@ -3378,7 +3378,10 @@ class Field(_FieldIO):
 
         This method convers at `discretisedfield.Field` into a
         `vtk.vtkRectilinearGrid`. The field data (``field.array``) is stored as
-        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Scalar fields (``nvdim=1``)
+        ``CELL_DATA`` of the ``RECTILINEAR_GRID``. Only fields with ``ndim=3``
+        can be converted. The ``x``, ``y``, and ``z``, spatial coordinates of
+        the VTK array will be in the same order as ``field.mesh.region.dims``.
+        Scalar fields (``nvdim=1``)
         contain one VTK array called ``field``. Vector fields (``nvdim>1``)
         contain one VTK array called ``field`` containing vector data and
         scalar VTK arrays for each field component (called
@@ -3420,15 +3423,13 @@ class Field(_FieldIO):
         rgrid = vtkRectilinearGrid()
         rgrid.SetDimensions(*(n + 1 for n in self.mesh.n))
 
-        rgrid.SetXCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.x, float))
-        )
-        rgrid.SetYCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.y, float))
-        )
-        rgrid.SetZCoordinates(
-            vns.numpy_to_vtk(np.fromiter(self.mesh.vertices.z, float))
-        )
+        for dim, setter in zip(
+            self.mesh.region.dims,
+            [rgrid.SetXCoordinates, rgrid.SetYCoordinates, rgrid.SetZCoordinates],
+        ):
+            setter(
+                vns.numpy_to_vtk(np.fromiter(getattr(self.mesh.vertices, dim), float))
+            )
 
         cell_data = rgrid.GetCellData()
         field_norm = vns.numpy_to_vtk(
