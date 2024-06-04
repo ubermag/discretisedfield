@@ -110,6 +110,8 @@ known-local-folder = ["discretisedfield"]
 filterwarnings = [
     "error",
     "ignore:((.|\n)*)Sentinel is not a public part of the traitlets API((.|\n)*)",  # dependency of k3d
+    "ignore:((.|\n)*)`ipykernel.pylab.backend_inline` is deprecated((.|\n)*)",  # dependency of ipywidgets
+    "ignore:((.|\n)*)Automatic coloring is only supported for 3d fields.((.|\n)*)",  # Our warning
 ]
 
 [tool.setuptools.packages.find]
