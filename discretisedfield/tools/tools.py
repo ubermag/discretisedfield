@@ -273,11 +273,7 @@ def topological_charge(field, /, method="continuous", absolute=False):
 
     q = topological_charge_density(field, method=method)
     if absolute:
-        result = abs(q).integrate()
-        if isinstance(result, np.ndarray) and result.size == 1:
-            result = result.item()
-        assert np.isscalar(result), "Expected a scalar result from integration"
-        return float(result)
+        return abs(q).integrate().item()
     else:
         return q.integrate().item()
 
