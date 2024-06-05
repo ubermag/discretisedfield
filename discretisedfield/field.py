@@ -601,7 +601,7 @@ class Field(_FieldIO):
     def _r_dim_mapping(self):
         """Map dims to vdims."""
         reversed_mapping = {val: key for key, val in self.vdim_mapping.items()}
-        return {dim: reversed_mapping.get(dim, None) for dim in self.mesh.region.dims}
+        return {dim: reversed_mapping.get(dim) for dim in self.mesh.region.dims}
 
     def __abs__(self):
         """Absolute value of the field.
@@ -1647,12 +1647,12 @@ class Field(_FieldIO):
 
         2. Divide vector field by a scalar.
 
-        >>> f1 = df.Field(mesh, nvdim=3, value=(0, 10, 5))
+        >>> f1 = df.Field(mesh, nvdim=3, value=(20, 10, 5))
         >>> res = f1 / 5  # discretisedfield.Field.__mul__ is called
         >>> res.mean()
-        array([0., 2., 1.])
-        >>> (10 / f1).mean()  # division by a vector is not allowed
-        array([inf,  1.,  2.])
+        array([4., 2., 1.])
+        >>> (10 / f1).mean()
+        array([0.5, 1. , 2. ])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 

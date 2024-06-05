@@ -3997,16 +3997,16 @@ def test_pyvista_scalar(test_field):
 
 def test_pyvista_volume(test_field):
     # Default
-    test_field.a.pyvista.volume()
+    test_field.c.pyvista.volume()
 
     # Colormap
-    test_field.a.pyvista.volume(cmap="hsv")
+    test_field.c.pyvista.volume(cmap="hsv")
 
     # Multiplier
-    test_field.a.pyvista.volume(multiplier=1e-6)
+    test_field.c.pyvista.volume(multiplier=1e-6)
 
     # 3D
-    test_field.pyvista.volume(scalars=test_field.vdims[0])
+    test_field.pyvista.volume(scalars=test_field.vdims[2])
 
     # Plotter
     plotter = pv.Plotter()

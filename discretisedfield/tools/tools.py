@@ -273,9 +273,9 @@ def topological_charge(field, /, method="continuous", absolute=False):
 
     q = topological_charge_density(field, method=method)
     if absolute:
-        return float(abs(q).integrate())
+        return abs(q).integrate().item()
     else:
-        return float(q.integrate())
+        return q.integrate().item()
 
 
 def emergent_magnetic_field(field):

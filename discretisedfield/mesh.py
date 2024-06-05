@@ -1544,7 +1544,7 @@ class Mesh(_MeshIO):
         8.0
 
         """
-        return np.product(self.cell)
+        return np.prod(self.cell)
 
     def scale(self, factor, reference_point=None, inplace=False):
         """Scale the underlying region and all subregions.
