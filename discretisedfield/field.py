@@ -1652,7 +1652,7 @@ class Field(_FieldIO):
         >>> res.mean()
         array([4., 2., 1.])
         >>> (10 / f1).mean()
-        array([0.5,  1.,  2.])
+        array([0.5, 1. , 2. ])
 
         .. seealso:: :py:func:`~discretisedfield.Field.__mul__`
 
