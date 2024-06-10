@@ -3205,6 +3205,7 @@ def test_mpl_vector(test_field):
     plt.close("all")
 
 
+@pytest.mark.filterwarnings("ignore:Automatic coloring")
 @pytest.mark.parametrize("nvdim", [1, 2, 3, 4])
 def test_mpl_dimension_vector(valid_mesh, nvdim):
     field = df.Field(valid_mesh, nvdim=nvdim)
