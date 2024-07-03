@@ -733,8 +733,11 @@ class Hv:
         if n is None:
             return array
 
+        # .item() is required to convert xarray to Python built-in type;
+        # without this conversion linspace will fail because it would try to create a
+        # a new xarray but no dimensions are provided.
         vals = {
-            dim: np.linspace(array[dim].min(), array[dim].max(), ni)
+            dim: np.linspace(array[dim].min().item(), array[dim].max().item(), ni)
             for dim, ni in zip(kdims, n)
         }
         resampled = array.sel(**vals, method="nearest")
