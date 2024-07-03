@@ -73,7 +73,9 @@ class _FieldIO_HDF5:
 
     def _to_hdf5(self, filename):
         """Save a single field in a new hdf5 file."""
-        utc_now = datetime.datetime.utcnow().isoformat(timespec="seconds")
+        utc_now = datetime.datetime.now(datetime.timezone.utc).isoformat(
+            timespec="seconds"
+        )
         with h5py.File(filename, "w") as f:
             f.attrs["ubermag-hdf5-file-version"] = "0.1"
             f.attrs["discretisedfield.__version__"] = df.__version__
