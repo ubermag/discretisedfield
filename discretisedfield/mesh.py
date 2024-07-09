@@ -2052,7 +2052,8 @@ class Mesh(_MeshIO):
             )
 
         values = np.arange(slider_min, slider_max + 1e-20, slider_step)
-        labels = np.around(values / multiplier, decimals=3)
+        labels = np.around(values / multiplier, decimals=3).tolist()
+        values = values.tolist()
         options = list(zip(labels, values))
 
         # Select middle element for slider value
