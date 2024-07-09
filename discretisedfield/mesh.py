@@ -850,7 +850,8 @@ class Mesh(_MeshIO):
         # If index is rounded to the out-of-range values.
         index = np.clip(index, 0, self.n - 1)
 
-        return tuple(index)
+        # conversion to list is required to convert the datatypes to Python builtins
+        return tuple(index.tolist())
 
     def region2slices(self, region):
         """Slices of indices that correspond to cells contained in the region.
@@ -1501,7 +1502,7 @@ class Mesh(_MeshIO):
             )
         if len(attr) > 1 and attr[0] == "d":
             with contextlib.suppress(ValueError):
-                return self.cell[self.region._dim2index(attr[1:])]
+                return self.cell.tolist()[self.region._dim2index(attr[1:])]
         raise AttributeError(f"Object has no attribute {attr}.")
 
     def __dir__(self):
@@ -1544,7 +1545,7 @@ class Mesh(_MeshIO):
         8.0
 
         """
-        return np.prod(self.cell)
+        return np.prod(self.cell).item()
 
     def scale(self, factor, reference_point=None, inplace=False):
         """Scale the underlying region and all subregions.

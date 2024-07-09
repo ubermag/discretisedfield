@@ -460,7 +460,7 @@ class Region(_RegionIO):
         100
 
         """
-        return np.prod(self.edges)
+        return np.prod(self.edges).item()
 
     def __repr__(self):
         r"""Representation string.

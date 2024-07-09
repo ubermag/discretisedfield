@@ -263,7 +263,7 @@ class Line:
         4.0
 
         """
-        return self.data["r"].iloc[-1]
+        return self.data["r"].iloc[-1].item()
 
     def __repr__(self):
         """Representation string.
