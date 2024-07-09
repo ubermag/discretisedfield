@@ -2,7 +2,7 @@
 <ul>
   {%- set region = mesh.region %}
   <li>{% include 'region.jinja2' %}</li>
-  <li>n = {{ mesh.n|list }}</li>
+  <li>n = {{ mesh.n.tolist() }}</li>
   {%- if mesh.bc %}
     <li>bc = {{ mesh.bc }}</li>
   {%- endif %}

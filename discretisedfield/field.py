@@ -331,16 +331,16 @@ class Field(_FieldIO):
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell,\
                            subregions={'s1': sub1, 's2': sub2})
         >>> field = df.Field(mesh, nvdim=1, value={'s1': 1, 's2': 1})
-        >>> (field.array == 1).all()
+        >>> (field.array == 1).all().item()
         True
         >>> field = df.Field(mesh, nvdim=1, value={'s1': 1})
         Traceback (most recent call last):
         ...
         KeyError: ...
         >>> field = df.Field(mesh, nvdim=1, value={'s1': 2, 'default': 1})
-        >>> (field.array == 1).all()
+        >>> (field.array == 1).all().item()
         False
-        >>> (field.array == 0).any()
+        >>> (field.array == 0).any().item()
         False
         >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell, subregions={'s': sub1})
         >>> field = df.Field(mesh, nvdim=1, value={'s': 1})
@@ -348,7 +348,7 @@ class Field(_FieldIO):
         ...
         KeyError: ...
         >>> field = df.Field(mesh, nvdim=1, value={'default': 1})
-        >>> (field.array == 1).all()
+        >>> (field.array == 1).all().item()
         True
 
         .. seealso:: :py:func:`~discretisedfield.Field.array`

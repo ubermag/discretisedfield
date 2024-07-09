@@ -1,7 +1,7 @@
 <strong>Region</strong>{%if region_name is defined %} <i>{{ region_name }}</i>{% endif %}
 <ul>
-  <li>pmin = {{ region.pmin|list }}</li>
-  <li>pmax = {{ region.pmax|list }}</li>
+  <li>pmin = {{ region.pmin.tolist() }}</li>
+  <li>pmax = {{ region.pmax.tolist() }}</li>
   <li>dims = {{ region.dims|list }}</li>
   <li>units = {{ region.units|list }}</li>
 </ul>

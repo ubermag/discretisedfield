@@ -657,10 +657,11 @@ def count_bps(field, /, direction):
     bp_count = bp_number[1:] - bp_number[:-1]
 
     results = {}
-    results["bp_number"] = abs(bp_count).sum()
-    results["bp_number_hh"] = abs(bp_count[bp_count < 0].sum())
-    results["bp_number_tt"] = bp_count[bp_count > 0].sum()
+    results["bp_number"] = abs(bp_count).sum().item()
+    results["bp_number_hh"] = abs(bp_count[bp_count < 0].sum()).item()
+    results["bp_number_tt"] = bp_count[bp_count > 0].sum().item()
 
+    bp_number = bp_number.tolist()
     # pattern = list([<local BP_count>, <repetitions>])
     pattern = [[bp_number[0], 1]]
     for q_val in bp_number[1:]:
