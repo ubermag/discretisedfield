@@ -170,7 +170,7 @@ class Line:
 
     @point_columns.setter
     def point_columns(self, val):
-        if len(val) != 3:
+        if len(val) != len(self._point_columns):
             msg = f"Cannot change column names with a list of lenght {len(val)}."
             raise ValueError(msg)
 
