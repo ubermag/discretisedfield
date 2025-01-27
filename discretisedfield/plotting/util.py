@@ -143,5 +143,5 @@ def _pyvista_save_to_file(filename, plotter):
     else:
         raise ValueError(
             f"{extension} extension is not supported. The supported formats are"
-            f" {', '.join(screenshot+graphic)}."
+            f" {', '.join(screenshot + graphic)}."
         )

@@ -34,9 +34,9 @@ def test_pyvista_valid_filename_extensions_screenshot(extension):
 
     try:
         plot_util._pyvista_save_to_file(filename, plotter)
-        assert os.path.exists(
-            filename
-        ), f"File with extension {extension} was not created."
+        assert os.path.exists(filename), (
+            f"File with extension {extension} was not created."
+        )
     finally:
         os.remove(filename)
 
@@ -56,8 +56,8 @@ def test_pyvista_valid_filename_extensions_save_graphic(extension):
 
     try:
         plot_util._pyvista_save_to_file(filename, plotter)
-        assert os.path.exists(
-            filename
-        ), f"File with extension {extension} was not created."
+        assert os.path.exists(filename), (
+            f"File with extension {extension} was not created."
+        )
     finally:
         os.remove(filename)
