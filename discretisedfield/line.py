@@ -4,14 +4,9 @@ import ipywidgets
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import ubermagutil.typesystem as ts
 import ubermagutil.units as uu
 
 
-@ts.typesystem(
-    dim=ts.Scalar(expected_type=int, positive=True, const=True),
-    n=ts.Scalar(expected_type=int, positive=True, const=True),
-)
 class Line:
     """Line class.
 
@@ -99,13 +94,18 @@ class Line:
             raise ValueError(msg)
 
         # Set the dimension (const descriptor).
-        if isinstance(values[0], numbers.Complex):
-            self.dim = 1
-        else:
-            self.dim = len(values[0])
+        dim = 1 if isinstance(values[0], numbers.Complex) else len(values[0])
+
+        if not isinstance(dim, int) or dim <= 0:
+            raise ValueError(f"dim must be a positive integer, got {dim}.")
 
         # Set the number of values (const descriptor).
-        self.n = len(points)
+        n = len(points)
+        if not isinstance(n, int) or n <= 0:
+            raise ValueError(f"n must be a positive integer, got {n}.")
+
+        self._dim = dim
+        self._n = n
 
         points = np.array(points)
         values = np.array(values).reshape((points.shape[0], -1))
@@ -120,6 +120,14 @@ class Line:
         # TODO this should be done in the setter
         self._point_columns = list(point_columns)
         self._value_columns = list(value_columns)
+
+    @property
+    def dim(self):
+        return self._dim
+
+    @property
+    def n(self):
+        return self._n
 
     @property
     def point_columns(self):
