@@ -7,10 +7,6 @@ import pandas as pd
 import ubermagutil.units as uu
 
 
-# @ts.typesystem(
-#    dim=ts.Scalar(expected_type=int, positive=True, const=True),
-#    n=ts.Scalar(expected_type=int, positive=True, const=True),
-# )
 class Line:
     """Line class.
 
