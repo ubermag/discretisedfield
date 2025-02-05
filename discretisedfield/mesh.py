@@ -2114,6 +2114,69 @@ class Mesh(_MeshIO):
             disabled=False,
         )
 
+    def resample(self, n):
+        """Resample mesh.
+
+        This method computes the mesh on a new mesh with ``n`` cells. The boundaries
+        ``pmin`` and ``pmax`` stay unchanged. The values of the new cells are taken from
+        the nearest old cell, no interpolation is performed.
+
+        Parameters
+        ----------
+        n : array_like
+
+            Number of cells in each direction. The number of elements must match
+            mesh.region.ndim.
+
+        Returns
+        -------
+        discretisedfield.Mesh
+
+            The resampled mesh.
+
+        Examples
+        --------
+        1. Decrease the number of cells.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.n
+        array([10, 10, 10])
+        >>> down_sampled = mesh.resample((5, 5, 5))
+        >>> down_sampled.n
+        array([5, 5, 5])
+
+        2. Increase the number of cells.
+
+        >>> import discretisedfield as df
+        ...
+        >>> p1 = (0, 0, 0)
+        >>> p2 = (100, 100, 100)
+        >>> cell = (10, 10, 10)
+        >>> mesh = df.Mesh(p1=p1, p2=p2, cell=cell)
+        >>> mesh.n
+        array([10, 10, 10])
+        >>> up_sampled = mesh.resample((10, 15, 20))
+        >>> up_sampled.n
+        array([10, 15, 20])
+
+        """
+        n = np.array(n, dtype=int)
+        new_n = self.n.copy()
+        for i in range(len(n)):
+            new_n[i] = n[i]
+
+        return self.__class__(
+            region=self.region,
+            n=new_n,
+            bc=self.bc,
+            subregions=self.subregions,
+        )
+
     def coordinate_field(self):
         """Create a field whose values are the mesh coordinates.
 
