@@ -682,7 +682,7 @@ class PyVistaField:
             )
 
         streamlines_default_values = {
-            "max_time": 10,
+            "max_length": 10,
             "n_points": 20,
         }
 

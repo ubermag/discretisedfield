@@ -3940,6 +3940,7 @@ def test_plot_large_sample():
     field.k3d.vector()
 
 
+@pytest.mark.pyvista
 def test_pyvista_vector(test_field):
     # Default
     test_field.pyvista.vector()
@@ -3977,6 +3978,7 @@ def test_pyvista_vector(test_field):
         test_field.pyvista.vector(color_field=test_field)
 
 
+@pytest.mark.pyvista
 def test_pyvista_scalar(test_field):
     # Default
     test_field.a.pyvista.scalar()
@@ -3996,6 +3998,7 @@ def test_pyvista_scalar(test_field):
     plotter.show()
 
 
+@pytest.mark.pyvista
 def test_pyvista_volume(test_field):
     # Default
     test_field.c.pyvista.volume()
@@ -4015,6 +4018,7 @@ def test_pyvista_volume(test_field):
     plotter.show()
 
 
+@pytest.mark.pyvista
 def test_pyvista_valid(test_field):
     # Default
     test_field.pyvista.valid()
@@ -4037,6 +4041,7 @@ def test_pyvista_valid(test_field):
 @pytest.mark.skipif(
     sys.platform != "linux", reason="Segmentation fault on Mac and Windows."
 )
+@pytest.mark.pyvista
 def test_pyvista_contour(test_field):
     # Default
     test_field.pyvista.contour()
@@ -4072,6 +4077,7 @@ def test_pyvista_contour(test_field):
 @pytest.mark.skipif(
     sys.platform != "linux", reason="Segmentation fault on Mac and Windows."
 )
+@pytest.mark.pyvista
 def test_pyvista_streamlines(test_field):
     # Default
     test_field.pyvista.streamlines()

@@ -1337,6 +1337,7 @@ def test_k3d_mpl_subregions(tmp_path):
     mesh.k3d.subregions()
 
 
+@pytest.mark.pyvista
 def test_pyvista(valid_mesh):
     if valid_mesh.region.ndim != 3:
         with pytest.raises(RuntimeError):
@@ -1345,6 +1346,7 @@ def test_pyvista(valid_mesh):
         valid_mesh.pyvista()
 
 
+@pytest.mark.pyvista
 def test_pyvista_subregions(tmp_path):
     p1 = (0, 0, 0)
     p2 = (100, 80, 10)

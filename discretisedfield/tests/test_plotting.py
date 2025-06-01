@@ -22,6 +22,7 @@ def test_inplane_angle():
 
 
 @pytest.mark.parametrize("extension", ["png", "jpeg", "jpg", "bmp", "tif", "tiff"])
+@pytest.mark.pyvista
 def test_pyvista_valid_filename_extensions_screenshot(extension):
     pv.OFF_SCREEN = True
 
@@ -44,6 +45,7 @@ def test_pyvista_valid_filename_extensions_screenshot(extension):
 # xfail as need on screen to create graphics. TODO: check how pyvista test this
 @pytest.mark.xfail(strict=True)
 @pytest.mark.parametrize("extension", ["svg", "eps", "ps", "pdf", "txt"])
+@pytest.mark.pyvista
 def test_pyvista_valid_filename_extensions_save_graphic(extension):
     pv.OFF_SCREEN = True
 

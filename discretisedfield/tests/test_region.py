@@ -924,6 +924,7 @@ def test_k3d(p1, p2):
     "p1, p2",
     [[0, 1], [(0, 0), (1, 1)], [(0, 0, 0), (1, 1, 1)], [(0, 0, 0, 0), (1, 1, 1, 1)]],
 )
+@pytest.mark.pyvista
 def test_pyvista(p1, p2):
     region = df.Region(p1=p1, p2=p2)
     if region.ndim != 3:
