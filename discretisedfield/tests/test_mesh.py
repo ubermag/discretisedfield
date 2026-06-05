@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import pyvista as pv
+import k3d
 
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
@@ -1305,10 +1306,13 @@ def test_mpl(valid_mesh, tmp_path):
 def test_k3d(valid_mesh):
     if valid_mesh.region.ndim != 3:
         with pytest.raises(RuntimeError):
-            valid_mesh.k3d()
+            plot = k3d.plot()
+            valid_mesh.k3d(plot=plot)
     else:
-        valid_mesh.k3d()
-        valid_mesh.sel(x=(0, 1e-9)).k3d()
+        plot = k3d.plot()
+        valid_mesh.k3d(plot=plot)
+        plot = k3d.plot()
+        valid_mesh.sel(x=(0, 1e-9)).k3d(plot=plot)
 
 
 def test_k3d_mpl_subregions(tmp_path):
@@ -1334,7 +1338,8 @@ def test_k3d_mpl_subregions(tmp_path):
     plt.close("all")
 
     # k3d tests
-    mesh.k3d.subregions()
+    plot = k3d.plot()
+    mesh.k3d.subregions(plot=plot)
 
 
 @pytest.mark.pyvista

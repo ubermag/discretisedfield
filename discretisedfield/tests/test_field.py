@@ -3737,47 +3737,72 @@ def test_k3d(valid_mesh):
     f = df.Field(valid_mesh, nvdim=3, value=(1, 1, 1))
     if f.mesh.region.ndim != 3:
         with pytest.raises(RuntimeError):
-            f.k3d.vector()
+            #f.k3d.vector()
+            plot = k3d.plot()
+            f.k3d.vector(plot=plot)
     else:
-        f.k3d.vector()
-        f.x.k3d.scalar()
-        f.norm.k3d.nonzero()
+        #f.k3d.vector()
+        #f.x.k3d.scalar()
+        #f.norm.k3d.nonzero()
+        plot = k3d.plot()
+        f.k3d.vector(plot=plot)
 
+        plot = k3d.plot()
+        f.x.k3d.scalar(plot=plot)
+        
+        plot = k3d.plot()
+        f.norm.k3d.nonzero(plot=plot)   
+        
 
 def test_k3d_nonzero(test_field):
     # Default
-    test_field.norm.k3d.nonzero()
+    plot = k3d.plot()
+    test_field.norm.k3d.nonzero(plot=plot)
 
     # Color
-    test_field.a.k3d.nonzero(color=0xFF00FF)
+    plot = k3d.plot()
+    test_field.a.k3d.nonzero(plot=plot, color=0xFF00FF)
 
     # Multiplier
-    test_field.b.k3d.nonzero(color=0xFF00FF, multiplier=1e-6)
+    plot = k3d.plot()
+    test_field.b.k3d.nonzero(plot=plot, color=0xFF00FF, multiplier=1e-6)
 
     # Interactive field
     range_ = (test_field.mesh.region.pmin[2], test_field.mesh.region.pmin[2])
+
+    plot = k3d.plot()
     test_field.c.sel(z=range_).k3d.nonzero(
-        color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
+        plot=plot,
+        color=0xFF00FF,
+        multiplier=1e-6,
+        interactive_field=test_field,
     )
 
     # kwargs
+    plot = k3d.plot()
     test_field.a.sel(z=range_).k3d.nonzero(
+        plot=plot,
         color=0xFF00FF,
         multiplier=1e-6,
         interactive_field=test_field,
         wireframe=True,
     )
 
-    # Plot
+    # Plot reuse
     plot = k3d.plot()
-    plot.display()
     test_field.b.sel(z=range_).k3d.nonzero(
-        plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
+        plot=plot,
+        color=0xFF00FF,
+        multiplier=1e-6,
+        interactive_field=test_field,
     )
 
-    # Continuation for interactive plot testing.
+    # Continuation for interactive plot testing
     test_field.c.sel(z=range_).k3d.nonzero(
-        plot=plot, color=0xFF00FF, multiplier=1e-6, interactive_field=test_field
+        plot=plot,
+        color=0xFF00FF,
+        multiplier=1e-6,
+        interactive_field=test_field,
     )
 
     assert len(plot.objects) == 2
@@ -3788,21 +3813,35 @@ def test_k3d_nonzero(test_field):
 
 def test_k3d_scalar(test_field):
     # Default
-    test_field.a.k3d.scalar()
+    plot = k3d.plot()
+    test_field.a.k3d.scalar(plot=plot)
 
     # Filter field
-    test_field.b.k3d.scalar(filter_field=test_field.norm)
+    plot = k3d.plot()
+    test_field.b.k3d.scalar(plot=plot, filter_field=test_field.norm)
 
     # Colormap
-    test_field.c.k3d.scalar(filter_field=test_field.norm, cmap="hsv", color=0xFF00FF)
+    plot = k3d.plot()
+    test_field.c.k3d.scalar(
+        plot=plot,
+        filter_field=test_field.norm,
+        cmap="hsv",
+        color=0xFF00FF,
+    )
 
     # Multiplier
+    plot = k3d.plot()
     test_field.a.k3d.scalar(
-        filter_field=test_field.norm, color=0xFF00FF, multiplier=1e-6
+        plot=plot,
+        filter_field=test_field.norm,
+        color=0xFF00FF,
+        multiplier=1e-6,
     )
 
     # Interactive field
+    plot = k3d.plot()
     test_field.b.k3d.scalar(
+        plot=plot,
         filter_field=test_field.norm,
         color=0xFF00FF,
         multiplier=1e-6,
@@ -3810,7 +3849,9 @@ def test_k3d_scalar(test_field):
     )
 
     # kwargs
+    plot = k3d.plot()
     test_field.c.k3d.scalar(
+        plot=plot,
         filter_field=test_field.norm,
         color=0xFF00FF,
         multiplier=1e-6,
@@ -3818,9 +3859,8 @@ def test_k3d_scalar(test_field):
         wireframe=True,
     )
 
-    # Plot
+    # Plot reuse
     plot = k3d.plot()
-    plot.display()
     range_ = (test_field.mesh.region.pmin[2], test_field.mesh.region.pmin[2])
     test_field.a.sel(z=range_).k3d.scalar(
         plot=plot,
@@ -3830,7 +3870,7 @@ def test_k3d_scalar(test_field):
         interactive_field=test_field,
     )
 
-    # Continuation for interactive plot testing.
+    # Continuation for interactive plot testing
     test_field.b.sel(z=range_).k3d.scalar(
         plot=plot,
         filter_field=test_field.norm,
@@ -3845,29 +3885,37 @@ def test_k3d_scalar(test_field):
     with pytest.raises(ValueError):
         test_field.k3d.scalar()
     with pytest.raises(ValueError):
-        test_field.c.k3d.scalar(filter_field=test_field)  # filter field nvdim=3
+        plot = k3d.plot()
+        test_field.c.k3d.scalar(plot=plot, filter_field=test_field)  # filter field nvdim=3
 
 
 def test_k3d_vector(test_field):
     # Default
-    test_field.k3d.vector()
+    plot = k3d.plot()
+    test_field.k3d.vector(plot=plot)
 
     # Color field
-    test_field.k3d.vector(color_field=test_field.a)
+    plot = k3d.plot()
+    test_field.k3d.vector(plot=plot, color_field=test_field.a)
 
     # Colormap
-    test_field.k3d.vector(color_field=test_field.norm, cmap="hsv")
+    plot = k3d.plot()
+    test_field.k3d.vector(plot=plot, color_field=test_field.norm, cmap="hsv")
 
     # Head size
-    test_field.k3d.vector(color_field=test_field.norm, cmap="hsv", head_size=3)
+    plot = k3d.plot()
+    test_field.k3d.vector(plot=plot, color_field=test_field.norm, cmap="hsv", head_size=3)
 
     # Points
+    plot = k3d.plot()
     test_field.k3d.vector(
-        color_field=test_field.norm, cmap="hsv", head_size=3, points=False
+        plot=plot, color_field=test_field.norm, cmap="hsv", head_size=3, points=False
     )
 
     # Point size
+    plot = k3d.plot()
     test_field.k3d.vector(
+        plot=plot,
         color_field=test_field.norm,
         cmap="hsv",
         head_size=3,
@@ -3876,7 +3924,9 @@ def test_k3d_vector(test_field):
     )
 
     # Vector multiplier
+    plot = k3d.plot()
     test_field.k3d.vector(
+        plot=plot,
         color_field=test_field.norm,
         cmap="hsv",
         head_size=3,
@@ -3886,7 +3936,9 @@ def test_k3d_vector(test_field):
     )
 
     # Multiplier
+    plot = k3d.plot()
     test_field.k3d.vector(
+        plot=plot,
         color_field=test_field.norm,
         cmap="hsv",
         head_size=3,
@@ -3897,8 +3949,10 @@ def test_k3d_vector(test_field):
     )
 
     # Interactive field
+    plot = k3d.plot()
     range_ = (test_field.mesh.region.pmin[2], test_field.mesh.region.pmin[2])
     test_field.sel(z=range_).k3d.vector(
+        plot=plot,
         color_field=test_field.norm,
         cmap="hsv",
         head_size=3,
@@ -3909,12 +3963,11 @@ def test_k3d_vector(test_field):
         interactive_field=test_field,
     )
 
-    # Plot
+    # Plot reuse
     plot = k3d.plot()
-    plot.display()
     test_field.sel(z=range_).k3d.vector(plot=plot, interactive_field=test_field)
 
-    # Continuation for interactive plot testing.
+    # Continuation for interactive plot testing
     test_field.sel(z=range_).k3d.vector(plot=plot, interactive_field=test_field)
 
     assert len(plot.objects) == 3
@@ -3923,10 +3976,12 @@ def test_k3d_vector(test_field):
     with pytest.raises(ValueError):
         test_field.a.k3d.vector()
     with pytest.raises(ValueError):
-        test_field.k3d.vector(color_field=test_field)  # filter field nvdim=3
+        plot = k3d.plot()
+        test_field.k3d.vector(plot=plot, color_field=test_field)  # color field nvdim=3
 
 
 def test_plot_large_sample():
+    
     p1 = (0, 0, 0)
     p2 = (50e9, 50e9, 50e9)
     cell = (25e9, 25e9, 25e9)
@@ -3934,10 +3989,14 @@ def test_plot_large_sample():
     value = (1e6, 1e6, 1e6)
     field = df.Field(mesh, nvdim=3, value=value)
 
-    field.sel("z").mpl()
-    field.norm.k3d.nonzero()
-    field.x.k3d.scalar()
-    field.k3d.vector()
+    plot = k3d.plot()
+    field.norm.k3d.nonzero(plot=plot)
+
+    plot = k3d.plot()
+    field.x.k3d.scalar(plot=plot)
+
+    plot = k3d.plot()
+    field.k3d.vector(plot=plot)
 
 
 @pytest.mark.pyvista

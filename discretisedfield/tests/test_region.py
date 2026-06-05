@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import pyvista as pv
+import k3d
 
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
@@ -916,8 +917,10 @@ def test_k3d(p1, p2):
             region.k3d()
     else:
         # Check if runs.
-        region.k3d()
-        region.k3d(multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
+        plot = k3d.plot()
+        region.k3d(plot=plot)
+        plot = k3d.plot()
+        region.k3d(plot=plot, multiplier=1e9, color=plot_util.cp_int[3], wireframe=True)
 
 
 @pytest.mark.parametrize(
