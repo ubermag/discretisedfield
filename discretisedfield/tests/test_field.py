@@ -3737,22 +3737,22 @@ def test_k3d(valid_mesh):
     f = df.Field(valid_mesh, nvdim=3, value=(1, 1, 1))
     if f.mesh.region.ndim != 3:
         with pytest.raises(RuntimeError):
-            #f.k3d.vector()
+            # f.k3d.vector()
             plot = k3d.plot()
             f.k3d.vector(plot=plot)
     else:
-        #f.k3d.vector()
-        #f.x.k3d.scalar()
-        #f.norm.k3d.nonzero()
+        # f.k3d.vector()
+        # f.x.k3d.scalar()
+        # f.norm.k3d.nonzero()
         plot = k3d.plot()
         f.k3d.vector(plot=plot)
 
         plot = k3d.plot()
         f.x.k3d.scalar(plot=plot)
-        
+
         plot = k3d.plot()
-        f.norm.k3d.nonzero(plot=plot)   
-        
+        f.norm.k3d.nonzero(plot=plot)
+
 
 def test_k3d_nonzero(test_field):
     # Default
@@ -3886,7 +3886,9 @@ def test_k3d_scalar(test_field):
         test_field.k3d.scalar()
     with pytest.raises(ValueError):
         plot = k3d.plot()
-        test_field.c.k3d.scalar(plot=plot, filter_field=test_field)  # filter field nvdim=3
+        test_field.c.k3d.scalar(
+            plot=plot, filter_field=test_field
+        )  # filter field nvdim=3
 
 
 def test_k3d_vector(test_field):
@@ -3904,7 +3906,9 @@ def test_k3d_vector(test_field):
 
     # Head size
     plot = k3d.plot()
-    test_field.k3d.vector(plot=plot, color_field=test_field.norm, cmap="hsv", head_size=3)
+    test_field.k3d.vector(
+        plot=plot, color_field=test_field.norm, cmap="hsv", head_size=3
+    )
 
     # Points
     plot = k3d.plot()
@@ -3981,7 +3985,6 @@ def test_k3d_vector(test_field):
 
 
 def test_plot_large_sample():
-    
     p1 = (0, 0, 0)
     p2 = (50e9, 50e9, 50e9)
     cell = (25e9, 25e9, 25e9)

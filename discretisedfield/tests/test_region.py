@@ -1,10 +1,10 @@
 import re
 
+import k3d
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import pyvista as pv
-import k3d
 
 import discretisedfield as df
 import discretisedfield.plotting.util as plot_util
