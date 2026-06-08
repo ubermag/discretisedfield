@@ -33,6 +33,23 @@ class Field(_FieldIO):
     the field can be normalised by passing ``norm``. For details on setting the
     norm, please refer to ``discretisedfield.Field.norm``.
 
+    If ``norm`` is passed the magnetization is initialized as
+    
+    .. math::
+
+            \\mathbf{M}(\\mathbf{r})  =
+                \\begin{cases}
+                n(\\mathbf{r}) \\frac{\\mathbf{f}(\\mathbf{r})}{\|\\mathbf{f}(\\mathbf{r})\|}, & \|\\mathbf{f}(\\mathbf{r})\| \\neq 0, \\\\
+                0, & \|\\mathbf{f}(\\mathbf{r})\| = 0.
+                \\end{cases}
+
+    where :math:`n` is here representative for ``norm`` and :math:`\\mathbf{f}` for ``value``. 
+    Otherwise, if ``norm`` is not passed the magnetization is initialized as
+
+    .. math::
+
+            \\mathbf{M}(\\mathbf{r})  = \\mathbf{f}(\\mathbf{r}).
+
     Parameters
     ----------
     mesh : discretisedfield.Mesh
