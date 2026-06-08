@@ -39,7 +39,7 @@ dependencies = [
     "h5py>=3.1",
     "holoviews",
     "jinja2",
-    "k3d>=2.11",
+    "k3d>=2.11,!=2.17",
     "matplotlib>=3.3, !=3.7.2",
     "pandas>=1.1",
     "scipy>=1.6",
