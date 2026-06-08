@@ -171,7 +171,7 @@ class Line:
         ['px', 'py', 'pz']
         >>> line.point_columns = ['p0', 'p1', 'p2']
         >>> line.data.columns
-        Index(['r', 'p0', 'p1', 'p2', 'v'], dtype='object')
+        Index(['r', 'p0', 'p1', 'p2', 'v'], dtype='str')
 
         """
         return self._point_columns
@@ -228,7 +228,7 @@ class Line:
         ['v']
         >>> line.value_columns = ['my_interesting_value']
         >>> line.data.columns
-        Index(['r', 'px', 'py', 'pz', 'my_interesting_value'], dtype='object')
+        Index(['r', 'px', 'py', 'pz', 'my_interesting_value'], dtype='str')
 
         """
         return self._value_columns
