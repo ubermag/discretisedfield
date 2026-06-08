@@ -20,7 +20,7 @@ from discretisedfield.plotting.util import hv_key_dim
 
 
 class Field(_FieldIO):
-    """Finite-difference field.
+    r"""Finite-difference field.
 
     This class specifies a finite-difference field and defines operations for
     its analysis and visualisation. The field is defined on a finite-difference
@@ -37,18 +37,19 @@ class Field(_FieldIO):
     
     .. math::
 
-            \\mathbf{M}(\\mathbf{r})  =
-                \\begin{cases}
-                n(\\mathbf{r}) \\frac{\\mathbf{f}(\\mathbf{r})}{\|\\mathbf{f}(\\mathbf{r})\|}, & \|\\mathbf{f}(\\mathbf{r})\| \\neq 0, \\\\
-                0, & \|\\mathbf{f}(\\mathbf{r})\| = 0.
-                \\end{cases}
+            \mathbf{M}(\mathbf{r})  =
+                \begin{cases}
+                n(\mathbf{r}) \frac{\mathbf{f}(\mathbf{r})}{\|\mathbf{f}(\mathbf{r})\|}, & \|\mathbf{f}(\mathbf{r})\| \neq 0, 
+                \\
+                0, & \|\mathbf{f}(\mathbf{r})\| = 0.
+                \end{cases}
 
     where :math:`n` is here representative for ``norm`` and :math:`\\mathbf{f}` for ``value``. 
     Otherwise, if ``norm`` is not passed the magnetization is initialized as
 
     .. math::
 
-            \\mathbf{M}(\\mathbf{r})  = \\mathbf{f}(\\mathbf{r}).
+            \mathbf{M}(\mathbf{r})  = \mathbf{f}(\mathbf{r}).
 
     Parameters
     ----------
