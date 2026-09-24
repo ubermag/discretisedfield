@@ -30,8 +30,12 @@ class Field(_FieldIO):
     field ``nvdim=3`` must be passed. The value of the field can be set by
     passing ``value``. For details on how the value can be defined, refer to
     ``discretisedfield.Field.value``. Similarly, if the field has ``nvdim>1``,
-    the field can be normalised by passing ``norm``. For details on setting the
-    norm, please refer to ``discretisedfield.Field.norm``.
+    the field can be normalised by passing ``norm``. If ``norm`` is not
+    provided, ``value`` directly defines the field values. If ``norm`` is
+    provided for a vector field, ``value`` only defines the local direction of
+    the field, which is normalised pointwise and then scaled by ``norm``. For
+    details on setting the norm, please refer to
+    ``discretisedfield.Field.norm``.
 
     Parameters
     ----------
@@ -53,7 +57,9 @@ class Field(_FieldIO):
     norm : numbers.Real, callable, optional
 
         Please refer to ``discretisedfield.Field.norm`` property. Defaults to
-        ``None`` (``norm=None`` defines no norm).
+        ``None`` (``norm=None`` defines no norm). If ``norm`` is given for a
+        vector field, ``value`` is only used for the direction of the field
+        and its magnitude is set by ``norm`` (see example 3).
 
     dtype : str, type, np.dtype, optional
 
@@ -112,7 +118,9 @@ class Field(_FieldIO):
     >>> field.mean()
     array([3.14])
 
-    3. Defining a uniform three-dimensional normalised vector field.
+    3. Defining a uniform three-dimensional normalised vector field. Because
+    ``norm`` is passed, ``value=(0, 0, 8)`` only sets the direction, so the
+    field has magnitude 1 everywhere.
 
     >>> import discretisedfield as df
     ...
