@@ -199,7 +199,7 @@ class _FieldIO_OVF:
                 )
                 if len(array.columns) == header["valuedim"] + 1:
                     # mumax3 writes trailing whitespace -> one extra column
-                    array.drop(array.columns[-1], axis=1, inplace=True)
+                    array = array.drop(array.columns[-1], axis=1)
                 array = array.to_numpy()
 
         with contextlib.suppress(FileNotFoundError):
