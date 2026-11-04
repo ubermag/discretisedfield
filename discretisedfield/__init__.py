@@ -1,9 +1,7 @@
 """Finite-difference fields."""
 
 import importlib.metadata
-import pathlib
 
-import matplotlib.pyplot as plt
 import pytest
 
 from . import tools as tools
@@ -14,9 +12,6 @@ from .line import Line as Line
 from .mesh import Mesh as Mesh
 from .operators import integrate as integrate
 from .region import Region as Region
-
-# Enable default plotting style.
-plt.style.use(pathlib.Path(__file__).parent / "plotting" / "plotting-style.mplstyle")
 
 __version__ = importlib.metadata.version(__package__)
 
