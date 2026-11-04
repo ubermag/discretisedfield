@@ -1190,8 +1190,9 @@ class Region(_RegionIO):
         >>> p1 = (-50e-9, -50e-9, 0)
         >>> p2 = (50e-9, 50e-9, 10e-9)
         >>> region = df.Region(p1=p1, p2=p2)
-        >>> region.k3d()
-        Plot(...)
+        >>> region.k3d()  # doctest: +ELLIPSIS
+        <k3d.plot.Plot object at 0x...>
+        Output()
 
         """
         return dfp.K3dRegion(self)
