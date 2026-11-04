@@ -1983,8 +1983,9 @@ class Mesh(_MeshIO):
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
-        >>> mesh.k3d()
-        Plot(...)
+        >>> mesh.k3d()  # doctest: +ELLIPSIS
+        <k3d.plot.Plot object at 0x...>
+        Output()
 
         .. seealso:: :py:func:`~discretisedfield.Mesh.mpl`
 

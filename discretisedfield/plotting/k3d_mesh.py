@@ -61,8 +61,9 @@ class K3dMesh:
         >>> n = (10, 10, 10)
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
-        >>> mesh.k3d()
-        Plot(...)
+        >>> mesh.k3d()  # doctest: +ELLIPSIS
+        <k3d.plot.Plot object at 0x...>
+        Output()
 
         """
         if self.mesh.region.ndim != 3:
@@ -148,8 +149,9 @@ class K3dMesh:
         ...               'r2': df.Region(p1=(50, 0, 0), p2=(100, 100, 100))}
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n, subregions=subregions)
         ...
-        >>> mesh.k3d.subregions()
-        Plot(...)
+        >>> mesh.k3d.subregions()  # doctest: +ELLIPSIS
+        <k3d.plot.Plot object at 0x...>
+        Output()
 
         """
         if self.mesh.region.ndim != 3:

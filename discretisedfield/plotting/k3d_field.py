@@ -96,8 +96,9 @@ class K3dField:
         ...         return 0
         >>> field.norm = normfun
         ...
-        >>> field.norm.k3d.nonzero()
-        Plot(...)
+        >>> field.norm.k3d.nonzero()  # doctest: +ELLIPSIS
+        <k3d.plot.Plot object at 0x...>
+        Output()
 
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.voxels`
 
@@ -237,8 +238,9 @@ class K3dField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         ...
         >>> field = df.Field(mesh, nvdim=1, value=5)
-        >>> field.k3d.scalar()
-        Plot(...)
+        >>> field.k3d.scalar()  # doctest: +ELLIPSIS
+        <k3d.plot.Plot object at 0x...>
+        Output()
 
         .. seealso:: :py:func:`~discretisedfield.plotting.K3d.vector`
 
@@ -424,8 +426,9 @@ class K3dField:
         >>> mesh = df.Mesh(p1=p1, p2=p2, n=n)
         >>> field = df.Field(mesh, nvdim=3, value=(0, 0, 1))
         ...
-        >>> field.k3d.vector()
-        Plot(...)
+        >>> field.k3d.vector()  # doctest: +ELLIPSIS
+        <k3d.plot.Plot object at 0x...>
+        Output()
 
         """
 
