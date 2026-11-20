@@ -134,8 +134,9 @@ class Line:
         """The names of point columns.
 
         This method returns a list of strings denoting the names of columns
-        storing three coordinates of points. Similarly, by assigning a list of
-        strings to this property, the columns can be renamed.
+        storing the coordinates of points (one column per spatial dimension).
+        Similarly, by assigning a list of strings to this property, the columns
+        can be renamed.
 
         Parameters
         ----------
@@ -178,8 +179,11 @@ class Line:
 
     @point_columns.setter
     def point_columns(self, val):
-        if len(val) != 3:
-            msg = f"Cannot change column names with a list of lenght {len(val)}."
+        if len(val) != len(self.point_columns):
+            msg = (
+                f"Cannot change {len(self.point_columns)} point column names with a"
+                f" list of length {len(val)}."
+            )
             raise ValueError(msg)
 
         self.data = self.data.rename(dict(zip(self.point_columns, val)), axis=1)
