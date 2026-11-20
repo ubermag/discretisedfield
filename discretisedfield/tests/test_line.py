@@ -147,6 +147,27 @@ class TestLine:
         with pytest.raises(ValueError):
             line.value_columns = ["a", "b", "c", "d"]
 
+    def test_point_columns_not_3d(self):
+        # Line with 2D points
+        line = df.Line(
+            points=[(0, 0), (1, 0), (2, 0)],
+            values=[1, 2, 3],
+            point_columns=["x", "y"],
+            value_columns=["v"],
+        )
+        line.point_columns = ["px", "py"]
+        assert line.point_columns == ["px", "py"]
+        assert line.data.columns.to_list() == ["r", "px", "py", "v"]
+        with pytest.raises(ValueError):
+            line.point_columns = ["a", "b", "c"]
+
+        # Line obtained from a field on a 2D mesh
+        mesh = df.Mesh(p1=(0, 0), p2=(10, 5), n=(10, 5))
+        field = df.Field(mesh, nvdim=1, value=1.0)
+        line = field.line(p1=(0, 2), p2=(10, 2), n=5)
+        line.point_columns = ["px", "py"]
+        assert line.data.columns.to_list()[:3] == ["r", "px", "py"]
+
     def test_mpl(self):
         p1 = (0, 0, 0)
         p2 = (10e-9, 15e-9, 2e-9)
